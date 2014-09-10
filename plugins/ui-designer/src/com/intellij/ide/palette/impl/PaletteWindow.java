@@ -15,18 +15,19 @@
  */
 package com.intellij.ide.palette.impl;
 
+import com.intellij.designer.LightToolWindowContent;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ide.palette.PaletteItemProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -48,7 +49,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PaletteWindow extends JPanel implements DataProvider {
+public class PaletteWindow extends JPanel implements LightToolWindowContent, DataProvider {
   private final Project myProject;
   private final ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<PaletteGroupHeader>();
   private final PaletteItemProvider[] myProviders;
@@ -60,7 +61,6 @@ public class PaletteWindow extends JPanel implements DataProvider {
   private PaletteGroupHeader myLastFocusedGroup;
 
   @NonNls private static final String ourHelpID = "guiDesigner.uiTour.palette";
-  private PaletteManager myPaletteManager;
 
   private final DragSourceListener myDragSourceListener = new DragSourceAdapter() {
     @Override
@@ -74,20 +74,17 @@ public class PaletteWindow extends JPanel implements DataProvider {
     }
   };
 
+  private GuiEditor myDesigner;
+
   public PaletteWindow(Project project) {
     myProject = project;
-    myPaletteManager = PaletteManager.getInstance(myProject);
     myProviders = Extensions.getExtensions(PaletteItemProvider.EP_NAME, project);
-    for (PaletteItemProvider provider : myProviders) {
-      provider.addListener(myPropertyChangeListener);
-    }
 
     setLayout(new GridLayout(1, 1));
     myScrollPane.addMouseListener(new MyScrollPanePopupHandler());
     myScrollPane.setBorder(null);
     KeyStroke escStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
     new ClearActiveItemAction().registerCustomShortcutSet(new CustomShortcutSet(escStroke), myScrollPane);
-    refreshPalette();
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       DragSource.getDefaultDragSource().addDragSourceListener(myDragSourceListener);
@@ -95,16 +92,40 @@ public class PaletteWindow extends JPanel implements DataProvider {
   }
 
   public void dispose() {
+    removePaletteProviderListener();
+
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       DragSource.getDefaultDragSource().removeDragSourceListener(myDragSourceListener);
     }
   }
 
-  public void refreshPalette() {
-    refreshPalette(null);
+  private void addPaletteProviderListener() {
+    for (PaletteItemProvider provider : myProviders) {
+      provider.addListener(myPropertyChangeListener);
+    }
   }
 
-  public void refreshPalette(@Nullable VirtualFile selectedFile) {
+  private void removePaletteProviderListener() {
+    for (PaletteItemProvider provider : myProviders) {
+      provider.removeListener(myPropertyChangeListener);
+    }
+  }
+
+  public void refreshPaletteIfChanged(@Nullable GuiEditor designer) {
+    removePaletteProviderListener();
+    myDesigner = designer;
+    if (designer != null) {
+      addPaletteProviderListener();
+    }
+
+    VirtualFile file = designer == null ? null : designer.getFile();
+    Set<PaletteGroup> currentGroups = new HashSet<PaletteGroup>(collectCurrentGroups(file));
+    if (!currentGroups.equals(myGroups)) {
+      refreshPalette(file);
+    }
+  }
+
+  private void refreshPalette(@Nullable VirtualFile selectedFile) {
     for (PaletteGroupHeader groupHeader : myGroupHeaders) {
       groupHeader.getComponentList().removeListSelectionListener(myListSelectionListener);
     }
@@ -161,7 +182,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
     myGroupHeaders.add(groupHeader);
     myGroups.add(group);
     control.add(groupHeader);
-    PaletteComponentList componentList = new PaletteComponentList(myProject, group);
+    PaletteComponentList componentList = new PaletteComponentList(myProject, this, group);
     control.add(componentList);
     groupHeader.setComponentList(componentList);
     componentList.addListSelectionListener(myListSelectionListener);
@@ -177,12 +198,6 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
   private ArrayList<PaletteGroup> collectCurrentGroups(@Nullable VirtualFile selectedFile) {
     ArrayList<PaletteGroup> result = new ArrayList<PaletteGroup>();
-    if (selectedFile == null) {
-      VirtualFile[] editedFiles = FileEditorManager.getInstance(myProject).getSelectedFiles();
-      if (editedFiles.length > 0) {
-        selectedFile = editedFiles[0];
-      }
-    }
     if (selectedFile != null) {
       for (PaletteItemProvider provider : myProviders) {
         PaletteGroup[] groups = provider.getActiveGroups(selectedFile);
@@ -192,24 +207,13 @@ public class PaletteWindow extends JPanel implements DataProvider {
     return result;
   }
 
-  public void refreshPaletteIfChanged(VirtualFile selectedFile) {
-    Set<PaletteGroup> currentGroups = new HashSet<PaletteGroup>(collectCurrentGroups(selectedFile));
-    if (!currentGroups.equals(myGroups)) {
-      refreshPalette(selectedFile);
-    }
-  }
-
-  public int getActiveGroupCount() {
-    return myGroups.size();
-  }
-
   public void clearActiveItem() {
     if (getActiveItem() == null) return;
     for (PaletteGroupHeader group : myGroupHeaders) {
       group.getComponentList().clearSelection();
     }
     ListSelectionEvent event = new ListSelectionEvent(this, -1, -1, false);
-    myPaletteManager.notifySelectionChanged(event);
+    notifySelectionChanged(event);
   }
 
   @Nullable
@@ -218,6 +222,16 @@ public class PaletteWindow extends JPanel implements DataProvider {
       if (groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) {
         return (PaletteItem)groupHeader.getComponentList().getSelectedValue();
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  public <T extends PaletteItem> T getActiveItem(Class<T> cls) {
+    PaletteItem item = getActiveItem();
+    if (item != null && item.getClass().isInstance(item)) {
+      //noinspection unchecked
+      return (T)item;
     }
     return null;
   }
@@ -269,6 +283,29 @@ public class PaletteWindow extends JPanel implements DataProvider {
     }
   }
 
+  void notifyKeyEvent(final KeyEvent e) {
+    if (myDesigner != null) {
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        myDesigner.paletteKeyPressed(e);
+      }
+      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+        myDesigner.paletteKeyReleased(e);
+      }
+    }
+  }
+
+  void notifyDropActionChanged(int gestureModifiers) {
+    if (myDesigner != null) {
+      myDesigner.paletteDropActionChanged(gestureModifiers);
+    }
+  }
+
+  void notifySelectionChanged(final ListSelectionEvent event) {
+    if (myDesigner != null) {
+      myDesigner.paletteValueChanged(event);
+    }
+  }
+
   private class MyListSelectionListener implements ListSelectionListener {
     public void valueChanged(ListSelectionEvent e) {
       PaletteComponentList sourceList = (PaletteComponentList)e.getSource();
@@ -283,13 +320,13 @@ public class PaletteWindow extends JPanel implements DataProvider {
           break;
         }
       }
-      myPaletteManager.notifySelectionChanged(e);
+      notifySelectionChanged(e);
     }
   }
 
   private class MyPropertyChangeListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
-      refreshPalette();
+      refreshPalette(myDesigner.getFile());
     }
   }
 

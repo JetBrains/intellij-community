@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,91 +13,79 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer;
+package com.intellij.uiDesigner.propertyInspector;
 
-import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.DesignerEditorPanelFacade;
+import com.intellij.designer.LightToolWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import icons.UIDesignerNewIcons;
+import com.intellij.uiDesigner.AbstractToolWindowManager;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
  */
-public final class DesignerToolWindowManager extends AbstractToolWindowManager {
-  private final DesignerToolWindow myToolWindowContent;
-
-  //////////////////////////////////////////////////////////////////////////////////////////
-  //
-  // Public Access
-  //
-  //////////////////////////////////////////////////////////////////////////////////////////
+public class DesignerToolWindowManager extends AbstractToolWindowManager {
+  private final DesignerToolWindow myToolWindowPanel;
 
   public DesignerToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     super(project, fileEditorManager);
-    myToolWindowContent = new DesignerToolWindow(project, true);
+    myToolWindowPanel = ApplicationManager.getApplication().isHeadlessEnvironment() ? null : new DesignerToolWindow(project);
   }
 
-  public static DesignerToolWindow getInstance(DesignerEditorPanel designer) {
+  public static DesignerToolWindow getInstance(GuiEditor designer) {
     DesignerToolWindowManager manager = getInstance(designer.getProject());
     if (manager.isEditorMode()) {
       return (DesignerToolWindow)manager.getContent(designer);
     }
-    return manager.myToolWindowContent;
+    return manager.myToolWindowPanel;
   }
-
 
   public static DesignerToolWindowManager getInstance(Project project) {
     return project.getComponent(DesignerToolWindowManager.class);
   }
 
-  //////////////////////////////////////////////////////////////////////////////////////////
-  //
-  // Impl
-  //
-  //////////////////////////////////////////////////////////////////////////////////////////
+  @Nullable
+  public GuiEditor getActiveFormEditor() {
+    return (GuiEditor)getActiveDesigner();
+  }
 
   @Override
   protected void initToolWindow() {
-    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer.name"),
                                                                                false, getAnchor(), myProject, true);
-    myToolWindow.setIcon(UIDesignerNewIcons.ToolWindow);
+    myToolWindow.setIcon(UIDesignerIcons.ToolWindowUIDesigner);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
     }
 
-    ((ToolWindowEx)myToolWindow).setTitleActions(myToolWindowContent.createActions());
     initGearActions();
 
     ContentManager contentManager = myToolWindow.getContentManager();
     Content content =
       contentManager.getFactory()
-        .createContent(myToolWindowContent.getToolWindowPanel(), DesignerBundle.message("designer.toolwindow.title"), false);
+        .createContent(myToolWindowPanel.getToolWindowPanel(), UIDesignerBundle.message("toolwindow.ui.designer.title"), false);
     content.setCloseable(false);
-    content.setPreferredFocusableComponent(myToolWindowContent.getComponentTree());
+    content.setPreferredFocusableComponent(myToolWindowPanel.getComponentTree());
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, true);
     myToolWindow.setAvailable(false, null);
   }
 
   @Override
-  protected ToolWindowAnchor getAnchor() {
-    DesignerCustomizations customization = getCustomizations();
-    return customization != null ? customization.getStructureAnchor() : ToolWindowAnchor.LEFT;
-  }
-
-  @Override
   protected void updateToolWindow(@Nullable DesignerEditorPanelFacade designer) {
-    myToolWindowContent.update((DesignerEditorPanel)designer);
+    myToolWindowPanel.update((GuiEditor)designer);
 
     if (designer == null) {
       myToolWindow.setAvailable(false, null);
@@ -109,34 +97,35 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   }
 
   @Override
+  protected ToolWindowAnchor getAnchor() {
+    return ToolWindowAnchor.LEFT;
+  }
+
+  @Override
+  protected LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer) {
+    DesignerToolWindow toolWindowContent = new DesignerToolWindow(myProject);
+    toolWindowContent.update((GuiEditor)designer);
+
+    return createContent(designer,
+                         toolWindowContent,
+                         UIDesignerBundle.message("toolwindow.ui.designer.title"),
+                         UIDesignerIcons.ToolWindowUIDesigner,
+                         toolWindowContent.getToolWindowPanel(),
+                         toolWindowContent.getComponentTree(),
+                         320,
+                         null);
+  }
+
+  @Override
   public void disposeComponent() {
-    myToolWindowContent.dispose();
+    if (myToolWindowPanel != null) {
+      myToolWindowPanel.dispose();
+    }
   }
 
   @NotNull
   @Override
   public String getComponentName() {
-    return "UIDesignerToolWindowManager2";
-  }
-
-  //////////////////////////////////////////////////////////////////////////////////////////
-  //
-  // Impl
-  //
-  //////////////////////////////////////////////////////////////////////////////////////////
-
-  @Override
-  protected LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer) {
-    DesignerToolWindow toolWindowContent = new DesignerToolWindow(myProject, false);
-    toolWindowContent.update((DesignerEditorPanel)designer);
-
-    return createContent(designer,
-                         toolWindowContent,
-                         DesignerBundle.message("designer.toolwindow.title"),
-                         UIDesignerNewIcons.ToolWindow,
-                         toolWindowContent.getToolWindowPanel(),
-                         toolWindowContent.getComponentTree(),
-                         320,
-                         toolWindowContent.createActions());
+    return "UIDesignerToolWindowManager";
   }
 }

@@ -25,8 +25,8 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.lw.IRootContainer;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadErrorComponent;
@@ -67,7 +67,8 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
           SwingUtilities.invokeLater(
             new Runnable(){
               public void run(){
-                UIDesignerToolWindowManager.getInstance(project).getPropertyInspector().requestFocus();
+                DesignerToolWindowManager.getInstance(DesignerToolWindowManager.getInstance(project).getActiveFormEditor())
+                  .getPropertyInspector().requestFocus();
               }
             }
           );

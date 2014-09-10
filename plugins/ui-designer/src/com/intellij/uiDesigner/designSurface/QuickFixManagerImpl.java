@@ -18,14 +18,12 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -35,9 +33,9 @@ import java.util.ArrayList;
 public class QuickFixManagerImpl extends QuickFixManager<GlassLayer> {
   public QuickFixManagerImpl(final GuiEditor editor, final GlassLayer component, final JViewport viewPort) {
     super(editor, component, viewPort);
-    final UIDesignerToolWindowManager toolWindowManager = UIDesignerToolWindowManager.getInstance(editor.getProject());
-    toolWindowManager.addComponentSelectionListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
+    editor.addComponentSelectionListener(new ComponentSelectionListener() {
+      @Override
+      public void selectedComponentChanged(GuiEditor source) {
         hideIntentionHint();
         updateIntentionHintVisibility();
       }

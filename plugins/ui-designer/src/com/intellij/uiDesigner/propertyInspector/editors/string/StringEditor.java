@@ -26,9 +26,9 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
+import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.UIUtil;
@@ -170,7 +170,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     public void actionPerformed(final ActionEvent e) {
       // 1. Show editor dialog
 
-      final GuiEditor guiEditor = UIDesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
+      final GuiEditor guiEditor = DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
       LOG.assertTrue(guiEditor != null);
 
       final StringEditorDialog dialog = new StringEditorDialog(

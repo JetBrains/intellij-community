@@ -39,10 +39,10 @@ import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.inspections.FormInspectionUtil;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.editors.BindingEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
@@ -177,7 +177,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
 
     // Commit document before refactoring starts
-    GuiEditor editor = UIDesignerToolWindowManager.getInstance(project).getActiveFormEditor();
+    GuiEditor editor = DesignerToolWindowManager.getInstance(project).getActiveFormEditor();
     if (editor != null) {
       editor.refreshAndSave(false);
     }

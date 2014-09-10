@@ -17,7 +17,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
@@ -56,7 +56,7 @@ class PassiveDecorationLayer extends JComponent{
 
     final Set<RadButtonGroup> paintedGroups = new HashSet<RadButtonGroup>();
     final RadRootContainer rootContainer = myEditor.getRootContainer();
-    final ComponentTree componentTree = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTree();
+    final ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
     final Collection<RadButtonGroup> selectedGroups = componentTree != null
                                                       ? componentTree.getSelectedElements(RadButtonGroup.class)
                                                       : Collections.<RadButtonGroup>emptyList();
