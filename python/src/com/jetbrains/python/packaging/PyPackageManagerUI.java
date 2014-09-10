@@ -59,8 +59,8 @@ public class PyPackageManagerUI {
     myListener = listener;
   }
 
-  public void installManagement(@NotNull final String name) {
-    ProgressManager.getInstance().run(new InstallManagementTask(myProject, mySdk, name, myListener));
+  public void installManagement() {
+    ProgressManager.getInstance().run(new InstallManagementTask(myProject, mySdk, myListener));
   }
 
   public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
@@ -269,14 +269,11 @@ public class PyPackageManagerUI {
   }
 
   private static class InstallManagementTask extends InstallTask {
-    @NotNull private final String myName;
 
     public InstallManagementTask(@Nullable Project project,
                                  @NotNull Sdk sdk,
-                                 @NotNull String name,
                                  @Nullable Listener listener) {
       super(project, sdk, Collections.<PyRequirement>emptyList(), Collections.<String>emptyList(), listener);
-      myName = name;
     }
 
     @NotNull
@@ -284,10 +281,10 @@ public class PyPackageManagerUI {
     protected List<PyExternalProcessException> runTask(@NotNull ProgressIndicator indicator) {
       final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
-      indicator.setText("Installing package management tools...");
+      indicator.setText("Installing packaging tools...");
       indicator.setIndeterminate(true);
       try {
-        manager.installManagement(myName);
+        manager.installManagement();
       }
       catch (PyExternalProcessException e) {
         exceptions.add(e);
@@ -299,7 +296,7 @@ public class PyPackageManagerUI {
     @NotNull
     @Override
     protected String getSuccessDescription() {
-      return "Installed packages: '" + myName + "'";
+      return "Installed Python packaging tools";
     }
   }
 

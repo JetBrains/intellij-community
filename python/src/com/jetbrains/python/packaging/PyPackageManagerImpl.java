@@ -72,6 +72,13 @@ import java.util.List;
  */
 @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
 public class PyPackageManagerImpl extends PyPackageManager {
+  // Bundled versions of package management tools
+  public static final String SETUPTOOLS_VERSION = "1.1.5";
+  public static final String PIP_VERSION = "1.4.1";
+
+  public static final String SETUPTOOLS = PACKAGE_SETUPTOOLS + "-" + SETUPTOOLS_VERSION;
+  public static final String PIP = PACKAGE_PIP + "-" + PIP_VERSION;
+
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
   public static final int ERROR_VAGRANT_NOT_LAUNCHED = 101;
@@ -116,16 +123,23 @@ public class PyPackageManagerImpl extends PyPackageManager {
     });
   }
 
-  private void installManagement() throws PyExternalProcessException {
-    if (!hasPackage(PACKAGE_SETUPTOOLS)) {
+  @Override
+  public void installManagement() throws PyExternalProcessException {
+    if (!hasPackage(PACKAGE_SETUPTOOLS, false) && !hasPackage(PACKAGE_DISTRIBUTE, false)) {
       installManagement(SETUPTOOLS);
     }
-    if (!hasPackage(PACKAGE_PIP)) {
+    if (!hasPackage(PACKAGE_PIP, false)) {
       installManagement(PIP);
     }
   }
 
-  public void installManagement(@NotNull String name) throws PyExternalProcessException {
+  @Override
+  public boolean hasManagement(boolean cachedOnly) {
+    return (hasPackage(PACKAGE_SETUPTOOLS, cachedOnly) || hasPackage(PACKAGE_DISTRIBUTE, cachedOnly)) &&
+           hasPackage(PACKAGE_PIP, cachedOnly);
+  }
+
+  private void installManagement(@NotNull String name) throws PyExternalProcessException {
     final String helperPath = getHelperPath(name);
 
     ArrayList<String> args = Lists.newArrayList(UNTAR, helperPath);
@@ -162,9 +176,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
-  private boolean hasPackage(@NotNull String name) {
+  private boolean hasPackage(@NotNull String name, boolean cachedOnly) {
     try {
-      return findPackage(name, false) != null;
+      return findPackage(name, cachedOnly) != null;
     }
     catch (PyExternalProcessException ignored) {
       return false;
@@ -377,8 +391,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         final ProjectJdkImpl tmpSdk = new ProjectJdkImpl("", PythonSdkType.getInstance());
         tmpSdk.setHomePath(path);
         final PyPackageManager manager = PyPackageManager.getInstance(tmpSdk);
-        manager.installManagement(SETUPTOOLS);
-        manager.installManagement(PIP);
+        manager.installManagement();
       }
     }
     return path;

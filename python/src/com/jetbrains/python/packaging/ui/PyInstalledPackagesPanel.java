@@ -40,33 +40,13 @@ import java.util.Set;
  * @author yole
  */
 public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
-  public static final String INSTALL_SETUPTOOLS = "installSetuptools";
-  public static final String INSTALL_PIP = "installPip";
+  public static final String INSTALL_MANAGEMENT = "installManagement";
   public static final String CREATE_VENV = "createVEnv";
 
-  private boolean myHasSetuptools;
-  private boolean myHasPip = true;
+  private boolean myHasManagement = false;
 
   public PyInstalledPackagesPanel(Project project, PackagesNotificationPanel area) {
     super(project, area);
-    myNotificationArea.addLinkHandler(INSTALL_SETUPTOOLS, new Runnable() {
-      @Override
-      public void run() {
-        final Sdk sdk = getSelectedSdk();
-        if (sdk != null) {
-          installManagementTool(sdk, PyPackageManager.SETUPTOOLS);
-        }
-      }
-    });
-    myNotificationArea.addLinkHandler(INSTALL_PIP, new Runnable() {
-      @Override
-      public void run() {
-        final Sdk sdk = getSelectedSdk();
-        if (sdk != null) {
-          installManagementTool(sdk, PyPackageManager.PIP);
-        }
-      }
-    });
   }
 
   private Sdk getSelectedSdk() {
@@ -83,19 +63,8 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        PyExternalProcessException exc = null;
-        try {
-          PyPackageManager packageManager = PyPackageManager.getInstance(selectedSdk);
-          myHasSetuptools = packageManager.findPackage(PyPackageManager.PACKAGE_SETUPTOOLS, false) != null;
-          if (!myHasSetuptools) {
-            myHasSetuptools = packageManager.findPackage(PyPackageManager.PACKAGE_DISTRIBUTE, false) != null;
-          }
-          myHasPip = packageManager.findPackage(PyPackageManager.PACKAGE_PIP, false) != null;
-        }
-        catch (PyExternalProcessException e) {
-          exc = e;
-        }
-        final PyExternalProcessException externalProcessException = exc;
+        PyPackageManager packageManager = PyPackageManager.getInstance(selectedSdk);
+        myHasManagement = packageManager.hasManagement(false);
         application.invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -110,42 +79,24 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
               myNotificationArea.hide();
               if (!invalid) {
                 String text = null;
-                if (externalProcessException != null) {
-                  final int retCode = externalProcessException.getRetcode();
-                  if (retCode == PyPackageManager.ERROR_NO_PIP) {
-                    myHasPip = false;
-                  }
-                  else if (retCode == PyPackageManager.ERROR_NO_SETUPTOOLS) {
-                    myHasSetuptools = false;
-                  }
-                  else {
-                    text = externalProcessException.getMessage();
-                  }
-                  final boolean hasPackagingTools = myHasPip && myHasSetuptools;
-                  allowCreateVirtualEnv &= !hasPackagingTools;
-
-                  if (externalProcessException.hasHandler()) {
-                    final String key = externalProcessException.getHandler().first;
-                    myNotificationArea.addLinkHandler(key,
-                                                      new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                          externalProcessException.getHandler().second.run();
-                                                          myNotificationArea.removeLinkHandler(key);
-                                                          updateNotifications(selectedSdk);
+                if (!myHasManagement) {
+                  myNotificationArea.addLinkHandler(INSTALL_MANAGEMENT,
+                                                    new Runnable() {
+                                                      @Override
+                                                      public void run() {
+                                                        final Sdk sdk = getSelectedSdk();
+                                                        if (sdk != null) {
+                                                          installManagementTools(sdk);
                                                         }
+                                                        myNotificationArea.removeLinkHandler(INSTALL_MANAGEMENT);
+                                                        updateNotifications(selectedSdk);
                                                       }
-                    );
-                  }
+                                                    }
+                  );
                 }
 
-                if (text == null) {
-                  if (!myHasSetuptools) {
-                    text = "Python package management tools not found. <a href=\"" + INSTALL_SETUPTOOLS + "\">Install 'setuptools'</a>";
-                  }
-                  else if (!myHasPip) {
-                    text = "Python packaging tool 'pip' not found. <a href=\"" + INSTALL_PIP + "\">Install 'pip'</a>";
-                  }
+                if (!myHasManagement) {
+                  text = "Python packaging tools not found. <a href=\"" + INSTALL_MANAGEMENT + "\">Install packaging tools</a>";
                 }
                 if (text != null) {
                   if (allowCreateVirtualEnv) {
@@ -155,7 +106,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
                 }
               }
 
-              myInstallButton.setEnabled(!invalid && externalProcessException == null && myHasPip);
+              myInstallButton.setEnabled(!invalid && myHasManagement);
             }
           }
         }, ModalityState.any());
@@ -168,7 +119,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     return Sets.newHashSet("pip", "distutils", "setuptools");
   }
 
-  private void installManagementTool(@NotNull final Sdk sdk, final String name) {
+  private void installManagementTools(@NotNull final Sdk sdk) {
     final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, sdk, new PyPackageManagerUI.Listener() {
       @Override
       public void started() {
@@ -180,9 +131,9 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         myPackagesTable.setPaintBusy(false);
         PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
         if (!exceptions.isEmpty()) {
-          final String firstLine = "Install package failed. ";
+          final String firstLine = "Install Python packaging tools failed. ";
           final String description = PyPackageManagerUI.createDescription(exceptions, firstLine);
-          packageManager.showInstallationError(myProject, "Failed to install " + name, description);
+          packageManager.showInstallationError(myProject, "Failed to install Python packaging tools", description);
         }
         packageManager.refresh();
         updatePackages(new PyPackageManagementService(myProject, sdk));
@@ -192,12 +143,12 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         updateNotifications(sdk);
       }
     });
-    ui.installManagement(name);
+    ui.installManagement();
   }
 
   @Override
   protected boolean canUninstallPackage(InstalledPackage pkg) {
-    if (!myHasPip) return false;
+    if (!myHasManagement) return false;
     if (PythonSdkType.isVirtualEnv(getSelectedSdk()) && pkg instanceof PyPackage) {
       final String location = ((PyPackage)pkg).getLocation();
       if (location != null && location.startsWith(PySdkUtil.getUserSite())) {
@@ -215,6 +166,6 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   @Override
   protected boolean canUpgradePackage(InstalledPackage pyPackage) {
-    return myHasPip;
+    return myHasManagement;
   }
 }

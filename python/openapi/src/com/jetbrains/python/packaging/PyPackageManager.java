@@ -36,13 +36,6 @@ public abstract class PyPackageManager {
   public static final String PACKAGE_PIP = "pip";
   public static final String PACKAGE_DISTRIBUTE = "distribute";
 
-  // Bundled versions of package management tools
-  public static final String SETUPTOOLS_VERSION = "1.1.5";
-  public static final String PIP_VERSION = "1.4.1";
-
-  public static final String SETUPTOOLS = PACKAGE_SETUPTOOLS + "-" + SETUPTOOLS_VERSION;
-  public static final String PIP = PACKAGE_PIP + "-" + PIP_VERSION;
-
   public static final int OK = 0;
   public static final int ERROR_NO_PIP = 2;
   public static final int ERROR_NO_SETUPTOOLS = 3;
@@ -58,7 +51,8 @@ public abstract class PyPackageManager {
     return PyPackageManagers.getInstance().forSdk(sdk);
   }
   public abstract boolean hasPip();
-  public abstract void installManagement(@NotNull String name) throws PyExternalProcessException;
+  public abstract void installManagement() throws PyExternalProcessException;
+  public abstract boolean hasManagement(boolean cachedOnly);
   public abstract void install(@NotNull String requirementString) throws PyExternalProcessException;
   public abstract void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws PyExternalProcessException;
   public abstract void uninstall(@NotNull List<PyPackage> packages) throws PyExternalProcessException;

@@ -84,11 +84,11 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackage setuptools = findPackage("setuptools", packages);
           assertNotNull(setuptools);
           assertEquals("setuptools", setuptools.getName());
-          assertEquals(PyPackageManager.SETUPTOOLS_VERSION, setuptools.getVersion());
+          assertEquals(PyPackageManagerImpl.SETUPTOOLS_VERSION, setuptools.getVersion());
           final PyPackage pip = findPackage("pip", packages);
           assertNotNull(pip);
           assertEquals("pip", pip.getName());
-          assertEquals(PyPackageManager.PIP_VERSION, pip.getVersion());
+          assertEquals(PyPackageManagerImpl.PIP_VERSION, pip.getVersion());
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -124,7 +124,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackage pip1 = findPackage("pip", packages1);
           assertNotNull(pip1);
           assertEquals("pip", pip1.getName());
-          assertEquals(PyPackageManager.PIP_VERSION, pip1.getVersion());
+          assertEquals(PyPackageManagerImpl.PIP_VERSION, pip1.getVersion());
           manager.uninstall(list(pip1));
           final List<PyPackage> packages3 = manager.getPackages(false);
           final PyPackage pip2 = findPackage("pip", packages3);
