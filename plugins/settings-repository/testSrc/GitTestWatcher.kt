@@ -9,7 +9,7 @@ import org.junit.runner.Description
 import java.io.File
 import java.io.IOException
 
-class GitTestWatcher : TestName() {
+public class GitTestWatcher : TestName() {
   private var repository: Repository? = null
 
   throws(javaClass<IOException>())

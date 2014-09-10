@@ -2,6 +2,12 @@
   <item name='org.eclipse.jgit.api.CheckoutCommand org.eclipse.jgit.api.CheckoutCommand setAllPaths(boolean)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.api.CheckoutCommand org.eclipse.jgit.api.CheckoutCommand setCreateBranch(boolean)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.api.CheckoutCommand org.eclipse.jgit.api.CheckoutCommand setName(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.api.CheckoutCommand org.eclipse.jgit.api.CheckoutCommand setStartPoint(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
