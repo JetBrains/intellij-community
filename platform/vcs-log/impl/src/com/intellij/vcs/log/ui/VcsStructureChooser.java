@@ -126,6 +126,7 @@ public class VcsStructureChooser extends DialogWrapper {
     return myModulesSet;
   }
 
+  @NotNull
   public Collection<VirtualFile> getSelectedFiles() {
     return ((CollectionListModel) mySelectedList.getModel()).getItems();
   }

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Provides the information needed to build the VCS log, such as the list of most recent commits with their parents.
@@ -17,20 +18,26 @@ import java.util.List;
 public interface VcsLogProvider {
 
   /**
-   * Reads the most recent correctly ordered commits from the log. <br/>
-   * Commits should be at least topologically ordered, better considering commit time as well. <br/>
-   * Commits will be shown in the log in this order.
-   * @param requirements some limitations on commit data that should be returned.
+   * Reads the most recent commits from the log together with all repository references.<br/>
+   * Commits should be at least topologically ordered, better considering commit time as well: they will be shown in the log in this order.
+   * <p/>
+   * This method is called both on the startup and on refresh.
+   *
+   * @param requirements some limitations on commit data that should be returned, e.g. the number of commits.
+   * @return given amount of ordered commits and <b>all</b> references in the repository.
    */
   @NotNull
-  List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root, @NotNull Requirements requirements) throws VcsException;
+  DetailedLogData readFirstBlock(@NotNull VirtualFile root, @NotNull Requirements requirements) throws VcsException;
 
   /**
-   * <p>Reads the whole history, but only hashes & parents.</p>
-   * <p>Also reports authors/committers of this repository to the given user registry.</p>
+   * Reads the whole history.
+   * <p/>
+   * Reports commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
+   *
+   * @return all references and all authors in the repository.
    */
-  void readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry,
-                     @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException;
+  @NotNull
+  LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException;
 
   /**
    * Reads those details of the given commits, which are necessary to be shown in the log table.
@@ -43,12 +50,6 @@ public interface VcsLogProvider {
    */
   @NotNull
   List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
-
-  /**
-   * Read all references (branches, tags, etc.) for the given roots.
-   */
-  @NotNull
-  Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException;
 
   /**
    * <p>Returns the VCS which is supported by this provider.</p>
@@ -104,6 +105,22 @@ public interface VcsLogProvider {
      */
     int getCommitCount();
 
+  }
+
+  /**
+   * Container for references and users.
+   */
+  interface LogData {
+    @NotNull Set<VcsRef> getRefs();
+    @NotNull Set<VcsUser> getUsers();
+  }
+
+  /**
+   * Container for the ordered list of commits together with their details, and references.
+   */
+  interface DetailedLogData {
+    @NotNull List<VcsCommitMetadata> getCommits();
+    @NotNull Set<VcsRef> getRefs();
   }
 
 }

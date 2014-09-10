@@ -16,8 +16,10 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 
 /**
@@ -32,26 +34,38 @@ public class PluginPathManager {
 
     private static List<File> findSubrepos() {
       List<File> result = new ArrayList<File>();
-      File[] subdirs = new File(PathManager.getHomePath()).listFiles();
-      if (subdirs == null) return result;
-      Arrays.sort(subdirs, new Comparator<File>() {
+      File[] gitRoots = getSortedGitRoots(new File(PathManager.getHomePath()));
+      for (File subdir : gitRoots) {
+        File pluginsDir = new File(subdir, "plugins");
+        if (pluginsDir.exists()) {
+          result.add(pluginsDir);
+        }
+        else {
+          result.add(subdir);
+        }
+        result.addAll(Arrays.asList(getSortedGitRoots(subdir)));
+      }
+      return result;
+    }
+
+    @NotNull
+    private static File[] getSortedGitRoots(@NotNull File dir) {
+      File[] gitRoots = dir.listFiles(new FileFilter() {
+        @Override
+        public boolean accept(File child) {
+          return child.isDirectory() && new File(child, ".git").exists();
+        }
+      });
+      if (gitRoots == null) {
+        return new File[0];
+      }
+      Arrays.sort(gitRoots, new Comparator<File>() {
         @Override
         public int compare(File file, File file2) {
           return FileUtil.compareFiles(file, file2);
         }
       });
-      for (File subdir : subdirs) {
-        if (new File(subdir, ".git").exists()) {
-          File pluginsDir = new File(subdir, "plugins");
-          if (pluginsDir.exists()) {
-            result.add(pluginsDir);
-          }
-          else {
-            result.add(subdir);
-          }
-        }
-      }
-      return result;
+      return gitRoots;
     }
   }
 

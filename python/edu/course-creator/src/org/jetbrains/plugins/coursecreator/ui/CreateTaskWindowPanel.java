@@ -37,6 +37,7 @@ public class CreateTaskWindowPanel extends JPanel {
       }
     });
 
+    myTaskWindowText.grabFocus();
     myHintName.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -92,5 +93,9 @@ public class CreateTaskWindowPanel extends JPanel {
 
   public void setGeneratedHintName(String generatedHintName) {
     myGeneratedHintName = generatedHintName;
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myTaskWindowText;
   }
 }

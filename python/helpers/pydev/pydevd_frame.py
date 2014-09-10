@@ -83,7 +83,7 @@ class PyDBFrame:
                         flag = False
                 else:
                     try:
-                        result = mainDebugger.plugin_exception_break(self, frame, self._args, arg)
+                        result = mainDebugger.plugin.exception_break(mainDebugger, self, frame, self._args, arg)
                         if result:
                             (flag, frame) = result
 
@@ -229,7 +229,7 @@ class PyDBFrame:
 
             is_exception_event = event == 'exception'
             has_exception_breakpoints = main_debugger.break_on_caught_exceptions \
-                                        or main_debugger.plugin_has_exception_breaks()
+                                        or main_debugger.plugin.has_exception_breaks(main_debugger)
 
             if is_exception_event:
                 if has_exception_breakpoints:
@@ -270,7 +270,7 @@ class PyDBFrame:
                         or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
                 if can_skip:
-                    can_skip = not main_debugger.plugin_can_not_skip(self, frame)
+                    can_skip = not main_debugger.plugin.can_not_skip(main_debugger, self, frame)
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
@@ -325,7 +325,7 @@ class PyDBFrame:
                     if step_cmd == CMD_STEP_OVER and stop_frame is frame and event in ('line', 'return'):
                         stop_info['stop'] = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
                 else:
-                    result = main_debugger.plugin_get_breakpoint(self, frame, event, self._args)
+                    result = main_debugger.plugin.get_breakpoint(main_debugger, self, frame, event, self._args)
                     if result:
                         exist_result = True
                         (flag, breakpoint, new_frame) = result
@@ -388,7 +388,7 @@ class PyDBFrame:
                 if stop_info['stop']:
                     self.setSuspend(thread, CMD_SET_BREAK)
                 elif flag:
-                    result = main_debugger.plugin_suspend(thread, frame)
+                    result = main_debugger.plugin.suspend(main_debugger, thread, frame)
                     if result:
                         frame = result
 
@@ -418,11 +418,11 @@ class PyDBFrame:
 
                 elif step_cmd == CMD_STEP_INTO:
                     stop_info['stop'] = event in ('line', 'return')
-                    main_debugger.plugin_cmd_step_into(frame, event, self._args, stop_info)
+                    main_debugger.plugin.cmd_step_into(main_debugger, frame, event, self._args, stop_info)
 
                 elif step_cmd == CMD_STEP_OVER:
                     stop_info['stop'] = stop_frame is frame and event in ('line', 'return')
-                    main_debugger.plugin_cmd_step_over(frame, event, self._args, stop_info)
+                    main_debugger.plugin.cmd_step_over(main_debugger, frame, event, self._args, stop_info)
 
                 elif step_cmd == CMD_SMART_STEP_INTO:
                     stop_info['stop'] = False
@@ -470,8 +470,8 @@ class PyDBFrame:
                 else:
                     stop_info['stop'] = False
 
-                if True in stop_info.values():
-                    stopped_on_plugin = main_debugger.plugin_stop(frame, event, self._args, stop_info, arg, step_cmd)
+                if True in DictIterValues(stop_info):
+                    stopped_on_plugin = main_debugger.plugin.stop(main_debugger, frame, event, self._args, stop_info, arg, step_cmd)
                     if DictContains(stop_info, 'stop') and stop_info['stop'] and not stopped_on_plugin:
                         if event == 'line':
                             self.setSuspend(thread, step_cmd)

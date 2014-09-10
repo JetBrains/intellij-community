@@ -33,8 +33,6 @@ import com.intellij.openapi.editor.impl.RedBlackTree;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.NonPhysicalFileSystem;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
@@ -214,8 +212,7 @@ public class UpdateHighlightersUtil {
         if (!atStart) return true;
         if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
 
-        FileViewProvider provider = psiFile.getViewProvider();
-        if (info.isFileLevelAnnotation() && (provider.isPhysical() || provider.getVirtualFile().getFileSystem() instanceof NonPhysicalFileSystem)) {
+        if (info.isFileLevelAnnotation()) {
           codeAnalyzer.addFileLevelHighlight(project, group, info, psiFile);
           changed[0] = true;
           return true;

@@ -175,6 +175,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       ProjectLevelVcsManager.getInstance(project).getAllActiveVcss());
   }
 
+  @NotNull
+  public List<RefreshableOnComponent> getAdditionalComponents() {
+    return Collections.unmodifiableList(myAdditionalComponents);
+  }
+
   public static void commitPaths(final Project project, Collection<FilePath> paths, final LocalChangeList initialSelection,
                                  @Nullable final CommitExecutor executor, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);

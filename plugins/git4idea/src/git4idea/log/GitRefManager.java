@@ -15,6 +15,7 @@ import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
+import git4idea.GitTag;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -38,9 +39,10 @@ public class GitRefManager implements VcsLogRefManager {
   public static final VcsRefType LOCAL_BRANCH = new SimpleRefType(true, LOCAL_BRANCH_COLOR);
   public static final VcsRefType REMOTE_BRANCH = new SimpleRefType(true, REMOTE_BRANCH_COLOR);
   public static final VcsRefType TAG = new SimpleRefType(false, TAG_COLOR);
+  public static final VcsRefType OTHER = new SimpleRefType(false, TAG_COLOR);
 
   // first has the highest priority
-  private static final List<VcsRefType> REF_TYPE_PRIORITIES = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG);
+  private static final List<VcsRefType> REF_TYPE_PRIORITIES = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG, OTHER);
 
   // -1 => higher priority
   public static final Comparator<VcsRefType> REF_TYPE_COMPARATOR = new Comparator<VcsRefType>() {
@@ -173,7 +175,7 @@ public class GitRefManager implements VcsLogRefManager {
           remoteRefGroups.putValue(nonTracked.get(refName), ref);
         }
         else {
-          LOG.warn("Didn't find ref neither in local nor in remote branches: " + ref);
+          LOG.debug("Didn't find ref neither in local nor in remote branches: " + ref);
         }
       }
     }
@@ -241,6 +243,23 @@ public class GitRefManager implements VcsLogRefManager {
       grouped.putValue(ref.getRoot(), ref);
     }
     return grouped;
+  }
+
+  @NotNull
+  public static VcsRefType getRefType(@NotNull String refName) {
+    if (refName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+      return LOCAL_BRANCH;
+    }
+    if (refName.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
+      return REMOTE_BRANCH;
+    }
+    if (refName.startsWith(GitTag.REFS_TAGS_PREFIX)) {
+      return TAG;
+    }
+    if (refName.startsWith("HEAD")) {
+      return HEAD;
+    }
+    return OTHER;
   }
 
   private static class SimpleRefType implements VcsRefType {

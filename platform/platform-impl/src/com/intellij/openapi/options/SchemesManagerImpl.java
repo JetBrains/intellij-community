@@ -583,7 +583,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   public void updateConfigFilesFromStreamProviders() {
-
   }
 
   private static class SharedSchemeData {

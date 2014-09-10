@@ -15,13 +15,13 @@
  */
 package git4idea.log;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -40,7 +40,8 @@ import static git4idea.test.GitExecutor.*;
 
 public class GitLogProviderTest extends GitSingleRepoTest {
 
-  @NotNull private GitLogProvider myLogProvider;
+  private GitLogProvider myLogProvider;
+  private VcsLogObjectsFactory myObjectsFactory;
 
   public void setUp() throws Exception {
     super.setUp();
@@ -53,6 +54,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
       });
     assertEquals("Incorrect number of GitLogProviders", 1, providers.size());
     myLogProvider = (GitLogProvider)providers.get(0);
+    myObjectsFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
   }
 
   public void tearDown() throws Exception {
@@ -64,21 +66,51 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     List<VcsCommitMetadata> expectedLogWithoutTaggedBranch = log();
     createTaggedBranch();
 
-    Set<VcsRef> noRefs = Collections.emptySet();
-    List<? extends VcsCommitMetadata> block = myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, false, noRefs, noRefs));
-    assertOrderedEquals(block, expectedLogWithoutTaggedBranch);
+    VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(myProjectRoot,new RequirementsImpl(1000, false, Collections.<VcsRef>emptySet()));
+    assertOrderedEquals(block.getCommits(), expectedLogWithoutTaggedBranch);
   }
 
   public void test_refresh_with_new_tagged_branch() throws VcsException {
     prepareSomeHistory();
-    Set<VcsRef> prevRefs = ContainerUtil.newHashSet(myLogProvider.readAllRefs(myProjectRoot));
+    Set<VcsRef> prevRefs = readAllRefs();
     createTaggedBranch();
-    Set<VcsRef> newRefs = ContainerUtil.newHashSet(myLogProvider.readAllRefs(myProjectRoot));
 
     List<VcsCommitMetadata> expectedLog = log();
-    List<? extends VcsCommitMetadata> block = myLogProvider.readFirstBlock(myProjectRoot,
-                                                                           new RequirementsImpl(1000, true, prevRefs, newRefs));
-    assertSameElements(block, expectedLog);
+    VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, true, prevRefs));
+    assertSameElements(block.getCommits(), expectedLog);
+  }
+
+  public void test_refresh_when_new_tag_moved() throws VcsException {
+    prepareSomeHistory();
+    Set<VcsRef> prevRefs = readAllRefs();
+    git("tag -f ATAG");
+
+    List<VcsCommitMetadata> expectedLog = log();
+    Set<VcsRef> refs = readAllRefs();
+    VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, true, prevRefs));
+    assertSameElements(block.getCommits(), expectedLog);
+    assertSameElements(block.getRefs(), refs);
+  }
+
+  public void test_new_tag_on_old_commit() throws VcsException {
+    prepareSomeHistory();
+    Set<VcsRef> prevRefs = readAllRefs();
+    List<VcsCommitMetadata> log = log();
+    String firstCommit = log.get(log.size() - 1).getId().asString();
+    git("tag NEW_TAG " + firstCommit);
+
+    Set<VcsRef> refs = readAllRefs();
+    VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, true, prevRefs));
+    assertSameElements(block.getRefs(), refs);
+  }
+
+  private Set<VcsRef> readAllRefs() {
+    String[] refs = StringUtil.splitByLines(git("log --branches --tags --no-walk --format=%H%d --decorate=full"));
+    Set<VcsRef> result = ContainerUtil.newHashSet();
+    for (String ref : refs) {
+      result.addAll(new RefParser(myObjectsFactory).parseCommitRefs(ref, myProjectRoot));
+    }
+    return result;
   }
 
   public void test_all_log_with_tagged_branch() throws VcsException {
@@ -87,7 +119,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     List<VcsCommitMetadata> expectedLog = log();
     List<TimedVcsCommit> collector = ContainerUtil.newArrayList();
     //noinspection unchecked
-    myLogProvider.readAllHashes(myProjectRoot, Consumer.EMPTY_CONSUMER, new CollectConsumer<TimedVcsCommit>(collector));
+    myLogProvider.readAllHashes(myProjectRoot, new CollectConsumer<TimedVcsCommit>(collector));
     assertOrderedEquals(expectedLog, collector);
   }
 

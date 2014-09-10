@@ -240,7 +240,7 @@ public class GithubRepository extends BaseRepositoryImpl {
         @Override
         public Comment fun(GithubIssueComment comment) {
           return new GithubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBodyHtml(),
-                                   comment.getUser().getGravatarId(),
+                                   comment.getUser().getAvatarUrl(),
                                    comment.getUser().getHtmlUrl());
         }
       });

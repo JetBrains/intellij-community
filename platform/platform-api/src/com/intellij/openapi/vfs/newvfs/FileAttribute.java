@@ -60,20 +60,7 @@ public class FileAttribute {
 
   @Nullable
   public DataInputStream readAttribute(@NotNull VirtualFile file) {
-    DataInputStream stream = ManagingFS.getInstance().readAttribute(file, this);
-    if (stream != null) {
-      try {
-        int actualVersion = DataInputOutputUtil.readINT(stream);
-        if (actualVersion != myVersion) {
-          stream.close();
-          return null;
-        }
-      }
-      catch (IOException e) {
-        return null;
-      }
-    }
-    return stream;
+    return ManagingFS.getInstance().readAttribute(file, this);
   }
 
   @NotNull
@@ -130,5 +117,9 @@ public class FileAttribute {
   @NotNull
   public FileAttribute newVersion(int newVersion) {
     return new FileAttribute(newVersion, myFixedSize, myId);
+  }
+
+  public int getVersion() {
+    return myVersion;
   }
 }

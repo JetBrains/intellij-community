@@ -298,14 +298,14 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     }
 
     final Sdk prevSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-    final Sdk selectedSdk = setSdk(newSdk);
+    setSdk(newSdk);
 
     // update string literals if different LanguageLevel was selected
-    if (prevSdk != null && selectedSdk != null) {
-      final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(selectedSdk);
+    if (prevSdk != null && newSdk != null) {
+      final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(newSdk);
       final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(prevSdk);
       if (flavor1 != null && flavor2 != null) {
-        final LanguageLevel languageLevel1 = flavor1.getLanguageLevel(selectedSdk);
+        final LanguageLevel languageLevel1 = flavor1.getLanguageLevel(newSdk);
         final LanguageLevel languageLevel2 = flavor2.getLanguageLevel(prevSdk);
         if ((languageLevel1.isPy3K() && languageLevel2.isPy3K()) ||
             (!languageLevel1.isPy3K()) && !languageLevel2.isPy3K()) {
@@ -316,22 +316,20 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     rehighlightStrings(myProject);
   }
 
-  private Sdk setSdk(Sdk item) {
+  private void setSdk(final Sdk item) {
     myAddedSdks.clear();
-    final Sdk selectedSdk = myProjectSdksModel.findSdk(item);
     if (myModule == null) {
       final ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          rootManager.setProjectSdk(selectedSdk);
+          rootManager.setProjectSdk(item);
         }
       });
     }
     else {
-      ModuleRootModificationUtil.setModuleSdk(myModule, selectedSdk);
+      ModuleRootModificationUtil.setModuleSdk(myModule, item);
     }
-    return selectedSdk;
   }
 
   public static void rehighlightStrings(final @NotNull Project project) {
@@ -428,8 +426,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     @Override
     public void sdkAdded(Sdk sdk) {
       final Object item = myConfigurable.mySdkCombo.getSelectedItem();
-
-      myConfigurable.resetSdkList();
 
       if (item instanceof PyDetectedSdk) {
         final String path = ((PyDetectedSdk)item).getHomePath();

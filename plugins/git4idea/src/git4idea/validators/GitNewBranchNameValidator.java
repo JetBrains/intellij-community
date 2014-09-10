@@ -51,7 +51,7 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
   }
 
   @Override
-  public boolean checkInput(String inputString) {
+  public boolean checkInput(@NotNull String inputString) {
     if (!GitRefNameValidator.getInstance().checkInput(inputString)){
       myErrorText = "Invalid name for branch";
       return false;
@@ -59,7 +59,7 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
     return checkBranchConflict(inputString);
   }
 
-  private boolean checkBranchConflict(String inputString) {
+  private boolean checkBranchConflict(@NotNull String inputString) {
     if (isNotPermitted(inputString) || conflictsWithLocalBranch(inputString) || conflictsWithRemoteBranch(inputString)) {
       return false;
     }
@@ -75,27 +75,37 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
     return false;
   }
 
-  private boolean conflictsWithLocalBranch(String inputString) {
+  private boolean conflictsWithLocalBranch(@NotNull String inputString) {
     return conflictsWithLocalOrRemote(inputString, true, " already exists");
   }
 
-  private boolean conflictsWithRemoteBranch(String inputString) {
+  private boolean conflictsWithRemoteBranch(@NotNull String inputString) {
     return conflictsWithLocalOrRemote(inputString, false, " clashes with remote branch with the same name");
   }
 
-  private boolean conflictsWithLocalOrRemote(String inputString, boolean local, String message) {
+  private boolean conflictsWithLocalOrRemote(@NotNull String inputString, boolean local, @NotNull String message) {
+    int conflictsWithCurrentName = 0;
     for (GitRepository repository : myRepositories) {
-      GitBranchesCollection branchesCollection = repository.getBranches();
-      Collection<? extends GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
-      for (GitBranch branch : branches) {
-        if (branch.getName().equals(inputString)) {
-          myErrorText = "Branch name " + inputString + message;
-          if (myRepositories.size() > 1 && !allReposHaveBranch(inputString, local)) {
-            myErrorText += " in repository " + repository.getPresentableUrl();
+      if (inputString.equals(repository.getCurrentBranchName())) {
+        conflictsWithCurrentName++;
+      }
+      else {
+        GitBranchesCollection branchesCollection = repository.getBranches();
+        Collection<? extends GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
+        for (GitBranch branch : branches) {
+          if (branch.getName().equals(inputString)) {
+            myErrorText = "Branch name " + inputString + message;
+            if (myRepositories.size() > 1 && !allReposHaveBranch(inputString, local)) {
+              myErrorText += " in repository " + repository.getPresentableUrl();
+            }
+            return true;
           }
-          return true;
         }
       }
+    }
+    if (conflictsWithCurrentName == myRepositories.size()) {
+      myErrorText = "You are already on branch " + inputString;
+      return true;
     }
     return false;
   }

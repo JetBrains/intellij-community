@@ -88,7 +88,7 @@
     <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder"/>
     <internalFileTemplate name="Gradle Build Script"/>
     <internalFileTemplate name="Gradle Build Script with wrapper"/>
-    <projectConfigurable groupId="build" id="reference.settingsdialog.project.gradle"
+    <projectConfigurable groupId="build.tools" groupWeight="110" id="reference.settingsdialog.project.gradle"
                          instance="org.jetbrains.plugins.gradle.service.settings.GradleConfigurable"
                          key="gradle.name" bundle="i18n.GradleBundle"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>

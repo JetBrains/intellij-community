@@ -2,8 +2,8 @@ import os
 import types
 
 import pydev_log
+import pydevd_trace_api
 from third_party.pluginbase import PluginBase
-
 
 def load_plugins(package):
     plugin_base = PluginBase(package=package)
@@ -21,26 +21,64 @@ def load_plugins(package):
     return plugins
 
 
-class NullProxy(object):
-    def __init__(self):
-        def foo(*args, **kwargs):
-            return None
-        self.null_func = types.MethodType(foo, self)
+def bind_func_to_method(func, obj, method_name):
+    foo = types.MethodType(func, obj)
 
-    def __getattr__(self, name):
-        return self.null_func
-
-
-def bind_func_to_method(plugin, func_name, obj, method_name):
-    foo = types.MethodType(getattr(plugin, func_name), obj)
     setattr(obj, method_name, foo)
     return foo
 
 
-def clear_bindings(obj, method_prefix):
-    for attr in dir(obj):
-        if attr.startswith(method_prefix):
-            delattr(obj, attr)
+class PluginManager(object):
+    def __init__(self, main_debugger):
+        self.plugins = load_plugins('pydevd_plugins')
+        self.active_plugins = []
+        self.main_debugger = main_debugger
+        self.rebind_methods()
+
+    def add_breakpoint(self, func_name, *args, **kwargs):
+        # add breakpoint for plugin and remember which plugin to use in tracing
+        for plugin in self.plugins:
+            if hasattr(plugin, func_name):
+                func = getattr(plugin, func_name)
+                result = func(self, *args, **kwargs)
+                if result:
+                    self.activate(plugin)
+
+                    return result
+        return None
+
+    def activate(self, plugin):
+        self.active_plugins.append(plugin)
+        self.rebind_methods()
+
+    def rebind_methods(self):
+        if len(self.active_plugins) == 0:
+            self.bind_functions(pydevd_trace_api, getattr, pydevd_trace_api)
+        elif len(self.active_plugins) == 1:
+            self.bind_functions(pydevd_trace_api, getattr, self.active_plugins[0])
+        else:
+            self.bind_functions(pydevd_trace_api, create_dispatch, self.active_plugins)
+
+    def bind_functions(self, interface, function_factory, arg):
+        for name in dir(interface):
+            func = function_factory(arg, name)
+            if type(func) == types.FunctionType:
+                    bind_func_to_method(func, self, name)
+
+
+def create_dispatch(obj, name):
+    def dispatch(self, *args, **kwargs):
+        result = None
+        for p in self.active_plugins:
+            r = getattr(p, name)(self, *args, **kwargs)
+            if not result:
+                result = r
+        return result
+    return dispatch
+
+
+
+
 
 
 

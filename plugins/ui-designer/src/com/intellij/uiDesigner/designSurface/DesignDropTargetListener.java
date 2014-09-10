@@ -15,26 +15,26 @@
  */
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.ide.palette.impl.PaletteManager;
+import com.intellij.ide.palette.impl.PaletteToolWindowManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.CutCopyPasteSupport;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SimpleTransferable;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -49,12 +49,10 @@ class DesignDropTargetListener implements DropTargetListener {
   private final GuiEditor myEditor;
   private final GridInsertProcessor myGridInsertProcessor;
   private boolean myUseDragDelta = false;
-  private final ComponentTree myComponentTree;
 
   public DesignDropTargetListener(final GuiEditor editor) {
     myEditor = editor;
     myGridInsertProcessor = new GridInsertProcessor(editor);
-    myComponentTree = UIDesignerToolWindowManager.getInstance(editor.getProject()).getComponentTree();
   }
 
   public void dragEnter(DropTargetDragEvent dtde) {
@@ -150,16 +148,18 @@ class DesignDropTargetListener implements DropTargetListener {
       myEditor.getDragLayer().repaint();
 
       ComponentDropLocation location = myGridInsertProcessor.processDragEvent(dtde.getLocation(), myComponentDragObject);
+      ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
+
       if (!location.canDrop(myComponentDragObject) ||
           (myDraggedComponentList != null && FormEditingUtil.isDropOnChild(myDraggedComponentList, location))) {
-        if (myComponentTree != null) {
-          myComponentTree.setDropTargetComponent(null);
+        if (componentTree != null) {
+          componentTree.setDropTargetComponent(null);
         }
         dtde.rejectDrag();
       }
       else {
-        if (myComponentTree != null) {
-          myComponentTree.setDropTargetComponent(location.getContainer());
+        if (componentTree != null) {
+          componentTree.setDropTargetComponent(location.getContainer());
         }
         dtde.acceptDrag(dtde.getDropAction());
       }
@@ -178,8 +178,9 @@ class DesignDropTargetListener implements DropTargetListener {
 
   public void dragExit(DropTargetEvent dte) {
     try {
-      if (myComponentTree != null) {
-        myComponentTree.setDropTargetComponent(null);
+      ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
+      if (componentTree != null) {
+        componentTree.setDropTargetComponent(null);
       }
       myUseDragDelta = false;
       if (myDraggedComponentList != null) {
@@ -198,8 +199,9 @@ class DesignDropTargetListener implements DropTargetListener {
 
   public void drop(final DropTargetDropEvent dtde) {
     try {
-      if (myComponentTree != null) {
-        myComponentTree.setDropTargetComponent(null);
+      ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
+      if (componentTree != null) {
+        componentTree.setDropTargetComponent(null);
       }
 
 
@@ -221,7 +223,7 @@ class DesignDropTargetListener implements DropTargetListener {
           new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
+              PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
               myEditor.getActiveDecorationLayer().removeFeedback();
               myEditor.getLayeredPane().setCursor(null);
               myEditor.getGlassLayer().requestFocus();

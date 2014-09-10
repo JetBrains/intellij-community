@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 public abstract class AbstractToolWindowManager extends LightToolWindowManager {
-
   protected AbstractToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     super(project, fileEditorManager);
   }

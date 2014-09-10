@@ -131,12 +131,6 @@ public class PalettePanel extends JPanel implements DataProvider, PaletteToolWin
     repaint();
   }
 
-  @Override
-  public boolean isEmpty() {
-    return myGroups.isEmpty();
-  }
-
-  @Override
   public void loadPalette(@Nullable DesignerEditorPanel designer) {
     if (myDesigner == null && designer == null) {
       return;

@@ -104,7 +104,7 @@ public class GenerateProjectCallback implements NullableConsumer<AbstractProject
   }
 
   @Nullable
-  private Project generateProject(@NotNull final Project project, @NotNull final AbstractProjectSettingsStep settings) {
+  private static Project generateProject(@NotNull final Project project, @NotNull final AbstractProjectSettingsStep settings) {
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
     final File location = new File(settings.getProjectLocation());
     if (!location.exists() && !location.mkdirs()) {

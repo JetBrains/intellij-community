@@ -41,7 +41,7 @@ import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
 import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
@@ -602,7 +602,7 @@ public final class FormEditingUtil {
     if (project == null) {
       return null;
     }
-    final UIDesignerToolWindowManager toolWindowManager = UIDesignerToolWindowManager.getInstance(project);
+    final DesignerToolWindowManager toolWindowManager = DesignerToolWindowManager.getInstance(project);
     if (toolWindowManager == null) {
       return null;
     }
@@ -702,7 +702,7 @@ public final class FormEditingUtil {
     final RadContainer root = (RadContainer)getRoot(component);
     if (root == null) return;
 
-    ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTreeBuilder();
+    ComponentTreeBuilder builder = DesignerToolWindowManager.getInstance(editor).getComponentTreeBuilder();
     // this can return null if the click to select the control also requested to grab the focus -
     // the component tree will be instantiated after the event has been processed completely
     if (builder != null) {
@@ -724,7 +724,7 @@ public final class FormEditingUtil {
   public static void selectComponents(final GuiEditor editor, List<RadComponent> components) {
     if (components.size() > 0) {
       RadComponent component = components.get(0);
-      ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTreeBuilder();
+      ComponentTreeBuilder builder = DesignerToolWindowManager.getInstance(editor).getComponentTreeBuilder();
       if (builder == null) {
         // race condition when handling event?
         return;
@@ -780,7 +780,7 @@ public final class FormEditingUtil {
   }
 
   public static Object getNextSaveUndoGroupId(final Project project) {
-    final GuiEditor guiEditor = UIDesignerToolWindowManager.getInstance(project).getActiveFormEditor();
+    final GuiEditor guiEditor = DesignerToolWindowManager.getInstance(project).getActiveFormEditor();
     return guiEditor == null ? null : guiEditor.getNextSaveGroupId();
   }
 

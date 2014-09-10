@@ -62,8 +62,9 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
             if (originalElement instanceof PsiFile) {
               PsiFile classFile = (PsiFile)originalElement;
               final VirtualFile virtualClassFile = classFile.getVirtualFile();
-              if (virtualClassFile != null && fileIndex.isInLibraryClasses(virtualClassFile) &&
-                  classOwner.getManager().areElementsEquivalent(classOwner.getContainingDirectory(), classFile.getContainingDirectory())) {
+              if (virtualClassFile != null && fileIndex.isInLibraryClasses(virtualClassFile)
+                  && !classOwner.getManager().areElementsEquivalent(classOwner, classFile)
+                  && classOwner.getManager().areElementsEquivalent(classOwner.getContainingDirectory(), classFile.getContainingDirectory())) {
                 continue;
               }
             }

@@ -56,7 +56,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
       private void transformRangeMarkers(@NotNull DocumentEvent e) {
         Document document = e.getDocument();
         VirtualFile file = fileDocumentManager.getFile(document);
-        if (file == null) {
+        if (file == null || myProject.isDisposed()) {
           return;
         }
 

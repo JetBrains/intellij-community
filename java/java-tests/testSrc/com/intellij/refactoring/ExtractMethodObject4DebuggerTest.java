@@ -53,9 +53,7 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
   }
 
   public void testSimpleGeneration() throws Exception {
-    doTest("int i = 0; int j = 0;", "Test test = new Test().invoke();\n" +
-                                    "      int i = test.getI();\n" +
-                                    "      int j = test.getJ();",
+    doTest("int i = 0; int j = 0;", "Test test = new Test().invoke();int i = test.getI();int j = test.getJ();",
 
            "public class Test {\n" +
            "        private int i;\n" +
@@ -77,11 +75,8 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "    }");
   }
 
-  @Bombed(month = Calendar.SEPTEMBER, day = 20)
   public void testInvokeReturnType() throws Exception {
-    doTest("x = 6; y = 6;", "Test test = new Test().invoke();\n" +
-                            "      x = test.getX();\n" +
-                            "      y = test.getY();",
+    doTest("x = 6; y = 6;", "Test test = new Test().invoke();x = test.getX();y = test.getY();",
 
            "public static class Test {\n" +
            "        private int x;\n" +
@@ -99,6 +94,20 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "            x = 6;\n" +
            "            y = 6;\n" +
            "            return this;\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testAnonymousClassParams() throws Exception {
+    doTest("new I() {public void foo(int i) {i++;}};", "new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public void invoke() {\n" +
+           "            new I() {\n" +
+           "                public void foo(int i) {\n" +
+           "                    i++;\n" +
+           "                }\n" +
+           "            };\n" +
            "        }\n" +
            "    }");
   }

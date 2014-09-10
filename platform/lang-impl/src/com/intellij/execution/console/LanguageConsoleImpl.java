@@ -659,6 +659,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
           if (myCurrentEditor != null && myCurrentEditor.isDisposed()) {
             myCurrentEditor = null;
           }
+          if (!isValid()) return;
           ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
         }
       }
@@ -678,6 +679,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   @NotNull
   public Language getLanguage() {
     return ObjectUtils.assertNotNull(myVirtualFile.getLanguage());
+  }
+
+  public boolean isValid() {
+    return myVirtualFile.isValid() && myProject.isOpen();
   }
 
   public void setLanguage(@NotNull Language language) {

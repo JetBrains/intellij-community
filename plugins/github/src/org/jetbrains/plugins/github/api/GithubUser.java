@@ -26,12 +26,12 @@ public class GithubUser {
 
   @NotNull private final String myHtmlUrl;
 
-  @Nullable private final String myGravatarId;
+  @Nullable private final String myAvatarUrl;
 
-  public GithubUser(@NotNull String login, @NotNull String htmlUrl, @Nullable String gravatarId) {
+  public GithubUser(@NotNull String login, @NotNull String htmlUrl, @Nullable String avatarUrl) {
     myLogin = login;
     myHtmlUrl = htmlUrl;
-    myGravatarId = gravatarId;
+    myAvatarUrl = avatarUrl;
   }
 
   @NotNull
@@ -45,7 +45,7 @@ public class GithubUser {
   }
 
   @Nullable
-  public String getGravatarId() {
-    return myGravatarId;
+  public String getAvatarUrl() {
+    return myAvatarUrl;
   }
 }

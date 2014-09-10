@@ -20,7 +20,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.ex.NodeConfigurable;
+import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -220,15 +220,15 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   }
 
   @Nullable
-  private ConfigurableGroup findConfigurableGroupAt(int x, int y) {
+  private String findGroupNameAt(int x, int y) {
     TreePath path = myTree.getClosestPathForLocation(x - myTree.getX(), y - myTree.getY());
     while (path != null) {
       MyNode node = extractNode(path);
       if (node == null) {
         return null;
       }
-      if (node.myComposite instanceof ConfigurableGroup) {
-        return (ConfigurableGroup)node.myComposite;
+      if (myRoot == node.getParent()) {
+        return node.myDisplayName;
       }
       path = path.getParentPath();
     }
@@ -273,10 +273,10 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       mySeparator.setFont(getFont().deriveFont(Font.BOLD));
     }
     int height = mySeparator.getPreferredSize().height;
-    ConfigurableGroup group = findConfigurableGroupAt(0, height);
-    if (group != null && group == findConfigurableGroupAt(0, 0)) {
+    String group = findGroupNameAt(0, height);
+    if (group != null && group.equals(findGroupNameAt(0, 0))) {
       mySeparator.setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 0));
-      mySeparator.setText(group.getDisplayName());
+      mySeparator.setText(group);
 
       Rectangle bounds = myScroller.getViewport().getBounds();
       if (bounds.height > height) {
@@ -403,11 +403,13 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       if (myGroups == null || myGroups.length == 0) {
         return NO_CHILDREN;
       }
-      SimpleNode[] result = new SimpleNode[myGroups.length];
-      for (int i = 0; i < myGroups.length; i++) {
-        result[i] = new MyNode(this, myGroups[i], 0);
+      ArrayList<MyNode> list = new ArrayList<MyNode>();
+      for (ConfigurableGroup group : myGroups) {
+        for (Configurable configurable : group.getConfigurables()) {
+          list.add(new MyNode(this, configurable, 0));
+        }
       }
-      return result;
+      return list.toArray(new SimpleNode[list.size()]);
     }
   }
 
@@ -423,15 +425,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       myConfigurable = configurable;
       String name = configurable.getDisplayName();
       myDisplayName = name != null ? name.replace("\n", " ") : "{ " + configurable.getClass().getSimpleName() + " }";
-      myLevel = level;
-    }
-
-    private MyNode(CachingSimpleNode parent, ConfigurableGroup group, int level) {
-      super(parent);
-      myComposite = group;
-      myConfigurable = group instanceof Configurable ? (Configurable)group : null;
-      String name = group.getDisplayName();
-      myDisplayName = name != null ? name.replace("\n", " ") : "{ " + group.getClass().getSimpleName() + " }";
       myLevel = level;
     }
 
@@ -530,15 +523,15 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         if (parent instanceof MyNode) {
           if (myRoot == parent.getParent()) {
             project = findConfigurableProject(node); // show icon for top-level nodes
-            if (node.myConfigurable instanceof NodeConfigurable) { // special case for custom subgroups (build.tools)
-              Configurable[] configurables = ((NodeConfigurable)node.myConfigurable).getConfigurables();
+            if (node.myConfigurable instanceof SortedConfigurableGroup) { // special case for custom subgroups (build.tools)
+              Configurable[] configurables = ((SortedConfigurableGroup)node.myConfigurable).getConfigurables();
               if (configurables != null) { // assume that all configurables have the same project
                 project = findConfigurableProject(configurables[0]);
               }
             }
           }
-          else if (((MyNode)parent).myConfigurable instanceof NodeConfigurable) {
-            if (((MyNode)node.getParent()).myConfigurable instanceof NodeConfigurable) {
+          else if (((MyNode)parent).myConfigurable instanceof SortedConfigurableGroup) {
+            if (((MyNode)node.getParent()).myConfigurable instanceof SortedConfigurableGroup) {
               project = findConfigurableProject(node); // special case for custom subgroups
             }
           }

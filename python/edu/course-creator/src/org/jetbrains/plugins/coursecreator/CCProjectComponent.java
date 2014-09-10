@@ -96,7 +96,9 @@ public class CCProjectComponent implements ProjectComponent {
   }
 
   public void projectClosed() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myListener);
+    if (myListener != null) {
+      VirtualFileManager.getInstance().removeVirtualFileListener(myListener);
+    }
   }
 
   private class FileDeletedListener extends VirtualFileAdapter {
@@ -151,7 +153,7 @@ public class CCProjectComponent implements ProjectComponent {
       if (task == null) {
         return;
       }
-      lesson.getTasklist().remove(task);
+      lesson.getTaskList().remove(task);
       lesson.getTasksMap().remove(removedFile.getName());
     }
 

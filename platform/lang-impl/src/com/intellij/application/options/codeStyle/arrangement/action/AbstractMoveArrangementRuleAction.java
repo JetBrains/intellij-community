@@ -17,7 +17,6 @@ package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 11/13/12 7:17 PM
  */
-public abstract class AbstractMoveArrangementRuleAction extends AnAction implements DumbAware {
+public abstract class AbstractMoveArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
@@ -95,8 +94,17 @@ public abstract class AbstractMoveArrangementRuleAction extends AnAction impleme
         }
 
 
+        int visibleRow = -1;
         if (newRowToEdit >= 0) {
           control.showEditor(newRowToEdit);
+          visibleRow = newRowToEdit;
+        }
+        else if (!mappings.isEmpty()) {
+          visibleRow = mappings.get(0)[1];
+        }
+
+        if (visibleRow != -1) {
+          scrollRowToVisible(control, visibleRow);
         }
       }
     });

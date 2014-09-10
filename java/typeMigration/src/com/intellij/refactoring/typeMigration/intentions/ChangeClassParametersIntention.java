@@ -48,7 +48,9 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
       final PsiMember member = PsiTreeUtil.getParentOfType(parameterList, PsiMember.class);
       if (member instanceof PsiAnonymousClass) {
         final PsiClassType.ClassResolveResult result = ((PsiAnonymousClass)member).getBaseClassType().resolveGenerics();
-        return result.getElement() != null && ((PsiAnonymousClass)member).getBaseClassReference().getParameterList() == parameterList;
+        final PsiClass baseClass = result.getElement();
+        return baseClass != null && baseClass.getTypeParameters().length == parameterList.getTypeParameterElements().length &&
+               ((PsiAnonymousClass)member).getBaseClassReference().getParameterList() == parameterList;
       }
     }
     return false;

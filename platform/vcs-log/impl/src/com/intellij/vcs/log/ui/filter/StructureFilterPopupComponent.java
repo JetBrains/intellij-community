@@ -101,7 +101,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogStructure
                                                             new ArrayList<VirtualFile>(myRoots));
       if (chooser.showAndGet()) {
         myFiles.clear();
-        myFiles.addAll(ContainerUtil.notNullize(chooser.getSelectedFiles()));
+        myFiles.addAll(chooser.getSelectedFiles());
         setValue(myFiles);
         applyFilters();
       }

@@ -105,7 +105,11 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
                 }
               });
               processor.run();
-              processor.runChangeSignature();
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  processor.runChangeSignature();
+                }
+              });
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);

@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.Course;
 import org.jetbrains.plugins.coursecreator.format.Lesson;
@@ -42,7 +43,7 @@ public class CreateTask extends DumbAwareAction {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     final Lesson lesson = course.getLesson(directory.getName());
-    final int size = lesson.getTasklist().size();
+    final int size = lesson.getTaskList().size();
 
     final String taskName = Messages.showInputDialog("Name:", "Task Name", null, "task" + (size + 1), null);
     if (taskName == null) return;
@@ -83,7 +84,7 @@ public class CreateTask extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

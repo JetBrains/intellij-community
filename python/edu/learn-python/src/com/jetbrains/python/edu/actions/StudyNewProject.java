@@ -28,7 +28,7 @@ public class StudyNewProject extends ProjectSpecificAction {
   }
 
   public StudyNewProject() {
-    this("Learn Python", null);
+    this("Explore courses", null);
   }
 
 }

@@ -19,7 +19,7 @@ package com.intellij.uiDesigner;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,7 +37,7 @@ public class FormHighlightingPass implements HighlightingPass {
   }
 
   public void applyInformationToEditor() {
-    UIDesignerToolWindowManager.getInstance(myEditor.getProject()).refreshErrors();
+    DesignerToolWindowManager.getInstance(myEditor).refreshErrors();
     myEditor.refreshIntentionHint();
   }
 }

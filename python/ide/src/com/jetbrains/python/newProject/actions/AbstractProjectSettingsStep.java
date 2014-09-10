@@ -42,6 +42,7 @@ import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PyPySdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -79,22 +80,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     myCallback = callback;
     myIsWelcomeScreen = isWelcomeScreen;
     myProjectDirectory = FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
-    if (myProjectGenerator instanceof WebProjectTemplate) {
-      ((WebProjectTemplate)myProjectGenerator).getPeer().addSettingsStateListener(new WebProjectGenerator.SettingsStateListener() {
-        @Override
-        public void stateChanged(boolean validSettings) {
-          checkValid();
-        }
-      });
-    }
-    else if (myProjectGenerator instanceof PythonProjectGenerator) {
-      ((PythonProjectGenerator)myProjectGenerator).addSettingsStateListener(new PythonProjectGenerator.SettingsListener() {
-        @Override
-        public void stateChanged() {
-          checkValid();
-        }
-      });
-    }
 
     myCreateAction = new AnAction("Create", "Create Project", getIcon()) {
       @Override
@@ -112,6 +97,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   @Override
   public JPanel createPanel() {
+    initGeneratorListeners();
     final JPanel basePanel = createBasePanel();
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
@@ -140,6 +126,25 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     bottomPanel.add(myCreateButton, BorderLayout.EAST);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     return mainPanel;
+  }
+
+  private void initGeneratorListeners() {
+    if (myProjectGenerator instanceof WebProjectTemplate) {
+      ((WebProjectTemplate)myProjectGenerator).getPeer().addSettingsStateListener(new WebProjectGenerator.SettingsStateListener() {
+        @Override
+        public void stateChanged(boolean validSettings) {
+          checkValid();
+        }
+      });
+    }
+    else if (myProjectGenerator instanceof PythonProjectGenerator) {
+      ((PythonProjectGenerator)myProjectGenerator).addSettingsStateListener(new PythonProjectGenerator.SettingsListener() {
+        @Override
+        public void stateChanged() {
+          checkValid();
+        }
+      });
+    }
   }
 
   protected Icon getIcon() {
@@ -452,6 +457,10 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   public String getProjectLocation() {
     return myLocationField.getText();
+  }
+
+  public void setLocation(@NotNull final String location) {
+    myLocationField.setText(location);
   }
 
   public boolean installFramework() {

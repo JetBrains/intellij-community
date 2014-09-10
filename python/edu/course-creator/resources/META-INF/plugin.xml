@@ -58,6 +58,12 @@
     <action id="ShowPreview" class="org.jetbrains.plugins.coursecreator.actions.CCShowPreview">
         <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
     </action>
+    <action id="RenameLesson" class="org.jetbrains.plugins.coursecreator.actions.CCRenameLesson">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+    </action>
+    <action id="RenameTask" class="org.jetbrains.plugins.coursecreator.actions.CCRenameTask">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+    </action>
     <action id="PackCourse" class="org.jetbrains.plugins.coursecreator.actions.CreateCourseArchive">
       <add-to-group group-id="MainToolBar" anchor="last" />
     </action>

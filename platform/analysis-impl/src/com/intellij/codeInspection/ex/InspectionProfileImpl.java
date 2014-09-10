@@ -885,13 +885,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     getTools(toolId, project).removeScope(scopeIdx);
   }
 
-  public void removeScope(@NotNull String toolId, @NotNull NamedScope scope, Project project) {
-    getTools(toolId, project).removeScope(scope);
+  public void removeScope(@NotNull String toolId, @NotNull String scopeName, Project project) {
+    getTools(toolId, project).removeScope(scopeName);
   }
 
-  public void removeScopes(@NotNull List<String> toolIds, @NotNull NamedScope scope, Project project) {
+  public void removeScopes(@NotNull List<String> toolIds, @NotNull String scopeName, Project project) {
     for (final String toolId : toolIds) {
-      removeScope(toolId, scope, project);
+      removeScope(toolId, scopeName, project);
     }
   }
 

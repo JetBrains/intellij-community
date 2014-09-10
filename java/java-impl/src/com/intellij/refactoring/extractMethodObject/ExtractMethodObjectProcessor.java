@@ -86,7 +86,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private boolean myMadeStatic = false;
   private final Set<MethodToMoveUsageInfo> myUsages = new LinkedHashSet<MethodToMoveUsageInfo>();
   private PsiClass myInnerClass;
-  private ChangeSignatureProcessor myChangeSignatureProcessor;
+  private boolean myChangeReturnType;
   private Runnable myCopyMethodToInner;
 
   public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, final String innerClassName) {
@@ -105,7 +105,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     final PsiClass containingClass = getMethod().getContainingClass();
-    final SearchScope scope = PsiUtilCore.getVirtualFile(containingClass) instanceof LightVirtualFile
+    final SearchScope scope = PsiUtilCore.getVirtualFile(containingClass) == null
                               ? new LocalSearchScope(containingClass)
                               : GlobalSearchScope.projectScope(myProject);
     PsiReference[] refs =
@@ -149,7 +149,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  protected void performRefactoring(final UsageInfo[] usages) {
+  public void performRefactoring(final UsageInfo[] usages) {
     try {
       if (isCreateInnerClass()) {
         myInnerClass = (PsiClass)getMethod().getContainingClass().add(myElementFactory.createClass(getInnerClassName()));
@@ -266,12 +266,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       myInnerClass.add(GenerateMembersUtil.generateGetterPrototype(field));
     }
 
-    PsiParameter[] params = getMethod().getParameterList().getParameters();
-    ParameterInfoImpl[] infos = new ParameterInfoImpl[params.length];
-    for (int i = 0; i < params.length; i++) {
-      PsiParameter param = params[i];
-      infos[i] = new ParameterInfoImpl(i, param.getName(), param.getType());
-    }
     final PsiCodeBlock body = getMethod().getBody();
     LOG.assertTrue(body != null);
     final LinkedHashSet<PsiLocalVariable> vars = new LinkedHashSet<PsiLocalVariable>();
@@ -393,16 +387,19 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    myChangeSignatureProcessor = new ChangeSignatureProcessor(myProject, getMethod(), false, null, getMethod().getName(),
-                                                                   new PsiImmediateClassType(myInnerClass, PsiSubstitutor.EMPTY), infos);
+    myChangeReturnType = true;
   }
 
   void runChangeSignature() {
-    if (myChangeSignatureProcessor != null) {
-      myChangeSignatureProcessor.run();
-    }
     if (myCopyMethodToInner != null) {
-      ApplicationManager.getApplication().runWriteAction(myCopyMethodToInner);
+      myCopyMethodToInner.run();
+    }
+    if (myChangeReturnType) {
+      final PsiTypeElement typeElement = ((PsiLocalVariable)((PsiDeclarationStatement)JavaPsiFacade.getElementFactory(myProject)
+        .createStatementFromText(myInnerClassName + " l =null;", myInnerClass)).getDeclaredElements()[0]).getTypeElement();
+      final PsiTypeElement innerMethodReturnTypeElement = myInnerMethod.getReturnTypeElement();
+      LOG.assertTrue(innerMethodReturnTypeElement != null);
+      innerMethodReturnTypeElement.replace(typeElement);
     }
   }
 
@@ -524,7 +521,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(methodBody != null);
     replacedMethodBody.replace(methodBody);
     PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, myInnerClass.hasModifierProperty(PsiModifier.STATIC) && notHasGeneratedFields());
-    myInnerMethod = (PsiMethod)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(myInnerClass.add(newMethod));
+    myInnerMethod = (PsiMethod)myInnerClass.add(newMethod);
   }
 
   private boolean notHasGeneratedFields() {
