@@ -145,8 +145,7 @@ public class ExtractLightMethodObjectHandler {
     extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
 
     final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = extractMethodObjectProcessor.getExtractProcessor();
-    if (extractProcessor.prepare() && CommonRefactoringUtil
-      .checkReadOnlyStatus(project, extractProcessor.getTargetClass().getContainingFile())) {
+    if (extractProcessor.prepare()) {
       if (extractProcessor.showDialog()) {
         try {
           extractProcessor.doExtract();
@@ -164,6 +163,8 @@ public class ExtractLightMethodObjectHandler {
         LOG.assertTrue(method != null);
         method.delete();
       }
+    } else {
+      return null;
     }
 
     final String generatedCall = copy.getText().substring(start, outStatement.getTextOffset());
