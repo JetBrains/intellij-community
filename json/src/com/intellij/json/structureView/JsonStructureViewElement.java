@@ -22,7 +22,7 @@ public class JsonStructureViewElement implements StructureViewTreeElement {
   private final JsonElement myElement;
 
   public JsonStructureViewElement(@NotNull JsonElement element) {
-    assert element instanceof JsonFile || element instanceof JsonObject || element instanceof JsonProperty;
+    assert element instanceof JsonFile || element instanceof JsonProperty;
     myElement = element;
   }
 
@@ -49,28 +49,7 @@ public class JsonStructureViewElement implements StructureViewTreeElement {
   @NotNull
   @Override
   public ItemPresentation getPresentation() {
-    if (myElement instanceof JsonObject) {
-      return new ItemPresentation() {
-        @Nullable
-        @Override
-        public String getPresentableText() {
-          return "Object";
-        }
-
-        @Nullable
-        @Override
-        public String getLocationString() {
-          return null;
-        }
-
-        @Nullable
-        @Override
-        public Icon getIcon(boolean unused) {
-          return PlatformIcons.CLASS_ICON;
-        }
-      };
-    }
-    else if (myElement instanceof JsonProperty) {
+    if (myElement instanceof JsonProperty) {
       return new ItemPresentation() {
         @Nullable
         @Override
@@ -95,27 +74,22 @@ public class JsonStructureViewElement implements StructureViewTreeElement {
       //noinspection ConstantConditions
       return myElement.getPresentation();
     }
-    throw new AssertionError("Attempting to create presentation for invalid element: " + myElement);
+    throw new AssertionError("Attempting to create presentation for illegal element: " + myElement);
   }
 
   @NotNull
   @Override
   public TreeElement[] getChildren() {
+    JsonElement value = null;
     if (myElement instanceof JsonFile) {
-      final JsonFile jsonFile = (JsonFile)myElement;
-      if (jsonFile.getTopLevelValue() instanceof JsonObject) {
-        return new TreeElement[]{new JsonStructureViewElement(jsonFile.getTopLevelValue())};
-      }
+      value = ((JsonFile)myElement).getTopLevelValue();
     }
     else if (myElement instanceof JsonProperty) {
-      final JsonProperty jsonProperty = (JsonProperty)myElement;
-      if (jsonProperty.getValue() instanceof JsonObject) {
-        return new TreeElement[]{new JsonStructureViewElement(jsonProperty.getValue())};
-      }
+      value = ((JsonProperty)myElement).getValue();
     }
-    else if (myElement instanceof JsonObject) {
-      final JsonObject jsonObject = (JsonObject)myElement;
-      return ContainerUtil.map2Array(jsonObject.getPropertyList(), TreeElement.class, new Function<JsonProperty, TreeElement>() {
+    if (value instanceof JsonObject) {
+      final JsonObject object = ((JsonObject)value);
+      return ContainerUtil.map2Array(object.getPropertyList(), TreeElement.class, new Function<JsonProperty, TreeElement>() {
         @Override
         public TreeElement fun(JsonProperty property) {
           return new JsonStructureViewElement(property);
