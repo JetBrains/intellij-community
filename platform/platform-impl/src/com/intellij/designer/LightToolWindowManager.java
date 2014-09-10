@@ -204,33 +204,33 @@ public abstract class LightToolWindowManager implements ProjectComponent {
 
   protected abstract ToggleEditorModeAction createToggleAction(ToolWindowAnchor anchor);
 
-  public final void bind(DesignerEditorPanelFacade designer) {
+  public final void bind(@NotNull DesignerEditorPanelFacade designer) {
     if (isEditorMode()) {
       myCreateAction.run(designer);
     }
   }
 
-  public final void dispose(DesignerEditorPanelFacade designer) {
+  public final void dispose(@NotNull DesignerEditorPanelFacade designer) {
     if (isEditorMode()) {
       disposeContent(designer);
     }
   }
 
-  protected final Object getContent(DesignerEditorPanelFacade designer) {
+  protected final Object getContent(@NotNull DesignerEditorPanelFacade designer) {
     LightToolWindow toolWindow = (LightToolWindow)designer.getClientProperty(getComponentName());
     return toolWindow.getContent();
   }
 
-  protected abstract LightToolWindow createContent(DesignerEditorPanelFacade designer);
+  protected abstract LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer);
 
-  protected final LightToolWindow createContent(DesignerEditorPanelFacade designer,
-                                                LightToolWindowContent content,
-                                                String title,
-                                                Icon icon,
-                                                JComponent component,
-                                                JComponent focusedComponent,
+  protected final LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer,
+                                                @NotNull LightToolWindowContent content,
+                                                @NotNull String title,
+                                                @NotNull Icon icon,
+                                                @NotNull JComponent component,
+                                                @NotNull JComponent focusedComponent,
                                                 int defaultWidth,
-                                                AnAction[] actions) {
+                                                @Nullable AnAction[] actions) {
     return new LightToolWindow(content,
                                title,
                                icon,

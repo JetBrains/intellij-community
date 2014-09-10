@@ -42,14 +42,16 @@ import java.awt.event.*;
  */
 public class PaletteComponentList extends JBList {
   private final Project myProject;
+  private final PaletteWindow myPalette;
   private final PaletteGroup myGroup;
   private int myHoverIndex = -1;
   private int myBeforeClickSelectedRow = -1;
   private int myDropTargetIndex = -1;
   private boolean myNeedClearSelection = false;
 
-  public PaletteComponentList(Project project, PaletteGroup group) {
+  public PaletteComponentList(Project project, PaletteWindow palette, PaletteGroup group) {
     myProject = project;
+    myPalette = palette;
     myGroup = group;
     setModel(new AbstractListModel() {
       public int getSize() {
@@ -118,15 +120,15 @@ public class PaletteComponentList extends JBList {
 
     addKeyListener(new KeyListener() {
       public void keyPressed(KeyEvent e) {
-        PaletteManager.getInstance(myProject).notifyKeyEvent(e);
+        myPalette.notifyKeyEvent(e);
       }
 
       public void keyReleased(KeyEvent e) {
-        PaletteManager.getInstance(myProject).notifyKeyEvent(e);
+        myPalette.notifyKeyEvent(e);
       }
 
       public void keyTyped(KeyEvent e) {
-        PaletteManager.getInstance(myProject).notifyKeyEvent(e);
+        myPalette.notifyKeyEvent(e);
       }
     });
 
@@ -395,7 +397,7 @@ public class PaletteComponentList extends JBList {
     }
 
     public void dropActionChanged(final int gestureModifiers) {
-      PaletteManager.getInstance(myProject).notifyDropActionChanged(gestureModifiers);
+      myPalette.notifyDropActionChanged(gestureModifiers);
     }
   }
 }

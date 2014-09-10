@@ -126,7 +126,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  protected LightToolWindow createContent(DesignerEditorPanelFacade designer) {
+  protected LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer) {
     DesignerToolWindow toolWindowContent = new DesignerToolWindow(myProject, false);
     toolWindowContent.update((DesignerEditorPanel)designer);
 

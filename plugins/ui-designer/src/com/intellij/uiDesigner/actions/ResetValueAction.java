@@ -18,10 +18,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
-import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.*;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
 import java.util.ArrayList;
@@ -44,7 +41,7 @@ public class ResetValueAction extends AbstractGuiEditorAction {
   public static void doResetValue(final List<RadComponent> selection, final Property property, final GuiEditor editor) {
     try {
       if (!editor.ensureEditable()) return;
-      final PropertyInspector propertyInspector = UIDesignerToolWindowManager.getInstance(editor.getProject()).getPropertyInspector();
+      final PropertyInspector propertyInspector = DesignerToolWindowManager.getInstance(editor).getPropertyInspector();
       if (propertyInspector.isEditing()) {
         propertyInspector.stopEditing();
       }

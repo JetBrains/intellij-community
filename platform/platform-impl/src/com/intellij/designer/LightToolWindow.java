@@ -35,6 +35,8 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,6 +49,7 @@ import java.awt.image.BufferedImage;
 public class LightToolWindow extends JPanel {
   public static final String LEFT_MIN_KEY = "left";
   public static final String RIGHT_MIN_KEY = "right";
+  public static final int MINIMIZE_WIDTH = 25;
   private static final String IGNORE_WIDTH_KEY = "ignore_width";
 
   private final LightToolWindowContent myContent;
@@ -79,19 +82,19 @@ public class LightToolWindow extends JPanel {
     }
   };
 
-  public LightToolWindow(LightToolWindowContent content,
-                         String title,
-                         Icon icon,
-                         JComponent component,
-                         JComponent focusedComponent,
-                         ThreeComponentsSplitter contentSplitter,
-                         ToolWindowAnchor anchor,
-                         LightToolWindowManager manager,
-                         Project project,
-                         PropertiesComponent propertiesComponent,
-                         String key,
+  public LightToolWindow(@NotNull LightToolWindowContent content,
+                         @NotNull String title,
+                         @NotNull Icon icon,
+                         @NotNull JComponent component,
+                         @NotNull JComponent focusedComponent,
+                         @NotNull ThreeComponentsSplitter contentSplitter,
+                         @Nullable ToolWindowAnchor anchor,
+                         @NotNull LightToolWindowManager manager,
+                         @NotNull Project project,
+                         @NotNull PropertiesComponent propertiesComponent,
+                         @NotNull String key,
                          int defaultWidth,
-                         AnAction[] actions) {
+                         @Nullable AnAction[] actions) {
     super(new BorderLayout());
     myContent = content;
     myFocusedComponent = focusedComponent;

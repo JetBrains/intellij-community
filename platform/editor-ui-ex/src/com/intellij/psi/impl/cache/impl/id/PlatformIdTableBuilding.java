@@ -23,17 +23,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.InternalFileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CustomHighlighterTokenType;
-import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.CacheUtil;
+import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
+import com.intellij.psi.impl.cache.impl.todo.VersionedTodoIndexer;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -116,7 +120,7 @@ public abstract class PlatformIdTableBuilding {
     return ourTodoIndexers.containsKey(fileType) || TodoIndexers.INSTANCE.forFileType(fileType) != null || fileType instanceof InternalFileType;
   }
 
-  private static class CompositeTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+  private static class CompositeTodoIndexer extends VersionedTodoIndexer {
     private final DataIndexer<TodoIndexEntry, Integer, FileContent>[] indexers;
 
     public CompositeTodoIndexer(@NotNull DataIndexer<TodoIndexEntry, Integer, FileContent>... indexers) {
@@ -139,9 +143,18 @@ public abstract class PlatformIdTableBuilding {
       }
       return result;
     }
+
+    @Override
+    public int getVersion() {
+      int version = super.getVersion();
+      for(DataIndexer dataIndexer:indexers) {
+        version += dataIndexer instanceof VersionedTodoIndexer ? ((VersionedTodoIndexer)dataIndexer).getVersion() : 0xFF;
+      }
+      return version;
+    }
   }
 
-  private static class TokenSetTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+  private static class TokenSetTodoIndexer extends VersionedTodoIndexer {
     @NotNull private final TokenSet myCommentTokens;
     private final VirtualFile myFile;
 
@@ -201,7 +214,7 @@ public abstract class PlatformIdTableBuilding {
     }
   }
 
-  public static class PlainTextTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+  public static class PlainTextTodoIndexer extends VersionedTodoIndexer {
     @Override
     @NotNull
     public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {

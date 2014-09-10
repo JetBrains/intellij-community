@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.ide.palette.impl.PaletteManager;
+import com.intellij.ide.palette.impl.PaletteToolWindowManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -58,7 +58,7 @@ public final class MainProcessor extends EventProcessor{
     if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
         if ((myCurrentProcessor != null && myCurrentProcessor.isDragActive()) ||
-            (PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class) != null &&
+            (PaletteToolWindowManager.getInstance(myEditor).getActiveItem(ComponentItem.class) != null &&
              myCurrentProcessor != myInsertComponentProcessor)) {
           myEditor.setDesignTimeInsets(12);
         }
@@ -151,7 +151,7 @@ public final class MainProcessor extends EventProcessor{
 
     Cursor cursor = Cursor.getDefaultCursor();
     if(id==MouseEvent.MOUSE_MOVED){
-      if (PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class) != null) {
+      if (PaletteToolWindowManager.getInstance(myEditor).getActiveItem(ComponentItem.class) != null) {
         if (myInsertFeedbackEnabled) {
           cursor = myInsertComponentProcessor.processMouseMoveEvent(e);
         }
@@ -292,7 +292,7 @@ public final class MainProcessor extends EventProcessor{
       return;
     }
 
-    final ComponentItem selectedItem = PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class);
+    final ComponentItem selectedItem = PaletteToolWindowManager.getInstance(myEditor).getActiveItem(ComponentItem.class);
     if (selectedItem != null) {
       myInsertComponentProcessor.setSticky(UIUtil.isControlKeyDown(e));
       myCurrentProcessor = myInsertComponentProcessor;
@@ -341,7 +341,7 @@ public final class MainProcessor extends EventProcessor{
         return true;
       }
     }
-    else if (PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class) != null) {
+    else if (PaletteToolWindowManager.getInstance(myEditor).getActiveItem(ComponentItem.class) != null) {
       cancelPaletteInsert();
       return true;
     }
@@ -349,7 +349,7 @@ public final class MainProcessor extends EventProcessor{
   }
 
   void cancelPaletteInsert() {
-    PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
+    PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
     myEditor.getLayeredPane().setCursor(Cursor.getDefaultCursor());
     myEditor.getActiveDecorationLayer().removeFeedback();
   }

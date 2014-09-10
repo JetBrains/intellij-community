@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="properties-psi-api" />
     <orderEntry type="module" module-name="properties-psi-impl" />
-    <orderEntry type="module" module-name="ui-designer" scope="TEST" />
   </component>
 </module>
 

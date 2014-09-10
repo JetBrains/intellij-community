@@ -26,16 +26,16 @@ import java.util.Date;
  * @author Dennis.Ushakov
  */
 public class GithubComment extends SimpleComment {
-  @Nullable private final String myGravatarId;
+  @Nullable private final String myAvatarUrl;
   @NotNull private final String myUserHtmlUrl;
 
   public GithubComment(@Nullable Date date,
                        @Nullable String author,
                        @NotNull String text,
-                       @Nullable String gravatarId,
+                       @Nullable String avatarUrl,
                        @NotNull String userHtmlUrl) {
     super(date, author, text);
-    myGravatarId = gravatarId;
+    myAvatarUrl = avatarUrl;
     myUserHtmlUrl = userHtmlUrl;
   }
 
@@ -43,9 +43,9 @@ public class GithubComment extends SimpleComment {
     builder.append("<hr>");
     builder.append("<table>");
     builder.append("<tr><td>");
-    if (myGravatarId != null) {
-        builder.append("<img src=\"").append("http://www.gravatar.com/avatar/").append(myGravatarId).append("?s=40\"/><br>");
-      }
+    if (myAvatarUrl != null) {
+      builder.append("<img src=\"").append(myAvatarUrl).append("\" height=\"40\" width=\"40\"/><br>");
+    }
     builder.append("</td><td>");
     if (getAuthor() != null) {
       builder.append("<b>Author:</b> <a href=\"").append(myUserHtmlUrl).append("\">").append(getAuthor()).append("</a><br>");

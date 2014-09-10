@@ -17,11 +17,13 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
  */
 public interface TestFixtureBuilder<T extends IdeaTestFixture> {
+  @NotNull
   T getFixture();
 
   <M extends ModuleFixtureBuilder> M addModule(Class<M> builderClass);
