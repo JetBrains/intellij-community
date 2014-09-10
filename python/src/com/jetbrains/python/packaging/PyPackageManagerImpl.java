@@ -268,6 +268,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
+  @Nullable
   public synchronized Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws PyExternalProcessException {
     if (myDependenciesCache == null) {
       if (myExceptionCache != null) {
@@ -315,7 +316,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   @Nullable
-  public PyPackage findPackage(String name, boolean cachedOnly) throws PyExternalProcessException {
+  public PyPackage findPackage(@NotNull String name, boolean cachedOnly) throws PyExternalProcessException {
     final List<PyPackage> packages = getPackages(cachedOnly);
     if (packages != null) {
       for (PyPackage pkg : packages) {

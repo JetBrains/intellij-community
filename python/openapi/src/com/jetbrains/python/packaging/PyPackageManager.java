@@ -70,9 +70,10 @@ public abstract class PyPackageManager {
   @Nullable
   public abstract List<PyPackage> getPackages(boolean cachedOnly) throws PyExternalProcessException;
   @Nullable
-  public abstract PyPackage findPackage(String name, boolean cachedOnly) throws PyExternalProcessException;
+  public abstract PyPackage findPackage(@NotNull String name, boolean cachedOnly) throws PyExternalProcessException;
   @Nullable
   public abstract List<PyRequirement> getRequirements(@NotNull Module module);
+  @Nullable
   public abstract Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws PyExternalProcessException;
   @Deprecated
   public abstract boolean cacheIsNotNull();
