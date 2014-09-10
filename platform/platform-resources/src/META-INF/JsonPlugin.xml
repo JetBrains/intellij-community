@@ -38,6 +38,8 @@
     <lang.namesValidator language="JSON" implementationClass="com.intellij.json.JsonNamesValidator"/>
     <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
     <lang.commenter language="JSON" implementationClass="com.intellij.json.editor.JsonCommenter"/>
+    <lang.surroundDescriptor language="JSON" implementationClass="com.intellij.json.surroundWith.JsonSurroundDescriptor"/>
+
 
     <!-- Imported from appcode-json -->
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonLiteral"
