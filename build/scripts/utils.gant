@@ -64,7 +64,7 @@ binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
 binding.setVariable("yjpOptions", { String systemSelector, String platformSuffix = "" ->
-  "-agentpath:%IDE_BIN_DIR%yjpagent$platformSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
+  "-agentpath:yjpagent$platformSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
 })
 binding.setVariable("vmOptions32yjp", { String systemSelector ->
   "${vmOptions32()} ${yjpOptions(systemSelector)}".trim()
@@ -359,7 +359,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   if (isEap() && !args.mac_no_yjp) {
     ideaVmOptions += " ${yjpOptions(args.system_selector)}"
   }
-  new File("$path/bin/idea.vmoptions").text = ideaVmOptions
+  new File("$path/bin/idea.vmoptions").text = ideaVmOptions.replace("yjpagent", "\$APP_PACKAGE/Contents/bin/yjpagent")
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
@@ -506,11 +506,13 @@ binding.setVariable("unixScripts", { String target, String home, String name, Ma
 binding.setVariable("winVMOptions", { String target, String system_selector, String name, String name64 = null ->
   if (name != null) {
     def options = isEap() && system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
+    options = options.replace("yjpagent", "%IDE_BIN_DIR%yjpagent")
     ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
   }
 
   if (name64 != null) {
     def options = isEap() && system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
+    options = options.replace("yjpagent", "%IDE_BIN_DIR%yjpagent")
     ant.echo(file: "$target/bin/${name64}.vmoptions", message: options.replace(' ', '\n'))
   }
 
