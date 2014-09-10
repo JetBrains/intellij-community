@@ -43,6 +43,8 @@ import org.hamcrest.Matchers.empty
 import org.junit.Assert.assertThat
 
 class GitTest {
+  data class FileInfo (val name: String, val data: ByteArray)
+
   private var fixture: IdeaProjectTestFixture? = null
 
   private var remoteRepository: File? = null
@@ -90,12 +92,12 @@ class GitTest {
 
       val diff = repository.computeIndexDiff()
       assertThat(diff.diff(), equalTo(false))
-      assertThat<Set<String>>(diff.getAdded(), empty<Any>())
-      assertThat<Set<String>>(diff.getChanged(), empty<Any>())
-      assertThat<Set<String>>(diff.getRemoved(), empty<Any>())
-      assertThat<Set<String>>(diff.getModified(), empty<Any>())
-      assertThat<Set<String>>(diff.getUntracked(), empty<Any>())
-      assertThat<Set<String>>(diff.getUntrackedFolders(), empty<Any>())
+      assertThat(diff.getAdded(), empty())
+      assertThat(diff.getChanged(), empty())
+      assertThat(diff.getRemoved(), empty())
+      assertThat(diff.getModified(), empty())
+      assertThat(diff.getUntracked(), empty())
+      assertThat(diff.getUntrackedFolders(), empty())
     }
 
     private fun getProvider(): StreamProvider {
@@ -160,12 +162,12 @@ class GitTest {
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff(), equalTo(true))
-    assertThat<Set<String>>(diff.getAdded(), contains(equalTo(addedFile)))
-    assertThat<Set<String>>(diff.getChanged(), empty<Any>())
-    assertThat<Set<String>>(diff.getRemoved(), empty<Any>())
-    assertThat<Set<String>>(diff.getModified(), empty<Any>())
-    assertThat<Set<String>>(diff.getUntracked(), empty<Any>())
-    assertThat<Set<String>>(diff.getUntrackedFolders(), empty<Any>())
+    assertThat(diff.getAdded(), contains(equalTo(addedFile)))
+    assertThat(diff.getChanged(), empty())
+    assertThat(diff.getRemoved(), empty())
+    assertThat(diff.getModified(), empty())
+    assertThat(diff.getUntracked(), empty())
+    assertThat(diff.getUntrackedFolders(), empty())
   }
 
   Test
@@ -179,12 +181,12 @@ class GitTest {
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff(), equalTo(true))
-    assertThat<Set<String>>(diff.getAdded(), contains(equalTo(addedFile), equalTo(addedFile2)))
-    assertThat<Set<String>>(diff.getChanged(), empty<Any>())
-    assertThat<Set<String>>(diff.getRemoved(), empty<Any>())
-    assertThat<Set<String>>(diff.getModified(), empty<Any>())
-    assertThat<Set<String>>(diff.getUntracked(), empty<Any>())
-    assertThat<Set<String>>(diff.getUntrackedFolders(), empty<Any>())
+    assertThat(diff.getAdded(), contains(equalTo(addedFile), equalTo(addedFile2)))
+    assertThat(diff.getChanged(), empty())
+    assertThat(diff.getRemoved(), empty())
+    assertThat(diff.getModified(), empty())
+    assertThat(diff.getUntracked(), empty())
+    assertThat(diff.getUntrackedFolders(), empty())
   }
 
   Test
@@ -237,9 +239,7 @@ class GitTest {
     assertThat(FileUtil.loadFile(File(repository.getWorkTree(), file.name)), equalTo(String(file.data, CharsetToolkit.UTF8_CHARSET)))
     compareFiles(repository.getWorkTree(), remoteRepository!!, PathUtilRt.getFileName(file.name))
   }
-
-  data class FileInfo (val name: String, val data: ByteArray)
-
+  
   private fun createLocalRepositoryAndCommit(remoteBranchName: String?): FileInfo {
     remoteRepository = createFileRemote(remoteBranchName)
     repositoryManager.setUpstream(remoteRepository!!.getAbsolutePath(), remoteBranchName)
