@@ -54,10 +54,10 @@ public class CompositeElement extends TreeElement {
   private TreeElement firstChild = null;
   private TreeElement lastChild = null;
 
-  private volatile int myModificationsCount = 0;
+  private volatile int myModificationsCount;
   private volatile int myCachedLength = -1;
   private volatile int myHC = -1;
-  private volatile PsiElement myWrapper = null;
+  private volatile PsiElement myWrapper;
   private static final boolean ASSERT_THREADING = true;//DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
 
   public CompositeElement(@NotNull IElementType type) {
