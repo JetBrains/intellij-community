@@ -171,12 +171,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
     boolean hasSetuptools = false;
     boolean hasPip = false;
     try {
-      hasSetuptools = findPackage(SETUPTOOLS, false) != null;
+      hasSetuptools = findPackage(PACKAGE_SETUPTOOLS, false) != null;
     }
     catch (PyExternalProcessException ignored) {
     }
     try {
-      hasPip = findPackage(PIP, false) != null;
+      hasPip = findPackage(PACKAGE_PIP, false) != null;
     }
     catch (PyExternalProcessException ignored) {
     }
