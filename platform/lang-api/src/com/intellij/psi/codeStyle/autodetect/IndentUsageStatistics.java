@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi.codeStyle.autodetect;
 
-package com.intellij.psi.impl.cache.impl.id;
+public interface IndentUsageStatistics {
 
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileContent;
+  int getTotalLinesWithLeadingTabs();
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Jan 16, 2008
- */
-public abstract class FileTypeIdIndexer implements DataIndexer<IdIndexEntry, Integer, FileContent> {
-  public int getVersion() {
-    return 1;
-  }
+  int getTotalLinesWithLeadingSpaces();
+
+  IndentUsageInfo getKMostUsedIndentInfo(int k);
+
+  int getTotalIndentSizesDetected();
+
+  int getTimesIndentUsed(int indent);
+
 }

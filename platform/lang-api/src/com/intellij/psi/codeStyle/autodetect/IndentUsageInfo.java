@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi.codeStyle.autodetect;
 
-package com.intellij.psi.impl.cache.impl.id;
+public class IndentUsageInfo {
+  private final int indentSize;
+  private final int timesUsed;
 
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileContent;
+  public IndentUsageInfo(int indentSize, int timesUsed) {
+    this.indentSize = indentSize;
+    this.timesUsed = timesUsed;
+  }
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Jan 16, 2008
- */
-public abstract class FileTypeIdIndexer implements DataIndexer<IdIndexEntry, Integer, FileContent> {
-  public int getVersion() {
-    return 1;
+  public int getIndentSize() {
+    return indentSize;
+  }
+
+  public int getTimesUsed() {
+    return timesUsed;
+  }
+
+  @Override
+  public String toString() {
+    return "indent: " + indentSize + ", used " + timesUsed;
   }
 }
