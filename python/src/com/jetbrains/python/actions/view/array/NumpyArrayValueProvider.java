@@ -15,11 +15,16 @@
  */
 package com.jetbrains.python.actions.view.array;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
@@ -63,17 +68,16 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     private int nextRow = 0;
     private String myDtype;
 
-    public NumpyArrayPresentation(String slice, String name) {
-      mySlice = slice;
-      myArrayName = name;
-    }
-
     public NumpyArrayPresentation(String name) {
       myArrayName = name;
     }
 
     public NumpyArrayPresentation getInstance() {
       return this;
+    }
+
+    public String getName() {
+      return myArrayName;
     }
 
     public int[] getShape() {
@@ -123,10 +127,10 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
           myComponent.setErrorSpinnerText(errorMessage);
         }
       };
-      fillShape(stop, callback);
+      fillShape(callback);
     }
 
-    public void fillShape(final boolean stop, XDebuggerEvaluator.XEvaluationCallback callback) {
+    public void fillShape(XDebuggerEvaluator.XEvaluationCallback callback) {
       String evalShapeCommand = myArrayName + ".shape";
       myEvaluator.evaluate(evalShapeCommand, callback, null);
     }
@@ -223,14 +227,13 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       XDebuggerTreeListener treeListener = new XDebuggerTreeListener() {
         @Override
         public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
-          return;
         }
 
         @Override
         public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
           String fullName = ((XValueNodeImpl)node).getName();
           int row = 0;
-          if (fullName.contains("[")) {
+          if (fullName != null && fullName.contains("[")) {
             row = Integer.parseInt(fullName.substring(fullName.lastIndexOf('[') + 1, fullName.length() - 2));
           }
           if (myData[row][0] == null) {
@@ -292,7 +295,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
             presentation += "[0:" + myShape[1] + "]";
           }
           else {
-            presentation += "[0:" + myShape[myShape.length - 2] + "][0:" + myShape[myShape.length - 1] + "]";
+            presentation += "[0:" + myShape[myShape.length - 2] + "]";
           }
         }
       }
@@ -341,12 +344,86 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
 
     DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
     myTable.setModel(model);
-    myTable.setDefaultEditor(myTable.getColumnClass(0), new ArrayTableCellEditor(myProject));
+    myTable.setDefaultEditor(myTable.getColumnClass(0), new ArrayTableCellEditor(myProject) {
+
+      private String getCellSlice() {
+        String expression = myLastPresentation.getSlice();
+        if (myTable.getRowCount() == 1) {
+          expression += "[" + myTable.getSelectedColumn() + "]";
+        }
+        else {
+          expression += "[" + myTable.getSelectedRow() + "][" + myTable.getSelectedColumn() + "]";
+        }
+        return expression;
+      }
+
+      private String changeValExpression() {
+        return getCellSlice() + " = " + myEditor.getDocument().getText();
+      }
+
+      @Override
+      public void doOKAction() {
+
+        myEvaluator.evaluate(changeValExpression(), new XDebuggerEvaluator.XEvaluationCallback() {
+          @Override
+          public void evaluated(@NotNull XValue result) {
+            AppUIUtil.invokeOnEdt(new Runnable() {
+              @Override
+              public void run() {
+                XDebuggerTree tree = ((XValueNodeImpl)myBaseNode).getTree();
+                final XDebuggerTreeState treeState = XDebuggerTreeState.saveState(tree);
+                tree.rebuildAndRestore(treeState);
+              }
+            });
+
+            XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
+              @Override
+              public void evaluated(@NotNull XValue value) {
+
+                //todo: compute presentation and work with
+                String text = ((PyDebugValue)value).getValue();
+                final String corrected;
+                if (!isNumeric()) {
+                  if (!text.startsWith("\\\'") && !text.startsWith("\\\"")) {
+                    corrected = "\'" + text + "\'";
+                  }
+                  else {
+                    corrected = text;
+                  }
+                }
+                else {
+                  corrected = text;
+                }
+
+                new WriteCommandAction(null) {
+                  protected void run(@NotNull Result result) throws Throwable {
+                    myEditor.getDocument().setText(corrected);
+                  }
+                }.execute();
+                lastValue = corrected;
+              }
+
+              @Override
+              public void errorOccurred(@NotNull String errorMessage) {
+              }
+            };
+
+            myEvaluator.evaluate(getCellSlice(), callback, null);
+          }
+
+          @Override
+          public void errorOccurred(@NotNull String errorMessage) {
+            myComponent.setErrorSpinnerText(errorMessage);
+          }
+        }, null);
+        super.doOKAction();
+      }
+    });
     enableColor(data);
     myComponent.getTextField().setText(myLastPresentation.getSlice());
   }
 
-  private String[] range(int min, int max) {
+  private static String[] range(int min, int max) {
     String[] array = new String[max - min + 1];
     for (int i = min; i <= max; i++) {
       array[i] = Integer.toString(i);
@@ -360,9 +437,9 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       double max = Double.MIN_VALUE;
       if (data.length > 0) {
         try {
-          for (int i = 0; i < data.length; i++) {
+          for (Object[] aData : data) {
             for (int j = 0; j < data[0].length; j++) {
-              double d = Double.parseDouble(data[i][j].toString());
+              double d = Double.parseDouble(aData[j].toString());
               min = min > d ? d : min;
               max = max < d ? d : max;
             }
@@ -384,25 +461,5 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       myComponent.getColored().setSelected(false);
       myComponent.getColored().setVisible(false);
     }
-  }
-
-  public void refreshTable(final NumpyArrayPresentation presentation) {
-
-    if (presentation.getSlice() != null) {
-      presentation.fillSliceShape(new XDebuggerEvaluator.XEvaluationCallback() {
-        @Override
-        public void evaluated(@NotNull XValue result) {
-          refreshTable(presentation);
-        }
-
-        @Override
-        public void errorOccurred(@NotNull String errorMessage) {
-          myComponent.setErrorSpinnerText(errorMessage);
-        }
-      });
-      return;
-    }
-
-    presentation.fillData(false);
   }
 }

@@ -26,8 +26,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 /**
-* @author amarch
-*/
+ * @author amarch
+ */
 class ArrayTableComponent extends JPanel {
   private JScrollPane myScrollPane;
   private JTextField myTextField;
@@ -42,7 +42,8 @@ class ArrayTableComponent extends JPanel {
     super(new GridBagLayout());
 
     myTextField = new JTextField();
-    myTextField.setToolTipText("Format");
+    myTextField.setToolTipText("Current slice");
+    myTextField.setEditable(false);
 
     myTable = new JBTable() {
       public boolean getScrollableTracksViewportWidth() {
@@ -73,12 +74,12 @@ class ArrayTableComponent extends JPanel {
     });
 
     myScrollPane = new JBScrollPane(myTable);
-    myScrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    myScrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
     JTable rowTable = new RowNumberTable(myTable);
     myScrollPane.setRowHeaderView(rowTable);
-    myScrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
+    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
                            rowTable.getTableHeader());
 
     add(myScrollPane,
@@ -116,10 +117,13 @@ class ArrayTableComponent extends JPanel {
   }
 
   public void setErrorSpinnerText(String message) {
+    //todo: Access to realized (ever shown) UI components
+    // should be done only from the AWT event dispatch thread,
+    // revalidate(), invalidate() & repaint() is ok from any thread
     setSpinnerText(message);
   }
 
-  public void setNotApplicableSpinner(XValueNodeImpl node){
+  public void setNotApplicableSpinner(XValueNodeImpl node) {
     setSpinnerText(NOT_APPLICABLE + node.getName());
   }
 }
