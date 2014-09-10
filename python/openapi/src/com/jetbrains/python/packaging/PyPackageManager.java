@@ -16,13 +16,11 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
@@ -47,8 +45,6 @@ public abstract class PyPackageManager {
   public abstract void install(@NotNull String requirementString) throws PyExternalProcessException;
   public abstract void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws PyExternalProcessException;
   public abstract void uninstall(@NotNull List<PyPackage> packages) throws PyExternalProcessException;
-  public abstract void showInstallationError(Project project, String title, String description);
-  public abstract void showInstallationError(Component owner, String title, String description);
   public abstract void refresh();
   @NotNull
   public abstract String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws PyExternalProcessException;

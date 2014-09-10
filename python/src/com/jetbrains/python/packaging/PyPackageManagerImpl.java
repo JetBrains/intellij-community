@@ -25,7 +25,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -48,7 +47,6 @@ import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
@@ -61,11 +59,9 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author vlan
@@ -662,16 +658,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return packages;
   }
 
-
-  @Override
-  public void showInstallationError(Project project, String title, String description) {
-    PackagesNotificationPanel.showError(project, title, description);
-  }
-
-  @Override
-  public void showInstallationError(Component owner, String title, String description) {
-    PackagesNotificationPanel.showError(owner, title, description);
-  }
 
   private class MySdkRootWatcher extends BulkFileListener.Adapter {
     @Override

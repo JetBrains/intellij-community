@@ -133,7 +133,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         if (!exceptions.isEmpty()) {
           final String firstLine = "Install Python packaging tools failed. ";
           final String description = PyPackageManagerUI.createDescription(exceptions, firstLine);
-          packageManager.showInstallationError(myProject, "Failed to install Python packaging tools", description);
+          PackagesNotificationPanel.showError(myProject, "Failed to install Python packaging tools", description);
         }
         packageManager.refresh();
         updatePackages(new PyPackageManagementService(myProject, sdk));
