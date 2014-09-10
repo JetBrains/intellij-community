@@ -112,8 +112,8 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
     configureByFile(getTestName(true) + ".java");
     Document document = getDocument(myFile);
     List<LineIndentInfo> lines = new LineIndentInfoBuilder(document.getCharsSequence()).build();
-    IndentUsageStatistics statistics = new IndentUsageStatistics(lines);
-    return statistics.getMaxUsedIndentInfo(0);
+    IndentUsageStatistics statistics = new IndentUsageStatisticsImpl(lines);
+    return statistics.getKMostUsedIndentInfo(0);
   }
 
   private static void doTestLineToIndentMapping(@NotNull CharSequence text, int... spacesForLine) {

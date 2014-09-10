@@ -50,7 +50,7 @@ public class IndentOptionsDetector {
 
     if (myDocument != null) {
       List<LineIndentInfo> linesInfo = new LineIndentInfoBuilder(myDocument.getCharsSequence()).build();
-      IndentUsageStatistics stats = new IndentUsageStatistics(linesInfo);
+      IndentUsageStatistics stats = new IndentUsageStatisticsImpl(linesInfo);
       adjustIndentOptions(indentOptions, stats);
     }
 
@@ -80,18 +80,24 @@ public class IndentOptionsDetector {
   }
 
   private static int getPositiveIndentSize(@NotNull IndentUsageStatistics stats) {
-    IndentUsageInfo maxUsedIndentInfo = stats.getMaxUsedIndentInfo(0);
-    int maxIndentSize = maxUsedIndentInfo.getIndentSize();
-    if (maxIndentSize == 0) {
-      maxUsedIndentInfo = stats.getMaxUsedIndentInfo(1);
-      maxIndentSize = maxUsedIndentInfo.getIndentSize();
+    int totalIndentSizesDetected = stats.getTotalIndentSizesDetected();
+    if (totalIndentSizesDetected == 0) return -1;
+
+    IndentUsageInfo maxUsedIndentInfo = stats.getKMostUsedIndentInfo(0);
+    int maxUsedIndentSize = maxUsedIndentInfo.getIndentSize();
+
+    if (maxUsedIndentSize == 0) {
+      if (totalIndentSizesDetected < 1) return -1;
+
+      maxUsedIndentInfo = stats.getKMostUsedIndentInfo(1);
+      maxUsedIndentSize = maxUsedIndentInfo.getIndentSize();
     }
 
-    if (maxIndentSize <= MAX_INDENT_TO_DETECT) {
-      int totalUsagesWithoutZeroIndent = stats.getTotalLinesWithLeadingSpaces() - stats.getTimesUsedIndent(0);
+    if (maxUsedIndentSize <= MAX_INDENT_TO_DETECT) {
+      int totalUsagesWithoutZeroIndent = stats.getTotalLinesWithLeadingSpaces() - stats.getTimesIndentUsed(0);
       double usageRate = (double)maxUsedIndentInfo.getTimesUsed() / totalUsagesWithoutZeroIndent;
       if (usageRate > RATE_THRESHOLD) {
-        return maxIndentSize;
+        return maxUsedIndentSize;
       }
     }
 

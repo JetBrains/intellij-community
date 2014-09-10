@@ -15,126 +15,16 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Stack;
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntIntIterator;
-import org.jetbrains.annotations.NotNull;
+public interface IndentUsageStatistics {
 
-import java.util.Comparator;
-import java.util.List;
+  int getTotalLinesWithLeadingTabs();
 
-public class IndentUsageStatistics {
-  private static final Comparator<IndentUsageInfo> DECREASING_ORDER = new Comparator<IndentUsageInfo>() {
-    @Override
-    public int compare(@NotNull IndentUsageInfo o1, @NotNull IndentUsageInfo o2) {
-      return o1.getTimesUsed() < o2.getTimesUsed() ? 1 : o1.getTimesUsed() == o2.getTimesUsed() ? 0 : -1;
-    }
-  };
+  int getTotalLinesWithLeadingSpaces();
 
-  private List<LineIndentInfo> myLineInfos;
+  IndentUsageInfo getKMostUsedIndentInfo(int k);
 
-  private int myPreviousLineIndent;
-  private int myPreviousRelativeIndent;
+  int getTotalIndentSizesDetected();
 
-  private int myTotalLinesWithTabs = 0;
-  private int myTotalLinesWithWhiteSpaces = 0;
+  int getTimesIndentUsed(int indent);
 
-  private TIntIntHashMap myIndentToUsages = new TIntIntHashMap();
-  private List<IndentUsageInfo> myIndentUsages = ContainerUtil.newArrayList();
-  private Stack<IndentData> myParentIndents = ContainerUtil.newStack(new IndentData(0, 0));
-
-  public IndentUsageStatistics(@NotNull List<LineIndentInfo> lineInfos) {
-    myLineInfos = lineInfos;
-    buildIndentToUsagesMap();
-    myIndentUsages = toIndentUsageList(myIndentToUsages);
-    ContainerUtil.sort(myIndentUsages, DECREASING_ORDER);
-  }
-
-  @NotNull
-  private static List<IndentUsageInfo> toIndentUsageList(@NotNull TIntIntHashMap indentToUsages) {
-    List<IndentUsageInfo> indentUsageInfos = ContainerUtil.newArrayList();
-    TIntIntIterator it = indentToUsages.iterator();
-    while (it.hasNext()) {
-      it.advance();
-      indentUsageInfos.add(new IndentUsageInfo(it.key(), it.value()));
-    }
-    return indentUsageInfos;
-  }
-
-  public void buildIndentToUsagesMap() {
-    myPreviousLineIndent = 0;
-    myPreviousRelativeIndent = 0;
-
-    for (LineIndentInfo lineInfo : myLineInfos) {
-      if (lineInfo.isLineWithTabs()) {
-        myTotalLinesWithTabs++;
-      }
-      else if (lineInfo.isLineWithWhiteSpaceIndent()) {
-        handleWhiteSpaceIndent(lineInfo.getIndentSize());
-      }
-    }
-  }
-
-  @NotNull
-  private IndentData findParentIndent(int indent) {
-    while (myParentIndents.size() != 1 && myParentIndents.peek().indent > indent) {
-      myParentIndents.pop();
-    }
-    return myParentIndents.peek();
-  }
-
-  private void handleWhiteSpaceIndent(int currentIndent) {
-    int relativeIndent = currentIndent - myPreviousLineIndent;
-    if (relativeIndent < 0) {
-      IndentData indentData = findParentIndent(currentIndent);
-      myPreviousLineIndent = indentData.indent;
-      myPreviousRelativeIndent = indentData.relativeIndent;
-      relativeIndent = currentIndent - myPreviousLineIndent;
-    }
-
-    if (relativeIndent == 0) {
-      relativeIndent = myPreviousRelativeIndent;
-    }
-    else {
-      myParentIndents.push(new IndentData(currentIndent, relativeIndent));
-    }
-
-    increaseIndentUsage(relativeIndent);
-
-    myPreviousRelativeIndent = relativeIndent;
-    myPreviousLineIndent = currentIndent;
-    myTotalLinesWithWhiteSpaces++;
-  }
-
-  private void increaseIndentUsage(int relativeIndent) {
-    int timesUsed = myIndentToUsages.get(relativeIndent);
-    myIndentToUsages.put(relativeIndent, ++timesUsed);
-  }
-
-  public int getTotalLinesWithLeadingTabs() {
-    return myTotalLinesWithTabs;
-  }
-
-  public int getTotalLinesWithLeadingSpaces() {
-    return myTotalLinesWithWhiteSpaces;
-  }
-
-  public IndentUsageInfo getMaxUsedIndentInfo(int rank) {
-    return myIndentUsages.get(rank);
-  }
-
-  public int getTimesUsedIndent(int indent) {
-    return myIndentToUsages.get(indent);
-  }
-
-  private static class IndentData {
-    public final int indent;
-    public final int relativeIndent;
-
-    public IndentData(int indent, int relativeIndent) {
-      this.indent = indent;
-      this.relativeIndent = relativeIndent;
-    }
-  }
 }
