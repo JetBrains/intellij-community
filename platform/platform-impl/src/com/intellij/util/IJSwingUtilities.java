@@ -22,6 +22,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.OrphanGuardian;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
 
-public class IJSwingUtilities {
+public class IJSwingUtilities extends JBSwingUtilities {
   public static void invoke(Runnable runnable) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();

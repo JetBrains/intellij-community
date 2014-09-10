@@ -79,7 +79,13 @@ public class ExtractLightMethodObjectHandler {
                                                        final PsiFile file,
                                                        @NotNull final PsiCodeFragment fragment,
                                                        final String methodName) throws PrepareFailedException {
-    final PsiElement[] elements = fragment.getChildren();
+    PsiExpression expression = CodeInsightUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
+    final PsiElement[] elements;
+    if (expression != null) {
+      elements = new PsiElement[] {JavaPsiFacade.getElementFactory(project).createStatementFromText(expression.getText() + ";", expression)};
+    } else {
+      elements = CodeInsightUtil.findStatementsInRange(fragment, 0, fragment.getTextLength());
+    }
     if (elements.length == 0) {
       return null;
     }
@@ -96,12 +102,11 @@ public class ExtractLightMethodObjectHandler {
       CodeInsightUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
     //todo before this or super, not found etc
     final PsiElement anchor = RefactoringUtil.getParentStatement(originalAnchor, false);
-    final PsiElement[] elementsCopy = new PsiElement[elements.length];
     final PsiElement container = anchor.getParent();
-    elementsCopy[0] = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);
-    for (int i = 1; i < elements.length; i++) {
-      elementsCopy[i] = elementsCopy[i - 1].getNextSibling();
-    }
+    final PsiElement firstElementCopy = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);
+    final PsiElement[] elementsCopy = CodeInsightUtil.findStatementsInRange(copy,
+                                                                            firstElementCopy.getTextRange().getStartOffset(),
+                                                                            anchor.getTextRange().getStartOffset());
 
     final int start = elementsCopy[0].getTextRange().getStartOffset();
 

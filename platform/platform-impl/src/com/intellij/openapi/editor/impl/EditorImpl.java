@@ -81,10 +81,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
@@ -4106,7 +4103,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void processMouseDragged(@NotNull MouseEvent e) {
-    if (SwingUtilities.isRightMouseButton(e)) {
+    if (JBSwingUtilities.isRightMouseButton(e)) {
       return;
     }
 

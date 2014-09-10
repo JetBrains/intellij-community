@@ -19,7 +19,6 @@ import com.intellij.application.options.codeStyle.arrangement.match.ArrangementM
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
 import com.intellij.application.options.codeStyle.arrangement.match.EmptyArrangementRuleComponent;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/24/12 1:54 PM
  */
-public class AddArrangementRuleAction extends AnAction implements DumbAware {
+public class AddArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
   
   public AddArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.add.text"));
@@ -64,6 +63,7 @@ public class AddArrangementRuleAction extends AnAction implements DumbAware {
     }
     showEditor(control, rowToEdit);
     control.getSelectionModel().setSelectionInterval(rowToEdit, rowToEdit);
+    scrollRowToVisible(control, rowToEdit);
   }
 
   @NotNull
