@@ -51,24 +51,30 @@ public class QuickDocUtil {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        DocumentationManager documentationManager = DocumentationManager.getInstance(project);
-        DocumentationComponent component;
-        JBPopup hint = documentationManager.getDocInfoHint();
-        if (hint != null) {
-          component = (DocumentationComponent)((AbstractPopup)hint).getComponent();
-        }
-        else if (documentationManager.hasActiveDockedDocWindow()) {
-          ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DOCUMENTATION);
-          Content selectedContent = toolWindow == null ? null : toolWindow.getContentManager().getSelectedContent();
-          component = selectedContent == null ? null : (DocumentationComponent)selectedContent.getComponent();
-        }
-        else {
-          component = null;
-        }
+        DocumentationComponent component = getActiveDocComponent(project);
         if (component != null) {
           component.replaceText(documentation, element);
         }
       }
     });
+  }
+
+  @Nullable
+  public static DocumentationComponent getActiveDocComponent(@NotNull Project project) {
+    DocumentationManager documentationManager = DocumentationManager.getInstance(project);
+    DocumentationComponent component;
+    JBPopup hint = documentationManager.getDocInfoHint();
+    if (hint != null) {
+      component = (DocumentationComponent)((AbstractPopup)hint).getComponent();
+    }
+    else if (documentationManager.hasActiveDockedDocWindow()) {
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DOCUMENTATION);
+      Content selectedContent = toolWindow == null ? null : toolWindow.getContentManager().getSelectedContent();
+      component = selectedContent == null ? null : (DocumentationComponent)selectedContent.getComponent();
+    }
+    else {
+      component = null;
+    }
+    return component;
   }
 }
