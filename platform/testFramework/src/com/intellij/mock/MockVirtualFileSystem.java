@@ -36,9 +36,8 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
     path = path.replace(File.separatorChar, '/');
     path = path.replace('/', ':');
     if (StringUtil.startsWithChar(path, ':')) path = path.substring(1);
-    String[] components = path.split(":");
     MyVirtualFile file = myRoot;
-    for (String component : components) {
+    for (String component : StringUtil.split(path, ":")) {
       file = file.getOrCreate(component);
     }
     return file;
