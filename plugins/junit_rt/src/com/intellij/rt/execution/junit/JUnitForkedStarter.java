@@ -106,32 +106,23 @@ public class JUnitForkedStarter {
         final String packageName = perDirReader.readLine();
         String workingDir;
         while ((workingDir = perDirReader.readLine()) != null) {
+          final String classpath = perDirReader.readLine();
           try {
-            File tempFile = File.createTempFile("idea_junit", ".tmp");
-            tempFile.deleteOnExit();
-
-            final FileOutputStream writer = new FileOutputStream(tempFile);
-
-            final String classpath = perDirReader.readLine();
 
             List classNames = new ArrayList();
-            try {
-              final int classNamesSize = Integer.parseInt(perDirReader.readLine());
-              writer.write((packageName + ", working directory: \'" + workingDir + "\'\n").getBytes("UTF-8")); //instead of package name
-              writer.write("\n".getBytes("UTF-8")); //category
-              for (int i = 0; i < classNamesSize; i++) {
-                String className = perDirReader.readLine();
-                if (className == null) {
-                  System.err.println("Class name is expected. Working dir: " + workingDir);
-                  return -1;
-                }
-                classNames.add(className);
-                writer.write((className + "\n").getBytes("UTF-8"));
+            final int classNamesSize = Integer.parseInt(perDirReader.readLine());
+            for (int i = 0; i < classNamesSize; i++) {
+              String className = perDirReader.readLine();
+              if (className == null) {
+                System.err.println("Class name is expected. Working dir: " + workingDir);
+                return -1;
               }
+              classNames.add(className);
             }
-            finally {
-              writer.close();
-            }
+
+            File tempFile = File.createTempFile("idea_junit", ".tmp");
+            tempFile.deleteOnExit();
+            JUnitStarter.printClassesList(classNames, packageName + ", working directory: \'" + workingDir + "\'", "", tempFile);
 
             final Object rootDescriptor = findByClassName(testRunner, (String)classNames.get(0), description);
             final int childResult;
