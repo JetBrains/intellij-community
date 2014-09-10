@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.8.7</version>
+  <version>0.9.0</version>
 
   <idea-version since-build="138.00"/>
 
@@ -172,6 +172,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+			<li>0.9.0
+				<ol>
+				    <li>Fixed #XX: ...</li>
+				</ol>
+			</li>
 		<li>0.8.7
 				<ol>
 				    <li>Fixed issue 104(on GoogleCode):	Intellij reports unused field with @Getter and @Setter</li>
