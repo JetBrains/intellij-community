@@ -16,26 +16,35 @@
 package com.intellij.lang.customFolding;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.lang.Language;
+import com.intellij.lang.folding.*;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class GotoCustomRegionAction extends AnAction implements DumbAware {
+public class GotoCustomRegionAction extends AnAction implements DumbAware, PopupAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getProject();
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
@@ -52,14 +61,13 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware {
         new Runnable() {
           @Override
           public void run() {
-            GotoCustomRegionDialog dialog = new GotoCustomRegionDialog(project, editor);
-            dialog.show();
-            if (dialog.isOK()) {
-              PsiElement navigationElement = dialog.getNavigationElement();
-              if (navigationElement != null) {
-                navigateTo(editor, navigationElement);
-                IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-              }
+            Collection<FoldingDescriptor> foldingDescriptors = getCustomFoldingDescriptors(editor, project);
+            if (foldingDescriptors.size() > 0) {
+              CustomFoldingRegionsPopup regionsPopup = new CustomFoldingRegionsPopup(foldingDescriptors, editor, project);
+              regionsPopup.show();
+            }
+            else {
+              notifyCustomRegionsUnavailable(editor, project);
             }
           }
         },
@@ -71,7 +79,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setText("Custom Region...");
+    presentation.setText(IdeBundle.message("goto.custom.region.menu.item"));
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     final Project project = e.getProject();
     boolean isAvailable = editor != null && project != null;
@@ -79,13 +87,49 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware {
     presentation.setVisible(isAvailable);
   }
 
-  private static void navigateTo(Editor editor, PsiElement element) {
-    int offset = element.getTextRange().getStartOffset();
-    if (offset >= 0 && offset < editor.getDocument().getTextLength()) {
-      editor.getCaretModel().removeSecondaryCarets();
-      editor.getCaretModel().moveToOffset(offset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-      editor.getSelectionModel().removeSelection();
+  @NotNull
+  private static Collection<FoldingDescriptor> getCustomFoldingDescriptors(@NotNull Editor editor, @NotNull Project project) {
+    Set<FoldingDescriptor> foldingDescriptors = new HashSet<FoldingDescriptor>();
+    final Document document = editor.getDocument();
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    PsiFile file = documentManager != null ? documentManager.getPsiFile(document) : null;
+    if (file != null) {
+      final FileViewProvider viewProvider = file.getViewProvider();
+      for (final Language language : viewProvider.getLanguages()) {
+        final PsiFile psi = viewProvider.getPsi(language);
+        final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
+        if (psi != null) {
+          for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptors(foldingBuilder, psi, document, false)) {
+            CustomFoldingBuilder customFoldingBuilder = getCustomFoldingBuilder(foldingBuilder, descriptor);
+            if (customFoldingBuilder != null) {
+              if (customFoldingBuilder.isCustomRegionStart(descriptor.getElement())) {
+                foldingDescriptors.add(descriptor);
+              }
+            }
+          }
+        }
+      }
     }
+    return foldingDescriptors;
+  }
+
+  @Nullable
+  private static CustomFoldingBuilder getCustomFoldingBuilder(FoldingBuilder builder, FoldingDescriptor descriptor) {
+    if (builder instanceof CustomFoldingBuilder) return (CustomFoldingBuilder)builder;
+    FoldingBuilder originalBuilder = descriptor.getElement().getUserData(CompositeFoldingBuilder.FOLDING_BUILDER);
+    if (originalBuilder instanceof CustomFoldingBuilder) return (CustomFoldingBuilder)originalBuilder;
+    return null;
+  }
+
+  private static void notifyCustomRegionsUnavailable(@NotNull Editor editor, @NotNull Project project) {
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    Balloon balloon = popupFactory
+      .createHtmlTextBalloonBuilder(IdeBundle.message("goto.custom.region.message.unavailable"), MessageType.INFO, null)
+      .setFadeoutTime(2000)
+      .setHideOnClickOutside(true)
+      .setHideOnKeyOutside(true)
+      .createBalloon();
+    Disposer.register(project, balloon);
+    balloon.show(popupFactory.guessBestPopupLocation(editor), Balloon.Position.above);
   }
 }
