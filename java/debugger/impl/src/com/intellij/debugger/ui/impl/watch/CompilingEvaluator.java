@@ -28,9 +28,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
@@ -50,15 +54,13 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   private final TextWithImports myText;
   private final PsiCodeFragment myCodeFragment;
   private final PsiElement myPsiContext;
-  private final ExtractLightMethodObjectHandler.ExtractedData myData;
+  @NotNull private final ExtractLightMethodObjectHandler.ExtractedData myData;
   private final EvaluationDescriptor myDescriptor;
-
-  public static Key<ExtractLightMethodObjectHandler.ExtractedData> COMPILING_EVALUATOR_DATA = new Key<ExtractLightMethodObjectHandler.ExtractedData>("COMPILING_EVALUATOR_DATA");
 
   public CompilingEvaluator(TextWithImports text,
                             PsiCodeFragment codeFragment,
                             PsiElement context,
-                            ExtractLightMethodObjectHandler.ExtractedData data,
+                            @NotNull ExtractLightMethodObjectHandler.ExtractedData data,
                             EvaluationDescriptor descriptor) {
     myText = text;
     myCodeFragment = codeFragment;

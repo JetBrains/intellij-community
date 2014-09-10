@@ -34,11 +34,9 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
@@ -89,12 +87,26 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
         });
       }
       catch (UnsupportedExpressionException ex) {
-        final ExtractLightMethodObjectHandler.ExtractedData data = getUserData(CompilingEvaluator.COMPILING_EVALUATOR_DATA);
-        if (Registry.is("debugger.compiling.evaluator") && data != null) {
+        if (Registry.is("debugger.compiling.evaluator")) {
           evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
             public ExpressionEvaluator compute() throws EvaluateException {
               final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
-              return new CompilingEvaluator(getEvaluationText(), getEvaluationCode(thisEvaluationContext), psiContext, data, EvaluationDescriptor.this);
+              if (psiContext == null) {
+                return null;
+              }
+              PsiFile psiFile = psiContext.getContainingFile();
+              PsiCodeFragment fragment = createCodeFragment(psiContext);
+              try {
+                ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(myProject,
+                                                                     psiFile, fragment, CompilingEvaluator.getGeneratedClassName());
+                if (data != null) {
+                  return new CompilingEvaluator(getEvaluationText(), getEvaluationCode(thisEvaluationContext), psiContext, data,
+                                                EvaluationDescriptor.this);
+                }
+              }
+              catch (PrepareFailedException ignored) {
+              }
+              return null;
             }
           });
         }
