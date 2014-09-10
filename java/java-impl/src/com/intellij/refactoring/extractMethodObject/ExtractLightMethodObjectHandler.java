@@ -145,33 +145,27 @@ public class ExtractLightMethodObjectHandler {
     extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
 
     final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = extractMethodObjectProcessor.getExtractProcessor();
-    if (extractProcessor.prepare() && CommonRefactoringUtil
-      .checkReadOnlyStatus(project, extractProcessor.getTargetClass().getContainingFile())) {
+    if (extractProcessor.prepare()) {
       if (extractProcessor.showDialog()) {
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          public void run() {
-            try {
-              extractProcessor.doExtract();
-
-              final UsageInfo[] usages = extractMethodObjectProcessor.findUsages();
-              extractMethodObjectProcessor.performRefactoring(usages);
-              extractMethodObjectProcessor.runChangeSignature();
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-            if (extractMethodObjectProcessor.isCreateInnerClass()) {
-              extractMethodObjectProcessor.changeInstanceAccess(project);
-            }
-            final PsiElement method = extractMethodObjectProcessor.getMethod();
-            LOG.assertTrue(method != null);
-            method.delete();
-          }
-        }, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME);
+        try {
+          extractProcessor.doExtract();
+          final UsageInfo[] usages = extractMethodObjectProcessor.findUsages();
+          extractMethodObjectProcessor.performRefactoring(usages);
+          extractMethodObjectProcessor.runChangeSignature();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+        if (extractMethodObjectProcessor.isCreateInnerClass()) {
+          extractMethodObjectProcessor.changeInstanceAccess(project);
+        }
+        final PsiElement method = extractMethodObjectProcessor.getMethod();
+        LOG.assertTrue(method != null);
+        method.delete();
       }
+    } else {
+      return null;
     }
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final String generatedCall = copy.getText().substring(start, outStatement.getTextOffset());
     return new ExtractedData(generatedCall,

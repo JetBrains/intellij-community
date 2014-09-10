@@ -89,7 +89,7 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   protected void updateToolWindow(@Nullable DesignerEditorPanelFacade designer) {
     myToolWindowPanel.loadPalette((DesignerEditorPanel)designer);
 
-    if (myToolWindowPanel.isEmpty()) {
+    if (designer == null) {
       myToolWindow.setAvailable(false, null);
     }
     else {
@@ -116,7 +116,7 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  protected LightToolWindow createContent(DesignerEditorPanelFacade designer) {
+  protected LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer) {
     PalettePanel palettePanel = new PalettePanel();
     palettePanel.loadPalette((DesignerEditorPanel)designer);
 

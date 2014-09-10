@@ -281,7 +281,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       return myEditor;
     }
     else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
-      return UIDesignerToolWindowManager.getInstance(myProject).getActiveFormFileEditor();
+      GuiEditor designer = DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
+      return designer == null ? null : designer.getEditor();
     }
     else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;

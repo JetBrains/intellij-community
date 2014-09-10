@@ -27,8 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.NonCancelableSection;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Queryable;
@@ -323,7 +322,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       synchronized (myMirrorLock) {
         mirrorTreeElement = myMirrorFileElement;
         if (mirrorTreeElement == null) {
-          VirtualFile file = getVirtualFile();
+          final VirtualFile file = getVirtualFile();
           CharSequence mirrorText = ClassFileDecompiler.decompileText(file);
 
           String ext = JavaFileType.INSTANCE.getDefaultExtension();
@@ -335,16 +334,18 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
 
           // IMPORTANT: do not take lock too early - FileDocumentManager.saveToString() can run write action
-          NonCancelableSection section = ProgressIndicatorProvider.startNonCancelableSectionIfSupported();
-          try {
-            setMirror(mirrorTreeElement);
-          }
-          catch (InvalidMirrorException e) {
-            LOG.error(file.getPath(), wrapException(e, file));
-          }
-          finally {
-            section.done();
-          }
+          final TreeElement finalMirrorTreeElement = mirrorTreeElement;
+          ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                setMirror(finalMirrorTreeElement);
+              }
+              catch (InvalidMirrorException e) {
+                LOG.error(file.getPath(), wrapException(e, file));
+              }
+            }
+          });
 
           myMirrorFileElement = mirrorTreeElement;
         }

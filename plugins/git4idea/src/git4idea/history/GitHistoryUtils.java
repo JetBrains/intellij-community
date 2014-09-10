@@ -841,7 +841,7 @@ public class GitHistoryUtils {
     if (factory == null) {
       return Collections.emptyList();
     }
-    return loadDetails(project, root, true, true, new NullableFunction<GitLogRecord, GitCommit>() {
+    return loadDetails(project, root, false, true, new NullableFunction<GitLogRecord, GitCommit>() {
       @Override
       @Nullable
       public GitCommit fun(GitLogRecord record) {
