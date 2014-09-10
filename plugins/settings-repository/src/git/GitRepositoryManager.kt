@@ -153,11 +153,11 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   override fun pull(indicator: ProgressIndicator) {
-    pull(this, indicator)
+    Pull(this, indicator).pull()
   }
 
   override fun reset(indicator: ProgressIndicator) {
-    reset(this, indicator)
+    Reset(this, indicator).reset()
   }
 }
 

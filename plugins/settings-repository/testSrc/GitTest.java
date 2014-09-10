@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.settingsRepository;
 
+import com.intellij.mock.MockVirtualFileSystem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -10,12 +11,15 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtilRt;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.IndexDiff;
@@ -30,7 +34,9 @@ import org.junit.*;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Comparator;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -53,6 +59,8 @@ public class GitTest {
     Logger.setFactory(TestLoggerFactory.class);
     PlatformTestCase.initPlatformLangPrefix();
   }
+
+  private Git remoteRepositoryApi;
 
   @BeforeClass
   public static void setIcsDir() throws IOException {
@@ -90,6 +98,7 @@ public class GitTest {
   @After
   public void tearDown() throws Exception {
     remoteRepository = null;
+    remoteRepositoryApi = null;
 
     IcsManager.OBJECT$.getInstance().setRepositoryActive(false);
     try {
@@ -126,8 +135,8 @@ public class GitTest {
 
   @Test
   public void add() throws IOException {
-    byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "encoding.xml"));
-    String addedFile = "$APP_CONFIG$/encoding.xml";
+    byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "remote.xml"));
+    String addedFile = "$APP_CONFIG$/remote.xml";
     getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, false);
 
     IndexDiff diff = GitPackage.computeIndexDiff(getRepositoryManager().getRepository());
@@ -142,10 +151,10 @@ public class GitTest {
 
   @Test
   public void addSeveral() throws IOException {
-    byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "encoding.xml"));
-    byte[] data2 = FileUtil.loadFileBytes(new File(getTestDataPath(), "crucibleConnector.xml"));
-    String addedFile = "$APP_CONFIG$/encoding.xml";
-    String addedFile2 = "$APP_CONFIG$/crucibleConnector.xml";
+    byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "remote.xml"));
+    byte[] data2 = FileUtil.loadFileBytes(new File(getTestDataPath(), "local.xml"));
+    String addedFile = "$APP_CONFIG$/remote.xml";
+    String addedFile2 = "$APP_CONFIG$/local.xml";
     getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, false);
     getProvider().saveContent(addedFile2, data2, data2.length, RoamingType.PER_USER, false);
 
@@ -161,13 +170,13 @@ public class GitTest {
 
   @Test
   public void delete() throws IOException {
-    byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "encoding.xml"));
+    byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "remote.xml"));
     delete(data, false);
     delete(data, true);
   }
 
   private static void delete(byte[] data, boolean directory) throws IOException {
-    String addedFile = "$APP_CONFIG$/encoding.xml";
+    String addedFile = "$APP_CONFIG$/remote.xml";
     getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, true);
     getProvider().delete(directory ? "$APP_CONFIG$" : addedFile, RoamingType.PER_USER);
 
@@ -231,7 +240,7 @@ public class GitTest {
     repositoryManager.commit(progressIndicator);
     repositoryManager.pull(progressIndicator);
     assertThat(FileUtil.loadFile(new File(getRepository().getWorkTree(), file.first)), equalTo(new String(file.second, CharsetToolkit.UTF8_CHARSET)));
-    compareFiles(getRepository().getWorkTree(), remoteRepository, "crucibleConnector.xml");
+    compareFiles(getRepository().getWorkTree(), remoteRepository, PathUtilRt.getFileName(file.first));
   }
 
   @NotNull
@@ -240,38 +249,79 @@ public class GitTest {
     remoteRepository = createFileRemote(remoteBranchName);
     repositoryManager.setUpstream(remoteRepository.getAbsolutePath(), remoteBranchName);
 
-    byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "crucibleConnector.xml"));
-    String addedFile = "$APP_CONFIG$/crucibleConnector.xml";
-    getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, false);
+    return addAndCommit("$APP_CONFIG$/local.xml");
+  }
 
-    repositoryManager.commit(new EmptyProgressIndicator());
-    return Pair.create(addedFile, data);
+  private static Pair<String, byte[]> addAndCommit(@NotNull String path) throws Exception {
+    byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), PathUtilRt.getFileName(path)));
+    getProvider().saveContent(path, data, data.length, RoamingType.PER_USER, false);
+    getRepositoryManager().commit(new EmptyProgressIndicator());
+    return Pair.create(path, data);
+  }
+
+  // never was merged. we reset using "merge with strategy "theirs", so, we must test - what's happen if it is not first merge? - see next test
+  @Test
+  public void resetToTheirsIfFirstMerge() throws Exception {
+    createLocalRepositoryAndCommit(null);
+    sync(SyncType.RESET_TO_THEIRS);
+    MockVirtualFileSystem fs = new MockVirtualFileSystem();
+    fs.findFileByPath("$APP_CONFIG$/remote.xml");
+    compareFiles(getRepository().getWorkTree(), remoteRepository, fs.findFileByPath(""));
   }
 
   @Test
-  public void resetToTheirs() throws Exception {
+  public void resetToTheirsISecondMergeIsEmpty() throws Exception {
     createLocalRepositoryAndCommit(null);
+    sync(SyncType.MERGE);
+
+    /** we must not push to non-bare repository - but we do it in test (our sync merge equals to "pull&push"),
+     "
+     By default, updating the current branch in a non-bare repository
+     is denied, because it will make the index and work tree inconsistent
+     with what you pushed, and will require 'git reset --hard' to match the work tree to HEAD.
+     "
+     so, we do "git reset --hard"
+     */
+    remoteRepositoryApi.reset().setMode(ResetCommand.ResetType.HARD).call();
+
+    MockVirtualFileSystem fs = new MockVirtualFileSystem();
+    fs.findFileByPath("$APP_CONFIG$/local.xml");
+    fs.findFileByPath("$APP_CONFIG$/remote.xml");
+    compareFiles(getRepository().getWorkTree(), remoteRepository, fs.findFileByPath(""));
+
+    addAndCommit("_mac/local2.xml");
+    sync(SyncType.RESET_TO_THEIRS);
+
+    compareFiles(getRepository().getWorkTree(), remoteRepository, fs.findFileByPath(""));
+  }
+
+  private void sync(@NotNull final SyncType syncType) throws InterruptedException, InvocationTargetException {
     SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {
         try {
-          IcsManager.OBJECT$.getInstance().sync(SyncType.RESET_TO_THEIRS, fixture.getProject());
+          IcsManager.OBJECT$.getInstance().sync(syncType, fixture.getProject());
         }
         catch (Exception e) {
           throw new AssertionError(e);
         }
       }
     });
-
-    compareFiles(getRepository().getWorkTree(), remoteRepository);
   }
 
   private static void compareFiles(@NotNull File local, @NotNull File remote, String... localExcludes) throws IOException {
+    compareFiles(local, remote, null, localExcludes);
+  }
+
+  private static void compareFiles(@NotNull File local, @NotNull File remote, @Nullable VirtualFile expected, String... localExcludes) throws IOException {
     String[] localFiles = local.list();
     String[] remoteFiles = remote.list();
 
-    assert localFiles != null;
-    assert remoteFiles != null;
+    assertThat(localFiles, notNullValue());
+    assertThat(remoteFiles, notNullValue());
+
+    localFiles = ArrayUtil.remove(localFiles, Constants.DOT_GIT);
+    remoteFiles = ArrayUtil.remove(remoteFiles, Constants.DOT_GIT);
 
     Arrays.sort(localFiles);
     Arrays.sort(remoteFiles);
@@ -283,18 +333,44 @@ public class GitTest {
     }
 
     assertThat(localFiles, equalTo(remoteFiles));
-    for (int i = 0, n = localFiles.length; i < n; i++) {
-      if (localFiles[i].equals(Constants.DOT_GIT)) {
-        continue;
-      }
 
+    VirtualFile[] expectedFiles;
+    if (expected == null) {
+      expectedFiles = null;
+    }
+    else {
+      assertThat(expected.isDirectory(), equalTo(true));
+      //noinspection UnsafeVfsRecursion
+      expectedFiles = expected.getChildren();
+      Arrays.sort(expectedFiles, new Comparator<VirtualFile>() {
+        @Override
+        public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
+
+      for (int i = 0, n = expectedFiles.length; i < n; i++) {
+        assertThat(localFiles[i], equalTo(expectedFiles[i].getName()));
+      }
+    }
+
+    for (int i = 0, n = localFiles.length; i < n; i++) {
       File localFile = new File(local, localFiles[i]);
       File remoteFile = new File(remote, remoteFiles[i]);
+      VirtualFile expectedFile;
+      if (expectedFiles == null) {
+        expectedFile = null;
+      }
+      else {
+        expectedFile = expectedFiles[i];
+        assertThat(expectedFile.isDirectory(), equalTo(localFile.isDirectory()));
+      }
+
       if (localFile.isFile()) {
         assertThat(FileUtil.loadFile(localFile), equalTo(FileUtil.loadFile(remoteFile)));
       }
       else {
-        compareFiles(localFile, remoteFile, localExcludes);
+        compareFiles(localFile, remoteFile, expectedFile, localExcludes);
       }
     }
   }
@@ -307,20 +383,20 @@ public class GitTest {
   @NotNull
   private File createFileRemote(@Nullable String branchName) throws IOException, GitAPIException {
     Repository repository = testWatcher.getRepository(ICS_DIR);
-    Git git = new Git(repository);
+    remoteRepositoryApi = new Git(repository);
 
     if (branchName != null) {
       // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
-      git.commit().setMessage("").call();
+      remoteRepositoryApi.commit().setMessage("").call();
 
-      git.checkout().setCreateBranch(true).setName(branchName).call();
+      remoteRepositoryApi.checkout().setCreateBranch(true).setName(branchName).call();
     }
 
-    String addedFile = "$APP_CONFIG$/encoding.xml";
+    String addedFile = "$APP_CONFIG$/remote.xml";
     File workTree = repository.getWorkTree();
-    FileUtil.copy(new File(getTestDataPath(), "encoding.xml"), new File(workTree, addedFile));
+    FileUtil.copy(new File(getTestDataPath(), "remote.xml"), new File(workTree, addedFile));
     GitPackage.edit(repository, new AddFile(addedFile));
-    git.commit().setMessage("").call();
+    remoteRepositoryApi.commit().setMessage("").call();
     return workTree;
   }
 }

@@ -17,6 +17,9 @@
   <item name='org.eclipse.jgit.lib.Config java.util.Set&lt;java.lang.String&gt; getSubsections(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.lib.Constants byte[] encode(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.lib.IndexDiff java.util.Set&lt;java.lang.String&gt; getAdded()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -54,6 +57,9 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.ObjectInserter newObjectInserter()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.ObjectReader newObjectReader()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.Ref peel(org.eclipse.jgit.lib.Ref)'>

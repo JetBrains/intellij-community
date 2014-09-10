@@ -2,6 +2,9 @@
   <item name='org.eclipse.jgit.internal.JGitText cannotPullOnARepoWithState'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.internal.JGitText fileModeNotSetForPath'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.internal.JGitText notAuthorized'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
