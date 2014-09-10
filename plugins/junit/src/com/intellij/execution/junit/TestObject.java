@@ -428,10 +428,14 @@ public abstract class TestObject implements JavaCommandLine {
   private void appendForkInfo(Executor executor) throws ExecutionException {
     final String forkMode = myConfiguration.getForkMode();
     if (Comparing.strEqual(forkMode, "none")) {
-      if (forkPerModule() && getRunnerSettings() != null) {
-        final String actionName = UIUtil.removeMnemonic(executor.getStartActionText());
-        throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
-                                   "Please specify single working directory, or change test scope to single module.");
+      if (forkPerModule()) {
+        if (getRunnerSettings() != null) {
+          final String actionName = UIUtil.removeMnemonic(executor.getStartActionText());
+          throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
+                                     "Please specify single working directory, or change test scope to single module.");
+        }
+      } else {
+        return;
       }
     } else if (getRunnerSettings() != null) {
       final String actionName = executor.getActionName();
