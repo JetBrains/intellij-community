@@ -112,6 +112,18 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "    }");
   }
 
+  public void testInnerClass() throws Exception {
+    doTest("   new In(2).foo()", "new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public void invoke() {\n" +
+           "            new In(2).foo()\n" +
+           "        }\n" +
+           "    }");
+  }
+
+
+
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();
