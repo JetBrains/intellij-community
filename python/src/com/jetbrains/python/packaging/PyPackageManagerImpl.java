@@ -116,6 +116,15 @@ public class PyPackageManagerImpl extends PyPackageManager {
     });
   }
 
+  private void installManagement() throws PyExternalProcessException {
+    if (!hasPackage(PACKAGE_SETUPTOOLS)) {
+      installManagement(SETUPTOOLS);
+    }
+    if (!hasPackage(PACKAGE_PIP)) {
+      installManagement(PIP);
+    }
+  }
+
   public void installManagement(@NotNull String name) throws PyExternalProcessException {
     final String helperPath = getHelperPath(name);
 
@@ -153,6 +162,15 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
+  private boolean hasPackage(@NotNull String name) {
+    try {
+      return findPackage(name, false) != null;
+    }
+    catch (PyExternalProcessException ignored) {
+      return false;
+    }
+  }
+
   PyPackageManagerImpl(@NotNull Sdk sdk) {
     mySdk = sdk;
     final Application app = ApplicationManager.getApplication();
@@ -168,21 +186,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void install(@NotNull String requirementString) throws PyExternalProcessException {
-    boolean hasSetuptools = false;
-    boolean hasPip = false;
-    try {
-      hasSetuptools = findPackage(PACKAGE_SETUPTOOLS, false) != null;
-    }
-    catch (PyExternalProcessException ignored) {
-    }
-    try {
-      hasPip = findPackage(PACKAGE_PIP, false) != null;
-    }
-    catch (PyExternalProcessException ignored) {
-    }
-
-    if (!hasSetuptools) installManagement(SETUPTOOLS);
-    if (!hasPip) installManagement(PIP);
+    installManagement();
     install(Collections.singletonList(PyRequirement.fromString(requirementString)), Collections.<String>emptyList());
   }
 
