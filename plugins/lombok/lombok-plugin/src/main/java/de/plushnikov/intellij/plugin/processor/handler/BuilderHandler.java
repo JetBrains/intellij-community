@@ -200,15 +200,15 @@ public class BuilderHandler {
   protected LombokLightClassBuilder createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiTypeParameterListOwner psiTypeParameterListOwner, @NotNull String builderClassName, @NotNull PsiAnnotation psiAnnotation) {
     final String builderClassQualifiedName = psiClass.getQualifiedName() + "." + builderClassName;
 
-    LombokLightClassBuilder innerClass = new LombokLightClassBuilder(psiClass.getProject(), builderClassName, builderClassQualifiedName)
+    final Project project = psiClass.getProject();
+    LombokLightClassBuilder innerClass = new LombokLightClassBuilder(project, builderClassName, builderClassQualifiedName)
         .withContainingClass(psiClass)
         .withNavigationElement(psiAnnotation)
         .withParameterTypes(psiTypeParameterListOwner.getTypeParameterList())
         .withModifier(PsiModifier.PUBLIC)
         .withModifier(PsiModifier.STATIC);
 
-    innerClass
-        .withConstructors(createConstructors(innerClass, psiAnnotation));
+    innerClass.withConstructors(createConstructors(innerClass, psiAnnotation));
 
     return innerClass;
   }

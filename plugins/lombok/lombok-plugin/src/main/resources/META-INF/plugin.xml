@@ -174,7 +174,7 @@
 		<ul>
 			<li>0.9.0
 				<ol>
-				    <li>Fixed #XX: ...</li>
+				    <li>Fixed issue 106(on GoogleCode): Static methods annotated with @Builder are not recognized</li>
 				</ol>
 			</li>
 		<li>0.8.7
