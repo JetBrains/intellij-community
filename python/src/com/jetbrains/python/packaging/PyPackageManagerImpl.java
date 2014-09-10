@@ -171,12 +171,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
     boolean hasSetuptools = false;
     boolean hasPip = false;
     try {
-      hasSetuptools = findInstalledPackage(SETUPTOOLS) != null;
+      hasSetuptools = findInstalledPackage(SETUPTOOLS, false) != null;
     }
     catch (PyExternalProcessException ignored) {
     }
     try {
-      hasPip = findInstalledPackage(PIP) != null;
+      hasPip = findInstalledPackage(PIP, false) != null;
     }
     catch (PyExternalProcessException ignored) {
     }
@@ -311,12 +311,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
         myDependenciesCache.put(name, value);
       }
     }
-  }
-
-  @Nullable
-  @Override
-  public PyPackage findInstalledPackage(String name) throws PyExternalProcessException {
-    return findInstalledPackage(name, false);
   }
 
   @Override
