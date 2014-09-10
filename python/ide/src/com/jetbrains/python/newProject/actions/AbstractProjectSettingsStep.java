@@ -324,7 +324,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         String warningText = frameworkName + " will be installed on selected interpreter";
         try {
           if (onlyWithCache && packageManager.cacheIsNotNull() || !onlyWithCache) {
-            final PyPackage pip = packageManager.findInstalledPackage("pip", false);
+            final PyPackage pip = packageManager.findPackage("pip", false);
             myInstallFramework = true;
             if (pip == null) {
               warningText = "pip and " + warningText;

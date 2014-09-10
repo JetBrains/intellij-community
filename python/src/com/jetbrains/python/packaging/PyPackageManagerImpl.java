@@ -171,12 +171,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
     boolean hasSetuptools = false;
     boolean hasPip = false;
     try {
-      hasSetuptools = findInstalledPackage(SETUPTOOLS, false) != null;
+      hasSetuptools = findPackage(SETUPTOOLS, false) != null;
     }
     catch (PyExternalProcessException ignored) {
     }
     try {
-      hasPip = findInstalledPackage(PIP, false) != null;
+      hasPip = findPackage(PIP, false) != null;
     }
     catch (PyExternalProcessException ignored) {
     }
@@ -315,7 +315,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   @Nullable
-  public PyPackage findInstalledPackage(String name, boolean cachedOnly) throws PyExternalProcessException {
+  public PyPackage findPackage(String name, boolean cachedOnly) throws PyExternalProcessException {
     final List<PyPackage> packages = getPackages(cachedOnly);
     if (packages != null) {
       for (PyPackage pkg : packages) {
@@ -334,7 +334,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   public boolean hasPip(boolean cachedOnly) {
     try {
-      return findInstalledPackage(PACKAGE_PIP, cachedOnly) != null;
+      return findPackage(PACKAGE_PIP, cachedOnly) != null;
     }
     catch (PyExternalProcessException e) {
       return false;

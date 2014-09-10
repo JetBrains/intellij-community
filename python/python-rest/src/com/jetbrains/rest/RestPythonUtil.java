@@ -49,7 +49,7 @@ public class RestPythonUtil {
         if (sdk != null) {
           PyPackageManager manager = PyPackageManager.getInstance(sdk);
           try {
-            final PyPackage sphinx = manager.findInstalledPackage("Sphinx", false);
+            final PyPackage sphinx = manager.findPackage("Sphinx", false);
             presentation.setEnabled(sphinx != null);
           }
           catch (PyExternalProcessException ignored) {
