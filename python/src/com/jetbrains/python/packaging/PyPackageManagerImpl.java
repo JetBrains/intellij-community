@@ -266,10 +266,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
-  public boolean cacheIsNotNull() {
-    return myPackagesCache != null;
-  }
-
   @Nullable
   public synchronized List<PyPackage> getPackages(boolean cachedOnly) throws PyExternalProcessException {
     if (cachedOnly) {

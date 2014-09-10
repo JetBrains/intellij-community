@@ -56,6 +56,4 @@ public abstract class PyPackageManager {
   public abstract List<PyRequirement> getRequirements(@NotNull Module module);
   @Nullable
   public abstract Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws PyExternalProcessException;
-  @Deprecated
-  public abstract boolean cacheIsNotNull();
 }
