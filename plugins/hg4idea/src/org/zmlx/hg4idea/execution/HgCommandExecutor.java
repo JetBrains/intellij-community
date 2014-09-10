@@ -49,7 +49,7 @@ import java.util.List;
  */
 
 public class HgCommandExecutor {
-  protected static final Logger LOG = Logger.getInstance(HgRemoteCommandExecutor.class.getName());
+  protected static final Logger LOG = Logger.getInstance(HgCommandExecutor.class.getName());
   private static final List<String> DEFAULT_OPTIONS = Arrays.asList("--config", "ui.merge=internal:merge");
 
   protected final Project myProject;
