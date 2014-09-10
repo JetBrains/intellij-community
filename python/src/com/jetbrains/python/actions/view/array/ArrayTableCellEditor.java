@@ -15,24 +15,29 @@
  */
 package com.jetbrains.python.actions.view.array;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 /**
-* @author amarch
-*/
+ * @author amarch
+ */
 class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor {
   Editor myEditor;
   Project myProject;
+  Object lastValue;
 
   public ArrayTableCellEditor(Project project) {
     super();
@@ -48,19 +53,29 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
     //myEditor = EditorFactoryImpl.getInstance().
     //  createEditor(PsiDocumentManager.getInstance(myProject).getDocument(fragment), myProject);
 
+    lastValue = value;
 
     myEditor =
-      EditorFactoryImpl.getInstance().createEditor(new DocumentImpl(value.toString()), myProject, PythonFileType.INSTANCE, false);
+      EditorFactory.getInstance().createEditor(new DocumentImpl(value.toString()), myProject, PythonFileType.INSTANCE, false);
 
 
     JComponent editorComponent = myEditor.getContentComponent();
 
-    editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
-    editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
+    //todo: handle ENTER with action not listener
+    editorComponent.addKeyListener(new KeyListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        doOKAction();
+      public void keyTyped(KeyEvent e) {
+      }
+
+      @Override
+      public void keyPressed(KeyEvent e) {
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
+          doOKAction();
+        }
       }
     });
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
@@ -80,11 +95,15 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
   }
 
   public void doOKAction() {
-    //todo: not performed
-    System.out.println("ok");
   }
 
   public void cancelEditing() {
-    System.out.println("esc");
+    new WriteCommandAction(null) {
+      protected void run(@NotNull Result result) throws Throwable {
+        myEditor.getDocument().setText(lastValue.toString());
+      }
+    }.execute();
+    myEditor.getComponent().repaint();
+    myEditor.getComponent().requestFocus();
   }
 }
