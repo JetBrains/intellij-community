@@ -177,7 +177,7 @@ public class MergeCalculatorTask extends BaseMergeTask implements
         return;
       }
       if (QuickMergeContentsVariants.all == result.getResultCode()) {
-        insertMergeAll(context);
+        context.next(getMergeAllTasks());
       }
       else {
         final List<CommittedChangeList> lists = result.getSelectedLists();

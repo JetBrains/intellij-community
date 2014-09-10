@@ -18,13 +18,17 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.CalledInAny;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
+import org.tmatesoft.svn.core.SVNURL;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,27 +45,41 @@ public abstract class BaseMergeTask extends TaskDescriptor {
                        @NotNull QuickMergeInteraction interaction, String name,
                        @NotNull Where where) {
     super(name, where);
+
     myMergeContext = mergeContext;
     myInteraction = interaction;
   }
 
-  protected void insertMergeAll(final ContinuationContext context) {
-    final List<TaskDescriptor> queue = new ArrayList<TaskDescriptor>();
-    insertMergeAll(queue);
-    context.next(queue);
-  }
+  @NotNull
+  protected List<TaskDescriptor> getMergeAllTasks() {
+    List<TaskDescriptor> result = ContainerUtil.newArrayList();
 
-  protected void insertMergeAll(final List<TaskDescriptor> queue) {
-    queue.add(new LocalChangesPromptTask(myMergeContext, myInteraction, true, null, null));
-    final MergeAllWithBranchCopyPointTask mergeAllExecutor = new MergeAllWithBranchCopyPointTask(myMergeContext, myInteraction);
-    queue.add(myMergeContext.getVcs().getSvnBranchPointsCalculator()
+    result.add(new LocalChangesPromptTask(myMergeContext, myInteraction, true, null, null));
+    MergeAllWithBranchCopyPointTask mergeAllExecutor = new MergeAllWithBranchCopyPointTask(myMergeContext, myInteraction);
+    result.add(myMergeContext.getVcs().getSvnBranchPointsCalculator()
                 .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl(),
                                        myMergeContext.getWcInfo().getRootUrl(), mergeAllExecutor));
-    queue.add(mergeAllExecutor);
+    result.add(mergeAllExecutor);
+
+    return result;
+  }
+
+  @Nullable
+  protected SVNURL parseSourceUrl(@NotNull ContinuationContext context) {
+    SVNURL result = null;
+
+    try {
+      result = SvnUtil.createUrl(myMergeContext.getSourceUrl());
+    }
+    catch (SvnBindException e) {
+      finishWithError(context, e.getMessage(), true);
+    }
+
+    return result;
   }
 
   @CalledInAny
-  protected void finishWithError(final ContinuationContext context, final String message, final boolean isError) {
+  protected void finishWithError(@NotNull ContinuationContext context, @NotNull final String message, final boolean isError) {
     LOG.info((isError ? "Error: " : "Info: ") + message);
     context.next(new TaskDescriptor(message, Where.AWT) {
       @Override
@@ -73,12 +91,11 @@ public abstract class BaseMergeTask extends TaskDescriptor {
   }
 
   @CalledInAny
-  protected void finishWithError(final ContinuationContext context, final String message, final List<VcsException> exceptions) {
-    if (exceptions != null) {
-      for (VcsException exception : exceptions) {
-        LOG.info(message, exception);
-      }
-    }
+  protected void finishWithError(@NotNull ContinuationContext context,
+                                 final String message,
+                                 @Nullable final List<VcsException> exceptions) {
+    log(message, exceptions);
+
     context.cancelEverything();
     context.next(new TaskDescriptor(message, Where.AWT) {
       @Override
@@ -86,5 +103,13 @@ public abstract class BaseMergeTask extends TaskDescriptor {
         myInteraction.showErrors(message, exceptions);
       }
     });
+  }
+
+  private static void log(String message, @Nullable List<VcsException> exceptions) {
+    if (exceptions != null) {
+      for (VcsException exception : exceptions) {
+        LOG.info(message, exception);
+      }
+    }
   }
 }

@@ -15,21 +15,19 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.NestedCopyType;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
-import java.util.List;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -41,50 +39,31 @@ public class MergeInitChecksTask extends BaseMergeTask {
   }
 
   @Override
-  public void run(ContinuationContext continuationContext) {
-    SVNURL url = parseUrl(continuationContext);
-    if (url == null) {
-      return;
-    }
+  public void run(ContinuationContext context) {
+    SVNURL url = parseSourceUrl(context);
 
-    if (SVNURLUtil.isAncestor(url, myMergeContext.getWcInfo().getUrl()) ||
-        SVNURLUtil.isAncestor(myMergeContext.getWcInfo().getUrl(), url)) {
-      finishWithError(continuationContext, "Cannot merge from self", true);
-      return;
-    }
-
-    if (!checkForSwitchedRoots()) {
-      continuationContext.cancelEverything();
-    }
-  }
-
-  private boolean checkForSwitchedRoots() {
-    final List<WCInfo> infoList = myMergeContext.getVcs().getAllWcInfos();
-    boolean switchedFound = false;
-    for (WCInfo wcInfo : infoList) {
-      if (FileUtil.isAncestor(new File(myMergeContext.getWcInfo().getPath()), new File(wcInfo.getPath()), true)
-          && NestedCopyType.switched.equals(wcInfo.getType())) {
-        switchedFound = true;
-        break;
+    if (url != null) {
+      if (areInSameHierarchy(url, myMergeContext.getWcInfo().getUrl())) {
+        finishWithError(context, "Cannot merge from self", true);
+      }
+      else if (hasSwitchedRoots() && !myInteraction.shouldContinueSwitchedRootFound()) {
+        context.cancelEverything();
       }
     }
-    if (switchedFound) {
-      return myInteraction.shouldContinueSwitchedRootFound();
-    }
-    return true;
   }
 
-  @Nullable
-  private SVNURL parseUrl(ContinuationContext continuationContext) {
-    SVNURL url = null;
+  private boolean hasSwitchedRoots() {
+    final File currentRoot = myMergeContext.getWcInfo().getRootInfo().getIoFile();
 
-    try {
-      url = SvnUtil.createUrl(myMergeContext.getSourceUrl());
-    }
-    catch (SvnBindException e) {
-      finishWithError(continuationContext, e.getMessage(), true);
-    }
+    return ContainerUtil.or(myMergeContext.getVcs().getAllWcInfos(), new Condition<WCInfo>() {
+      @Override
+      public boolean value(WCInfo info) {
+        return NestedCopyType.switched.equals(info.getType()) && FileUtil.isAncestor(currentRoot, info.getRootInfo().getIoFile(), true);
+      }
+    });
+  }
 
-    return url;
+  private static boolean areInSameHierarchy(@NotNull SVNURL url1, @NotNull SVNURL url2) {
+    return SVNURLUtil.isAncestor(url1, url2) || SVNURLUtil.isAncestor(url2, url1);
   }
 }
