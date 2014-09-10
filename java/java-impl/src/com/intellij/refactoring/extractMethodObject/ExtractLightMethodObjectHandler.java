@@ -148,30 +148,23 @@ public class ExtractLightMethodObjectHandler {
     if (extractProcessor.prepare() && CommonRefactoringUtil
       .checkReadOnlyStatus(project, extractProcessor.getTargetClass().getContainingFile())) {
       if (extractProcessor.showDialog()) {
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          public void run() {
-            try {
-              extractProcessor.doExtract();
-
-              final UsageInfo[] usages = extractMethodObjectProcessor.findUsages();
-              extractMethodObjectProcessor.performRefactoring(usages);
-              extractMethodObjectProcessor.runChangeSignature();
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-            if (extractMethodObjectProcessor.isCreateInnerClass()) {
-              extractMethodObjectProcessor.changeInstanceAccess(project);
-            }
-            final PsiElement method = extractMethodObjectProcessor.getMethod();
-            LOG.assertTrue(method != null);
-            method.delete();
-          }
-        }, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME);
+        try {
+          extractProcessor.doExtract();
+          final UsageInfo[] usages = extractMethodObjectProcessor.findUsages();
+          extractMethodObjectProcessor.performRefactoring(usages);
+          extractMethodObjectProcessor.runChangeSignature();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+        if (extractMethodObjectProcessor.isCreateInnerClass()) {
+          extractMethodObjectProcessor.changeInstanceAccess(project);
+        }
+        final PsiElement method = extractMethodObjectProcessor.getMethod();
+        LOG.assertTrue(method != null);
+        method.delete();
       }
     }
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final String generatedCall = copy.getText().substring(start, outStatement.getTextOffset());
     return new ExtractedData(generatedCall,
