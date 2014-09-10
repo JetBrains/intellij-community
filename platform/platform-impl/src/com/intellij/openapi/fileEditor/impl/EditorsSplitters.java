@@ -51,6 +51,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
 
-  private final static EditorEmptyTextPainter ourPainter = ServiceManager.getService(EditorEmptyTextPainter.class);
+  private static final EditorEmptyTextPainter ourPainter = ServiceManager.getService(EditorEmptyTextPainter.class);
 
   private EditorWindow myCurrentWindow;
   final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<EditorWindow>();
@@ -346,22 +347,18 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return virtualFiles;
   }
 
-  @NotNull public FileEditor[] getSelectedEditors() {
-    final List<FileEditor> editors = new ArrayList<FileEditor>();
+  @NotNull
+  public FileEditor[] getSelectedEditors() {
+    List<FileEditor> editors = new ArrayList<FileEditor>();
+    Set<EditorWindow> windows = new THashSet<EditorWindow>(myWindows);
     final EditorWindow currentWindow = getCurrentWindow();
     if (currentWindow != null) {
-      final EditorWithProviderComposite composite = currentWindow.getSelectedEditor();
-      if (composite != null) {
-        editors.add (composite.getSelectedEditor());
-      }
+      windows.add(currentWindow);
     }
-
-    for (final EditorWindow window : myWindows) {
-      if (!window.equals(currentWindow)) {
-        final EditorWithProviderComposite composite = window.getSelectedEditor();
-        if (composite != null) {
-          editors.add(composite.getSelectedEditor());
-        }
+    for (final EditorWindow window : windows) {
+      final EditorWithProviderComposite composite = window.getSelectedEditor();
+      if (composite != null) {
+        editors.add(composite.getSelectedEditor());
       }
     }
     return editors.toArray(new FileEditor[editors.size()]);
@@ -824,8 +821,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return processFiles(children, context);
     }
 
-    protected abstract @Nullable T processFiles(@NotNull List<Element> fileElements, @Nullable T context);
-    protected abstract @Nullable T processSplitter(@NotNull Element element, @Nullable Element firstChild, @Nullable Element secondChild, @Nullable T context);
+    @Nullable
+    protected abstract T processFiles(@NotNull List<Element> fileElements, @Nullable T context);
+    @Nullable
+    protected abstract T processSplitter(@NotNull Element element, @Nullable Element firstChild, @Nullable Element secondChild, @Nullable T context);
   }
 
   private class UIBuilder extends ConfigTreeReader<JPanel> {
