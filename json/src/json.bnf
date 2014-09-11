@@ -69,7 +69,7 @@ private object_element ::= property (','|&'}') {
   pin = 1
 }
 
-property ::= string_literal (':' value) {
+property ::= property_name (':' value) {
   methods=[
     getName
     getNameElement
@@ -80,6 +80,8 @@ property ::= string_literal (':' value) {
   mixin="com.intellij.json.psi.impl.JsonPropertyMixin"
   pin(".*")=1
 }
+
+private property_name ::= literal | reference_expression
 
 array ::= '[' array_element* ']' { pin=1 }
 

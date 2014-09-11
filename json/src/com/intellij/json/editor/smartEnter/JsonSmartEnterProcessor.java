@@ -1,6 +1,9 @@
 package com.intellij.json.editor.smartEnter;
 
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -91,7 +94,7 @@ public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
           }
         }
         else {
-          final JsonStringLiteral propertyKey = ((JsonProperty)element).getNameElement();
+          final JsonValue propertyKey = ((JsonProperty)element).getNameElement();
           final int keyEndOffset = propertyKey.getTextRange().getEndOffset();
           //processor.myFirstErrorOffset = keyEndOffset;
           if (terminatedOnCurrentLine(editor, propertyKey) && !isFollowedByTerminal(propertyKey, COLON)) {

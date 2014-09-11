@@ -12,7 +12,7 @@ public interface JsonProperty extends JsonElement, PsiNamedElement {
   String getName();
 
   @NotNull
-  JsonStringLiteral getNameElement();
+  JsonValue getNameElement();
 
   @Nullable
   JsonValue getValue();

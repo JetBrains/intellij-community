@@ -27,7 +27,7 @@ public class JsonPropertyImpl extends JsonPropertyMixin implements JsonProperty 
   }
 
   @NotNull
-  public JsonStringLiteral getNameElement() {
+  public JsonValue getNameElement() {
     return JsonPsiImplUtils.getNameElement(this);
   }
 

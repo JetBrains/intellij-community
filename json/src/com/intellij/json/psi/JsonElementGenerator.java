@@ -36,7 +36,7 @@ public class JsonElementGenerator {
    * @param <T>     type of the JSON value desired
    * @return element created from given text
    *
-   * @see {@link com.intellij.json.psi.JsonElementGenerator#createStringLiteral(String)}
+   * @see #createStringLiteral(String)
    */
   @NotNull
   public <T extends JsonValue> T createValue(@NotNull String content) {

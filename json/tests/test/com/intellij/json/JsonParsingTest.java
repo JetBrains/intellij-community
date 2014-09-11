@@ -58,6 +58,10 @@ public class JsonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testNonStandardPropertyKeyValues() {
+    doTest();
+  }
+
   // Moved from JavaScript
 
   public void testSimple1() {
