@@ -345,17 +345,17 @@ public class CodeCompletionHandlerBase {
   private static PsiElement findCompletionPositionLeaf(CompletionContext newContext, int offset, PsiFile fileCopy, PsiFile originalFile) {
     final PsiElement insertedElement = newContext.file.findElementAt(offset);
     CompletionAssertions.assertCompletionPositionPsiConsistent(newContext, offset, fileCopy, originalFile, insertedElement);
-    assert insertedElement != null;
     return insertedElement;
   }
 
-  private AutoCompletionDecision shouldAutoComplete(final CompletionProgressIndicator indicator, final LookupElement[] items) {
+  private AutoCompletionDecision shouldAutoComplete(final CompletionProgressIndicator indicator) {
     if (!invokedExplicitly) {
       return AutoCompletionDecision.SHOW_LOOKUP;
     }
+    final List<LookupElement> items = indicator.getLookup().getItems();
     final CompletionParameters parameters = indicator.getParameters();
-    final LookupElement item = items[0];
-    if (items.length == 1) {
+    final LookupElement item = items.get(0);
+    if (items.size() == 1) {
       final AutoCompletionPolicy policy = getAutocompletionPolicy(item);
       if (policy == AutoCompletionPolicy.NEVER_AUTOCOMPLETE) return AutoCompletionDecision.SHOW_LOOKUP;
       if (policy == AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE) return AutoCompletionDecision.insertItem(item);
@@ -367,11 +367,11 @@ public class CodeCompletionHandlerBase {
     if (isInsideIdentifier(indicator.getOffsetMap())) {
       return AutoCompletionDecision.SHOW_LOOKUP;
     }
-    if (items.length == 1 && getAutocompletionPolicy(item) == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) {
+    if (items.size() == 1 && getAutocompletionPolicy(item) == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) {
       return AutoCompletionDecision.insertItem(item);
     }
 
-    AutoCompletionContext context = new AutoCompletionContext(parameters, items, indicator.getOffsetMap(), indicator.getLookup());
+    AutoCompletionContext context = new AutoCompletionContext(parameters, items.toArray(new LookupElement[items.size()]), indicator.getOffsetMap(), indicator.getLookup());
     for (final CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
       final AutoCompletionDecision decision = contributor.handleAutoCompletionPossibility(context);
       if (decision != null) {
@@ -425,7 +425,7 @@ public class CodeCompletionHandlerBase {
 
     try {
       indicator.getLookup().refreshUi(true, false);
-      final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
+      final AutoCompletionDecision decision = shouldAutoComplete(indicator);
       if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
         CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
         indicator.getLookup().setCalculating(false);
