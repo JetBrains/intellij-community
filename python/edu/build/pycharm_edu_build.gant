@@ -213,6 +213,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   String macAppRoot = isEap() ? "PyCharm Educational ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Educational.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
   ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-jdk-bundled.sit")
+  ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-custom-jdk-bundled.sit")
   ant.delete(file: "${paths.artifacts}/pycharm${buildName}.sit")
 }
 
