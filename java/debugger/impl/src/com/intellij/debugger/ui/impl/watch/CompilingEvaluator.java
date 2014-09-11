@@ -27,7 +27,6 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
@@ -152,7 +151,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
         classLoader.invokeMethod(threadReference, defineMethod, args, ClassType.INVOKE_SINGLE_THREADED);
       }
     }
-    return (ClassType)process.findClass(context, getGenPackageName() + '.' + getGenClassName(), classLoader);
+    return (ClassType)process.findClass(context, getGenClassFullName(), classLoader);
   }
 
   private static byte[] changeSuperToMagicAccessor(byte[] bytes) {
@@ -230,11 +229,24 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   }
 
   private String getMainClassName() {
-    return ((PsiClass)myData.getGeneratedInnerClass().getParent()).getName();
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return ((PsiClass)myData.getGeneratedInnerClass().getParent()).getName();
+      }
+    });
   }
 
   private String getGenClassName() {
     return getMainClassName() + '$' + GEN_CLASS_NAME;
+  }
+
+  private String getGenClassFullName() {
+    String packageName = getGenPackageName();
+    if (packageName.isEmpty()) {
+      return getGenClassName();
+    }
+    return packageName + '.' + getGenClassName();
   }
 
   //private String createClassCode() {

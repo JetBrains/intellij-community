@@ -60,12 +60,27 @@ public class ContractInference {
 
 class ContractInferenceInterpreter {
   private final PsiMethod myMethod;
+  private final ValueConstraint[] myEmptyConstraints;
 
   public ContractInferenceInterpreter(PsiMethod method) {
     myMethod = method;
+    myEmptyConstraints = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
   }
 
   List<MethodContract> inferContracts() {
+    final boolean notNull = NullableNotNullManager.isNotNull(myMethod);
+    return ContainerUtil.filter(doInferContracts(), new Condition<MethodContract>() {
+      @Override
+      public boolean value(MethodContract contract) {
+        if (notNull && contract.returnValue == NOT_NULL_VALUE && Arrays.equals(contract.arguments, myEmptyConstraints)) {
+          return false;
+        }
+        return true;
+      }
+    });
+  }
+  
+  private List<MethodContract> doInferContracts() {
     PsiCodeBlock body = myMethod.getBody();
     PsiStatement[] statements = body == null ? PsiStatement.EMPTY_ARRAY : body.getStatements();
     if (statements.length == 0) return Collections.emptyList();
@@ -102,8 +117,7 @@ class ContractInferenceInterpreter {
       }
     }
 
-    ValueConstraint[] emptyState = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
-    return visitStatements(Collections.singletonList(emptyState), statements);
+    return visitStatements(Collections.singletonList(myEmptyConstraints), statements);
   }
 
   @Nullable
@@ -132,12 +146,11 @@ class ContractInferenceInterpreter {
       @Override
       public List<MethodContract> compute() {
         final boolean notNull = NullableNotNullManager.isNotNull(targetMethod);
-        final ValueConstraint[] emptyConstraints = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
         List<MethodContract> fromDelegate = ContainerUtil.mapNotNull(ControlFlowAnalyzer.getMethodContracts(targetMethod), new NullableFunction<MethodContract, MethodContract>() {
           @Nullable
           @Override
           public MethodContract fun(MethodContract delegateContract) {
-            ValueConstraint[] answer = emptyConstraints;
+            ValueConstraint[] answer = myEmptyConstraints;
             for (int i = 0; i < delegateContract.arguments.length; i++) {
               if (i >= arguments.length) return null;
 
@@ -165,7 +178,7 @@ class ContractInferenceInterpreter {
           }
         });
         if (notNull) {
-          return ContainerUtil.concat(fromDelegate, Arrays.asList(new MethodContract(emptyConstraints, NOT_NULL_VALUE)));
+          return ContainerUtil.concat(fromDelegate, Arrays.asList(new MethodContract(myEmptyConstraints, NOT_NULL_VALUE)));
         }
         return fromDelegate;
       }

@@ -35,8 +35,8 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
-import junit.framework.Assert;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +49,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.*;
 
 public class XDebuggerTestUtil {
   private static final int TIMEOUT = 25000;
@@ -65,10 +67,9 @@ public class XDebuggerTestUtil {
     XLineBreakpointType type = (XLineBreakpointType)XDebuggerUtil.getInstance().findBreakpointType(breakpointType);
     XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XLineBreakpointImpl breakpoint = (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line);
-    Assert.assertNotNull(breakpoint);
-    Assert
-      .assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
-    Assert.assertEquals(errorMessage, breakpoint.getErrorMessage());
+    assertNotNull(breakpoint);
+    assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
+    assertEquals(errorMessage, breakpoint.getErrorMessage());
   }
 
   public static void toggleBreakpoint(Project project, VirtualFile file, int line) {
@@ -79,7 +80,7 @@ public class XDebuggerTestUtil {
                                                                                   final P properties,
                                                                                   final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
     return new WriteAction<XBreakpoint<P>>() {
-      protected void run(final Result<XBreakpoint<P>> result) {
+      protected void run(@NotNull final Result<XBreakpoint<P>> result) {
         result.setResult(XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
           XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties));
       }
@@ -88,16 +89,16 @@ public class XDebuggerTestUtil {
 
   public static void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
     new WriteAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
       }
     }.execute();
   }
 
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {
-    Assert.assertNotNull("No current position", pos);
-    Assert.assertEquals(new File(file.getPath()).getCanonicalPath(), new File(pos.getFile().getPath()).getCanonicalPath());
-    if (line != -1) Assert.assertEquals(line, pos.getLine());
+    assertNotNull("No current position", pos);
+    assertEquals(new File(file.getPath()).getCanonicalPath(), new File(pos.getFile().getPath()).getCanonicalPath());
+    if (line != -1) assertEquals(line, pos.getLine());
   }
 
   public static void assertCurrentPosition(XDebugSession session, VirtualFile file, int line) throws IOException {
@@ -127,12 +128,23 @@ public class XDebuggerTestUtil {
     return container.waitFor(timeout).first;
   }
 
-  public static Pair<XValue, String> evaluate(XDebugSession session, String expression) throws InterruptedException {
+  public static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression) {
     return evaluate(session, expression, TIMEOUT);
   }
 
-  public static Pair<XValue, String> evaluate(XDebugSession session, String expression, long timeout) throws InterruptedException {
-    XDebuggerEvaluator evaluator = session.getCurrentStackFrame().getEvaluator();
+  public static Pair<XValue, String> evaluate(XDebugSession session, String expression) {
+    return evaluate(session, XExpressionImpl.fromText(expression), TIMEOUT);
+  }
+
+  public static Pair<XValue, String> evaluate(XDebugSession session, String expression, long timeout) {
+    return evaluate(session, XExpressionImpl.fromText(expression), timeout);
+  }
+
+  private static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression, long timeout) {
+    XStackFrame frame = session.getCurrentStackFrame();
+    assertNotNull(frame);
+    XDebuggerEvaluator evaluator = frame.getEvaluator();
+    assertNotNull(evaluator);
     XTestEvaluationCallback callback = new XTestEvaluationCallback();
     evaluator.evaluate(expression, callback, session.getCurrentPosition());
     return callback.waitFor(timeout);
@@ -189,10 +201,10 @@ public class XDebuggerTestUtil {
                                     @Nullable Boolean hasChildren) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
 
-    if (name != null) Assert.assertEquals(name, node.myName);
-    if (type != null) Assert.assertEquals(type, node.myType);
-    if (value != null) Assert.assertEquals(value, node.myValue);
-    if (hasChildren != null) Assert.assertEquals((boolean)hasChildren, node.myHasChildren);
+    if (name != null) assertEquals(name, node.myName);
+    if (type != null) assertEquals(type, node.myType);
+    if (value != null) assertEquals(value, node.myValue);
+    if (hasChildren != null) assertEquals(hasChildren, node.myHasChildren);
   }
 
   public static void assertVariableValue(XValue var, @Nullable String name, @Nullable String value) throws InterruptedException {
@@ -221,10 +233,10 @@ public class XDebuggerTestUtil {
                                                 @Nullable String type,
                                                 @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
-    if (name != null) Assert.assertEquals(name, node.myName);
-    if (type != null) Assert.assertEquals(type, node.myType);
+    if (name != null) assertEquals(name, node.myName);
+    if (type != null) assertEquals(type, node.myType);
     if (valuePattern != null) {
-      Assert.assertTrue("Expected value" + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
+      assertTrue("Expected value" + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
     }
   }
 
@@ -239,10 +251,10 @@ public class XDebuggerTestUtil {
                                                @Nullable @Language("RegExp") String typePattern) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
     if (name != null) {
-      Assert.assertEquals(name, node.myName);
+      assertEquals(name, node.myName);
     }
     if (typePattern != null) {
-      Assert.assertTrue("Expected type: " + typePattern + " Actual type: " + node.myType, node.myType.matches(typePattern));
+      assertTrue("Expected type: " + typePattern + " Actual type: " + node.myType, node.myType.matches(typePattern));
     }
   }
 
@@ -273,7 +285,7 @@ public class XDebuggerTestUtil {
       }
     });
 
-    Assert.assertEquals(value, result[0]);
+    assertEquals(value, result[0]);
   }
 
   public static void assertVariableFullValue(Collection<XValue> vars, @Nullable String name, @Nullable String value)
@@ -303,9 +315,9 @@ public class XDebuggerTestUtil {
     }
 
     expectedNames.removeAll(actualNames);
-    UsefulTestCase.assertTrue("Missing variables:" + StringUtil.join(expectedNames, ", ")
-                              + "\nAll Variables: " + StringUtil.join(actualNames, ", "),
-                              expectedNames.isEmpty()
+    assertTrue("Missing variables:" + StringUtil.join(expectedNames, ", ")
+                        + "\nAll Variables: " + StringUtil.join(actualNames, ", "),
+                        expectedNames.isEmpty()
     );
   }
 
@@ -317,13 +329,23 @@ public class XDebuggerTestUtil {
         value.computeSourcePosition(n);
       }
     });
-    Assert.assertNotNull(n.myPosition);
-    Assert.assertEquals(file, n.myPosition.getFile());
-    Assert.assertEquals(offset, n.myPosition.getOffset());
+    assertNotNull(n.myPosition);
+    assertEquals(file, n.myPosition.getFile());
+    assertEquals(offset, n.myPosition.getOffset());
   }
 
-  public static boolean waitFor(Semaphore semaphore, long timeoutInMillis) throws InterruptedException {
-    return semaphore.tryAcquire(timeoutInMillis, TimeUnit.MILLISECONDS);
+  public static boolean waitFor(Semaphore semaphore, long timeoutInMillis) {
+    long end = System.currentTimeMillis() + timeoutInMillis;
+    long remaining = timeoutInMillis;
+    do {
+      try {
+        return semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException ignored) {
+        remaining = end - System.currentTimeMillis();
+      }
+    } while (remaining > 0);
+    return false;
   }
 
   public static void assertVariable(Collection<XValue> vars,
@@ -337,7 +359,7 @@ public class XDebuggerTestUtil {
   @NotNull
   public static String getConsoleText(final @NotNull ConsoleViewImpl consoleView) {
     new WriteAction() {
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         consoleView.flushDeferredText();
       }
     }.execute();
@@ -356,7 +378,7 @@ public class XDebuggerTestUtil {
         final T breakpointType = exceptionType.cast(type);
         new WriteAction() {
           @Override
-          protected void run(Result result) throws Throwable {
+          protected void run(@NotNull Result result) throws Throwable {
             breakpoint.set(breakpointManager.addBreakpoint(breakpointType, properties));
           }
         }.execute();
@@ -372,7 +394,7 @@ public class XDebuggerTestUtil {
     for (final XBreakpoint b : breakpoints) {
       new WriteAction() {
         @Override
-        protected void run(Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           breakpointManager.removeBreakpoint(b);
         }
       }.execute();
@@ -406,7 +428,7 @@ public class XDebuggerTestUtil {
         if (lineBreakpoint.getLine() == line) {
           new WriteAction() {
             @Override
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
               lineBreakpoint.setCondition(condition);
             }
           }.execute();
@@ -424,7 +446,7 @@ public class XDebuggerTestUtil {
         if (lineBreakpoint.getLine() == line) {
           new WriteAction() {
             @Override
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
               lineBreakpoint.setLogExpression(logExpression);
               lineBreakpoint.setLogMessage(true);
             }
@@ -436,7 +458,7 @@ public class XDebuggerTestUtil {
 
   public static void disposeDebugSession(final XDebugSession debugSession) {
     new WriteAction() {
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         XDebugSessionImpl session = (XDebugSessionImpl)debugSession;
         Disposer.dispose(session.getSessionTab());
         Disposer.dispose(session.getConsoleView());
@@ -449,13 +471,13 @@ public class XDebuggerTestUtil {
                                     @Nullable String type,
                                     @Nullable String value,
                                     @Nullable Boolean hasChildren) throws InterruptedException {
-    Assert.assertNull(varAndErrorMessage.second);
+    assertNull(varAndErrorMessage.second);
     assertVariable(varAndErrorMessage.first, name, type, value, hasChildren);
   }
 
   public static String assertVariableExpression(XValue desc, String expectedExpression) {
     String expression = desc.getEvaluationExpression();
-    Assert.assertEquals(expectedExpression, expression);
+    assertEquals(expectedExpression, expression);
     return expression;
   }
 

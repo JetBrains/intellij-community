@@ -65,9 +65,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class CodeCompletionHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
@@ -306,16 +304,24 @@ public class CodeCompletionHandlerBase {
 
     CompletionServiceImpl.setCompletionPhase(synchronous ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
 
-    final AtomicReference<LookupElement[]> data = indicator.startCompletion(initContext);
+    indicator.startCompletion(initContext);
 
     if (!synchronous) {
       return;
     }
 
     if (freezeSemaphore.waitFor(2000)) {
-      final LookupElement[] allItems = data.get();
-      if (allItems != null && !indicator.isRunning() && !indicator.isCanceled()) { // the completion is really finished, now we may auto-insert or show lookup
-        completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems, hasModifiers);
+      if (!indicator.isRunning() && !indicator.isCanceled()) { // the completion is really finished, now we may auto-insert or show lookup
+        try {
+          indicator.getLookup().refreshUi(true, false);
+        }
+        catch (Exception e) {
+          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+          LOG.error(e);
+          return;
+        }
+
+        completionFinished(indicator, hasModifiers);
         return;
       }
     }
@@ -324,9 +330,9 @@ public class CodeCompletionHandlerBase {
     indicator.showLookup();
   }
 
-  private static void checkNotSync(CompletionProgressIndicator indicator, LookupElement[] allItems) {
+  private static void checkNotSync(CompletionProgressIndicator indicator, List<LookupElement> allItems) {
     if (CompletionServiceImpl.isPhase(CompletionPhase.Synchronous.class)) {
-      LOG.error("sync phase survived: " + Arrays.toString(allItems) + "; indicator=" + CompletionServiceImpl.getCompletionPhase().indicator + "; myIndicator=" + indicator);
+      LOG.error("sync phase survived: " + allItems + "; indicator=" + CompletionServiceImpl.getCompletionPhase().indicator + "; myIndicator=" + indicator);
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     }
   }
@@ -348,11 +354,10 @@ public class CodeCompletionHandlerBase {
     return insertedElement;
   }
 
-  private AutoCompletionDecision shouldAutoComplete(final CompletionProgressIndicator indicator) {
+  private AutoCompletionDecision shouldAutoComplete(final CompletionProgressIndicator indicator, List<LookupElement> items) {
     if (!invokedExplicitly) {
       return AutoCompletionDecision.SHOW_LOOKUP;
     }
-    final List<LookupElement> items = indicator.getLookup().getItems();
     final CompletionParameters parameters = indicator.getParameters();
     final LookupElement item = items.get(0);
     if (items.size() == 1) {
@@ -401,12 +406,9 @@ public class CodeCompletionHandlerBase {
     return offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
   }
 
-
-  protected void completionFinished(final int offset1,
-                                    final int offset2,
-                                    final CompletionProgressIndicator indicator,
-                                    final LookupElement[] items, boolean hasModifiers) {
-    if (items.length == 0) {
+  protected void completionFinished(final CompletionProgressIndicator indicator, boolean hasModifiers) {
+    final List<LookupElement> items = indicator.getLookup().getItems();
+    if (items.isEmpty()) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
 
       Caret nextCaret = getNextCaretToProcess(indicator.getEditor());
@@ -424,8 +426,7 @@ public class CodeCompletionHandlerBase {
     LOG.assertTrue(!indicator.isCanceled(), "canceled");
 
     try {
-      indicator.getLookup().refreshUi(true, false);
-      final AutoCompletionDecision decision = shouldAutoComplete(indicator);
+      final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
       if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
         CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
         indicator.getLookup().setCalculating(false);

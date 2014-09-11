@@ -161,6 +161,9 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
+    //override default tree behaviour.
+    myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
+
     myTree.setRowHeight(0);
     ToolTipManager.sharedInstance().registerComponent(myTree);
 
@@ -218,8 +221,14 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
   @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (e.getKeyCode() == KeyEvent.VK_ENTER && myTree.isEditing()) {
-      myTree.stopEditing();
+    if (e.getKeyCode() == KeyEvent.VK_ENTER && pressed) {
+      if (myTree.isEditing()) {
+        myTree.stopEditing();
+      }
+      else {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
+        myTree.startEditingAtPath(TreeUtil.getPathFromRoot(node));
+      }
       return true;
     }
     return super.processKeyBinding(ks, e, condition, pressed);

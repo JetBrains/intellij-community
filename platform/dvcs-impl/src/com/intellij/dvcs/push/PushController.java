@@ -162,7 +162,7 @@ public class PushController implements Disposable {
     if (target == null) {
       model.setError(VcsError.createEmptyTargetError(repoName));
     }
-    final PushTargetPanel<T> pushTargetPanel = support.createTargetPanel(repository, target == null ? "" : target.getPresentation());
+    final PushTargetPanel<T> pushTargetPanel = support.createTargetPanel(repository, target);
     RepositoryWithBranchPanel<T> repoPanel =
       new RepositoryWithBranchPanel<T>(repoName, support.getSource(repository).getPresentation(), pushTargetPanel);
     repoPanel.setInputVerifier(new InputVerifier() {

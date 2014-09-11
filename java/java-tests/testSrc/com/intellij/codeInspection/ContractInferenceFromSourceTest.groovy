@@ -161,11 +161,10 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> fail']
   }
 
-  void "_test no NotNull duplication"() {
+  void "test no return value NotNull duplication"() {
     def c = inferContracts("""
-  boolean smth(@org.jetbrains.annotations.NotNull Object o) {
-    if (o == null) throw new RuntimeException();
-    return o.hashCode() == 1;
+  @org.jetbrains.annotations.NotNull String smth(Object o) {
+    return "abc";
   }
 """)
     assert c == []
