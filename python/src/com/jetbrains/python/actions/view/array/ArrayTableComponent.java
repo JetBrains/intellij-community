@@ -51,6 +51,7 @@ class ArrayTableComponent extends JPanel {
       }
     };
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+    myTable.setRowSelectionAllowed(false);
 
     myCheckBox = new JCheckBox();
     myCheckBox.setText("Colored");
@@ -103,7 +104,12 @@ class ArrayTableComponent extends JPanel {
   }
 
   private void setSpinnerText(String text) {
-    DefaultTableModel model = new DefaultTableModel(1, 1);
+    DefaultTableModel model = new DefaultTableModel(1, 1) {
+      @Override
+      public boolean isCellEditable(int row, int column) {
+        return false;
+      }
+    };
     myTable.setModel(model);
     myTable.setValueAt(text, 0, 0);
   }
