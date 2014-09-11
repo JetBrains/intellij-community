@@ -29,6 +29,7 @@
     <codeInsight.lineMarkerProvider language="Python" implementationClass="org.jetbrains.plugins.coursecreator.RunTestsLineMarker"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.coursecreator.AnswerFileTypeFactory" />
     <refactoring.elementListenerProvider implementation="org.jetbrains.plugins.coursecreator.CCRefactoringElementListenerProvider"/>
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
 
   <application-components>
