@@ -92,8 +92,22 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
           return false;
         }
 
-        if (!(myS instanceof PsiClassType)) return false;
-        PsiClassType.ClassResolveResult SResult = ((PsiClassType)myS).resolveGenerics();
+        PsiClassType.ClassResolveResult SResult = null;
+        if (myS instanceof PsiIntersectionType) {
+          for (PsiType conjunct : ((PsiIntersectionType)myS).getConjuncts()) {
+            if (conjunct instanceof PsiClassType) {
+              final PsiClassType.ClassResolveResult conjunctResult = ((PsiClassType)conjunct).resolveGenerics();
+              if (InheritanceUtil.isInheritorOrSelf(conjunctResult.getElement(), CClass, true)) {
+                SResult = conjunctResult;
+                break;
+              }
+            }
+          }
+        } else if (myS instanceof PsiClassType) {
+          SResult = ((PsiClassType)myS).resolveGenerics();
+        }
+
+        if (SResult == null) return false;
         PsiClass SClass = SResult.getElement();
         if (((PsiClassType)myT).isRaw()) {
           return SClass != null && InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
