@@ -240,10 +240,17 @@ public class RenameUtil {
       for (UsageInfo usage : usages) {
         final PsiReference ref = usage.getReference();
         if (ref instanceof BindablePsiReference) {
-          try {
-            ref.bindToElement(namedElement);
+          boolean fallback = true;
+          if (!(ref instanceof FragmentaryPsiReference
+                && ((FragmentaryPsiReference)ref).isFragmentOnlyRename())) {
+            try {
+              ref.bindToElement(namedElement);
+              fallback = false;
+            }
+            catch (IncorrectOperationException ignored) {
+            }
           }
-          catch (IncorrectOperationException e) {//fall back to old scheme
+          if (fallback) {//fall back to old scheme
             ref.handleElementRename(newName);
           }
         }
