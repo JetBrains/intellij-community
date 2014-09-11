@@ -16,4 +16,19 @@ public class JsonFoldingTest extends JsonTestCase {
   public void testObjectFolding() {
     doTest();
   }
+
+  // Moved from JavaScript
+
+  public void testObjectLiteral2() {
+    doTest();
+  }
+
+  public void testObjectLiteral3() {
+    doTest();
+  }
+
+  public void testObjectLiteral4() {
+    doTest();
+  }
+
 }

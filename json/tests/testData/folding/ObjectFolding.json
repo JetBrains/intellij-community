@@ -1,7 +1,7 @@
-<fold text='{...}'>{
+<fold text='{"foo": null...}'>{
   "foo": null,
   "bar": {"inline": true},
-  "baz": <fold text='{...}'>{
+  "baz": <fold text='{"nested": true...}'>{
     "nested": true
   }</fold>
 }</fold>

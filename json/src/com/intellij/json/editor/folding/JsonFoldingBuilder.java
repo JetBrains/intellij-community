@@ -1,6 +1,10 @@
 package com.intellij.json.editor.folding;
 
 import com.intellij.json.JsonElementTypes;
+import com.intellij.json.psi.JsonLiteral;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -43,6 +47,26 @@ public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
   public String getPlaceholderText(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == JsonElementTypes.OBJECT) {
+      final JsonObject object = node.getPsi(JsonObject.class);
+      final List<JsonProperty> properties = object.getPropertyList();
+      JsonProperty candidate = null;
+      for (JsonProperty property : properties) {
+        final String name = property.getName();
+        final JsonValue value = property.getValue();
+        if (value instanceof JsonLiteral) {
+          if ("id".equals(name) || "name".equals(name)) {
+            candidate = property;
+            break;
+          }
+          if (candidate == null) {
+            candidate = property;
+          }
+        }
+      }
+      if (candidate != null) {
+        //noinspection ConstantConditions
+        return "{\"" + candidate.getName() + "\": " + candidate.getValue().getText() + "...}";
+      }
       return "{...}";
     }
     else if (type == JsonElementTypes.ARRAY) {
