@@ -132,7 +132,7 @@ public class XDebuggerTestUtil {
     return evaluate(session, expression, TIMEOUT);
   }
 
-  public static Pair<XValue, String> evaluate(XDebugSession session, String expression) throws InterruptedException {
+  public static Pair<XValue, String> evaluate(XDebugSession session, String expression) {
     return evaluate(session, XExpressionImpl.fromText(expression), TIMEOUT);
   }
 
