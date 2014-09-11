@@ -540,17 +540,11 @@ public class ArrangementMatchingRulesControl extends JBTable {
 
       final Object target = getModel().getElementAt(index);
       if (target instanceof StdArrangementMatchRule) {
-        final Set<String> rules = ContainerUtil.newHashSet();
         for (int i = 0; i < index; i++) {
           final Object element = getModel().getElementAt(i);
-          if (element instanceof StdArrangementMatchRule) {
-            final StdArrangementMatchRule rule = (StdArrangementMatchRule)element;
-            rules.add(rule.toString());
+          if (element instanceof StdArrangementMatchRule && target.equals(element)) {
+            return ApplicationBundle.message("arrangement.settings.validation.duplicate.matching.rule");
           }
-        }
-
-        if (rules.contains(target.toString())) {
-          return ApplicationBundle.message("arrangement.settings.validation.duplicate.matching.rule");
         }
       }
       return null;
