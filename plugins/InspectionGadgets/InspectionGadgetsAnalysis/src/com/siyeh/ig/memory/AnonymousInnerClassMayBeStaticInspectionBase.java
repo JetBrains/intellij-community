@@ -17,6 +17,7 @@ package com.siyeh.ig.memory;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -59,12 +60,51 @@ public class AnonymousInnerClassMayBeStaticInspectionBase extends BaseInspection
         // don't warn on broken code
         return;
       }
+      final PsiClass containingClass = PsiTreeUtil.getParentOfType(anonymousClass, PsiClass.class);
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+        // strictly speaking can be named static inner class but not when part of the current containing class
+        return;
+      }
       final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(anonymousClass);
       anonymousClass.accept(visitor);
       if (!visitor.canInnerClassBeStatic()) {
         return;
       }
+      if (hasReferenceToLocalClass(anonymousClass)) {
+        return;
+      }
       registerClassError(anonymousClass);
+    }
+
+    private static boolean hasReferenceToLocalClass(PsiAnonymousClass anonymousClass) {
+      final LocalClassReferenceVisitor visitor = new LocalClassReferenceVisitor();
+      anonymousClass.accept(visitor);
+      return visitor.hasReferenceToLocalClass();
+    }
+
+    private static class LocalClassReferenceVisitor extends JavaRecursiveElementVisitor {
+
+      private boolean referenceToLocalClass = false;
+
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        if (reference.getQualifier() != null) {
+          return;
+        }
+        final PsiElement target = reference.resolve();
+        if (!(target instanceof PsiClass) || !PsiUtil.isLocalClass((PsiClass)target)) {
+          return;
+        }
+        referenceToLocalClass = true;
+      }
+
+      public boolean hasReferenceToLocalClass() {
+        return referenceToLocalClass;
+      }
     }
   }
 }
