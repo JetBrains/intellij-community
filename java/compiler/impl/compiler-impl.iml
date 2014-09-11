@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="module" module-name="instrumentation-util" />
     <orderEntry type="library" name="asm5" level="project" />
-    <orderEntry type="library" name="Eclipse" level="project" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="jsp-openapi" />
