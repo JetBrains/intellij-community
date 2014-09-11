@@ -565,7 +565,7 @@ public class FileUtilRt {
   }
 
   public static boolean ensureCanCreateFile(@NotNull File file) {
-    if (file.exists()) return delete(file);
+    if (file.exists()) return file.canWrite();
     if (!createIfNotExists(file)) return false;
     return delete(file);
   }
