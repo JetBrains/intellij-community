@@ -1,20 +1,32 @@
 package com.intellij.json;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.util.ArrayUtil;
 
 /**
  * @author Mikhail Golubev
  */
 public class JsonCompletionTest extends JsonTestCase {
-  private static final String[] KEYWORDS = new String[]{"true", "false", "null"};
+  private static final String[] ALL_KEYWORDS = new String[]{"true", "false", "null"};
   private static final String[] NOTHING = ArrayUtil.EMPTY_STRING_ARRAY;
 
+  private void doTest(String... variants) {
+    myFixture.testCompletionVariants("completion/" + getTestName(false) + ".json", variants);
+  }
+
+  private void doTestSingleVariant() {
+    myFixture.configureByFile("completion/" + getTestName(false) + ".json");
+    final LookupElement[] variants = myFixture.completeBasic();
+    assertNull(variants);
+    myFixture.checkResultByFile("completion/" + getTestName(false) + "_after.json" );
+  }
+
   public void testInsideArrayElement1() throws Exception {
-    doTest(KEYWORDS);
+    doTest(ALL_KEYWORDS);
   }
 
   public void testInsideArrayElement2() throws Exception {
-    doTest(KEYWORDS);
+    doTest(ALL_KEYWORDS);
   }
 
   public void testInsidePropertyKey1() throws Exception {
@@ -26,17 +38,16 @@ public class JsonCompletionTest extends JsonTestCase {
   }
 
   public void testInsidePropertyValue() throws Exception {
-    doTest(KEYWORDS);
+    doTest(ALL_KEYWORDS);
   }
 
-  private void doTest(String... variants) {
-    myFixture.testCompletionVariants("completion/" + getTestName(false) + ".json", variants);
+  // Moved from JavaScript
+
+  public void testKeywords() {
+    doTestSingleVariant();
   }
 
-  public void testWithPrefix() {
-    // Before artificial reference expressions were added to grammar, lack of identifier-like tokens
-    // might lead to problems with keyword completion.
-    myFixture.configureByFile("completion/" + getTestName(false) + ".json");
-    assertNull(myFixture.completeBasic());
+  public void testKeywords_2() {
+    doTestSingleVariant();
   }
 }
