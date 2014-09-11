@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.importing;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 /**
@@ -34,14 +35,39 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertModules("project");
     assertContentRoots("project", getProjectPath());
 
-    assertSources("project", "src/main/java");
-    assertResources("project", "src/main/resources");
-    assertTestSources("project", "src/test/java");
-    assertTestResources("project", "src/test/resources");
-    assertExcludes("project", ".gradle", "build");
+    assertDefaultGradleJavaProjectFolders("project");
 
     assertModuleOutput("project",
                        getProjectPath() + "/build/classes/main",
                        getProjectPath() + "/build/classes/test");
+  }
+
+  @Test
+  public void testProjectWithInheritedOutputDirs() throws Exception {
+
+    importProject(
+      "apply plugin: 'java'\n" +
+      "apply plugin: 'idea'\n" +
+      "idea {\n" +
+      "  module {\n" +
+      "    inheritOutputDirs = true\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertDefaultGradleJavaProjectFolders("project");
+
+    assertModuleInheritedOutput("project");
+  }
+
+  protected void assertDefaultGradleJavaProjectFolders(@NotNull String moduleName) {
+    assertSources(moduleName, "src/main/java");
+    assertResources(moduleName, "src/main/resources");
+    assertTestSources(moduleName, "src/test/java");
+    assertTestResources(moduleName, "src/test/resources");
+    assertExcludes(moduleName, ".gradle", "build");
   }
 }
