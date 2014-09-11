@@ -80,7 +80,7 @@ public class XDebuggerTestUtil {
                                                                                   final P properties,
                                                                                   final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
     return new WriteAction<XBreakpoint<P>>() {
-      protected void run(final Result<XBreakpoint<P>> result) {
+      protected void run(@NotNull final Result<XBreakpoint<P>> result) {
         result.setResult(XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
           XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties));
       }
@@ -89,7 +89,7 @@ public class XDebuggerTestUtil {
 
   public static void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
     new WriteAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
       }
     }.execute();
@@ -204,7 +204,7 @@ public class XDebuggerTestUtil {
     if (name != null) assertEquals(name, node.myName);
     if (type != null) assertEquals(type, node.myType);
     if (value != null) assertEquals(value, node.myValue);
-    if (hasChildren != null) assertEquals((boolean)hasChildren, node.myHasChildren);
+    if (hasChildren != null) assertEquals(hasChildren, node.myHasChildren);
   }
 
   public static void assertVariableValue(XValue var, @Nullable String name, @Nullable String value) throws InterruptedException {
@@ -315,9 +315,9 @@ public class XDebuggerTestUtil {
     }
 
     expectedNames.removeAll(actualNames);
-    UsefulTestCase.assertTrue("Missing variables:" + StringUtil.join(expectedNames, ", ")
-                              + "\nAll Variables: " + StringUtil.join(actualNames, ", "),
-                              expectedNames.isEmpty()
+    assertTrue("Missing variables:" + StringUtil.join(expectedNames, ", ")
+                        + "\nAll Variables: " + StringUtil.join(actualNames, ", "),
+                        expectedNames.isEmpty()
     );
   }
 
@@ -359,7 +359,7 @@ public class XDebuggerTestUtil {
   @NotNull
   public static String getConsoleText(final @NotNull ConsoleViewImpl consoleView) {
     new WriteAction() {
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         consoleView.flushDeferredText();
       }
     }.execute();
@@ -378,7 +378,7 @@ public class XDebuggerTestUtil {
         final T breakpointType = exceptionType.cast(type);
         new WriteAction() {
           @Override
-          protected void run(Result result) throws Throwable {
+          protected void run(@NotNull Result result) throws Throwable {
             breakpoint.set(breakpointManager.addBreakpoint(breakpointType, properties));
           }
         }.execute();
@@ -394,7 +394,7 @@ public class XDebuggerTestUtil {
     for (final XBreakpoint b : breakpoints) {
       new WriteAction() {
         @Override
-        protected void run(Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           breakpointManager.removeBreakpoint(b);
         }
       }.execute();
@@ -428,7 +428,7 @@ public class XDebuggerTestUtil {
         if (lineBreakpoint.getLine() == line) {
           new WriteAction() {
             @Override
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
               lineBreakpoint.setCondition(condition);
             }
           }.execute();
@@ -446,7 +446,7 @@ public class XDebuggerTestUtil {
         if (lineBreakpoint.getLine() == line) {
           new WriteAction() {
             @Override
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
               lineBreakpoint.setLogExpression(logExpression);
               lineBreakpoint.setLogMessage(true);
             }
@@ -458,7 +458,7 @@ public class XDebuggerTestUtil {
 
   public static void disposeDebugSession(final XDebugSession debugSession) {
     new WriteAction() {
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         XDebugSessionImpl session = (XDebugSessionImpl)debugSession;
         Disposer.dispose(session.getSessionTab());
         Disposer.dispose(session.getConsoleView());
