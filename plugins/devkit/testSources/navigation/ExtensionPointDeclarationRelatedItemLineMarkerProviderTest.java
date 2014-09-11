@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -34,8 +35,10 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    String pathForClass = PathUtil.getJarPathForClass(ExtensionPointName.class);
-    moduleBuilder.addLibrary("extensions", pathForClass);
+    String extensionsJar = PathUtil.getJarPathForClass(ExtensionPointName.class);
+    moduleBuilder.addLibrary("extensions", extensionsJar);
+    String langApiJar = PathUtil.getJarPathForClass(LocalInspectionEP.class);
+    moduleBuilder.addLibrary("lang-api", langApiJar);
   }
 
   public void testMyStringEP() {
