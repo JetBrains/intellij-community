@@ -51,6 +51,7 @@ public class ReplacePromptDialog extends DialogWrapper {
     replaceAction.putValue(DEFAULT_ACTION,Boolean.TRUE);
     if (myException == null) {
       if (myIsMultiple){
+        setCancelButtonText(UIBundle.message("replace.prompt.review.action"));
         return new Action[]{
           replaceAction,
           createSkipAction(),
