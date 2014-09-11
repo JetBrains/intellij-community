@@ -81,7 +81,6 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author peter
@@ -742,7 +741,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return false;
   }
 
-  AtomicReference<LookupElement[]> startCompletion(final CompletionInitializationContext initContext) {
+  void startCompletion(final CompletionInitializationContext initContext) {
     boolean sync = ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup;
     final CompletionThreading strategy = sync ? new SyncCompletion() : new AsyncCompletion();
 
@@ -754,12 +753,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
     final WeighingDelegate weigher = strategy.delegateWeighing(this);
 
-    final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
     class CalculateItems implements Runnable {
       @Override
       public void run() {
         try {
-          data.set(calculateItems(initContext, weigher));
+          calculateItems(initContext, weigher);
         }
         catch (ProcessCanceledException ignore) {
           cancel(); // some contributor may just throw PCE; if indicator is not canceled everything will hang
@@ -771,7 +769,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
     strategy.startThread(this, new CalculateItems());
-    return data;
   }
 
   private LookupElement[] calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {
