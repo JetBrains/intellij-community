@@ -1,3 +1,3 @@
 class Array  {
-  String s []<caret> = {};
+    String s []<caret> = {};
 }
