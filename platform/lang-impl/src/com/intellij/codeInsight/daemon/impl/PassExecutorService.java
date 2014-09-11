@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -95,6 +96,12 @@ public class PassExecutorService implements Disposable {
       catch (ProcessCanceledException ignored) {
 
       }
+      catch (Error e) {
+        throw e;
+      }
+      catch (RuntimeException e) {
+        throw e;
+      }
       catch (Throwable throwable) {
         LOG.error(throwable);
       }
@@ -117,6 +124,10 @@ public class PassExecutorService implements Disposable {
         Editor editor = ((TextEditor)fileEditor).getEditor();
         LOG.assertTrue(!(editor instanceof EditorWindow));
         document = editor.getDocument();
+      }
+      else {
+        VirtualFile virtualFile = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor);
+        document = virtualFile == null ? null : FileDocumentManager.getInstance().getDocument(virtualFile);
       }
 
       int prevId = 0;
@@ -534,7 +545,7 @@ public class PassExecutorService implements Disposable {
     return result;
   }
 
-  private void sortById(@NotNull List<TextEditorHighlightingPass> result) {
+  private static void sortById(@NotNull List<TextEditorHighlightingPass> result) {
     ContainerUtil.quickSort(result, new Comparator<TextEditorHighlightingPass>() {
       @Override
       public int compare(TextEditorHighlightingPass o1, TextEditorHighlightingPass o2) {
@@ -548,7 +559,7 @@ public class PassExecutorService implements Disposable {
     return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
   }
 
-  public static void log(ProgressIndicator progressIndicator, TextEditorHighlightingPass pass, @NonNls Object... info) {
+  public static void log(ProgressIndicator progressIndicator, TextEditorHighlightingPass pass, @NonNls @NotNull Object... info) {
     if (LOG.isDebugEnabled()) {
       CharSequence docText = pass == null ? "" : StringUtil.first(pass.getDocument().getCharsSequence(), 10, true);
       synchronized (PassExecutorService.class) {
