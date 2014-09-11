@@ -19,14 +19,36 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
+
+import java.io.File;
 
 /**
  * @author Vladislav.Soroka
  * @since 5/23/2014
  */
 public class ManifestGenerationTest extends MavenCompilingTestCase {
+  private File myGlobalSettingsFile;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myGlobalSettingsFile = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.getEffectiveGlobalSettingsIoFile();
+    if (myGlobalSettingsFile != null) {
+      VfsRootAccess.allowRootAccess(myGlobalSettingsFile.getAbsolutePath());
+    }
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    if (myGlobalSettingsFile != null) {
+      VfsRootAccess.disallowRootAccess(myGlobalSettingsFile.getAbsolutePath());
+    }
+    super.tearDown();
+  }
 
   public void testBasic() throws Exception {
     importProject("<groupId>test</groupId>" +
