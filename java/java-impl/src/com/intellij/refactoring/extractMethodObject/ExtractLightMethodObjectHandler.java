@@ -92,18 +92,6 @@ public class ExtractLightMethodObjectHandler {
       return null;
     }
 
-    if (elements[elements.length - 1] instanceof PsiExpressionStatement) {
-      final PsiExpression expr = ((PsiExpressionStatement)elements[elements.length - 1]).getExpression();
-      if (!(expr instanceof PsiAssignmentExpression)) {
-        final PsiType expressionType = expr.getType();
-        if (expressionType != null && expressionType != PsiType.VOID) {
-          final String uniqueResultName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("result", elements[0], true);
-          final String statementText = expressionType.getCanonicalText() + " " + uniqueResultName + " = " + expr.getText() + ";";
-          elements[elements.length - 1] = elements[elements.length - 1].replace(elementFactory.createStatementFromText(statementText, elements[elements.length -1]));
-        }
-      }
-    }
-
     final PsiFile copy = PsiFileFactory.getInstance(project)
       .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
 
@@ -121,6 +109,18 @@ public class ExtractLightMethodObjectHandler {
     final PsiElement[] elementsCopy = CodeInsightUtil.findStatementsInRange(copy,
                                                                             firstElementCopy.getTextRange().getStartOffset(),
                                                                             anchor.getTextRange().getStartOffset());
+    if (elementsCopy[elementsCopy.length - 1] instanceof PsiExpressionStatement) {
+      final PsiExpression expr = ((PsiExpressionStatement)elementsCopy[elementsCopy.length - 1]).getExpression();
+      if (!(expr instanceof PsiAssignmentExpression)) {
+        final PsiType expressionType = expr.getType();
+        if (expressionType != null && expressionType != PsiType.VOID) {
+          final String uniqueResultName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("result", elementsCopy[0], true);
+          final String statementText = expressionType.getCanonicalText() + " " + uniqueResultName + " = " + expr.getText() + ";";
+          elementsCopy[elementsCopy.length - 1] = elementsCopy[elementsCopy.length - 1]
+            .replace(elementFactory.createStatementFromText(statementText, elementsCopy[elementsCopy.length -1]));
+        }
+      }
+    }
 
     final int start = elementsCopy[0].getTextRange().getStartOffset();
 
