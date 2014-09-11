@@ -72,8 +72,7 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
   }
 
   public <Data> boolean processAll(Processor<Data> processor, KeyDescriptor<Data> descriptor) throws IOException {
-    force();
-
+    assert !isDirty();
     DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(getPagedFileStorage().getFile()),
                                                                                                     myFileLength) {
       @Override
