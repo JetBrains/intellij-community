@@ -44,31 +44,15 @@ public class JsonLineMover extends LineMover {
 
     final PsiElement commonParent = movedElementRange.getFirst().getParent();
     final PsiElement lowerRightElement = down ? destElementRange.getSecond() : movedElementRange.getSecond();
-    if (commonParent instanceof JsonArray) {
-      if (PsiTreeUtil.getNextSiblingOfType(lowerRightElement, JsonValue.class) == null &&
-          TreeUtil.findSibling(lowerRightElement.getNode(), JsonElementTypes.COMMA) == null) {
+    // Destination rightmost element is not closing brace or bracket
+    if (lowerRightElement instanceof JsonElement) {
+      if (commonParent instanceof JsonArray && notFollowedByNextElementOrComma(lowerRightElement, JsonValue.class) ||
+          commonParent instanceof JsonObject && notFollowedByNextElementOrComma(lowerRightElement, JsonProperty.class)) {
         myShouldAddComma = true;
       }
     }
-    else if (commonParent instanceof JsonObject) {
-      if (PsiTreeUtil.getNextSiblingOfType(lowerRightElement, JsonProperty.class) == null &&
-          TreeUtil.findSibling(lowerRightElement.getNode(), JsonElementTypes.COMMA) == null) {
-        myShouldAddComma = true;
-      }
-    }
-
-    info.indentSource = false;
-    info.indentTarget = false;
 
     return true;
-}
-
-
-  private static boolean isValidElementRange(@Nullable Pair<PsiElement, PsiElement> elementRange) {
-    if (elementRange == null) {
-      return false;
-    }
-    return elementRange.getFirst().getParent() == elementRange.getSecond().getParent();
   }
 
   @Override
@@ -88,5 +72,17 @@ public class JsonLineMover extends LineMover {
       assert project != null;
       PsiDocumentManager.getInstance(project).commitDocument(document);
     }
+  }
+
+  private static boolean notFollowedByNextElementOrComma(@NotNull PsiElement anchor, @NotNull Class<? extends PsiElement> nextElementType) {
+    return PsiTreeUtil.getNextSiblingOfType(anchor, nextElementType) == null &&
+           TreeUtil.findSibling(anchor.getNode(), JsonElementTypes.COMMA) == null;
+  }
+
+  private static boolean isValidElementRange(@Nullable Pair<PsiElement, PsiElement> elementRange) {
+    if (elementRange == null) {
+      return false;
+    }
+    return elementRange.getFirst().getParent() == elementRange.getSecond().getParent();
   }
 }

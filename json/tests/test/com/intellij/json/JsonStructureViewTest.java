@@ -40,11 +40,11 @@ public class JsonStructureViewTest extends JsonTestCase {
   public void testJsonStructure() {
     myFixture.configureByFile("structureView/SimpleStructure.json");
 
-    final StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(getFile());
+    final StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(myFixture.getFile());
     assertNotNull(builder);
     StructureViewComponent component = null;
     try {
-      final FileEditor editor = FileEditorManager.getInstance(getProject()).getSelectedEditor(getFile().getVirtualFile());
+      final FileEditor editor = FileEditorManager.getInstance(getProject()).getSelectedEditor(myFixture.getFile().getVirtualFile());
       component = (StructureViewComponent)builder.createStructureView(editor, myFixture.getProject());
       final StructureViewModel model = component.getTreeModel();
 

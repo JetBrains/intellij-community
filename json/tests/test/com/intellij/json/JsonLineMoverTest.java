@@ -1,6 +1,7 @@
 package com.intellij.json;
 
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 
 /**
  * @author Mikhail Golubev
@@ -34,6 +35,15 @@ public class JsonLineMoverTest extends JsonTestCase {
   }
 
   public void testObjectSelectionMovedDown() {
+    doTest(true);
+  }
+
+
+  // Moved from JavaScript
+
+  public void testWeb_10585() {
+    doTest(false);
+    FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()));
     doTest(true);
   }
 }

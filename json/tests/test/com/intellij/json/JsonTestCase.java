@@ -4,14 +4,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.TestLoggerFactory;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
 @TestDataPath("$CONTENT_ROOT/testData")
-public abstract class JsonTestCase extends CodeInsightFixtureTestCase {
+public abstract class JsonTestCase extends LightCodeInsightFixtureTestCase {
   static {
     Logger.setFactory(TestLoggerFactory.class);
   }
@@ -28,10 +28,5 @@ public abstract class JsonTestCase extends CodeInsightFixtureTestCase {
   @NotNull
   public String getBasePath() {
     return "/json/tests/testData";
-  }
-
-  @Override
-  protected boolean isCommunity() {
-    return true;
   }
 }
