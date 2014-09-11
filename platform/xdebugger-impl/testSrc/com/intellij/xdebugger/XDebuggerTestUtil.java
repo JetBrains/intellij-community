@@ -35,6 +35,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import junit.framework.Assert;
 import org.intellij.lang.annotations.Language;
@@ -49,6 +50,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.*;
 
 public class XDebuggerTestUtil {
   private static final int TIMEOUT = 25000;
@@ -127,12 +130,23 @@ public class XDebuggerTestUtil {
     return container.waitFor(timeout).first;
   }
 
-  public static Pair<XValue, String> evaluate(XDebugSession session, String expression) throws InterruptedException {
+  public static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression) {
     return evaluate(session, expression, TIMEOUT);
   }
 
-  public static Pair<XValue, String> evaluate(XDebugSession session, String expression, long timeout) throws InterruptedException {
-    XDebuggerEvaluator evaluator = session.getCurrentStackFrame().getEvaluator();
+  public static Pair<XValue, String> evaluate(XDebugSession session, String expression) throws InterruptedException {
+    return evaluate(session, XExpressionImpl.fromText(expression), TIMEOUT);
+  }
+
+  public static Pair<XValue, String> evaluate(XDebugSession session, String expression, long timeout) {
+    return evaluate(session, XExpressionImpl.fromText(expression), timeout);
+  }
+
+  private static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression, long timeout) {
+    XStackFrame frame = session.getCurrentStackFrame();
+    assertNotNull(frame);
+    XDebuggerEvaluator evaluator = frame.getEvaluator();
+    assertNotNull(evaluator);
     XTestEvaluationCallback callback = new XTestEvaluationCallback();
     evaluator.evaluate(expression, callback, session.getCurrentPosition());
     return callback.waitFor(timeout);
@@ -322,8 +336,18 @@ public class XDebuggerTestUtil {
     Assert.assertEquals(offset, n.myPosition.getOffset());
   }
 
-  public static boolean waitFor(Semaphore semaphore, long timeoutInMillis) throws InterruptedException {
-    return semaphore.tryAcquire(timeoutInMillis, TimeUnit.MILLISECONDS);
+  public static boolean waitFor(Semaphore semaphore, long timeoutInMillis) {
+    long end = System.currentTimeMillis() + timeoutInMillis;
+    long remaining = timeoutInMillis;
+    do {
+      try {
+        return semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException ignored) {
+        remaining = end - System.currentTimeMillis();
+      }
+    } while (remaining > 0);
+    return false;
   }
 
   public static void assertVariable(Collection<XValue> vars,
