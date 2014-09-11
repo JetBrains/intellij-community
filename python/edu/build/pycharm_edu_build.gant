@@ -150,8 +150,8 @@ target('default': "Build artifacts") {
   def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
   //custom jdk bundled
   def sitFileName = "pycharm${buildName}-custom-jdk-bundled"
-  signMacZip("idea", ["sitFileName": "${sitFileName}", "jdk_archive_name": "custom_jdk_${buildNumber}.tar"])
-  buildDmg("idea", getDmgImage(false), extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": "custom_jdk_${buildNumber}.tar"])
+  signMacZip("pycharm", extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": "custom_jdk_${buildNumber}.tar"])
+  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": "custom_jdk_${buildNumber}.tar"])
 
   signMacZip("pycharm", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
   buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
