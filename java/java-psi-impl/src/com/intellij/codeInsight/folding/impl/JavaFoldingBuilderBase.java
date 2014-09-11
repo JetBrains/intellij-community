@@ -625,6 +625,11 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
 
     int leftStart = method.getParameterList().getTextRange().getEndOffset();
+
+    if (!StringUtil.isEmptyOrSpaces(document.getCharsSequence().subSequence(leftStart + 1, body.getTextRange().getStartOffset()))) {
+      return false;
+    }
+    
     int leftEnd = statement.getTextRange().getStartOffset();
     int rightStart = statement.getTextRange().getEndOffset();
     int rightEnd = body.getTextRange().getEndOffset();
