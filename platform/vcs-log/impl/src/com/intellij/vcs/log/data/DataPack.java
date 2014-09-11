@@ -26,16 +26,14 @@ public class DataPack implements VcsLogDataPack {
   private boolean myFull;
 
   @NotNull
-  static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits, @NotNull RefsModel refsModel,
-                        @NotNull NotNullFunction<Hash, Integer> indexGetter, @NotNull NotNullFunction<Integer, Hash> hashGetter,
-                        @NotNull Map<VirtualFile, VcsLogProvider> providers, boolean full) {
-    return build(buildPermanentGraph(commits, refsModel, indexGetter, hashGetter, providers), providers, refsModel, full);
-  }
-
-  @NotNull
-  static DataPack build(@NotNull PermanentGraph<Integer> permanentGraph, @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                        @NotNull RefsModel refsModel, boolean full) {
-    return new DataPack(refsModel, permanentGraph, createGraphFacade(permanentGraph), providers, full);
+  static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
+                        @NotNull Map<VirtualFile, Set<VcsRef>> refs,
+                        @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                        @NotNull VcsLogHashMap hashMap,
+                        boolean full) {
+    RefsModel refsModel = new RefsModel(refs, hashMap.asIndexGetter());
+    PermanentGraph<Integer> graph = buildPermanentGraph(commits, refsModel, hashMap.asIndexGetter(), hashMap.asHashGetter(), providers);
+    return new DataPack(refsModel, graph, createGraphFacade(graph), providers, full);
   }
 
   @NotNull
@@ -57,11 +55,11 @@ public class DataPack implements VcsLogDataPack {
   }
 
   @NotNull
-  static PermanentGraph<Integer> buildPermanentGraph(@NotNull List<? extends GraphCommit<Integer>> commits,
-                                                     @NotNull RefsModel refsModel,
-                                                     @NotNull NotNullFunction<Hash, Integer> indexGetter,
-                                                     @NotNull NotNullFunction<Integer, Hash> hashGetter,
-                                                     @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+  private static PermanentGraph<Integer> buildPermanentGraph(@NotNull List<? extends GraphCommit<Integer>> commits,
+                                                             @NotNull RefsModel refsModel,
+                                                             @NotNull NotNullFunction<Hash, Integer> indexGetter,
+                                                             @NotNull NotNullFunction<Integer, Hash> hashGetter,
+                                                             @NotNull Map<VirtualFile, VcsLogProvider> providers) {
     if (commits.isEmpty()) {
       return EmptyPermanentGraph.getInstance();
     }

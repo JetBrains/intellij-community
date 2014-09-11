@@ -228,8 +228,8 @@ public class CCRunTests extends AnAction {
         .createChildDirectory(project, taskDir.getName());
       if (CCProjectService.indexIsValid(lessonIndex, course.getLessons())) {
         Lesson lesson = course.getLessons().get(lessonIndex);
-        if (CCProjectService.indexIsValid(index, lesson.getTasklist())) {
-          Task task = lesson.getTasklist().get(index);
+        if (CCProjectService.indexIsValid(index, lesson.getTaskList())) {
+          Task task = lesson.getTaskList().get(index);
           HashMap<TaskFile, TaskFile> taskFilesCopy = new HashMap<TaskFile, TaskFile>();
           for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
             CreateCourseArchive.createUserFile(project, taskFilesCopy, taskResourceDir, taskDir, entry);

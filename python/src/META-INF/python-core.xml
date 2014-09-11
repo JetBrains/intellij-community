@@ -477,9 +477,6 @@
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
 
-    <projectService serviceInterface="com.jetbrains.python.hierarchy.call.PyStaticCallDataManager"
-                    serviceImplementation="com.jetbrains.python.hierarchy.call.PyStaticCallDataManagerImpl"/>
-
     <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"

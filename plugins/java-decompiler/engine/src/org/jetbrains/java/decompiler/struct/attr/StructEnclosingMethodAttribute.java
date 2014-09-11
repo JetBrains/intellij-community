@@ -18,32 +18,31 @@ package org.jetbrains.java.decompiler.struct.attr;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 
+import java.io.DataInputStream;
+import java.io.IOException;
+
 public class StructEnclosingMethodAttribute extends StructGeneralAttribute {
 
-  private String classname;
-
-  private String mtname;
-
+  private String className;
+  private String methodName;
   private String methodDescriptor;
 
-  public void initContent(ConstantPool pool) {
+  @Override
+  public void initContent(ConstantPool pool) throws IOException {
+    DataInputStream data = stream();
+    int classIndex = data.readUnsignedShort();
+    int methodIndex = data.readUnsignedShort();
 
-    name = ATTRIBUTE_ENCLOSING_METHOD;
-
-    int clindex = (((info[0] & 0xFF) << 8) | (info[1] & 0xFF));
-    int mtindex = (((info[2] & 0xFF) << 8) | (info[3] & 0xFF));
-
-    classname = pool.getPrimitiveConstant(clindex).getString();
-    if (mtindex != 0) {
-      LinkConstant lk = pool.getLinkConstant(mtindex);
-
-      mtname = lk.elementname;
+    className = pool.getPrimitiveConstant(classIndex).getString();
+    if (methodIndex != 0) {
+      LinkConstant lk = pool.getLinkConstant(methodIndex);
+      methodName = lk.elementname;
       methodDescriptor = lk.descriptor;
     }
   }
 
-  public String getClassname() {
-    return classname;
+  public String getClassName() {
+    return className;
   }
 
   public String getMethodDescriptor() {
@@ -51,6 +50,6 @@ public class StructEnclosingMethodAttribute extends StructGeneralAttribute {
   }
 
   public String getMethodName() {
-    return mtname;
+    return methodName;
   }
 }

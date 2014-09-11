@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/extensionPointDeclaration")
@@ -34,8 +35,10 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    String pathForClass = PathUtil.getJarPathForClass(ExtensionPointName.class);
-    moduleBuilder.addLibrary("extensions", pathForClass);
+    String extensionsJar = PathUtil.getJarPathForClass(ExtensionPointName.class);
+    moduleBuilder.addLibrary("extensions", extensionsJar);
+    String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
+    moduleBuilder.addLibrary("platform-api", platformApiJar);
   }
 
   public void testMyStringEP() {

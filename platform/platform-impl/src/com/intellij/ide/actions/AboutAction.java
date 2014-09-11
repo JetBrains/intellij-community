@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -31,7 +32,7 @@ import java.awt.*;
 public class AboutAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu);
+    e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(e.getPlace()));
     e.getPresentation().setDescription("Show information about " + ApplicationNamesInfo.getInstance().getFullProductName());
   }
 

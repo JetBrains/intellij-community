@@ -1,17 +1,13 @@
 package pkg;
 
-
 class TestCodeConstructs {
-
    private int count = 0;
-
 
    void expressions() {
       (new String()).hashCode();
    }
 
-   String fieldIncrement() {
-      int var1 = this.count++;
-      return "id:" + var1;
+   Integer fieldIncrement() {
+      return new Integer(this.count++);
    }
 }

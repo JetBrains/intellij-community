@@ -249,6 +249,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     activate();
   }
 
+  @NotNull
   @Override
   public String getTabTitle() {
     return myTitle;

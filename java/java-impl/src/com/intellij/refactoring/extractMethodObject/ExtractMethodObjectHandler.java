@@ -20,12 +20,10 @@
  */
 package com.intellij.refactoring.extractMethodObject;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
@@ -37,12 +35,9 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
-import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -69,20 +64,18 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
       return;
     }
 
-    extractMethodObject(project, editor, file, new ExtractMethodObjectProcessor(project, editor, elements, ""));
-  }
-
-  static void extractMethodObject(Project project, Editor editor, PsiFile file, ExtractMethodObjectProcessor processor) {
-    final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
     try {
-      if (!extractProcessor.prepare()) return;
+      extractMethodObject(project, editor, new ExtractMethodObjectProcessor(project, editor, elements, ""));
     }
     catch (PrepareFailedException e) {
       CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), ExtractMethodObjectProcessor.REFACTORING_NAME, HelpID.EXTRACT_METHOD_OBJECT);
       ExtractMethodHandler.highlightPrepareError(e, file, editor, project);
-      return;
     }
+  }
 
+  static void extractMethodObject(Project project, Editor editor, ExtractMethodObjectProcessor processor) throws PrepareFailedException {
+    final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
+    if (!extractProcessor.prepare()) return;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, extractProcessor.getTargetClass().getContainingFile())) return;
     if (extractProcessor.showDialog()) {
       run(project, editor, processor, extractProcessor);
@@ -90,11 +83,16 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
   }
 
   public static void run(@NotNull final Project project,
-                  @NotNull final Editor editor,
+                           final Editor editor,
                   @NotNull final ExtractMethodObjectProcessor processor,
                   @NotNull final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor) {
-    final int offset = editor.getCaretModel().getOffset();
-    final RangeMarker marker = editor.getDocument().createRangeMarker(new TextRange(offset, offset));
+    final RangeMarker marker;
+    if (editor != null) {
+      final int offset = editor.getCaretModel().getOffset();
+      marker = editor.getDocument().createRangeMarker(new TextRange(offset, offset));
+    } else {
+      marker = null;
+    }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
@@ -107,7 +105,11 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
                 }
               });
               processor.run();
-              processor.runChangeSignature();
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  processor.runChangeSignature();
+                }
+              });
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -119,7 +121,9 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
         if (processor.isCreateInnerClass()) {
           processor.moveUsedMethodsToInner();
           PsiDocumentManager.getInstance(project).commitAllDocuments();
-          DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
+          if (editor != null) {
+            DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
+          }
         }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
@@ -134,9 +138,11 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
         });
       }
     }, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME);
-    editor.getCaretModel().moveToOffset(marker.getStartOffset());
-    marker.dispose();
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    if (editor != null) {
+      editor.getCaretModel().moveToOffset(marker.getStartOffset());
+      marker.dispose();
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
   }
 
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {

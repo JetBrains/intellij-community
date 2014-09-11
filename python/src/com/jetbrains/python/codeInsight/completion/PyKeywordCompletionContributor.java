@@ -649,8 +649,13 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC,
            psiElement()
              .withLanguage(PythonLanguage.getInstance())
-             .inside(false, psiElement(PyAssignmentStatement.class), psiElement(PyTargetExpression.class))
-             .afterLeaf("=", "("),
+             .andOr(psiElement()
+                      .inside(false, psiElement(PyAssignmentStatement.class), psiElement(PyTargetExpression.class))
+                      .afterLeaf(psiElement().withElementType(PyTokenTypes.EQ)),
+                    psiElement()
+                      .inside(false, psiElement(PyAugAssignmentStatement.class), psiElement(PyTargetExpression.class))
+                      .afterLeaf(psiElement().withElementType(PyTokenTypes.AUG_ASSIGN_OPERATIONS)),
+                    psiElement().inside(true, psiElement(PyParenthesizedExpression.class))),
            new PyKeywordCompletionProvider(PyNames.YIELD));
   }
 

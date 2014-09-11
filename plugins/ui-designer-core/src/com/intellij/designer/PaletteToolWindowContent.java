@@ -15,19 +15,8 @@
  */
 package com.intellij.designer;
 
-import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.palette.PaletteItem;
-import org.jetbrains.annotations.Nullable;
-
 public interface PaletteToolWindowContent extends LightToolWindowContent {
-  @Nullable
-  PaletteItem getActiveItem();
-
   void clearActiveItem();
 
   void refresh();
-
-  boolean isEmpty();
-
-  void loadPalette(@Nullable DesignerEditorPanel designer);
 }

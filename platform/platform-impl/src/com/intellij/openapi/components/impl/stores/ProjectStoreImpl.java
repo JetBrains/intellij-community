@@ -39,12 +39,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.OrderedSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.annotation.Annotation;
@@ -263,8 +265,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return null;
     }
 
-    File file = ((FileBasedStorage)storage).getFile();
-    return file == null ? null : getBasePath(file);
+    return getBasePath(((FileBasedStorage)storage).getFile());
   }
 
   private String getBasePath(@NotNull File file) {
@@ -307,7 +308,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return baseDir.getName().replace(":", "");
     }
     else {
-      String temp = ((FileBasedStorage)getProjectFileStorage()).getFile().getName();
+      String temp = PathUtilRt.getFileName(((FileBasedStorage)getProjectFileStorage()).getFilePath());
       FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp);
       if (fileType instanceof ProjectFileType) {
         temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length() - 1);
@@ -441,16 +442,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     @Override
-    public void load(@NotNull final Element root) {
-      final String v = root.getAttributeValue(VERSION_OPTION);
+    public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
+      final String v = rootElement.getAttributeValue(VERSION_OPTION);
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       originalVersion = v != null ? Integer.parseInt(v) : 0;
 
       if (originalVersion != ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
-        convert(root, originalVersion);
+        convert(rootElement, originalVersion);
       }
 
-      super.load(root);
+      super.load(rootElement, pathMacroSubstitutor, intern);
     }
 
     protected void convert(final Element root, final int originalVersion) {

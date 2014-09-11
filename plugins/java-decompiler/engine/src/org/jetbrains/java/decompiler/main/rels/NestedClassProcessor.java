@@ -75,7 +75,8 @@ public class NestedClassProcessor {
           child.simpleName = "SyntheticClass_" + (++synthetics);
         }
         else {
-          DecompilerContext.getLogger().writeMessage("Nameless local or member class " + cl.qualifiedName + "!", IFernflowerLogger.WARNING);
+          DecompilerContext.getLogger().writeMessage("Nameless local or member class " + cl.qualifiedName + "!",
+                                                     IFernflowerLogger.Severity.WARN);
           child.simpleName = "NamelessClass_" + (++nameless);
         }
       }
@@ -201,7 +202,7 @@ public class NestedClassProcessor {
           StructEnclosingMethodAttribute attr =
             (StructEnclosingMethodAttribute)child.classStruct.getAttributes().getWithKey("EnclosingMethod");
           if (attr != null && attr.getMethodName() != null) {
-            if (node.classStruct.qualifiedName.equals(attr.getClassname()) &&
+            if (node.classStruct.qualifiedName.equals(attr.getClassName()) &&
                 node.classStruct.getMethod(attr.getMethodName(), attr.getMethodDescriptor()) != null) {
               child.enclosingMethod = InterpreterUtil.makeUniqueKey(attr.getMethodName(), attr.getMethodDescriptor());
               continue;
@@ -221,11 +222,11 @@ public class NestedClassProcessor {
         if (!hasEnclosing) {
           if (child.type == ClassNode.CLASS_ANONYMOUS) {
             DecompilerContext.getLogger()
-              .writeMessage("Unreferenced anonymous class " + child.classStruct.qualifiedName + "!", IFernflowerLogger.WARNING);
+              .writeMessage("Unreferenced anonymous class " + child.classStruct.qualifiedName + "!", IFernflowerLogger.Severity.WARN);
           }
           else if (child.type == ClassNode.CLASS_LOCAL) {
             DecompilerContext.getLogger()
-              .writeMessage("Unreferenced local class " + child.classStruct.qualifiedName + "!", IFernflowerLogger.WARNING);
+              .writeMessage("Unreferenced local class " + child.classStruct.qualifiedName + "!", IFernflowerLogger.Severity.WARN);
           }
         }
       }
@@ -275,7 +276,7 @@ public class NestedClassProcessor {
           HashMap<String, List<VarFieldPair>> mask = getMaskLocalVars(nd.wrapper);
           if (mask.isEmpty()) {
             DecompilerContext.getLogger()
-              .writeMessage("Nested class " + nd.classStruct.qualifiedName + " has no constructor!", IFernflowerLogger.WARNING);
+              .writeMessage("Nested class " + nd.classStruct.qualifiedName + " has no constructor!", IFernflowerLogger.Severity.WARN);
           }
           else {
             mapVarMasks.put(nd.classStruct.qualifiedName, mask);

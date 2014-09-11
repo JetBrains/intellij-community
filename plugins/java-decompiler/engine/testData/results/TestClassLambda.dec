@@ -10,9 +10,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class TestClassLambda {
-
    public int field = 0;
-
 
    public void testLambda() {
       List var1 = Arrays.asList(new Integer[]{Integer.valueOf(1), Integer.valueOf(2), Integer.valueOf(3), Integer.valueOf(4), Integer.valueOf(5), Integer.valueOf(6), Integer.valueOf(7)});

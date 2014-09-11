@@ -45,7 +45,9 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     if (CustomFoldingProvider.getAllProviders().length > 0) {
       myDefaultProvider = null;
       ASTNode rootNode = root.getNode();
-      addCustomFoldingRegionsRecursively(new FoldingStack(rootNode), rootNode, descriptors, 0);
+      if (rootNode != null) {
+        addCustomFoldingRegionsRecursively(new FoldingStack(rootNode), rootNode, descriptors, 0);
+      }
     }
     buildLanguageFoldRegions(descriptors, root, document, quick);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);

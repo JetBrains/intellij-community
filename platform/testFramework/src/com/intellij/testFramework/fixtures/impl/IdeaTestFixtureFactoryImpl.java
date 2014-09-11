@@ -62,6 +62,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(name), myFixtureBuilderProviders);
   }
 
+  @NotNull
   @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
     return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(

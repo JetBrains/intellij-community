@@ -17,14 +17,15 @@ package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 
+import java.io.IOException;
+
 public class StructConstantValueAttribute extends StructGeneralAttribute {
 
   private int index;
 
-  public void initContent(ConstantPool pool) {
-
-    name = ATTRIBUTE_CONSTANT_VALUE;
-    index = ((info[0] & 0xFF) << 8) | (info[1] & 0xFF);
+  @Override
+  public void initContent(ConstantPool pool) throws IOException {
+    index = stream().readUnsignedShort();
   }
 
   public int getIndex() {

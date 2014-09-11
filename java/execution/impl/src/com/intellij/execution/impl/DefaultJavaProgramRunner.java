@@ -34,7 +34,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
@@ -97,7 +96,6 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     onProcessStarted(env.getRunnerSettings(), executionResult);
 
     final RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
-    Disposer.register(env.getProject(), contentBuilder);
     if (shouldAddDefaultActions) {
       addDefaultActions(contentBuilder);
     }
@@ -116,7 +114,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     final ExecutionResult executionResult = contentBuilder.getExecutionResult();
     final ExecutionConsole executionConsole = executionResult.getExecutionConsole();
     final JComponent consoleComponent = executionConsole != null ? executionConsole.getComponent() : null;
-    final ControlBreakAction controlBreakAction = new ControlBreakAction(contentBuilder.getProcessHandler());
+    final ControlBreakAction controlBreakAction = new ControlBreakAction(executionResult.getProcessHandler());
     if (consoleComponent != null) {
       controlBreakAction.registerCustomShortcutSet(controlBreakAction.getShortcutSet(), consoleComponent);
       final ProcessHandler processHandler = executionResult.getProcessHandler();
@@ -130,7 +128,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       });
     }
     contentBuilder.addAction(controlBreakAction);
-    contentBuilder.addAction(new SoftExitAction(contentBuilder.getProcessHandler()));
+    contentBuilder.addAction(new SoftExitAction(executionResult.getProcessHandler()));
   }
 
 
@@ -143,7 +141,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
 
     @Override
-    public void update(final AnActionEvent event) {
+    public void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       if (!isVisible()) {
         presentation.setVisible(false);
@@ -172,7 +170,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       if (proxy != null) {
         final WiseDumpThreadsListener wiseListener = Boolean.TRUE.equals(Boolean.getBoolean(ourWiseThreadDumpProperty)) ?
@@ -254,7 +252,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       if (proxy != null) {
         proxy.sendStop();

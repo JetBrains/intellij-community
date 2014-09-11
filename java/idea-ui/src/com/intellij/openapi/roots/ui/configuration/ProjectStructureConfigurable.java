@@ -197,9 +197,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myToolbarComponent = toolbar.getComponent();
     if (Registry.is("ide.new.project.settings")) {
       left.setBackground(UIUtil.getSidePanelColor());
-    } else {
-      left.add(myToolbarComponent, BorderLayout.NORTH);
+      myToolbarComponent.setBackground(UIUtil.getSidePanelColor());
     }
+    left.add(myToolbarComponent, BorderLayout.NORTH);
     left.add(mySidePanel, BorderLayout.CENTER);
 
     mySplitter.setFirstComponent(left);

@@ -44,10 +44,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -352,8 +349,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return new CompoundPositionManager(new PositionManagerImpl(this));
   }
 
+  @Override
   public void printToConsole(final String text) {
     myExecutionResult.getProcessHandler().notifyTextAvailable(text, ProcessOutputTypes.SYSTEM);
+  }
+
+  @Override
+  public ProcessHandler getProcessHandler() {
+    return myExecutionResult.getProcessHandler();
   }
 
   /**
@@ -651,8 +654,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public void addProcessListener(ProcessListener processListener) {
     synchronized(myProcessListeners) {
-      if(getExecutionResult() != null) {
-        getExecutionResult().getProcessHandler().addProcessListener(processListener);
+      if(getProcessHandler() != null) {
+        getProcessHandler().addProcessListener(processListener);
       }
       else {
         myProcessListeners.add(processListener);
@@ -662,8 +665,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public void removeProcessListener(ProcessListener processListener) {
     synchronized (myProcessListeners) {
-      if(getExecutionResult() != null) {
-        getExecutionResult().getProcessHandler().removeProcessListener(processListener);
+      if(getProcessHandler() != null) {
+        getProcessHandler().removeProcessListener(processListener);
       }
       else {
         myProcessListeners.remove(processListener);
@@ -915,11 +918,32 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                                                 ClassNotLoadedException,
                                                                                 IncompatibleThreadStateException,
                                                                                 InvalidTypeException;
-    public E start(EvaluationContextImpl evaluationContext, Method method) throws EvaluateException {
-      return start(evaluationContext, method, false);
+
+
+    E start(EvaluationContextImpl evaluationContext, Method method, boolean internalEvaluate) throws EvaluateException {
+      while (true) {
+        try {
+          return startInternal(evaluationContext, method, internalEvaluate);
+        }
+        catch (ClassNotLoadedException e) {
+          ReferenceType loadedClass = null;
+          try {
+            if (evaluationContext.isAutoLoadClasses()) {
+              loadedClass = loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader());
+            }
+          }
+          catch (Exception ignored) {
+            loadedClass = null;
+          }
+          if (loadedClass == null) {
+            throw EvaluateExceptionUtil.createEvaluateException(e);
+          }
+        }
+      }
     }
 
-    public E start(EvaluationContextImpl evaluationContext, Method method, boolean internalEvaluate) throws EvaluateException {
+    E startInternal(EvaluationContextImpl evaluationContext, Method method, boolean internalEvaluate)
+      throws EvaluateException, ClassNotLoadedException {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       SuspendContextImpl suspendContext = evaluationContext.getSuspendContext();
       SuspendManagerUtil.assertSuspendContext(suspendContext);
@@ -954,26 +978,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
         getVirtualMachineProxy().clearCaches();
 
-        while (true) {
-          try {
-            return invokeMethodAndFork(suspendContext);
-          }
-          catch (ClassNotLoadedException e) {
-            ReferenceType loadedClass;
-            try {
-              loadedClass = evaluationContext.isAutoLoadClasses() ? loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader()) : null;
-            }
-            catch (EvaluateException ignored) {
-              loadedClass = null;
-            }
-            if (loadedClass == null) {
-              throw EvaluateExceptionUtil.createEvaluateException(e);
-            }
-          }
-        }
-      }
-      catch (ClassNotLoadedException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
+        return invokeMethodAndFork(suspendContext);
       }
       catch (InvocationException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -1113,7 +1118,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
       }
-    }.start((EvaluationContextImpl)evaluationContext, method);
+    }.start((EvaluationContextImpl)evaluationContext, method, false);
   }
 
   private static ThreadReference getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
@@ -1180,7 +1185,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return classType.newInstance(thread, method, args, invokePolicy);
       }
     };
-    return invokeCommand.start((EvaluationContextImpl)evaluationContext, method);
+    return invokeCommand.start((EvaluationContextImpl)evaluationContext, method, false);
   }
 
   public void clearCashes(int suspendPolicy) {
@@ -1709,15 +1714,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     createVirtualMachine(environment.getSessionName(), environment.isPollConnection());
 
+    ExecutionResult executionResult;
     try {
       synchronized (myProcessListeners) {
-        myExecutionResult = environment.createExecutionResult();
-        if (myExecutionResult == null) {
+        executionResult = environment.createExecutionResult();
+        myExecutionResult = executionResult;
+        if (executionResult == null) {
           fail();
           return null;
         }
         for (ProcessListener processListener : myProcessListeners) {
-          myExecutionResult.getProcessHandler().addProcessListener(processListener);
+          executionResult.getProcessHandler().addProcessListener(processListener);
         }
         myProcessListeners.clear();
       }
@@ -1730,7 +1737,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     // writing to volatile field ensures the other threads will see the right values in non-volatile fields
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myExecutionResult;
+      return executionResult;
     }
 
     /*
@@ -1758,7 +1765,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     });
     */
 
-    return myExecutionResult;
+    return executionResult;
   }
 
   private void fail() {
@@ -1883,8 +1890,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     MyProcessAdapter processListener = new MyProcessAdapter();
     addProcessListener(processListener);
-    if(myExecutionResult != null) {
-      if(myExecutionResult.getProcessHandler().isStartNotified()) {
+    if (myExecutionResult != null) {
+      if (myExecutionResult.getProcessHandler().isStartNotified()) {
         processListener.run();
       }
     }

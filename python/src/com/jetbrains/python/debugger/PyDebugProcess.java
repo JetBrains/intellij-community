@@ -571,9 +571,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public boolean isVariable(String name) {
+  public boolean canSaveToTemp(String name) {
     final Project project = getSession().getProject();
-    return PyDebugSupportUtils.isVariable(project, name);
+    return PyDebugSupportUtils.canSaveToTemp(project, name);
   }
 
   private PyStackFrame currentFrame() throws PyDebuggerException {

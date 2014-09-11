@@ -477,7 +477,17 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
           return;
         }
         super.visitReferenceExpression(expression);
-        if (offset + expression.getTextLength() < finalStartOffset)
+        if (offset + expression.getTextLength() < finalStartOffset) {
+          return;
+        }
+        final PsiElement target = expression.resolve();
+        if (!(target instanceof PsiMember)) {
+          return;
+        }
+        final PsiMember member = (PsiMember)target;
+        if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
         if (expression.getQualifierExpression() == null) {
           return;
         }

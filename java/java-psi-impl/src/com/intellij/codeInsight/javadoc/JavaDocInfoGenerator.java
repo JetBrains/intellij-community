@@ -501,6 +501,7 @@ public class JavaDocInfoGenerator {
     buffer.append("<b>");
     buffer.append(field.getName());
     appendInitializer(buffer, field);
+    enumConstantOrdinal(buffer, field, field.getContainingClass(), "\n");
     buffer.append("</b>");
   }
 
@@ -754,7 +755,20 @@ public class JavaDocInfoGenerator {
               }
               final PsiAnnotationMemberValue value = pair.getValue();
               if (value != null) {
-                buffer.append(XmlStringUtil.escapeString(value.getText()));
+                if (value instanceof PsiArrayInitializerMemberValue) {
+                  buffer.append("{");
+                  boolean firstMember = true;
+
+                  for(PsiAnnotationMemberValue memberValue:((PsiArrayInitializerMemberValue)value).getInitializers()) {
+                    if (!firstMember) buffer.append(",");
+                    firstMember = false;
+
+                    appendLinkOrText(buffer, memberValue, generateLink);
+                  }
+                  buffer.append("}");
+                } else {
+                  appendLinkOrText(buffer, value, generateLink);
+                }
               }
             }
             buffer.append(")");
@@ -775,6 +789,35 @@ public class JavaDocInfoGenerator {
         buffer.append("&nbsp;");
       }
       if (splitAnnotations) buffer.append("\n");
+    }
+  }
+
+  private static void appendLinkOrText(StringBuilder buffer,
+                                       PsiAnnotationMemberValue memberValue,
+                                       boolean generateLink) {
+    boolean linkGenerated = !generateLink;
+    if (!linkGenerated && memberValue instanceof PsiQualifiedReferenceElement) {
+      String text = ((PsiQualifiedReferenceElement)memberValue).getCanonicalText();
+      PsiElement resolve = ((PsiQualifiedReferenceElement)memberValue).resolve();
+
+      if (resolve instanceof PsiField) {
+        PsiField field = (PsiField)resolve;
+        PsiClass aClass = field.getContainingClass();
+        int startOfPropertyNamePosition = text.lastIndexOf('.');
+
+        if (startOfPropertyNamePosition != -1) {
+          text = text.substring(0, startOfPropertyNamePosition) + '#' + text.substring(startOfPropertyNamePosition + 1);
+        }
+        else {
+          if (aClass != null) text = aClass.getQualifiedName() + '#' + field.getName();
+        }
+        generateLink(buffer, text, aClass != null? aClass.getName() + '.' + field.getName():null, memberValue, false);
+        linkGenerated = true;
+      }
+    }
+
+    if (!linkGenerated) {
+      buffer.append(XmlStringUtil.escapeString(memberValue.getText()));
     }
   }
 

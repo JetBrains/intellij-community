@@ -71,7 +71,7 @@ public final class LazyVariablesGroup extends XValueGroup {
 
       @Override
       public void consumeVariables(@NotNull List<Variable> variables) {
-        node.addChildren(Variables.createVariablesList(variables, context), true);
+        node.addChildren(Variables.createVariablesList(variables, context, null), true);
       }
     }, componentType);
   }

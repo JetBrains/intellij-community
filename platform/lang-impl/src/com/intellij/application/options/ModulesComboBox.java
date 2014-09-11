@@ -36,6 +36,7 @@ import java.util.List;
  */
 public class ModulesComboBox extends ComboBox {
   private final SortedComboBoxModel<Module> myModel;
+  private boolean myAllowEmptySelection;
 
   public ModulesComboBox() {
     this(new SortedComboBoxModel<Module>(ModulesAlphaComparator.INSTANCE));
@@ -58,8 +59,17 @@ public class ModulesComboBox extends ComboBox {
     setRenderer(new ModuleListCellRenderer());
   }
 
+  public void allowEmptySelection(@NotNull String emptySelectionText) {
+    myAllowEmptySelection = true;
+    myModel.add(null);
+    setRenderer(new ModuleListCellRenderer(emptySelectionText));
+  }
+
   public void setModules(@NotNull Collection<Module> modules) {
     myModel.setAll(modules);
+    if (myAllowEmptySelection) {
+      myModel.add(null);
+    }
   }
 
   public void fillModules(@NotNull Project project) {

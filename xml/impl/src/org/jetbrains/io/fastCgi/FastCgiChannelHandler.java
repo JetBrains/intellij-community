@@ -92,7 +92,14 @@ public class FastCgiChannelHandler extends SimpleChannelInboundHandlerAdapter<Fa
 
       String value = builder.toString();
       if (key.equalsIgnoreCase("status")) {
-        response.setStatus(HttpResponseStatus.valueOf(Integer.parseInt(value.substring(0, value.indexOf(' ')))));
+        int index = value.indexOf(' ');
+        if (index == -1) {
+          LOG.warn("Cannot parse status: " + value);
+          response.setStatus(HttpResponseStatus.OK);
+        }
+        else {
+          response.setStatus(HttpResponseStatus.valueOf(Integer.parseInt(value.substring(0, index))));
+        }
       }
       else if (!(key.startsWith("http") || key.startsWith("HTTP"))) {
         response.headers().add(key, value);

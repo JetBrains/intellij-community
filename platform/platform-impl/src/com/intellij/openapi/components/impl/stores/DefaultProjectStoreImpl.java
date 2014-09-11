@@ -67,8 +67,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     final Element element = _d;
 
-    final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
-                                                            ROOT_TAG_NAME, null, "",
+    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, pathMacroManager.createTrackingSubstitutor(), componentManager,
+                                                            ROOT_TAG_NAME, null,
                                                             ComponentVersionProvider.EMPTY) {
       @Override
       @Nullable
@@ -112,6 +112,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
     };
 
+    //noinspection deprecation
     return new StateStorageManager() {
       @Override
       public void addMacro(@NotNull String macro, @NotNull String expansion) {

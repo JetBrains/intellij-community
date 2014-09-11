@@ -15,43 +15,35 @@
  */
 package org.jetbrains.java.decompiler.main.extern;
 
-import java.util.HashMap;
+public abstract class IFernflowerLogger {
 
-public interface IFernflowerLogger {
+  public enum Severity {
+    TRACE, INFO, WARN, ERROR
+  }
 
-  int TRACE = 1;
-  int INFO = 2;
-  int WARNING = 3;
-  int ERROR = 4;
-  int IMMEDIATE = 5;
+  private Severity severity = Severity.INFO;
 
-  HashMap<String, Integer> mapLogLevel = new HashMap<String, Integer>() {{
-    put("TRACE", 1);
-    put("INFO", 2);
-    put("WARN", 3);
-    put("ERROR", 4);
-    put("IMME", 5);
-  }};
+  public boolean accepts(Severity severity) {
+    return severity.ordinal() >= this.severity.ordinal();
+  }
 
-  String[] names = new String[]{""/*DUMMY ENTRY*/, "TRACE", "INFO", "WARNING", "ERROR", ""/*IMMEDIATE*/};
+  public void setSeverity(Severity severity) {
+    this.severity = severity;
+  }
 
-  void writeMessage(String message, int severity);
+  public abstract void writeMessage(String message, Severity severity);
 
-  void writeMessage(String message, Throwable t);
+  public abstract void writeMessage(String message, Throwable t);
 
-  void startClass(String classname);
+  public void startClass(String className) { }
 
-  void endClass();
+  public void endClass() { }
 
-  void startWriteClass(String classname);
+  public void startWriteClass(String className) { }
 
-  void endWriteClass();
+  public void endWriteClass() { }
 
-  void startMethod(String method);
+  public void startMethod(String methodName) { }
 
-  void endMethod();
-
-  int getSeverity();
-
-  void setSeverity(int severity);
+  public void endMethod() { }
 }

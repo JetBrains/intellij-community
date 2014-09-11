@@ -30,6 +30,7 @@ public final class EvaluationContextImpl implements EvaluationContext{
   private final SuspendContextImpl mySuspendContext;
   private final StackFrameProxyImpl myFrameProxy;
   private boolean myAutoLoadClasses = true;
+  private ClassLoaderReference myClassLoader;
   
   public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy, @Nullable Value thisObject) {
     myThisObject = thisObject;
@@ -77,7 +78,14 @@ public final class EvaluationContextImpl implements EvaluationContext{
   @Override
   public ClassLoaderReference getClassLoader() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (myClassLoader != null) {
+      return myClassLoader;
+    }
     return myFrameProxy != null ? myFrameProxy.getClassLoader() : null;
+  }
+
+  public void setClassLoader(ClassLoaderReference classLoader) {
+    myClassLoader = classLoader;
   }
 
   public boolean isAutoLoadClasses() {

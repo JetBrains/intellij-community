@@ -26,9 +26,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Producer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author gregsh
@@ -40,33 +40,41 @@ public class QuickDocUtil {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        final String documentation = docProducer.produce();
-        if (StringUtil.isEmpty(documentation)) return;
-        // modal dialogs with fragment editors fix: can't guess proper modality state here
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            DocumentationManager documentationManager = DocumentationManager.getInstance(project);
-            DocumentationComponent component;
-            JBPopup hint = documentationManager.getDocInfoHint();
-            if (hint != null) {
-              component = (DocumentationComponent)((AbstractPopup)hint).getComponent();
-            }
-            else if (documentationManager.hasActiveDockedDocWindow()) {
-              ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DOCUMENTATION);
-              Content selectedContent = toolWindow == null ? null : toolWindow.getContentManager().getSelectedContent();
-              component = selectedContent == null ? null : (DocumentationComponent)selectedContent.getComponent();
-            }
-            else {
-              component = null;
-            }
-            if (component != null) {
-              component.replaceText(documentation, element);
-            }
-          }
-        });
+        updateQuickDoc(project, element, docProducer.produce());
       }
     });
+  }
+
+  public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable final String documentation) {
+    if (StringUtil.isEmpty(documentation)) return;
+    // modal dialogs with fragment editors fix: can't guess proper modality state here
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        DocumentationComponent component = getActiveDocComponent(project);
+        if (component != null) {
+          component.replaceText(documentation, element);
+        }
+      }
+    });
+  }
+
+  @Nullable
+  public static DocumentationComponent getActiveDocComponent(@NotNull Project project) {
+    DocumentationManager documentationManager = DocumentationManager.getInstance(project);
+    DocumentationComponent component;
+    JBPopup hint = documentationManager.getDocInfoHint();
+    if (hint != null) {
+      component = (DocumentationComponent)((AbstractPopup)hint).getComponent();
+    }
+    else if (documentationManager.hasActiveDockedDocWindow()) {
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DOCUMENTATION);
+      Content selectedContent = toolWindow == null ? null : toolWindow.getContentManager().getSelectedContent();
+      component = selectedContent == null ? null : (DocumentationComponent)selectedContent.getComponent();
+    }
+    else {
+      component = null;
+    }
+    return component;
   }
 }

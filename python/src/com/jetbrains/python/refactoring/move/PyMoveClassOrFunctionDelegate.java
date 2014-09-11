@@ -39,11 +39,10 @@ import org.jetbrains.annotations.Nullable;
  * @author vlan
  */
 public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
-
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
     for (PsiElement element : elements) {
-      if (element instanceof PyClass || element instanceof PyFunction) continue;
+      if ((element instanceof PyClass || element instanceof PyFunction) && PyUtil.isTopLevel(element)) continue;
       return false;
     }
     return super.canMove(elements, targetContainer);

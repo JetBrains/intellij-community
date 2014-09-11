@@ -143,4 +143,16 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     String getExpected();
     String getActual();
   }
+
+  public interface AssertEqualsDiffChain {
+    AssertEqualsMultiDiffViewProvider getPrevious();
+    AssertEqualsMultiDiffViewProvider getCurrent();
+    AssertEqualsMultiDiffViewProvider getNext();
+    void setCurrent(AssertEqualsMultiDiffViewProvider provider);
+  }
+
+  public interface AssertEqualsMultiDiffViewProvider extends AssertEqualsDiffViewerProvider {
+    void openMultiDiff(Project project, AssertEqualsDiffChain chain);
+    String getFilePath();
+  }
 }

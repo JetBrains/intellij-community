@@ -77,6 +77,7 @@ public interface IFernflowerPreferences {
     put(IDEA_NOT_NULL_ANNOTATION, "1");
     put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
 
+    put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     put(MAX_PROCESSING_METHOD, "0");
     put(RENAME_ENTITIES, "0");
     put(NEW_LINE_SEPARATOR, (InterpreterUtil.IS_WINDOWS ? "0" : "1"));

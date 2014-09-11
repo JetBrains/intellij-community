@@ -17,7 +17,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.ide.palette.impl.PaletteManager;
+import com.intellij.ide.palette.impl.PaletteToolWindowManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,7 +63,6 @@ import java.util.Map;
 public final class InsertComponentProcessor extends EventProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.InsertComponentProcessor");
 
-  private final PaletteManager myPaletteManager;
   private final GuiEditor myEditor;
   private boolean mySticky;
   private RadComponent myInsertedComponent;
@@ -87,7 +86,6 @@ public final class InsertComponentProcessor extends EventProcessor {
   public InsertComponentProcessor(@NotNull final GuiEditor editor) {
     myEditor = editor;
     myGridInsertProcessor = new GridInsertProcessor(editor);
-    myPaletteManager = PaletteManager.getInstance(editor.getProject());
   }
 
   public void setSticky(final boolean sticky) {
@@ -261,7 +259,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   private ComponentItem getComponentToInsert() {
     return (myComponentToInsert != null)
            ? myComponentToInsert
-           : myPaletteManager.getActiveItem(ComponentItem.class);
+           : PaletteToolWindowManager.getInstance(myEditor).getActiveItem(ComponentItem.class);
   }
 
   public void processComponentInsert(@NotNull final Point point, final ComponentItem item) {
@@ -295,7 +293,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     setCursor(Cursor.getDefaultCursor());
     if (myInsertedComponent == null) {
       if (!mySticky) {
-        PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
+        PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
       }
       return;
     }
@@ -328,7 +326,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             checkBindTopLevelPanel();
 
             if (!mySticky) {
-              PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
+              PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
             }
 
             myEditor.refreshAndSave(false);
@@ -578,7 +576,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   public Cursor processMouseMoveEvent(final MouseEvent e) {
-    final ComponentItem componentItem = myPaletteManager.getActiveItem(ComponentItem.class);
+    final ComponentItem componentItem = PaletteToolWindowManager.getInstance(myEditor).getActiveItem(ComponentItem.class);
     if (componentItem != null) {
       return myGridInsertProcessor.processMouseMoveEvent(e.getPoint(), false, new ComponentItemDragObject(componentItem));
     }

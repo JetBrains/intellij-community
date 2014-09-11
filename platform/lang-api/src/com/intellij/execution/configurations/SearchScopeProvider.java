@@ -28,8 +28,8 @@ public class SearchScopeProvider {
   @NotNull
   public static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
     Module[] modules = null;
-    if (runProfile instanceof ModuleRunProfile) {
-      modules = ((ModuleRunProfile)runProfile).getModules();
+    if (runProfile instanceof SearchScopeProvidingRunProfile) {
+      modules = ((SearchScopeProvidingRunProfile)runProfile).getModules();
     }
     if (modules == null || modules.length == 0) {
       return GlobalSearchScope.allScope(project);

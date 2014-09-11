@@ -29,8 +29,9 @@ public class ModulesAlphaComparator implements Comparator<Module>{
 
   @Override
   public int compare(Module module1, Module module2) {
-    final String name1 = module1.getName();
-    final String name2 = module2.getName();
-    return name1.compareToIgnoreCase(name2);
+    if (module1 == null && module2 == null) return 0;
+    if (module1 == null && module2 != null) return -1;
+    if (module1 != null && module2 == null) return 1;
+    return module1.getName().compareToIgnoreCase(module2.getName());
   }
 }

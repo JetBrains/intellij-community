@@ -166,7 +166,7 @@ public class RemoteDebugger implements ProcessDebugger {
       @Override
       public void ok(List<PyDebugValue> value) {
         XValueChildrenList list = new XValueChildrenList();
-        for (PyDebugValue v: value) {
+        for (PyDebugValue v : value) {
           list.add(v);
         }
         callback.ok(list);
@@ -174,7 +174,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
       @Override
       public void error(PyDebuggerException exception) {
-         callback.error(exception);
+        callback.error(exception);
       }
     });
   }
@@ -216,7 +216,7 @@ public class RemoteDebugger implements ProcessDebugger {
   // todo: change variable in lists doesn't work - either fix in pydevd or format var name appropriately
   private void setTempVariable(final String threadId, final String frameId, final PyDebugValue var) {
     final PyDebugValue topVar = var.getTopParent();
-    if (myDebugProcess.isVariable(topVar.getName())) {
+    if (!myDebugProcess.canSaveToTemp(topVar.getName())) {
       return;
     }
     if (myTempVars.contains(threadId, frameId, topVar.getTempName())) {
@@ -368,7 +368,7 @@ public class RemoteDebugger implements ProcessDebugger {
       }
     }
     if (myDebuggerReader != null) {
-      myDebuggerReader.close();
+      myDebuggerReader.stop();
     }
     fireCloseEvent();
   }
@@ -453,7 +453,6 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   private class DebuggerReader extends BaseOutputReader {
-    private boolean myClosing = false;
     private Reader myReader;
 
     private DebuggerReader(final Reader reader) throws IOException {
@@ -467,7 +466,7 @@ public class RemoteDebugger implements ProcessDebugger {
         while (true) {
           boolean read = readAvailable();
 
-          if (myClosing) {
+          if (isStopped) {
             break;
           }
 
@@ -478,7 +477,7 @@ public class RemoteDebugger implements ProcessDebugger {
         fireCommunicationError();
       }
       finally {
-        closeReader(myReader);
+        close();
         fireExitEvent();
       }
     }
@@ -593,7 +592,13 @@ public class RemoteDebugger implements ProcessDebugger {
     }
 
     public void close() {
-      myClosing = true;
+      closeReader(myReader);
+    }
+
+    @Override
+    public void stop() {
+      super.stop();
+      close();
     }
 
     @Override

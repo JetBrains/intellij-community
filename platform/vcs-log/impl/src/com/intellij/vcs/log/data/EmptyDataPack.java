@@ -22,14 +22,14 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 public class EmptyDataPack {
 
   @NotNull
   public static DataPack getInstance() {
-    RefsModel emptyModel = new RefsModel(Collections.<VirtualFile, Collection<VcsRef>>emptyMap(), new ConstantFunction<Hash, Integer>(0));
+    RefsModel emptyModel = new RefsModel(Collections.<VirtualFile, Set<VcsRef>>emptyMap(), new ConstantFunction<Hash, Integer>(0));
     return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), new EmptyGraphFacade(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
   }
 

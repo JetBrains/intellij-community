@@ -29,6 +29,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtilRt;
 import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -116,8 +117,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
 
     @Override
-    public void load(@NotNull final Element rootElement) {
-      super.load(rootElement);
+    public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
+      super.load(rootElement, pathMacroSubstitutor, intern);
 
       for (Attribute attribute : rootElement.getAttributes()) {
         myOptions.put(attribute.getName(), attribute.getValue());
@@ -204,7 +205,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   @Override
   @NotNull
   public String getModuleFileName() {
-    return getMainStorage().getFile().getName();
+    return PathUtilRt.getFileName(getMainStorage().getFilePath());
   }
 
   @Override

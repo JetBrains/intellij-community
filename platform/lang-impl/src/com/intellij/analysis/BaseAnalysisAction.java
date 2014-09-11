@@ -70,7 +70,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     }
     AnalysisScope scope = getInspectionScope(dataContext);
     LOG.assertTrue(scope != null);
-    final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
+    final boolean rememberScope = ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", myTitle),

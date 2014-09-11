@@ -141,7 +141,7 @@ public class CommandLineProcessor {
             starter instanceof ApplicationStarterEx &&
             ((ApplicationStarterEx)starter).canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
-          ((ApplicationStarterEx) starter).processExternalCommandLine(ArrayUtil.toStringArray(args));
+          ((ApplicationStarterEx) starter).processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
           return null;
         }
       }

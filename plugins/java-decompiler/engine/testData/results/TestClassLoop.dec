@@ -1,8 +1,6 @@
 package pkg;
 
-
 public class TestClassLoop {
-
    public static void testSimpleInfinite() {
       while(true) {
          System.out.println();

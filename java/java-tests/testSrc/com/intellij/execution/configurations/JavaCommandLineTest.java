@@ -48,6 +48,14 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     }
   }
 
+  public void testJarParameter() throws CantRunException {
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.setJdk(getProjectJDK());
+    javaParameters.setJarPath("my-jar-file.jar");
+    String commandLineString = CommandLineBuilder.createFromJavaParameters(javaParameters).getCommandLineString();
+    assertTrue(commandLineString, commandLineString.contains("-jar my-jar-file.jar"));
+  }
+
   public void testClasspath() throws CantRunException {
     JavaParameters javaParameters;
     String commandLineString;
@@ -55,12 +63,14 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     javaParameters = new JavaParameters();
     final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     javaParameters.setJdk(internalJdk);
+    javaParameters.getClassPath().add("my-jar-file.jar");
     javaParameters.setMainClass("Main");
     commandLineString = CommandLineBuilder.createFromJavaParameters(javaParameters).getCommandLineString();
     assertTrue(containsClassPath(commandLineString));
 
     javaParameters = new JavaParameters();
     javaParameters.setJdk(internalJdk);
+    javaParameters.getClassPath().add("my-jar-file.jar");
     javaParameters.setMainClass("Main");
     javaParameters.getVMParametersList().add("-cp");
     javaParameters.getVMParametersList().add("..");
@@ -70,6 +80,7 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
 
     javaParameters = new JavaParameters();
     javaParameters.setJdk(internalJdk);
+    javaParameters.getClassPath().add("my-jar-file.jar");
     javaParameters.setMainClass("Main");
     javaParameters.getVMParametersList().add("-classpath");
     javaParameters.getVMParametersList().add("..");

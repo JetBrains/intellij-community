@@ -224,7 +224,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static CompositeException doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
-                                              @NotNull CodeStyleSettings currentCodeStyleSettings) throws Exception {
+                                                            @NotNull CodeStyleSettings currentCodeStyleSettings) throws Exception {
     CompositeException result = new CompositeException();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     try {
@@ -234,9 +234,13 @@ public abstract class UsefulTestCase extends TestCase {
     }
     catch (AssertionError error) {
       CodeInsightSettings clean = new CodeInsightSettings();
-      Element temp = new Element("temp");
-      clean.writeExternal(temp);
-      settings.loadState(temp);
+      for (Field field : clean.getClass().getFields()) {
+        try {
+          ReflectionUtil.copyFieldValue(clean, settings, field);
+        }
+        catch (Exception ignored) {
+        }
+      }
       result.add(error);
     }
 

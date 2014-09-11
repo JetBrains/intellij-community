@@ -23,7 +23,6 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.ex.NodeConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -383,17 +382,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         SimpleNode parent = base.getParent();
         if (parent == myRoot) {
           project = getConfigurableProject(base); // show icon for top-level nodes
-          if (base.getConfigurable() instanceof NodeConfigurable) { // special case for custom subgroups (build.tools)
-            Configurable[] configurables = ((NodeConfigurable)base.getConfigurable()).getConfigurables();
-            if (configurables != null) { // assume that all configurables have the same project
-              project = getConfigurableProject(configurables[0]);
-            }
-          }
-        }
-        else if (parent instanceof Base && ((Base)parent).getConfigurable() instanceof NodeConfigurable) {
-          if (((Base)base.getParent()).getConfigurable() instanceof NodeConfigurable) {
-            project = getConfigurableProject(base); // special case for custom subgroups
-          }
         }
       }
       if (project != null) {

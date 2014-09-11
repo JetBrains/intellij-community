@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,7 +38,7 @@ import java.util.List;
 public interface DebugProcess {
   @NonNls String JAVA_STRATUM = "Java";
 
-  <T> T    getUserData(Key<T> key);  
+  <T> T    getUserData(Key<T> key);
   <T> void putUserData(Key<T> key, T value);
 
   Project getProject();
@@ -76,17 +77,17 @@ public interface DebugProcess {
                      List args) throws EvaluateException;
 
   /**
-   * Is equivalent to invokeInstanceMethod(evaluationContext, classType, method, args, 0) 
+   * Is equivalent to invokeInstanceMethod(evaluationContext, classType, method, args, 0)
    */
   Value invokeMethod(EvaluationContext evaluationContext,
                      ClassType classType,
                      Method method,
                      List args) throws EvaluateException;
 
-  Value invokeInstanceMethod(EvaluationContext evaluationContext, 
-                             ObjectReference objRef, 
-                             Method method, 
-                             List args, 
+  Value invokeInstanceMethod(EvaluationContext evaluationContext,
+                             ObjectReference objRef,
+                             Method method,
+                             List args,
                              int invocationOptions) throws EvaluateException;
 
   ReferenceType findClass(EvaluationContext evaluationContext,
@@ -112,4 +113,8 @@ public interface DebugProcess {
    */
   @NotNull
   GlobalSearchScope getSearchScope();
+
+  void printToConsole(String text);
+
+  ProcessHandler getProcessHandler();
 }

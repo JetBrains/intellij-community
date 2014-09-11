@@ -28,9 +28,6 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -260,29 +257,16 @@ public class NewExprent extends Exprent {
         buf.setLength(0);
       }
 
-      StringWriter strwriter = new StringWriter();
-      BufferedWriter bufstrwriter = new BufferedWriter(strwriter);
-
-      ClassWriter clwriter = new ClassWriter();
-      try {
-        if (lambda) {
-          clwriter.classLambdaToJava(child, bufstrwriter, (constructor == null ? null : constructor.getInstance()), indent);
+      if (lambda) {
+        if (!DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS)) {
+          buf.setLength(0);  // remove the usual 'new <class>()', it will be replaced with lambda style '() ->'
         }
-        else {
-          clwriter.classToJava(child, bufstrwriter, indent);
-        }
-        bufstrwriter.flush();
+        Exprent methodObject = constructor == null ? null : constructor.getInstance();
+        new ClassWriter().classLambdaToJava(child, buf, methodObject, indent);
       }
-      catch (IOException ex) {
-        throw new RuntimeException(ex);
+      else {
+        new ClassWriter().classToJava(child, buf, indent);
       }
-
-      if (lambda && !DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS)) {
-        buf.setLength(0); // remove the usual 'new <class>()', it will
-        // be replaced with lambda style '() ->'
-      }
-
-      buf.append(strwriter.toString());
     }
     else if (directArrayInit) {
       VarType leftType = newtype.copy();
@@ -293,10 +277,7 @@ public class NewExprent extends Exprent {
         if (i > 0) {
           buf.append(", ");
         }
-        StringBuilder buff = new StringBuilder();
-        ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buff, indent, false);
-
-        buf.append(buff);
+        ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buf, indent, false);
       }
       buf.append("}");
     }

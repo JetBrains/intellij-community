@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="kxml2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/android/android/lib/kxml2-2.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

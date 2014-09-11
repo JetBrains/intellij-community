@@ -25,10 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -674,8 +671,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private class MyMouseListener extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent mouseevent) {
-      if (!SwingUtilities.isLeftMouseButton(mouseevent) &&
-          (SwingUtilities.isRightMouseButton(mouseevent) || SwingUtilities.isMiddleMouseButton(mouseevent))) {
+      if (!JBSwingUtilities.isLeftMouseButton(mouseevent) &&
+          (JBSwingUtilities.isRightMouseButton(mouseevent) || JBSwingUtilities.isMiddleMouseButton(mouseevent))) {
         TreePath treepath = getPathForLocation(mouseevent.getX(), mouseevent.getY());
         if (treepath != null) {
           if (getSelectionModel().getSelectionMode() != TreeSelectionModel.SINGLE_TREE_SELECTION) {
@@ -843,7 +840,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * @return the deepest visible component of the renderer
    */
   @Nullable
-  protected Component getDeepestRendererComponentAt(int x, int y) {
+  public Component getDeepestRendererComponentAt(int x, int y) {
     int row = getRowForLocation(x, y);
     if (row >= 0) {
       TreeCellRenderer renderer = getCellRenderer();

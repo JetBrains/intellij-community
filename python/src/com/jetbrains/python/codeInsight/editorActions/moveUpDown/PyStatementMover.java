@@ -108,7 +108,6 @@ public class PyStatementMover extends LineMover {
     if (moveOutsideFile(document, lineNumber)) return null;
     int lineEndOffset = document.getLineEndOffset(lineNumber);
     final int startOffset = document.getLineStartOffset(lineNumber);
-    lineEndOffset = startOffset != lineEndOffset ? lineEndOffset - 1 : lineEndOffset;
 
     final PyStatementList statementList = getStatementList(elementToMove);
 
@@ -118,10 +117,6 @@ public class PyStatementMover extends LineMover {
     final int end = destination != null ? destination.getTextRange().getEndOffset() : lineNumber;
     final int startLine = document.getLineNumber(start);
     final int endLine = document.getLineNumber(end);
-
-    if (elementToMove instanceof PsiComment && destination instanceof  PsiComment) {
-      return new LineRange(lineNumber, lineNumber + 1);
-    }
 
     if (elementToMove instanceof PyClass || elementToMove instanceof PyFunction) {
       PyElement scope = statementList == null ? (PyElement)elementToMove.getContainingFile() : statementList;
@@ -136,6 +131,11 @@ public class PyStatementMover extends LineMover {
     if (scopeRange != null) return scopeRange;
     scopeRange = moveInto(elementToMove, file, editor, down, lineEndOffset);
     if (scopeRange != null) return scopeRange;
+
+    if (elementToMove instanceof PsiComment && ( PsiTreeUtil.isAncestor(destination, elementToMove, true)) ||
+        destination instanceof  PsiComment) {
+      return new LineRange(lineNumber, lineNumber + 1);
+    }
 
     final PyElement scope = statementList == null ? (PyElement)elementToMove.getContainingFile() : statementList;
     if ((elementToMove instanceof PyClass) || (elementToMove instanceof PyFunction))
@@ -185,7 +185,6 @@ public class PyStatementMover extends LineMover {
 
     if (sibling != null) {
       final PyStatementList list = sibling.getStatementList();
-      assert list != null;
       return new ScopeRange(list, down ? list.getFirstChild() : list.getLastChild(), !addBefore);
     }
     else {
@@ -278,11 +277,23 @@ public class PyStatementMover extends LineMover {
 
   private static PsiElement getDestinationElement(@NotNull final PsiElement elementToMove, @NotNull final Document document,
                                                   int lineEndOffset, boolean down) {
-    PsiElement destination = elementToMove.getContainingFile().findElementAt(lineEndOffset);
-    if (destination == null) return null;
-    if (destination instanceof PsiComment) return destination;
+    PsiElement destination = PyUtil.findPrevAtOffset(elementToMove.getContainingFile(), lineEndOffset, PsiWhiteSpace.class);
     PsiElement sibling = down ? PsiTreeUtil.getNextSiblingOfType(elementToMove, PyStatement.class) :
-                  PsiTreeUtil.getPrevSiblingOfType(elementToMove, PyStatement.class);
+                         PsiTreeUtil.getPrevSiblingOfType(elementToMove, PyStatement.class);
+    if (destination == null) {
+      if (elementToMove instanceof PyClass) {
+        destination = sibling;
+      }
+      else if (elementToMove instanceof PyFunction) {
+        if (!(sibling instanceof PyClass))
+          destination = sibling;
+        else destination = null;
+      }
+      else {
+        return null;
+      }
+    }
+    if (destination instanceof PsiComment) return destination;
     if (elementToMove instanceof PyClass) {
       destination = sibling;
     }

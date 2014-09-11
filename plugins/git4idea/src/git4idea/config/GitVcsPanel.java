@@ -51,6 +51,7 @@ public class GitVcsPanel {
   private JBCheckBox mySyncBranchControl;
   private JCheckBox myAutoCommitOnCherryPick;
   private JBCheckBox myWarnAboutCrlf;
+  private JCheckBox myWarnAboutDetachedHead;
 
   public GitVcsPanel(@NotNull Project project) {
     myVcs = GitVcs.getInstance(project);
@@ -121,6 +122,7 @@ public class GitVcsPanel {
     mySyncBranchControl.setSelected(settings.getSyncSetting() == DvcsBranchSync.SYNC);
     myAutoCommitOnCherryPick.setSelected(settings.isAutoCommitOnCherryPick());
     myWarnAboutCrlf.setSelected(settings.warnAboutCrlf());
+    myWarnAboutDetachedHead.setSelected(settings.warnAboutDetachedHead());
   }
 
   /**
@@ -134,7 +136,8 @@ public class GitVcsPanel {
            !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((settings.getSyncSetting() == DvcsBranchSync.SYNC) != mySyncBranchControl.isSelected() ||
            settings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
-           settings.warnAboutCrlf() != myWarnAboutCrlf.isSelected());
+           settings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
+           settings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected());
   }
 
   /**
@@ -153,6 +156,7 @@ public class GitVcsPanel {
     settings.setSyncSetting(mySyncBranchControl.isSelected() ? DvcsBranchSync.SYNC : DvcsBranchSync.DONT);
     settings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
     settings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
+    settings.setWarnAboutDetachedHead(myWarnAboutDetachedHead.isSelected());
   }
 
 }

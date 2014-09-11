@@ -120,6 +120,8 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   private void optionSelected(final String selectedValue) {
+    if (!MORE.equals(selectedValue))
+      Disposer.dispose(myMore.getDisposable());
     if (LOCAL.equals(selectedValue)) {
       createLocalSdk();
     }

@@ -26,13 +26,11 @@ public class RequirementsImpl implements VcsLogProviderRequirementsEx {
   private final int myCommitCount;
   private final boolean myRefresh;
   @NotNull private final Set<VcsRef> myPreviousRefs;
-  @NotNull private final Set<VcsRef> myCurrentRefs;
 
-  public RequirementsImpl(int count, boolean refresh, @NotNull Set<VcsRef> previousRefs, @NotNull Set<VcsRef> currentRefs) {
+  public RequirementsImpl(int count, boolean refresh, @NotNull Set<VcsRef> previousRefs) {
     myCommitCount = count;
     myRefresh = refresh;
     myPreviousRefs = previousRefs;
-    myCurrentRefs = currentRefs;
   }
 
   @Override
@@ -49,11 +47,5 @@ public class RequirementsImpl implements VcsLogProviderRequirementsEx {
   @Override
   public Set<VcsRef> getPreviousRefs() {
     return myPreviousRefs;
-  }
-
-  @NotNull
-  @Override
-  public Set<VcsRef> getCurrentRefs() {
-    return myCurrentRefs;
   }
 }

@@ -96,7 +96,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             final DataContext context = DataManager.getInstance().getDataContext(component);
             final AnActionEvent event = new AnActionEvent(e == null ? null : e.getInputEvent(),
                                                           context,
-                                                          e == null ? ActionPlaces.UNKNOWN : e.getPlace(),
+                                                          ActionPlaces.ACTION_SEARCH,
                                                           presentation,
                                                           ActionManager.getInstance(),
                                                           e == null ? 0 : e.getModifiers());

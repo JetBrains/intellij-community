@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestClassTypes {
-
    public void testBoolean() {
       byte var1 = 0;
       long var2 = System.currentTimeMillis();

@@ -38,7 +38,7 @@ public class GroovyClassDescriptor {
       final AtomicInteger integer = GroovyCategorySupport.getCategoryNameUsage("aaa");
     }
     catch (NoSuchMethodError e) {
-      throw new RuntimeException("Incompatible Groovy jar in classpath: " + GroovyCategorySupport.class.getResource("/") + ", please remove it");
+      throw new RuntimeException("Incompatible Groovy JAR in classpath: " + GroovyCategorySupport.class.getResource("/") + ", please remove it");
     }
   }
 

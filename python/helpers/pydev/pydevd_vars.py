@@ -360,10 +360,10 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
     try:
         expression = expression.replace('@LINE@', '\n')
 
-        if isinstance(frame, DjangoTemplateFrame):
-            result = eval(expression, frame.f_globals, frame.f_locals)
-            frame.changeVariable(attr, result)
-            return result
+        # if isinstance(frame, DjangoTemplateFrame): # TODO: implemente for plugins
+        #     result = eval(expression, frame.f_globals, frame.f_locals)
+        #     frame.changeVariable(attr, result)
+        #     return result
 
         if attr[:7] == "Globals":
             attr = attr[8:]

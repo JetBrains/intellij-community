@@ -44,7 +44,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
                                          final DomParentStrategy strategy,
                                          final DomManagerImpl manager,
                                          @Nullable ElementStub stub) {
-    super(description.getType(), strategy, tagName, description, manager, strategy.getXmlElement() != null, stub);
+    super(description.getType(), strategy, tagName, description, manager, strategy.isPhysical(), stub);
     myIndex = index;
   }
 

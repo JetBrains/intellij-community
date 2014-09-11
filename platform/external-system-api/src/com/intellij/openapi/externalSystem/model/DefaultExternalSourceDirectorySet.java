@@ -43,6 +43,8 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
   @NotNull
   private List<ExternalFilter> myFilters;
 
+  private boolean myInheritedCompilerOutput;
+
   public DefaultExternalSourceDirectorySet() {
     mySrcDirs = new HashSet<File>();
     myExcludes = new HashSet<String>();
@@ -86,6 +88,15 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
   @Override
   public File getOutputDir() {
     return myOutputDir;
+  }
+
+  @Override
+  public boolean isCompilerOutputPathInherited() {
+    return myInheritedCompilerOutput;
+  }
+
+  public void setInheritedCompilerOutput(boolean inheritedCompilerOutput) {
+    myInheritedCompilerOutput = inheritedCompilerOutput;
   }
 
   @NotNull

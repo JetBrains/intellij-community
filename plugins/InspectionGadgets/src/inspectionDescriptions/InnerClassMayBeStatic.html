@@ -1,8 +1,10 @@
 <html>
 <body>
-Reports any inner classes which may safely be made
-<b>static</b>. An inner class may be static if it doesn't reference
-its enclosing class instance. A static inner class uses slightly less memory.
+Reports any inner classes which may safely be made <b>static</b>.
+An inner class may be <b>static</b> if it doesn't reference its enclosing instance.
+<p>
+A <b>static</b> inner class does not keep an implicit reference to its enclosing instance.
+This prevents a common cause of memory leaks and uses less memory per instance of the class.
 <!-- tooltip end -->
 <p>
 

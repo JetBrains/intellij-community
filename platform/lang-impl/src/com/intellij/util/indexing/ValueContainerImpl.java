@@ -458,7 +458,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       } else {
         // serialize positive file ids with delta encoding
         ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
-        IntIterator intIterator = originalInput.intIterator();
+        IntIterator intIterator = originalInput.rawIntIterator();
         DataInputOutputUtil.writeINT(out, -intIterator.size());
 
         if (intIterator.hasAscendingOrder()) {
@@ -493,7 +493,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           final int[] bits = ourSpareBuffer.getBuffer(bitsLength);
           for(int i = 0; i < bitsLength; ++i) bits[i] = 0;
 
-          intIterator = originalInput.intIterator();
+          intIterator = originalInput.rawIntIterator();
           while(intIterator.hasNext()) {
             final int id = intIterator.next() - offset;
             bits[id >> INT_BITS_SHIFT] |= (1 << (id));

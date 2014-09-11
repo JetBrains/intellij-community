@@ -18,7 +18,8 @@ package org.jetbrains.java.decompiler.main;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
-import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.renamer.IdentifierConverter;
 import org.jetbrains.java.decompiler.struct.IDecompiledData;
@@ -26,20 +27,18 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 
-import java.io.BufferedWriter;
-import java.io.StringWriter;
 import java.util.Map;
-
 
 public class Fernflower implements IDecompiledData {
 
   private StructContext structContext;
   private ClassesProcessor classesProcessor;
 
-  public Fernflower(IBytecodeProvider provider, IDecompilatSaver saver, Map<String, Object> propertiesCustom) {
+  public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> options, IFernflowerLogger logger) {
     structContext = new StructContext(saver, this, new LazyLoader(provider));
-    DecompilerContext.initContext(propertiesCustom);
+    DecompilerContext.initContext(options);
     DecompilerContext.setCounterContainer(new CounterContainer());
+    DecompilerContext.setLogger(logger);
   }
 
   public void decompileContext() {
@@ -59,6 +58,11 @@ public class Fernflower implements IDecompiledData {
     DecompilerContext.setCurrentContext(null);
   }
 
+  public StructContext getStructContext() {
+    return structContext;
+  }
+
+  @Override
   public String getClassEntryName(StructClass cl, String entryName) {
     ClassNode node = classesProcessor.getMapRootClasses().get(cl.qualifiedName);
     if (node.type != ClassNode.CLASS_ROOT) {
@@ -75,15 +79,12 @@ public class Fernflower implements IDecompiledData {
     }
   }
 
-  public StructContext getStructContext() {
-    return structContext;
-  }
-
+  @Override
   public String getClassContent(StructClass cl) {
     try {
-      StringWriter writer = new StringWriter();
-      classesProcessor.writeClass(cl, new BufferedWriter(writer));
-      return writer.toString();
+      StringBuilder buffer = new StringBuilder();
+      classesProcessor.writeClass(cl, buffer);
+      return buffer.toString();
     }
     catch (Throwable ex) {
       DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName + " couldn't be fully decompiled.", ex);

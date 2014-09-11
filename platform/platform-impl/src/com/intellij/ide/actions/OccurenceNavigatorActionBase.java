@@ -68,14 +68,14 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
     if (project == null) {
       presentation.setEnabled(false);
       // make it invisible only in main menu to avoid initial invisibility in toolbars
-      presentation.setVisible(!ActionPlaces.MAIN_MENU.equals(event.getPlace()));
+      presentation.setVisible(!ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
       return;
     }
     OccurenceNavigator navigator = getNavigator(event.getDataContext());
     if (navigator == null) {
       presentation.setEnabled(false);
       // make it invisible only in main menu to avoid initial invisibility in toolbars
-      presentation.setVisible(!ActionPlaces.MAIN_MENU.equals(event.getPlace()));
+      presentation.setVisible(!ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
       return;
     }
     presentation.setVisible(true);

@@ -18,20 +18,15 @@ package org.jetbrains.java.decompiler.struct.attr;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-
+import java.io.IOException;
 
 public class StructAnnDefaultAttribute extends StructGeneralAttribute {
 
   private Exprent defaultValue;
 
-  public void initContent(ConstantPool pool) {
-
-    name = ATTRIBUTE_ANNOTATION_DEFAULT;
-
-    DataInputStream data = new DataInputStream(new ByteArrayInputStream(info));
-    defaultValue = StructAnnotationAttribute.parseAnnotationElement(data, pool);
+  @Override
+  public void initContent(ConstantPool pool) throws IOException {
+    defaultValue = StructAnnotationAttribute.parseAnnotationElement(stream(), pool);
   }
 
   public Exprent getDefaultValue() {

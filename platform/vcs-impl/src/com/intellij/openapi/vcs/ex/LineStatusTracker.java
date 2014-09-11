@@ -768,15 +768,10 @@ public class LineStatusTracker {
     }
   }
 
-  public void rollbackChanges(@NotNull BitSet lines) {
-    myApplication.assertWriteAccessAllowed();
-
-    synchronized (myLock) {
-      if (myBulkUpdate) return;
-
-      try {
-        mySuppressUpdate = true;
-
+  public void rollbackChanges(@NotNull final BitSet lines) {
+    runBulkRollback(new Runnable() {
+      @Override
+      public void run() {
         Range first = null;
         Range last = null;
 
@@ -820,19 +815,24 @@ public class LineStatusTracker {
           doUpdateRanges(beforeChangedLine1, beforeChangedLine2, shift, beforeTotalLines);
         }
       }
-      catch (Throwable e) {
-        reinstallRanges();
-        if (e instanceof Error) throw ((Error)e);
-        if (e instanceof RuntimeException) throw ((RuntimeException)e);
-        throw new RuntimeException(e);
-      }
-      finally {
-        mySuppressUpdate = false;
-      }
-    }
+    });
   }
 
-  public void rollbackChanges() {
+  public void rollbackAllChanges() {
+    runBulkRollback(new Runnable() {
+      @Override
+      public void run() {
+        myDocument.setText(myVcsDocument.getText());
+
+        removeAnathema();
+        removeHighlightersFromMarkupModel();
+
+        markFileUnchanged();
+      }
+    });
+  }
+
+  private void runBulkRollback(@NotNull Runnable task) {
     myApplication.assertWriteAccessAllowed();
 
     synchronized (myLock) {
@@ -841,18 +841,15 @@ public class LineStatusTracker {
       try {
         mySuppressUpdate = true;
 
-        myDocument.setText(myVcsDocument.getText());
-
-        removeAnathema();
-        removeHighlightersFromMarkupModel();
-
-        markFileUnchanged();
+        task.run();
       }
-      catch (Throwable e) {
+      catch (Error e) {
         reinstallRanges();
-        if (e instanceof Error) throw ((Error)e);
-        if (e instanceof RuntimeException) throw ((RuntimeException)e);
-        throw new RuntimeException(e);
+        throw e;
+      }
+      catch (RuntimeException e) {
+        reinstallRanges();
+        throw e;
       }
       finally {
         mySuppressUpdate = false;

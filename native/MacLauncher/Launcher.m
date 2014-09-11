@@ -326,8 +326,8 @@ NSDictionary *parseProperties() {
             NSLog(@"Cannot chdir to working directory at %@", cwd);
         }
     } else {
-        NSLog(@"Info.plist is corrupted, Absent WorkingDirectory key.");
-        exit(-1);
+        NSString *dir = [[NSFileManager defaultManager] currentDirectoryPath];
+        NSLog(@"WorkingDirectory is absent in Info.plist. Current Directory: %@", dir);
     }
 }
 

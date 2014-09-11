@@ -20,28 +20,35 @@ import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.LightVirtualFile;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Map;
 
 public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
   private final MyVirtualFile myRoot = new MyVirtualFile("", null);
   public static final String PROTOCOL = "mock";
 
   @Override
+  @NotNull
   public VirtualFile findFileByPath(@NotNull String path) {
     path = path.replace(File.separatorChar, '/');
     path = path.replace('/', ':');
     if (StringUtil.startsWithChar(path, ':')) path = path.substring(1);
-    String[] components = path.split(":");
     MyVirtualFile file = myRoot;
-    for (String component : components) {
+    for (String component : StringUtil.split(path, ":")) {
       file = file.getOrCreate(component);
     }
     return file;
+  }
+
+  @NotNull
+  public VirtualFile getRoot() {
+    return myRoot;
   }
 
   @Override
@@ -93,11 +100,12 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
   }
 
   public class MyVirtualFile extends LightVirtualFile {
-    private final HashMap<String, MyVirtualFile> myChildren = new HashMap<String, MyVirtualFile>();
+    private final Map<String, MyVirtualFile> myChildren = new THashMap<String, MyVirtualFile>();
     private final MyVirtualFile myParent;
 
-    public MyVirtualFile(String name, MyVirtualFile parent) {
+    public MyVirtualFile(@NotNull String name, @Nullable MyVirtualFile parent) {
       super(name);
+
       myParent = parent;
     }
 
@@ -107,7 +115,8 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
       return MockVirtualFileSystem.this;
     }
 
-    public MyVirtualFile getOrCreate(String name) {
+    @NotNull
+    public MyVirtualFile getOrCreate(@NotNull String name) {
       MyVirtualFile file = myChildren.get(name);
       if (file == null) {
         file = new MyVirtualFile(name, this);

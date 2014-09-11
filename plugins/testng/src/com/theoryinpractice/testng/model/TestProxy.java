@@ -292,7 +292,7 @@ public class TestProxy extends AbstractTestProxy {
     if (myHyperlink == null) {
       return null;
     }
-    return new AssertEqualsDiffViewerProvider() {
+    return new AssertEqualsMultiDiffViewProvider() {
       @Override
       public void openDiff(Project project) {
         myHyperlink.openDiff(project);
@@ -306,6 +306,16 @@ public class TestProxy extends AbstractTestProxy {
       @Override
       public String getActual() {
         return myHyperlink.getRight();
+      }
+
+      @Override
+      public void openMultiDiff(Project project, AssertEqualsDiffChain chain) {
+        myHyperlink.openMultiDiff(project, chain);
+      }
+
+      @Override
+      public String getFilePath() {
+        return myHyperlink.getFilePath();
       }
     };
   }

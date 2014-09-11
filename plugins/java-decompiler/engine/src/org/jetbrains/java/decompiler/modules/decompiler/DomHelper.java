@@ -213,7 +213,7 @@ public class DomHelper {
     RootStatement root = graphToStatement(graph);
 
     if (!processStatement(root, new HashMap<Integer, Set<Integer>>())) {
-      DecompilerContext.getLogger().writeMessage("parsing failure!", IFernflowerLogger.ERROR);
+      DecompilerContext.getLogger().writeMessage("parsing failure!", IFernflowerLogger.Severity.ERROR);
 
       //			try {
       //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));
@@ -348,13 +348,14 @@ public class DomHelper {
           // take care of irreducible control flow graphs
           if (IrreducibleCFGDeobfuscator.isStatementIrreducible(general)) {
             if (!IrreducibleCFGDeobfuscator.splitIrreducibleNode(general)) {
-              DecompilerContext.getLogger().writeMessage("Irreducible statement cannot be decomposed!", IFernflowerLogger.ERROR);
+              DecompilerContext.getLogger().writeMessage("Irreducible statement cannot be decomposed!", IFernflowerLogger.Severity.ERROR);
               break;
             }
           }
           else {
             if (mapstage == 2 || mapRefreshed) { // last chance lost
-              DecompilerContext.getLogger().writeMessage("Statement cannot be decomposed although reducible!", IFernflowerLogger.ERROR);
+              DecompilerContext.getLogger().writeMessage("Statement cannot be decomposed although reducible!",
+                                                         IFernflowerLogger.Severity.ERROR);
             }
             break;
           }

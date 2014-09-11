@@ -79,7 +79,14 @@
                 </constraints>
                 <properties/>
                 <border type="none"/>
-                <children/>
+                <children>
+                  <component id="916d9" class="com.intellij.ui.components.JBLabel" binding="myFrameworksLabel">
+                    <constraints border-constraint="North"/>
+                    <properties>
+                      <text value="Additional Libraries and &amp;Frameworks:"/>
+                    </properties>
+                  </component>
+                </children>
               </grid>
             </children>
           </grid>

@@ -70,6 +70,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Future;
 
 public final class ActionManagerImpl extends ActionManagerEx implements ApplicationComponent {
   @NonNls public static final String ACTION_ELEMENT_NAME = "action";
@@ -1264,7 +1265,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
-  public void preloadActions() {
+  public Future<?> preloadActions() {
     if (myPreloadActionsRunnable == null) {
       myPreloadActionsRunnable = new Runnable() {
         @Override
@@ -1275,8 +1276,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
           }
         }
       };
-      ApplicationManager.getApplication().executeOnPooledThread(myPreloadActionsRunnable);
+      return ApplicationManager.getApplication().executeOnPooledThread(myPreloadActionsRunnable);
     }
+    return null;
   }
 
   private void doPreloadActions() {

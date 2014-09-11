@@ -16,14 +16,14 @@ import java.util.*;
 
 public class RefsModel implements VcsLogRefs {
 
-  @NotNull private final Map<VirtualFile, Collection<VcsRef>> myRefs;
+  @NotNull private final Map<VirtualFile, Set<VcsRef>> myRefs;
   @NotNull private final NotNullFunction<Hash, Integer> myIndexGetter;
 
   @NotNull private final Collection<VcsRef> myBranches;
   @NotNull private final MultiMap<Hash, VcsRef> myRefsToHashes;
   @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToIndices;
 
-  public RefsModel(@NotNull Map<VirtualFile, Collection<VcsRef>> refsByRoot, @NotNull NotNullFunction<Hash, Integer> indexGetter) {
+  public RefsModel(@NotNull Map<VirtualFile, Set<VcsRef>> refsByRoot, @NotNull NotNullFunction<Hash, Integer> indexGetter) {
     myRefs = refsByRoot;
     myIndexGetter = indexGetter;
 
@@ -85,7 +85,7 @@ public class RefsModel implements VcsLogRefs {
   }
 
   @NotNull
-  public Map<VirtualFile, Collection<VcsRef>> getAllRefsByRoot() {
+  public Map<VirtualFile, Set<VcsRef>> getAllRefsByRoot() {
     return myRefs;
   }
 

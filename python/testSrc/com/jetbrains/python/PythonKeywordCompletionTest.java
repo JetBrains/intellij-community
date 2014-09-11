@@ -204,6 +204,10 @@ public class PythonKeywordCompletionTest extends PyTestCase {
     assertContainsElements(doTestByText("def gen(): x = <caret>"), "yield");
     assertDoesntContain(doTestByText("def gen(): x = 1 + <caret>"), "yield");
     assertContainsElements(doTestByText("def gen(): x = 1 + (<caret>"), "yield");
+    assertContainsElements(doTestByText("def gen(): x **= <caret>"), "yield");
+    assertDoesntContain(doTestByText("def gen(): func(<caret>)"), "yield");
+    assertContainsElements(doTestByText("def gen(): func((<caret>"), "yield");
+    assertDoesntContain(doTestByText("def gen(): x = y<caret> = 42"), "yield");
   }
 
   public void testExceptAfterElse() {

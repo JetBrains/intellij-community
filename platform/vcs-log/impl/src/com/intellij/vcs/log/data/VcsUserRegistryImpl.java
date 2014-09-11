@@ -86,6 +86,12 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
     }
   }
 
+  public void addUsers(@NotNull Collection<VcsUser> users) {
+    for (VcsUser user : users) {
+      addUser(user);
+    }
+  }
+
   @Override
   @NotNull
   public Set<VcsUser> getUsers() {

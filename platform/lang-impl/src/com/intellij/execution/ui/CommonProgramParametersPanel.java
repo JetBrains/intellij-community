@@ -56,6 +56,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   protected JComponent myAnchor;
 
   private Module myModuleContext = null;
+  private boolean myHasModuleMacro = false;
 
   public CommonProgramParametersPanel() {
     this(true);
@@ -170,6 +171,10 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   public void setModuleContext(Module moduleContext) {
     myModuleContext = moduleContext;
+  }
+
+  public void setHasModuleMacro() {
+    myHasModuleMacro = true;
   }
 
   public LabeledComponent<RawCommandLineEditor> getProgramParametersComponent() {

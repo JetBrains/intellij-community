@@ -38,7 +38,7 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
         PsiElement at = file.findElementAt(editor.getCaretModel().getOffset() - 1);
         PsiElement atParent = at != null ? at.getParent() : null;
         if(atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null) {
-          needToInsertQuotes = atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null;
+          needToInsertQuotes = ((XmlAttribute)atParent).getValueElement() == null;
         }
       }
     }

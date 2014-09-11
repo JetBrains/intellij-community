@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,21 +125,21 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
     if (isStateChangeable(file)) {
       if (PowerSaveMode.isEnabled()) {
         myCurrentIcon = AllIcons.Ide.HectorNo;
-        myToolTipText = "Code analysis is disabled in power save mode. ";
+        myToolTipText = "Code analysis is disabled in power save mode.\n";
       }
       else if (HighlightingLevelManager.getInstance(myProject).shouldInspect(file)) {
         myCurrentIcon = AllIcons.Ide.HectorOn;
         myToolTipText = "Current inspection profile: " +
                         InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile().getName() +
-                        ". ";
+                        ".\n";
       }
       else if (HighlightingLevelManager.getInstance(myProject).shouldHighlight(file)) {
         myCurrentIcon = AllIcons.Ide.HectorSyntax;
-        myToolTipText = "Highlighting level is: Syntax. ";
+        myToolTipText = "Highlighting level is: Syntax.\n";
       }
       else {
         myCurrentIcon = AllIcons.Ide.HectorOff;
-        myToolTipText = "Inspections are off. ";
+        myToolTipText = "Inspections are off.\n";
       }
       myToolTipText += UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text");
     }

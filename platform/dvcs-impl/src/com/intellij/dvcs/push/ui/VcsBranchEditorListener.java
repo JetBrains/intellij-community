@@ -15,7 +15,7 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.dvcs.push.TargetEditor;
+import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.ui.CheckboxTree;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
   public void mouseMoved(MouseEvent e) {
     Component component = (Component)e.getSource();
     Object tag = getTagAt(e);
-    if (tag != null && tag instanceof TargetEditor) {
+    if (tag != null && tag instanceof PushTargetPanel) {
       component.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
     }
     else if (tag != null && tag instanceof TextWithLinkNode) {

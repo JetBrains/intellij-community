@@ -19,7 +19,9 @@ import com.intellij.find.*;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
@@ -29,6 +31,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -147,7 +150,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   }
 
   @Override
-  public String getStringToReplace(Editor editor, FindResult findResult) {
+  public String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult) {
     if (findResult == null) {
       return null;
     }

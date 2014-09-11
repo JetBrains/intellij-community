@@ -17,6 +17,7 @@ package com.intellij.ui.win;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diff.ApplicationStarterBase;
+import org.jetbrains.annotations.Nullable;
 
 
 /**
@@ -33,7 +34,7 @@ public class RecentProjectApplication extends ApplicationStarterBase {
   }
 
   @Override
-  protected void processCommand(String[] args) throws Exception {
+  protected void processCommand(String[] args, @Nullable String currentDirectory) throws Exception {
     ProjectUtil.openProject(args[1], null, false);
   }
 }

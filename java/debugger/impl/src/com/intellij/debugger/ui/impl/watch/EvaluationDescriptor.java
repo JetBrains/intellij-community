@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -33,11 +34,10 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.extractMethod.PrepareFailedException;
+import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -64,7 +64,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
 
   protected abstract PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException;
 
-  protected PsiCodeFragment createCodeFragment(PsiElement context) {
+  public PsiCodeFragment createCodeFragment(PsiElement context) {
     TextWithImports text = getEvaluationText();
     final PsiCodeFragment fragment =
       DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
@@ -76,11 +76,8 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     try {
       final EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
 
-      final ExpressionEvaluator evaluator;
-      if (Registry.is("debugger.compiling.evaluator")) {
-        evaluator = new CompilingEvaluator(getEvaluationText());
-      }
-      else {
+      ExpressionEvaluator evaluator = null;
+      try {
         evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
           public ExpressionEvaluator compute() throws EvaluateException {
             final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
@@ -88,6 +85,34 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
               .build(getEvaluationCode(thisEvaluationContext), ContextUtil.getSourcePosition(thisEvaluationContext));
           }
         });
+      }
+      catch (UnsupportedExpressionException ex) {
+        if (Registry.is("debugger.compiling.evaluator")) {
+          evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
+            public ExpressionEvaluator compute() throws EvaluateException {
+              final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
+              if (psiContext == null) {
+                return null;
+              }
+              PsiFile psiFile = psiContext.getContainingFile();
+              PsiCodeFragment fragment = createCodeFragment(psiContext);
+              try {
+                ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(myProject,
+                                                                     psiFile, fragment, CompilingEvaluator.getGeneratedClassName());
+                if (data != null) {
+                  return new CompilingEvaluator(getEvaluationText(), getEvaluationCode(thisEvaluationContext), psiContext, data,
+                                                EvaluationDescriptor.this);
+                }
+              }
+              catch (PrepareFailedException ignored) {
+              }
+              return null;
+            }
+          });
+        }
+        if (evaluator == null) {
+          throw ex;
+        }
       }
 
       if (!thisEvaluationContext.getDebugProcess().isAttached()) {

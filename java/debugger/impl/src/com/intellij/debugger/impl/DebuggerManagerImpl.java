@@ -607,8 +607,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   private void dispose(DebuggerSession session) {
-    ProcessHandler processHandler = session.getProcess().getExecutionResult().getProcessHandler();
-
+    ProcessHandler processHandler = session.getProcess().getProcessHandler();
     synchronized (mySessions) {
       DebuggerSession removed = mySessions.remove(processHandler);
       LOG.assertTrue(removed != null);

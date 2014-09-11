@@ -54,7 +54,7 @@
     <orderEntry type="library" scope="TEST" name="cucumber-java" level="project" />
     <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="module" module-name="spellchecker" />
-    <orderEntry type="module" module-name="cucumber-test-runner" scope="RUNTIME" />
+    <orderEntry type="module" module-name="cucumber-test-runner" scope="TEST" />
     <orderEntry type="module" module-name="vcs-log-api" />
     <orderEntry type="module" module-name="vcs-log-impl" />
     <orderEntry type="module" module-name="vcs-log-graph" />

@@ -21,13 +21,15 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.idea.Bombed;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Calendar;
 
 public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
   @NotNull
@@ -36,16 +38,14 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  private void doTest(String expectedCallSite, String expectedClass) throws Exception {
+  private void doTest(String evaluatedText, String expectedCallSite, String expectedClass) throws Exception {
     final String testName = getTestName(false);
     configureByFile("/refactoring/extractMethodObject4Debugger/" + testName + ".java");
-    int startOffset = getEditor().getSelectionModel().getSelectionStart();
-    int endOffset = getEditor().getSelectionModel().getSelectionEnd();
-    PsiElement[] elements = CodeInsightUtil.findStatementsInRange(getFile(), startOffset, endOffset);
-    assertTrue(elements.length > 0);
-
+    final int offset = getEditor().getCaretModel().getOffset();
+    final PsiElement context = getFile().findElementAt(offset);
+    final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(getProject()).createCodeBlockCodeFragment(evaluatedText, context, false);
     final ExtractLightMethodObjectHandler.ExtractedData extractedData =
-      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), getEditor(), getFile(), elements, "test");
+      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), getFile(), fragment, "test");
     assertNotNull(extractedData);
     assertEquals(expectedCallSite, extractedData.getGeneratedCallText());
     final PsiClass innerClass = extractedData.getGeneratedInnerClass();
@@ -53,9 +53,7 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
   }
 
   public void testSimpleGeneration() throws Exception {
-    doTest("  Test test = new Test().invoke();\n" +
-           "      int i = test.getI();\n" +
-           "      int j = test.getJ();",
+    doTest("int i = 0; int j = 0;", "Test test = new Test().invoke();int i = test.getI();int j = test.getJ();",
 
            "public class Test {\n" +
            "        private int i;\n" +
@@ -76,6 +74,88 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "        }\n" +
            "    }");
   }
+
+  public void testInvokeReturnType() throws Exception {
+    doTest("x = 6; y = 6;", "Test test = new Test().invoke();x = test.getX();y = test.getY();",
+
+           "public static class Test {\n" +
+           "        private int x;\n" +
+           "        private int y;\n" +
+           "\n" +
+           "        public int getX() {\n" +
+           "            return x;\n" +
+           "        }\n" +
+           "\n" +
+           "        public int getY() {\n" +
+           "            return y;\n" +
+           "        }\n" +
+           "\n" +
+           "        public Test invoke() {\n" +
+           "            x = 6;\n" +
+           "            y = 6;\n" +
+           "            return this;\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testAnonymousClassParams() throws Exception {
+    doTest("new I() {public void foo(int i) {i++;}};", "I result = new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public I invoke() {\n" +
+           "            return new I() {\n" +
+           "                public void foo(int i) {\n" +
+           "                    i++;\n" +
+           "                }\n" +
+           "            };\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testInnerClass() throws Exception {
+    doTest("   new I(2).foo()", "new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public void invoke() {\n" +
+           "            new Sample.I(2).foo();\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testResultExpr() throws Exception {
+    doTest("   foo()", "int result = new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public int invoke() {\n" +
+           "            return foo();\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testResultStatements() throws Exception {
+    doTest("int i = 0;\nfoo()", "Test test = new Test().invoke();int i = test.getI();int result = test.getResult();",
+
+           "public class Test {\n" +
+           "        private int i;\n" +
+           "        private int result;\n" +
+           "\n" +
+           "        public int getI() {\n" +
+           "            return i;\n" +
+           "        }\n" +
+           "\n" +
+           "        public int getResult() {\n" +
+           "            return result;\n" +
+           "        }\n" +
+           "\n" +
+           "        public Test invoke() {\n" +
+           "            i = 0;\n" +
+           "            result = foo();\n" +
+           "            return this;\n" +
+           "        }\n" +
+           "    }");
+  }
+
+
 
   @Override
   protected Sdk getProjectJDK() {

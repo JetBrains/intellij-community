@@ -15,12 +15,14 @@
  */
 package git4idea.checkin;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
@@ -281,7 +283,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     private ReturnResult warnAboutDetachedHeadIfNeeded() {
       // Warning: commit on a detached HEAD
       DetachedRoot detachedRoot = getDetachedRoot();
-      if (detachedRoot == null) {
+      if (detachedRoot == null || !GitVcsSettings.getInstance(myProject).warnAboutDetachedHead()) {
         return ReturnResult.COMMIT;
       }
 
@@ -303,10 +305,38 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                   readMore("http://gitolite.com/detached-head.html", "Read more about detached HEAD");
       }
 
-      final int choice = Messages.showOkCancelDialog(myPanel.getComponent(), XmlStringUtil.wrapInHtml(message), title,
-                                                                                                      "Cancel", "Commit",
-                                                                                                      Messages.getWarningIcon());
-      if (choice != Messages.OK) {
+      DialogWrapper.DoNotAskOption dontAskAgain = new DialogWrapper.DoNotAskOption() {
+        @Override
+        public boolean isToBeShown() {
+          return true;
+        }
+
+        @Override
+        public void setToBeShown(boolean toBeShown, int exitCode) {
+          if (exitCode == Messages.OK) {
+            GitVcsSettings.getInstance(myProject).setWarnAboutDetachedHead(toBeShown);
+          }
+        }
+
+        @Override
+        public boolean canBeHidden() {
+          return true;
+        }
+
+        @Override
+        public boolean shouldSaveOptionsOnCancel() {
+          return false;
+        }
+
+        @NotNull
+        @Override
+        public String getDoNotShowMessage() {
+          return "Don't warn again";
+        }
+      };
+      int choice = Messages.showOkCancelDialog(myProject, XmlStringUtil.wrapInHtml(message), title, "Commit",
+                                               CommonBundle.getCancelButtonText(), Messages.getWarningIcon(), dontAskAgain);
+      if (choice == Messages.OK) {
         return ReturnResult.COMMIT;
       } else {
         return ReturnResult.CLOSE_WINDOW;

@@ -48,14 +48,14 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
   private final GuiEditor myEditor;
   private UIFormEditor.MyBackgroundEditorHighlighter myBackgroundEditorHighlighter;
 
-  public UIFormEditor(final Project project, final VirtualFile file){
+  public UIFormEditor(@NotNull final Project project, @NotNull final VirtualFile file){
     final VirtualFile vf = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : file;
     final Module module = ModuleUtil.findModuleForFile(vf, project);
     if (module == null) {
       throw new IllegalArgumentException("No module for file " + file + " in project " + project);
     }
     myFile = file;
-    myEditor = new GuiEditor(project, module, file);
+    myEditor = new GuiEditor(this, project, module, file);
   }
 
   @NotNull

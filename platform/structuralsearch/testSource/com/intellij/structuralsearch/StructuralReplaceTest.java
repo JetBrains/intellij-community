@@ -1810,13 +1810,17 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testUseStaticImport() {
-    final String in = "class X {{ Math.abs(-1); }}";
+    String in = "class X {{ Math.abs(-1); }}";
     final String what = "Math.abs('a)";
     final String by = "Math.abs($a$)";
     options.setToUseStaticImport(true);
 
-    final String expected = "import static java.lang.Math.abs;class X {{ abs(-1); }}";
+    String expected = "import static java.lang.Math.abs;class X {{ abs(-1); }}";
     assertEquals("Replacing with static import", expected, replacer.testReplace(in, what, by, options, true));
+
+    in = "class X { void m(java.util.Random r) { Math.abs(r.nextInt()); }}";
+    expected = "import static java.lang.Math.abs;class X { void m(java.util.Random r) { abs(r.nextInt()); }}";
+    assertEquals("don't add broken static imports", expected, replacer.testReplace(in, what, by, options, true));
   }
 
   public void testUseStaticStarImport() {

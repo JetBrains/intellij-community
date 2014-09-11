@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -27,7 +29,9 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,7 +82,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     }
 
     @Override
-    public int getSourceActions(JComponent c) {
+    public int getSourceActions(@NotNull JComponent c) {
       return COPY;
     }
   };
@@ -90,6 +94,17 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
     doInit();
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
+    setDataProvider(new DataProvider() {
+      @Nullable
+      @Override
+      public Object getData(@NonNls String dataId) {
+        if (CommonDataKeys.VIRTUAL_FILE.is(dataId) && mySelectedFrame != null) {
+          XSourcePosition position = mySelectedFrame.getSourcePosition();
+          return position != null ? position.getFile() : null;
+        }
+        return null;
+      }
+    });
   }
 
   @Override

@@ -70,12 +70,6 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K, V> newHashMap(int initialCapacity) {
-    return ContainerUtilRt.newHashMap(initialCapacity);
-  }
-
-  @NotNull
-  @Contract(pure=true)
   public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
     return ContainerUtilRt.newTreeMap();
   }
@@ -90,6 +84,12 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
     return ContainerUtilRt.newLinkedHashMap();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
+    return ContainerUtilRt.newLinkedHashMap(capacity);
   }
 
   @NotNull
@@ -2280,9 +2280,15 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, C extends Collection<T>> C notNullize(@Nullable C collection) {
+  public static <T> List<T> notNullize(@Nullable List<T> list) {
+    return list == null ? ContainerUtilRt.<T>emptyList() : list;
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> Set<T> notNullize(@Nullable Set<T> set) {
     //noinspection unchecked
-    return collection == null ? (C)ContainerUtilRt.emptyList() : collection;
+    return set == null ? Collections.<T>emptySet() : set;
   }
 
   @Nullable
@@ -2382,6 +2388,17 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T extends Comparable<T>> int compareLexicographically(@NotNull List<T> o1, @NotNull List<T> o2) {
     for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
       int result = o1.get(i).compareTo(o2.get(i));
+      if (result != 0) {
+        return result;
+      }
+    }
+    return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
+  }
+
+  @Contract(pure=true)
+  public static <T> int compareLexicographically(@NotNull List<T> o1, @NotNull List<T> o2, @NotNull Comparator<T> comparator) {
+    for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
+      int result = comparator.compare(o1.get(i), o2.get(i));
       if (result != 0) {
         return result;
       }
