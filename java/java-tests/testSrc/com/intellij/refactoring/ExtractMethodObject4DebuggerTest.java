@@ -99,11 +99,11 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
   }
 
   public void testAnonymousClassParams() throws Exception {
-    doTest("new I() {public void foo(int i) {i++;}};", "new Test().invoke();",
+    doTest("new I() {public void foo(int i) {i++;}};", "I result = new Test().invoke();",
 
            "public class Test {\n" +
-           "        public void invoke() {\n" +
-           "            new I() {\n" +
+           "        public I invoke() {\n" +
+           "            return new I() {\n" +
            "                public void foo(int i) {\n" +
            "                    i++;\n" +
            "                }\n" +
@@ -113,11 +113,44 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
   }
 
   public void testInnerClass() throws Exception {
-    doTest("   new In(2).foo()", "new Test().invoke();",
+    doTest("   new I(2).foo()", "new Test().invoke();",
 
            "public class Test {\n" +
            "        public void invoke() {\n" +
-           "            new In(2).foo();\n" +
+           "            new Sample.I(2).foo();\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testResultExpr() throws Exception {
+    doTest("   foo()", "int result = new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public int invoke() {\n" +
+           "            return foo();\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testResultStatements() throws Exception {
+    doTest("int i = 0;\nfoo()", "Test test = new Test().invoke();int i = test.getI();int result = test.getResult();",
+
+           "public class Test {\n" +
+           "        private int i;\n" +
+           "        private int result;\n" +
+           "\n" +
+           "        public int getI() {\n" +
+           "            return i;\n" +
+           "        }\n" +
+           "\n" +
+           "        public int getResult() {\n" +
+           "            return result;\n" +
+           "        }\n" +
+           "\n" +
+           "        public Test invoke() {\n" +
+           "            i = 0;\n" +
+           "            result = foo();\n" +
+           "            return this;\n" +
            "        }\n" +
            "    }");
   }

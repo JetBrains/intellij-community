@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -80,14 +81,27 @@ public class ExtractLightMethodObjectHandler {
                                                        @NotNull final PsiCodeFragment fragment,
                                                        final String methodName) throws PrepareFailedException {
     PsiExpression expression = CodeInsightUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiElement[] elements;
     if (expression != null) {
-      elements = new PsiElement[] {JavaPsiFacade.getElementFactory(project).createStatementFromText(expression.getText() + ";", expression)};
+      elements = new PsiElement[] {elementFactory.createStatementFromText(expression.getText() + ";", expression)};
     } else {
       elements = CodeInsightUtil.findStatementsInRange(fragment, 0, fragment.getTextLength());
     }
     if (elements.length == 0) {
       return null;
+    }
+
+    if (elements[elements.length - 1] instanceof PsiExpressionStatement) {
+      final PsiExpression expr = ((PsiExpressionStatement)elements[elements.length - 1]).getExpression();
+      if (!(expr instanceof PsiAssignmentExpression)) {
+        final PsiType expressionType = expr.getType();
+        if (expressionType != null && expressionType != PsiType.VOID) {
+          final String uniqueResultName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("result", elements[0], true);
+          final String statementText = expressionType.getCanonicalText() + " " + uniqueResultName + " = " + expr.getText() + ";";
+          elements[elements.length - 1] = elements[elements.length - 1].replace(elementFactory.createStatementFromText(statementText, elements[elements.length -1]));
+        }
+      }
     }
 
     final PsiFile copy = PsiFileFactory.getInstance(project)
@@ -138,7 +152,7 @@ public class ExtractLightMethodObjectHandler {
                                             return "\"variable: \" + " + variable.getName();
                                           }
                                         }, " +");
-    PsiStatement outStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText("System.out.println(" + outputVariables + ");", anchor);
+    PsiStatement outStatement = elementFactory.createStatementFromText("System.out.println(" + outputVariables + ");", anchor);
     outStatement = (PsiStatement)container.addAfter(outStatement, elementsCopy[elementsCopy.length - 1]);
 
     final ExtractMethodObjectProcessor extractMethodObjectProcessor = new ExtractMethodObjectProcessor(project, null, elementsCopy, "") {
