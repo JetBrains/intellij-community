@@ -270,12 +270,10 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     if (executionResult instanceof DefaultExecutionResult) {
       final AnAction[] actions = ((DefaultExecutionResult)executionResult).getRestartActions();
-      if (actions != null) {
         leftToolbar.addAll(actions);
         if (actions.length > 0) {
           leftToolbar.addSeparator();
         }
-      }
     }
     final AnAction[] profileActions = executionResult.getActions();
     leftToolbar.addAll(profileActions);

@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.ui;
 
+import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
@@ -71,9 +72,8 @@ public class RunContentDescriptor implements Disposable {
   public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull RunnerLayoutUi ui) {
     this(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), ui.getComponent(), profile.getName(),
          profile.getIcon());
-    final AnAction[] restartActions = executionResult.getRestartActions();
-    if (restartActions != null) {
-      myRestartActions = restartActions;
+    if (executionResult instanceof DefaultExecutionResult) {
+      myRestartActions = ((DefaultExecutionResult)executionResult).getRestartActions();
     }
   }
 
