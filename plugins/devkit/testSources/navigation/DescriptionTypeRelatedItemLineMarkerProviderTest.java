@@ -22,6 +22,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 
 import java.util.Collection;
@@ -39,6 +40,8 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeIn
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     String pathForClass = PathUtil.getJarPathForClass(LocalInspectionEP.class);
     moduleBuilder.addLibrary("lang-api", pathForClass);
+    String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
+    moduleBuilder.addLibrary("platform-api", platformApiJar);
   }
 
   public void testInspectionDescription() {
