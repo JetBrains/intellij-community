@@ -763,11 +763,11 @@ public class JavaDocInfoGenerator {
                     if (!firstMember) buffer.append(",");
                     firstMember = false;
 
-                    appendLinkOrText(buffer, owner, memberValue, generateLink);
+                    appendLinkOrText(buffer, memberValue, generateLink);
                   }
                   buffer.append("}");
                 } else {
-                  appendLinkOrText(buffer, owner, value, generateLink);
+                  appendLinkOrText(buffer, value, generateLink);
                 }
               }
             }
@@ -792,7 +792,9 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static void appendLinkOrText(StringBuilder buffer, PsiModifierListOwner owner, PsiAnnotationMemberValue memberValue, boolean generateLink) {
+  private static void appendLinkOrText(StringBuilder buffer,
+                                       PsiAnnotationMemberValue memberValue,
+                                       boolean generateLink) {
     boolean linkGenerated = !generateLink;
     if (!linkGenerated && memberValue instanceof PsiQualifiedReferenceElement) {
       String text = ((PsiQualifiedReferenceElement)memberValue).getCanonicalText();
