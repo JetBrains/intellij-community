@@ -43,6 +43,7 @@ import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.provider.HgCurrentBinaryContentRevision;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -243,21 +244,22 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       ContentRevision beforeRevision = change.getBeforeRevision();
 
       if (afterRevision != null) {
-        addFile(result, afterRevision.getFile());
+        addFile(result, afterRevision);
       }
       if (beforeRevision != null) {
-        addFile(result, beforeRevision.getFile());
+        addFile(result, beforeRevision);
       }
     }
     return result;
   }
 
-  private void addFile(Map<HgRepository, Set<HgFile>> result, FilePath filePath) {
-    if (filePath == null) {
-      return;
-    }
-    HgRepository repo = HgUtil.getRepositoryForFile(myProject, ChangesUtil.findValidParentAccurately(filePath));
-    if (repo == null || filePath.isDirectory()) {
+  private void addFile(Map<HgRepository, Set<HgFile>> result, ContentRevision contentRevision) {
+    FilePath filePath = contentRevision.getFile();
+    // try to find repository from hgFile from change
+    HgRepository repo = HgUtil.getRepositoryForFile(myProject, contentRevision instanceof HgCurrentBinaryContentRevision
+                                                               ? ((HgCurrentBinaryContentRevision)contentRevision).getRepositoryRoot()
+                                                               : ChangesUtil.findValidParentAccurately(filePath));
+    if (repo == null) {
       return;
     }
 
