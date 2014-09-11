@@ -21,7 +21,10 @@ import java.util.EventListener;
 
 /**
  * @author nik
+ *
+ * @deprecated external build is now the only available option
  */
+@Deprecated
 public interface ExternalBuildOptionListener extends EventListener {
   Topic<ExternalBuildOptionListener> TOPIC = Topic.create("External build option", ExternalBuildOptionListener.class);
 
