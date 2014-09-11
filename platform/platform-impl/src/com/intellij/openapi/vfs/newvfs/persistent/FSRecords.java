@@ -1250,6 +1250,7 @@ public class FSRecords implements Forceable {
               }
             }
             catch (IOException e) {
+              stream.close();
               return null;
             }
           }
