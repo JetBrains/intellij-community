@@ -34,7 +34,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     urlTextField.setText(icsManager.getRepositoryManager().getUpstream());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
 
-    SyncType[] syncTypes = SettingsRepositoryPackage.getSYNC_TYPES();
+    SyncType[] syncTypes = SyncType.values();
     if (SystemInfo.isMac) {
       syncTypes = ArrayUtil.reverseArray(syncTypes);
     }

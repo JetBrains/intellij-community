@@ -41,9 +41,6 @@ enum class SyncType {
 
 class AuthenticationException(message: String, cause: Throwable) : Exception(message, cause)
 
-// KT-5591
-public val SYNC_TYPES: Array<SyncType> = SyncType.values()
-
 private fun getPathToBundledFile(filename: String): String {
   val url = javaClass<IcsManager>().getResource("")!!
   val folder: String
