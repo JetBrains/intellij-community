@@ -52,7 +52,7 @@ import java.util.List;
 @State(
   name = "BookmarkManager",
   storages = {
-    @Storage( file = StoragePathMacros.WORKSPACE_FILE)
+    @Storage(file = StoragePathMacros.WORKSPACE_FILE)
   }
 )
 public class BookmarkManager extends AbstractProjectComponent implements PersistentStateComponent<Element> {

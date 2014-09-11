@@ -28,7 +28,7 @@ import java.util.Map;
 
 @State(
   name = "HgGlobalSettings",
-  storages = @Storage( file = StoragePathMacros.APP_CONFIG + "/vcs.xml")
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml")
 )
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {
 

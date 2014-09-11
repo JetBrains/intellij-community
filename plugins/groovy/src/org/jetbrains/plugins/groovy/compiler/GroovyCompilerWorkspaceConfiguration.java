@@ -28,7 +28,7 @@ import org.jetbrains.jps.incremental.groovy.JpsGroovySettings;
 /**
  * @author peter
  */
-@State(name = "GroovyCompilerConfiguration", storages = @Storage( file = StoragePathMacros.WORKSPACE_FILE))
+@State(name = "GroovyCompilerConfiguration", storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE))
 public class GroovyCompilerWorkspaceConfiguration implements PersistentStateComponent<JpsGroovySettings>, Disposable {
   String myHeapSize = JpsGroovySettings.DEFAULT_HEAP_SIZE;
   boolean myInvokeDynamic = JpsGroovySettings.DEFAULT_INVOKE_DYNAMIC;

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  *         Date: 10/9/12
  */
-@State(name = "SelectProjectTemplateSettings", storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")})
+@State(name = "SelectProjectTemplateSettings", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")})
 public class SelectTemplateSettings implements PersistentStateComponent<SelectTemplateSettings> {
 
   public static SelectTemplateSettings getInstance() {
