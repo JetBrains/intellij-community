@@ -22,7 +22,7 @@ public class JsonPsiImplUtils {
    * but for compatibility with JavaScript integration any JSON literals as well as identifiers (unquoted words)
    * are possible and highlighted as error later.
    *
-   * @see com.intellij.json.codeinsight.JsonStandardComplianceAnnotator
+   * @see com.intellij.json.codeinsight.JsonStandardComplianceInspection
    */
   @NotNull
   public static JsonValue getNameElement(@NotNull JsonProperty property) {

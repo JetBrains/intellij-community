@@ -14,6 +14,8 @@
     <!-- Add your actions here -->
   </actions>
 
+  <resource-bundle>com.intellij.json.JsonBundle</resource-bundle>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
@@ -31,7 +33,6 @@
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
     <completion.contributor language="JSON" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
-    <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceAnnotator"/>
     <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewBuilderFactory"/>
     <lang.foldingBuilder language="JSON" implementationClass="com.intellij.json.editor.folding.JsonFoldingBuilder"/>
     <lang.smartEnterProcessor language="JSON" implementationClass="com.intellij.json.editor.smartEnter.JsonSmartEnterProcessor"/>
@@ -40,6 +41,9 @@
     <lang.commenter language="JSON" implementationClass="com.intellij.json.editor.JsonCommenter"/>
     <lang.surroundDescriptor language="JSON" implementationClass="com.intellij.json.surroundWith.JsonSurroundDescriptor"/>
 
+    <localInspection language="JSON" groupPath="JSON" shortName="JsonStandardCompliance" key="name.standard.compliance.inspection"
+                     groupKey="name.json.inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
 
     <!-- Imported from appcode-json -->
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonLiteral"

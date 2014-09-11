@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 public class JsonWithObjectLiteralSurrounder implements Surrounder {
   @Override
   public String getTemplateDescription() {
-    return JsonBundle.message("surround.with.object.literal.description");
+    return JsonBundle.message("name.surround.with.object.literal");
   }
 
   @Override

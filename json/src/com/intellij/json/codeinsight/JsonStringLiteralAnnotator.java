@@ -22,7 +22,7 @@ public class JsonStringLiteralAnnotator implements Annotator {
       int length = text.length();
       // Check that string literal closed properly
       if (length <= 1 || text.charAt(0) != text.charAt(length - 1) || quoteEscaped(text, length - 1)) {
-        holder.createErrorAnnotation(element.getTextRange(), JsonBundle.message("missing.closing.quote"));
+        holder.createErrorAnnotation(element.getTextRange(), JsonBundle.message("msg.missing.closing.quote"));
       }
       // Check escape sequences validity
       int pos = 1;
@@ -30,7 +30,7 @@ public class JsonStringLiteralAnnotator implements Annotator {
         if (text.charAt(pos) == '\\') {
           if (pos >= length - 1) {
             TextRange range = new TextRange(offset + pos, offset + pos + 1);
-            holder.createErrorAnnotation(range, JsonBundle.message("illegal.escape.sequence"));
+            holder.createErrorAnnotation(range, JsonBundle.message("msg.illegal.escape.sequence"));
             break;
           }
           char next = text.charAt(pos + 1);
@@ -50,7 +50,7 @@ public class JsonStringLiteralAnnotator implements Annotator {
               for (; i < pos + 6; i++) {
                 if (i == length || !StringUtil.isHexDigit(text.charAt(i))) {
                   TextRange range = new TextRange(offset + pos, offset + i);
-                  holder.createErrorAnnotation(range, JsonBundle.message("illegal.unicode.escape.sequence"));
+                  holder.createErrorAnnotation(range, JsonBundle.message("msg.illegal.unicode.escape.sequence"));
                   break;
                 }
               }
@@ -58,7 +58,7 @@ public class JsonStringLiteralAnnotator implements Annotator {
               break;
             default:
               TextRange range = new TextRange(offset + pos, offset + pos + 2);
-              holder.createErrorAnnotation(range, JsonBundle.message("illegal.escape.sequence"));
+              holder.createErrorAnnotation(range, JsonBundle.message("msg.illegal.escape.sequence"));
               pos += 2;
           }
         }
