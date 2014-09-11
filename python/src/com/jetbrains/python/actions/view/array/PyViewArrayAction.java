@@ -36,7 +36,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    final MyDialog dialog = new MyDialog(e.getProject(), node, nodeName);
+    final MyDialog dialog = new MyDialog(e.getProject());
     dialog.setTitle("View Array");
     dialog.setValue(node);
     dialog.show();
@@ -45,19 +45,15 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
   private class MyDialog extends DialogWrapper {
     public JTable myTable;
-    private XValueNodeImpl myNode;
-    private String myNodeName;
     private Project myProject;
     private ArrayTableComponent myComponent;
 
-    private MyDialog(Project project, XValueNodeImpl node, @NotNull String nodeName) {
+    private MyDialog(Project project) {
       super(project, false);
       setModal(false);
       setCancelButtonText("Close");
       setCrossClosesWindow(true);
 
-      myNode = node;
-      myNodeName = nodeName;
       myProject = project;
 
       myComponent = new ArrayTableComponent();
@@ -73,7 +69,6 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
         PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
         if ("ndarray".equals(debugValue.getType())) {
           myComponent.setDefaultSpinnerText();
-
           final NumpyArrayValueProvider valueProvider = new NumpyArrayValueProvider(node, myComponent, myProject);
           try {
             valueProvider.startFillTable(null);
