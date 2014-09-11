@@ -8,7 +8,7 @@ public class AmbiguousMethodCall {
 
         class Inner extends Y {
             {
-                <warning descr="Method 'm()' from superclass 'Y' called, when method from class 'X' might have been expected">m</warning>(); // ambiguous
+                <warning descr="Call to method 'm()' from superclass 'Y' looks like call to method from class 'X'">m</warning>(); // ambiguous
             }
         }
     }
