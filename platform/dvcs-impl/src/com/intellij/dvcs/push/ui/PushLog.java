@@ -59,7 +59,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
-  //private final AtomicBoolean myIgnoreStopEditing = new AtomicBoolean(false);
+  private boolean myEditingSucceeded;
 
   public PushLog(Project project, CheckedTreeNode root) {
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -102,7 +102,13 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
           InputVerifier verifier = editedComponent.getInputVerifier();
           if (verifier != null && !verifier.verify(editedComponent)) return false;
         }
-        return super.stopEditing();
+        myEditingSucceeded = true;
+        try {
+          return super.stopEditing();
+        }
+        finally {
+          myEditingSucceeded = false;
+        }
       }
     };
     myTree.setEditable(true);
@@ -266,7 +272,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
     //Implement the one CellEditor method that AbstractCellEditor doesn't.
     public Object getCellEditorValue() {
-      return ((RepositoryWithBranchPanel)editorComponent).getEditableValue();
+      return myEditingSucceeded ? ((RepositoryWithBranchPanel)editorComponent).getEditableValue() : null;
     }
   }
 

@@ -122,7 +122,7 @@ class SearchForUsagesRunnable implements Runnable {
     return "<a href='" + SEARCH_IN_PROJECT_HREF_TARGET + "'>Search in Project</a>";
   }
 
-  private static void notifyByFindBalloon(final HyperlinkListener listener,
+  private static void notifyByFindBalloon(@Nullable final HyperlinkListener listener,
                                           @NotNull final MessageType info,
                                           @NotNull FindUsagesProcessPresentation processPresentation,
                                           @NotNull final Project project,
@@ -400,6 +400,12 @@ class SearchForUsagesRunnable implements Runnable {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
+            if (myProcessPresentation.isCanceled()) {
+              notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation, myProject, Arrays.asList("Usage search was canceled"));
+              findStartedBalloonShown.set(false);
+              return;
+            }
+
             final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
             final String message = UsageViewBundle.message("dialog.no.usages.found.in",
                                                            StringUtil.decapitalize(myPresentation.getUsagesString()),

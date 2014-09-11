@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -76,8 +77,13 @@ public class GroovyFacetUtil {
   }
 
   public static File getBundledGroovyJar() {
-    String root = new File(PathUtil.getJarPathForClass(GroovyFacetUtil.class)).isDirectory() ?
-                  PluginPathManager.getPluginHomePath("groovy") + "/../../lib/" : PathManager.getHomePath() + "/lib/";
+    String root;
+    if (new File(PathUtil.getJarPathForClass(GroovyFacetUtil.class)).isDirectory()) {
+      root = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../lib/");
+    }
+    else {
+      root = PathManager.getHomePath() + "/lib/";
+    }
     final File[] groovyJars = LibrariesUtil.getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
     assert groovyJars.length == 1;
     return groovyJars[0];

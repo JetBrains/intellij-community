@@ -46,18 +46,24 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author peter
  */
 public class CompilerTester {
-
-  private Module myModule;
+  private Project myProject;
+  private List<Module> myModules;
   private TempDirTestFixture myMainOutput;
 
   public CompilerTester(Module module) throws Exception {
-    myModule = module;
+    this(module.getProject(), Collections.singletonList(module));
+  }
+
+  public CompilerTester(Project project, List<Module> modules) throws Exception {
+    myProject = project;
+    myModules = modules;
     myMainOutput = new TempDirTestFixtureImpl();
     myMainOutput.setUp();
 
@@ -67,10 +73,11 @@ public class CompilerTester {
         //noinspection ConstantConditions
         CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
         CompilerTestUtil.enableExternalCompiler();
-        ModuleRootModificationUtil.setModuleSdk(myModule, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
+        for (Module module : myModules) {
+          ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
+        }
       }
     }.execute();
-
   }
 
   public void tearDown() {
@@ -84,12 +91,12 @@ public class CompilerTester {
     } 
     finally {
       myMainOutput = null;
-      myModule = null;
+      myModules = null;
     }
   }
 
   private Project getProject() {
-    return myModule.getProject();
+    return myProject;
   }
 
   public void deleteClassFile(final String className) throws IOException {
@@ -173,6 +180,15 @@ public class CompilerTester {
     });
   }
 
+  public List<CompilerMessage> make(final CompileScope scope) {
+    return runCompiler(new Consumer<ErrorReportingCallback>() {
+      @Override
+      public void consume(ErrorReportingCallback callback) {
+        CompilerManager.getInstance(getProject()).make(scope, callback);
+      }
+    });
+  }
+
   public List<CompilerMessage> compileFiles(final VirtualFile... files) {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override
@@ -192,11 +208,13 @@ public class CompilerTester {
         try {
           getProject().save();
           CompilerTestUtil.saveApplicationSettings();
-          final VirtualFile moduleFile = myModule.getModuleFile();
-          File ioFile = VfsUtil.virtualToIoFile(moduleFile);
-          if (!ioFile.exists()) {
-            getProject().save();
-            assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
+          for (Module module : myModules) {
+            final VirtualFile moduleFile = module.getModuleFile();
+            File ioFile = VfsUtil.virtualToIoFile(moduleFile);
+            if (!ioFile.exists()) {
+              getProject().save();
+              assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
+            }
           }
           runnable.consume(callback);
         }
