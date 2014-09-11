@@ -1,5 +1,5 @@
 class Array  {
-    String[] s;
+    String s [];
 
     {
         s = new String[]{};

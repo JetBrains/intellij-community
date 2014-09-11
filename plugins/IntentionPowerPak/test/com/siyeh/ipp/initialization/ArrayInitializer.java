@@ -1,3 +1,3 @@
 class X {
-  String s <caret>= {};
+    String s <caret>= {};
 }

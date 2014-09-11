@@ -61,7 +61,9 @@ public class StudyTestRunner {
     try {
       while ((line = testOutputReader.readLine()) != null) {
         if (line.contains(TEST_FAILED)) {
-          return line.substring(TEST_FAILED.length(), line.length());
+          String res = line.substring(TEST_FAILED.length(), line.length());
+          StudyUtils.closeSilently(testOutputReader);
+          return res;
         }
       }
     }
