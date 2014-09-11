@@ -56,7 +56,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private final SvnVcs myVcs;
   private final WorkingCopyInfo myInfo;
 
-  private final UpdatedFilesReverseSide myAccomulatedFiles;
+  private final UpdatedFilesReverseSide myAccumulatedFiles;
   private UpdatedFiles myRecentlyUpdatedFiles;
 
   private final List<VcsException> myExceptions;
@@ -66,38 +66,31 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private ResolveWorker myResolveWorker;
   private FilePathImpl myMergeTarget;
   private final String myTitle;
-  private final String myBranchName;
-  private final MergerFactory myMergerFactory;
-  private final SVNURL myCurrentBranchUrl;
   private boolean myDryRun;
 
-  public SvnIntegrateChangesTask(final SvnVcs vcs, final WorkingCopyInfo info, final MergerFactory mergerFactory,
+  public SvnIntegrateChangesTask(final SvnVcs vcs, @NotNull WorkingCopyInfo info, final MergerFactory mergerFactory,
                                  final SVNURL currentBranchUrl, final String title, final boolean dryRun, String branchName) {
     super(vcs.getProject(), title, true, VcsConfiguration.getInstance(vcs.getProject()).getUpdateOption());
-    myMergerFactory = mergerFactory;
-    myCurrentBranchUrl = currentBranchUrl;
     myDryRun = dryRun;
     myTitle = title;
-    myBranchName = branchName;
 
     myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
     myVcs = vcs;
 
     myInfo = info;
 
-    myAccomulatedFiles = new UpdatedFilesReverseSide(UpdatedFiles.create());
+    myAccumulatedFiles = new UpdatedFilesReverseSide(UpdatedFiles.create());
     myExceptions = new ArrayList<VcsException>();
     myHandler = new IntegrateEventHandler(myVcs, ProgressManager.getInstance().getProgressIndicator());
-    myMerger = myMergerFactory.createMerger(myVcs, new File(myInfo.getLocalPath()), myHandler, myCurrentBranchUrl, myBranchName);
+    myMerger = mergerFactory.createMerger(myVcs, new File(myInfo.getLocalPath()), myHandler, currentBranchUrl, branchName);
   }
 
-  private void indicatorOnStart() {
-    final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
-    if (ind != null) {
-      ind.setIndeterminate(true);
-    }
-    if (ind != null) {
-      ind.setText(SvnBundle.message("action.Subversion.integrate.changes.progress.integrating.text"));
+  private static void indicatorOnStart() {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+
+    if (indicator != null) {
+      indicator.setIndeterminate(true);
+      indicator.setText(SvnBundle.message("action.Subversion.integrate.changes.progress.integrating.text"));
     }
   }
 
@@ -125,7 +118,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
             (! myExceptions.isEmpty()) || UpdatedFilesReverseSide.containErrors(myRecentlyUpdatedFiles)) {
           break;
         }
-        accomulate();
+        accumulate();
       }
     } finally {
       myProjectLevelVcsManager.stopBackgroundVcsOperation();
@@ -168,25 +161,25 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   public void onCancel() {
-    try {
-      if (myProject.isDisposed()) return;
-      afterExecution(true);
-    } finally {
-      BlockReloadingUtil.unblock();
-    }
+    onTaskFinished(true);
   }
 
   public void onSuccess() {
+    onTaskFinished(false);
+  }
+
+  private void onTaskFinished(boolean wasCancelled) {
     try {
-      if (myProject.isDisposed()) return;
-      afterExecution(false);
+      if (!myProject.isDisposed()) {
+        afterExecution(wasCancelled);
+      }
     } finally {
       BlockReloadingUtil.unblock();
     }
   }
 
-  private void accomulate() {
-    myAccomulatedFiles.accomulateFiles(myRecentlyUpdatedFiles, UpdatedFilesReverseSide.DuplicateLevel.DUPLICATE_ERRORS);
+  private void accumulate() {
+    myAccumulatedFiles.accomulateFiles(myRecentlyUpdatedFiles, UpdatedFilesReverseSide.DuplicateLevel.DUPLICATE_ERRORS);
   }
 
   private void afterExecution(final boolean wasCanceled) {
@@ -195,11 +188,11 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
     final boolean haveConflicts = ResolveWorker.haveUnresolvedConflicts(myRecentlyUpdatedFiles);
 
-    accomulate();
+    accumulate();
 
-    if ((! myMerger.hasNext()) || haveConflicts || (! myExceptions.isEmpty()) || myAccomulatedFiles.containErrors() || wasCanceled) {
+    if ((!myMerger.hasNext()) || haveConflicts || (!myExceptions.isEmpty()) || myAccumulatedFiles.containErrors() || wasCanceled) {
       initMergeTarget();
-      if (myAccomulatedFiles.isEmpty() && myExceptions.isEmpty() && (myMergeTarget == null) && (! wasCanceled)) {
+      if (myAccumulatedFiles.isEmpty() && myExceptions.isEmpty() && (myMergeTarget == null) && (!wasCanceled)) {
         Messages.showMessageDialog(SvnBundle.message("action.Subversion.integrate.changes.message.files.up.to.date.text"), myTitle,
                                    Messages.getInformationIcon());
       } else {
@@ -220,8 +213,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private void finishActions(final boolean wasCanceled) {
     if (! wasCanceled) {
       if (! ApplicationManager.getApplication().isUnitTestMode() &&
-          (! myDryRun) && (myExceptions.isEmpty()) && (! myAccomulatedFiles.containErrors()) &&
-          ((! myAccomulatedFiles.isEmpty()) || (myMergeTarget != null))) {
+          (! myDryRun) && (myExceptions.isEmpty()) && (! myAccumulatedFiles.containErrors()) &&
+          ((! myAccumulatedFiles.isEmpty()) || (myMergeTarget != null))) {
         if (myInfo.isUnderProjectRoot()) {
           showLocalCommit();
         } else {
@@ -239,7 +232,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   // no remote operations
   private void prepareAndShowResults() {
     // todo unite into one window??
-    if (! myAccomulatedFiles.isEmpty()) {
+    if (!myAccumulatedFiles.isEmpty()) {
       showUpdateTree();
     }
     if (! myExceptions.isEmpty()) {
@@ -250,8 +243,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private void showUpdateTree() {
     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
     // action info is actually NOT used
-    restoreUpdateTree.registerUpdateInformation(myAccomulatedFiles.getUpdatedFiles(), ActionInfo.INTEGRATE);
-    myProjectLevelVcsManager.showUpdateProjectInfo(myAccomulatedFiles.getUpdatedFiles(), myTitle, ActionInfo.INTEGRATE, false);
+    restoreUpdateTree.registerUpdateInformation(myAccumulatedFiles.getUpdatedFiles(), ActionInfo.INTEGRATE);
+    myProjectLevelVcsManager.showUpdateProjectInfo(myAccumulatedFiles.getUpdatedFiles(), myTitle, ActionInfo.INTEGRATE, false);
   }
 
   private void stepToNextChangeList() {
@@ -265,7 +258,6 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   /**
    * folder that is going to keep merge info record should also be changed
    */
-  @Nullable
   private void initMergeTarget() {
     final File mergeInfoHolder = myMerger.getMergeInfoHolder();
     if (mergeInfoHolder != null) {
@@ -282,16 +274,14 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     // for changes to be detected, we need switch to background change list manager update thread and back to dispatch thread
     // so callback is used; ok to be called after VCS update markup closed: no remote operations
-    final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-    clManager.invokeAfterUpdate(new Runnable() {
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    changeListManager.invokeAfterUpdate(new Runnable() {
       public void run() {
-        final Collection<Change> changes = new ArrayList<Change>();
+        Collection<Change> changes = new ArrayList<Change>();
         for (FilePath file : files) {
-          final Change change = clManager.getChange(file);
-          if (change != null) {
-            changes.add(change);
-          }
+          ContainerUtil.addIfNotNull(changes, changeListManager.getChange(file));
         }
+
         CommitChangeListDialog.commitChanges(myProject, changes, null, null, myMerger.getComment());
         prepareAndShowResults();
       }
@@ -303,19 +293,18 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       }, null);
   }
 
+  @NotNull
   private Collection<FilePath> gatherChangedPaths() {
-    final Collection<FilePath> files = new ArrayList<FilePath>();
+    final Collection<FilePath> result = new ArrayList<FilePath>();
 
-    UpdateFilesHelper.iterateFileGroupFiles(myAccomulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
+    UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
       public void onFile(final String filePath, final String groupId) {
-        final FilePath file = FilePathImpl.create(new File(filePath));
-        files.add(file);
+        result.add(FilePathImpl.create(new File(filePath)));
       }
     });
-    if (myMergeTarget != null) {
-      files.add(myMergeTarget);
-    }
-    return files;
+    ContainerUtil.addIfNotNull(result, myMergeTarget);
+
+    return result;
   }
 
   private void showAlienCommit() {
@@ -324,28 +313,30 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     if (myMergeTarget != null) {
       dirtyScope.addDir(myMergeTarget);
     } else {
-      UpdateFilesHelper.iterateFileGroupFiles(myAccomulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
+      UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
         public void onFile(final String filePath, final String groupId) {
-          final FilePath file = FilePathImpl.create(new File(filePath));
-          dirtyScope.addFile(file);
+          dirtyScope.addFile(FilePathImpl.create(new File(filePath)));
         }
       });
     }
 
+    showAlienCommit(dirtyScope);
+  }
+
+  private void showAlienCommit(@NotNull final AlienDirtyScope dirtyScope) {
     new Task.Backgroundable(myVcs.getProject(),
                             SvnBundle.message("action.Subversion.integrate.changes.collecting.changes.to.commit.task.title")) {
 
-      private final GatheringChangelistBuilder changesBuilder = new GatheringChangelistBuilder(myVcs, myAccomulatedFiles);
+      private final GatheringChangelistBuilder changesBuilder = new GatheringChangelistBuilder(myVcs, myAccumulatedFiles);
       private final Ref<String> caughtError = new Ref<String>();
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
-        if (!myVcs.getProject().isDisposed()) {
-          final SvnChangeProvider provider = new SvnChangeProvider(myVcs);
 
+        if (!myVcs.getProject().isDisposed()) {
           try {
-            provider.getChanges(dirtyScope, changesBuilder, indicator, null);
+            new SvnChangeProvider(myVcs).getChanges(dirtyScope, changesBuilder, indicator, null);
           }
           catch (VcsException e) {
             caughtError.set(SvnBundle.message("action.Subversion.integrate.changes.error.unable.to.collect.changes.text", e.getMessage()));
@@ -359,8 +350,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
           VcsBalloonProblemNotifier.showOverVersionControlView(myVcs.getProject(), caughtError.get(), MessageType.ERROR);
         }
         else if (!changesBuilder.getChanges().isEmpty()) {
-          CommitChangeListDialog
-            .commitAlienChanges(myProject, changesBuilder.getChanges(), myVcs, myMerger.getComment(), myMerger.getComment());
+          CommitChangeListDialog.commitAlienChanges(myProject, changesBuilder.getChanges(), myVcs, myMerger.getComment(),
+                                                    myMerger.getComment());
         }
       }
     }.queue();

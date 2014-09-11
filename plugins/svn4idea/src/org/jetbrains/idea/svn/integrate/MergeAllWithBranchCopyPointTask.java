@@ -38,10 +38,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
   implements Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> {
 
-  private final AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> myData;
+  @NotNull private final AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> myData;
 
   public MergeAllWithBranchCopyPointTask(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
     super(mergeContext, interaction, "merge all", Where.AWT);
+
     myData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>>();
   }
 
@@ -52,42 +53,55 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
 
   @Override
   public void run(ContinuationContext context) {
-    SvnBranchPointsCalculator.WrapperInvertor invertor;
+    TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> inverterValue = myData.get();
+
+    if (inverterValue != null) {
+      runMerge(context, inverterValue);
+    }
+    else {
+      finishWithError(context, "Merge start wasn't found", true);
+    }
+  }
+
+  private void runMerge(@NotNull ContinuationContext context,
+                        @NotNull TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> inverterValue) {
     try {
-      final TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>
-        transparentlyFailedValueI = myData.get();
-      if (transparentlyFailedValueI == null) {
-        finishWithError(context, "Merge start wasn't found", true);
-        return;
+      SvnBranchPointsCalculator.WrapperInvertor inverter = inverterValue.get();
+
+      if (inverter != null) {
+        runMerge(context, inverter);
       }
-      invertor = transparentlyFailedValueI.get();
+      else {
+        finishWithError(context, "Merge start wasn't found", true);
+      }
     }
     catch (VcsException e) {
       finishWithError(context, "Merge start wasn't found", Collections.singletonList(e));
-      return;
     }
-    if (invertor == null) {
-      finishWithError(context, "Merge start wasn't found", true);
-      return;
-    }
-    final boolean reintegrate = invertor.isInvertedSense();
-    if (reintegrate && (!myInteraction.shouldReintegrate(myMergeContext.getSourceUrl(), invertor.inverted().getTarget()))) {
-      context.cancelEverything();
-      return;
-    }
-    final MergerFactory mergerFactory = createBranchMergerFactory(reintegrate, invertor);
-
-    final String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
-    context.next(new MergeTask(myMergeContext, myInteraction, mergerFactory, title));
   }
 
+  private void runMerge(@NotNull ContinuationContext context, @NotNull SvnBranchPointsCalculator.WrapperInvertor inverter) {
+    boolean reintegrate = inverter.isInvertedSense();
+
+    if (reintegrate && !myInteraction.shouldReintegrate(myMergeContext.getSourceUrl(), inverter.inverted().getTarget())) {
+      context.cancelEverything();
+    }
+    else {
+      final MergerFactory mergerFactory = createBranchMergerFactory(reintegrate, inverter);
+      final String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
+
+      context.next(new MergeTask(myMergeContext, myInteraction, mergerFactory, title));
+    }
+  }
+
+  @NotNull
   private MergerFactory createBranchMergerFactory(final boolean reintegrate,
-                                                  final SvnBranchPointsCalculator.WrapperInvertor invertor) {
+                                                  @NotNull final SvnBranchPointsCalculator.WrapperInvertor inverter) {
     return new MergerFactory() {
       public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
-        return new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getPath(), handler,
-                                reintegrate, myMergeContext.getBranchName(),
-                                reintegrate ? invertor.getWrapped().getTargetRevision() : invertor.getWrapped().getSourceRevision());
+        return new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getPath(), handler, reintegrate,
+                                myMergeContext.getBranchName(),
+                                reintegrate ? inverter.getWrapped().getTargetRevision() : inverter.getWrapped().getSourceRevision());
       }
     };
   }

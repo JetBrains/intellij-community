@@ -20,80 +20,82 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public class MergeTask extends BaseMergeTask {
-  private final MergerFactory myFactory;
 
-  // awt since only a wrapper
+  @NotNull private final MergerFactory myFactory;
+
   public MergeTask(@NotNull MergeContext mergeContext,
-                   @NotNull QuickMergeInteraction interaction, final MergerFactory factory,
+                   @NotNull QuickMergeInteraction interaction,
+                   @NotNull MergerFactory factory,
                    final String mergeTitle) {
     super(mergeContext, interaction, mergeTitle, Where.AWT);
+
     myFactory = factory;
   }
 
   @Override
   public void run(ContinuationContext context) {
-    final SVNURL sourceUrlUrl;
-    try {
-      sourceUrlUrl = SVNURL.parseURIEncoded(myMergeContext.getSourceUrl());
-    }
-    catch (SVNException e) {
-      finishWithError(context, "Cannot merge: " + e.getMessage(), true);
-      return;
-    }
+    SVNURL sourceUrl = parseSourceUrl(context);
 
-    final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(myMergeContext.getVcs(),
-                                                                     new WorkingCopyInfo(myMergeContext.getWcInfo().getPath(), true),
-                                                                     myFactory, sourceUrlUrl, getName(), false,
-                                                                     myMergeContext.getBranchName());
-    final TaskDescriptor taskDescriptor = TaskDescriptor.createForBackgroundableTask(task);
-    // merge task will be the next after...
-    context.next(taskDescriptor);
-    // ... after we create changelist
-    createChangelist(context);
+    if (sourceUrl != null) {
+      context.next(TaskDescriptor.createForBackgroundableTask(newIntegrateTask(sourceUrl)));
+
+      boolean needRefresh = setupDefaultEmptyChangeListForMerge();
+      if (needRefresh) {
+        refreshChanges(context);
+      }
+    }
   }
 
-  private void createChangelist(final ContinuationPause context) {
-    final ChangeListManager listManager = ChangeListManager.getInstance(myMergeContext.getProject());
-    String name = myMergeContext.getTitle();
-    int i = 1;
-    boolean updateDefaultList = false;
+  @NotNull
+  private SvnIntegrateChangesTask newIntegrateTask(@NotNull SVNURL branchUrl) {
+    return new SvnIntegrateChangesTask(myMergeContext.getVcs(), new WorkingCopyInfo(myMergeContext.getWcInfo().getPath(), true), myFactory,
+                                       branchUrl, getName(), false, myMergeContext.getBranchName());
+  }
+
+  private boolean setupDefaultEmptyChangeListForMerge() {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myMergeContext.getProject());
+    int i = 0;
+    boolean needRefresh = false;
+
     while (true) {
-      final LocalChangeList changeList = listManager.findChangeList(name);
+      String name = myMergeContext.getTitle() + (i > 0 ? " (" + i + ")" : "");
+      LocalChangeList changeList = changeListManager.findChangeList(name);
+
       if (changeList == null) {
-        final LocalChangeList newList = listManager.addChangeList(name, null);
-        listManager.setDefaultChangeList(newList);
-        updateDefaultList = true;
+        changeListManager.setDefaultChangeList(changeListManager.addChangeList(name, null));
+        needRefresh = true;
         break;
       }
       if (changeList.getChanges().isEmpty()) {
         if (!changeList.isDefault()) {
-          listManager.setDefaultChangeList(changeList);
-          updateDefaultList = true;
+          changeListManager.setDefaultChangeList(changeList);
+          needRefresh = true;
         }
         break;
       }
-      name = myMergeContext.getTitle() + " (" + i + ")";
-      ++i;
+      i++;
     }
-    if (updateDefaultList) {
-      context.suspend();
-      listManager.invokeAfterUpdate(new Runnable() {
-        public void run() {
-          context.ping();
-        }
-      }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE_NOT_AWT, "", ModalityState.NON_MODAL);
-    }
+
+    return needRefresh;
+  }
+
+  private void refreshChanges(@NotNull final ContinuationContext context) {
+    context.suspend();
+
+    ChangeListManager.getInstance(myMergeContext.getProject()).invokeAfterUpdate(new Runnable() {
+      public void run() {
+        context.ping();
+      }
+    }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE_NOT_AWT, "", ModalityState.NON_MODAL);
   }
 }
