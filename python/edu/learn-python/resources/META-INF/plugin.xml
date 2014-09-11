@@ -79,6 +79,7 @@
     <highlightErrorFilter implementation="com.jetbrains.python.edu.StudyHighlightErrorFilter"/>
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
         serviceImplementation="com.jetbrains.python.edu.StudyInstructionPainter" overrides="true"/>
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <visitorFilter language="Python" implementationClass="com.jetbrains.python.edu.highlighting.StudyVisitorFilter"/>
