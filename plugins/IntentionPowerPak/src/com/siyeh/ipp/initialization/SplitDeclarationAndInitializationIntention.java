@@ -38,11 +38,11 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
   public void processIntention(@NotNull PsiElement element) {
     final PsiField field = (PsiField)element.getParent();
     field.normalizeDeclaration();
-    final PsiExpression initializer = RefactoringUtil.convertInitializerToNormalExpression(field.getInitializer(), field.getType());
+    final PsiExpression initializer = field.getInitializer();
     if (initializer == null) {
       return;
     }
-    final String initializerText = initializer.getText();
+    final String initializerText = RefactoringUtil.convertInitializerToNormalExpression(initializer, field.getType()).getText();
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) {
       return;
@@ -97,6 +97,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
     }
     initializer.delete();
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
+    codeStyleManager.reformat(field);
     codeStyleManager.reformat(field);
     codeStyleManager.reformat(classInitializer);
     HighlightUtil.highlightElement(addedElement,
