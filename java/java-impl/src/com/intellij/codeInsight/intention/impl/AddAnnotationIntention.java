@@ -56,9 +56,11 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
     Pair<String, String[]> annotations = getAnnotations(project);
     String toAdd = annotations.first;
     String[] toRemove = annotations.second;
-    if (toRemove.length > 0 && AnnotationUtil.isAnnotated(owner, toRemove[0], false, false)) return false;
+    if (toRemove.length > 0 && isAnnotatedSkipInferred(owner, toRemove)) {
+      return false;
+    }
     setText(AddAnnotationPsiFix.calcText(owner, toAdd));
-    if (AnnotationUtil.isAnnotated(owner, toAdd, false, false)) return false;
+    if (isAnnotatedSkipInferred(owner, toAdd)) return false;
 
     if (owner instanceof PsiMethod) {
       PsiType returnType = ((PsiMethod)owner).getReturnType();
@@ -71,6 +73,11 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
     }
 
     return true;
+  }
+
+  private static boolean isAnnotatedSkipInferred(PsiModifierListOwner owner, String... annoFqns) {
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, false, annoFqns);
+    return annotation != null && !AnnotationUtil.isInferredAnnotation(annotation);
   }
 
   @Override
