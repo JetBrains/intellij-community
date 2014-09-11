@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
@@ -44,6 +45,8 @@ public class RunContentDescriptor implements Disposable {
 
   private Content myContent;
   private Runnable myRestarter;
+  @NotNull
+  private AnAction[] myRestartActions = AnAction.EMPTY_ARRAY;
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
                               @Nullable ProcessHandler processHandler,
@@ -66,7 +69,20 @@ public class RunContentDescriptor implements Disposable {
   }
 
   public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull RunnerLayoutUi ui) {
-    this(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), ui.getComponent(), profile.getName(), profile.getIcon());
+    this(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), ui.getComponent(), profile.getName(),
+         profile.getIcon());
+    final AnAction[] restartActions = executionResult.getRestartActions();
+    if (restartActions != null) {
+      myRestartActions = restartActions;
+    }
+  }
+
+  /**
+   * @return actions to restart or rerun
+   */
+  @NotNull
+  public AnAction[] getRestartActions() {
+    return myRestartActions.clone();
   }
 
   public ExecutionConsole getExecutionConsole() {

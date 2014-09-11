@@ -67,6 +67,8 @@ public class DefaultExecutionResult implements ExecutionResult {
     myActions = actions;
   }
 
+  @Nullable
+  @Override
   public AnAction[] getRestartActions() {
     return myRestartActions;
   }

@@ -18,6 +18,7 @@ package com.intellij.execution;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The result of executing a process.
@@ -39,6 +40,12 @@ public interface ExecutionResult {
    * @return the list of toolbar actions to display.
    */
   AnAction[] getActions();
+
+  /**
+   * @return actions to restart or rerun
+   */
+  @Nullable
+  AnAction[] getRestartActions();
 
   /**
    * Returns the ProcessHandler attached to the running process.
