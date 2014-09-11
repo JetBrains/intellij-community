@@ -49,6 +49,7 @@ public class SingleClassesTest {
   @Test public void testClassSwitch() { doTest("TestClassSwitch"); }
   @Test public void testClassTypes() { doTest("TestClassTypes"); }
   @Test public void testClassVar() { doTest("TestClassVar"); }
+  @Test public void testClassNestedInitializer() { doTest("TestClassNestedInitializer"); }
   @Test public void testDeprecations() { doTest("TestDeprecations"); }
   @Test public void testExtendsList() { doTest("TestExtendsList"); }
   @Test public void testMethodParameters() { doTest("TestMethodParameters"); }

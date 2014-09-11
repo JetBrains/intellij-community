@@ -1,0 +1,14 @@
+package pkg;
+
+public class TestClassNestedInitializer {
+   public String secret;
+
+   public void test() {
+      TestClassNestedInitializer var1 = new TestClassNestedInitializer() {
+         {
+            this.secret = "one";
+         }
+      };
+      System.out.println(var1.secret);
+   }
+}
