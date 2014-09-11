@@ -565,11 +565,8 @@ public class FileUtilRt {
   }
 
   public static boolean ensureCanCreateFile(@NotNull File file) {
-    System.out.println(" ensureCanCreateFile " + file.getPath());
     if (file.exists()) return delete(file);
-    System.out.println(" ensureCanCreateFile " + file.getPath() + " rewritable" );
     if (!createIfNotExists(file)) return false;
-    System.out.println(" ensureCanCreateFile " + file.getPath() + " created");
     return delete(file);
   }
 
