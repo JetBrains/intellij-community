@@ -72,7 +72,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,8 +96,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
   @Nullable
   private final PsiFile myInjectedFile;
-  private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers =
-    new LinkedList<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>>();
+  private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers = ContainerUtil.newLinkedList();
 
   @Nullable
   private final RangeMarker myAltFullRange;
@@ -199,7 +197,16 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   }
 
   public boolean isValid() {
-    return myNewVirtualFile.isValid() && (myAltFullRange == null && myInjectedFile.isValid() || myAltFullRange.isValid());
+    boolean valid = myNewVirtualFile.isValid() && (myAltFullRange == null && myInjectedFile.isValid() || myAltFullRange.isValid());
+    if (valid) {
+      for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> t : myMarkers) {
+        if (!t.first.isValid() || !t.second.isValid() || t.third.getElement() == null) {
+          valid = false;
+          break;
+        }
+      }
+    }
+    return valid;
   }
 
   public void navigate(int injectedOffset) {
@@ -285,6 +292,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     }
     else if (e.getDocument() == myNewDocument) {
       commitToOriginal();
+      if (!isValid()) closeEditor();
     }
     else if (e.getDocument() == myOrigDocument) {
       if (myCommittingToOriginal || myAltFullRange != null && myAltFullRange.isValid()) return;
@@ -359,7 +367,6 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
 
   private void commitToOriginal() {
-    if (!isValid()) return;
     VirtualFile origVirtualFile = PsiUtilCore.getVirtualFile(myNewFile.getContext());
     myCommittingToOriginal = true;
     try {
@@ -401,7 +408,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       ProperTextRange insideHost = null;
       StringBuilder sb = new StringBuilder();
       for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> entry : map.get(host)) {
-        RangeMarker origMarker = entry.first;
+        RangeMarker origMarker = entry.first; // check for validity?
         int hostOffset = host.getTextRange().getStartOffset();
         ProperTextRange localInsideHost = new ProperTextRange(origMarker.getStartOffset() - hostOffset, origMarker.getEndOffset() - hostOffset);
         RangeMarker rangeMarker = entry.second;
