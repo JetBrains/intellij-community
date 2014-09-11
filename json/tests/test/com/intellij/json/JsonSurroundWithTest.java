@@ -34,4 +34,11 @@ public class JsonSurroundWithTest extends JsonTestCase {
   public void testCannotSurroundPropertyKey() {
     doTest();
   }
+
+  // Moved from JavaScript
+
+
+  public void testObjectLiteral() {
+    doTest();
+  }
 }
