@@ -17,12 +17,9 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.idea.devkit.inspections.DescriptionType;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,15 +35,10 @@ public abstract class DevkitRelatedLineMarkerProviderBase extends RelatedItemLin
                                        boolean forNavigation) {
     final PsiElement psiElement = ContainerUtil.getFirstItem(elements);
     if (psiElement == null ||
-        !isPluginProject(psiElement.getProject())) {
+        !PsiUtil.isPluginProject(psiElement.getProject())) {
       return;
     }
 
     super.collectNavigationMarkers(elements, result, forNavigation);
-  }
-
-  private static boolean isPluginProject(Project project) {
-    return JavaPsiFacade.getInstance(project).findClass(DescriptionType.INSPECTION.getClassName(),
-                                                        GlobalSearchScope.allScope(project)) != null;
   }
 }

@@ -16,13 +16,13 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/extensionPointDeclaration")
@@ -37,8 +37,8 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     String extensionsJar = PathUtil.getJarPathForClass(ExtensionPointName.class);
     moduleBuilder.addLibrary("extensions", extensionsJar);
-    String langApiJar = PathUtil.getJarPathForClass(LocalInspectionEP.class);
-    moduleBuilder.addLibrary("lang-api", langApiJar);
+    String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
+    moduleBuilder.addLibrary("platform-api", platformApiJar);
   }
 
   public void testMyStringEP() {
