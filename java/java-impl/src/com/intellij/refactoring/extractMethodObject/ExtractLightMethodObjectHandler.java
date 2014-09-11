@@ -16,12 +16,7 @@
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -30,15 +25,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
-import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -117,12 +109,13 @@ public class ExtractLightMethodObjectHandler {
           final String uniqueResultName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("result", elementsCopy[0], true);
           final String statementText = expressionType.getCanonicalText() + " " + uniqueResultName + " = " + expr.getText() + ";";
           elementsCopy[elementsCopy.length - 1] = elementsCopy[elementsCopy.length - 1]
-            .replace(elementFactory.createStatementFromText(statementText, elementsCopy[elementsCopy.length -1]));
+            .replace(elementFactory.createStatementFromText(statementText, elementsCopy[elementsCopy.length - 1]));
         }
       }
     }
 
-    final int start = elementsCopy[0].getTextRange().getStartOffset();
+    LOG.assertTrue(elementsCopy[0].getParent() == container, "element: " +  elementsCopy[0].getText() + "; container: " + container.getText());
+    final int startOffsetInContainer = elementsCopy[0].getStartOffsetInParent();
 
     final ControlFlow controlFlow;
     try {
@@ -186,7 +179,8 @@ public class ExtractLightMethodObjectHandler {
       return null;
     }
 
-    final String generatedCall = copy.getText().substring(start, outStatement.getTextOffset());
+    final int startOffset = startOffsetInContainer + container.getTextRange().getStartOffset();
+    final String generatedCall = copy.getText().substring(startOffset, outStatement.getTextOffset());
     return new ExtractedData(generatedCall,
                              (PsiClass)CodeStyleManager.getInstance(project).reformat(extractMethodObjectProcessor.getInnerClass()),
                              originalAnchor);
