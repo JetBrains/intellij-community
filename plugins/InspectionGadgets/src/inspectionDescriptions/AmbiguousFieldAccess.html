@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports field accesses of a super class where a local variable, parameter or field of the same name is available
-in the surrounding class. In this case a cursory reader of the code may think that a variable in the surrounding class is
-accessed, when in fact a field from the super class is accessed. To make the intent of the code more clear it is recommended to add a
-<b>this</b> qualifier to the field access call.
+Reports ambiguous accesses of a super class field from an inner or anonymous class, where a local variable, parameter or field with identical name is available
+in the surrounding code. In this situation a cursory examination of the code may suggest that an element in the surrounding code is
+accessed, when in actual fact a field from the super class is accessed. To clarify the intent of the code it is recommended to add a
+<b>super</b> qualifier to the field access.
 <p>Example:
 <pre><code>
 <b>class</b> X {
