@@ -149,6 +149,13 @@ target('default': "Build artifacts") {
   signMacZip("pycharm", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
   buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
 
+  //custom jdk bundled
+  ant.copy(file: "${home}/build/jdk/custom_jdk.tar.gz", tofile: "${home}/build/jdk/custom_jdk_${buildNumber}.tar")
+  def sitFileName = "pycharm${buildName}-custom-jdk-bundled"
+  signMacZip("idea", ["sitFileName": "${sitFileName}", "jdk_archive_name": "custom_jdk_${buildNumber}.tar"])
+  buildDmg("idea", getDmgImage(false), extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": "custom_jdk_${buildNumber}.tar"])
+
+
 }
 
 public layoutEducational(String classesPath, Set usedJars) {
