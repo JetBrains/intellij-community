@@ -92,6 +92,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }
     CompilerTestUtil.enableExternalCompiler();
     CompilerTestUtil.setupJavacForTests(myProject);
+    CompilerTestUtil.saveApplicationSettings();
   }
 
   //------------------------------------------------------------------------------------------
