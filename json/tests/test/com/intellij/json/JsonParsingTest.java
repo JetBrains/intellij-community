@@ -13,6 +13,15 @@ public class JsonParsingTest extends ParsingTestCase {
     super("psi", "json", new JsonParserDefinition());
   }
 
+  @Override
+  protected String getTestDataPath() {
+    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData";
+  }
+
+  private void doTest() {
+    doTest(true);
+  }
+
   public void testKeywords() throws Exception {
     doTest();
   }
@@ -28,6 +37,28 @@ public class JsonParsingTest extends ParsingTestCase {
   public void testTopLevelStringLiteral() {
     doTest();
   }
+
+  public void testStringLiterals() {
+    doTest();
+  }
+
+  public void testComments() {
+    doTest();
+  }
+
+  public void testIncompleteObjectProperties() {
+    doTest();
+  }
+
+  public void testMissingCommaBetweenArrayElements() {
+    doTest();
+  }
+
+  public void testMissingCommaBetweenObjectProperties() {
+    doTest();
+  }
+
+  // Moved from JavaScript
 
   public void testSimple1() {
     doTest();
@@ -52,23 +83,6 @@ public class JsonParsingTest extends ParsingTestCase {
   //
   //public void testReal2() {
   //  doTest();
+
   //}
-
-
-  public void testComments() {
-    doTest();
-  }
-
-  public void testStringLiterals() {
-    doTest();
-  }
-
-  private void doTest() {
-    doTest(true);
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData";
-  }
 }
