@@ -1,6 +1,6 @@
 {
   parserClass = 'com.intellij.json.JsonParser'
-  parserUtilClass = "com.intellij.json.JsonParserUtil"
+  parserUtilClass = "com.intellij.json.psi.JsonParserUtil"
   psiPackage = 'com.intellij.json.psi'
   psiImplPackage = 'com.intellij.json.psi.impl'
 
@@ -64,7 +64,7 @@ object ::= '{' object_element* '}' {
 
 // Hackity-hack to parse array elements and properties even if separating commas are missing,
 // TODO: Find out if there is any simpler way to do so in GrammarKit
-private object_element ::= property (','|&'}') {
+private object_element ::= property (<<notTrailingComma>>|&'}') {
   recoverWhile = not_brace_or_next_value
   pin = 1
 }
@@ -85,7 +85,8 @@ private property_name ::= literal | reference_expression
 
 array ::= '[' array_element* ']' { pin=1 }
 
-private array_element ::= value (','|&']') {
+// Using rule value ((','!']')|&']') to detect trailing comma gives meaningless message: "',' or ']' expected, got ','"
+private array_element ::= value (<<notTrailingComma>>|&']') {
   recoverWhile = not_bracket_or_next_value
   pin=1
 }
