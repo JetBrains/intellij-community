@@ -58,6 +58,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     myDisplayDescriptorSearcher.clear();
   }
 
+  @NotNull
   public <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> key) {
     final T descriptor = key.createDescriptor(myProject);
 
@@ -140,6 +141,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, new ArrayItemData(array, index));
   }
 
+  @NotNull
   @Override
   public FieldDescriptorImpl getFieldDescriptor(NodeDescriptor parent, ObjectReference objRef, Field field) {
     final DescriptorData<FieldDescriptorImpl> descriptorData;

@@ -174,7 +174,7 @@ public class ClassRenderer extends NodeRendererImpl{
           if (!shouldDisplay(evaluationContext, objRef, field)) {
             continue;
           }
-          children.add(nodeManager.createNode(nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field), evaluationContext));
+          children.add(nodeManager.createNode(createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext), evaluationContext));
         }
 
         if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
@@ -186,6 +186,15 @@ public class ClassRenderer extends NodeRendererImpl{
       }
     }
     builder.setChildren(children);
+  }
+
+  @NotNull
+  protected FieldDescriptor createFieldDescriptor(ValueDescriptorImpl parentDescriptor,
+                                                  NodeDescriptorFactory nodeDescriptorFactory,
+                                                  ObjectReference objRef,
+                                                  Field field,
+                                                  EvaluationContext evaluationContext) {
+    return nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field);
   }
 
   private boolean shouldDisplay(EvaluationContext context, @NotNull ObjectReference objInstance, @NotNull Field field) {
