@@ -34,6 +34,7 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,6 +148,26 @@ public class ExtractLightMethodObjectHandler {
                                         }, " +");
     PsiStatement outStatement = elementFactory.createStatementFromText("System.out.println(" + outputVariables + ");", anchor);
     outStatement = (PsiStatement)container.addAfter(outStatement, elementsCopy[elementsCopy.length - 1]);
+
+    copy.accept(new JavaRecursiveElementWalkingVisitor() {
+      private void makePublic(PsiMember method) {
+        if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+          VisibilityUtil.setVisibility(method.getModifierList(), PsiModifier.PUBLIC);
+        }
+      }
+
+      @Override
+      public void visitMethod(PsiMethod method) {
+        super.visitMethod(method);
+        makePublic(method);
+      }
+
+      @Override
+      public void visitField(PsiField field) {
+        super.visitField(field);
+        makePublic(field);
+      }
+    });
 
     final ExtractMethodObjectProcessor extractMethodObjectProcessor = new ExtractMethodObjectProcessor(project, null, elementsCopy, "") {
       @Override
