@@ -230,8 +230,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     File sourceCompileOutputPath = null;
     File testCompileOutputPath = null;
-    File resourceCompileOutputPath;
-    File testResourceCompileOutputPath;
+    File resourceCompileOutputPath = null;
+    File testResourceCompileOutputPath = null;
     boolean inheritOutputDirs = false;
 
     ModuleData moduleData = ideModule.getData();
@@ -244,21 +244,22 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (externalProject != null) {
       externalProject = new DefaultExternalProject(externalProject);
-    }
 
-    if (!inheritOutputDirs && (sourceCompileOutputPath == null || testCompileOutputPath == null)) {
-      sourceCompileOutputPath = getCompileOutputPath(externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.SOURCE);
-      resourceCompileOutputPath = getCompileOutputPath(externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.RESOURCE);
-      testCompileOutputPath = getCompileOutputPath(externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST);
-      testResourceCompileOutputPath = getCompileOutputPath(externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST_RESOURCE);
-    }
-    else {
-      resourceCompileOutputPath = sourceCompileOutputPath;
-      testResourceCompileOutputPath = testCompileOutputPath;
-
-      if (externalProject != null) {
+      if (!inheritOutputDirs && (sourceCompileOutputPath == null || testCompileOutputPath == null)) {
+        sourceCompileOutputPath = getCompileOutputPath(externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.SOURCE);
+        resourceCompileOutputPath = getCompileOutputPath(externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.RESOURCE);
+        testCompileOutputPath = getCompileOutputPath(externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST);
+        testResourceCompileOutputPath = getCompileOutputPath(externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST_RESOURCE);
+      }
+      else if (!inheritOutputDirs) {
+        resourceCompileOutputPath = sourceCompileOutputPath;
+        testResourceCompileOutputPath = testCompileOutputPath;
         final ExternalSourceSet mainSourceSet = externalProject.getSourceSets().get(MAIN_SOURCE_SET);
         if (mainSourceSet != null) {
+          final ExternalSourceDirectorySet sourceDirectories = mainSourceSet.getSources().get(ExternalSystemSourceType.SOURCE);
+          if (sourceDirectories instanceof DefaultExternalSourceDirectorySet) {
+            ((DefaultExternalSourceDirectorySet)sourceDirectories).setOutputDir(sourceCompileOutputPath);
+          }
           final ExternalSourceDirectorySet resourceDirectories = mainSourceSet.getSources().get(ExternalSystemSourceType.RESOURCE);
           if (resourceDirectories instanceof DefaultExternalSourceDirectorySet) {
             ((DefaultExternalSourceDirectorySet)resourceDirectories).setOutputDir(sourceCompileOutputPath);
@@ -266,6 +267,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         }
         final ExternalSourceSet testSourceSet = externalProject.getSourceSets().get(TEST_SOURCE_SET);
         if (testSourceSet != null) {
+          final ExternalSourceDirectorySet testDirectories = testSourceSet.getSources().get(ExternalSystemSourceType.TEST);
+          if (testDirectories instanceof DefaultExternalSourceDirectorySet) {
+            ((DefaultExternalSourceDirectorySet)testDirectories).setOutputDir(testCompileOutputPath);
+          }
           final ExternalSourceDirectorySet testResourceDirectories = testSourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE);
           if (testResourceDirectories instanceof DefaultExternalSourceDirectorySet) {
             ((DefaultExternalSourceDirectorySet)testResourceDirectories).setOutputDir(testCompileOutputPath);
@@ -276,6 +281,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         assert projectDataNode != null;
         projectDataNode.createOrReplaceChild(ExternalProjectDataService.KEY, externalProject);
       }
+    }
+    else {
+      LOG.warn(String.format("Unable to get ExternalProject model for '%s'", gradleModule.getName()));
     }
 
     if (sourceCompileOutputPath != null) {

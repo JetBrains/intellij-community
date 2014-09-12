@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -20,10 +21,10 @@ public interface TestRunConfigurationReRunResponsible {
    * @param executor test executor
    * @param environment test environment
    * @param failedTests a pack of psi elements, indicating failed tests (to retrn)
-   * @return state to run
+   * @return state to run or null if no rerun actions found (i.e. no errors in failedTest, empty etc)
    * @throws ExecutionException failed to run
    */
-  @NotNull
+  @Nullable
   RunProfileState rerunTests(@NotNull final Executor executor, @NotNull final ExecutionEnvironment environment,
                              @NotNull Collection<PsiElement> failedTests) throws ExecutionException;
 }

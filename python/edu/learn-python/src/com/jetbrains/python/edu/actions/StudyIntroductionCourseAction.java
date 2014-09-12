@@ -34,9 +34,9 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-public class StudyIntroductionCourse extends AnAction {
+public class StudyIntroductionCourseAction extends AnAction {
 
-  public StudyIntroductionCourse() {
+  public StudyIntroductionCourseAction() {
     super("Introduction to Python", "Introduction to Python", StudyIcons.EducationalProjectType);
   }
 

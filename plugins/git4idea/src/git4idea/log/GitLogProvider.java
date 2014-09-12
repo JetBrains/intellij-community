@@ -30,6 +30,7 @@ import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
@@ -62,6 +63,7 @@ public class GitLogProvider implements VcsLogProvider {
   };
 
   @NotNull private final Project myProject;
+  @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitUserRegistry myUserRegistry;
   @NotNull private final VcsLogRefManager myRefSorter;
@@ -74,6 +76,7 @@ public class GitLogProvider implements VcsLogProvider {
     myUserRegistry = userRegistry;
     myRefSorter = new GitRefManager(myRepositoryManager);
     myVcsObjectsFactory = factory;
+    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
   }
 
   @NotNull
@@ -206,7 +209,11 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
-    return GitHistoryUtils.commitsDetails(myProject, root, hashes);
+    String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+    List<String> params = new ArrayList<String>();
+    params.add(noWalk);
+    params.addAll(hashes);
+    return GitHistoryUtils.history(myProject, root, ArrayUtil.toStringArray(params));
   }
 
   @NotNull

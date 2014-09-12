@@ -128,6 +128,9 @@ class FindInProjectTask {
         }
       });
       myProgress.setIndeterminate(false);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Searching for " + myFindModel.getStringToFind() + " in " + filesForFastWordSearch.size() + " indexed files");
+      }
 
       searchInFiles(filesForFastWordSearch, processPresentation, consumer);
 
@@ -137,6 +140,10 @@ class FindInProjectTask {
       final Collection<PsiFile> otherFiles = collectFilesInScope(filesForFastWordSearch, skipIndexed);
       myProgress.setIndeterminate(false);
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Searching for " + myFindModel.getStringToFind() + " in " + otherFiles.size() + " non-indexed files");
+      }
+
       long start = System.currentTimeMillis();
       searchInFiles(otherFiles, processPresentation, consumer);
       if (skipIndexed && otherFiles.size() > 1000) {
@@ -144,7 +151,10 @@ class FindInProjectTask {
       }
     }
     catch (ProcessCanceledException e) {
-      // fine
+      processPresentation.setCanceled(true);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Usage search canceled", e);
+      }
     }
 
     if (!myLargeFiles.isEmpty()) {

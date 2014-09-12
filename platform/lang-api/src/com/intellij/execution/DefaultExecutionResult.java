@@ -34,7 +34,8 @@ public class DefaultExecutionResult implements ExecutionResult {
   private final ExecutionConsole myConsole;
   private final ProcessHandler myProcessHandler;
   private AnAction[] myActions;
-  private AnAction[] myRestartActions;
+  @NotNull
+  private AnAction[] myRestartActions = AnAction.EMPTY_ARRAY;
   private final List<AnAction> myStopActions = new ArrayList<AnAction>();
 
   public DefaultExecutionResult() {
@@ -67,12 +68,14 @@ public class DefaultExecutionResult implements ExecutionResult {
     myActions = actions;
   }
 
+  @NotNull
   public AnAction[] getRestartActions() {
     return myRestartActions;
   }
 
-  public void setRestartActions(AnAction... restartActions) {
-    myRestartActions = restartActions;
+  // TODO: Find all usages, make sure there is no null and make this method NotNull
+  public void setRestartActions(@Nullable AnAction... restartActions) {
+    myRestartActions = (restartActions != null ? restartActions : AnAction.EMPTY_ARRAY);
   }
 
   public void addStopAction(AnAction action) {
@@ -104,7 +107,7 @@ public class DefaultExecutionResult implements ExecutionResult {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      if(myProcessHandler.detachIsDefault()) {
+      if (myProcessHandler.detachIsDefault()) {
         myProcessHandler.detachProcess();
       }
       else {

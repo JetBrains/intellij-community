@@ -36,8 +36,10 @@ public class SwitchToFind extends EditorHeaderAction implements DumbAware {
       action.actionPerformed(e);
       return;
     }
-    
-    final FindModel findModel = getEditorSearchComponent().getFindModel();
+
+    EditorSearchComponent component = getEditorSearchComponent();
+    final FindModel findModel = component.getFindModel();
     FindUtil.configureFindModel(false, null, findModel, false);
+    component.selectAllText();
   }
 }

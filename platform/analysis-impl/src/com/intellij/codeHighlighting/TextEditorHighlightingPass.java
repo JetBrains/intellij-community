@@ -141,6 +141,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myStartingPredecessorIds = startingPredecessorIds;
   }
 
+  @Override
   @NonNls
   public String toString() {
     return getClass() + "; id=" + getId();

@@ -59,7 +59,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
-  //private final AtomicBoolean myIgnoreStopEditing = new AtomicBoolean(false);
+  private boolean myEditingSucceeded;
 
   public PushLog(Project project, CheckedTreeNode root) {
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -102,7 +102,13 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
           InputVerifier verifier = editedComponent.getInputVerifier();
           if (verifier != null && !verifier.verify(editedComponent)) return false;
         }
-        return super.stopEditing();
+        myEditingSucceeded = true;
+        try {
+          return super.stopEditing();
+        }
+        finally {
+          myEditingSucceeded = false;
+        }
       }
     };
     myTree.setEditable(true);
@@ -155,6 +161,9 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
+    //override default tree behaviour.
+    myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
+
     myTree.setRowHeight(0);
     ToolTipManager.sharedInstance().registerComponent(myTree);
 
@@ -212,8 +221,14 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
   @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (e.getKeyCode() == KeyEvent.VK_ENTER && myTree.isEditing()) {
-      myTree.stopEditing();
+    if (e.getKeyCode() == KeyEvent.VK_ENTER && pressed) {
+      if (myTree.isEditing()) {
+        myTree.stopEditing();
+      }
+      else {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
+        myTree.startEditingAtPath(TreeUtil.getPathFromRoot(node));
+      }
       return true;
     }
     return super.processKeyBinding(ks, e, condition, pressed);
@@ -266,7 +281,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
     //Implement the one CellEditor method that AbstractCellEditor doesn't.
     public Object getCellEditorValue() {
-      return ((RepositoryWithBranchPanel)editorComponent).getEditableValue();
+      return myEditingSucceeded ? ((RepositoryWithBranchPanel)editorComponent).getEditableValue() : null;
     }
   }
 

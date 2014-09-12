@@ -177,18 +177,15 @@ public class RunContentBuilder extends RunTab {
   }
 
   @NotNull
-  private ActionGroup createActionToolbar(@NotNull RunContentDescriptor contentDescriptor) {
+  private ActionGroup createActionToolbar(@NotNull final RunContentDescriptor contentDescriptor) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
-    if (myExecutionResult instanceof DefaultExecutionResult) {
-      final AnAction[] actions = ((DefaultExecutionResult)myExecutionResult).getRestartActions();
-      if (actions != null) {
-        actionGroup.addAll(actions);
-        if (actions.length > 0) {
-          actionGroup.addSeparator();
-        }
-      }
+    final AnAction[] actions = contentDescriptor.getRestartActions();
+    actionGroup.addAll(actions);
+    if (actions.length > 0) {
+      actionGroup.addSeparator();
     }
+
 
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));
     if (myExecutionResult instanceof DefaultExecutionResult) {

@@ -125,6 +125,11 @@ public class PsiUtil {
     return flag;
   }
 
+  public static boolean isPluginProject(Project project) {
+    return JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS,
+                                                        GlobalSearchScope.allScope(project)) != null;
+  }
+
   private static boolean isIntelliJBasedDir(VirtualFile baseDir) {
     if (baseDir == null) {
       return false;

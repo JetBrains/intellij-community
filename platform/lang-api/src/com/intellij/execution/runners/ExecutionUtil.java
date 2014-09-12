@@ -112,6 +112,10 @@ public class ExecutionUtil {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
+        if (project.isDisposed()) {
+          return;
+        }
+
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
         if (toolWindowManager.canShowNotification(toolWindowId)) {
           //noinspection SSBasedInspection

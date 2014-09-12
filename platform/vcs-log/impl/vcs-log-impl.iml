@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="vcs-log-graph-api" />

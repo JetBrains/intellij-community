@@ -56,7 +56,7 @@ public class XTestContainer<T> {
     return false;
   }
 
-  public Pair<List<T>, String> waitFor(long timeout) throws InterruptedException {
+  public Pair<List<T>, String> waitFor(long timeout) {
     if (!XDebuggerTestUtil.waitFor(myFinished, timeout)) {
       throw new AssertionError("Waiting timed out");
     }

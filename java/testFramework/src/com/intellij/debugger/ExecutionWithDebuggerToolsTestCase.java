@@ -26,7 +26,6 @@ import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.impl.SynchronizationBasedSemaphore;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.execution.ExecutionException;
@@ -62,7 +61,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   private final SynchronizationBasedSemaphore myScriptRunnablesSema = new SynchronizationBasedSemaphore();
   protected static final int RATHER_LATER_INVOKES_N = 10;
   public DebugProcessImpl myDebugProcess = null;
-  private final CompositeException exception = new CompositeException();
+  private final CompositeException myException = new CompositeException();
 
   private class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
@@ -107,7 +106,9 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    if (!exception.isEmpty()) throw exception;
+    synchronized (myException) {
+      if (!myException.isEmpty()) throw myException;
+    }
   }
 
   protected void onBreakpoint(SuspendContextRunnable runnable) {
@@ -131,11 +132,11 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
               suspendContextRunnable.run(suspendContext);
             }
             catch (Exception e) {
-              exception.add(e);
+              addException(e);
               error(e);
             }
             catch (AssertionError e) {
-              exception.add(e);
+              addException(e);
             }
 
             if (myScriptRunnables.isEmpty()) {
@@ -270,6 +271,11 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
+  protected void addException(Throwable e) {
+    synchronized (myException) {
+      myException.add(e);
+    }
+  }
 
   protected void error(Throwable th) {
     fail(StringUtil.getThrowableText(th));

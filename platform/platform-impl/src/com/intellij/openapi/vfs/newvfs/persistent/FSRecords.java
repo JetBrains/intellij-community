@@ -1250,6 +1250,7 @@ public class FSRecords implements Forceable {
               }
             }
             catch (IOException e) {
+              stream.close();
               return null;
             }
           }
@@ -1420,7 +1421,14 @@ public class FSRecords implements Forceable {
 
   @NotNull
   public static DataOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
-    return writeAttribute(fileId, att.getId(), att.isFixedSize());
+    DataOutputStream stream = writeAttribute(fileId, att.getId(), att.isFixedSize());
+    try {
+      DataInputOutputUtil.writeINT(stream, att.getVersion());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return stream;
   }
 
   private static class ContentOutputStream extends DataOutputStream {

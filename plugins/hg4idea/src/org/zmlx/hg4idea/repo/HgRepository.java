@@ -71,5 +71,10 @@ public interface HgRepository extends Repository {
   @NotNull
   HgConfig getRepositoryConfig();
 
+  boolean hasSubrepos();
+
+  @NotNull
+  Collection<HgNameWithHashInfo> getSubrepos();
+
   void updateConfig();
 }

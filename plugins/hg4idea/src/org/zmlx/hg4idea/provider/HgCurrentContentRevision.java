@@ -34,7 +34,7 @@ class HgCurrentContentRevision extends CurrentContentRevision {
     return revisionNumber;
   }
 
-  public static ContentRevision create(@NotNull HgFile hgFile, HgRevisionNumber revision) {
+  public static ContentRevision create(@NotNull HgFile hgFile, @NotNull HgRevisionNumber revision) {
     VirtualFile virtualFile = VcsUtil.getVirtualFile(hgFile.getFile());
     if (virtualFile == null) {
       return null;

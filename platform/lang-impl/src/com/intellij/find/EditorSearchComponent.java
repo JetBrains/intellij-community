@@ -425,6 +425,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     myToolbarComponent.setOpaque(false);
   }
 
+  public void selectAllText() {
+    mySearchField.selectAll();
+  }
+
   private boolean secondaryActionsAvailable() {
     return FindManagerImpl.ourHasSearchInCommentsAndLiterals;
   }

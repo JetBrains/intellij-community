@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -31,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author Konstantin Bulenkov
@@ -38,24 +44,31 @@ import java.awt.*;
 @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
 public class InspectionListCellRenderer extends DefaultListCellRenderer implements MatcherHolder {
   private Matcher myMatcher;
-  private final SimpleTextAttributes SELECTED;
-  private final SimpleTextAttributes PLAIN;
+  private final SimpleTextAttributes mySelected;
+  private final SimpleTextAttributes myPlain;
+  private final SimpleTextAttributes myHighlighted;
 
   public InspectionListCellRenderer() {
-    SELECTED = new SimpleTextAttributes(UIUtil.getListSelectionBackground(),
-                                                                   UIUtil.getListSelectionForeground(),
-                                                                   JBColor.RED,
-                                                                   SimpleTextAttributes.STYLE_PLAIN);
-    PLAIN = new SimpleTextAttributes(UIUtil.getListBackground(),
-                                                                UIUtil.getListForeground(),
-                                                                JBColor.RED,
-                                                                SimpleTextAttributes.STYLE_PLAIN);
+    mySelected = new SimpleTextAttributes(UIUtil.getListSelectionBackground(),
+                                          UIUtil.getListSelectionForeground(),
+                                          JBColor.RED,
+                                          SimpleTextAttributes.STYLE_PLAIN);
+    myPlain = new SimpleTextAttributes(UIUtil.getListBackground(),
+                                       UIUtil.getListForeground(),
+                                       JBColor.RED,
+                                       SimpleTextAttributes.STYLE_PLAIN);
+    myHighlighted = new SimpleTextAttributes(UIUtil.getListBackground(),
+                                             UIUtil.getListForeground(),
+                                             null,
+                                             SimpleTextAttributes.STYLE_SEARCH_MATCH);
   }
 
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean sel, boolean focus) {
-    final JPanel panel = new JPanel(new BorderLayout());
+    final BorderLayout layout = new BorderLayout();
+    layout.setHgap(5);
+    final JPanel panel = new JPanel(layout);
     panel.setOpaque(true);
 
     final Color bg = sel ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
@@ -63,15 +76,37 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
     panel.setBackground(bg);
     panel.setForeground(fg);
 
-    SimpleTextAttributes attr = sel ? SELECTED : PLAIN;
     if (value instanceof InspectionToolWrapper) {
       final InspectionToolWrapper toolWrapper = (InspectionToolWrapper)value;
+      final String inspectionName = "  " + toolWrapper.getDisplayName();
+      final String groupName = StringUtil.join(toolWrapper.getGroupPath(), " | ");
+      final String matchingText = inspectionName + "|" + groupName;
+      List<TextRange> fragments = ((MinusculeMatcher)myMatcher).matchingFragments(matchingText);
+      List<TextRange> adjustedFragments = new ArrayList<TextRange>();
+      if (fragments != null) {
+        adjustedFragments.addAll(fragments);
+      }
+      final int splitPoint = adjustRanges(adjustedFragments, inspectionName.length() + 1);
       final SimpleColoredComponent c = new SimpleColoredComponent();
-      SpeedSearchUtil.appendColoredFragmentForMatcher("  " + toolWrapper.getDisplayName(), c, attr, myMatcher, bg, sel);
+      final boolean matchHighlighting = Registry.is("ide.highlight.match.in.selected.only") && !sel;
+      if (matchHighlighting) {
+        c.append(inspectionName, myPlain);
+      }
+      else {
+        final List<TextRange> ranges = adjustedFragments.subList(0, splitPoint);
+        SpeedSearchUtil.appendColoredFragments(c, inspectionName, ranges, sel ? mySelected : myPlain, myHighlighted);
+      }
       panel.add(c, BorderLayout.WEST);
 
       final SimpleColoredComponent group = new SimpleColoredComponent();
-      SpeedSearchUtil.appendColoredFragmentForMatcher(toolWrapper.getGroupDisplayName() + "  ", group, attr, myMatcher, bg, sel);
+      if (matchHighlighting) {
+        group.append(groupName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      }
+      else {
+        final SimpleTextAttributes attributes = sel ? mySelected : SimpleTextAttributes.GRAYED_ATTRIBUTES;
+        final List<TextRange> ranges = adjustedFragments.subList(splitPoint, adjustedFragments.size());
+        SpeedSearchUtil.appendColoredFragments(group, groupName, ranges, attributes, myHighlighted);
+      }
       final JPanel right = new JPanel(new BorderLayout());
       right.setBackground(bg);
       right.setForeground(fg);
@@ -89,6 +124,21 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
     }
 
     return panel;
+  }
+
+  private static int adjustRanges(List<TextRange> ranges, int offset) {
+    int result = 0;
+    for (int i = 0; i < ranges.size(); i++) {
+      final TextRange range = ranges.get(i);
+      final int startOffset = range.getStartOffset();
+      if (startOffset < offset) {
+        result = i + 1;
+      }
+      else {
+        ranges.set(i, new TextRange(startOffset - offset, range.getEndOffset() - offset));
+      }
+    }
+    return result;
   }
 
   @NotNull

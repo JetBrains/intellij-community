@@ -25,6 +25,7 @@ import com.siyeh.ipp.IPPTestCase;
 public class SplitDeclarationAndInitializationIntentionTest extends IPPTestCase {
 
   public void testArrayInitializer() { doTest(); }
+  public void testArray() { doTest(); }
 
   @Override
   protected String getRelativePath() {
