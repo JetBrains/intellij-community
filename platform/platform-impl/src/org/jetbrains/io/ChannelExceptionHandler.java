@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.ConnectException;
 
@@ -31,6 +32,7 @@ public final class ChannelExceptionHandler extends ChannelHandlerAdapter {
   private ChannelExceptionHandler() {
   }
 
+  @NotNull
   public static ChannelHandler getInstance() {
     return INSTANCE;
   }

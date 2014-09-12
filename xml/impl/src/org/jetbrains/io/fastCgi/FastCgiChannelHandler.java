@@ -8,6 +8,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.Responses;
 import org.jetbrains.io.SimpleChannelInboundHandlerAdapter;
 
@@ -17,7 +18,7 @@ import static org.jetbrains.io.fastCgi.FastCgiService.LOG;
 public class FastCgiChannelHandler extends SimpleChannelInboundHandlerAdapter<FastCgiResponse> {
   private final ConcurrentIntObjectMap<Channel> requestToChannel;
 
-  public FastCgiChannelHandler(ConcurrentIntObjectMap<Channel> channel) {
+  public FastCgiChannelHandler(@NotNull ConcurrentIntObjectMap<Channel> channel) {
     requestToChannel = channel;
   }
 

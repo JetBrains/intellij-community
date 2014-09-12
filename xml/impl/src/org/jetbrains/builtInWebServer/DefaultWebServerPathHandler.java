@@ -18,6 +18,7 @@ package org.jetbrains.builtInWebServer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,10 +30,11 @@ final class DefaultWebServerPathHandler extends WebServerPathHandler {
   public boolean process(@NotNull String path,
                          @NotNull Project project,
                          @NotNull FullHttpRequest request,
-                         @NotNull Channel channel,
+                         @NotNull ChannelHandlerContext context,
                          @Nullable String projectName,
                          @NotNull String decodedRawPath,
                          boolean isCustomHost) {
+    Channel channel = context.channel();
     WebServerPathToFileManager pathToFileManager = WebServerPathToFileManager.getInstance(project);
     VirtualFile result = pathToFileManager.pathToFileCache.getIfPresent(path);
     boolean indexUsed = false;
