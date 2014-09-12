@@ -133,6 +133,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testEnsureGroundTypeToGetLambdaParameterType() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
