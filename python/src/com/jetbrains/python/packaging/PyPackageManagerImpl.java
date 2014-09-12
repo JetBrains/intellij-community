@@ -56,7 +56,6 @@ import java.util.*;
 /**
  * @author vlan
  */
-@SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
 public class PyPackageManagerImpl extends PyPackageManager {
   // Bundled versions of package management tools
   public static final String SETUPTOOLS_VERSION = "1.1.5";
@@ -299,7 +298,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
-  private void calculateDependents() {
+  private synchronized void calculateDependents() {
     myDependenciesCache = new HashMap<String, Set<PyPackage>>();
     for (PyPackage p : myPackagesCache) {
       final List<PyRequirement> requirements = p.getRequirements();
@@ -390,7 +389,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return null;
   }
 
-  protected void clearCaches() {
+  protected synchronized void clearCaches() {
     myPackagesCache = null;
     myDependenciesCache = null;
     myExceptionCache = null;
