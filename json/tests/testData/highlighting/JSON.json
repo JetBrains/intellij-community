@@ -1,0 +1,12 @@
+{ "bindings": [
+        {"ircEvent": <error>undefined</error>},
+        {<error>'ircEvent'</error> :123},
+        <weak_warning descr="JSON standard does not allow comments. Use JSMin or similar tool to remove comments before parsing.">/*comment*/</weak_warning>
+        {<error>ircEvent</error>: "PRIVMSG", "method": "randomURI",
+            "regex": <error>'test'</error>
+        }<error>,</error>
+    ],
+<weak_warning>/** some comment */</weak_warning>
+"foo": 1,
+"lastComma": {"a":"b"<error>,</error>}
+}

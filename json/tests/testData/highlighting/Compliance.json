@@ -1,7 +1,0 @@
-[
-  <error descr="JSON standard does not allow comments">// Line comment</error>
-  <error descr="JSON standard does not allow comments">/* Block
-     Comment
-   */</error>
-  <error descr="JSON standard does not allow single quoted strings">'string literal'</error>
-]
