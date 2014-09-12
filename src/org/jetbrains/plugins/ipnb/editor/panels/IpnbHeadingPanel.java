@@ -26,7 +26,7 @@ public class IpnbHeadingPanel extends IpnbEditablePanel<JBLabel, IpnbHeadingCell
   @Override
   public void updateCellView() {
     final String text = myEditablePanel.getText();
-    myCell.setSource(StringUtil.splitByLines(text));
+    myCell.setSource(StringUtil.splitByLinesKeepSeparators(text != null ? text : ""));
     myViewPanel.setText(renderCellText());
   }
 
