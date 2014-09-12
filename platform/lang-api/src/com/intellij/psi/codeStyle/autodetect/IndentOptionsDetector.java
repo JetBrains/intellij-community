@@ -87,7 +87,7 @@ public class IndentOptionsDetector {
     int maxUsedIndentSize = maxUsedIndentInfo.getIndentSize();
 
     if (maxUsedIndentSize == 0) {
-      if (totalIndentSizesDetected < 1) return -1;
+      if (totalIndentSizesDetected < 2) return -1;
 
       maxUsedIndentInfo = stats.getKMostUsedIndentInfo(1);
       maxUsedIndentSize = maxUsedIndentInfo.getIndentSize();

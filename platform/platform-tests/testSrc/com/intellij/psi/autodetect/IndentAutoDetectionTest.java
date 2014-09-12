@@ -16,6 +16,7 @@
 package com.intellij.psi.autodetect;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.autodetect.*;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestCase;
@@ -31,6 +32,22 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
 
   static {
     PlatformTestCase.initPlatformLangPrefix();
+  }
+
+  public void testBigFileWithIndent2() {
+    doTestIndentSize(2);
+  }
+
+  public void testBigFileWithIndent8() {
+    doTestIndentSize(8);
+  }
+
+  public void testBigFileWithIndent4() {
+    doTestIndentSize(4);
+  }
+
+  public void testFileWithTabs() {
+    doTestTabsUsed();
   }
 
   public void testSimpleIndent() {
@@ -105,6 +122,23 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
   public void doTestMaxUsedIndent(int indentExpected) {
     IndentUsageInfo indentInfo = getMaxUsedIndentInfo();
     Assert.assertEquals("Indent size mismatch", indentExpected, indentInfo.getIndentSize());
+  }
+
+  private void doTestTabsUsed() {
+    CommonCodeStyleSettings.IndentOptions options = getIndentOptions();
+    Assert.assertTrue("Tab usage not detected", options.USE_TAB_CHARACTER);
+  }
+
+  private void doTestIndentSize(int indent) {
+    CommonCodeStyleSettings.IndentOptions options = getIndentOptions();
+    Assert.assertEquals("Indent mismatch", indent, options.INDENT_SIZE);
+  }
+
+  @NotNull
+  private CommonCodeStyleSettings.IndentOptions getIndentOptions() {
+    configureByFile(getTestName(true) + ".java");
+    IndentOptionsDetector detector = new IndentOptionsDetector(myFile);
+    return detector.getIndentOptions();
   }
 
   @NotNull
