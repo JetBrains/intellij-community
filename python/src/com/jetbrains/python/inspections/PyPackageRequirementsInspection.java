@@ -27,6 +27,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +43,7 @@ import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,9 +113,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               unsatisfiedNames.add(req.getName());
             }
             final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
-            if (PyPackageManager.getInstance(sdk).hasPip()) {
-              quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
-            }
+            quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
             quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
             registerProblem(node, msg,
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
@@ -160,15 +160,16 @@ public class PyPackageRequirementsInspection extends PyInspection {
               return;
             }
           }
-          if (PyPackageManagerImpl.PACKAGE_SETUPTOOLS.equals(packageName)) {
+          if (PyPackageManager.PACKAGE_SETUPTOOLS.equals(packageName)) {
             return;
           }
           final Module module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression);
           if (module != null) {
-            Collection<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(module);
-            if (requirements != null) {
-              final Sdk sdk = PythonSdkType.findPythonSdk(module);
-              if (sdk != null) {
+            final Sdk sdk = PythonSdkType.findPythonSdk(module);
+            if (sdk != null) {
+              final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+              Collection<PyRequirement> requirements = manager.getRequirements(module);
+              if (requirements != null) {
                 requirements = getTransitiveRequirements(sdk, requirements, new HashSet<PyPackage>());
               }
               if (requirements == null) return;
@@ -191,9 +192,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                 }
               }
               final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
-              if (sdk != null && PyPackageManager.getInstance(sdk).hasPip()) {
-                quickFixes.add(new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
-              }
+              quickFixes.add(new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
               quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
               registerProblem(packageReferenceExpression, String.format("Package '%s' is not listed in project requirements", packageName),
                               ProblemHighlightType.WEAK_WARNING, null,
@@ -211,7 +210,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
     final List<PyPackage> packages;
     try {
-      packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(sdk)).getPackagesFast();
+      packages = PyPackageManager.getInstance(sdk).getPackages(PySdkUtil.isRemote(sdk));
     }
     catch (PyExternalProcessException e) {
       return null;
@@ -242,12 +241,12 @@ public class PyPackageRequirementsInspection extends PyInspection {
   @Nullable
   private static List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module, @NotNull Sdk sdk,
                                                                  @NotNull Set<String> ignoredPackages) {
-    final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
-    List<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(module);
+    final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+    List<PyRequirement> requirements = manager.getRequirements(module);
     if (requirements != null) {
       final List<PyPackage> packages;
       try {
-        packages = manager.getPackagesFast();
+        packages = manager.getPackages(PySdkUtil.isRemote(sdk));
       }
       catch (PyExternalProcessException e) {
         return null;
@@ -265,11 +264,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   private static void setRunningPackagingTasks(@NotNull Module module, boolean value) {
-    module.putUserData(PyPackageManagerImpl.RUNNING_PACKAGING_TASKS, value);
+    module.putUserData(PyPackageManager.RUNNING_PACKAGING_TASKS, value);
   }
 
   private static boolean isRunningPackagingTasks(@NotNull Module module) {
-    final Boolean value = module.getUserData(PyPackageManagerImpl.RUNNING_PACKAGING_TASKS);
+    final Boolean value = module.getUserData(PyPackageManager.RUNNING_PACKAGING_TASKS);
     return value != null && value;
   }
 
@@ -302,6 +301,21 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      boolean installManagement = false;
+      final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
+      if (!manager.hasManagement(false)) {
+        final int result = Messages.showYesNoDialog(project,
+                                                    "Python packaging tools are required for installing packages. Do you want to " +
+                                                    "install 'pip' and 'setuptools' for your interpreter?",
+                                                    "Install Python Packaging Tools",
+                                                    Messages.getQuestionIcon());
+        if (result == Messages.YES) {
+          installManagement = true;
+        }
+        else {
+          return;
+        }
+      }
       final List<PyRequirement> chosen;
       if (myUnsatisfied.size() > 1) {
         final PyChooseRequirementsDialog dialog = new PyChooseRequirementsDialog(project, myUnsatisfied);
@@ -313,20 +327,47 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (chosen.isEmpty()) {
         return;
       }
-      final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(project, mySdk, new PyPackageManagerImpl.UI.Listener() {
-        @Override
-        public void started() {
-          setRunningPackagingTasks(myModule, true);
-        }
+      if (installManagement) {
+        final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule) {
+          @Override
+          public void finished(List<PyExternalProcessException> exceptions) {
+            super.finished(exceptions);
+            if (exceptions.isEmpty()) {
+              installRequirements(project, chosen);
+            }
+          }
+        });
+        ui.installManagement();
+      }
+      else {
+        installRequirements(project, chosen);
+      }
+    }
 
-        @Override
-        public void finished(List<PyExternalProcessException> exceptions) {
-          setRunningPackagingTasks(myModule, false);
-        }
-      });
-      ui.install(chosen, Collections.<String>emptyList());
+    private void installRequirements(Project project, List<PyRequirement> requirements) {
+      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule));
+      ui.install(requirements, Collections.<String>emptyList());
     }
   }
+
+  private static class UIListener implements PyPackageManagerUI.Listener {
+    private final Module myModule;
+
+    public UIListener(Module module) {
+      myModule = module;
+    }
+
+    @Override
+    public void started() {
+      setRunningPackagingTasks(myModule, true);
+    }
+
+    @Override
+    public void finished(List<PyExternalProcessException> exceptions) {
+      setRunningPackagingTasks(myModule, false);
+    }
+  }
+
 
   private static class IgnoreRequirementFix implements LocalQuickFix {
     @NotNull private final Set<String> myPackageNames;

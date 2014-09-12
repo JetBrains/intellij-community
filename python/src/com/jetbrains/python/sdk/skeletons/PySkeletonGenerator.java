@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.skeletons;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -52,21 +53,12 @@ public class PySkeletonGenerator {
     ENV_PATH_PARAM.put(IronPythonSdkFlavor.class, "IRONPYTHONPATH"); // TODO: Make strategy and move to PythonSdkFlavor?
   }
 
-
   protected static final Logger LOG = Logger.getInstance("#" + PySkeletonGenerator.class.getName());
-
-
   protected static final int MINUTE = 60 * 1000;
-
   protected static final String GENERATOR3 = "generator3.py";
-  private static final String[] EMPTY_ENVS = new String[0];
 
   private final String mySkeletonsPath;
-  /**
-   * Env variables to be added to skeleton generator
-   */
-  @NotNull
-  private final String[] myEnvs;
+  @NotNull private final Map<String, String> myEnv;
 
   public void finishSkeletonsGeneration() {
   }
@@ -85,7 +77,6 @@ public class PySkeletonGenerator {
     }
   }
 
-
   /**
    * @param skeletonPath path where skeletons should be generated
    * @param pySdk SDK
@@ -94,11 +85,11 @@ public class PySkeletonGenerator {
   public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
     mySkeletonsPath = skeletonPath;
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
-    if ((currentFolder != null) && (flavor != null) && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-      myEnvs = new String[]{String.format("%s=%s", ENV_PATH_PARAM.get(flavor.getClass()), currentFolder)};
+    if (currentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
+      myEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), currentFolder);
     }
     else {
-      myEnvs = EMPTY_ENVS;
+      myEnv = Collections.emptyMap();
     }
   }
 
@@ -171,23 +162,19 @@ public class PySkeletonGenerator {
     if (modfilename != null) {
       commandLine.add(modfilename);
     }
-    final List<String> envs = new ArrayList<String>(Arrays.asList(myEnvs));
-    final String[] virtualEnvAdditionalEnv = PythonSdkType.getVirtualEnvAdditionalEnv(binaryPath);
-    if (virtualEnvAdditionalEnv != null) {
-      envs.addAll(Arrays.asList(virtualEnvAdditionalEnv));
-    }
 
+    final Map<String, String> extraEnv = PythonSdkType.getVirtualEnvExtraEnv(binaryPath);
+    final Map<String, String> env = extraEnv != null ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv;
 
-    return getProcessOutput(parent_dir, ArrayUtil.toStringArray(commandLine), envs.toArray(new String[envs.size()]),
-                            MINUTE * 10
-    );
+    return getProcessOutput(parent_dir, ArrayUtil.toStringArray(commandLine), env, MINUTE * 10);
   }
 
-  protected ProcessOutput getProcessOutput(String homePath, String[] commandLine, String[] env, int timeout) throws InvalidSdkException {
+  protected ProcessOutput getProcessOutput(String homePath, String[] commandLine, Map<String, String> extraEnv,
+                                           int timeout) throws InvalidSdkException {
     return PySdkUtil.getProcessOutput(
       homePath,
       commandLine,
-      env,
+      extraEnv,
       timeout
     );
   }
@@ -207,7 +194,7 @@ public class PySkeletonGenerator {
         "-d", mySkeletonsPath, // output dir
         "-b", // for builtins
       },
-      PythonSdkType.getVirtualEnvAdditionalEnv(binaryPath), MINUTE * 5
+      PythonSdkType.getVirtualEnvExtraEnv(binaryPath), MINUTE * 5
     );
     runResult.checkSuccess(LOG);
     LOG.info("Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
@@ -228,7 +215,7 @@ public class PySkeletonGenerator {
 
     final ProcessOutput process = getProcessOutput(parentDir,
                                                    ArrayUtil.toStringArray(cmd),
-                                                   PythonSdkType.getVirtualEnvAdditionalEnv(homePath),
+                                                   PythonSdkType.getVirtualEnvExtraEnv(homePath),
                                                    MINUTE * 4); // see PY-3898
 
     LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - startTime) + " ms");

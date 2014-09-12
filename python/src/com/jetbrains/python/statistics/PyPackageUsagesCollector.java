@@ -25,7 +25,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
-import com.jetbrains.python.packaging.PyPackageManagerImpl;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -46,12 +46,12 @@ public class PyPackageUsagesCollector extends AbstractApplicationUsagesCollector
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
     final Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();
     for(final Module m: ModuleManager.getInstance(project).getModules()) {
-      Sdk pythonSdk = PythonSdkType.findPythonSdk(m);
+      final Sdk pythonSdk = PythonSdkType.findPythonSdk(m);
       if (pythonSdk != null) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            List<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(m);
+            List<PyRequirement> requirements = PyPackageManager.getInstance(pythonSdk).getRequirements(m);
             if (requirements != null) {
               Collection<String> packages = new HashSet<String>(PyPIPackageUtil.INSTANCE.getPackageNames());
               for (PyRequirement requirement : requirements) {

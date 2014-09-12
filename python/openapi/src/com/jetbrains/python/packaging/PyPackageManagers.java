@@ -16,12 +16,8 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author yole
@@ -35,22 +31,4 @@ public abstract class PyPackageManagers {
 
   @NotNull
   public abstract PyPackageManager forSdk(Sdk sdk);
-
-  /**
-   * Returns the list of requirements from 'requirements.txt' or 'setup.py' files in the specified module.
-   *
-   * @param module the module to check for requirements
-   * @return the list of requirements, or null if the module contains neither requirements.txt nor setup.py.
-   */
-  @Nullable
-  public abstract List<PyRequirement> getRequirements(Module module);
-
-  /**
-   * Returns the list of requirements from 'requirements.txt' file in the specified module.
-   *
-   * @param module the module to check for requirements
-   * @return the list of requirements, or null if the module does not contain a requirements.txt
-   */
-  @Nullable
-  public abstract List<PyRequirement> getRequirementsFromTxt(Module module);
 }
