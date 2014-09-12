@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ipnb;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MarkdownUtil;
@@ -21,6 +22,8 @@ import uk.ac.ed.ph.snuggletex.SnuggleSession;
 import uk.ac.ed.ph.snuggletex.XMLStringOutputOptions;
 
 import javax.swing.*;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -180,10 +183,16 @@ public class IpnbUtils {
       string = IpnbUtils.markdown2Html(string);
     else
       string = "<p>"+string+"</p>";
-    final JLabel comp = new JLabel("<html><body style='width: " + IpnbEditorUtil.PANEL_WIDTH + "px'>" + string + "</body></html>");
+    final JEditorPane editorPane = new JEditorPane(new HTMLEditorKit().getContentType(), "<html><body style='width: " + IpnbEditorUtil.PANEL_WIDTH + "px'>" + string + "</body></html>");
     final Font font = new Font(Font.SERIF, Font.PLAIN, 16);
-    comp.setFont(font);
-    panel.add(comp);
+    String bodyRule = "body { font-family: " + font.getFamily() + "; " +
+                      "font-size: " + font.getSize() + "pt; }";
+    ((HTMLDocument)editorPane.getDocument()).getStyleSheet().addRule(bodyRule);
+
+    editorPane.setEditable(false);
+    editorPane.addHyperlinkListener(new BrowserHyperlinkListener());
+
+    panel.add(editorPane);
   }
 
   public static boolean isStyleOrScript(String string) {
