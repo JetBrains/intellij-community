@@ -165,10 +165,10 @@ public class IpnbUtils {
       LOG.error(e);
     }
     catch (SAXException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     catch (ParserConfigurationException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
   }
 
