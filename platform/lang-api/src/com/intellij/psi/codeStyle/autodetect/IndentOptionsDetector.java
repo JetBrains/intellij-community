@@ -32,7 +32,7 @@ public class IndentOptionsDetector {
 
   private static final double RATE_THRESHOLD = 0.8;
   private static final int MIN_LINES_THRESHOLD = 50;
-  private static int MAX_INDENT_TO_DETECT = 8;
+  private static final int MAX_INDENT_TO_DETECT = 8;
 
   private final PsiFile myFile;
   private final Project myProject;

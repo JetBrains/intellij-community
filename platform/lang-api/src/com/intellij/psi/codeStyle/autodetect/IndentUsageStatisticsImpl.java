@@ -40,14 +40,14 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
   private int myTotalLinesWithTabs = 0;
   private int myTotalLinesWithWhiteSpaces = 0;
 
-  private TIntIntHashMap myIndentToUsages = new TIntIntHashMap();
+  private TIntIntHashMap myIndentToUsagesMap = new TIntIntHashMap();
   private List<IndentUsageInfo> myIndentUsages = ContainerUtil.newArrayList();
   private Stack<IndentData> myParentIndents = ContainerUtil.newStack(new IndentData(0, 0));
 
   public IndentUsageStatisticsImpl(@NotNull List<LineIndentInfo> lineInfos) {
     myLineInfos = lineInfos;
     buildIndentToUsagesMap();
-    myIndentUsages = toIndentUsageList(myIndentToUsages);
+    myIndentUsages = toIndentUsageList(myIndentToUsagesMap);
     ContainerUtil.sort(myIndentUsages, DECREASING_ORDER);
   }
 
@@ -108,8 +108,8 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
   }
 
   private void increaseIndentUsage(int relativeIndent) {
-    int timesUsed = myIndentToUsages.get(relativeIndent);
-    myIndentToUsages.put(relativeIndent, ++timesUsed);
+    int timesUsed = myIndentToUsagesMap.get(relativeIndent);
+    myIndentToUsagesMap.put(relativeIndent, ++timesUsed);
   }
 
   @Override
@@ -129,12 +129,12 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
 
   @Override
   public int getTimesIndentUsed(int indent) {
-    return myIndentToUsages.get(indent);
+    return myIndentToUsagesMap.get(indent);
   }
 
   @Override
   public int getTotalIndentSizesDetected() {
-    return myIndentToUsages.size();
+    return myIndentToUsagesMap.size();
   }
 
   private static class IndentData {
