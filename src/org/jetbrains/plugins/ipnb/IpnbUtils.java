@@ -96,7 +96,7 @@ public class IpnbUtils {
       }
 
       if (inFormula && !markdown.isEmpty()) {
-        addMarkdown(panel, markdown, isEscaped);
+        addMarkdown(panel, markdown);
         markdown.clear();
       }
       if ((StringUtil.trimTrailing(string).endsWith("$$")) && inFormula) {
@@ -137,7 +137,7 @@ public class IpnbUtils {
       addFormula(panel, formula.toString());
     }
     if (!markdown.isEmpty()) {
-      addMarkdown(panel, markdown, isEscaped);
+      addMarkdown(panel, markdown);
     }
   }
 
@@ -188,8 +188,9 @@ public class IpnbUtils {
     }
   }
 
-  private static void addMarkdown(@NotNull final JPanel panel, List<String> strings, boolean isEscaped) {
+  private static void addMarkdown(@NotNull final JPanel panel, List<String> strings) {
     StringBuilder stringBuilder = new StringBuilder();
+    boolean isEscaped = false;
     for (String string : strings) {
       if (string.startsWith("```") && !isEscaped) {
         isEscaped = true;
@@ -228,7 +229,7 @@ public class IpnbUtils {
     panel.add(editorPane);
   }
 
-  public static boolean isStyleOrScript(String string) {
+  public static boolean isStyleOrScript(@NotNull final String string) {
     return string.contains("<style>") || string.contains("<script>");
   }
 
