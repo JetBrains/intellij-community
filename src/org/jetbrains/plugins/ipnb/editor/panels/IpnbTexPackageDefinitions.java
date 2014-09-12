@@ -38,28 +38,5 @@ public final class IpnbTexPackageDefinitions {
           builder.appendMathMLOperatorElement(parentElement, "\u03c0");
         }
       }, null);
-      //ourPackage.addComplexCommandSameArgMode("frac", true, 1, MATH_MODE_ONLY, new CommandHandler() {
-      //  @Override
-      //  public void handleCommand(DOMBuilder builder, Element parentElement, CommandToken token) throws SnuggleParseException {
-      //    Element mfrac = builder.appendMathMLElement(parentElement, "mfrac");
-      //    final ArgumentContainerToken[] arguments = token.getArguments();
-      //    if (arguments.length == 1) {
-      //      final List<FlowToken> content = arguments[0].getContents();
-      //      for (FlowToken flowToken : content) {
-      //        final FrozenSlice slice = flowToken.getSlice();
-      //        final CharSequence sequence = slice.extract();
-      //        for (int i = 0; i != sequence.length(); ++i) {
-      //          final char c = sequence.charAt(i);
-      //          builder.appendMathMLNumberElement(mfrac, String.valueOf(c));
-      //        }
-      //      }
-      //    }
-      //    else {
-      //      for (ArgumentContainerToken argument : token.getArguments()) {
-      //        builder.handleMathTokensAsSingleElement(mfrac, argument);
-      //      }
-      //    }
-      //  }
-      //}, null);
     }
 }

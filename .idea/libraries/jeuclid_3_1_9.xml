@@ -14,12 +14,9 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="file://$PROJECT_DIR$/../snuggletex-code/snuggletex-core/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../snuggletex-code/snuggletex-core/src/test/java" />
-      <root url="file://$PROJECT_DIR$/../snuggletex-code/snuggletex-jeuclid/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../snuggletex-code/snuggletex-upconversion/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../snuggletex-code/snuggletex-upconversion/src/test/java" />
-      <root url="file://$PROJECT_DIR$/../snuggletex-code/snuggletex-webapp/src/main/java" />
+      <root url="file://$PROJECT_DIR$/../snuggletex/snuggletex-core/src/main/java" />
+      <root url="file://$PROJECT_DIR$/../snuggletex/snuggletex-core/src/test/java" />
+      <root url="file://$PROJECT_DIR$/../snuggletex/snuggletex-jeuclid/src/main/java" />
     </SOURCES>
   </library>
 </component>
