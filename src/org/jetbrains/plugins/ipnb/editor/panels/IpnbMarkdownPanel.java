@@ -44,7 +44,7 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JPanel, IpnbMarkdownCel
   @Override
   public void updateCellView() {
     final String text = myEditablePanel.getText();
-    myCell.setSource(text == null ? new String[]{} : StringUtil.splitByLines(text));
+    myCell.setSource(text == null ? new String[]{} : StringUtil.splitByLinesKeepSeparators(text));
     updatePanel(myViewPanel);
   }
 
