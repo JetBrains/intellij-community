@@ -4,7 +4,7 @@ import java.util.function.Function;
 
 class Main {
   {
-    List<Optional<Function<String, String>>> list = asList(of(Main::identity));
+    List<Optional<Function<String, String>>> list = asList(of(<error descr="T is not a functional interface">Main::identity</error>));
   }
 
   static <T> List<T> asList(T a) { return null;}
