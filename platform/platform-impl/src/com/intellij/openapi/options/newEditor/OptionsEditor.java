@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.GlassPanel;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
@@ -143,8 +144,17 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   };
 
+  final Settings mySettings;
+
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProperties = PropertiesComponent.getInstance(project);
+
+    mySettings = new Settings(groups) {
+      @Override
+      protected ActionCallback selectImpl(Configurable configurable) {
+        return OptionsEditor.this.select(configurable, "");
+      }
+    };
 
     mySearch = new MySearchField() {
       @Override
@@ -844,6 +854,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   @Override
   public Object getData(@NonNls final String dataId) {
+    if (Settings.KEY.is(dataId)) {
+      return mySettings;
+    }
     if (KEY.is(dataId)) {
       return this;
     }

@@ -37,8 +37,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.newEditor.OptionsEditor;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -230,14 +229,13 @@ public class SeverityEditorDialog extends DialogWrapper {
     doOKAction();
     myOptionsList.clearSelection();
     final DataContext dataContext = DataManager.getInstance().getDataContext(myPanel);
-    final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(dataContext);
-    if (optionsEditor != null) {
-      final ColorAndFontOptions colorAndFontOptions =
-        (ColorAndFontOptions)((ConfigurableWrapper)optionsEditor.findConfigurableById(ColorAndFontOptions.ID)).getConfigurable();
+    Settings settings = Settings.KEY.getData(dataContext);
+    if (settings != null) {
+      ColorAndFontOptions colorAndFontOptions = settings.find(ColorAndFontOptions.class);
       assert colorAndFontOptions != null;
       final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
       LOG.assertTrue(javaPage != null);
-      optionsEditor.clearSearchAndSelect(javaPage).doWhenDone(new Runnable() {
+      settings.select(javaPage).doWhenDone(new Runnable() {
         @Override
         public void run() {
           final Runnable runnable = javaPage.enableSearch(toConfigure);
