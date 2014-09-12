@@ -20,11 +20,9 @@ import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -36,6 +34,7 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +44,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PushController implements Disposable {
@@ -56,6 +57,7 @@ public class PushController implements Disposable {
   private boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final Map<PushSupport, MyPushOptionValueModel> myAdditionalValuesMap;
+  private final ExecutorService myExecutorService = Executors.newSingleThreadExecutor();
 
   private final Map<RepositoryNode, MyRepoModel> myView2Model = new TreeMap<RepositoryNode, MyRepoModel>();
   //todo need to sort repositories in ui tree using natural order
@@ -207,56 +209,49 @@ public class PushController implements Disposable {
     final T target = model.getTarget();
     if (target == null) return;   //todo should be removed when commit loader executor will be modified
     myPushLog.startLoading(node);
-    final ProgressIndicator indicator = node.startLoading();
     final PushSupport<R, S, T> support = model.getSupport();
     final AtomicReference<OutgoingResult> result = new AtomicReference<OutgoingResult>();
-    Task.Backgroundable task = new Task.Backgroundable(myProject, "Loading Commits", true) {
-
+    Runnable task = new Runnable() {
       @Override
-      public void onCancel() {
-        node.stopLoading();
-      }
-
-      @Override
-      public void onSuccess() {
-        OutgoingResult outgoing = result.get();
-        List<VcsError> errors = outgoing.getErrors();
-        if (!errors.isEmpty()) {
-          myPushLog.setChildren(node, ContainerUtil.map(errors, new Function<VcsError, DefaultMutableTreeNode>() {
-            @Override
-            public DefaultMutableTreeNode fun(final VcsError error) {
-              VcsLinkedText errorLinkText = new VcsLinkedText(error.getText(), new VcsLinkListener() {
-                @Override
-                public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
-                  error.handleError(new CommitLoader() {
-                    @Override
-                    public void reloadCommits() {
-                      loadCommits(model, node, false);
-                    }
-                  });
-                }
-              });
-              return new TextWithLinkNode(errorLinkText);
-            }
-          }), model.isSelected());
-        }
-        else {
-          model.setLoadedCommits(outgoing.getCommits());
-          myPushLog.setChildren(node,
-                                getPresentationForCommits(PushController.this.myProject, model.getLoadedCommits(),
-                                                          model.getNumberOfShownCommits()), model.isSelected());
-        }
-      }
-
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
+      public void run() {
         OutgoingResult outgoing = support.getOutgoingCommitsProvider()
           .getOutgoingCommits(model.getRepository(), new PushSpec<S, T>(model.getSource(), model.getTarget()), initial);
         result.compareAndSet(null, outgoing);
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            OutgoingResult outgoing = result.get();
+            List<VcsError> errors = outgoing.getErrors();
+            if (!errors.isEmpty()) {
+              myPushLog.setChildren(node, ContainerUtil.map(errors, new Function<VcsError, DefaultMutableTreeNode>() {
+                @Override
+                public DefaultMutableTreeNode fun(final VcsError error) {
+                  VcsLinkedText errorLinkText = new VcsLinkedText(error.getText(), new VcsLinkListener() {
+                    @Override
+                    public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
+                      error.handleError(new CommitLoader() {
+                        @Override
+                        public void reloadCommits() {
+                          loadCommits(model, node, false);
+                        }
+                      });
+                    }
+                  });
+                  return new TextWithLinkNode(errorLinkText);
+                }
+              }), model.isSelected());
+            }
+            else {
+              model.setLoadedCommits(outgoing.getCommits());
+              myPushLog.setChildren(node,
+                                    getPresentationForCommits(PushController.this.myProject, model.getLoadedCommits(),
+                                                              model.getNumberOfShownCommits()), model.isSelected());
+            }
+          }
+        });
       }
     };
-
-    ProgressManagerImpl.runProcessWithProgressAsynchronously(task, indicator, null, ModalityState.any());
+    node.startLoading(myExecutorService.submit(task, result));
   }
 
   public PushLog getPushPanelLog() {
@@ -313,9 +308,7 @@ public class PushController implements Disposable {
 
   @Override
   public void dispose() {
-    for (RepositoryNode node : myView2Model.keySet()) {
-      node.stopLoading();
-    }
+    myExecutorService.shutdownNow();
   }
 
   private void addMoreCommits(RepositoryNode repositoryNode) {
