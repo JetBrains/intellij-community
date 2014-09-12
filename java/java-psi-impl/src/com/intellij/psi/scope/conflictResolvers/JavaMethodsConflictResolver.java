@@ -398,7 +398,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   @MethodCandidateInfo.ApplicabilityLevelConstant
-  protected int checkApplicability(@NotNull List<CandidateInfo> conflicts) {
+  public int checkApplicability(@NotNull List<CandidateInfo> conflicts) {
     @MethodCandidateInfo.ApplicabilityLevelConstant int maxApplicabilityLevel = 0;
     boolean toFilter = false;
     for (CandidateInfo conflict : conflicts) {
