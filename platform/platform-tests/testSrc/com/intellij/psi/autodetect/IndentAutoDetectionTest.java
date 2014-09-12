@@ -137,7 +137,7 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
   @NotNull
   private CommonCodeStyleSettings.IndentOptions getIndentOptions() {
     configureByFile(getTestName(true) + ".java");
-    IndentOptionsDetector detector = new IndentOptionsDetector(myFile);
+    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(myFile);
     return detector.getIndentOptions();
   }
 
