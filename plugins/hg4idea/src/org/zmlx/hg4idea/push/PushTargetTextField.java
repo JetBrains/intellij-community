@@ -36,6 +36,11 @@ public class PushTargetTextField extends TextFieldWithAutoCompletion<String> {
       public void focusGained(FocusEvent e) {
         selectAll();
       }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        removeSelection();
+      }
     });
   }
 
