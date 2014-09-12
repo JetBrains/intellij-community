@@ -41,7 +41,10 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -49,11 +52,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EventObject;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PushLog extends JPanel implements TypeSafeDataProvider {
-
-  private final ReentrantReadWriteLock TREE_CONSTRUCTION_LOCK = new ReentrantReadWriteLock();
 
   private static final String START_EDITING = "startEditing";
   private final ChangesBrowser myChangesBrowser;
@@ -315,34 +315,19 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   public void setChildren(DefaultMutableTreeNode parentNode,
                           @NotNull Collection<? extends DefaultMutableTreeNode> childrenNodes,
                           boolean shouldExpand) {
-    try {
-      TREE_CONSTRUCTION_LOCK.writeLock().lock();
-      parentNode.removeAllChildren();
-      for (DefaultMutableTreeNode child : childrenNodes) {
-        parentNode.add(child);
-      }
-      final DefaultTreeModel model = ((DefaultTreeModel)myTree.getModel());
-      model.nodeStructureChanged(parentNode);
-      TreePath path = TreeUtil.getPathFromRoot(parentNode);
-      //myIgnoreStopEditing.set(true);
-      if (shouldExpand) {
-        myTree.expandPath(path);
-      }
-      else {
-        myTree.collapsePath(path);
-      }
+    parentNode.removeAllChildren();
+    for (DefaultMutableTreeNode child : childrenNodes) {
+      parentNode.add(child);
     }
-    finally {
-      TREE_CONSTRUCTION_LOCK.writeLock().unlock();
-      //myIgnoreStopEditing.set(false);
+    final DefaultTreeModel model = ((DefaultTreeModel)myTree.getModel());
+    model.nodeStructureChanged(parentNode);
+    TreePath path = TreeUtil.getPathFromRoot(parentNode);
+    if (shouldExpand) {
+      myTree.expandPath(path);
+    }
+    else {
+      myTree.collapsePath(path);
     }
   }
 
-  public void startEditNode(@NotNull TreeNode node) {
-    TreePath path = TreeUtil.getPathFromRoot(node);
-    if (!myTree.isEditing()) {
-      myTree.setSelectionPath(path);
-      myTree.startEditingAtPath(path);
-    }
-  }
 }
