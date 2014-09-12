@@ -34,6 +34,7 @@ import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.Nullable;
@@ -316,7 +317,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         String warningText = frameworkName + " will be installed on selected interpreter";
         myInstallFramework = true;
         final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-        if (!packageManager.hasManagement(true)) {
+        if (!packageManager.hasManagement(PySdkUtil.isRemote(sdk))) {
           warningText = "Python packaging tools and " + warningText;
         }
         setWarningText(warningText);

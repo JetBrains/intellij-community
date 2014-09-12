@@ -43,6 +43,7 @@ import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,7 +210,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
     final List<PyPackage> packages;
     try {
-      packages = PyPackageManager.getInstance(sdk).getPackages(true);
+      packages = PyPackageManager.getInstance(sdk).getPackages(PySdkUtil.isRemote(sdk));
     }
     catch (PyExternalProcessException e) {
       return null;
@@ -245,7 +246,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     if (requirements != null) {
       final List<PyPackage> packages;
       try {
-        packages = manager.getPackages(true);
+        packages = manager.getPackages(PySdkUtil.isRemote(sdk));
       }
       catch (PyExternalProcessException e) {
         return null;

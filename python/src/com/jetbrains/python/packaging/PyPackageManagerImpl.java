@@ -56,7 +56,7 @@ import java.util.*;
 /**
  * @author vlan
  */
-@SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized", "NonPrivateFieldAccessedInSynchronizedContext"})
+@SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
 public class PyPackageManagerImpl extends PyPackageManager {
   // Bundled versions of package management tools
   public static final String SETUPTOOLS_VERSION = "1.1.5";
@@ -87,7 +87,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final String UNINSTALL = "uninstall";
   public static final String UNTAR = "untar";
 
-  protected List<PyPackage> myPackagesCache = null;
+  private List<PyPackage> myPackagesCache = null;
   private Map<String, Set<PyPackage>> myDependenciesCache = null;
   private PyExternalProcessException myExceptionCache = null;
 
@@ -255,21 +255,16 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Nullable
   public synchronized List<PyPackage> getPackages(boolean cachedOnly) throws PyExternalProcessException {
-    if (cachedOnly) {
-      if (myPackagesCache != null) {
-        return myPackagesCache;
+    if (myPackagesCache == null) {
+      if (myExceptionCache != null) {
+        throw myExceptionCache;
       }
-      return getPackages(false);
-    }
-    else {
-      if (myPackagesCache == null) {
-        if (myExceptionCache != null) {
-          throw myExceptionCache;
-        }
-        loadPackages();
+      if (cachedOnly) {
+        return null;
       }
-      return myPackagesCache;
+      loadPackages();
     }
+    return myPackagesCache;
   }
 
   @Nullable

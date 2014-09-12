@@ -40,7 +40,6 @@ import java.util.List;
 /**
  * @author vlan
  */
-@SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   private static final String LAUNCH_VAGRANT = "launchVagrant";
   public static final int ERROR_VAGRANT_NOT_LAUNCHED = 101;
@@ -50,15 +49,6 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
 
   PyRemotePackageManagerImpl(@NotNull Sdk sdk) {
     super(sdk);
-  }
-
-  @Nullable
-  @Override
-  public synchronized List<PyPackage> getPackages(boolean cachedOnly) throws PyExternalProcessException {
-    if (cachedOnly) {
-      return myPackagesCache != null ? myPackagesCache : null;
-    }
-    return super.getPackages(false);
   }
 
   @Nullable
