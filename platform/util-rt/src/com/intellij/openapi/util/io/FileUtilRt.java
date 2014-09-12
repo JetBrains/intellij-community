@@ -565,8 +565,7 @@ public class FileUtilRt {
   }
 
   public static boolean ensureCanCreateFile(@NotNull File file) {
-    // check if the file is not locked
-    if (file.exists()) return (file.canWrite() && file.getParentFile().canWrite());
+    if (file.exists()) return file.canWrite();
     if (!createIfNotExists(file)) return false;
     return delete(file);
   }
