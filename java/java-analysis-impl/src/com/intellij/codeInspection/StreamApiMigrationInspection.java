@@ -111,7 +111,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                     }
                   });
   
-                  if (effectivelyFinal[0]) {
+                  if (effectivelyFinal[0] && ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {body}).isEmpty()) {
                     if (isCollectCall(body)) {
                       holder.registerProblem(iteratedValue, "Can be replaced with collect call",
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithCollectCallFix());
