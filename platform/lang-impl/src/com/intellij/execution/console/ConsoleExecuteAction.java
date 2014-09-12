@@ -95,7 +95,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   }
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     EditorEx editor = myConsole.getConsoleEditor();
     boolean enabled = !editor.isRendererMode() && isEnabled() &&
                       (myExecuteActionHandler.isEmptyCommandExecutionAllowed() || !StringUtil.isEmptyOrSpaces(editor.getDocument().getCharsSequence()));
@@ -109,7 +109,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     myExecuteActionHandler.runExecuteAction(myConsole, myConsoleView);
   }
 
@@ -156,14 +156,10 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       myAddToHistory = addCurrentToHistory;
     }
 
-    /**
-     * @deprecated
-     */
     protected void beforeExecution(@NotNull LanguageConsoleImpl console) {
     }
 
     protected void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
-      //noinspection deprecation
       beforeExecution(console);
 
       String text = console.prepareExecuteAction(myAddToHistory, myPreserveMarkup, true);
