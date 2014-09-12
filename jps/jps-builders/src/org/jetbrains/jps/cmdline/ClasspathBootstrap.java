@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.CellConstraints;
@@ -30,6 +29,7 @@ import io.netty.util.NetUtil;
 import jsr166e.extra.SequenceLock;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
@@ -169,12 +169,9 @@ public class ClasspathBootstrap {
       cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
     }
 
-    for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) { // Eclipse compiler
-      final String compilerResource = getResourcePath(javaCompiler.getClass());
-      final String name = PathUtilRt.getFileName(compilerResource);
-      if (name.startsWith("ecj-") && name.endsWith(".jar")) {
-        cp.add(compilerResource);
-      }
+    File file = EclipseCompilerTool.findEcjJarFile();
+    if (file != null) {
+      cp.add(file.getAbsolutePath());
     }
   }
 
