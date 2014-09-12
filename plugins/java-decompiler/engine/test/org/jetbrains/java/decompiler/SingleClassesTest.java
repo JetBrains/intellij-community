@@ -43,30 +43,32 @@ public class SingleClassesTest {
     fixture = null;
   }
 
-  @Test public void testClassFields() { doTest("TestClassFields"); }
-  @Test public void testClassLambda() { doTest("TestClassLambda"); }
-  @Test public void testClassLoop() { doTest("TestClassLoop"); }
-  @Test public void testClassSwitch() { doTest("TestClassSwitch"); }
-  @Test public void testClassTypes() { doTest("TestClassTypes"); }
-  @Test public void testClassVar() { doTest("TestClassVar"); }
-  @Test public void testClassNestedInitializer() { doTest("TestClassNestedInitializer"); }
-  @Test public void testClassCast() { doTest("TestClassCast"); }
-  @Test public void testDeprecations() { doTest("TestDeprecations"); }
-  @Test public void testExtendsList() { doTest("TestExtendsList"); }
-  @Test public void testMethodParameters() { doTest("TestMethodParameters"); }
-  @Test public void testCodeConstructs() { doTest("TestCodeConstructs"); }
-  @Test public void testConstants() { doTest("TestConstants"); }
-  @Test public void testEnum() { doTest("TestEnum"); }
-  @Test public void testDebugSymbols() { doTest("TestDebugSymbols"); }
+  @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
+  @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }
+  @Test public void testClassLoop() { doTest("pkg/TestClassLoop"); }
+  @Test public void testClassSwitch() { doTest("pkg/TestClassSwitch"); }
+  @Test public void testClassTypes() { doTest("pkg/TestClassTypes"); }
+  @Test public void testClassVar() { doTest("pkg/TestClassVar"); }
+  @Test public void testClassNestedInitializer() { doTest("pkg/TestClassNestedInitializer"); }
+  @Test public void testClassCast() { doTest("pkg/TestClassCast"); }
+  @Test public void testDeprecations() { doTest("pkg/TestDeprecations"); }
+  @Test public void testExtendsList() { doTest("pkg/TestExtendsList"); }
+  @Test public void testMethodParameters() { doTest("pkg/TestMethodParameters"); }
+  @Test public void testCodeConstructs() { doTest("pkg/TestCodeConstructs"); }
+  @Test public void testConstants() { doTest("pkg/TestConstants"); }
+  @Test public void testEnum() { doTest("pkg/TestEnum"); }
+  @Test public void testDebugSymbols() { doTest("pkg/TestDebugSymbols"); }
+  @Test public void testInvalidMethodSignature() { doTest("InvalidMethodSignature"); }
 
-  private void doTest(final String testName) {
+  private void doTest(String testFile) {
     try {
-      File classFile = new File(fixture.getTestDataDir(), "/classes/pkg/" + testName + ".class");
+      File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
       assertTrue(classFile.isFile());
+      String testName = classFile.getName().replace(".class", "");
 
       ConsoleDecompiler decompiler = fixture.getDecompiler();
-      for (File inner : collectClasses(classFile)) {
-        decompiler.addSpace(inner, true);
+      for (File file : collectClasses(classFile)) {
+        decompiler.addSpace(file, true);
       }
 
       decompiler.decompileContext();
