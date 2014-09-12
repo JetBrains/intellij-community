@@ -26,6 +26,8 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -212,18 +214,22 @@ public class IpnbUtils {
 
     }
 
-    final JEditorPane editorPane = new JEditorPane(new HTMLEditorKit().getContentType(), "<html><body style='width: " +
-                                                                                         IpnbEditorUtil.PANEL_WIDTH +
-                                                                                         "px'>" +
-                                                                                         stringBuilder.toString() +
-                                                                                         "</body></html>");
+    final JEditorPane editorPane = new JEditorPane();
+    editorPane.setContentType(new HTMLEditorKit().getContentType());
+    editorPane.setText("<html><body style='width: " + IpnbEditorUtil.PANEL_WIDTH + "px'>" + stringBuilder.toString() + "</body></html>");
     final Font font = new Font(Font.SERIF, Font.PLAIN, 16);
     String bodyRule = "body { font-family: " + font.getFamily() + "; " +
                       "font-size: " + font.getSize() + "pt; }";
     ((HTMLDocument)editorPane.getDocument()).getStyleSheet().addRule(bodyRule);
 
     editorPane.setEditable(false);
-
+    editorPane.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(editorPane, e, panel);
+        panel.dispatchEvent(parentEvent);
+      }
+    });
     editorPane.addHyperlinkListener(new BrowserHyperlinkListener());
 
     panel.add(editorPane);
