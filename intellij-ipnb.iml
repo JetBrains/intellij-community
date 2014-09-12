@@ -10,12 +10,16 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="java_websocket" level="project" />
-    <orderEntry type="library" name="jeuclid-core-3.1.9" level="project" />
-    <orderEntry type="library" name="xmlgraphics-commons-1.3.1" level="project" />
-    <orderEntry type="library" name="snuggletex-core-1.2.2" level="project" />
-    <orderEntry type="library" name="commons-io-1.3.1" level="project" />
-    <orderEntry type="library" name="jlatexmath-1.0.3" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/java_websocket.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="jeuclid-3.1.9" level="project" />
   </component>
 </module>
 

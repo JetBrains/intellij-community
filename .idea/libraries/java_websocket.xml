@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="java_websocket">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/java_websocket.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
