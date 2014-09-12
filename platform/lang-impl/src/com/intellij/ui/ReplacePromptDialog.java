@@ -56,6 +56,7 @@ public class ReplacePromptDialog extends DialogWrapper {
           replaceAction,
           createSkipAction(),
           new DoAction(UIBundle.message("replace.prompt.all.in.this.file.button"), FindManager.PromptResult.ALL_IN_THIS_FILE),
+          new DoAction(UIBundle.message("replace.prompt.skip.all.in.file.button"), FindManager.PromptResult.SKIP_ALL_IN_THIS_FILE),
           new DoAction(UIBundle.message("replace.prompt.all.files.action"), FindManager.PromptResult.ALL_FILES),
           getCancelAction()
         };
