@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -79,9 +80,7 @@ public class SingleClassesTest {
       File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
       assertTrue(referenceFile.isFile());
 
-      String decompiledContent = getContent(decompiledFile);
-      String referenceContent = getContent(referenceFile);
-      assertEquals(referenceContent, decompiledContent);
+      compareContent(decompiledFile, referenceFile);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -107,19 +106,14 @@ public class SingleClassesTest {
     return files;
   }
 
-  private static String getContent(File file) throws IOException {
-    Reader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
-    try {
-      char[] buff = new char[16 * 1024];
-      StringBuilder content = new StringBuilder();
-      int n;
-      while ((n = reader.read(buff)) > 0) {
-        content.append(buff, 0, n);
-      }
-      return content.toString();
+  private static void compareContent(File decompiledFile, File referenceFile) throws IOException {
+    String decompiledContent = new String(InterpreterUtil.getBytes(decompiledFile), "UTF-8");
+
+    String referenceContent = new String(InterpreterUtil.getBytes(referenceFile), "UTF-8");
+    if (InterpreterUtil.IS_WINDOWS && !referenceContent.contains("\r\n")) {
+      referenceContent = referenceContent.replace("\n", "\r\n");  // fix for broken Git checkout on Windows
     }
-    finally {
-      reader.close();
-    }
+
+    assertEquals(referenceContent, decompiledContent);
   }
 }
