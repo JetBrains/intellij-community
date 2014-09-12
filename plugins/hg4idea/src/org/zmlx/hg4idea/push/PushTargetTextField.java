@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.FocusAdapter;
@@ -31,7 +30,6 @@ public class PushTargetTextField extends TextFieldWithAutoCompletion<String> {
 
   public PushTargetTextField(@NotNull Project project, @NotNull final List<String> targetVariants, @NotNull String defaultTargetName) {
     super(project, getCompletionProvider(targetVariants), true, defaultTargetName);
-    setBorder(UIUtil.getTableFocusCellHighlightBorder());
     setOneLineMode(true);
     addFocusListener(new FocusAdapter() {
       @Override
@@ -39,11 +37,6 @@ public class PushTargetTextField extends TextFieldWithAutoCompletion<String> {
         selectAll();
       }
     });
-  }
-
-  @Override
-  public boolean shouldHaveBorder() {
-    return false;
   }
 
   @Override
