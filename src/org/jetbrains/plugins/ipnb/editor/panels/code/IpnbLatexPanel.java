@@ -19,7 +19,7 @@ public class IpnbLatexPanel extends IpnbCodeOutputPanel<IpnbLatexOutputCell> {
   protected JComponent createViewPanel() {
     final JPanel panel = new JPanel();
     final String[] text = myCell.getLatex();
-    IpnbUtils.addFormulaToPanel(text, panel);
+    IpnbUtils.addLatexToPanel(text, panel);
     setBackground(IpnbEditorUtil.getBackground());
     setOpaque(true);
     return panel;

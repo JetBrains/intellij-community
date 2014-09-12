@@ -78,8 +78,9 @@ public class IpnbUtils {
     return html;
   }
 
-  public static void addFormulaToPanel(@NotNull final String[] source, @NotNull final JPanel panel) {
+  public static void addLatexToPanel(@NotNull final String[] source, @NotNull final JPanel panel) {
     StringBuilder formula = new StringBuilder();
+    List<String> markdown = new ArrayList<String>();
     boolean hasFormula = false;
     boolean isEscaped = false;
     boolean inFormula = false;
@@ -94,22 +95,21 @@ public class IpnbUtils {
         isEscaped = false;
       }
 
-      string = string.replace("\n", " \n");
-      if (string.contains("{align}"))
-        string = string.replace("{align}", "{eqnarray*}");
-      if (string.contains("{equation*}"))
-        string = string.replace("{equation*}", "{eqnarray*}");
-
-
+      if (inFormula && !markdown.isEmpty()) {
+        addMarkdown(panel, markdown, isEscaped);
+        markdown.clear();
+      }
       if ((StringUtil.trimTrailing(string).endsWith("$$")) && inFormula) {
         inFormula = false;
         string = StringUtil.trimTrailing(string);
+        string = prepareLatex(string);
         formula.append(string);
         addFormula(panel, formula.toString());
         hasFormula = false;
         formula = new StringBuilder();
       }
       else if (string.trim().startsWith("$$") && !isEscaped) {
+        string = prepareLatex(string);
         formula.append(string);
         hasFormula = true;
         inFormula = true;
@@ -117,6 +117,7 @@ public class IpnbUtils {
       else if (string.startsWith("\\") && !isEscaped || inFormula) {
         inFormula = true;
         hasFormula = true;
+        string = prepareLatex(string);
         formula.append(string);
       }
       else {
@@ -126,16 +127,28 @@ public class IpnbUtils {
           formula = new StringBuilder();
         }
         else {
-          if (!StringUtil.isEmptyOrSpaces(string))
-            addMarkdown(panel, string, isEscaped);
+          if (!StringUtil.isEmptyOrSpaces(string)) {
+            markdown.add(string);
+          }
         }
       }
     }
     if (hasFormula) {
       addFormula(panel, formula.toString());
     }
+    if (!markdown.isEmpty()) {
+      addMarkdown(panel, markdown, isEscaped);
+    }
   }
 
+  private static String prepareLatex(@NotNull String string) {
+    string = string.replace("\n", " \n");
+    if (string.contains("{align}"))
+      string = string.replace("{align}", "{eqnarray*}");
+    if (string.contains("{equation*}"))
+      string = string.replace("{equation*}", "{eqnarray*}");
+    return string;
+  }
 
 
   private static void addFormula(@NotNull final JPanel panel, @NotNull final String formulaText) {
@@ -175,21 +188,41 @@ public class IpnbUtils {
     }
   }
 
-  private static void addMarkdown(@NotNull final JPanel panel, String string, boolean isEscaped) {
-    string = StringUtil.trimStart(string, "```");
-    string = StringUtil.trimTrailing(string);
-    string = StringUtil.trimEnd(string, "```");
-    if (!isEscaped)
-      string = IpnbUtils.markdown2Html(string);
-    else
-      string = "<p>"+string+"</p>";
-    final JEditorPane editorPane = new JEditorPane(new HTMLEditorKit().getContentType(), "<html><body style='width: " + IpnbEditorUtil.PANEL_WIDTH + "px'>" + string + "</body></html>");
+  private static void addMarkdown(@NotNull final JPanel panel, List<String> strings, boolean isEscaped) {
+    StringBuilder stringBuilder = new StringBuilder();
+    for (String string : strings) {
+      if (string.startsWith("```") && !isEscaped) {
+        isEscaped = true;
+        string = StringUtil.trimStart(string, "```");
+        stringBuilder.append("<p>").append(string).append("</p>");
+      }
+      else if (StringUtil.trimTrailing(string).endsWith("```") && isEscaped) {
+        isEscaped = false;
+        string = StringUtil.trimTrailing(string);
+        string = StringUtil.trimEnd(string, "```");
+        stringBuilder.append("<p>").append(string).append("</p>");
+      }
+      else if (!isEscaped) {
+        stringBuilder.append(IpnbUtils.markdown2Html(string));
+      }
+      else {
+        stringBuilder.append("<p>").append(string).append("</p>");
+      }
+
+    }
+
+    final JEditorPane editorPane = new JEditorPane(new HTMLEditorKit().getContentType(), "<html><body style='width: " +
+                                                                                         IpnbEditorUtil.PANEL_WIDTH +
+                                                                                         "px'>" +
+                                                                                         stringBuilder.toString() +
+                                                                                         "</body></html>");
     final Font font = new Font(Font.SERIF, Font.PLAIN, 16);
     String bodyRule = "body { font-family: " + font.getFamily() + "; " +
                       "font-size: " + font.getSize() + "pt; }";
     ((HTMLDocument)editorPane.getDocument()).getStyleSheet().addRule(bodyRule);
 
     editorPane.setEditable(false);
+
     editorPane.addHyperlinkListener(new BrowserHyperlinkListener());
 
     panel.add(editorPane);

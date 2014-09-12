@@ -37,7 +37,7 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JPanel, IpnbMarkdownCel
 
   private void updatePanel(@NotNull final JPanel panel) {
     panel.removeAll();
-    IpnbUtils.addFormulaToPanel(myCell.getSource(), panel);
+    IpnbUtils.addLatexToPanel(myCell.getSource(), panel);
   }
 
 
