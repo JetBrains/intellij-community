@@ -100,11 +100,6 @@ public class RunContentBuilder extends RunTab {
     return SearchScopeProvider.createSearchScope(project, runProfile);
   }
 
-  @NotNull
-  public ExecutionResult getExecutionResult() {
-    return myExecutionResult;
-  }
-
   public void addAction(@NotNull final AnAction action) {
     myRunnerActions.add(action);
   }
