@@ -357,7 +357,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final String path = (binary != null) ? binary : binaryFallback;
 
     if (usePyVenv) {
-      // TODO: Still no 'packaging' and 'pysetup3' for Python 3.3rc1, see PEP 405
+      // Still no 'packaging' and 'pysetup3' for Python 3.3rc1, see PEP 405
       final VirtualFile binaryFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
       if (binaryFile != null) {
         final ProjectJdkImpl tmpSdk = new ProjectJdkImpl("", PythonSdkType.getInstance());
@@ -371,7 +371,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Nullable
   public List<PyRequirement> getRequirements(@NotNull Module module) {
-    // TODO: Cache requirements, clear cache on requirements.txt or setup.py updates
     List<PyRequirement> requirements = PySdkUtil.getRequirementsFromTxt(module);
     if (requirements != null) {
       return requirements;
