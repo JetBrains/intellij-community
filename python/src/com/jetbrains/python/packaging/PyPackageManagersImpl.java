@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -33,7 +34,12 @@ public class PyPackageManagersImpl extends PyPackageManagers {
     final String name = sdk.getName();
     PyPackageManagerImpl manager = myInstances.get(name);
     if (manager == null) {
-      manager = new PyPackageManagerImpl(sdk);
+      if (PythonSdkType.isRemote(sdk)) {
+        manager = new PyRemotePackageManagerImpl(sdk);
+      }
+      else {
+        manager = new PyPackageManagerImpl(sdk);
+      }
       myInstances.put(name, manager);
     }
     return manager;

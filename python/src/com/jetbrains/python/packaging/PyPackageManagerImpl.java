@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
@@ -26,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
@@ -38,12 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.remote.RemoteFile;
-import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.remote.RemoteSdkCredentials;
-import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
@@ -52,8 +44,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +56,7 @@ import java.util.*;
 /**
  * @author vlan
  */
-@SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+@SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized", "NonPrivateFieldAccessedInSynchronizedContext"})
 public class PyPackageManagerImpl extends PyPackageManager {
   // Bundled versions of package management tools
   public static final String SETUPTOOLS_VERSION = "1.1.5";
@@ -87,9 +77,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
-  public static final int ERROR_VAGRANT_NOT_LAUNCHED = 101;
-  public static final int ERROR_REMOTE_ACCESS = 102;
-
   private static final String PACKAGING_TOOL = "packaging_tool.py";
   private static final String VIRTUALENV = "virtualenv.py";
   private static final int TIMEOUT = 10 * 60 * 1000;
@@ -100,13 +87,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final String UNINSTALL = "uninstall";
   public static final String UNTAR = "untar";
 
-  private static final String LAUNCH_VAGRANT = "launchVagrant";
-
-  private List<PyPackage> myPackagesCache = null;
+  protected List<PyPackage> myPackagesCache = null;
   private Map<String, Set<PyPackage>> myDependenciesCache = null;
   private PyExternalProcessException myExceptionCache = null;
 
-  private Sdk mySdk;
+  protected Sdk mySdk;
 
   @Override
   public void refresh() {
@@ -145,7 +130,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
            hasPackage(PACKAGE_PIP, cachedOnly);
   }
 
-  private void installManagement(@NotNull String name) throws PyExternalProcessException {
+  protected void installManagement(@NotNull String name) throws PyExternalProcessException {
     final String helperPath = getHelperPath(name);
 
     ArrayList<String> args = Lists.newArrayList(UNTAR, helperPath);
@@ -178,7 +163,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     finally {
       clearCaches();
-      FileUtil.delete(new File(dirName)); //TODO: remove temp directory for remote interpreter
+      FileUtil.delete(new File(dirName));
     }
   }
 
@@ -193,11 +178,13 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   PyPackageManagerImpl(@NotNull Sdk sdk) {
     mySdk = sdk;
+    subscribeToLocalChanges(sdk);
+  }
+
+  protected void subscribeToLocalChanges(Sdk sdk) {
     final Application app = ApplicationManager.getApplication();
     final MessageBusConnection connection = app.getMessageBus().connect();
-    if (!PySdkUtil.isRemote(sdk)) {
-      connection.subscribe(VirtualFileManager.VFS_CHANGES, new MySdkRootWatcher());
-    }
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new MySdkRootWatcher());
   }
 
   public Sdk getSdk() {
@@ -271,9 +258,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     if (cachedOnly) {
       if (myPackagesCache != null) {
         return myPackagesCache;
-      }
-      if (PySdkUtil.isRemote(mySdk)) {
-        return null;
       }
       return getPackages(false);
     }
@@ -412,7 +396,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return null;
   }
 
-  private void clearCaches() {
+  protected void clearCaches() {
     myPackagesCache = null;
     myDependenciesCache = null;
     myExceptionCache = null;
@@ -470,162 +454,59 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Nullable
-  private String getHelperPath(String helper) {
-    String helperPath;
-    final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
-    if (sdkData instanceof PyRemoteSdkAdditionalDataBase) {
-      PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
-
-      try {
-        final RemoteSdkCredentials remoteSdkCredentials = remoteSdkData.getRemoteSdkCredentials(false);
-        if (!StringUtil.isEmpty(remoteSdkCredentials.getHelpersPath())) {
-          helperPath = new RemoteFile(remoteSdkCredentials.getHelpersPath(),
-                                      helper).getPath();
-        }
-        else {
-          helperPath = null;
-        }
-      }
-      catch (Exception e) {
-        helperPath = null;
-        LOG.error(e);
-      }
-    }
-    else {
-      helperPath = PythonHelpersLocator.getHelperPath(helper);
-    }
-    return helperPath;
+  protected String getHelperPath(String helper) {
+    return PythonHelpersLocator.getHelperPath(helper);
   }
 
-  private ProcessOutput getProcessOutput(@NotNull String helperPath,
+  protected ProcessOutput getProcessOutput(@NotNull String helperPath,
                                          @NotNull List<String> args,
                                          boolean askForSudo,
-                                         @Nullable String workingDir)
-    throws PyExternalProcessException {
-    final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
+                                         @Nullable String workingDir) throws PyExternalProcessException {
     final String homePath = mySdk.getHomePath();
     if (homePath == null) {
       throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");
     }
-    if (sdkData instanceof PyRemoteSdkAdditionalDataBase) { //remote interpreter
-      RemoteSdkCredentials remoteSdkCredentials;
-      try {
-        remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials(false);
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-        remoteSdkCredentials = null;
-      }
-      catch (final ExecutionException e) {
-        if (e.getCause() instanceof VagrantNotStartedException) {
-          throw new PyExternalProcessException(ERROR_VAGRANT_NOT_LAUNCHED, helperPath, args, "Vagrant instance is down. <a href=\"" +
-                                                                                             LAUNCH_VAGRANT +
-                                                                                             "\">Launch vagrant</a>")
-            .withHandler(LAUNCH_VAGRANT, new Runnable() {
-              @Override
-              public void run() {
-                final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-                if (manager != null) {
+    if (workingDir == null) {
+      workingDir = new File(homePath).getParent();
+    }
+    final List<String> cmdline = new ArrayList<String>();
+    cmdline.add(homePath);
+    cmdline.add(helperPath);
+    cmdline.addAll(args);
+    LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
 
-                  try {
-                    manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
-                    clearCaches();
-                  }
-                  catch (ExecutionException e1) {
-                    throw new RuntimeException(e1);
-                  }
-                }
-              }
-            });
+    final boolean canCreate = FileUtil.ensureCanCreateFile(new File(homePath));
+    if (!canCreate && !SystemInfo.isWindows && askForSudo) {   //is system site interpreter --> we need sudo privileges
+      try {
+        final ProcessOutput result = ExecUtil.sudoAndGetOutput(cmdline,
+                                                               "Please enter your password to make changes in system packages: ",
+                                                               workingDir);
+        String message = result.getStderr();
+        if (result.getExitCode() != 0) {
+          final String stdout = result.getStdout();
+          if (StringUtil.isEmptyOrSpaces(message)) {
+            message = stdout;
+          }
+          if (StringUtil.isEmptyOrSpaces(message)) {
+            message = "Failed to perform action. Permission denied.";
+          }
+          throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
         }
-        else {
-          throw new PyExternalProcessException(ERROR_REMOTE_ACCESS, helperPath, args, e.getMessage());
+        if (SystemInfo.isMac && !StringUtil.isEmptyOrSpaces(message)) {
+          throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
         }
+        return result;
       }
-      final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-      if (manager != null && remoteSdkCredentials != null) {
-        final List<String> cmdline = new ArrayList<String>();
-        cmdline.add(homePath);
-        cmdline.add(RemoteFile.detectSystemByPath(homePath).createRemoteFile(helperPath).getPath());
-        cmdline.addAll(Collections2.transform(args, new Function<String, String>() {
-          @Override
-          public String apply(@Nullable String input) {
-            return quoteIfNeeded(input);
-          }
-        }));
-        try {
-          if (askForSudo) {
-            askForSudo = !manager.ensureCanWrite(null, remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
-          }
-          ProcessOutput processOutput;
-          do {
-            PathMappingSettings mappings = manager.setupMappings(null, (PyRemoteSdkAdditionalDataBase)sdkData, null);
-            processOutput =
-              manager.runRemoteProcess(null, remoteSdkCredentials, mappings, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
-            if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
-              continue;
-            }
-            break;
-          }
-          while (true);
-          return processOutput;
-        }
-        catch (ExecutionException e) {
-          throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK: " + e.getMessage(), e);
-        }
+      catch (ExecutionException e) {
+        throw new PyExternalProcessException(ERROR_EXECUTION, helperPath, args, e.getMessage());
       }
-      else {
-        throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args,
-                                             PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
+      catch (IOException e) {
+        throw new PyExternalProcessException(ERROR_ACCESS_DENIED, helperPath, args, e.getMessage());
       }
     }
     else {
-      if (workingDir == null) {
-        workingDir = new File(homePath).getParent();
-      }
-      final List<String> cmdline = new ArrayList<String>();
-      cmdline.add(homePath);
-      cmdline.add(helperPath);
-      cmdline.addAll(args);
-      LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
-
-      final boolean canCreate = FileUtil.ensureCanCreateFile(new File(homePath));
-      if (!canCreate && !SystemInfo.isWindows && askForSudo) {   //is system site interpreter --> we need sudo privileges
-        try {
-          final ProcessOutput result = ExecUtil.sudoAndGetOutput(cmdline,
-                                                                 "Please enter your password to make changes in system packages: ",
-                                                                 workingDir);
-          String message = result.getStderr();
-          if (result.getExitCode() != 0) {
-            final String stdout = result.getStdout();
-            if (StringUtil.isEmptyOrSpaces(message)) {
-              message = stdout;
-            }
-            if (StringUtil.isEmptyOrSpaces(message)) {
-              message = "Failed to perform action. Permission denied.";
-            }
-            throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
-          }
-          if (SystemInfo.isMac && !StringUtil.isEmptyOrSpaces(message)) {
-            throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
-          }
-          return result;
-        }
-        catch (ExecutionException e) {
-          throw new PyExternalProcessException(ERROR_EXECUTION, helperPath, args, e.getMessage());
-        }
-        catch (IOException e) {
-          throw new PyExternalProcessException(ERROR_ACCESS_DENIED, helperPath, args, e.getMessage());
-        }
-      }
-      else {
-        return PySdkUtil.getProcessOutput(workingDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
-      }
+      return PySdkUtil.getProcessOutput(workingDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
     }
-  }
-
-  private static String quoteIfNeeded(String arg) {
-    return arg.replace("<", "\\<").replace(">", "\\>"); //TODO: move this logic to ParametersListUtil.encode
   }
 
   @NotNull
@@ -653,7 +534,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     return packages;
   }
-
 
   private class MySdkRootWatcher extends BulkFileListener.Adapter {
     @Override
