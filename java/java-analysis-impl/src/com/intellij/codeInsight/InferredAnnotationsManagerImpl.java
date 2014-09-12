@@ -20,7 +20,6 @@ import com.intellij.codeInspection.dataFlow.ContractInference;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiUtil;
@@ -34,16 +33,10 @@ import static com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer.ORG_JETBR
 
 public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
-  @NotNull
-  private static PsiModifierListOwner preferCompiledElement(@NotNull PsiModifierListOwner element) {
-    PsiElement original = element.getOriginalElement();
-    return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
-  }
-
   @Nullable
   @Override
   public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
-    listOwner = preferCompiledElement(listOwner);
+    listOwner = BaseExternalAnnotationsManager.preferCompiledElement(listOwner);
     PsiAnnotation fromBytecode = ProjectBytecodeAnalysis.getInstance(listOwner.getProject()).findInferredAnnotation(listOwner, annotationFQN);
     if (fromBytecode != null) {
       return fromBytecode;
@@ -66,7 +59,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   @NotNull
   @Override
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
-    listOwner = preferCompiledElement(listOwner);
+    listOwner = BaseExternalAnnotationsManager.preferCompiledElement(listOwner);
     List<PsiAnnotation> result = ContainerUtil.newArrayList();
     PsiAnnotation[] fromBytecode = ProjectBytecodeAnalysis.getInstance(listOwner.getProject()).findInferredAnnotations(listOwner);
     for (PsiAnnotation annotation : fromBytecode) {
