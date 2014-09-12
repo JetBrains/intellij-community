@@ -43,9 +43,8 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
     setOpaque(false);
     myRepository = repository;
     final List<String> targetVariants = HgUtil.getTargetNames(repository);
-    String targetName = defaultTarget != null ? defaultTarget.getPresentation() : "";
-    myDestTargetPanel = new PushTargetTextField(repository.getProject(), targetVariants, targetName);
-    myOldText = targetName;
+    myOldText = defaultTarget != null ? defaultTarget.getPresentation() : "";
+    myDestTargetPanel = new PushTargetTextField(repository.getProject(), targetVariants, myOldText);
     add(myDestTargetPanel, BorderLayout.CENTER);
   }
 
