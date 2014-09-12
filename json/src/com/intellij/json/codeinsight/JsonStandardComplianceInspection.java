@@ -4,13 +4,18 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
+import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -72,8 +77,38 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
         holder.registerProblem(reference, JsonBundle.message("msg.compliance.problem.identifier"), new AddDoubleQuotesFix());
       }
+
+      @Override
+      public void visitArray(@NotNull JsonArray array) {
+        final PsiElement trailingComma = findTrailingComma(array, JsonElementTypes.R_BRACKET);
+        if (trailingComma != null) {
+          holder.registerProblem(trailingComma, JsonBundle.message("msg.compliance.problem.trailing.comma"));
+        }
+      }
+
+      @Override
+      public void visitObject(@NotNull JsonObject object) {
+        final PsiElement trailingComma = findTrailingComma(object, JsonElementTypes.R_CURLY);
+        if (trailingComma != null) {
+          holder.registerProblem(trailingComma, JsonBundle.message("msg.compliance.problem.trailing.comma"));
+        }
+      }
     };
   }
+
+  @Nullable
+  private static PsiElement findTrailingComma(@NotNull JsonContainer container, @NotNull IElementType ending) {
+    final PsiElement lastChild = container.getLastChild();
+    if (lastChild.getNode().getElementType() != ending) {
+      return null;
+    }
+    final PsiElement beforeEnding = PsiTreeUtil.skipSiblingsBackward(lastChild, PsiComment.class, PsiWhiteSpace.class);
+    if (beforeEnding != null && beforeEnding.getNode().getElementType() == JsonElementTypes.COMMA) {
+      return beforeEnding;
+    }
+    return null;
+  }
+
 
   @Override
   public JComponent createOptionsPanel() {

@@ -98,7 +98,7 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // value (<<notTrailingComma>>|&']')
+  // value (','|&']')
   static boolean array_element(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array_element")) return false;
     boolean result_;
@@ -111,12 +111,12 @@ public class JsonParser implements PsiParser {
     return result_ || pinned_;
   }
 
-  // <<notTrailingComma>>|&']'
+  // ','|&']'
   private static boolean array_element_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array_element_1")) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
-    result_ = notTrailingComma(builder_, level_ + 1);
+    result_ = consumeToken(builder_, COMMA);
     if (!result_) result_ = array_element_1_1(builder_, level_ + 1);
     exit_section_(builder_, marker_, null, result_);
     return result_;
@@ -262,7 +262,7 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // property (<<notTrailingComma>>|&'}')
+  // property (','|&'}')
   static boolean object_element(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "object_element")) return false;
     boolean result_;
@@ -275,12 +275,12 @@ public class JsonParser implements PsiParser {
     return result_ || pinned_;
   }
 
-  // <<notTrailingComma>>|&'}'
+  // ','|&'}'
   private static boolean object_element_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "object_element_1")) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
-    result_ = notTrailingComma(builder_, level_ + 1);
+    result_ = consumeToken(builder_, COMMA);
     if (!result_) result_ = object_element_1_1(builder_, level_ + 1);
     exit_section_(builder_, marker_, null, result_);
     return result_;

@@ -9,11 +9,15 @@ import com.intellij.psi.PsiNamedElement;
 public class JsonElementVisitor extends PsiElementVisitor {
 
   public void visitArray(@NotNull JsonArray o) {
-    visitValue(o);
+    visitContainer(o);
   }
 
   public void visitBooleanLiteral(@NotNull JsonBooleanLiteral o) {
     visitLiteral(o);
+  }
+
+  public void visitContainer(@NotNull JsonContainer o) {
+    visitValue(o);
   }
 
   public void visitLiteral(@NotNull JsonLiteral o) {
@@ -29,7 +33,7 @@ public class JsonElementVisitor extends PsiElementVisitor {
   }
 
   public void visitObject(@NotNull JsonObject o) {
-    visitValue(o);
+    visitContainer(o);
   }
 
   public void visitProperty(@NotNull JsonProperty o) {

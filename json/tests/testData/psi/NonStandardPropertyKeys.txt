@@ -1,4 +1,4 @@
-JsonFile: NonStandardPropertyKeyValues.json
+JsonFile: NonStandardPropertyKeys.json
   JsonObject
     PsiElement({)('{')
     PsiWhiteSpace('\n  ')

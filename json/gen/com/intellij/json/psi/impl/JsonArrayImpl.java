@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
 
-public class JsonArrayImpl extends JsonValueImpl implements JsonArray {
+public class JsonArrayImpl extends JsonContainerImpl implements JsonArray {
 
   public JsonArrayImpl(ASTNode node) {
     super(node);

@@ -58,7 +58,11 @@ public class JsonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-  public void testNonStandardPropertyKeyValues() {
+  public void testNonStandardPropertyKeys() {
+    doTest();
+  }
+
+  public void testTrailingCommas() {
     doTest();
   }
 

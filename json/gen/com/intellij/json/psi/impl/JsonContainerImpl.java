@@ -10,26 +10,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
 
-public class JsonObjectImpl extends JsonContainerImpl implements JsonObject {
+public class JsonContainerImpl extends JsonValueImpl implements JsonContainer {
 
-  public JsonObjectImpl(ASTNode node) {
+  public JsonContainerImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonElementVisitor) ((JsonElementVisitor)visitor).visitObject(this);
+    if (visitor instanceof JsonElementVisitor) ((JsonElementVisitor)visitor).visitContainer(this);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public List<JsonProperty> getPropertyList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonProperty.class);
-  }
-
-  @Nullable
-  public JsonProperty findProperty(String name) {
-    return JsonPsiImplUtils.findProperty(this, name);
   }
 
 }

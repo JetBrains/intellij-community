@@ -8,5 +8,7 @@
   <weak_warning descr="JSON standard does not allow comments. Use JSMin or similar tool to remove comments before parsing.">// Property value checks</weak_warning>
   "key4": "foo",
   "key5": <error descr="JSON standard does not allow single quoted strings">'foo'</error>,
-  "key6": <error descr="JSON standard does not allow identifiers">foo</error>
+  "key6": <error descr="JSON standard does not allow identifiers">foo</error>,
+  "key7": [42<error descr="JSON standard does not allow trailing comma">,</error>],
+  "key8": false<error descr="JSON standard does not allow trailing comma">,</error>
 }

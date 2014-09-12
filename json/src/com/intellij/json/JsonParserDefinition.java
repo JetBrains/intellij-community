@@ -29,6 +29,7 @@ public class JsonParserDefinition implements ParserDefinition {
   public static final TokenSet JSON_KEYWORDS = TokenSet.create(TRUE, FALSE, NULL);
   public static final TokenSet JSON_LITERALS = TokenSet.create(STRING_LITERAL, NUMBER_LITERAL, NULL_LITERAL, TRUE, FALSE);
   public static final TokenSet JSON_VALUES = TokenSet.orSet(JSON_CONTAINERS, JSON_LITERALS);
+  public static final TokenSet JSON_COMMENTARIES = TokenSet.create(BLOCK_COMMENT, LINE_COMMENT);
 
 
   @NotNull
@@ -56,7 +57,7 @@ public class JsonParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public TokenSet getCommentTokens() {
-    return TokenSet.create(BLOCK_COMMENT, LINE_COMMENT);
+    return JSON_COMMENTARIES;
   }
 
   @NotNull
