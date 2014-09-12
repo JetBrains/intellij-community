@@ -38,13 +38,14 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   private final TextFieldWithAutoCompletion<String> myDestTargetPanel;
   private String myOldText;
 
-  public HgPushTargetPanel(@NotNull HgRepository repository, @NotNull HgTarget defaultTarget) {
+  public HgPushTargetPanel(@NotNull HgRepository repository, @Nullable HgTarget defaultTarget) {
     setLayout(new BorderLayout());
     setOpaque(false);
     myRepository = repository;
     final List<String> targetVariants = HgUtil.getTargetNames(repository);
-    myDestTargetPanel = new PushTargetTextField(repository.getProject(), targetVariants, defaultTarget.getPresentation());
-    myOldText = defaultTarget.getPresentation();
+    String targetName = defaultTarget != null ? defaultTarget.getPresentation() : "";
+    myDestTargetPanel = new PushTargetTextField(repository.getProject(), targetVariants, targetName);
+    myOldText = targetName;
     add(myDestTargetPanel, BorderLayout.CENTER);
   }
 
