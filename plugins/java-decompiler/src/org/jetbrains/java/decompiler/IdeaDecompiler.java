@@ -49,7 +49,7 @@ import java.util.jar.Manifest;
 public class IdeaDecompiler extends ClassFileDecompilers.Light {
   private static final Logger LOG = Logger.getInstance(IdeaDecompiler.class);
 
-  private static final String BANNER =
+  public static final String BANNER =
     "//\n" +
     "// Source code recreated from a .class file by IntelliJ IDEA\n" +
     "// (powered by Fernflower decompiler)\n" +
