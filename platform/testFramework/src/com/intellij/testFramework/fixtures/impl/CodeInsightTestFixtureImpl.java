@@ -441,6 +441,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     };
   }
 
+  @Override
   public void openFileInEditor(@NotNull final VirtualFile file) {
     myFile = file;
     myEditor = createEditor(file);
@@ -930,9 +931,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   @NotNull
   public Collection<GutterMark> findAllGutters(@NotNull final String filePath) {
+    configureByFilesInner(filePath);
+    return findAllGutters();
+  }
+
+  @Override
+  @NotNull
+  public Collection<GutterMark> findAllGutters() {
     final Project project = getProject();
     final SortedMap<Integer, List<GutterMark>> result = new TreeMap<Integer, List<GutterMark>>();
-    configureByFilesInner(filePath);
 
     List<HighlightInfo> infos = doHighlighting();
     for (HighlightInfo info : infos) {
@@ -1461,9 +1468,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private Editor createEditor(@NotNull VirtualFile file) {
     final Project project = getProject();
     final FileEditorManager instance = FileEditorManager.getInstance(project);
-    if (file.getFileType().isBinary()) {
-      return null;
-    }
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(project, file), false);
     if (editor != null) {
       editor.getCaretModel().moveToOffset(0);
