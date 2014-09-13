@@ -144,6 +144,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(new Throwable());
+  private int myLinePaintersWidth = 0;
 
   static {
     ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, 0, UIManager.getFont("Label.font").getFamily()); // load costly font info
@@ -1888,6 +1889,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ApplicationManager.getApplication().invokeLater(stopDumbRunnable, ModalityState.current());
   }
 
+  void resetPaintersWidth() {
+    myLinePaintersWidth = 0;
+  }
+
   public void stopDumb() {
     putUserData(BUFFER, null);
   }
@@ -2763,11 +2768,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                 effectType, fontType, currentColor, logicalPosition);
           final VirtualFile file = getVirtualFile();
           if (myProject != null && file != null && !isOneLineMode()) {
+            int offset = lIterator.getStart();
+            String additionalText = "";
             for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
               Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, file, lIterator.getLineNumber());
               if (extensions != null && !extensions.isEmpty()) {
                 for (LineExtensionInfo info : extensions) {
-                  drawStringWithSoftWraps(g, info.getText(), 0, info.getText().length(), position, clip,
+                  final String text = info.getText();
+                  additionalText += text;
+                  drawStringWithSoftWraps(g, text, 0, text.length(), position, clip,
                                           info.getEffectColor() == null ? effectColor : info.getEffectColor(),
                                           info.getEffectType() == null ? effectType : info.getEffectType(),
                                           info.getFontType(),
@@ -2776,6 +2785,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 }
               }
             }
+            myLinePaintersWidth = Math.max(myLinePaintersWidth, position.x);
           }
 
           position.x = 0;
@@ -6431,7 +6441,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "AssignmentToForLoopParameter"})
     private void validateSizes() {
-      if (!myIsDirty) return;
+      if (!myIsDirty || myLinePaintersWidth < myMaxWidth) return;
 
       synchronized (this) {
         if (!myIsDirty) return;
@@ -6597,7 +6607,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NotNull
     private Dimension getContentSize() {
       validateSizes();
-      return mySize;
+      return new Dimension(Math.max(mySize.width, myLinePaintersWidth), mySize.height);
     }
 
     private int getContentHeight() {
