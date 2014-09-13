@@ -63,7 +63,11 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   }
 
   public LombokLightMethodBuilder withParameter(@NotNull String name, @NotNull PsiType type) {
-    addParameter(new LombokLightParameter(name, type, this, JavaLanguage.INSTANCE));
+    return withParameter(new LombokLightParameter(name, type, this, JavaLanguage.INSTANCE));
+  }
+
+  public LombokLightMethodBuilder withParameter(@NotNull PsiParameter psiParameter) {
+    addParameter(psiParameter);
     return this;
   }
 
