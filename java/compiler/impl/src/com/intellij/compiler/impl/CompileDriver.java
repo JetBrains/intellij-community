@@ -510,7 +510,7 @@ public class CompileDriver {
               "", wrappedMessage,
               messageType.toNotificationType(),
               new MessagesActivationListener(compileContext)
-            );
+            ).setImportant(false);
             compileContext.getBuildSession().registerCloseAction(new Runnable() {
               @Override
               public void run() {
