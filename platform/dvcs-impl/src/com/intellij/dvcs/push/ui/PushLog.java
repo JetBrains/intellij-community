@@ -30,7 +30,6 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -41,10 +40,7 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -59,7 +55,6 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
-  private boolean myEditingSucceeded;
 
   public PushLog(Project project, CheckedTreeNode root) {
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -102,17 +97,11 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
           InputVerifier verifier = editedComponent.getInputVerifier();
           if (verifier != null && !verifier.verify(editedComponent)) return false;
         }
-        myEditingSucceeded = true;
-        try {
-          return super.stopEditing();
-        }
-        finally {
-          myEditingSucceeded = false;
-        }
+        return super.stopEditing();
       }
     };
     myTree.setEditable(true);
-    MyTreeCellEditor treeCellEditor = new MyTreeCellEditor(new JBTextField());
+    MyTreeCellEditor treeCellEditor = new MyTreeCellEditor();
     myTree.setCellEditor(treeCellEditor);
     treeCellEditor.addCellEditorListener(new CellEditorListener() {
       @Override
@@ -244,19 +233,15 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     return myTree;
   }
 
-  private class MyTreeCellEditor extends DefaultCellEditor {
+  private class MyTreeCellEditor extends AbstractCellEditor implements TreeCellEditor {
 
-    public MyTreeCellEditor(JTextField field) {
-      super(field);
-      setClickCountToStart(1);
-    }
+    private RepositoryWithBranchPanel myValue;
 
     @Override
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
-      final Object node = ((DefaultMutableTreeNode)value).getUserObject();
-      editorComponent =
-        (JComponent)((RepositoryWithBranchPanel)node).getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, true);
-      return editorComponent;
+      RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
+      myValue = panel;
+      return panel.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, true);
     }
 
     @Override
@@ -266,7 +251,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         final TreePath path = myTree.getClosestPathForLocation(me.getX(), me.getY());
         final int row = myTree.getRowForLocation(me.getX(), me.getY());
         myTree.getCellRenderer().getTreeCellRendererComponent(myTree, path.getLastPathComponent(), false, false, true, row, true);
-        Object tag = me.getClickCount() >= clickCountToStart
+        Object tag = me.getClickCount() >= 1
                      ? PushLogTreeUtil.getTagAtForRenderer(myTreeCellRenderer, me)
                      : null;
         return tag instanceof PushTargetPanel;
@@ -279,9 +264,8 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       return treeNode instanceof EditableTreeNode;
     }
 
-    //Implement the one CellEditor method that AbstractCellEditor doesn't.
     public Object getCellEditorValue() {
-      return myEditingSucceeded ? ((RepositoryWithBranchPanel)editorComponent).getEditableValue() : null;
+      return myValue;
     }
   }
 
