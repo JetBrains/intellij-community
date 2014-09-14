@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,10 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.actionSystem.RegistryToggleAction;
 
-public class ValueTooltipAutoShowAction extends ToggleAction {
-  public boolean isSelected(AnActionEvent e) {
-    return Registry.is("debugger.valueTooltipAutoShow");
-  }
-
-  public void setSelected(AnActionEvent e, boolean state) {
-    Registry.get("debugger.valueTooltipAutoShow").setValue(state);
+public class ValueTooltipAutoShowAction extends RegistryToggleAction {
+  public ValueTooltipAutoShowAction() {
+    super("debugger.valueTooltipAutoShow");
   }
 }
