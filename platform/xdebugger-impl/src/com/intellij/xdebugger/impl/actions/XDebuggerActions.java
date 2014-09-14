@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,8 @@ public interface XDebuggerActions {
   @NonNls String TOGGLE_SORT_VALUES = "XDebugger.ToggleSortValues";
 
   @NonNls String AUTO_TOOLTIP = "XDebugger.AutoTooltip";
+  @NonNls String AUTO_TOOLTIP_ON_SELECTION = "XDebugger.AutoTooltipOnSelection";
+
   @NonNls String MARK_OBJECT = "Debugger.MarkObject";
 
   @NonNls String FOCUS_ON_BREAKPOINT = "Debugger.FocusOnBreakpoint";
