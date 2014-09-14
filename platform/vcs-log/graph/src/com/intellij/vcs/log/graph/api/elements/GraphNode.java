@@ -25,10 +25,10 @@ public final class GraphNode implements GraphElement {
   private final GraphNodeType myType;
 
   public GraphNode(int nodeIndex) {
-    this(nodeIndex, GraphNodeType.USUAL, nodeIndex);
+    this(nodeIndex, nodeIndex, GraphNodeType.USUAL);
   }
 
-  public GraphNode(int nodeIndex, @NotNull GraphNodeType type, int nodeId) {
+  public GraphNode(int nodeId, int nodeIndex, @NotNull GraphNodeType type) {
     myNodeIndex = nodeIndex;
     myType = type;
     myNodeId = nodeId;
