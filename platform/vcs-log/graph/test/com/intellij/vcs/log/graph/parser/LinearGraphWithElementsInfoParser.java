@@ -60,7 +60,7 @@ public class LinearGraphWithElementsInfoParser {
     int separatorIndex = nextSeparatorIndex(line, 0);
     Pair<Integer, Character> pair = parseNumberWithChar(line.substring(0, separatorIndex));
 
-    GraphNode graphNode = new GraphNode(pair.first, parseGraphNodeType(pair.second), pair.first);
+    GraphNode graphNode = new GraphNode(pair.first,pair.first, parseGraphNodeType(pair.second));
     List<GraphEdge> edges = new ArrayList<GraphEdge>();
 
     for (String edge : line.substring(separatorIndex + 2).split("\\s")) {

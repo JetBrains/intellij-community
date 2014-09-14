@@ -19,16 +19,16 @@ import org.jetbrains.annotations.NotNull;
 
 public enum GraphEdgeType {
   USUAL(0, true),  // between visible delegate nodes
-  DOTTED(1, false), // collapsed fragment
-  NOT_LOAD_COMMIT(-2, true), // edge to not load commit
+  DOTTED(1, true), // collapsed fragment
+  NOT_LOAD_COMMIT(-2, false), // edge to not load commit
   DOTTED_ARROW_UP(2, false),
   DOTTED_ARROW_DOWN(3, false);
 
   private final byte myType;
-  private final boolean myIsPermanentEdge;
+  private final boolean myIsEdge;
 
-  GraphEdgeType(int type, boolean isPermanentEdge) {
-    this.myIsPermanentEdge = isPermanentEdge;
+  GraphEdgeType(int type, boolean isEdge) {
+    this.myIsEdge = isEdge;
     this.myType = (byte) type;
   }
 
@@ -36,8 +36,8 @@ public enum GraphEdgeType {
     return myType;
   }
 
-  public boolean isPermanentEdge() {
-    return myIsPermanentEdge;
+  public boolean isEdge() {
+    return myIsEdge;
   }
 
   @NotNull
