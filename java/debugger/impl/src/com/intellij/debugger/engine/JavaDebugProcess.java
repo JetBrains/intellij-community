@@ -318,6 +318,7 @@ public class JavaDebugProcess extends XDebugProcess {
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
+    addActionToGroup(settings, XDebuggerActions.INLINE_DEBUGGER);
     addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
     addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP_ON_SELECTION);
     settings.addAction(new AutoVarsSwitchAction(), Constraints.FIRST);

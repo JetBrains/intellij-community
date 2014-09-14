@@ -66,6 +66,8 @@ public interface XDebuggerActions {
 
   @NonNls String TOGGLE_SORT_VALUES = "XDebugger.ToggleSortValues";
 
+  @NonNls String INLINE_DEBUGGER = "XDebugger.Inline";
+
   @NonNls String AUTO_TOOLTIP = "XDebugger.AutoTooltip";
   @NonNls String AUTO_TOOLTIP_ON_SELECTION = "XDebugger.AutoTooltipOnSelection";
 

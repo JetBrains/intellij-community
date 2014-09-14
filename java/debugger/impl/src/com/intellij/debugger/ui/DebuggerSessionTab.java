@@ -317,6 +317,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     settings.add(new WatchLastMethodReturnValueAction());
     settings.add(new AutoVarsSwitchAction());
     settings.addSeparator();
+    addActionToGroup(settings, XDebuggerActions.INLINE_DEBUGGER);
     addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
     addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP_ON_SELECTION);
 
