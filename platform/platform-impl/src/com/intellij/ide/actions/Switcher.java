@@ -594,8 +594,10 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     public void keyReleased(KeyEvent e) {
-      if (e.getKeyCode() == CTRL_KEY && isAutoHide() || e.getKeyCode() == VK_ENTER) {
-        navigate(e.isShiftDown());
+      boolean ctrl = e.getKeyCode() == CTRL_KEY;
+      boolean enter = e.getKeyCode() == VK_ENTER;
+      if (ctrl && isAutoHide() || enter) {
+        navigate(e.isShiftDown() && enter);
       } 
       else if (e.getKeyCode() == VK_LEFT) {
         goLeft();
