@@ -34,10 +34,17 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
 
   private static Collection<BooleanOptionDescription> createOptions() {
     final List<BooleanOptionDescription> options = new ArrayList<BooleanOptionDescription>();
-    options.add(editor("IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS", "Mouse", "checkbox.honor.camelhumps.words.settings.on.double.click",
-                       "Editor.Behavior"));
-    options.add(editor("IS_WHEEL_FONTCHANGE_ENABLED", "Mouse", SystemInfo.isMac ? "checkbox.enable.ctrl.mousewheel.changes.font.size.macos" : "checkbox.enable.ctrl.mousewheel.changes.font.size", "Editor.Behavior"));
-    options.add(editor("IS_DND_ENABLED", "Mouse", "checkbox.enable.drag.n.drop.functionality.in.editor", "Editor.Behavior"));
+    options.add(editorMouse("IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS", "checkbox.honor.camelhumps.words.settings.on.double.click"));
+    options.add(editorMouse("IS_WHEEL_FONTCHANGE_ENABLED", SystemInfo.isMac
+                                                           ? "checkbox.enable.ctrl.mousewheel.changes.font.size.macos"
+                                                           : "checkbox.enable.ctrl.mousewheel.changes.font.size"));
+    options.add(editorMouse("IS_DND_ENABLED", "checkbox.enable.drag.n.drop.functionality.in.editor"));
+
+    options.add(editorVirtualSpace("IS_ALL_SOFTWRAPS_SHOWN", "checkbox.show.all.softwraps"));
+    options.add(editorVirtualSpace("IS_VIRTUAL_SPACE", "checkbox.allow.placement.of.caret.after.end.of.line"));
+    options.add(editorVirtualSpace("IS_CARET_INSIDE_TABS", "checkbox.allow.placement.of.caret.inside.tabs"));
+    options.add(editorVirtualSpace("ADDITIONAL_PAGE_AT_BOTTOM", "checkbox.show.virtual.space.at.file.bottom"));
+
     return options;
   }
 
@@ -48,5 +55,17 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     }
     name += StringUtil.stripHtml(ApplicationBundle.message(property), false);
     return new EditorOptionDescription(fieldName, name, configurableId);
+  }
+
+  static EditorOptionDescription editorMouse(String fieldName, String property) {
+    return editorBehavior(fieldName, "Mouse", property);
+  }
+
+  static EditorOptionDescription editorVirtualSpace(String fieldName, String property) {
+    return editorBehavior(fieldName, "Virtual Space", property);
+  }
+
+  static EditorOptionDescription editorBehavior(String fieldName, String group, String property) {
+    return editor(fieldName, group, property, "Editor.Behavior");
   }
 }
