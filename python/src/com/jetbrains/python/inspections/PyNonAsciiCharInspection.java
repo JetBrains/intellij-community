@@ -25,7 +25,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +95,16 @@ public class PyNonAsciiCharInspection extends PyInspection {
 
     @Override
     public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+      checkString(node, node.getText());
+    }
+
+    @Override
+    public void visitPyReferenceExpression(PyReferenceExpression node) {
+      checkString(node, node.getText());
+    }
+
+    @Override
+    public void visitPyTargetExpression(PyTargetExpression node) {
       checkString(node, node.getText());
     }
   }
