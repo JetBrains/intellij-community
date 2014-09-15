@@ -1,9 +1,11 @@
 package com.jetbrains.env.python.debug;
 
 import com.google.common.collect.Sets;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -37,6 +39,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected Semaphore myTerminateSemaphore;
   protected boolean shouldPrintOutput = false;
   protected boolean myProcessCanTerminate;
+  protected ExecutionResult myExecutionResult;
 
   protected void waitForPause() throws InterruptedException, InvocationTargetException {
     Assert.assertTrue("Debugger didn't stopped within timeout\nOutput:" + output(), waitFor(myPausedSemaphore));
@@ -246,9 +249,8 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         try {
-          if (mySession != null) {
-            finishSession();
-          }
+          finishSession();
+
           PyBaseDebuggerTask.super.tearDown();
         }
         catch (Exception e) {
@@ -271,9 +273,21 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       waitFor(mySession.getDebugProcess().getProcessHandler()); //wait for process termination after session.stop() which is async
 
       XDebuggerTestUtil.disposeDebugSession(mySession);
+
       mySession = null;
       myDebugProcess = null;
       myPausedSemaphore = null;
+    }
+
+
+    if (myExecutionResult != null) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(myExecutionResult.getExecutionConsole());
+        }
+      });
+      myExecutionResult = null;
     }
   }
 
