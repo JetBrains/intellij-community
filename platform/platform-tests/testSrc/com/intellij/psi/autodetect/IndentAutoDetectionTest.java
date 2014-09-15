@@ -84,7 +84,7 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
       "    public void a() {\n" +
       "    }\n" +
       "}",
-      0, -1, 4, 6, 4, -1, 4, 4, 0
+      -1, -1, 4, 6, 4, -1, 4, 4, -1
     );
   }
 
@@ -108,7 +108,18 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
       "    };\n" +
       "  }\n" +
       "}",
-      0, 0, 2, 2, -1, 2, 4, 2, -1, 2, 4, 6, 6, 8, 6, 4, 2, 0
+      -1, -1, 2, 2, -1, 2, 4, 2, -1, 2, 4, 6, 6, 8, 6, 4, 2, -1
+    );
+  }
+
+  public void testNoZeroIndents() {
+    doTestLineToIndentMapping(
+      "class Test\n" +
+      "{\n" +
+      "int a;\n" +
+      "int b;\n" +
+      "}",
+      -1, -1, -1, -1, -1
     );
   }
 
