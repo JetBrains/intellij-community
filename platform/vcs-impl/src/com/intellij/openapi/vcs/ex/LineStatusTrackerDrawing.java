@@ -154,6 +154,14 @@ public class LineStatusTrackerDrawing {
     group.add(copyRange);
 
 
+    final JComponent editorComponent = editor.getComponent();
+    EmptyAction.setupAction(localShowPrevAction, "VcsShowPrevChangeMarker", editorComponent);
+    EmptyAction.setupAction(localShowNextAction, "VcsShowNextChangeMarker", editorComponent);
+    EmptyAction.setupAction(rollback, IdeActions.SELECTED_CHANGES_ROLLBACK, editorComponent);
+    EmptyAction.setupAction(showDiff, "ChangesView.Diff", editorComponent);
+    EmptyAction.setupAction(copyRange, IdeActions.ACTION_COPY, editorComponent);
+
+
     final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true).getComponent();
 
     final Color background = ((EditorEx)editor).getBackgroundColor();
@@ -204,14 +212,6 @@ public class LineStatusTrackerDrawing {
 
       EditorFactory.getInstance().releaseEditor(uEditor);
     }
-
-
-    final JComponent editorComponent = editor.getComponent();
-    EmptyAction.setupAction(localShowPrevAction, "VcsShowPrevChangeMarker", editorComponent);
-    EmptyAction.setupAction(localShowNextAction, "VcsShowNextChangeMarker", editorComponent);
-    EmptyAction.setupAction(rollback, IdeActions.SELECTED_CHANGES_ROLLBACK, editorComponent);
-    EmptyAction.setupAction(showDiff, "ChangesView.Diff", editorComponent);
-    EmptyAction.setupAction(copyRange, IdeActions.ACTION_COPY, editorComponent);
 
 
     final List<AnAction> actionList = ActionUtil.getActions(editorComponent);
