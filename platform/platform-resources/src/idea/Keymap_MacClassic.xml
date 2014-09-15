@@ -349,5 +349,9 @@
     <action id="QuickChangeScheme">
       <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
     </action>
+
+    <action id="NewScratchFile">
+      <keyboard-shortcut first-keystroke="control shift N"/>
+    </action>
   </keymap>
 </component>
