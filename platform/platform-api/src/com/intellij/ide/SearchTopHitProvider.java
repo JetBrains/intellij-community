@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 
 /**
@@ -24,5 +25,5 @@ import com.intellij.util.Consumer;
 public interface SearchTopHitProvider {
   ExtensionPointName<SearchTopHitProvider> EP_NAME = ExtensionPointName.create("com.intellij.search.topHitProvider");
 
-  void consumeTopHits(String pattern, Consumer<Object> collector);
+  void consumeTopHits(String pattern, Consumer<Object> collector, Project project);
 }
