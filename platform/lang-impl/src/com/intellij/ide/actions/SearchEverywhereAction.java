@@ -265,6 +265,20 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         final Dimension size = super.getPreferredSize();
         return new Dimension(Math.min(size.width - 2, POPUP_MAX_WIDTH), size.height);
       }
+
+      @Override
+      public void clearSelection() {
+        //avoid blinking
+      }
+
+      @Override
+      public Object getSelectedValue() {
+        try {
+          return super.getSelectedValue();
+        } catch (Exception e) {
+          return null;
+        }
+      }
     };
     myList.setCellRenderer(myRenderer);
     myList.addMouseListener(new MouseAdapter() {
@@ -1195,8 +1209,20 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
             myList.getEmptyText().setText("Searching...");
 
-            //noinspection unchecked
-            myList.setModel(myListModel);
+            myAlarm.cancelAllRequests();
+            if (myList.getModel() instanceof SearchListModel) {
+              //noinspection unchecked
+              myAlarm.addRequest(new Runnable() {
+                @Override
+                public void run() {
+                  if (!myDone.isRejected()) {
+                    myList.setModel(myListModel);
+                  }
+                }
+              }, 100);
+            } else {
+              myList.setModel(myListModel);
+            }
           }
         });
 
