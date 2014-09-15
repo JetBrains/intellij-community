@@ -48,7 +48,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
   public void editorReleased(@NotNull EditorFactoryEvent event) {
     Editor editor = event.getEditor();
     Document document = editor.getDocument();
-    StudyDocumentListener listener = CCProjectService.getListener(document);
+    CCDocumentListener listener = CCProjectService.getListener(document);
     if (listener != null) {
       document.removeDocumentListener(listener);
       CCProjectService.removeListener(document);
@@ -57,7 +57,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     editor.getSelectionModel().removeSelection();
   }
 
-  private static class TaskFileModificationListener extends StudyDocumentListener {
+  private static class TaskFileModificationListener extends CCDocumentListener {
 
     public TaskFileModificationListener(TaskFile taskFile) {
       super(taskFile);

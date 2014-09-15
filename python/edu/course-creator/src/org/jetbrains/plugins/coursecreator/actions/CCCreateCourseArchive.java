@@ -19,8 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.coursecreator.CCDocumentListener;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
-import org.jetbrains.plugins.coursecreator.StudyDocumentListener;
 import org.jetbrains.plugins.coursecreator.format.*;
 import org.jetbrains.plugins.coursecreator.ui.CreateCourseArchiveDialog;
 
@@ -28,8 +28,8 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.ZipOutputStream;
 
-public class CreateCourseArchive extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(CreateCourseArchive.class.getName());
+public class CCCreateCourseArchive extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(CCCreateCourseArchive.class.getName());
   private String myZipName;
   private String myLocationDir;
 
@@ -41,7 +41,7 @@ public class CreateCourseArchive extends DumbAwareAction {
     myLocationDir = locationDir;
   }
 
-  public CreateCourseArchive() {
+  public CCCreateCourseArchive() {
     super("Generate course archive", "Generate course archive", AllIcons.FileTypes.Archive);
   }
 
@@ -236,7 +236,7 @@ public class CreateCourseArchive extends DumbAwareAction {
     }
   }
 
-  private static class InsertionListener extends StudyDocumentListener {
+  private static class InsertionListener extends CCDocumentListener {
 
     public InsertionListener(TaskFile taskFile) {
       super(taskFile);

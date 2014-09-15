@@ -18,8 +18,8 @@ import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.*;
 import org.jetbrains.plugins.coursecreator.ui.CreateTaskWindowDialog;
 
-public class AddTaskWindow extends DumbAwareAction {
-  public AddTaskWindow() {
+public class CCAddTaskWindow extends DumbAwareAction {
+  public CCAddTaskWindow() {
     super("Add task window","Add task window", null);
   }
 

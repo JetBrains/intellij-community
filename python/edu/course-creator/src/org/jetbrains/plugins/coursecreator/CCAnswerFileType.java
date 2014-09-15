@@ -18,7 +18,7 @@ package org.jetbrains.plugins.coursecreator;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 
-public class AnswerFileType extends PythonFileType {
+public class CCAnswerFileType extends PythonFileType {
 
   @NotNull
   @Override

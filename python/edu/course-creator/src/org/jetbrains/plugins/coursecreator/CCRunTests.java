@@ -40,7 +40,7 @@ import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.coursecreator.actions.CreateCourseArchive;
+import org.jetbrains.plugins.coursecreator.actions.CCCreateCourseArchive;
 import org.jetbrains.plugins.coursecreator.format.*;
 
 import java.io.FileOutputStream;
@@ -232,8 +232,8 @@ public class CCRunTests extends AnAction {
           Task task = lesson.getTaskList().get(index);
           HashMap<TaskFile, TaskFile> taskFilesCopy = new HashMap<TaskFile, TaskFile>();
           for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-            CreateCourseArchive.createUserFile(project, taskFilesCopy, taskResourceDir, taskDir, entry);
-            CreateCourseArchive.resetTaskFiles(taskFilesCopy);
+            CCCreateCourseArchive.createUserFile(project, taskFilesCopy, taskResourceDir, taskDir, entry);
+            CCCreateCourseArchive.resetTaskFiles(taskFilesCopy);
           }
         }
       }

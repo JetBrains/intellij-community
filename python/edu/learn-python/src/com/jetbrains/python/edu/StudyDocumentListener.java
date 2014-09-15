@@ -21,8 +21,8 @@ import com.jetbrains.python.edu.editor.StudyEditor;
 public class StudyDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
   private final Project myProject;
-  private int oldLine;
-  private int oldLineStartOffset;
+  private int myOldLine;
+  private int myOldLineStartOffset;
   private TaskWindow myTaskWindow;
 
   public StudyDocumentListener(TaskFile taskFile, Project project) {
@@ -38,8 +38,8 @@ public class StudyDocumentListener extends DocumentAdapter {
     int offset = e.getOffset();
     int oldEnd = offset + e.getOldLength();
     Document document = e.getDocument();
-    oldLine = document.getLineNumber(oldEnd);
-    oldLineStartOffset = document.getLineStartOffset(oldLine);
+    myOldLine = document.getLineNumber(oldEnd);
+    myOldLineStartOffset = document.getLineStartOffset(myOldLine);
     int line = document.getLineNumber(offset);
     int offsetInLine = offset - document.getLineStartOffset(line);
     LogicalPosition pos = new LogicalPosition(line, offsetInLine);
@@ -63,11 +63,11 @@ public class StudyDocumentListener extends DocumentAdapter {
       }
       int newEnd = offset + event.getNewLength();
       int newLine = document.getLineNumber(newEnd);
-      int lineChange = newLine - oldLine;
-      myTaskFile.incrementLines(oldLine + 1, lineChange);
+      int lineChange = newLine - myOldLine;
+      myTaskFile.incrementLines(myOldLine + 1, lineChange);
       int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
-      int oldEndOffsetInLine = offset + e.getOldLength() - oldLineStartOffset;
-      myTaskFile.updateLine(lineChange, oldLine, newEndOffsetInLine, oldEndOffsetInLine);
+      int oldEndOffsetInLine = offset + e.getOldLength() - myOldLineStartOffset;
+      myTaskFile.updateLine(lineChange, myOldLine, newEndOffsetInLine, oldEndOffsetInLine);
       Editor editor = StudyEditor.getSelectedEditor(myProject);
       if (editor == null) {
         return;
