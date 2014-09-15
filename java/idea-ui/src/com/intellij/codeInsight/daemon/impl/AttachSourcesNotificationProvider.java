@@ -46,8 +46,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
@@ -58,6 +60,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -92,7 +97,11 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     if (file.getFileType() != JavaClassFileType.INSTANCE) return null;
 
     final EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText(ProjectBundle.message("class.file.decompiled.text"));
+
+    String text = ProjectBundle.message("class.file.decompiled.text");
+    String classInfo = getClassFileInfo(file);
+    if (classInfo != null) text += ", " + classInfo;
+    panel.setText(text);
 
     final VirtualFile sourceFile = JavaEditorFileSwapper.findSourceFile(myProject, file);
     if (sourceFile == null) {
@@ -164,6 +173,29 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     }
 
     return panel;
+  }
+
+  @Nullable
+  private static String getClassFileInfo(VirtualFile file) {
+    try {
+      byte[] data = file.contentsToByteArray();
+      if (data.length > 8) {
+        DataInputStream stream = new DataInputStream(new ByteArrayInputStream(data));
+        try {
+          if (stream.readInt() == 0xCAFEBABE) {
+            int minor = stream.readUnsignedShort();
+            int major = stream.readUnsignedShort();
+            LanguageLevel level = ClsParsingUtil.getLanguageLevelByVersion(major);
+            return "bytecode version: " + major + "." + minor + " (" + level.getName() + ")";
+          }
+        }
+        finally {
+          stream.close();
+        }
+      }
+    }
+    catch (IOException ignored) { }
+    return null;
   }
 
   @Nullable

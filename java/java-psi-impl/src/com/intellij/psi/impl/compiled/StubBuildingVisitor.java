@@ -105,7 +105,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     byte stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
-    LanguageLevel languageLevel = convertFromVersion(version);
+    LanguageLevel languageLevel = ClsParsingUtil.getLanguageLevelByVersion(version);
     ((PsiClassStubImpl)myResult).setLanguageLevel(languageLevel);
 
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
@@ -187,33 +187,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       convertedInterfaces.add(ifs);
     }
     return convertedSuper;
-  }
-
-  private static LanguageLevel convertFromVersion(final int version) {
-    switch (version) {
-      case Opcodes.V1_1:
-      case Opcodes.V1_2:
-      case Opcodes.V1_3:
-        return LanguageLevel.JDK_1_3;
-
-      case Opcodes.V1_4:
-        return LanguageLevel.JDK_1_4;
-
-      case Opcodes.V1_5:
-        return LanguageLevel.JDK_1_5;
-
-      case Opcodes.V1_6:
-        return LanguageLevel.JDK_1_6;
-
-      case Opcodes.V1_7:
-        return LanguageLevel.JDK_1_7;
-
-      case Opcodes.V1_8:
-        return LanguageLevel.JDK_1_8;
-
-      default:
-        return LanguageLevel.HIGHEST;
-    }
   }
 
   private static int packCommonFlags(final int access) {
