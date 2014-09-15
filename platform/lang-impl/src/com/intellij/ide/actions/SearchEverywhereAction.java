@@ -97,6 +97,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.StatusText;
@@ -131,6 +132,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int MAX_RECENT_FILES = 10;
   private static final int DEFAULT_MORE_STEP_COUNT = 15;
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
+  public static final int MAX_TOP_HIT = 15;
   private static final int POPUP_MAX_WIDTH = 600;
   private static final Logger LOG = Logger.getInstance("#" + SearchEverywhereAction.class.getName());
 
@@ -1718,7 +1720,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
         check();
-        provider.consumeTopHits(pattern, consumer);
+        provider.consumeTopHits(pattern, consumer, project);
       }
       if (elements.size() > 0) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -1727,7 +1729,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             if (isCanceled()) return;
 
 
-            for (Object element : elements.toArray()) {
+            for (Object element : new ArrayList(elements)) {
               if (element instanceof AnAction) {
                 final AnAction action = (AnAction)element;
                 final AnActionEvent e = new AnActionEvent(myActionEvent.getInputEvent(),
@@ -1746,7 +1748,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
             if (isCanceled() || elements.isEmpty()) return;
             myListModel.titleIndex.topHit = myListModel.size();
-            for (Object element : elements) {
+            for (Object element : ContainerUtil.getFirstItems(elements, MAX_TOP_HIT)) {
               myListModel.addElement(element);
             }
           }
