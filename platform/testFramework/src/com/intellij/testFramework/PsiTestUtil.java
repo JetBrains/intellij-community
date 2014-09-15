@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ContentEntryImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
@@ -431,5 +432,16 @@ public class PsiTestUtil {
         model.getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls);
       }
     });
+  }
+
+  public static Sdk addJdkAnnotations(Sdk sdk) {
+    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(
+      FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations");
+    if (root != null) {
+      SdkModificator sdkModificator = sdk.getSdkModificator();
+      sdkModificator.addRoot(root, AnnotationOrderRootType.getInstance());
+      sdkModificator.commitChanges();
+    }
+    return sdk;
   }
 }
