@@ -115,7 +115,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
           pyState.execute(executor, PyDebugRunner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort));
 
         mySession = XDebuggerManager.getInstance(getProject()).
-          startSession(runner, env, env.getContentToReuse(), new XDebugProcessStarter() {
+          startSession(env, new XDebugProcessStarter() {
             @NotNull
             public XDebugProcess start(@NotNull final XDebugSession session) {
               myDebugProcess =
