@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
-import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
@@ -24,8 +23,10 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +42,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class DescriptionTypeRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvider {
+public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
 
   private static final NotNullFunction<PsiFile, Collection<? extends PsiElement>> CONVERTER =
     new NotNullFunction<PsiFile, Collection<? extends PsiElement>>() {
@@ -73,11 +74,6 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends RelatedItemLin
 
     Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (module == null) return;
-
-    final GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(module, false);
-    final PsiClass actionClass = JavaPsiFacade.getInstance(psiClass.getProject())
-      .findClass(DescriptionType.INSPECTION.getClassName(), scope);
-    if (actionClass == null) return;
 
     PsiElement highlightingElement = psiClass.getNameIdentifier();
     if (highlightingElement == null) return;

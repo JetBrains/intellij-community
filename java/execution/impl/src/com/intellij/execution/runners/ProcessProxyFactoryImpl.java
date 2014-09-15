@@ -30,15 +30,16 @@ import java.io.File;
 public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   public ProcessProxy createCommandLineProxy(final JavaCommandLine javaCmdLine) throws ExecutionException {
     ProcessProxyImpl proxy = null;
-    if (ProcessProxyImpl.useLauncher()) {
+    final JavaParameters javaParameters = javaCmdLine.getJavaParameters();
+    String mainClass = javaParameters.getMainClass();
+    if (ProcessProxyImpl.useLauncher() && mainClass != null) {
       try {
         proxy = new ProcessProxyImpl();
-        final JavaParameters javaParameters = javaCmdLine.getJavaParameters();
         JavaSdkUtil.addRtJar(javaParameters.getClassPath());
         final ParametersList vmParametersList = javaParameters.getVMParametersList();
         vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_PORT_NUMBER, String.valueOf(proxy.getPortNumber()));
         vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_BINPATH, PathManager.getBinPath());
-        javaParameters.getProgramParametersList().prepend(javaParameters.getMainClass());
+        javaParameters.getProgramParametersList().prepend(mainClass);
         javaParameters.setMainClass(ProcessProxyImpl.LAUNCH_MAIN_CLASS);
       }
       catch (ProcessProxyImpl.NoMoreSocketsException e) {

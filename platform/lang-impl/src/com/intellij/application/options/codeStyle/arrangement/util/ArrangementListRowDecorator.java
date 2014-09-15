@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import java.util.Set;
  */
 public class ArrangementListRowDecorator extends JPanel implements ArrangementUiComponent {
 
-  @NotNull private final JLabel mySortLabel = new JLabel(AllIcons.Icons.Inspector.SortByName);
+  @NotNull private final JLabel mySortLabel = new JLabel(AllIcons.ObjectBrowser.Sorted);
 
   @NotNull private final ArrangementRuleIndexControl     myRowIndexControl;
   @NotNull private final ArrangementUiComponent          myDelegate;

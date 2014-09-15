@@ -20,19 +20,23 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -45,7 +49,6 @@ import java.util.*;
 
 public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.JUnitConfiguration");
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
 
   @NonNls public static final String TEST_CLASS = "class";
@@ -75,11 +78,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     myData = data;
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return TestObject.fromString(myData.TEST_OBJECT, getProject(), this, env);
+    return TestObject.fromString(myData.TEST_OBJECT, this, env);
   }
 
-
+  @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<JUnitConfiguration>();
@@ -93,22 +97,25 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return myData;
   }
 
+  @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
-    final RefactoringElementListener listener = myData.getTestObject(getProject(), this).getListener(element, this);
+    final RefactoringElementListener listener = myData.getTestObject(this).getListener(element, this);
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    myData.getTestObject(getProject(), this).checkConfiguration();
+    myData.getTestObject(this).checkConfiguration();
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
+  @Override
   public Collection<Module> getValidModules() {
     if (TEST_PACKAGE.equals(myData.TEST_OBJECT) || TEST_PATTERN.equals(myData.TEST_OBJECT)) {
       return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
     }
     try {
-      myData.getTestObject(getProject(), this).checkConfiguration();
+      myData.getTestObject(this).checkConfiguration();
     }
     catch (RuntimeConfigurationError e) {
       return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
@@ -120,10 +127,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return JavaRunConfigurationModule.getModulesForClass(getProject(), myData.getMainClassName());
   }
 
+  @Override
   protected ModuleBasedConfiguration createInstance() {
     return new JUnitConfiguration(getName(), getProject(), myData.clone(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);// throw new RuntimeException("Should not call");
   }
 
+  @Override
   public String suggestedName() {
     return myData.getGeneratedName(getConfigurationModule());
   }
@@ -133,68 +142,84 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return getTestObject().suggestActionName();
   }
 
+  @Override
   public void setVMParameters(String value) {
     myData.setVMParameters(value);
   }
 
+  @Override
   public String getVMParameters() {
     return myData.getVMParameters();
   }
 
+  @Override
   public void setProgramParameters(String value) {
     myData.setProgramParameters(value);
   }
 
+  @Override
   public String getProgramParameters() {
     return myData.getProgramParameters();
   }
 
+  @Override
   public void setWorkingDirectory(String value) {
     myData.setWorkingDirectory(value);
   }
 
+  @Override
   public String getWorkingDirectory() {
     return myData.getWorkingDirectory();
   }
 
+  @Override
   public void setEnvs(@NotNull Map<String, String> envs) {
     myData.setEnvs(envs);
   }
 
+  @Override
   @NotNull
   public Map<String, String> getEnvs() {
     return myData.getEnvs();
   }
 
+  @Override
   public void setPassParentEnvs(boolean passParentEnvs) {
     myData.PASS_PARENT_ENVS = passParentEnvs;
   }
 
+  @Override
   public boolean isPassParentEnvs() {
     return myData.PASS_PARENT_ENVS;
   }
 
+  @Override
   public boolean isAlternativeJrePathEnabled() {
     return ALTERNATIVE_JRE_PATH_ENABLED;
   }
 
+  @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
-    this.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+    ALTERNATIVE_JRE_PATH_ENABLED = enabled;
   }
 
+  @Override
   public String getAlternativeJrePath() {
     return ALTERNATIVE_JRE_PATH;
   }
 
+  @Override
   public void setAlternativeJrePath(String path) {
-    this.ALTERNATIVE_JRE_PATH = path;
+    ALTERNATIVE_JRE_PATH = path;
   }
 
+  @Override
   public String getRunClass() {
     final Data data = getPersistentData();
     return data.TEST_OBJECT != TEST_CLASS && data.TEST_OBJECT != TEST_METHOD ? null : data.getMainClassName();
   }
 
+  @Override
   public String getPackage() {
     final Data data = getPersistentData();
     return !Comparing.strEqual(data.TEST_OBJECT, TEST_PACKAGE) ? null : data.getPackageName();
@@ -218,6 +243,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     setGeneratedName();
   }
 
+  @Override
   @NotNull
   public Module[] getModules() {
     if (TEST_PACKAGE.equals(myData.TEST_OBJECT) &&
@@ -228,34 +254,40 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
   final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
+    @Override
     public void setName(final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
       myData.PACKAGE_NAME = qualifiedName;
       if (generatedName) setGeneratedName();
     }
 
+    @Override
     public PsiPackage getPsiElement() {
       final String qualifiedName = myData.getPackageName();
       return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName)
              : null;
     }
 
+    @Override
     public void setPsiElement(final PsiPackage psiPackage) {
       setName(psiPackage.getQualifiedName());
     }
   };
 
   final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
+    @Override
     public void setName(@NotNull final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
       myData.MAIN_CLASS_NAME = qualifiedName;
       if (generatedName) setGeneratedName();
     }
 
+    @Override
     public PsiClass getPsiElement() {
       return getConfigurationModule().findClass(myData.getMainClassName());
     }
 
+    @Override
     public void setPsiElement(final PsiClass psiClass) {
       final Module originalModule = getConfigurationModule().getModule();
       setMainClass(psiClass);
@@ -264,9 +296,10 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   };
 
   public TestObject getTestObject() {
-    return myData.getTestObject(getProject(), this);
+    return myData.getTestObject(this);
   }
 
+  @Override
   public void readExternal(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
@@ -304,6 +337,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     }
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
@@ -445,6 +479,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       return TEST_SEARCH_SCOPE.getScope();
     }
 
+    @Override
     public Data clone() {
       try {
         Data data = (Data)super.clone();
@@ -550,9 +585,9 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       myPattern = pattern;
     }
 
-    public TestObject getTestObject(final Project project, final JUnitConfiguration configuration) {
+    public TestObject getTestObject(@NotNull JUnitConfiguration configuration) {
       //TODO[dyoma]!
-      return TestObject.fromString(TEST_OBJECT, project, configuration, null);
+      return TestObject.fromString(TEST_OBJECT, configuration, ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build());
     }
 
     public Module setMainClass(final PsiClass testClass) {

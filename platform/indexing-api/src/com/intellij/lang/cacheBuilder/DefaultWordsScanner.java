@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 
-public class DefaultWordsScanner implements WordsScanner {
+public class DefaultWordsScanner extends VersionedWordsScanner {
   private final Lexer myLexer;
   private final TokenSet myIdentifierTokenSet;
   private final TokenSet myCommentTokenSet;

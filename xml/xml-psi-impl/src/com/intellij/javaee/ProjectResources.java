@@ -16,42 +16,21 @@
 package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMExternalizableAdapter;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
 
 /**
-* @author Dmitry Avdeev
-*/
-@State(name = "ProjectResources", storages = {@Storage( file = StoragePathMacros.PROJECT_FILE)})
-public class ProjectResources extends ExternalResourceManagerExImpl implements PersistentStateComponent<Element>, JDOMExternalizable {
-  private final JDOMExternalizableAdapter myAdapter;
-
-  public ProjectResources(@NotNull PathMacrosImpl pathMacros) {
-    super(pathMacros);
-    myAdapter = new JDOMExternalizableAdapter(this, "ProjectResources");
-  }
-
+ * @author Dmitry Avdeev
+ */
+@State(name = "ProjectResources", storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)})
+public class ProjectResources extends ExternalResourceManagerExImpl {
   @Override
   protected Map<String, Map<String, Resource>> computeStdResources() {
-    return Collections.emptyMap();   
-  }
-
-  @Override
-  public Element getState() {
-    return myAdapter.getState();
-  }
-
-  @Override
-  public void loadState(Element state) {
-    myAdapter.loadState(state);
+    return Collections.emptyMap();
   }
 }

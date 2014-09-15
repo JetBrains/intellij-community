@@ -1,0 +1,11 @@
+package pkg;
+
+class TestDebugSymbols {
+   private int m() {
+      String text = "text";
+      long prolonged = 42L;
+      float decimated = (float)prolonged / 10.0F;
+      double doubled = (double)(2.0F * decimated);
+      return (text + ":" + prolonged + ":" + decimated + ":" + doubled).length();
+   }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -381,7 +381,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   @Nullable
-  public static Color calcTabColor(final Project project, final VirtualFile file) {
+  public static Color calcTabColor(@NotNull Project project, @NotNull VirtualFile file) {
     for (EditorTabColorProvider provider : Extensions.getExtensions(EditorTabColorProvider.EP_NAME)) {
       final Color result = provider.getEditorTabColor(project, file);
       if (result != null) {

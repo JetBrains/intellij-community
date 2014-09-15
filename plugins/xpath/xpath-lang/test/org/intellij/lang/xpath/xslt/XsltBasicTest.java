@@ -18,8 +18,6 @@ package org.intellij.lang.xpath.xslt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.xml.XmlFile;
-
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 
@@ -95,7 +93,7 @@ public class XsltBasicTest extends TestBase {
     final String fileName = getTestFileName();
     String path = fileName.replaceAll("_.*$", "") + ".xsl";
     final VirtualFile file = myFixture.copyFileToProject(path);
-    ((CodeInsightTestFixtureImpl)myFixture).openFileInEditor(file);
+    myFixture.openFileInEditor(file);
     if (fileName.endsWith("_Loaded")) {
       ((XmlFile)myFixture.getFile()).getDocument();
       assertTrue(((PsiFileEx)myFixture.getFile()).isContentsLoaded());

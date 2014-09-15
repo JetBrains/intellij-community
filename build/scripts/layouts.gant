@@ -254,8 +254,11 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 }
 
 public def layoutCommunityPlugins(String home) {
-  if (isDefined("androidPluginHome")) {
-    layoutAndroid(p("androidPluginHome"))
+  if (!isDefined("maySkipAndroidPlugin") || new File("$home/android").exists()) {
+    layoutAndroid("$home/android")
+  }
+  else {
+    projectBuilder.warning("Android plugin sources aren't found at $home/android. Android plugin is excluded from layout.")
   }
 
   dir("plugins") {

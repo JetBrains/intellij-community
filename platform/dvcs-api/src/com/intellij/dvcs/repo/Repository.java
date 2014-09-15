@@ -48,11 +48,8 @@ import org.jetbrains.annotations.Nullable;
  * If one needs a really 100 % up-to-date value, one should call {@link #update()} and then get...().
  * update() is a synchronous read from repository file (.git or .hg), so it is guaranteed to query the real value.
  * </p>
- *
- * @author Nadya Zabrodina
  */
 public interface Repository extends Disposable {
-
 
   /**
    * Current state of the repository.
@@ -62,24 +59,29 @@ public interface Repository extends Disposable {
      * HEAD is on branch, no merge process is in progress (and no rebase as well).
      */
     NORMAL,
+
     /**
      * During merge (for instance, merge failed with conflicts that weren't immediately resolved).
      */
     MERGING {
+      @NotNull
       @Override
       public String toString() {
         return "Merging";
       }
     },
+
     /**
      * During rebase.
      */
     REBASING {
+      @NotNull
       @Override
       public String toString() {
         return "Rebasing";
       }
     },
+
     /**
      * Detached HEAD state, but not during rebase (for example, manual checkout of a commit hash).
      */
@@ -97,6 +99,9 @@ public interface Repository extends Disposable {
 
   @NotNull
   State getState();
+
+  @Nullable
+  String getCurrentBranchName();
 
   @Nullable
   AbstractVcs getVcs();

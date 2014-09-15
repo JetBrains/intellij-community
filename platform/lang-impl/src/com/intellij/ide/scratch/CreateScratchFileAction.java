@@ -34,6 +34,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -136,7 +137,7 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
 
   @NotNull
   public static List<Language> getLanguages() {
-    Set<Language> result = ContainerUtil.newTreeSet(new Comparator<Language>() {
+    Set<Language> result = ContainerUtilRt.newTreeSet(new Comparator<Language>() {
       @Override
       public int compare(@NotNull Language l1, @NotNull Language l2) {
         return l1.getDisplayName().compareTo(l2.getDisplayName());

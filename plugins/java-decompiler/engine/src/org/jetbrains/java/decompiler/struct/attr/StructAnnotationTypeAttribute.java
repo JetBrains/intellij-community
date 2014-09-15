@@ -18,81 +18,77 @@ package org.jetbrains.java.decompiler.struct.attr;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class StructAnnotationTypeAttribute extends StructGeneralAttribute {
 
-  public static final int ANNOTATION_TARGET_TYPE_GENERIC_CLASS = 0x00;
-  public static final int ANNOTATION_TARGET_TYPE_GENERIC_METHOD = 0x01;
-  public static final int ANNOTATION_TARGET_TYPE_EXTENDS_IMPLEMENTS = 0x10;
-  public static final int ANNOTATION_TARGET_TYPE_GENERIC_CLASS_BOUND = 0x11;
-  public static final int ANNOTATION_TARGET_TYPE_GENERIC_METHOD_BOUND = 0x12;
-  public static final int ANNOTATION_TARGET_TYPE_FIELD = 0x13;
-  public static final int ANNOTATION_TARGET_TYPE_RETURN = 0x14;
-  public static final int ANNOTATION_TARGET_TYPE_RECEIVER = 0x15;
-  public static final int ANNOTATION_TARGET_TYPE_FORMAL = 0x16;
-  public static final int ANNOTATION_TARGET_TYPE_THROWS = 0x17;
-  public static final int ANNOTATION_TARGET_TYPE_LOCAL_VARIABLE = 0x40;
-  public static final int ANNOTATION_TARGET_TYPE_RESOURCE_VARIABLE = 0x41;
-  public static final int ANNOTATION_TARGET_TYPE_EXCEPTION = 0x42;
-  public static final int ANNOTATION_TARGET_TYPE_INSTANCEOF = 0x43;
-  public static final int ANNOTATION_TARGET_TYPE_NEW = 0x44;
-  public static final int ANNOTATION_TARGET_TYPE_DOUBLECOLON_NEW = 0x45;
-  public static final int ANNOTATION_TARGET_TYPE_DOUBLECOLON_ID = 0x46;
-  public static final int ANNOTATION_TARGET_TYPE_CAST = 0x47;
-  public static final int ANNOTATION_TARGET_TYPE_INVOKATION_CONSTRUCTOR = 0x48;
-  public static final int ANNOTATION_TARGET_TYPE_INVOKATION_METHOD = 0x49;
-  public static final int ANNOTATION_TARGET_TYPE_GENERIC_DOUBLECOLON_NEW = 0x4A;
-  public static final int ANNOTATION_TARGET_TYPE_GENERIC_DOUBLECOLON_ID = 0x4B;
+  private static final int ANNOTATION_TARGET_TYPE_GENERIC_CLASS = 0x00;
+  private static final int ANNOTATION_TARGET_TYPE_GENERIC_METHOD = 0x01;
+  private static final int ANNOTATION_TARGET_TYPE_EXTENDS_IMPLEMENTS = 0x10;
+  private static final int ANNOTATION_TARGET_TYPE_GENERIC_CLASS_BOUND = 0x11;
+  private static final int ANNOTATION_TARGET_TYPE_GENERIC_METHOD_BOUND = 0x12;
+  private static final int ANNOTATION_TARGET_TYPE_FIELD = 0x13;
+  private static final int ANNOTATION_TARGET_TYPE_RETURN = 0x14;
+  private static final int ANNOTATION_TARGET_TYPE_RECEIVER = 0x15;
+  private static final int ANNOTATION_TARGET_TYPE_FORMAL = 0x16;
+  private static final int ANNOTATION_TARGET_TYPE_THROWS = 0x17;
+  private static final int ANNOTATION_TARGET_TYPE_LOCAL_VARIABLE = 0x40;
+  private static final int ANNOTATION_TARGET_TYPE_RESOURCE_VARIABLE = 0x41;
+  private static final int ANNOTATION_TARGET_TYPE_EXCEPTION = 0x42;
+  private static final int ANNOTATION_TARGET_TYPE_INSTANCEOF = 0x43;
+  private static final int ANNOTATION_TARGET_TYPE_NEW = 0x44;
+  private static final int ANNOTATION_TARGET_TYPE_DOUBLE_COLON_NEW = 0x45;
+  private static final int ANNOTATION_TARGET_TYPE_DOUBLE_COLON_ID = 0x46;
+  private static final int ANNOTATION_TARGET_TYPE_CAST = 0x47;
+  private static final int ANNOTATION_TARGET_TYPE_INVOCATION_CONSTRUCTOR = 0x48;
+  private static final int ANNOTATION_TARGET_TYPE_INVOCATION_METHOD = 0x49;
+  private static final int ANNOTATION_TARGET_TYPE_GENERIC_DOUBLE_COLON_NEW = 0x4A;
+  private static final int ANNOTATION_TARGET_TYPE_GENERIC_DOUBLE_COLON_ID = 0x4B;
 
-  public static final int ANNOTATION_TARGET_UNION_TYPE_PARAMETER = 1;
-  public static final int ANNOTATION_TARGET_UNION_SUPERTYPE = 2;
-  public static final int ANNOTATION_TARGET_UNION_TYPE_PARAMETER_BOUND = 3;
-  public static final int ANNOTATION_TARGET_UNION_EMPTY = 4;
-  public static final int ANNOTATION_TARGET_UNION_FORMAL_PARAMETER = 5;
-  public static final int ANNOTATION_TARGET_UNION_THROWS = 6;
-  public static final int ANNOTATION_TARGET_UNION_LOCALVAR = 7;
-  public static final int ANNOTATION_TARGET_UNION_CATCH = 8;
-  public static final int ANNOTATION_TARGET_UNION_OFFSET = 9;
-  public static final int ANNOTATION_TARGET_UNION_TYPE_ARGUMENT = 10;
+  private static final int ANNOTATION_TARGET_UNION_TYPE_PARAMETER = 1;
+  private static final int ANNOTATION_TARGET_UNION_SUPERTYPE = 2;
+  private static final int ANNOTATION_TARGET_UNION_TYPE_PARAMETER_BOUND = 3;
+  private static final int ANNOTATION_TARGET_UNION_EMPTY = 4;
+  private static final int ANNOTATION_TARGET_UNION_FORMAL_PARAMETER = 5;
+  private static final int ANNOTATION_TARGET_UNION_THROWS = 6;
+  private static final int ANNOTATION_TARGET_UNION_LOCAL_VAR = 7;
+  private static final int ANNOTATION_TARGET_UNION_CATCH = 8;
+  private static final int ANNOTATION_TARGET_UNION_OFFSET = 9;
+  private static final int ANNOTATION_TARGET_UNION_TYPE_ARGUMENT = 10;
 
+  @SuppressWarnings("FieldCanBeLocal") private List<AnnotationLocation> locations;
+  @SuppressWarnings("FieldCanBeLocal") private List<AnnotationExprent> annotations;
 
-  List<AnnotationLocation> locations = new ArrayList<AnnotationLocation>();
-  List<AnnotationExprent> annotations = new ArrayList<AnnotationExprent>();
+  @Override
+  public void initContent(ConstantPool pool) throws IOException {
+    DataInputStream data = stream();
 
-  public void initContent(ConstantPool pool) {
-
-    super.initContent(pool);
-
-    DataInputStream data = new DataInputStream(new ByteArrayInputStream(info));
-
-    try {
-
-      int ann_number = data.readUnsignedByte();
-      for (int i = 0; i < ann_number; i++) {
+    int len = data.readUnsignedByte();
+    if (len > 0) {
+      locations = new ArrayList<AnnotationLocation>(len);
+      annotations = new ArrayList<AnnotationExprent>(len);
+      for (int i = 0; i < len; i++) {
         locations.add(parseAnnotationLocation(data));
         annotations.add(StructAnnotationAttribute.parseAnnotation(data, pool));
       }
     }
-    catch (IOException ex) {
-      throw new RuntimeException(ex);
+    else {
+      locations = Collections.emptyList();
+      annotations = Collections.emptyList();
     }
   }
 
-  public AnnotationLocation parseAnnotationLocation(DataInputStream data) throws IOException {
-
+  private static AnnotationLocation parseAnnotationLocation(DataInputStream data) throws IOException {
     AnnotationLocation ann_location = new AnnotationLocation();
 
     // target type
-
     ann_location.target_type = data.readUnsignedByte();
 
     // target union
-
     switch (ann_location.target_type) {
       case ANNOTATION_TARGET_TYPE_GENERIC_CLASS:
       case ANNOTATION_TARGET_TYPE_GENERIC_METHOD:
@@ -118,22 +114,22 @@ public class StructAnnotationTypeAttribute extends StructGeneralAttribute {
         break;
       case ANNOTATION_TARGET_TYPE_LOCAL_VARIABLE:
       case ANNOTATION_TARGET_TYPE_RESOURCE_VARIABLE:
-        ann_location.target_union = ANNOTATION_TARGET_UNION_LOCALVAR;
+        ann_location.target_union = ANNOTATION_TARGET_UNION_LOCAL_VAR;
         break;
       case ANNOTATION_TARGET_TYPE_EXCEPTION:
         ann_location.target_union = ANNOTATION_TARGET_UNION_CATCH;
         break;
       case ANNOTATION_TARGET_TYPE_INSTANCEOF:
       case ANNOTATION_TARGET_TYPE_NEW:
-      case ANNOTATION_TARGET_TYPE_DOUBLECOLON_NEW:
-      case ANNOTATION_TARGET_TYPE_DOUBLECOLON_ID:
+      case ANNOTATION_TARGET_TYPE_DOUBLE_COLON_NEW:
+      case ANNOTATION_TARGET_TYPE_DOUBLE_COLON_ID:
         ann_location.target_union = ANNOTATION_TARGET_UNION_OFFSET;
         break;
       case ANNOTATION_TARGET_TYPE_CAST:
-      case ANNOTATION_TARGET_TYPE_INVOKATION_CONSTRUCTOR:
-      case ANNOTATION_TARGET_TYPE_INVOKATION_METHOD:
-      case ANNOTATION_TARGET_TYPE_GENERIC_DOUBLECOLON_NEW:
-      case ANNOTATION_TARGET_TYPE_GENERIC_DOUBLECOLON_ID:
+      case ANNOTATION_TARGET_TYPE_INVOCATION_CONSTRUCTOR:
+      case ANNOTATION_TARGET_TYPE_INVOCATION_METHOD:
+      case ANNOTATION_TARGET_TYPE_GENERIC_DOUBLE_COLON_NEW:
+      case ANNOTATION_TARGET_TYPE_GENERIC_DOUBLE_COLON_ID:
         ann_location.target_union = ANNOTATION_TARGET_UNION_TYPE_ARGUMENT;
         break;
       default:
@@ -158,7 +154,7 @@ public class StructAnnotationTypeAttribute extends StructGeneralAttribute {
         break;
       case ANNOTATION_TARGET_UNION_EMPTY:
         break;
-      case ANNOTATION_TARGET_UNION_LOCALVAR:
+      case ANNOTATION_TARGET_UNION_LOCAL_VAR:
         int table_length = data.readUnsignedShort();
 
         ann_location.data = new int[table_length * 3 + 1];
@@ -175,7 +171,6 @@ public class StructAnnotationTypeAttribute extends StructGeneralAttribute {
     }
 
     // target path
-
     int path_length = data.readUnsignedByte();
 
     ann_location.target_path_kind = new int[path_length];
@@ -190,14 +185,10 @@ public class StructAnnotationTypeAttribute extends StructGeneralAttribute {
   }
 
   private static class AnnotationLocation {
-
     public int target_type;
     public int target_union;
-
     public int[] data;
-
     public int[] target_path_kind;
     public int[] target_argument_index;
   }
 }
-

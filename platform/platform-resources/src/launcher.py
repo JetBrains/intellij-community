@@ -18,27 +18,19 @@ for i, arg in enumerate(sys.argv[1:]):
         print(('Usage:\n' + \
                '  {0} -h |-? | --help\n' + \
                '  {0} [-l|--line line] file[:line]\n' + \
-               '  {0} diff file1 file2').format(sys.argv[0]))
+               '  {0} diff <left> <right>' + \
+               '  {0} merge <local> <remote> [base] <merged>').format(sys.argv[0]))
         exit(0)
-    elif arg == 'diff' and i == 0:
-        args.append(arg)
-    elif arg == '-l' or arg == '--line':
-        args.append(arg)
-        skip_next = True
-    elif skip_next:
-        args.append(arg)
-        skip_next = False
-    else:
-        if ':' in arg:
-            file_path, line_number = arg.rsplit(':', 1)
-            if line_number.isdigit():
-              args.append('-l')
-              args.append(line_number)
-              args.append(os.path.abspath(file_path))
-            else:
-              args.append(os.path.abspath(arg))
+    elif ':' in arg:
+        file_path, line_number = arg.rsplit(':', 1)
+        if line_number.isdigit():
+          args.append('-l')
+          args.append(line_number)
+          args.append(file_path)
         else:
-            args.append(os.path.abspath(arg))
+          args.append(arg)
+    else:
+        args.append(arg)
 
 def launch_with_port(port):
     found = False
@@ -54,7 +46,6 @@ def launch_with_port(port):
         try:
             path_len = struct.unpack(">h", s.recv(2))[0]
             path = s.recv(path_len)
-            path = os.path.abspath(path)
             if os.path.abspath(path) == os.path.abspath(CONFIG_PATH):
                 found = True
                 break
@@ -87,13 +78,5 @@ if port == -1:
 else:
     if launch_with_port(port): exit()
 
-if sys.platform == "darwin":
-    # Mac OS: RUN_PATH is *.app path
-    if len(args):
-        args.insert(0, "--args")
-    os.execvp("open", ["-a", RUN_PATH] + args)
-else:
-    # unix common
-    bin_dir, bin_file = os.path.split(RUN_PATH)
-    os.chdir(bin_dir)
-    os.execv(bin_file, [bin_file] + args)
+bin_dir, bin_file = os.path.split(RUN_PATH)
+os.execv(RUN_PATH, [bin_file] + args)

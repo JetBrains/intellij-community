@@ -290,6 +290,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   HighlightTestInfo testFile(@NonNls @NotNull String... filePath);
 
+  void openFileInEditor(@NotNull VirtualFile file);
+
   void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper toolWrapper);
 
   /**
@@ -461,6 +463,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @NotNull
   Collection<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
+
+  Collection<GutterMark> findAllGutters();
 
   void type(final char c);
 

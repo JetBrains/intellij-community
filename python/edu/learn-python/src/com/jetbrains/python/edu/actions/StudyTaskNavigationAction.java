@@ -1,5 +1,6 @@
 package com.jetbrains.python.edu.actions;
 
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -12,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.edu.StudyState;
 import com.jetbrains.python.edu.course.Lesson;
 import com.jetbrains.python.edu.course.Task;
@@ -20,6 +22,7 @@ import com.jetbrains.python.edu.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.util.Map;
 
 
@@ -74,7 +77,11 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
         }
       }
     }
+    JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
+    TreePath path = TreeUtil.getFirstNodePath(tree);
+    tree.collapsePath(path);
     if (shouldBeActive != null) {
+      ProjectView.getInstance(project).select(shouldBeActive, shouldBeActive, false);
       FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
     }
     ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);

@@ -16,36 +16,33 @@
 package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerTestUtil;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.util.concurrency.Semaphore;
+import com.intellij.testFramework.CompilerTester;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenResourceCompilerConfigurationGenerator;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author nik
  */
 public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
-
   protected void tearDown() throws Exception {
     try {
       CompilerTestUtil.disableExternalCompiler(myProject);
@@ -64,42 +61,29 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
   }
 
   private void compile(final CompileScope scope) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        for (Module module : scope.getAffectedModules()) {
-          setupJdkForModule(module.getName());
+    try {
+      CompilerTester tester = new CompilerTester(myProject, Arrays.asList(scope.getAffectedModules()));
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          new MavenResourceCompilerConfigurationGenerator(myProject, MavenProjectsManager.getInstance(myProject).getProjectsTreeForTests())
+            .generateBuildConfiguration(false);
         }
-        new MavenResourceCompilerConfigurationGenerator(myProject, MavenProjectsManager.getInstance(myProject).getProjectsTreeForTests()).generateBuildConfiguration(false);
-      }
-    });
-
-    CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
-
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        CompilerTestUtil.enableExternalCompiler();
-        CompilerManager.getInstance(myProject).make(scope, new CompileStatusNotification() {
-          @Override
-          public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-            //assertFalse(aborted);
-            //assertEquals(collectMessages(compileContext, CompilerMessageCategory.ERROR), 0, errors);
-            //assertEquals(collectMessages(compileContext, CompilerMessageCategory.WARNING), 0, warnings);
-            semaphore.up();
+      });
+      try {
+        List<CompilerMessage> messages = tester.make(scope);
+        for (CompilerMessage message : messages) {
+          if (message.getCategory() == CompilerMessageCategory.ERROR) {
+            fail("Compilation failed with error: " + message.getMessage());
           }
-        });
+        }
       }
-    });
-    while (!semaphore.waitFor(100)) {
-      if (SwingUtilities.isEventDispatchThread()) {
-        UIUtil.dispatchAllInvocationEvents();
+      finally {
+        tester.tearDown();
       }
     }
-    if (SwingUtilities.isEventDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 

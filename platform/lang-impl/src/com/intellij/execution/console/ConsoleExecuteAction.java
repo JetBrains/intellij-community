@@ -18,6 +18,7 @@ package com.intellij.execution.console;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.process.ConsoleHistoryModel;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.EmptyAction;
@@ -39,7 +40,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
   private final LanguageConsoleView myConsoleView;
   private final LanguageConsoleImpl myConsole;
-  private final ConsoleExecuteActionHandler myExecuteActionHandler;
+  final ConsoleExecuteActionHandler myExecuteActionHandler;
   private final Condition<LanguageConsoleImpl> myEnabledCondition;
 
   @SuppressWarnings("UnusedDeclaration")
@@ -95,7 +96,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   }
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     EditorEx editor = myConsole.getConsoleEditor();
     boolean enabled = !editor.isRendererMode() && isEnabled() &&
                       (myExecuteActionHandler.isEmptyCommandExecutionAllowed() || !StringUtil.isEmptyOrSpaces(editor.getDocument().getCharsSequence()));
@@ -109,7 +110,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     myExecuteActionHandler.runExecuteAction(myConsole, myConsoleView);
   }
 
@@ -139,6 +140,8 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     private boolean myAddToHistory = true;
     final boolean myPreserveMarkup;
 
+    boolean useProcessStdIn;
+
     public ConsoleExecuteActionHandler(boolean preserveMarkup) {
       myCommandHistoryModel = new ConsoleHistoryModel();
       myPreserveMarkup = preserveMarkup;
@@ -156,19 +159,25 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       myAddToHistory = addCurrentToHistory;
     }
 
-    /**
-     * @deprecated
-     */
     protected void beforeExecution(@NotNull LanguageConsoleImpl console) {
     }
 
     protected void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
-      //noinspection deprecation
-      beforeExecution(console);
+      if (!useProcessStdIn) {
+        beforeExecution(console);
+      }
 
-      String text = console.prepareExecuteAction(myAddToHistory, myPreserveMarkup, true);
+      String text = console.prepareExecuteAction(myAddToHistory && !useProcessStdIn, myPreserveMarkup, true);
       ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(console.getCurrentEditor().getDocument()));
-      addToCommandHistoryAndExecute(console, consoleView, text);
+
+      if (useProcessStdIn) {
+        assert consoleView != null;
+        consoleView.print(text, ConsoleViewContentType.USER_INPUT);
+        consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
+      }
+      else {
+        addToCommandHistoryAndExecute(console, consoleView, text);
+      }
     }
 
     private void addToCommandHistoryAndExecute(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView, @NotNull String text) {

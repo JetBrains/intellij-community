@@ -53,12 +53,7 @@ import java.util.TreeSet;
 
 @State(
   name = "SvnConfiguration",
-  roamingType = RoamingType.DISABLED,
-  storages = {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )
-  }
+  storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
 )
 public class SvnConfiguration implements PersistentStateComponent<SvnConfigurationState> {
 

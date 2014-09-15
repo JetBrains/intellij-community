@@ -125,6 +125,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     public NotificationsTable() {
       super(new NotificationsTableModel());
+      setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
       final TableColumn idColumn = getColumnModel().getColumn(ID_COLUMN);
       idColumn.setPreferredWidth(200);
@@ -151,7 +152,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       displayTypeColumn.setCellRenderer(new ComboBoxTableRenderer<NotificationDisplayType>(NotificationDisplayType.values()) {
         @Override
         protected void customizeComponent(NotificationDisplayType value, JTable table, boolean isSelected) {
-          super.customizeComponent(value, table, isSelected);
+          super.customizeComponent(myDisplayBalloons.isSelected() ? value : NotificationDisplayType.NONE, table, isSelected);
           if (!myDisplayBalloons.isSelected() && !isSelected) {
             setBackground(UIUtil.getComboBoxDisabledBackground());
             setForeground(UIUtil.getComboBoxDisabledForeground());

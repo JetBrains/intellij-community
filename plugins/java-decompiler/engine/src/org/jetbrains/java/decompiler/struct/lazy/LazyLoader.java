@@ -22,14 +22,13 @@ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 public class LazyLoader {
 
-  private Map<String, Link> mapClassLinks = new HashMap<String, Link>();
-  private IBytecodeProvider provider;
+  private final Map<String, Link> mapClassLinks = new HashMap<String, Link>();
+  private final IBytecodeProvider provider;
 
   public LazyLoader(IBytecodeProvider provider) {
     this.provider = provider;
@@ -138,10 +137,9 @@ public class LazyLoader {
     }
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public DataInputFullStream getClassStream(String externalPath, String internalPath) throws IOException {
-    InputStream stream = provider.getBytecodeStream(externalPath, internalPath);
-    return stream == null ? null : new DataInputFullStream(stream);
+    byte[] bytes = provider.getBytecode(externalPath, internalPath);
+    return new DataInputFullStream(bytes);
   }
 
   public DataInputFullStream getClassStream(String qualifiedClassName) throws IOException {

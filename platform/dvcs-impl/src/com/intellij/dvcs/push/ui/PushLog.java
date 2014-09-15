@@ -15,7 +15,7 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.dvcs.push.TargetEditor;
+import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -30,7 +30,6 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -49,17 +48,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EventObject;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PushLog extends JPanel implements TypeSafeDataProvider {
-
-  private final ReentrantReadWriteLock TREE_CONSTRUCTION_LOCK = new ReentrantReadWriteLock();
 
   private static final String START_EDITING = "startEditing";
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
-  //private final AtomicBoolean myIgnoreStopEditing = new AtomicBoolean(false);
 
   public PushLog(Project project, CheckedTreeNode root) {
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -106,7 +101,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
     };
     myTree.setEditable(true);
-    MyTreeCellEditor treeCellEditor = new MyTreeCellEditor(new JBTextField());
+    MyTreeCellEditor treeCellEditor = new MyTreeCellEditor();
     myTree.setCellEditor(treeCellEditor);
     treeCellEditor.addCellEditorListener(new CellEditorListener() {
       @Override
@@ -155,6 +150,9 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
+    //override default tree behaviour.
+    myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
+
     myTree.setRowHeight(0);
     ToolTipManager.sharedInstance().registerComponent(myTree);
 
@@ -212,8 +210,14 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
   @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (e.getKeyCode() == KeyEvent.VK_ENTER && myTree.isEditing()) {
-      myTree.stopEditing();
+    if (e.getKeyCode() == KeyEvent.VK_ENTER && pressed) {
+      if (myTree.isEditing()) {
+        myTree.stopEditing();
+      }
+      else {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
+        myTree.startEditingAtPath(TreeUtil.getPathFromRoot(node));
+      }
       return true;
     }
     return super.processKeyBinding(ks, e, condition, pressed);
@@ -229,19 +233,15 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     return myTree;
   }
 
-  private class MyTreeCellEditor extends DefaultCellEditor {
+  private class MyTreeCellEditor extends AbstractCellEditor implements TreeCellEditor {
 
-    public MyTreeCellEditor(JTextField field) {
-      super(field);
-      setClickCountToStart(1);
-    }
+    private RepositoryWithBranchPanel myValue;
 
     @Override
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
-      final Object node = ((DefaultMutableTreeNode)value).getUserObject();
-      editorComponent =
-        (JComponent)((RepositoryWithBranchPanel)node).getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, true);
-      return editorComponent;
+      RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
+      myValue = panel;
+      return panel.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, true);
     }
 
     @Override
@@ -251,10 +251,10 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         final TreePath path = myTree.getClosestPathForLocation(me.getX(), me.getY());
         final int row = myTree.getRowForLocation(me.getX(), me.getY());
         myTree.getCellRenderer().getTreeCellRendererComponent(myTree, path.getLastPathComponent(), false, false, true, row, true);
-        Object tag = me.getClickCount() >= clickCountToStart
+        Object tag = me.getClickCount() >= 1
                      ? PushLogTreeUtil.getTagAtForRenderer(myTreeCellRenderer, me)
                      : null;
-        return tag instanceof TargetEditor;
+        return tag instanceof PushTargetPanel;
       }
       //if keyboard event - then anEvent will be null =( See BasicTreeUi
       TreePath treePath = myTree.getAnchorSelectionPath();
@@ -264,9 +264,8 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       return treeNode instanceof EditableTreeNode;
     }
 
-    //Implement the one CellEditor method that AbstractCellEditor doesn't.
     public Object getCellEditorValue() {
-      return ((RepositoryWithBranchPanel)editorComponent).getEditableValue();
+      return myValue;
     }
   }
 
@@ -300,34 +299,19 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   public void setChildren(DefaultMutableTreeNode parentNode,
                           @NotNull Collection<? extends DefaultMutableTreeNode> childrenNodes,
                           boolean shouldExpand) {
-    try {
-      TREE_CONSTRUCTION_LOCK.writeLock().lock();
-      parentNode.removeAllChildren();
-      for (DefaultMutableTreeNode child : childrenNodes) {
-        parentNode.add(child);
-      }
-      final DefaultTreeModel model = ((DefaultTreeModel)myTree.getModel());
-      model.nodeStructureChanged(parentNode);
-      TreePath path = TreeUtil.getPathFromRoot(parentNode);
-      //myIgnoreStopEditing.set(true);
-      if (shouldExpand) {
-        myTree.expandPath(path);
-      }
-      else {
-        myTree.collapsePath(path);
-      }
+    parentNode.removeAllChildren();
+    for (DefaultMutableTreeNode child : childrenNodes) {
+      parentNode.add(child);
     }
-    finally {
-      TREE_CONSTRUCTION_LOCK.writeLock().unlock();
-      //myIgnoreStopEditing.set(false);
+    final DefaultTreeModel model = ((DefaultTreeModel)myTree.getModel());
+    model.nodeStructureChanged(parentNode);
+    TreePath path = TreeUtil.getPathFromRoot(parentNode);
+    if (shouldExpand) {
+      myTree.expandPath(path);
+    }
+    else {
+      myTree.collapsePath(path);
     }
   }
 
-  public void startEditNode(@NotNull TreeNode node) {
-    TreePath path = TreeUtil.getPathFromRoot(node);
-    if (!myTree.isEditing()) {
-      myTree.setSelectionPath(path);
-      myTree.startEditingAtPath(path);
-    }
-  }
 }

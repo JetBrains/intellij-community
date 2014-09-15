@@ -333,6 +333,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         else {
           PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
           if (exprType == null) return null;
+          if (exprType instanceof PsiDisjunctionType) {
+            exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
+          }
           final ParameterInfoImpl changedParameterInfo = new ParameterInfoImpl(i, parameter.getName(), exprType);
           result.add(changedParameterInfo);
           changedParams.add(changedParameterInfo);
@@ -403,6 +406,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (varargParam != null && pi >= parameters.length) return false;
         PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
         if (exprType == null) return false;
+        if (exprType instanceof PsiDisjunctionType) {
+          exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
+        }
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
         String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);
         final ParameterInfoImpl newParameterInfo = new ParameterInfoImpl(-1, name, exprType, expression.getText().replace('\n', ' '));

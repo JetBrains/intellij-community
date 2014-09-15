@@ -1,8 +1,10 @@
 package com.jetbrains.python.edu.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Set;
 
 public class StudyDirectoryNode extends PsiDirectoryNode {
   private final PsiDirectory myValue;
@@ -109,5 +112,57 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     data.clearText();
     data.addText(additionalName, new SimpleTextAttributes(Font.PLAIN, color));
     data.setIcon(icon);
+  }
+
+  @Override
+  public boolean canNavigate() {
+    return true;
+  }
+
+  @Override
+  public boolean canNavigateToSource() {
+    return true;
+  }
+
+  @Override
+  public void navigate(boolean requestFocus) {
+    if (myValue.getName().contains(Task.TASK_DIR)) {
+      TaskFile taskFile = null;
+      VirtualFile virtualFile =  null;
+      for (PsiElement child : myValue.getChildren()) {
+        VirtualFile childFile = child.getContainingFile().getVirtualFile();
+        taskFile = StudyTaskManager.getInstance(myProject).getTaskFile(childFile);
+        if (taskFile != null) {
+          virtualFile = childFile;
+          break;
+        }
+      }
+      if (taskFile != null) {
+        VirtualFile taskDir = virtualFile.getParent();
+        Task task = taskFile.getTask();
+        for (VirtualFile openFile : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+          FileEditorManager.getInstance(myProject).closeFile(openFile);
+        }
+        VirtualFile child = null;
+        Set<String> fileNames = task.getTaskFiles().keySet();
+        for (String name : fileNames) {
+           child = taskDir.findChild(name);
+          if (child != null) {
+            FileEditorManager.getInstance(myProject).openFile(child, true);
+          }
+        }
+        if (child != null) {
+          ProjectView.getInstance(myProject).select(child, child, false);
+        }
+      }
+    }
+  }
+
+  @Override
+  public boolean expandOnDoubleClick() {
+    if (myValue.getName().contains(Task.TASK_DIR)) {
+      return false;
+    }
+    return super.expandOnDoubleClick();
   }
 }

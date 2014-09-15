@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Set;
 
 public abstract class PathMacros {
-
   public static PathMacros getInstance() {
-    return ApplicationManager.getApplication().getComponent(PathMacros.class);
+    return ServiceManager.getService(PathMacros.class);
   }
 
   public abstract Set<String> getAllMacroNames();
@@ -33,9 +33,7 @@ public abstract class PathMacros {
   public abstract void setMacro(String name, String value);
 
   /**
-   * Obsolete macros that are to be removed gently from the project files. They can be read, but not written again. Not persisted.
-   * @param name
-   * @param value
+   * Obsolete macros that are to be removed gently from the project files. They can be read, but not written again. Not persisted
    */
   public abstract void addLegacyMacro(@NotNull String name, @NotNull String value);
 

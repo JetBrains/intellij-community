@@ -2085,7 +2085,7 @@ public class UIUtil {
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
    * is event queue thread.
-   *
+   * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    * @param runnable a runnable to invoke
    * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
    */
@@ -2103,6 +2103,14 @@ public class UIUtil {
     }
   }
 
+  /**
+   * Invoke and wait in the event dispatch thread
+   * or in the current thread if the current thread
+   * is event queue thread.
+   * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   * @param computable a runnable to invoke
+   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   */
   public static <T> T invokeAndWaitIfNeeded(@NotNull final Computable<T> computable) {
     final Ref<T> result = Ref.create();
     invokeAndWaitIfNeeded(new Runnable() {
@@ -2114,6 +2122,14 @@ public class UIUtil {
     return result.get();
   }
 
+  /**
+   * Invoke and wait in the event dispatch thread
+   * or in the current thread if the current thread
+   * is event queue thread.
+   * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   * @param runnable a runnable to invoke
+   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   */
   public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
     if (SwingUtilities.isEventDispatchThread()) {
       runnable.run();
@@ -2890,6 +2906,7 @@ public class UIUtil {
     new Thread(new Runnable() {
       // The wrapper thread is unnecessary, unless it blocks on the
       // Clip finishing; see comments.
+      @Override
       public void run() {
         try {
           Clip clip = AudioSystem.getClip();

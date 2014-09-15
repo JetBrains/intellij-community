@@ -54,6 +54,7 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SingleSelectionModel;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
@@ -81,10 +82,6 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
 
-  private static final String TEMPLATES_CARD = "templates card";
-  private static final String FRAMEWORKS_CARD = "frameworks card";
-
-  private static final String PROJECT_WIZARD_GROUP = "project.wizard.group";
   public static final Convertor<FrameworkSupportInModuleProvider,String> PROVIDER_STRING_CONVERTOR =
     new Convertor<FrameworkSupportInModuleProvider, String>() {
       @Override
@@ -98,23 +95,14 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       return node.getId();
     }
   };
-
-  private JPanel myPanel;
-  private JPanel myOptionsPanel;
-  private JBList myProjectTypeList;
-  private ProjectTemplateList myTemplatesList;
-  private JPanel myFrameworksPanelPlaceholder;
-  private JPanel myHeaderPanel;
-
+  private static final String TEMPLATES_CARD = "templates card";
+  private static final String FRAMEWORKS_CARD = "frameworks card";
+  private static final String PROJECT_WIZARD_GROUP = "project.wizard.group";
   private final WizardContext myContext;
   private final NewProjectWizard myWizard;
   private final ModulesProvider myModulesProvider;
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
-  @Nullable
-  private ModuleWizardStep mySettingsStep;
-
-
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<ProjectTemplate, ModuleBuilder> myBuilders = new FactoryMap<ProjectTemplate, ModuleBuilder>() {
     @Nullable
@@ -125,6 +113,15 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   };
   private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<String, ModuleWizardStep>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
+  private JPanel myPanel;
+  private JPanel myOptionsPanel;
+  private JBList myProjectTypeList;
+  private ProjectTemplateList myTemplatesList;
+  private JPanel myFrameworksPanelPlaceholder;
+  private JPanel myHeaderPanel;
+  private JBLabel myFrameworksLabel;
+  @Nullable
+  private ModuleWizardStep mySettingsStep;
   private String myCurrentCard;
   private TemplatesGroup myLastSelectedGroup;
 
@@ -206,6 +203,8 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true, myHeaderPanel);
     Disposer.register(this, myFrameworksPanel);
     myFrameworksPanelPlaceholder.add(myFrameworksPanel.getMainPanel());
+    myFrameworksLabel.setLabelFor(myFrameworksPanel.getFrameworksTree());
+    myFrameworksLabel.setBorder(IdeBorderFactory.createEmptyBorder(3));
 
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
       @Override
@@ -256,6 +255,20 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       myProjectTypeList.setSelectedIndex(0);
     }
     myTemplatesList.restoreSelection();
+  }
+
+  private static ModuleType getModuleType(TemplatesGroup group) {
+    ModuleBuilder moduleBuilder = group.getModuleBuilder();
+    return moduleBuilder == null ? null : moduleBuilder.getModuleType();
+  }
+
+  private static boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
+
+    FrameworkRole[] roles = framework.getRoles();
+    if (roles.length == 0) return true;
+
+    List<FrameworkRole> acceptable = Arrays.asList(projectCategory.getAcceptableFrameworkRoles());
+    return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
   }
 
   private boolean isFrameworksMode() {
@@ -356,11 +369,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     return groups;
   }
 
-  private static ModuleType getModuleType(TemplatesGroup group) {
-    ModuleBuilder moduleBuilder = group.getModuleBuilder();
-    return moduleBuilder == null ? null : moduleBuilder.getModuleType();
-  }
-
   // new TemplatesGroup selected
   public void projectTypeChanged() {
     TemplatesGroup group = getSelectedGroup();
@@ -436,15 +444,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
     setTemplatesList(group, templates, false);
     showCard(TEMPLATES_CARD);
-  }
-
-  private static boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
-
-    FrameworkRole[] roles = framework.getRoles();
-    if (roles.length == 0) return true;
-
-    List<FrameworkRole> acceptable = Arrays.asList(projectCategory.getAcceptableFrameworkRoles());
-    return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
   }
 
   private void setTemplatesList(TemplatesGroup group, Collection<ProjectTemplate> templates, boolean preserveSelection) {

@@ -187,14 +187,14 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
                                                                     myTemporaryMessageChildren != null ? myTemporaryMessageChildren : Collections.<MessageTreeNode>emptyList());
     final int[] indices = getNodesIndices(allMessageChildren);
     final TreeNode[] nodes = getChildNodes(indices);
-    myMessageChildren = null;
-    myTemporaryMessageChildren = null;
     fireNodesRemoved(indices, nodes);
     if (!temporary) {
       myMessageChildren = messages;
+      myTemporaryMessageChildren = null;
     }
     else {
       myTemporaryMessageChildren = messages;
+      myMessageChildren = null;
     }
     myCachedAllChildren = null;
     fireNodesInserted(messages);

@@ -53,17 +53,17 @@ import java.util.*;
  * @author mike
  */
 public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
-
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
-  private String myName;
-  private PluginId myId;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
+  private static final StringInterner ourInterner = new WeakStringInterner();
   private final NullableLazyValue<String> myDescription = new NullableLazyValue<String>() {
     @Override
     protected String compute() {
       return computeDescription();
     }
   };
+  private String myName;
+  private PluginId myId;
   private String myResourceBundleBaseName;
   private String myChangeNotes;
   private String myVersion;
@@ -93,31 +93,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
   private boolean myEnabled = true;
-
   private String mySinceBuild;
   private String myUntilBuild;
-
   private Boolean mySkipped;
-
   private List<String> myModules = null;
 
   public IdeaPluginDescriptorImpl(@NotNull File pluginPath) {
     myPath = pluginPath;
   }
-
-  IdeaPluginDescriptorImpl() {
-  }
-
-  public void setPath(@NotNull File path) {
-    myPath = path;
-  }
-
-  @Override
-  public File getPath() {
-    return myPath;
-  }
-
-  private static final StringInterner ourInterner = new WeakStringInterner();
 
   @NotNull
   public static String intern(@NotNull String s) {
@@ -126,6 +109,46 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public static void internJDOMElement(@NotNull Element rootElement) {
     JDOMUtil.internElement(rootElement, ourInterner);
+  }
+
+  @Nullable
+  private static List<Element> copyElements(final Element[] elements) {
+    if (elements != null) {
+      List<Element> result = new ArrayList<Element>();
+      for (Element extensionsRoot : elements) {
+        for (final Object o : extensionsRoot.getChildren()) {
+          Element element = (Element)o;
+          internJDOMElement(element);
+          result.add(element);
+        }
+      }
+      return result;
+    }
+    return null;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static String createDescriptionKey(final PluginId id) {
+    return "plugin." + id + ".description";
+  }
+
+  private static ComponentConfig[] mergeComponents(ComponentConfig[] first, ComponentConfig[] second) {
+    if (first == null) {
+      return second;
+    }
+    if (second == null) {
+      return first;
+    }
+    return ArrayUtil.mergeArrays(first, second);
+  }
+
+  @Override
+  public File getPath() {
+    return myPath;
+  }
+
+  public void setPath(@NotNull File path) {
+    myPath = path;
   }
 
   public void readExternal(@NotNull Document document, @NotNull URL url) throws InvalidDataException, FileNotFoundException {
@@ -243,7 +266,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension), extension);
       }
     }
-    
+
     List<Element> extensionPoints = copyElements(pluginBean.extensionPoints);
     if (extensionPoints != null) {
       myExtensionsPoints = new MultiMap<String, Element>();
@@ -251,33 +274,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         myExtensionsPoints.putValue(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA), extensionPoint);
       }
     }
-    
+
     myActionsElements = copyElements(pluginBean.actions);
 
     if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
       myModules = pluginBean.modules;
     }
-  }
-
-  @Nullable
-  private static List<Element> copyElements(final Element[] elements) {
-    if (elements != null) {
-      List<Element> result = new ArrayList<Element>();
-      for (Element extensionsRoot : elements) {
-        for (final Object o : extensionsRoot.getChildren()) {
-          Element element = (Element)o;
-          internJDOMElement(element);
-          result.add(element);
-        }
-      }
-      return result;
-    }
-    return null;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String createDescriptionKey(final PluginId id) {
-    return "plugin." + id + ".description";
   }
 
   void registerExtensionPoints(ExtensionsArea area) {
@@ -317,7 +319,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myDependencies;
   }
 
-
   @Override
   @NotNull
   public PluginId[] getOptionalDependentPluginIds() {
@@ -327,6 +328,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String getVendor() {
     return myVendor;
+  }
+
+  public void setVendor( final String val )
+  {
+    myVendor = val;
   }
 
   @Override
@@ -342,6 +348,17 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String getCategory() {
     return myCategory;
+  }
+
+  /*
+     This setter was explicitly defined to be able to set a category for a
+     descriptor outside its loading from the xml file.
+     Problem was that most commonly plugin authors do not publish the plugin's
+     category in its .xml file so to be consistent in plugins representation
+     (e.g. in the Plugins form) we have to set this value outside.
+  */
+  public void setCategory( String category ){
+    myCategory = category;
   }
 
   @SuppressWarnings("UnusedDeclaration") // Used in Upsource
@@ -418,14 +435,29 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myVendorEmail;
   }
 
+  public void setVendorEmail( final String val )
+  {
+    myVendorEmail = val;
+  }
+
   @Override
   public String getVendorUrl() {
     return myVendorUrl;
   }
 
+  public void setVendorUrl( final String val )
+  {
+    myVendorUrl = val;
+  }
+
   @Override
   public String getUrl() {
     return url;
+  }
+
+  public void setUrl( final String val )
+  {
+    url = val;
   }
 
   @NonNls
@@ -470,17 +502,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   /*
-     This setter was explicitly defined to be able to set a category for a
-     descriptor outside its loading from the xml file.
-     Problem was that most commonly plugin authors do not publish the plugin's
-     category in its .xml file so to be consistent in plugins representation
-     (e.g. in the Plugins form) we have to set this value outside.
-  */
-  public void setCategory( String category ){
-    myCategory = category;
-  }
-
-  /*
      This setter was explicitly defined to be able to set downloads count for a
      descriptor outside its loading from the xml file since this information
      is available only from the site.
@@ -494,6 +515,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myDownloadCounter;
   }
 
+  public long getDate(){
+    return myDate;
+  }
+
   /*
      This setter was explicitly defined to be able to set date for a
      descriptor outside its loading from the xml file since this information
@@ -501,27 +526,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   */
   public void setDate( long date ){
     myDate = date;
-  }
-
-  public long getDate(){
-    return myDate;
-  }
-
-  public void setVendor( final String val )
-  {
-    myVendor = val;
-  }
-  public void setVendorEmail( final String val )
-  {
-    myVendorEmail = val;
-  }
-  public void setVendorUrl( final String val )
-  {
-    myVendorUrl = val;
-  }
-  public void setUrl( final String val )
-  {
-    url = val;
   }
 
   @Override
@@ -532,6 +536,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String getVendorLogoPath() {
     return myVendorLogoPath;
+  }
+
+  public void setVendorLogoPath(final String vendorLogoPath) {
+    myVendorLogoPath = vendorLogoPath;
   }
 
   @Override
@@ -545,10 +553,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void setUseCoreClassLoader(final boolean useCoreClassLoader) {
     myUseCoreClassLoader = useCoreClassLoader;
-  }
-
-  public void setVendorLogoPath(final String vendorLogoPath) {
-    myVendorLogoPath = vendorLogoPath;
   }
 
   private String computeDescription() {
@@ -633,16 +637,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myAppComponents = mergeComponents(myAppComponents, descriptor.myAppComponents);
     myProjectComponents = mergeComponents(myProjectComponents, descriptor.myProjectComponents);
     myModuleComponents = mergeComponents(myModuleComponents, descriptor.myModuleComponents);
-  }
-
-  private static ComponentConfig[] mergeComponents(ComponentConfig[] first, ComponentConfig[] second) {
-    if (first == null) {
-      return second;
-    }
-    if (second == null) {
-      return first;
-    }
-    return ArrayUtil.mergeArrays(first, second);
   }
 
   public Boolean getSkipped() {

@@ -23,8 +23,14 @@ import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class InterpreterUtil {
+  public static final boolean IS_WINDOWS = System.getProperty("os.name", "").startsWith("Windows");
+
+  private static final int CHANNEL_WINDOW_SIZE = IS_WINDOWS ? 64 * 1024 * 1024 - (32 * 1024) : 64 * 1024 * 1024;  // magic number for Windows
+  private static final int BUFFER_SIZE = 16* 1024;
 
   public static void copyFile(File in, File out) throws IOException {
     FileInputStream inStream = new FileInputStream(in);
@@ -33,12 +39,9 @@ public class InterpreterUtil {
       try {
         FileChannel inChannel = inStream.getChannel();
         FileChannel outChannel = outStream.getChannel();
-        // magic number for Windows, 64Mb - 32Kb)
-        int maxCount = (64 * 1024 * 1024) - (32 * 1024);
-        long size = inChannel.size();
-        long position = 0;
+        long size = inChannel.size(), position = 0;
         while (position < size) {
-          position += inChannel.transferTo(position, maxCount, outChannel);
+          position += inChannel.transferTo(position, CHANNEL_WINDOW_SIZE, outChannel);
         }
       }
       finally {
@@ -50,28 +53,51 @@ public class InterpreterUtil {
     }
   }
 
-  public static void copyInputStream(InputStream in, OutputStream out) throws IOException {
-
-    byte[] buffer = new byte[1024];
+  public static void copyStream(InputStream in, OutputStream out) throws IOException {
+    byte[] buffer = new byte[BUFFER_SIZE];
     int len;
-
     while ((len = in.read(buffer)) >= 0) {
       out.write(buffer, 0, len);
     }
   }
 
-  public static String getIndentString(int length) {
-    String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
-    StringBuilder buf = new StringBuilder();
-    while (length-- > 0) {
-      buf.append(indent);
+  public static byte[] getBytes(ZipFile archive, ZipEntry entry) throws IOException {
+    return readAndClose(archive.getInputStream(entry), entry.getSize());
+  }
+
+  public static byte[] getBytes(File file) throws IOException {
+    return readAndClose(new FileInputStream(file), file.length());
+  }
+
+  private static byte[] readAndClose(InputStream stream, long length) throws IOException {
+    try {
+      byte[] bytes = new byte[(int)length];
+      if (stream.read(bytes) != length) {
+        throw new IOException("premature end of stream");
+      }
+      return bytes;
     }
+    finally {
+      stream.close();
+    }
+  }
+
+  public static String getIndentString(int length) {
+    if (length == 0) return "";
+    StringBuilder buf = new StringBuilder();
+    appendIndent(buf, length);
     return buf.toString();
   }
 
+  public static void appendIndent(StringBuilder buffer, int length) {
+    if (length == 0) return;
+    String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
+    while (length-- > 0) {
+      buffer.append(indent);
+    }
+  }
 
   public static boolean equalSets(Collection<?> c1, Collection<?> c2) {
-
     if (c1 == null) {
       return c2 == null;
     }
@@ -93,7 +119,6 @@ public class InterpreterUtil {
   }
 
   public static boolean equalObjectArrays(Object[] first, Object[] second) {
-
     if (first == null || second == null) {
       return equalObjects(first, second);
     }
@@ -113,12 +138,11 @@ public class InterpreterUtil {
   }
 
   public static boolean equalLists(List<?> first, List<?> second) {
-
     if (first == null) {
       return second == null;
     }
     else if (second == null) {
-      return first == null;
+      return false;
     }
 
     if (first.size() == second.size()) {

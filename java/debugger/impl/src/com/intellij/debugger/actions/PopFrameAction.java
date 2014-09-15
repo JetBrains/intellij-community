@@ -270,7 +270,7 @@ public class PopFrameAction extends DebuggerAction {
       enable = virtualMachineProxy.canPopFrames();
     }
 
-    if(ActionPlaces.MAIN_MENU.equals(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
+    if(ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
       e.getPresentation().setEnabled(enable);
     }
     else {

@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -66,17 +67,18 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   @Override
   public PsiClass getOriginalClass(PsiClass psiClass) {
-    PsiFile psiFile = psiClass.getContainingFile();
+    PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
+    if (cls != null) return (PsiClass)cls;
 
-    VirtualFile vFile = psiFile.getVirtualFile();
+    VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
     final Project project = psiClass.getProject();
     final ProjectFileIndex idx = ProjectRootManager.getInstance(project).getFileIndex();
-
     if (vFile == null || !idx.isInLibrarySource(vFile)) return psiClass;
-    final Set<OrderEntry> orderEntries = new THashSet<OrderEntry>(idx.getOrderEntriesForFile(vFile));
-    final String fqn = psiClass.getQualifiedName();
+
+    String fqn = psiClass.getQualifiedName();
     if (fqn == null) return psiClass;
 
+    final Set<OrderEntry> orderEntries = new THashSet<OrderEntry>(idx.getOrderEntriesForFile(vFile));
     PsiClass original = JavaPsiFacade.getInstance(project).findClass(fqn, new GlobalSearchScope(project) {
       @Override
       public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {

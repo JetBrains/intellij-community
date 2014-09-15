@@ -409,6 +409,17 @@ class NdArrayResolver:
             return obj.dtype
         if attribute == 'size':
             return obj.size
+        if attribute.startswith('['):
+            container = NdArrayItemsContainer()
+            i = 0
+            format_str = '%0' + str(int(len(str(len(obj))))) + 'd'
+            for item in obj:
+                setattr(container, format_str % i, item)
+                i += 1
+                if i > MAX_ITEMS_TO_HANDLE:
+                    setattr(container, TOO_LARGE_ATTR, TOO_LARGE_MSG)
+                    break
+            return container
         return None
 
     def getDictionary(self, obj):
@@ -427,9 +438,10 @@ class NdArrayResolver:
         ret['shape'] = obj.shape
         ret['dtype'] = obj.dtype
         ret['size'] = obj.size
+        ret['[0:%s]' % (len(obj))] = list(obj)
         return ret
 
-
+class NdArrayItemsContainer: pass
 #=======================================================================================================================
 # FrameResolver
 #=======================================================================================================================

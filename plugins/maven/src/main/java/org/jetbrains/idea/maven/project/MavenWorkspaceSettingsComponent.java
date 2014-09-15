@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
-@State(name = "MavenImportPreferences", storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "MavenImportPreferences", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class MavenWorkspaceSettingsComponent implements PersistentStateComponent<MavenWorkspaceSettings> {
   private MavenWorkspaceSettings mySettings = new MavenWorkspaceSettings();
 

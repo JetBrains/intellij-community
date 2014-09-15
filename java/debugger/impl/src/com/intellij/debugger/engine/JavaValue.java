@@ -103,6 +103,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   @Override
+  @NotNull
   public ValueDescriptorImpl getDescriptor() {
     return myValueDescriptor;
   }
@@ -428,6 +429,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public String getEvaluationExpression() {
     if (evaluationExpression == null) {
       // TODO: change API to allow to calculate it asynchronously
+      if (myEvaluationContext.getSuspendContext().isResumed()) return null;
       DebugProcessImpl debugProcess = myEvaluationContext.getDebugProcess();
       debugProcess.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
         @Override

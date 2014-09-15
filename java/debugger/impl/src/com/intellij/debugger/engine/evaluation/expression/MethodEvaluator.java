@@ -43,13 +43,19 @@ public class MethodEvaluator implements Evaluator {
   private final String myMethodName;
   private final Evaluator[] myArgumentEvaluators;
   private final Evaluator myObjectEvaluator;
+  private final boolean myCheckDefaultInterfaceMethod;
 
   public MethodEvaluator(Evaluator objectEvaluator, JVMName className, String methodName, JVMName signature, Evaluator[] argumentEvaluators) {
+    this(objectEvaluator, className, methodName, signature, argumentEvaluators, false);
+  }
+
+  public MethodEvaluator(Evaluator objectEvaluator, JVMName className, String methodName, JVMName signature, Evaluator[] argumentEvaluators, boolean checkDefaultInterfaceMethod) {
     myObjectEvaluator = new DisableGC(objectEvaluator);
     myClassName = className;
     myMethodName = methodName;
     myMethodSignature = signature;
     myArgumentEvaluators = argumentEvaluators;
+    myCheckDefaultInterfaceMethod = checkDefaultInterfaceMethod;
   }
 
   @Override
@@ -148,7 +154,7 @@ public class MethodEvaluator implements Evaluator {
         return debugProcess.invokeInstanceMethod(context, objRef, jdiMethod, args, ObjectReference.INVOKE_NONVIRTUAL);
       }
       // fix for default methods in interfaces, see IDEA-124066
-      if (Boolean.valueOf(System.getProperty("debugger.invoke.default")) && jdiMethod.declaringType() instanceof InterfaceType) {
+      if (myCheckDefaultInterfaceMethod && jdiMethod.declaringType() instanceof InterfaceType) {
         return invokeDefaultMethod(debugProcess, context, objRef, myMethodName);
       }
       else {

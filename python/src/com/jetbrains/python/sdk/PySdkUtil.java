@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
@@ -29,8 +32,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.packaging.PyPackageUtil;
+import com.jetbrains.python.packaging.PyRequirement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +60,7 @@ public class PySdkUtil {
 
   // Windows EOF marker, Ctrl+Z
   public static final int SUBSTITUTE = 26;
+  public static final String PATH_ENV_VARIABLE = "PATH";
 
   private PySdkUtil() {
     // explicitly none
@@ -87,57 +92,29 @@ public class PySdkUtil {
     return getProcessOutput(homePath, command, null, timeout);
   }
 
-  /**
-   * Executes a process and returns its stdout and stderr outputs as lists of lines.
-   * Waits for process for possibly limited duration.
-   *
-   * @param homePath process run directory
-   * @param command  command to execute and its arguments
-   * @param addEnv   items are prepended to same-named values of inherited process environment.
-   * @param timeout  how many milliseconds to wait until the process terminates; non-positive means inifinity.
-   * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
-   */
   @NotNull
   public static ProcessOutput getProcessOutput(String homePath,
                                                @NonNls String[] command,
-                                               @Nullable @NonNls String[] addEnv,
+                                               @Nullable @NonNls Map<String, String> extraEnv,
                                                final int timeout) {
-    return getProcessOutput(homePath, command, addEnv, timeout, null, true);
+    return getProcessOutput(homePath, command, extraEnv, timeout, null, true);
   }
 
-  /**
-   * Executes a process and returns its stdout and stderr outputs as lists of lines.
-   * Waits for process for possibly limited duration.
-   *
-   * @param homePath      process run directory
-   * @param command       command to execute and its arguments
-   * @param addEnv        items are prepended to same-named values of inherited process environment.
-   * @param timeout       how many milliseconds to wait until the process terminates; non-positive means infinity.
-   * @param stdin         the data to write to the process standard input stream
-   * @param needEOFMarker
-   * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
-   */
   @NotNull
   public static ProcessOutput getProcessOutput(String homePath,
                                                @NonNls String[] command,
-                                               @Nullable @NonNls String[] addEnv,
+                                               @Nullable @NonNls Map<String, String> extraEnv,
                                                final int timeout,
                                                @Nullable byte[] stdin,
                                                boolean needEOFMarker) {
-    final ProcessOutput failureOutput = new ProcessOutput();
     if (homePath == null || !new File(homePath).exists()) {
-      return failureOutput;
+      return new ProcessOutput();
     }
+    final Map<String, String> systemEnv = System.getenv();
+    final Map<String, String> env = extraEnv != null ? mergeEnvVariables(systemEnv, extraEnv) : systemEnv;
     try {
-      List<String> commands = new ArrayList<String>();
-      if (SystemInfo.isWindows && StringUtil.endsWithIgnoreCase(command[0], ".bat")) {
-        commands.add("cmd");
-        commands.add("/c");
-      }
-      Collections.addAll(commands, command);
-      String[] newEnv = buildAdditionalEnv(addEnv);
-      Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands), newEnv, new File(homePath));
-      CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+      final Process process = ExecUtil.exec(Arrays.asList(command), homePath, env);
+      final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
         assert processInput != null;
@@ -152,70 +129,59 @@ public class PySdkUtil {
       }
       return processHandler.runProcess(timeout);
     }
-    catch (final IOException ex) {
-      LOG.warn(ex);
-      return new ProcessOutput() {
-        @Override
-        public String getStderr() {
-          String err = super.getStderr();
-          if (!StringUtil.isEmpty(err)) {
-            err += "\n" + ex.getMessage();
-          }
-          else {
-            err = ex.getMessage();
-          }
-          return err;
+    catch (ExecutionException e) {
+      return getOutputForException(e);
+    }
+    catch (IOException e) {
+      return getOutputForException(e);
+    }
+  }
+
+  private static ProcessOutput getOutputForException(final Exception e) {
+    LOG.warn(e);
+    return new ProcessOutput() {
+      @Override
+      public String getStderr() {
+        String err = super.getStderr();
+        if (!StringUtil.isEmpty(err)) {
+          err += "\n" + e.getMessage();
         }
-      };
-    }
+        else {
+          err = e.getMessage();
+        }
+        return err;
+      }
+    };
   }
 
-  private static String[] buildAdditionalEnv(String[] addEnv) {
-    String[] newEnv = null;
-    if (addEnv != null) {
-      Map<String, String> envMap = buildEnvMap(addEnv);
-      newEnv = new String[envMap.size()];
-      int i = 0;
-      for (Map.Entry<String, String> entry : envMap.entrySet()) {
-        newEnv[i] = entry.getKey() + "=" + entry.getValue();
-        i += 1;
-      }
-    }
-    return newEnv;
-  }
-
-  public static Map<String, String> buildEnvMap(String[] addEnv) {
-    Map<String, String> envMap = new HashMap<String, String>(System.getenv());
-    // turn additional ent into map
-    Map<String, String> addMap = new HashMap<String, String>();
-    for (String envItem : addEnv) {
-      int pos = envItem.indexOf('=');
-      if (pos > 0) {
-        String key = envItem.substring(0, pos);
-        String value = envItem.substring(pos + 1, envItem.length());
-        addMap.put(key, value);
+  @NotNull
+  public static Map<String, String> mergeEnvVariables(@NotNull Map<String, String> environment,
+                                                       @NotNull Map<String, String> extraEnvironment) {
+    final Map<String, String> result = new HashMap<String, String>(environment);
+    for (Map.Entry<String, String> entry : extraEnvironment.entrySet()) {
+      if (PATH_ENV_VARIABLE.equals(entry.getKey()) && result.containsKey(PATH_ENV_VARIABLE)) {
+        result.put(PATH_ENV_VARIABLE, result.get(PATH_ENV_VARIABLE) + File.pathSeparator + entry.getValue());
       }
       else {
-        LOG.warn(String.format("Invalid env value: '%s'", envItem));
+        result.put(entry.getKey(), entry.getValue());
       }
     }
-    // fuse old and new
-    for (Map.Entry<String, String> entry : addMap.entrySet()) {
-      final String key = entry.getKey();
-      final String value = entry.getValue();
-      final String oldValue = envMap.get(key);
-      if (oldValue != null) {
-        envMap.put(key, value + oldValue);
-      }
-      else {
-        envMap.put(key, value);
-      }
-    }
-    return envMap;
+    return result;
   }
 
   public static boolean isRemote(@Nullable Sdk sdk) {
     return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData;
+  }
+
+  public static String getUserSite() {
+    if (SystemInfo.isWindows) {
+      final String appdata = System.getenv("APPDATA");
+      return appdata + File.separator + "Python";
+    }
+    else {
+      final String userHome = SystemProperties.getUserHome();
+      return userHome + File.separator + ".local";
+    }
   }
 
   public static boolean isElementInSkeletons(@NotNull final PsiElement element) {
@@ -263,6 +229,15 @@ public class PySdkUtil {
       if (virtualFile.isValid() && virtualFile.getPath().contains(dirName)) {
         return virtualFile;
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static List<PyRequirement> getRequirementsFromTxt(Module module) {
+    final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
+    if (requirementsTxt != null) {
+      return PyRequirement.parse(requirementsTxt);
     }
     return null;
   }

@@ -267,25 +267,26 @@ public class ToolsImpl implements Tools {
   public void removeScope(int scopeIdx) {
     if (myTools != null && scopeIdx >= 0 && myTools.size() > scopeIdx) {
       myTools.remove(scopeIdx);
-      if (myTools.isEmpty()) {
-        myTools = null;
-        setEnabled(myDefaultState.isEnabled());
-      }
+      checkToolsIsEmpty();
     }
   }
 
-  public void removeScope(final NamedScope scope) {
+  public void removeScope(final @NotNull String scopeName) {
     if (myTools != null) {
-      for (final ScopeToolState tool : myTools) {
-        if (Comparing.equal(tool.getScopeName(), scope.getName())) {
+      for (ScopeToolState tool : myTools) {
+        if (scopeName.equals(tool.getScopeName())) {
           myTools.remove(tool);
           break;
         }
       }
-      if (myTools.isEmpty()) {
-        myTools = null;
-        setEnabled(myDefaultState.isEnabled());
-      }
+      checkToolsIsEmpty();
+    }
+  }
+
+  private void checkToolsIsEmpty() {
+    if (myTools.isEmpty()) {
+      myTools = null;
+      setEnabled(myDefaultState.isEnabled());
     }
   }
 

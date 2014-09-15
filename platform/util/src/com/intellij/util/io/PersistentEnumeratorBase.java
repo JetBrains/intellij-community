@@ -443,11 +443,13 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
 
     lockStorage(); // todo locking in key storage
     try {
-      return myKeyStorage.processAll(processor, myDataDescriptor);
+      myKeyStorage.force();
     }
     finally {
       unlockStorage();
     }
+
+    return myKeyStorage.processAll(processor, myDataDescriptor);
   }
 
   private File keystreamFile() {

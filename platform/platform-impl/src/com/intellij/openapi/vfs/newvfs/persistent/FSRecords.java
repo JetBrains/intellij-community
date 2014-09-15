@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
@@ -57,6 +58,7 @@ public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
   public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
+  public static final boolean lazyVfsDataCleaning = SystemProperties.getBooleanProperty("idea.lazy.vfs.data.cleaning", true);
   private static final int VERSION = 20 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0);
 
   private static final int PARENT_OFFSET = 0;
@@ -558,6 +560,7 @@ public class FSRecords implements Forceable {
         return newRecord;
       }
       else {
+        if (lazyVfsDataCleaning) deleteContentAndAttributes(free);
         DbConnection.cleanRecord(free);
         return free;
       }
@@ -588,7 +591,33 @@ public class FSRecords implements Forceable {
     try {
       w.lock();
       incModCount(id);
-      doDeleteRecursively(id);
+      if (lazyVfsDataCleaning) {
+        markAsDeletedRecursively(id);
+      } else {
+        doDeleteRecursively(id);
+      }
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  private static void markAsDeletedRecursively(final int id) {
+    for (int subrecord : list(id)) {
+      markAsDeletedRecursively(subrecord);
+    }
+
+    markAsDeleted(id);
+  }
+
+  private static void markAsDeleted(final int id) {
+    try {
+      w.lock();
+      DbConnection.markDirty();
+      addToFreeRecordsList(id);
     }
     catch (Throwable e) {
       throw DbConnection.handleError(e);
@@ -1206,12 +1235,26 @@ public class FSRecords implements Forceable {
   }
 
   @Nullable
-  static DataInputStream readAttributeWithLock(int fileId, String attId) {
+  public static DataInputStream readAttributeWithLock(int fileId, FileAttribute att) {
     try {
-      synchronized (attId) {
+      synchronized (att.getId()) {
         try {
           r.lock();
-          return readAttribute(fileId, attId);
+          DataInputStream stream = readAttribute(fileId, att.getId());
+          if (stream != null) {
+            try {
+              int actualVersion = DataInputOutputUtil.readINT(stream);
+              if (actualVersion != att.getVersion()) {
+                stream.close();
+                return null;
+              }
+            }
+            catch (IOException e) {
+              stream.close();
+              return null;
+            }
+          }
+          return stream;
         }
         finally {
           r.unlock();
@@ -1280,7 +1323,9 @@ public class FSRecords implements Forceable {
   private static void checkFileIsValid(int fileId) {
     assert fileId > 0 : fileId;
     // TODO: This assertion is a bit timey, will remove when bug is caught.
-    assert (getFlags(fileId) & FREE_RECORD_FLAG) == 0 : "Accessing attribute of a deleted page: " + fileId + ":" + getName(fileId);
+    if (!lazyVfsDataCleaning) {
+      assert (getFlags(fileId) & FREE_RECORD_FLAG) == 0 : "Accessing attribute of a deleted page: " + fileId + ":" + getName(fileId);
+    }
   }
 
   public static int acquireFileContent(int fileId) {
@@ -1372,6 +1417,18 @@ public class FSRecords implements Forceable {
   @NotNull
   public static DataOutputStream writeAttribute(final int fileId, @NotNull String attId, boolean fixedSize) {
     return new AttributeOutputStream(fileId, attId, fixedSize);
+  }
+
+  @NotNull
+  public static DataOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
+    DataOutputStream stream = writeAttribute(fileId, att.getId(), att.isFixedSize());
+    try {
+      DataInputOutputUtil.writeINT(stream, att.getVersion());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return stream;
   }
 
   private static class ContentOutputStream extends DataOutputStream {

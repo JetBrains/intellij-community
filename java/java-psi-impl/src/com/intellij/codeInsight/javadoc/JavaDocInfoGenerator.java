@@ -501,6 +501,7 @@ public class JavaDocInfoGenerator {
     buffer.append("<b>");
     buffer.append(field.getName());
     appendInitializer(buffer, field);
+    enumConstantOrdinal(buffer, field, field.getContainingClass(), "\n");
     buffer.append("</b>");
   }
 
@@ -638,7 +639,7 @@ public class JavaDocInfoGenerator {
           String text = o.toString();
           PsiType type = variable.getType();
           if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            text = "\"" + StringUtil.shortenPathWithEllipsis(text, 120) + "\"";
+            text = "\"" + StringUtil.escapeLineBreak(StringUtil.shortenPathWithEllipsis(text, 120)) + "\"";
           }
           else if (type.equalsToText("char")) text = "'" + text + "'";
           try {
@@ -754,7 +755,20 @@ public class JavaDocInfoGenerator {
               }
               final PsiAnnotationMemberValue value = pair.getValue();
               if (value != null) {
-                buffer.append(XmlStringUtil.escapeString(value.getText()));
+                if (value instanceof PsiArrayInitializerMemberValue) {
+                  buffer.append("{");
+                  boolean firstMember = true;
+
+                  for(PsiAnnotationMemberValue memberValue:((PsiArrayInitializerMemberValue)value).getInitializers()) {
+                    if (!firstMember) buffer.append(",");
+                    firstMember = false;
+
+                    appendLinkOrText(buffer, memberValue, generateLink);
+                  }
+                  buffer.append("}");
+                } else {
+                  appendLinkOrText(buffer, value, generateLink);
+                }
               }
             }
             buffer.append(")");
@@ -776,6 +790,32 @@ public class JavaDocInfoGenerator {
       }
       if (splitAnnotations) buffer.append("\n");
     }
+  }
+
+  private static void appendLinkOrText(StringBuilder buffer,
+                                       PsiAnnotationMemberValue memberValue,
+                                       boolean generateLink) {
+    if (generateLink && memberValue instanceof PsiQualifiedReferenceElement) {
+      String text = ((PsiQualifiedReferenceElement)memberValue).getCanonicalText();
+      PsiElement resolve = ((PsiQualifiedReferenceElement)memberValue).resolve();
+
+      if (resolve instanceof PsiField) {
+        PsiField field = (PsiField)resolve;
+        PsiClass aClass = field.getContainingClass();
+        int startOfPropertyNamePosition = text.lastIndexOf('.');
+
+        if (startOfPropertyNamePosition != -1) {
+          text = text.substring(0, startOfPropertyNamePosition) + '#' + text.substring(startOfPropertyNamePosition + 1);
+        }
+        else {
+          if (aClass != null) text = aClass.getQualifiedName() + '#' + field.getName();
+        }
+        generateLink(buffer, text, aClass != null? aClass.getName() + '.' + field.getName():null, memberValue, false);
+        return;
+      }
+    }
+
+    buffer.append(XmlStringUtil.escapeString(memberValue.getText()));
   }
 
   public static boolean isDocumentedAnnotationType(@Nullable PsiElement annotationType) {

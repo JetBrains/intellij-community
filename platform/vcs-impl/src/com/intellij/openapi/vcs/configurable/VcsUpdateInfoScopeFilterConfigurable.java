@@ -19,8 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.newEditor.OptionsEditor;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
@@ -95,12 +94,9 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     panel.add(new LinkLabel("Manage Scopes", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext(panel));
-        if (optionsEditor != null) {
-          SearchableConfigurable configurable = optionsEditor.findConfigurableById(ScopeChooserConfigurable.PROJECT_SCOPES);
-          if (configurable != null) {
-            optionsEditor.select(configurable);
-          }
+        Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(panel));
+        if (settings != null) {
+          settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES));
         }
       }
     }));

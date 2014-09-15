@@ -87,9 +87,8 @@ import java.util.List;
  */
 @State(
   name = "LafManager",
-  roamingType = RoamingType.PER_PLATFORM,
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/options.xml")})
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml", roamingType = RoamingType.PER_PLATFORM)}
+)
 public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
 

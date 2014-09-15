@@ -36,10 +36,7 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.util.ClassExtension;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.KeyedExtensionCollector;
-import com.intellij.openapi.util.StaticGetter;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -175,15 +172,7 @@ public class CoreApplicationEnvironment {
                                                                            ProgressIndicator progress,
                                                                            boolean failFastOnAcquireReadAction,
                                                                            @NotNull Processor<T> thingProcessor) {
-        final AsyncFutureResult<Boolean> asyncFutureResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-        try {
-          final boolean result = invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor);
-          asyncFutureResult.set(result);
-        }
-        catch (Throwable t) {
-          asyncFutureResult.setException(t);
-        }
-        return asyncFutureResult;
+        return AsyncUtil.wrapBoolean(invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor));
       }
 
       @NotNull

@@ -16,8 +16,8 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushTarget;
+import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.RepositoryNodeListener;
-import com.intellij.dvcs.push.TargetEditor;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBCheckBox;
@@ -36,7 +36,7 @@ import java.util.List;
 public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePanel implements TreeCellRenderer {
 
   private final JBCheckBox myRepositoryCheckbox;
-  private final TargetEditor<T> myDestTargetEditorComponent;
+  private final PushTargetPanel<T> myDestPushTargetPanelComponent;
   private final JBLabel myLocalBranch;
   private final JLabel myArrowLabel;
   private final JLabel myRepositoryLabel;
@@ -44,7 +44,7 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
   @NotNull private final List<RepositoryNodeListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public RepositoryWithBranchPanel(@NotNull String repoName,
-                                   @NotNull String sourceName, @NotNull TargetEditor<T> destTargetEditorComponent) {
+                                   @NotNull String sourceName, @NotNull PushTargetPanel<T> destPushTargetPanelComponent) {
     super();
     setLayout(new BorderLayout());
     myRepositoryCheckbox = new JBCheckBox();
@@ -59,7 +59,7 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     myRepositoryLabel = new JLabel(repoName);
     myLocalBranch = new JBLabel(sourceName);
     myArrowLabel = new JLabel(" -> ");
-    myDestTargetEditorComponent = destTargetEditorComponent;
+    myDestPushTargetPanelComponent = destPushTargetPanelComponent;
     myTextRenderer = new ColoredTreeCellRenderer() {
       public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
@@ -79,7 +79,7 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     add(myRepositoryCheckbox, BorderLayout.WEST);
     JPanel panel = new NonOpaquePanel(new BorderLayout());
     panel.add(myTextRenderer, BorderLayout.WEST);
-    panel.add(myDestTargetEditorComponent, BorderLayout.CENTER);
+    panel.add(myDestPushTargetPanelComponent, BorderLayout.CENTER);
     add(panel, BorderLayout.CENTER);
   }
 
@@ -123,8 +123,8 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getWidth() - bounds.x, bounds.height));
     }
-    myDestTargetEditorComponent.grabFocus();
-    myDestTargetEditorComponent.requestFocus();
+    myDestPushTargetPanelComponent.grabFocus();
+    myDestPushTargetPanelComponent.requestFocus();
     revalidate();
     return this;
   }
@@ -134,9 +134,9 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
   }
 
   public void fireOnChange() {
-    myDestTargetEditorComponent.fireOnChange();
+    myDestPushTargetPanelComponent.fireOnChange();
     for (RepositoryNodeListener<T> listener : myListeners) {
-      listener.onTargetChanged(myDestTargetEditorComponent.getValue());
+      listener.onTargetChanged(myDestPushTargetPanelComponent.getValue());
     }
   }
 
@@ -147,15 +147,11 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
   }
 
   public void fireOnCancel() {
-    myDestTargetEditorComponent.fireOnCancel();
+    myDestPushTargetPanelComponent.fireOnCancel();
   }
 
-  public TargetEditor getTargetEditor() {
-    return myDestTargetEditorComponent;
-  }
-
-  public T getEditableValue() {
-    return myDestTargetEditorComponent.getValue();
+  public PushTargetPanel getTargetPanel() {
+    return myDestPushTargetPanelComponent;
   }
 }
 

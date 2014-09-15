@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -99,6 +100,19 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @Nullable
   @Override
+  /**
+   * Return active bookmark name if exist or heavy branch name otherwise
+   */
+  public String getCurrentBranchName() {
+    String branchOrBookMarkName = getCurrentBookmark();
+    if (StringUtil.isEmptyOrSpaces(branchOrBookMarkName)) {
+      branchOrBookMarkName = getCurrentBranch();
+    }
+    return branchOrBookMarkName;
+  }
+
+  @Nullable
+  @Override
   public AbstractVcs getVcs() {
     return HgVcs.getInstance(getProject());
   }
@@ -163,6 +177,16 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   }
 
   @Override
+  public boolean hasSubrepos() {
+    return myInfo.hasSubrepos();
+  }
+
+  @NotNull
+  public Collection<HgNameWithHashInfo> getSubrepos() {
+    return myInfo.getSubrepos();
+  }
+
+  @Override
   public boolean isFresh() {
     return myIsFresh;
   }
@@ -199,7 +223,8 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return
       new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readCurrentTipRevision(), myReader.readState(),
                      myReader.readBranches(),
-                     myReader.readBookmarks(), myReader.readCurrentBookmark(), myReader.readTags(), myReader.readLocalTags());
+                     myReader.readBookmarks(), myReader.readCurrentBookmark(), myReader.readTags(), myReader.readLocalTags(),
+                     myReader.readSubrepos());
   }
 
   public void updateConfig() {

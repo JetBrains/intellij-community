@@ -21,12 +21,12 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,10 +39,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   private final ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
-  public DefaultProjectStoreImpl(final ProjectImpl project, final ProjectManagerImpl projectManager) {
+  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, final ProjectManagerImpl projectManager) {
     super(project);
-    myProjectManager = projectManager;
 
+    myProjectManager = projectManager;
     myElement = projectManager.getDefaultProjectRootElement();
   }
 
@@ -51,7 +51,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     final Element element = myProjectManager.getDefaultProjectRootElement();
     return element != null ? element.clone() : null;
   }
-
 
   @NotNull
   @Override
@@ -68,8 +67,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     final Element element = _d;
 
-    final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
-                                                            ROOT_TAG_NAME, null, "", ComponentRoamingManager.getInstance(),
+    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, pathMacroManager.createTrackingSubstitutor(), componentManager,
+                                                            ROOT_TAG_NAME, null,
                                                             ComponentVersionProvider.EMPTY) {
       @Override
       @Nullable
@@ -101,21 +100,22 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
         @NotNull
         @Override
-        public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
+        public Collection<File> getStorageFilesToSave() throws StateStorageException {
           return Collections.emptyList();
         }
 
         @NotNull
         @Override
-        public List<IFile> getAllStorageFiles() {
+        public List<File> getAllStorageFiles() {
           return Collections.emptyList();
         }
       }
     };
 
+    //noinspection deprecation
     return new StateStorageManager() {
       @Override
-      public void addMacro(String macro, String expansion) {
+      public void addMacro(@NotNull String macro, @NotNull String expansion) {
         throw new UnsupportedOperationException("Method addMacro not implemented in " + getClass());
       }
 
@@ -128,6 +128,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       @Override
       @Nullable
       public StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException {
+        return storage;
+      }
+
+      @Nullable
+      @Override
+      public StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         return storage;
       }
 
@@ -158,6 +164,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         storage.finishSave(((MySaveSession)saveSession).saveSession);
       }
 
+      @NotNull
       @Override
       public String expandMacros(@NotNull String file) {
         throw new UnsupportedOperationException("Method expandMacros not implemented in " + getClass());
@@ -186,6 +193,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
 
+      @NotNull
       @Override
       public Collection<String> getStorageFileNames() {
         throw new UnsupportedOperationException("Method getStorageFileNames not implemented in " + getClass());
@@ -238,13 +246,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
+    public List<File> getAllStorageFilesToSave() throws StateStorageException {
       return Collections.emptyList();
     }
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFiles() {
+    public List<File> getAllStorageFiles() {
       return Collections.emptyList();
     }
 

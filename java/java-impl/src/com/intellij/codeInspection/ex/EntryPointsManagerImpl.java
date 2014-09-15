@@ -39,7 +39,7 @@ import java.util.List;
 
 @State(
     name = "EntryPointsManager",
-    storages = {@Storage( file = StoragePathMacros.PROJECT_FILE)}
+    storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)}
 )
 public class EntryPointsManagerImpl extends EntryPointsManagerBase implements PersistentStateComponent<Element> {
   public EntryPointsManagerImpl(Project project) {

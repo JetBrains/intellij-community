@@ -34,6 +34,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -53,6 +54,16 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return null;
     }
+
+    if (!(element instanceof PsiMethod) &&
+        !(element instanceof PsiClass)) {
+      return null;
+    }
+
+    if (!PsiUtil.isPluginProject(element.getProject())) {
+      return null;
+    }
+
     final VirtualFile file = PsiUtilCore.getVirtualFile(element);
     if (file == null || !ProjectFileIndex.SERVICE.getInstance(element.getProject()).isInTestSourceContent(file)) {
       return null;
@@ -64,7 +75,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
           method, method.getModifierList().getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new TestDataNavigationHandler(),
           GutterIconRenderer.Alignment.LEFT);
       }                                                                                         
-    } else if (element instanceof PsiClass) {
+    } else {
       final PsiClass psiClass = (PsiClass)element;
       final String basePath = getTestDataBasePath(psiClass);
       if (basePath != null) {
@@ -115,7 +126,8 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
   @Nullable
   public static String getTestDataBasePath(PsiClass psiClass) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(psiClass,
-                                                                              Collections.singleton(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME));
+                                                                              Collections.singleton(
+                                                                                TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME));
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value instanceof PsiExpression) {

@@ -48,10 +48,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class TestsPattern extends TestPackage {
-  public TestsPattern(final Project project,
-                      final JUnitConfiguration configuration,
-                      ExecutionEnvironment environment) {
-    super(project, configuration, environment);
+  public TestsPattern(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+    super(configuration, environment);
   }
 
   @Override
@@ -119,7 +117,7 @@ public class TestsPattern extends TestPackage {
                                            ? className.substring(0, className.indexOf(','))
                                            : className).trim(), GlobalSearchScope.allScope(project));
   }
-  
+
   protected void configureClasspath() throws CantRunException {
     final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
 

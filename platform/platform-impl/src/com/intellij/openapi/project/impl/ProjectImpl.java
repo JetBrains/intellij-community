@@ -38,7 +38,6 @@ import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -58,6 +57,8 @@ import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.util.Function;
 import com.intellij.util.TimedReference;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -488,7 +489,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
         }
 
         if (!macros2invalidate.isEmpty()) {
-          final Set<String> components = new HashSet<String>();
+          final Set<String> components = new THashSet<String>();
           for (TrackingPathMacroSubstitutor substitutor : substitutors) {
             components.addAll(substitutor.getComponents(macros2invalidate));
           }

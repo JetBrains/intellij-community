@@ -15,13 +15,11 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,22 +34,14 @@ public class PyPackageManagersImpl extends PyPackageManagers {
     final String name = sdk.getName();
     PyPackageManagerImpl manager = myInstances.get(name);
     if (manager == null) {
-      manager = new PyPackageManagerImpl(sdk);
+      if (PythonSdkType.isRemote(sdk)) {
+        manager = new PyRemotePackageManagerImpl(sdk);
+      }
+      else {
+        manager = new PyPackageManagerImpl(sdk);
+      }
       myInstances.put(name, manager);
     }
     return manager;
-  }
-
-  @Nullable
-  @Override
-  public List<PyRequirement> getRequirements(Module module) {
-    return PyPackageManagerImpl.getRequirements(module);
-  }
-
-
-  @Nullable
-  @Override
-  public List<PyRequirement> getRequirementsFromTxt(Module module) {
-    return PyPackageManagerImpl.getRequirementsFromTxt(module);
   }
 }

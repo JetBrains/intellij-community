@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -285,13 +286,20 @@ public class JVMNameUtil {
     return DebuggerManager.getInstance(aClass.getProject()).getVMClassQualifiedName(aClass);
   }
 
+  public static JVMName getJVMConstructorSignature(@Nullable PsiMethod method, @Nullable PsiClass declaringClass) {
+    return getJVMSignature(method, true, declaringClass);
+  }
+
+  public static JVMName getJVMSignature(@NotNull PsiMethod method) {
+    return getJVMSignature(method, method.isConstructor(), method.getContainingClass());
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static JVMName getJVMSignature(PsiMethod method) {
+  private static JVMName getJVMSignature(@Nullable PsiMethod method, boolean constructor, @Nullable PsiClass declaringClass) {
     JVMNameBuffer signature = new JVMNameBuffer();
     signature.append("(");
     
-    if (method.isConstructor()) {
-      final PsiClass declaringClass = method.getContainingClass();
+    if (constructor) {
       if (declaringClass != null) {
         final PsiClass outerClass = declaringClass.getContainingClass();
         if (outerClass != null) {
@@ -302,11 +310,13 @@ public class JVMNameUtil {
         }
       }
     }
-    for (PsiParameter psiParameter : method.getParameterList().getParameters()) {
-      appendJVMSignature(signature, psiParameter.getType());
+    if (method != null) {
+      for (PsiParameter psiParameter : method.getParameterList().getParameters()) {
+        appendJVMSignature(signature, psiParameter.getType());
+      }
     }
     signature.append(")");
-    if (!method.isConstructor()) {
+    if (!constructor && method != null) {
       appendJVMSignature(signature, method.getReturnType());
     }
     else {
@@ -411,6 +421,13 @@ public class JVMNameUtil {
           int i = qName.lastIndexOf('.');
           return i > 0 ? qName.substring(0, i) : "";
         }
+      }
+    }
+
+    if (positionFile instanceof PsiClassOwner) {
+      String name = ((PsiClassOwner)positionFile).getPackageName();
+      if (!StringUtil.isEmpty(name)) {
+        return name;
       }
     }
 

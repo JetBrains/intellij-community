@@ -679,7 +679,9 @@
       <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="AllIcons.Debugger.MuteBreakpoints"/>
+      <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
       <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
+      <action id="XDebugger.AutoTooltipOnSelection" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowOnSelectionAction"/>
       <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="AllIcons.ObjectBrowser.Sorted"/>
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
@@ -817,7 +819,8 @@
     <action id="SendEOF" class="com.intellij.execution.actions.EOFAction" text="Send EOF"/>
 
     <group>
-      <action class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction" text="View assertEquals Difference" id="openAssertEqualsDiff"/>
+      <action class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction"
+              text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="CompareDirs"/>
       <separator/>
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>

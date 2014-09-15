@@ -15,9 +15,8 @@
  */
 package org.jetbrains.java.decompiler.main.extern;
 
-import java.io.InputStream;
+import java.io.IOException;
 
 public interface IBytecodeProvider {
-
-  InputStream getBytecodeStream(String externPath, String internPath);
+  byte[] getBytecode(String externalPath, String internalPath) throws IOException;
 }

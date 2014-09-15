@@ -16,123 +16,104 @@
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SingleClassesTest {
-  private File tempDir;
-  private ConsoleDecompiler decompiler;
+  private DecompilerTestFixture fixture;
 
   @Before
   public void setUp() throws IOException {
-    //noinspection SSBasedInspection
-    tempDir = File.createTempFile("decompiler_test_", "_dir");
-    assertTrue(tempDir.delete());
-    assertTrue(tempDir.mkdirs());
-
-    decompiler = new ConsoleDecompiler(new HashMap<String, Object>() {{
-      put(IFernflowerPreferences.LOG_LEVEL, "warn");
-      put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
-      put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
-      put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
-      put(IFernflowerPreferences.LITERALS_AS_IS, "1");
-    }});
+    fixture = new DecompilerTestFixture();
+    fixture.setUp();
   }
 
   @After
   public void tearDown() {
-    decompiler = null;
-    delete(tempDir);
-    tempDir = null;
+    fixture.tearDown();
+    fixture = null;
   }
 
-  @Test public void testClassFields() { doTest("TestClassFields"); }
-  @Test public void testClassLambda() { doTest("TestClassLambda"); }
-  @Test public void testClassLoop() { doTest("TestClassLoop"); }
-  @Test public void testClassSwitch() { doTest("TestClassSwitch"); }
-  @Test public void testClassTypes() { doTest("TestClassTypes"); }
-  @Test public void testClassVar() { doTest("TestClassVar"); }
-  @Test public void testDeprecations() { doTest("TestDeprecations"); }
-  @Test public void testExtendsList() { doTest("TestExtendsList"); }
-  @Test public void testMethodParameters() { doTest("TestMethodParameters"); }
-  @Test public void testCodeConstructs() { doTest("TestCodeConstructs"); }
-  @Test public void testConstants() { doTest("TestConstants"); }
-  //@Test public void testEnum() { doTest("TestEnum"); }
+  @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
+  @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }
+  @Test public void testClassLoop() { doTest("pkg/TestClassLoop"); }
+  @Test public void testClassSwitch() { doTest("pkg/TestClassSwitch"); }
+  @Test public void testClassTypes() { doTest("pkg/TestClassTypes"); }
+  @Test public void testClassVar() { doTest("pkg/TestClassVar"); }
+  @Test public void testClassNestedInitializer() { doTest("pkg/TestClassNestedInitializer"); }
+  @Test public void testClassCast() { doTest("pkg/TestClassCast"); }
+  @Test public void testDeprecations() { doTest("pkg/TestDeprecations"); }
+  @Test public void testExtendsList() { doTest("pkg/TestExtendsList"); }
+  @Test public void testMethodParameters() { doTest("pkg/TestMethodParameters"); }
+  @Test public void testCodeConstructs() { doTest("pkg/TestCodeConstructs"); }
+  @Test public void testConstants() { doTest("pkg/TestConstants"); }
+  @Test public void testEnum() { doTest("pkg/TestEnum"); }
+  @Test public void testDebugSymbols() { doTest("pkg/TestDebugSymbols"); }
+  @Test public void testInvalidMethodSignature() { doTest("InvalidMethodSignature"); }
 
-  private void doTest(final String testName) {
+  private void doTest(String testFile) {
     try {
-      File testDataDir = new File("testData");
-      if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
-      if (!isTestDataDir(testDataDir)) testDataDir = new File("plugins/java-decompiler/engine/testData");
-      assertTrue(isTestDataDir(testDataDir));
-
-      File classFile = new File(testDataDir, "/classes/pkg/" + testName + ".class");
+      File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
       assertTrue(classFile.isFile());
-      decompiler.addSpace(classFile, true);
-      File[] innerClasses = classFile.getParentFile().listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.matches(testName + "\\$.+\\.class");
-        }
-      });
-      for (File inner : innerClasses) {
-        decompiler.addSpace(inner, true);
+      String testName = classFile.getName().replace(".class", "");
+
+      ConsoleDecompiler decompiler = fixture.getDecompiler();
+      for (File file : collectClasses(classFile)) {
+        decompiler.addSpace(file, true);
       }
 
-      decompiler.decompileContext(tempDir);
+      decompiler.decompileContext();
 
-      File decompiledFile = new File(tempDir, testName + ".java");
+      File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
       assertTrue(decompiledFile.isFile());
 
-      File referenceFile = new File(testDataDir, "results/" + testName + ".dec");
+      File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
       assertTrue(referenceFile.isFile());
 
-      String decompiledContent = getContent(decompiledFile);
-      String referenceContent = getContent(referenceFile);
-      assertEquals(referenceContent, decompiledContent);
+      compareContent(decompiledFile, referenceFile);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  private static boolean isTestDataDir(File dir) {
-    return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
+  private static List<File> collectClasses(File classFile) {
+    List<File> files = new ArrayList<File>();
+    files.add(classFile);
+
+    File parent = classFile.getParentFile();
+    if (parent != null) {
+      final String pattern = classFile.getName().replace(".class", "") + "\\$.+\\.class";
+      File[] inner = parent.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.matches(pattern);
+        }
+      });
+      if (inner != null) Collections.addAll(files, inner);
+    }
+
+    return files;
   }
 
-  private static String getContent(File file) throws IOException {
-    Reader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
-    try {
-      char[] buff = new char[16 * 1024];
-      StringBuilder content = new StringBuilder();
-      int n;
-      while ((n = reader.read(buff)) > 0) {
-        content.append(buff, 0, n);
-      }
-      return content.toString();
-    }
-    finally {
-      reader.close();
-    }
-  }
+  private static void compareContent(File decompiledFile, File referenceFile) throws IOException {
+    String decompiledContent = new String(InterpreterUtil.getBytes(decompiledFile), "UTF-8");
 
-  private static void delete(File file) {
-    if (file.isDirectory()) {
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File f : files) delete(f);
-      }
+    String referenceContent = new String(InterpreterUtil.getBytes(referenceFile), "UTF-8");
+    if (InterpreterUtil.IS_WINDOWS && !referenceContent.contains("\r\n")) {
+      referenceContent = referenceContent.replace("\n", "\r\n");  // fix for broken Git checkout on Windows
     }
-    else {
-      assertTrue(file.delete());
-    }
+
+    assertEquals(referenceContent, decompiledContent);
   }
 }

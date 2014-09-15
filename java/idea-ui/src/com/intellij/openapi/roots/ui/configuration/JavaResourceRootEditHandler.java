@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
@@ -51,7 +52,7 @@ public class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase
   @NotNull
   @Override
   public Color getRootsGroupColor() {
-    return new Color(0x812DF3);
+    return new JBColor(new Color(0x812DF3), new Color(127, 96, 144));
   }
 
   @NotNull

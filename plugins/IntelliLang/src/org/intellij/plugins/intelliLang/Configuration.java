@@ -77,7 +77,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   @State(
     name = Configuration.COMPONENT_NAME,
-    storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
+    storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
   public static class App extends Configuration {
 
     private final List<BaseInjection> myDefaultInjections;

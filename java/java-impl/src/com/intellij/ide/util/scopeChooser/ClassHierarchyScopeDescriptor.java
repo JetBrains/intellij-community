@@ -69,23 +69,25 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
       chooser.showDialog();
 
       PsiClass aClass = chooser.getSelected();
-      if (aClass == null) return null;
+      if (aClass == null) {
+        myCachedScope = GlobalSearchScope.EMPTY_SCOPE;
+      } else {
+        final List<PsiElement> classesToSearch = new LinkedList<PsiElement>();
+        classesToSearch.add(aClass);
 
-      final List<PsiElement> classesToSearch = new LinkedList<PsiElement>();
-      classesToSearch.add(aClass);
+        classesToSearch.addAll(ClassInheritorsSearch.search(aClass, true).findAll());
 
-      classesToSearch.addAll(ClassInheritorsSearch.search(aClass, true).findAll());
+        FunctionalExpressionSearch.search(aClass).forEach(new Processor<PsiFunctionalExpression>() {
+          @Override
+          public boolean process(PsiFunctionalExpression expression) {
+            classesToSearch.add(expression);
+            return true;
+          }
+        });
 
-      FunctionalExpressionSearch.search(aClass).forEach(new Processor<PsiFunctionalExpression>() {
-        @Override
-        public boolean process(PsiFunctionalExpression expression) {
-          classesToSearch.add(expression);
-          return true;
-        }
-      });
-
-      myCachedScope = new LocalSearchScope(PsiUtilCore.toPsiElementArray(classesToSearch),
-                                           IdeBundle.message("scope.hierarchy", ClassPresentationUtil.getNameForClass(aClass, true)));
+        myCachedScope = new LocalSearchScope(PsiUtilCore.toPsiElementArray(classesToSearch),
+                                             IdeBundle.message("scope.hierarchy", ClassPresentationUtil.getNameForClass(aClass, true)));
+      }
     }
 
     return myCachedScope;

@@ -14,6 +14,7 @@
         <runConfigurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGSuiteConfigurationProducer"/>
         <configurationType implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationType"/>
        <psi.referenceContributor language="JAVA" implementation="com.theoryinpractice.testng.TestNGReferenceContributor"/>
+       <psi.referenceContributor language="Groovy" implementation="com.theoryinpractice.testng.TestNGReferenceContributor"/>
        <psi.referenceContributor language="XML" implementation="com.theoryinpractice.testng.TestNGSuiteReferenceContributor"/>
       <library.dependencyScopeSuggester implementation="com.theoryinpractice.testng.configuration.TestNGDependencyScopeSuggester"/>
 

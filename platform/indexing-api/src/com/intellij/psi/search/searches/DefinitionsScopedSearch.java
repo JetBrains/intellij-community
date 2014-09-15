@@ -63,8 +63,13 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
     private final SearchScope myScope;
     private final boolean myCheckDeep;
 
-    public SearchParameters(@NotNull PsiElement element) {
-      this(element, element.getUseScope(), true);
+    public SearchParameters(@NotNull final PsiElement element) {
+      this(element, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+        @Override
+        public SearchScope compute() {
+          return element.getUseScope();
+        }
+      }), true);
     }
 
     public SearchParameters(@NotNull PsiElement element, @NotNull SearchScope scope, final boolean checkDeep) {

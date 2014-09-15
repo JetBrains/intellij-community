@@ -1,8 +1,6 @@
 package pkg;
 
-
 public enum TestEnum {
-
    E1,
    E2 {
       public void m() {
@@ -13,8 +11,8 @@ public enum TestEnum {
       public void m() {
       }
    };
-   private String s;
 
+   private String s;
 
    public void m() {
    }
@@ -26,5 +24,4 @@ public enum TestEnum {
    private TestEnum(@Deprecated String var3) {
       this.s = var3;
    }
-
 }

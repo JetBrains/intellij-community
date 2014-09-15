@@ -1,11 +1,11 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http:www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,9 +24,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -772,14 +769,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
    private void doTest(boolean warnings) {
      LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
      IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), myTestRootDisposable);
-     final PsiResolveHelperImpl helper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(getProject()).getResolveHelper();
-     helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));
-     try {
-       doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
-     }
-     finally {
-       helper.setTestHelper(null);
-     }
+     doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
    }
 
 

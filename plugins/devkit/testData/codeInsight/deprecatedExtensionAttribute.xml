@@ -6,7 +6,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.myPlugin">
-    <myExt <warning descr="Deprecated attribute 'old'">old="java.lang.Runnable"</warning> attr="value"/>
+    <myExt <error descr="Deprecated attribute 'old'">old="java.lang.Runnable"</error> attr="value"/>
   </extensions>
 
 </idea-plugin>

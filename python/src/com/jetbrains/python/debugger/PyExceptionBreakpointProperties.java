@@ -79,9 +79,13 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     myNotifyOnlyOnFirst = notifyOnlyOnFirst;
   }
 
+  public String getExceptionBreakpointId() {
+    return "python-" + myException;
+  }
+
   @Override
   public ExceptionBreakpointCommand createAddCommand(RemoteDebugger debugger) {
-    return ExceptionBreakpointCommand.addExceptionBreakpointCommand(debugger, getException(),
+    return ExceptionBreakpointCommand.addExceptionBreakpointCommand(debugger, getExceptionBreakpointId(),
                                                                     new AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy(
                                                                       isNotifyAlways(),
                                                                       isNotifyOnTerminate(), isNotifyOnlyOnFirst()));
@@ -89,6 +93,6 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
 
   @Override
   public ExceptionBreakpointCommand createRemoveCommand(RemoteDebugger debugger) {
-    return ExceptionBreakpointCommand.removeExceptionBreakpointCommand(debugger, getException());
+    return ExceptionBreakpointCommand.removeExceptionBreakpointCommand(debugger, getExceptionBreakpointId());
   }
 }

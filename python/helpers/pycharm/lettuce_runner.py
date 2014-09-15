@@ -2,13 +2,14 @@
 """
 BDD lettuce framework runner
 TODO: Support other params (like tags) as well.
-Supports only 1 param now: folder to search "features" for.
+Supports only 2 params now: folder to search "features" for or file and "-s scenario_index"
 """
+import argparse
+import os
 import _bdd_utils
 
 __author__ = 'Ilya.Kazakevich'
 from lettuce.exceptions import ReasonToFail
-import sys
 import lettuce
 from lettuce import core
 
@@ -18,31 +19,43 @@ class _LettuceRunner(_bdd_utils.BddRunner):
     Lettuce runner (BddRunner for lettuce)
     """
 
-    def __init__(self, base_dir, what_to_run):
+    def __init__(self, base_dir, what_to_run, scenarios):
         """
 
+        :param scenarios scenario numbers to run
+        :type scenarios list
         :param base_dir base directory to run tests in
         :type base_dir: str
         :param what_to_run folder or file to run
         :type what_to_run str
+
         """
         super(_LettuceRunner, self).__init__(base_dir)
-        self.__runner = lettuce.Runner(what_to_run)
+        self.__runner = lettuce.Runner(what_to_run, ",".join(scenarios))
 
     def _get_features_to_run(self):
         super(_LettuceRunner, self)._get_features_to_run()
-        if self.__runner.single_feature:  # We need to run one and only one feature
-            return [core.Feature.from_file(self.__runner.single_feature)]
-
-        # Find all features in dir
         features = []
-        for feature_file in self.__runner.loader.find_feature_files():
-            feature = core.Feature.from_file(feature_file)
-            assert isinstance(feature, core.Feature), feature
-            # TODO: cut out due to https://github.com/gabrielfalcao/lettuce/issues/451  Fix when this issue fixed
-            feature.scenarios = filter(lambda s: not s.outlines, feature.scenarios)
-            if feature.scenarios:
-                features.append(feature)
+        if self.__runner.single_feature:  # We need to run one and only one feature
+            features = [core.Feature.from_file(self.__runner.single_feature)]
+        else:
+            # Find all features in dir
+            for feature_file in self.__runner.loader.find_feature_files():
+                feature = core.Feature.from_file(feature_file)
+                assert isinstance(feature, core.Feature), feature
+                # TODO: cut out due to https://github.com/gabrielfalcao/lettuce/issues/451  Fix when this issue fixed
+                feature.scenarios = filter(lambda s: not s.outlines, feature.scenarios)
+                if feature.scenarios:
+                    features.append(feature)
+
+        # Choose only selected scenarios
+        if self.__runner.scenarios:
+            for feature in features:
+                filtered_feature_scenarios = []
+                for index in [i - 1 for i in self.__runner.scenarios]:  # decrease index by 1
+                    if index < len(feature.scenarios):
+                        filtered_feature_scenarios.append(feature.scenarios[index])
+                feature.scenarios = filtered_feature_scenarios
         return features
 
     def _run_tests(self):
@@ -108,6 +121,8 @@ class _LettuceRunner(_bdd_utils.BddRunner):
 
 
 if __name__ == "__main__":
-    (base_dir, what_to_run) = _bdd_utils.get_path_by_args(sys.argv)
-    _bdd_utils.fix_win_drive(what_to_run)
-    _LettuceRunner(base_dir, what_to_run).run()
+    (base_dir, scenarios, what_to_run) = _bdd_utils.get_what_to_run_by_env(os.environ)
+    if len(what_to_run) > 1:
+        raise Exception("Lettuce can't run more than one file now")
+    _bdd_utils.fix_win_drive(what_to_run[0])
+    _LettuceRunner(base_dir, what_to_run[0], scenarios).run()

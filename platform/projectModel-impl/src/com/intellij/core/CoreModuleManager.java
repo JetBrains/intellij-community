@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import java.io.IOException;
@@ -52,10 +51,10 @@ public class CoreModuleManager extends ModuleManagerImpl {
     final ModuleEx module = createModule(filePath);
     VirtualFile vFile = StandardFileSystems.local().findFileByPath(filePath);
     try {
+      assert vFile != null;
       StorageData storageData = CoreProjectLoader.loadStorageFile(module, vFile);
-      final Element element = storageData.getState("NewModuleRootManager");
       ModuleRootManagerImpl.ModuleRootManagerState state = new ModuleRootManagerImpl.ModuleRootManagerState();
-      state.readExternal(element);
+      state.readExternal(storageData.getState("NewModuleRootManager"));
       ((ModuleRootManagerImpl) ModuleRootManager.getInstance(module)).loadState(state);
     }
     catch (JDOMException e) {

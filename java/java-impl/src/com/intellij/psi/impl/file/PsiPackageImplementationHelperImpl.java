@@ -37,6 +37,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -158,7 +160,16 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
       if (psiFile != null) {
         final Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
         if (module != null) {
-          directories = psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
+          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiFile);
+          final boolean isInTests =
+            virtualFile != null && ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(virtualFile);
+          if (isInTests) {
+            directories = psiPackage.getDirectories(GlobalSearchScope.moduleTestsWithDependentsScope(module));
+          }
+
+          if (directories == null || directories.length == 0) {
+            directories = psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
+          }
         }
         else {
           directories = psiPackage.getDirectories(GlobalSearchScope.notScope(GlobalSearchScope.projectScope(project)));

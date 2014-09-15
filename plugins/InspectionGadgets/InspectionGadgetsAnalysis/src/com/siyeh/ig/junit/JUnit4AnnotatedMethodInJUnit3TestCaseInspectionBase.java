@@ -18,6 +18,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -66,6 +67,11 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspectionBase extends BaseIns
       if (!TestUtils.isJUnitTestClass(containingClass)) {
         return;
       }
+
+      if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, true)) {
+        return;
+      }
+
       if (AnnotationUtil.isAnnotated(method, IGNORE, false) && method.getName().startsWith("test")) {
         registerMethodError(method, containingClass, method);
       } else if (TestUtils.isJUnit4TestMethod(method)) {

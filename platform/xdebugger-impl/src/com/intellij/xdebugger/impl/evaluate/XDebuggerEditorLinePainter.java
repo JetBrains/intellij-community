@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.evaluate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorLinePainter;
 import com.intellij.openapi.editor.LineExtensionInfo;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -25,10 +26,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.util.NotNullProducer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -100,7 +99,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         if (StringUtil.isEmpty(text.toString())) {
           continue;
         }
-        result.add(new LineExtensionInfo("  " + name + ": ", color, null, null, Font.PLAIN));
+        result.add(new LineExtensionInfo("  " + name + ": ", color, null, null, Font.ITALIC));
 
         Variable var = new Variable(name, lineNumber);
         VariableValue variableValue = oldValues.get(var);
@@ -116,7 +115,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
         if (!variableValue.isChanged()) {
           for (String s : text.getTexts()) {
-            result.add(new LineExtensionInfo(s, color, null, null, Font.PLAIN));
+            result.add(new LineExtensionInfo(s, color, null, null, Font.ITALIC));
           }
         } else {
           variableValue.produceChangedParts(result);
@@ -142,12 +141,33 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     return -1;
   }
 
+  private static boolean isDarkEditor() {
+    Color bg = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+    return ColorUtil.isDark(bg);
+  }
+
   public static JBColor getForeground() {
-    return new JBColor(new Color(61, 128, 101), new Color(61, 128, 101));
+    return new JBColor(new NotNullProducer<Color>() {
+      @SuppressWarnings("UseJBColor")
+      @NotNull
+      @Override
+      public Color produce() {
+        return isDarkEditor() ? Registry.getColor("ide.debugger.inline.dark.fg.color", new Color(0x3d8065))
+          : Registry.getColor("ide.debugger.inline.fg.color", new Color(0x3d8065));
+      }
+    });
   }
 
   public static JBColor getChangedForeground() {
-    return new JBColor(new Color(202, 128, 33), new Color(161, 131, 10));
+    return new JBColor(new NotNullProducer<Color>() {
+      @SuppressWarnings("UseJBColor")
+      @NotNull
+      @Override
+      public Color produce() {
+        return isDarkEditor() ? Registry.getColor("ide.debugger.inline.dark.fg.modified.color", new Color(0xa1830a))
+                              : Registry.getColor("ide.debugger.inline.fg.modified.color", new Color(0xca8021));
+      }
+    });
   }
 
   static class Variable {
@@ -199,22 +219,22 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       if (isArray(actual) && isArray(old)) {
         List<String> actualParts = getArrayParts(actual);
         List<String> oldParts = getArrayParts(old);
-        result.add(new LineExtensionInfo("{", getForeground(), null, null, Font.PLAIN));
+        result.add(new LineExtensionInfo("{", getForeground(), null, null, Font.ITALIC));
         for (int i = 0; i < actualParts.size(); i++) {
           if (i < oldParts.size() && StringUtil.equals(actualParts.get(i), oldParts.get(i))) {
-            result.add(new LineExtensionInfo(actualParts.get(i), getForeground(), null, null, Font.PLAIN));
+            result.add(new LineExtensionInfo(actualParts.get(i), getForeground(), null, null, Font.ITALIC));
           } else {
-            result.add(new LineExtensionInfo(actualParts.get(i), getChangedForeground(), null, null, Font.BOLD));
+            result.add(new LineExtensionInfo(actualParts.get(i), getChangedForeground(), null, null, Font.ITALIC));
           }
           if (i != actualParts.size() - 1) {
-            result.add(new LineExtensionInfo(", ", getForeground(), null, null, Font.PLAIN));
+            result.add(new LineExtensionInfo(", ", getForeground(), null, null, Font.ITALIC));
           }
         }
-        result.add(new LineExtensionInfo("}", getForeground(), null, null, Font.PLAIN));
+        result.add(new LineExtensionInfo("}", getForeground(), null, null, Font.ITALIC));
         return;
       }
 
-      result.add(new LineExtensionInfo(actual, getChangedForeground(), null, null, Font.BOLD));
+      result.add(new LineExtensionInfo(actual, getChangedForeground(), null, null, Font.ITALIC));
     }
 
     private static boolean isArray(String s) {

@@ -214,7 +214,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
             return !file.isDirectory() && importer.getSourceExtension().equals(file.getExtension());
           }
         }, null, myContentPane);
-      VirtualFile[] selection = fileChooser.choose(CodeStyleSchemesUIConfiguration.Util.getRecentImportFile(), null);
+      VirtualFile[] selection = fileChooser.choose(null, CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
       if (selection.length == 1) {
         VirtualFile selectedFile = selection[0];
         selectedFile.refresh(false, false);

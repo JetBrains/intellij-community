@@ -314,6 +314,9 @@ public class GitBranchUtil {
     else if (branchName.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
       return branchName.substring(GitBranch.REFS_REMOTES_PREFIX.length());
     }
+    else if (branchName.startsWith(GitTag.REFS_TAGS_PREFIX)) {
+      return branchName.substring(GitTag.REFS_TAGS_PREFIX.length());
+    }
     return branchName;
   }
 

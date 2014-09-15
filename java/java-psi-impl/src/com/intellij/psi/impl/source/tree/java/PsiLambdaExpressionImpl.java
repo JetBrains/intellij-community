@@ -30,7 +30,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,16 +77,11 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
   @Override
   public boolean isVoidCompatible() {
     final PsiElement body = getBody();
-    if (body != null) {
-      try {
-        ControlFlow controlFlow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy
-          .getInstance());
-        int startOffset = controlFlow.getStartOffset(body);
-        int endOffset = controlFlow.getEndOffset(body);
-        return startOffset != -1 && endOffset != -1 && !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset);
-      }
-      catch (AnalysisCanceledException e) {
-        return true;
+    if (body instanceof PsiCodeBlock) {
+      for (PsiReturnStatement statement : PsiUtil.findReturnStatements((PsiCodeBlock)body)) {
+        if (statement.getReturnValue() != null) {
+          return false;
+        }
       }
     }
     return true;
@@ -96,18 +90,25 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
   @Override
   public boolean isValueCompatible() {
     final PsiElement body = getBody();
-    if (body != null) {
+    if (body instanceof PsiCodeBlock) {
       try {
-        final ControlFlow controlFlow =
-          ControlFlowFactory.getInstance(getProject()).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
-        if (ControlFlowUtil.findExitPointsAndStatements(controlFlow, 0, controlFlow.getSize(), new IntArrayList(),
-                                                        PsiReturnStatement.class,
-                                                        PsiThrowStatement.class).isEmpty()) {
+        ControlFlow controlFlow =
+          ControlFlowFactory.getInstance(getProject()).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy
+            .getInstance());
+        int startOffset = controlFlow.getStartOffset(body);
+        int endOffset = controlFlow.getEndOffset(body);
+        if (startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset)) {
           return false;
         }
       }
       catch (AnalysisCanceledException e) {
-        return true;
+        return false;
+      }
+
+      for (PsiReturnStatement statement : PsiUtil.findReturnStatements((PsiCodeBlock)body)) {
+        if (statement.getReturnValue() == null) {
+          return false;
+        }
       }
     }
     return true;
@@ -200,16 +201,35 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       }
     }
 
+
+    //A lambda expression (§15.27) is potentially compatible with a functional interface type (§9.8) if all of the following are true:
+    //   The arity of the target type's function type is the same as the arity of the lambda expression.
+    //   If the target type's function type has a void return, then the lambda body is either a statement expression (§14.8) or a void-compatible block (§15.27.2).
+    //   If the target type's function type has a (non-void) return type, then the lambda body is either an expression or a value-compatible block (§15.27.2).
+    PsiType methodReturnType = interfaceMethod.getReturnType();
     if (checkReturnType) {
       final String uniqueVarName = JavaCodeStyleManager.getInstance(getProject()).suggestUniqueVariableName("l", this, true);
       final String canonicalText = toArray(leftType).getCanonicalText();
       final PsiStatement assignmentFromText = JavaPsiFacade.getElementFactory(getProject())
         .createStatementFromText(canonicalText + " " + uniqueVarName + " = " + getText(), this);
       final PsiLocalVariable localVariable = (PsiLocalVariable)((PsiDeclarationStatement)assignmentFromText).getDeclaredElements()[0];
-      PsiType methodReturnType = interfaceMethod.getReturnType();
       if (methodReturnType != null) {
         return LambdaHighlightingUtil.checkReturnTypeCompatible((PsiLambdaExpression)localVariable.getInitializer(),
                                                                 substitutor.substitute(methodReturnType)) == null;
+      }
+    } else {
+      final PsiElement body = getBody();
+      if (methodReturnType == PsiType.VOID) {
+        if (body instanceof PsiCodeBlock) {
+          return isVoidCompatible();
+        } else {
+          return LambdaUtil.isExpressionStatementExpression(body);
+        }
+      } else {
+        if (body instanceof PsiCodeBlock) {
+          return isValueCompatible();
+        }
+        return body instanceof PsiExpression;
       }
     }
     return true;

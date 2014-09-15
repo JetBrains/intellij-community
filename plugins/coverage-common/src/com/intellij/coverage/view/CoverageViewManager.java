@@ -28,7 +28,7 @@ import java.util.Map;
  */
 @State(
     name = "CoverageViewManager",
-    storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)}
+    storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
 )
 public class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance("#" + CoverageViewManager.class.getName());

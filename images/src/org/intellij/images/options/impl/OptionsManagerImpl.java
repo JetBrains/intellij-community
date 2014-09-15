@@ -28,11 +28,8 @@ import org.jdom.Element;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 @State(
-    name = "Images.OptionsManager",
-    roamingType = RoamingType.DISABLED,
-    storages = {
-        @Storage(file = StoragePathMacros.APP_CONFIG + "/images.support.xml")
-    }
+  name = "Images.OptionsManager",
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/images.support.xml", roamingType = RoamingType.DISABLED)}
 )
 final class OptionsManagerImpl extends OptionsManager implements PersistentStateComponent<Element> {
   private final OptionsImpl options = new OptionsImpl();

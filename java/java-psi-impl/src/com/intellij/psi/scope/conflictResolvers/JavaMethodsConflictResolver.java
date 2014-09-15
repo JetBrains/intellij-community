@@ -158,7 +158,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       // A lambda expression or a method reference expression is potentially compatible with a type variable if the type variable is a type parameter of the candidate method.
       final PsiClass paramClass = PsiUtil.resolveClassInType(paramType);
       if (paramClass instanceof PsiTypeParameter && ((PsiTypeParameter)paramClass).getOwner() == method) continue;
-      if (!lambdaExpression.isAcceptable(((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType), lambdaExpression.hasFormalParameterTypes())) {
+      if (!lambdaExpression.isAcceptable(((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType),
+                                         InferenceSession.isPertinentToApplicability(lambdaExpression, method))) {
         iterator.remove();
       }
     }
@@ -397,7 +398,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   @MethodCandidateInfo.ApplicabilityLevelConstant
-  protected int checkApplicability(@NotNull List<CandidateInfo> conflicts) {
+  public int checkApplicability(@NotNull List<CandidateInfo> conflicts) {
     @MethodCandidateInfo.ApplicabilityLevelConstant int maxApplicabilityLevel = 0;
     boolean toFilter = false;
     for (CandidateInfo conflict : conflicts) {

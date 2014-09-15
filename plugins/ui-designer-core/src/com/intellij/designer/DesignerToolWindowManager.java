@@ -96,8 +96,8 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   }
 
   @Override
-  protected void updateToolWindow(@Nullable DesignerEditorPanel designer) {
-    myToolWindowContent.update(designer);
+  protected void updateToolWindow(@Nullable DesignerEditorPanelFacade designer) {
+    myToolWindowContent.update((DesignerEditorPanel)designer);
 
     if (designer == null) {
       myToolWindow.setAvailable(false, null);
@@ -126,9 +126,9 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  protected LightToolWindow createContent(DesignerEditorPanel designer) {
+  protected LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer) {
     DesignerToolWindow toolWindowContent = new DesignerToolWindow(myProject, false);
-    toolWindowContent.update(designer);
+    toolWindowContent.update((DesignerEditorPanel)designer);
 
     return createContent(designer,
                          toolWindowContent,

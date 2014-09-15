@@ -80,7 +80,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private boolean myListenerAdded = false;
   private Alarm myRefreshAlarm;
-  
+
   private String mySchemeExtension = DEFAULT_EXT;
   private boolean myUpgradeExtension = false;
 
@@ -536,7 +536,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   @Nullable
   private static Document loadGlobalScheme(final String schemePath) throws IOException {
     StreamProvider provider = getProvider();
-    return provider != null && provider.isEnabled() ? StorageUtil.loadDocument(provider.loadContent(schemePath, RoamingType.GLOBAL)) : null;
+    return provider != null && provider.isEnabled() ? StorageUtil.loadDocument(provider.loadContent(schemePath, getRoamingType(provider))) : null;
   }
 
   private void saveFileName(String fileName, final E schemeKey) {
@@ -583,7 +583,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   public void updateConfigFilesFromStreamProviders() {
-
   }
 
   private static class SharedSchemeData {
@@ -610,9 +609,9 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
     Collection<String> names = new THashSet<String>(getAllSchemeNames(currentSchemeList));
     Map<String, SharedScheme<E>> result = new THashMap<String, SharedScheme<E>>();
-    for (String subPath : provider.listSubFiles(myFileSpec, RoamingType.GLOBAL)) {
+    for (String subPath : provider.listSubFiles(myFileSpec, getRoamingType(provider))) {
       try {
-        final Document subDocument = StorageUtil.loadDocument(provider.loadContent(getFileFullPath(subPath), RoamingType.GLOBAL));
+        final Document subDocument = StorageUtil.loadDocument(provider.loadContent(getFileFullPath(subPath), getRoamingType(provider)));
         if (subDocument != null) {
           SharedSchemeData original = unwrap(subDocument);
           final E scheme = myProcessor.readScheme(original.original);
@@ -674,6 +673,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return myFileSpec + '/' + subPath;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void exportScheme(@NotNull final E scheme, final String name, final String description) throws WriteExternalException, IOException {
     StreamProvider provider = getProvider();
@@ -684,7 +684,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     Parent document = myProcessor.writeScheme(scheme);
     if (document != null) {
       String fileSpec = getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + mySchemeExtension;
-      if (!provider.isApplicable(fileSpec, RoamingType.GLOBAL)) {
+      if (!provider.isApplicable(fileSpec, getRoamingType(provider))) {
         return;
       }
 
@@ -696,8 +696,15 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           wrapped.setAttribute(USER, userName);
         }
       }
-      StorageUtil.doSendContent(provider, fileSpec, wrapped, RoamingType.GLOBAL, false);
+      StorageUtil.doSendContent(provider, fileSpec, wrapped, getRoamingType(provider), false);
     }
+  }
+
+  @SuppressWarnings("deprecation")
+  @NotNull
+  private static RoamingType getRoamingType(@NotNull StreamProvider provider) {
+    // for deprecated old stream we use GLOBAL as before to preserve backward compatibility
+    return provider instanceof CurrentUserHolder ? RoamingType.GLOBAL : RoamingType.PER_USER;
   }
 
   @NotNull
@@ -897,7 +904,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private void saveIfNeeded(E schemeKey, String fileName, Parent element, long newHash, Long oldHash) throws IOException {
     if (oldHash == null || newHash != oldHash.longValue() || myVFSBaseDir.findChild(fileName) == null) {
-      ensureFileText(fileName, StorageUtil.documentToBytes(element, true).toByteArray());
+      ensureFileText(fileName, StorageUtil.elementToBytes(element, true).toByteArray());
       schemeKey.getExternalInfo().setHash(newHash);
       saveFileName(fileName, schemeKey);
       saveOnServer(fileName, element);

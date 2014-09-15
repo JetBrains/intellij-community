@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.actions.ResizeToolWindowAction;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -53,8 +55,6 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 public final class InternalDecorator extends JPanel implements Queryable, TypeSafeDataProvider {
-
-  private static final int DIVIDER_WIDTH = UIUtil.isUnderDarcula() ? 2 : 5;
 
   private Project myProject;
   private WindowInfoImpl myInfo;
@@ -169,7 +169,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       else if (ToolWindowAnchor.RIGHT == anchor) {
         add(myDivider, BorderLayout.WEST);
       }
-      myDivider.setPreferredSize(new Dimension(DIVIDER_WIDTH, DIVIDER_WIDTH));
+      myDivider.setPreferredSize(new Dimension(0, 0));
     }
     else { // docked and floating windows don't have divider
       remove(myDivider);
@@ -303,10 +303,16 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      g.setColor(UIUtil.getPanelBackground());
-      doPaintBorder(c, g, x, y, width, height);
-      g.setColor(new Color(0, 0, 0, 90));
-      doPaintBorder(c, g, x, y, width, height);
+      if (UIUtil.isUnderDarcula()) {
+        g.setColor(Gray._40);
+        doPaintBorder(c, g, x, y, width, height);
+      }
+      else {
+        g.setColor(UIUtil.getPanelBackground());
+        doPaintBorder(c, g, x, y, width, height);
+        g.setColor(Gray._155);
+        doPaintBorder(c, g, x, y, width, height);
+      }
     }
 
     private void doPaintBorder(Component c, Graphics g, int x, int y, int width, int height) {
@@ -314,18 +320,22 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
       if (insets.top > 0) {
         UIUtil.drawLine(g, x, y + insets.top - 1, x + width - 1, y + insets.top - 1);
+        UIUtil.drawLine(g, x, y + insets.top, x + width - 1, y + insets.top);
       }
 
       if (insets.left > 0) {
-        UIUtil.drawLine(g, x, y + insets.top, x, y + height - 1);
+        UIUtil.drawLine(g, x, y, x, y + height);
+        UIUtil.drawLine(g, x + 1, y, x + 1, y + height);
       }
 
       if (insets.right > 0) {
-        UIUtil.drawLine(g, x + width - 1, y + insets.top, x + width - 1, y + height - 1);
+        UIUtil.drawLine(g, x + width - 1, y + insets.top, x + width - 1, y + height);
+        UIUtil.drawLine(g, x + width, y + insets.top, x + width, y + height);
       }
 
       if (insets.bottom > 0) {
-        UIUtil.drawLine(g, x, y + height - 1, x + width - 1, y + height - 1);
+        UIUtil.drawLine(g, x, y + height - 1, x + width, y + height - 1);
+        UIUtil.drawLine(g, x, y + height, x + width, y + height);
        }
     }
 
@@ -354,7 +364,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
         component = parent;
         parent = component.getParent();
       }
-      return new Insets(0, anchor == ToolWindowAnchor.RIGHT ? 1 : 0, 0, anchor == ToolWindowAnchor.LEFT ? 1 : 0);
+      return new Insets(0, anchor == ToolWindowAnchor.RIGHT ? 1 : 0, anchor == ToolWindowAnchor.TOP ? 1 : 0, anchor == ToolWindowAnchor.LEFT ? 1 : 0);
     }
 
     @Override
@@ -446,6 +456,10 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
           main.addAction(action).setAsSecondary(true);
         }
       }
+    }
+    String separatorText = group.getTemplatePresentation().getText();
+    if (children.length > 0 && !StringUtil.isEmpty(separatorText)) {
+      main.addAction(new Separator(separatorText), Constraints.FIRST);
     }
   }
 
@@ -609,135 +623,98 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   private final class MyDivider extends JPanel {
     private boolean myDragging;
     private Point myLastPoint;
+    private Disposable myDisposable;
+    private IdeGlassPane myGlassPane;
 
-    private MyDivider() {
-      myDragging = false;
-      enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
-      setBorder(new DividerBorder());
+    private final MouseAdapter myListener = new MyMouseAdapter();
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      myGlassPane = IdeGlassPaneUtil.find(this);
+      myDisposable = Disposer.newDisposable();
+      myGlassPane.addMouseMotionPreprocessor(myListener, myDisposable);
+      myGlassPane.addMousePreprocessor(myListener, myDisposable);
     }
 
     @Override
-    protected final void processMouseMotionEvent(final MouseEvent e) {
-      super.processMouseMotionEvent(e);
-      if (MouseEvent.MOUSE_DRAGGED == e.getID()) {
-        myDragging = true;
-        final ToolWindowAnchor anchor = myInfo.getAnchor();
-        final boolean isVerticalCursor = myInfo.isDocked() ? anchor.isSplitVertically() : anchor.isHorizontal();
-        setCursor(isVerticalCursor ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
-        final Point point = e.getPoint();
+    public void removeNotify() {
+      super.removeNotify();
+      if (myDisposable != null && !Disposer.isDisposed(myDisposable)) {
+        Disposer.dispose(myDisposable);
+      }
+    }
 
+    boolean isInDragZone(MouseEvent e) {
+      final Point p = SwingUtilities.convertMouseEvent(e.getComponent(), e, this).getPoint();
+      return Math.abs(myInfo.getAnchor().isHorizontal() ? p.y : p.x) < 6;
+    }
+
+
+    private class MyMouseAdapter extends MouseAdapter {
+
+      private void updateCursor(MouseEvent e) {
+        if (isInDragZone(e)) {
+          myGlassPane.setCursor(MyDivider.this.getCursor(), MyDivider.this);
+          e.consume();
+        }
+      }
+
+      @Override
+      public void mousePressed(MouseEvent e) {
+        myDragging = isInDragZone(e);
+        updateCursor(e);
+      }
+
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        updateCursor(e);
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        updateCursor(e);
+        myDragging = false;
+      }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        updateCursor(e);
+      }
+
+      @Override
+      public void mouseDragged(MouseEvent e) {
+        if (!myDragging) return;
+        MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, MyDivider.this);
+        final ToolWindowAnchor anchor = myInfo.getAnchor();
+        final Point point = event.getPoint();
         final Container windowPane = InternalDecorator.this.getParent();
-        myLastPoint = SwingUtilities.convertPoint(this, point, windowPane);
+        myLastPoint = SwingUtilities.convertPoint(MyDivider.this, point, windowPane);
         myLastPoint.x = Math.min(Math.max(myLastPoint.x, 0), windowPane.getWidth());
         myLastPoint.y = Math.min(Math.max(myLastPoint.y, 0), windowPane.getHeight());
 
         final Rectangle bounds = InternalDecorator.this.getBounds();
         if (anchor == ToolWindowAnchor.TOP) {
-          if (myLastPoint.y < DIVIDER_WIDTH) {
-            myLastPoint.y = DIVIDER_WIDTH;
-          }
           InternalDecorator.this.setBounds(0, 0, bounds.width, myLastPoint.y);
         }
         else if (anchor == ToolWindowAnchor.LEFT) {
-          if (myLastPoint.x < DIVIDER_WIDTH) {
-            myLastPoint.x = DIVIDER_WIDTH;
-          }
           InternalDecorator.this.setBounds(0, 0, myLastPoint.x, bounds.height);
         }
         else if (anchor == ToolWindowAnchor.BOTTOM) {
-          if (myLastPoint.y > windowPane.getHeight() - DIVIDER_WIDTH) {
-            myLastPoint.y = windowPane.getHeight() - DIVIDER_WIDTH;
-          }
           InternalDecorator.this.setBounds(0, myLastPoint.y, bounds.width, windowPane.getHeight() - myLastPoint.y);
         }
         else if (anchor == ToolWindowAnchor.RIGHT) {
-          if (myLastPoint.x > windowPane.getWidth() - DIVIDER_WIDTH) {
-            myLastPoint.x = windowPane.getWidth() - DIVIDER_WIDTH;
-          }
           InternalDecorator.this.setBounds(myLastPoint.x, 0, windowPane.getWidth() - myLastPoint.x, bounds.height);
         }
         InternalDecorator.this.validate();
+        e.consume();
       }
     }
 
     @Override
-    protected final void processMouseEvent(final MouseEvent e) {
-      super.processMouseEvent(e);
+    public Cursor getCursor() {
       final boolean isVerticalCursor = myInfo.isDocked() ? myInfo.getAnchor().isSplitVertically() : myInfo.getAnchor().isHorizontal();
-      switch (e.getID()) {
-        case MouseEvent.MOUSE_MOVED:
-        default:
-          break;
-        case MouseEvent.MOUSE_ENTERED:
-          setCursor(
-            isVerticalCursor ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
-          break;
-        case MouseEvent.MOUSE_EXITED:
-          if (!myDragging) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-          }
-          break;
-        case MouseEvent.MOUSE_PRESSED:
-          setCursor(
-            isVerticalCursor ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
-          break;
-        case MouseEvent.MOUSE_RELEASED:
-          myDragging = false;
-          myLastPoint = null;
-          break;
-        case MouseEvent.MOUSE_CLICKED:
-          break;
-      }
-    }
-
-    private final class DividerBorder implements Border {
-      @Override
-      public final void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-        final ToolWindowAnchor anchor = myInfo.getAnchor();
-        final boolean isVertical = !anchor.isSplitVertically();
-        final JBColor outer = new JBColor(Color.white, Color.darkGray);
-        if (isVertical) {
-          if (anchor == ToolWindowAnchor.TOP) {
-            g.setColor(outer);
-            UIUtil.drawLine(g, x, y, x + width - 1, y);
-            g.setColor(Color.darkGray);
-            UIUtil.drawLine(g, x, y + height - 1, x + width - 1, y + height - 1);
-          }
-          else {
-            g.setColor(Color.darkGray);
-            UIUtil.drawLine(g, x, y, x + width - 1, y);
-            g.setColor(outer);
-            UIUtil.drawLine(g, x, y + height - 1, x + width - 1, y + height - 1);
-          }
-        }
-        else {
-          if (anchor == ToolWindowAnchor.LEFT) {
-            g.setColor(outer);
-            UIUtil.drawLine(g, x, y, x, y + height - 1);
-            g.setColor(Color.darkGray);
-            UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 1);
-          }
-          else {
-            g.setColor(Color.darkGray);
-            UIUtil.drawLine(g, x, y, x, y + height - 1);
-            g.setColor(outer);
-            UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 1);
-          }
-        }
-      }
-
-      @Override
-      public final Insets getBorderInsets(final Component c) {
-        if (c instanceof MyDivider) {
-          return new Insets(1, 1, 1, 1);
-        }
-        return new Insets(0, 0, 0, 0);
-      }
-
-      @Override
-      public final boolean isBorderOpaque() {
-        return true;
-      }
+      return isVerticalCursor ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
     }
   }
 

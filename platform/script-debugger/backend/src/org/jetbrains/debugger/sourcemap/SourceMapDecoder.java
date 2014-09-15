@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +132,12 @@ public final class SourceMapDecoder {
         if (reader.peek() != JsonToken.END_ARRAY) {
           sourcesContent = new SmartList<String>();
           do {
-            sourcesContent.add(StringUtilRt.convertLineSeparators(reader.nextString()));
+            if (reader.peek() == JsonToken.STRING) {
+              sourcesContent.add(StringUtilRt.convertLineSeparators(reader.nextString()));
+            }
+            else {
+              reader.skipValue();
+            }
           }
           while (reader.hasNext());
         }
@@ -176,7 +182,7 @@ public final class SourceMapDecoder {
         sourceToEntries[i] = new SourceMappingList(entries);
       }
     }
-    return new SourceMap(file, new GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory.create(sources, sourcesContent));
+    return new SourceMap(file, new GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory.create(sources, sourcesContent), !ContainerUtil.isEmpty(names));
   }
 
   @Nullable

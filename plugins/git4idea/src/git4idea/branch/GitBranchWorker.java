@@ -19,11 +19,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitCommit;
 import git4idea.GitExecutionException;
+import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -61,15 +65,27 @@ public final class GitBranchWorker {
     myUiHandler = uiHandler;
   }
   
-  public void checkoutNewBranch(@NotNull final String name, @NotNull final List<GitRepository> repositories) {
+  public void checkoutNewBranch(@NotNull final String name, @NotNull List<GitRepository> repositories) {
     updateInfo(repositories);
-    new GitCheckoutNewBranchOperation(myProject, myFacade, myGit, myUiHandler, repositories, name).execute();
+    repositories = ContainerUtil.filter(repositories, new Condition<GitRepository>() {
+      @Override
+      public boolean value(GitRepository repository) {
+        GitLocalBranch currentBranch = repository.getCurrentBranch();
+        return currentBranch == null || !currentBranch.getName().equals(name);
+      }
+    });
+    if (!repositories.isEmpty()) {
+      new GitCheckoutNewBranchOperation(myProject, myFacade, myGit, myUiHandler, repositories, name).execute();
+    }
+    else {
+      LOG.error("Creating new branch the same as current in all repositories: " + name);
+    }
   }
 
   public void createNewTag(@NotNull final String name, @NotNull final String reference, @NotNull final List<GitRepository> repositories) {
-    updateInfo(repositories);
     for (GitRepository repository : repositories) {
       myGit.createNewTag(repository, name, null, reference);
+      VfsUtil.markDirtyAndRefresh(true, true, false, repository.getGitDir());
     }
   }
 

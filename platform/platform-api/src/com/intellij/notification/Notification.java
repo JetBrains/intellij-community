@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,7 @@ public class Notification {
     myType = type;
     myListener = listener;
 
-    LOG.assertTrue(myContent.trim().length() > 0, "Notification should have content, groupId: " + myGroupId);
+    LOG.assertTrue(!StringUtil.isEmptyOrSpaces(myContent), "Notification should have content, groupId: " + myGroupId);
   }
 
   @SuppressWarnings("MethodMayBeStatic")

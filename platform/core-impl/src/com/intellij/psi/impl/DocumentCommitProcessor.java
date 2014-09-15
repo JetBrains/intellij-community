@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +39,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -105,8 +108,7 @@ public abstract class DocumentCommitProcessor {
     final long startDocModificationTimeStamp = document.getModificationStamp();
     final FileElement myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
     final CharSequence chars = document.getImmutableCharSequence();
-    final CharSequence oldPsiText = myTreeElementBeingReparsedSoItWontBeCollected.getChars();
-    final TextRange changedPsiRange = getChangedPsiRange(file, oldPsiText, chars);
+    final TextRange changedPsiRange = getChangedPsiRange(file, myTreeElementBeingReparsedSoItWontBeCollected, chars);
     if (changedPsiRange == null) {
       return null;
     }
@@ -132,26 +134,65 @@ public abstract class DocumentCommitProcessor {
 
         doActualPsiChange(file, diffLog);
 
-        assertAfterCommit(document, file, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected);
+        assertAfterCommit(document, file, myTreeElementBeingReparsedSoItWontBeCollected);
 
         return true;
       }
     };
   }
 
+  private static int getLeafMatchingLength(CharSequence leafText, CharSequence pattern, int patternIndex, int finalPatternIndex, int direction) {
+    int leafIndex = direction == 1 ? 0 : leafText.length() - 1;
+    int finalLeafIndex = direction == 1 ? leafText.length() - 1 : 0;
+    int result = 0;
+    while (leafText.charAt(leafIndex) == pattern.charAt(patternIndex)) {
+      result++;
+      if (leafIndex == finalLeafIndex || patternIndex == finalPatternIndex) {
+        break;
+      }
+      leafIndex += direction;
+      patternIndex += direction;
+    }
+    return result;
+  }
+
+  private static int getMatchingLength(@NotNull FileElement treeElement, @NotNull CharSequence text, boolean fromStart) {
+    int patternIndex = fromStart ? 0 : text.length() - 1;
+    int finalPatternIndex = fromStart ? text.length() - 1 : 0;
+    int direction = fromStart ? 1 : -1;
+    ASTNode leaf = fromStart ? TreeUtil.findFirstLeaf(treeElement, false) : TreeUtil.findLastLeaf(treeElement, false);
+    int result = 0;
+    while (leaf != null && (fromStart ? patternIndex <= finalPatternIndex : patternIndex >= finalPatternIndex)) {
+      if (!(leaf instanceof ForeignLeafPsiElement)) {
+        CharSequence chars = leaf.getChars();
+        if (chars.length() > 0) {
+          int matchingLength = getLeafMatchingLength(chars, text, patternIndex, finalPatternIndex, direction);
+          result += matchingLength;
+          if (matchingLength != chars.length()) {
+            break;
+          }
+          patternIndex += (fromStart ? matchingLength : -matchingLength);
+        }
+      }
+      leaf = fromStart ? TreeUtil.nextLeaf(leaf, false) : TreeUtil.prevLeaf(leaf, false);
+    }
+    return result;
+  }
+
   @Nullable
-  public static TextRange getChangedPsiRange(@NotNull PsiFile file, @NotNull CharSequence oldPsiText, @NotNull CharSequence newDocumentText) {
+  public static TextRange getChangedPsiRange(@NotNull PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newDocumentText) {
+    int psiLength = treeElement.getTextLength();
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
-      return new TextRange(0, newDocumentText.length());
+      return new TextRange(0, psiLength);
     }
 
-    int commonPrefixLength = StringUtil.commonPrefixLength(oldPsiText, newDocumentText);
-    if (commonPrefixLength == newDocumentText.length() && newDocumentText.length() == oldPsiText.length()) {
+    int commonPrefixLength = getMatchingLength(treeElement, newDocumentText, true);
+    if (commonPrefixLength == newDocumentText.length() && newDocumentText.length() == psiLength) {
       return null;
     }
 
-    int commonSuffixLength = StringUtil.commonSuffixLength(oldPsiText, newDocumentText);
-    return new TextRange(commonPrefixLength, Math.max(commonPrefixLength, oldPsiText.length() - commonSuffixLength));
+    int commonSuffixLength = Math.min(getMatchingLength(treeElement, newDocumentText, false), psiLength - commonPrefixLength);
+    return new TextRange(commonPrefixLength, psiLength - commonSuffixLength);
   }
 
   public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {
@@ -187,7 +228,6 @@ public abstract class DocumentCommitProcessor {
 
   private void assertAfterCommit(@NotNull Document document,
                                  @NotNull final PsiFile file,
-                                 @NotNull CharSequence oldPsiText,
                                  @NotNull FileElement myTreeElementBeingReparsedSoItWontBeCollected) {
     if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
       final String documentText = document.getText();
@@ -197,8 +237,7 @@ public abstract class DocumentCommitProcessor {
                 "; doc len=" + document.getTextLength() +
                 "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText),
                 new Attachment("file psi text", fileText),
-                new Attachment("old text", documentText),
-                new Attachment("old psi file text", oldPsiText.toString()));
+                new Attachment("old text", documentText));
 
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       try {

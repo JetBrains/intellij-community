@@ -1,8 +1,6 @@
 package pkg;
 
-
 public class TestClassSwitch {
-
    public void testCaseOrder(int var1) {
       switch(var1) {
       case 5:

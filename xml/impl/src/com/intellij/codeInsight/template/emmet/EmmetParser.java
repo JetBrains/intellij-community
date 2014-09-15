@@ -80,6 +80,10 @@ public abstract class EmmetParser {
     ZenCodingNode mul = parseMul();
 
     ZenCodingToken operationToken = getToken();
+    if (operationToken == ZenCodingTokens.OPENING_R_BRACKET) {
+      mul = new MoreOperationNode(notNullNode(mul), parseExpression());
+      operationToken = getToken();
+    }
     if (!(operationToken instanceof OperationToken)) {
       return mul;
     }
@@ -132,7 +136,7 @@ public abstract class EmmetParser {
 
   @Nullable
   private ZenCodingNode parseMul() {
-    ZenCodingNode exp = parseExpressionInBraces();
+    ZenCodingNode exp = parseExpression();
     if (exp == null) {
       return null;
     }
@@ -153,7 +157,7 @@ public abstract class EmmetParser {
   }
 
   @Nullable
-  private ZenCodingNode parseExpressionInBraces() {
+  private ZenCodingNode parseExpression() {
     ZenCodingToken token = getToken();
     if (token == ZenCodingTokens.OPENING_R_BRACKET) {
       advance();

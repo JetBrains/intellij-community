@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
-import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
@@ -37,7 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvider {
+public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
 
   private static final NotNullFunction<ExtensionPointCandidate, Collection<? extends PsiElement>> CONVERTER =
     new NotNullFunction<ExtensionPointCandidate, Collection<? extends PsiElement>>() {

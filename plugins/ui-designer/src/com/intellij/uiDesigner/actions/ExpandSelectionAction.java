@@ -18,13 +18,14 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.SelectionState;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import java.util.Stack;
 
@@ -43,7 +44,7 @@ public final class ExpandSelectionAction extends AnAction{
     final SelectionState selectionState = editor.getSelectionState();
     selectionState.setInsideChange(true);
 
-    ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(editor.getProject()).getComponentTreeBuilder();
+    ComponentTreeBuilder builder = DesignerToolWindowManager.getInstance(editor).getComponentTreeBuilder();
     if (builder != null) {
       builder.beginUpdateSelection();
     }

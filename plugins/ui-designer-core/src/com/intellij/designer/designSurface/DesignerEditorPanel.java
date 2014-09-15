@@ -78,7 +78,8 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class DesignerEditorPanel extends JPanel implements DataProvider, ModuleProvider, RadPropertyContext {
+public abstract class DesignerEditorPanel extends JPanel
+  implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, RadPropertyContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.DesignerEditorPanel");
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
@@ -176,7 +177,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   private void createDesignerCard() {
-    JPanel panel = new JPanel(new FillLayout());
+    JPanel panel = new JPanel(new LightFillLayout());
     myContentSplitter.setInnerComponent(panel);
 
     myLayeredPane = new MyLayeredPane();
@@ -857,103 +858,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   //
   //
   //////////////////////////////////////////////////////////////////////////////////////////
-
-  private static final int MINIMIZE_WIDTH = 25;
-
-  private static final class FillLayout implements LayoutManager2 {
-    @Override
-    public void addLayoutComponent(Component comp, Object constraints) {
-    }
-
-    @Override
-    public float getLayoutAlignmentX(Container target) {
-      return 0.5f;
-    }
-
-    @Override
-    public float getLayoutAlignmentY(Container target) {
-      return 0.5f;
-    }
-
-    @Override
-    public void invalidateLayout(Container target) {
-    }
-
-    @Override
-    public void addLayoutComponent(String name, Component comp) {
-    }
-
-    @Override
-    public void removeLayoutComponent(Component comp) {
-    }
-
-    @Override
-    public Dimension maximumLayoutSize(Container target) {
-      return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
-    }
-
-    @Override
-    public Dimension preferredLayoutSize(Container parent) {
-      Component toolbar = parent.getComponent(0);
-      Dimension toolbarSize = toolbar.isVisible() ? toolbar.getPreferredSize() : new Dimension();
-      Dimension contentSize = parent.getComponent(1).getPreferredSize();
-      int extraWidth = 0;
-      JComponent jParent = (JComponent)parent;
-      if (jParent.getClientProperty(LightToolWindow.LEFT_MIN_KEY) != null) {
-        extraWidth += MINIMIZE_WIDTH;
-      }
-      if (jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY) != null) {
-        extraWidth += MINIMIZE_WIDTH;
-      }
-      return new Dimension(Math.max(toolbarSize.width, contentSize.width + extraWidth), toolbarSize.height + contentSize.height);
-    }
-
-    @Override
-    public Dimension minimumLayoutSize(Container parent) {
-      Component toolbar = parent.getComponent(0);
-      Dimension toolbarSize = toolbar.isVisible() ? toolbar.getMinimumSize() : new Dimension();
-      Dimension contentSize = parent.getComponent(1).getMinimumSize();
-      int extraWidth = 0;
-      JComponent jParent = (JComponent)parent;
-      if (jParent.getClientProperty(LightToolWindow.LEFT_MIN_KEY) != null) {
-        extraWidth += MINIMIZE_WIDTH;
-      }
-      if (jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY) != null) {
-        extraWidth += MINIMIZE_WIDTH;
-      }
-      return new Dimension(Math.max(toolbarSize.width, contentSize.width + extraWidth), toolbarSize.height + contentSize.height);
-    }
-
-    @Override
-    public void layoutContainer(Container parent) {
-      int leftWidth = 0;
-      int rightWidth = 0;
-      JComponent jParent = (JComponent)parent;
-      JComponent left = (JComponent)jParent.getClientProperty(LightToolWindow.LEFT_MIN_KEY);
-      if (left != null) {
-        leftWidth = MINIMIZE_WIDTH;
-      }
-      JComponent right = (JComponent)jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY);
-      if (right != null) {
-        rightWidth = MINIMIZE_WIDTH;
-      }
-      int extraWidth = leftWidth + rightWidth;
-
-      int width = parent.getWidth() - extraWidth;
-      int height = parent.getHeight();
-      Component toolbar = parent.getComponent(0);
-      Dimension toolbarSize = toolbar.isVisible() ? toolbar.getPreferredSize() : new Dimension();
-      toolbar.setBounds(leftWidth, 0, width, toolbarSize.height);
-      parent.getComponent(1).setBounds(leftWidth, toolbarSize.height, width, height - toolbarSize.height);
-
-      if (left != null) {
-        left.setBounds(0, 0, leftWidth, height);
-      }
-      if (right != null) {
-        right.setBounds(width + leftWidth, 0, rightWidth, height);
-      }
-    }
-  }
 
   /**
    * Size of the scene, in scroll pane view port pixels.

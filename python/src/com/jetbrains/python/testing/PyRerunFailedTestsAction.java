@@ -28,32 +28,28 @@ import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsActi
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-/*
- * User: ktisha
- */
 public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
-
   protected PyRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
     super(componentContainer);
   }
 
   @Override
   @Nullable
-  public MyRunProfile getRunProfile() {
+  protected MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
     final TestFrameworkRunningModel model = getModel();
-    if (model == null) return null;
-    final AbstractPythonRunConfiguration configuration = (AbstractPythonRunConfiguration)model.getProperties().getConfiguration();
-    return new MyTestRunProfile(configuration);
+    if (model == null) {
+      return null;
+    }
+    return new MyTestRunProfile((AbstractPythonRunConfiguration)model.getProperties().getConfiguration());
   }
-
 
   private class MyTestRunProfile extends MyRunProfile {
 
@@ -71,6 +67,19 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
       final AbstractPythonRunConfiguration configuration = ((AbstractPythonRunConfiguration)getPeer());
+
+      // If configuration wants to take care about rerun itself
+      if (configuration instanceof TestRunConfigurationReRunResponsible) {
+        // TODO: Extract method
+        final Set<PsiElement> failedTestElements = new HashSet<PsiElement>();
+        for (final AbstractTestProxy proxy : getFailedTests(getProject())) {
+          final Location<?> location = proxy.getLocation(getProject(), GlobalSearchScope.allScope(getProject()));
+          if (location != null) {
+            failedTestElements.add(location.getPsiElement());
+          }
+        }
+        return ((TestRunConfigurationReRunResponsible)configuration).rerunTests(executor, env, failedTestElements);
+      }
       return new FailedPythonTestCommandLineStateBase(configuration, env,
                                                       (PythonTestCommandLineStateBase)configuration.getState(executor, env));
     }

@@ -16,29 +16,22 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.impl.SelectionModelImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -94,7 +87,7 @@ public abstract class XVariablesViewBase extends XDebugView {
       disposeTreeRestorer();
       myTreeRestorer = myTreeState.restoreState(tree);
     }
-    if (position != null && Registry.is("ide.debugger.inline")) {
+    if (position != null) {
       registerInlineEvaluator(stackFrame, tree, position, project);
     }
   }
@@ -110,6 +103,9 @@ public abstract class XVariablesViewBase extends XDebugView {
       final SelectionListener listener = new SelectionListener() {
         @Override
         public void selectionChanged(final SelectionEvent e) {
+          if (!Registry.is("debugger.valueTooltipAutoShowOnSelection")) {
+            return;
+          }
           final String text = editor.getDocument().getText(e.getNewRange());
           final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
           if (evaluator != null && !StringUtil.isEmpty(text)
@@ -126,38 +122,8 @@ public abstract class XVariablesViewBase extends XDebugView {
                   final int offset = range.getStartOffset();
                   final LogicalPosition pos = editor.offsetToLogicalPosition(offset);
                   final Point point = editor.logicalPositionToXY(pos);
-                  final Point fullPopupPoint = new Point(point.x, point.y + editor.getLineHeight());
-                  final Disposable disposable = Disposer.newDisposable();
-                  final CustomShortcutSet expandShortcut = CustomShortcutSet.fromString("F2");//todo[kb] remove hardcoded shortcut
-                  new DumbAwareAction() {
-                    @Override
-                    public void actionPerformed(AnActionEvent e) {
 
-                      new XValueHint(project, editor, fullPopupPoint, ValueHintType.MOUSE_CLICK_HINT, info, evaluator,
-                                     session).invokeHint(new Runnable() {
-                        public void run() {
-                        }
-                      });
-                    }
-                  }.registerCustomShortcutSet(expandShortcut, editor.getComponent(), disposable);
-
-                  new XValueHint(project, editor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session) {
-                    @Override
-                    protected JComponent createExpandableHintComponent(SimpleColoredText text, Runnable expand) {
-                      final SimpleColoredText patched = new SimpleColoredText();
-                      patched.append("(Press " + KeymapUtil.getShortcutsText(expandShortcut.getShortcuts()) + ") ", SimpleTextAttributes.GRAY_ATTRIBUTES);
-                      for (int i = 0; i < text.getTexts().size(); i++) {
-                        patched.append(text.getTexts().get(i), text.getAttributes().get(i));
-                      }
-                      return super.createExpandableHintComponent(patched, expand);
-                    }
-                  }.invokeHint(
-                    new Runnable() {
-                      @Override
-                      public void run() {
-                        Disposer.dispose(disposable);
-                      }
-                    });
+                  new XValueHint(project, editor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session).invokeHint();
                 }
                 finally {
                   token.finish();
@@ -171,16 +137,7 @@ public abstract class XVariablesViewBase extends XDebugView {
           }
         }
       };
-      editor.getSelectionModel().addSelectionListener(listener);
-      Disposer.register(tree, new Disposable() {
-        @Override
-        public void dispose() {
-          final FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSelectedEditor(file);
-          if (fileEditor instanceof PsiAwareTextEditorImpl) {
-            ((PsiAwareTextEditorImpl)fileEditor).getEditor().getSelectionModel().removeSelectionListener(listener);
-          }
-        }
-      });
+      ((SelectionModelImpl)editor.getSelectionModel()).addSelectionListener(listener, tree);
     }
   }
 

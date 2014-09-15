@@ -226,4 +226,19 @@ public class JUnitStarter {
            : Class.forName("com.intellij.junit3.JUnit3IdeaTestRunner");
 
   }
+
+  public static void printClassesList(List classNames, String packageName, String category, File tempFile) throws IOException {
+    final PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"));
+
+    try {
+      writer.println(packageName); //package name
+      writer.println(category); //category
+      for (int i = 0; i < classNames.size(); i++) {
+        writer.println(classNames.get(i));
+      }
+    }
+    finally {
+      writer.close();
+    }
+  }
 }

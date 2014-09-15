@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -155,63 +153,20 @@ public class CommonCodeStyleSettings {
 
   protected static void copyPublicFields(Object from, Object to) {
     assert from != to;
-    copyFields(to.getClass().getFields(), from, to);
+    ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
   }
 
   void copyNonDefaultValuesFrom(CommonCodeStyleSettings from) {
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(null);
     PARENT_SETTINGS_INSTALLED =
-      copyFields(getClass().getFields(), from, this, new SupportedFieldsDiffFilter(from, getSupportedFields(), defaultSettings) {
-        @Override
-        public boolean isAccept(@NotNull Field field) {
-          if ("RIGHT_MARGIN".equals(field.getName())) return false; // Never copy RIGHT_MARGIN, it is inherited automatically if -1
-          return super.isAccept(field);
-        }
-      });
-  }
-
-  private static void copyFields(Field[] fields, Object from, Object to) {
-    copyFields(fields, from, to, null);
-  }
-
-  private static boolean copyFields(Field[] fields, Object from, Object to, @Nullable DifferenceFilter diffFilter) {
-    Set<Field> sourceFields = new HashSet<Field>(Arrays.asList(from.getClass().getFields()));
-    boolean valuesChanged = false;
-    for (Field field : fields) {
-      if (sourceFields.contains(field)) {
-        if (isPublic(field) && !isFinal(field)) {
-          try {
-            if (diffFilter == null || diffFilter.isAccept(field)) {
-              copyFieldValue(from, to, field);
-              valuesChanged = true;
-            }
+      ReflectionUtil
+        .copyFields(getClass().getFields(), from, this, new SupportedFieldsDiffFilter(from, getSupportedFields(), defaultSettings) {
+          @Override
+          public boolean isAccept(@NotNull Field field) {
+            if ("RIGHT_MARGIN".equals(field.getName())) return false; // Never copy RIGHT_MARGIN, it is inherited automatically if -1
+            return super.isAccept(field);
           }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }
-    }
-    return valuesChanged;
-  }
-
-  private static void copyFieldValue(final Object from, Object to, final Field field)
-    throws IllegalAccessException {
-    Class<?> fieldType = field.getType();
-    if (fieldType.isPrimitive() || fieldType.equals(String.class)) {
-      field.set(to, field.get(from));
-    }
-    else {
-      throw new RuntimeException("Field not copied " + field.getName());
-    }
-  }
-
-  private static boolean isPublic(final Field field) {
-    return (field.getModifiers() & Modifier.PUBLIC) != 0;
-  }
-
-  private static boolean isFinal(final Field field) {
-    return (field.getModifiers() & Modifier.FINAL) != 0;
+        });
   }
 
   @Nullable

@@ -132,12 +132,12 @@ public class DecompilerContext {
 
   public static void setLogger(IFernflowerLogger logger) {
     if (logger != null) {
-      String severity = (String)getProperty(IFernflowerPreferences.LOG_LEVEL);
-      if (severity != null) {
-        Integer iSeverity = IFernflowerLogger.mapLogLevel.get(severity.toUpperCase(Locale.US));
-        if (iSeverity != null) {
-          logger.setSeverity(iSeverity);
+      String level = (String)getProperty(IFernflowerPreferences.LOG_LEVEL);
+      if (level != null) {
+        try {
+          logger.setSeverity(IFernflowerLogger.Severity.valueOf(level.toUpperCase(Locale.US)));
         }
+        catch (IllegalArgumentException ignore) { }
       }
     }
     getCurrentContext().logger = logger;

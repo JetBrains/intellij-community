@@ -47,6 +47,9 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(ConfigurableEP<T> ep) {
+    if (!ep.canCreateConfigurable()) {
+      return null;
+    }
     if (ep.displayName != null || ep.key != null || ep.groupId != null) {
       T configurable = null;
       if (ep.providerClass != null) {
@@ -57,9 +60,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
       }
       return !ep.dynamic && ep.children == null && ep.childrenEPName == null
              ? (T)new ConfigurableWrapper(ep, configurable)
-             : "itself".equals(ep.groupId)
-               ? (T)new GroupWrapper(ep, configurable)
-               : (T)new CompositeWrapper(ep, configurable);
+             : (T)new CompositeWrapper(ep, configurable);
     }
     else {
       return ep.createConfigurable();
@@ -196,7 +197,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     return configurable instanceof SearchableConfigurable ? ((SearchableConfigurable)configurable).enableSearch(option) : null;
   }
 
-  private static class CompositeWrapper extends ConfigurableWrapper implements SearchableConfigurable.Parent {
+  private static class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
 
     private Configurable[] myKids;
 
@@ -240,53 +241,6 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     public ConfigurableWrapper addChild(Configurable configurable) {
       myKids = ArrayUtil.append(myKids, configurable);
       return this;
-    }
-
-    @Override
-    public boolean hasOwnContent() {
-      UnnamedConfigurable configurable = getConfigurable();
-      if (configurable instanceof SearchableConfigurable.Parent) {
-        SearchableConfigurable.Parent parent = (SearchableConfigurable.Parent)configurable;
-        return parent.hasOwnContent();
-      }
-      return false;
-    }
-
-    @Override
-    public boolean isVisible() {
-      if (super.myConfigurable == null) {
-        String name = super.myEp.instanceClass;
-        if (name == null) {
-          name = super.myEp.implementationClass;
-        }
-        if (name != null) {
-          try {
-            if (!SearchableConfigurable.Parent.class.isAssignableFrom(super.myEp.findClass(name))) {
-              return true; // do not instantiate wrapped configurable if not needed
-            }
-          }
-          catch (ClassNotFoundException exception) {
-            return true; // ignore unexpected exception from findClass
-          }
-        }
-      }
-      UnnamedConfigurable configurable = getConfigurable();
-      if (configurable instanceof SearchableConfigurable.Parent) {
-        SearchableConfigurable.Parent parent = (SearchableConfigurable.Parent)configurable;
-        return parent.isVisible();
-      }
-      return true;
-    }
-  }
-
-  private static final class GroupWrapper extends CompositeWrapper implements ConfigurableGroup {
-    private GroupWrapper(@NotNull ConfigurableEP ep, @Nullable UnnamedConfigurable configurable, Configurable... kids) {
-      super(ep, configurable, kids);
-    }
-
-    @Override
-    public String getShortName() {
-      return getDisplayName();
     }
   }
 }

@@ -259,18 +259,15 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       if (file != changedFile) {
         FileElement fileElement = ((PsiFileImpl)file).getTreeElement();
         if (fileElement != null) {
-          CharSequence oldText = fileElement.getChars();
-          reparseFile(file, newText, oldText);
+          reparseFile(file, fileElement, newText);
         }
       }
     }
   }
 
-  private void reparseFile(final PsiFile file, CharSequence newText, CharSequence oldText) {
-    if (oldText.equals(newText)) return;
-
+  private void reparseFile(final PsiFile file, FileElement treeElement, CharSequence newText) {
     PsiToDocumentSynchronizer synchronizer =((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getSynchronizer();
-    TextRange changedPsiRange = DocumentCommitProcessor.getChangedPsiRange(file, oldText, newText);
+    TextRange changedPsiRange = DocumentCommitProcessor.getChangedPsiRange(file, treeElement, newText);
     if (changedPsiRange == null) return;
 
     final DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, changedPsiRange, newText, new EmptyProgressIndicator());

@@ -130,7 +130,7 @@ public class MethodProcessorThread implements Runnable {
     //System.out.println(graph.toString());
 
     if (ExceptionDeobfuscator.hasObfuscatedExceptions(graph)) {
-      DecompilerContext.getLogger().writeMessage("Heavily obfuscated exception ranges found!", IFernflowerLogger.WARNING);
+      DecompilerContext.getLogger().writeMessage("Heavily obfuscated exception ranges found!", IFernflowerLogger.Severity.WARN);
     }
 
     RootStatement root = DomHelper.parseGraph(graph);

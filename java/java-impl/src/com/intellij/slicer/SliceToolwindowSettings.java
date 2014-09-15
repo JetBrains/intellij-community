@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 @State(
     name = "SliceToolwindowSettings",
-    storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)}
+    storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
 )
 public class SliceToolwindowSettings implements PersistentStateComponent<SliceToolwindowSettings> {
   private boolean isPreview;

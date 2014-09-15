@@ -1,0 +1,43 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.application.options.codeStyle.arrangement.action;
+
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
+import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
+
+/**
+ * @author Svetlana.Zemlyanskaya
+ */
+public abstract class AbstractArrangementRuleAction extends AnAction {
+
+  protected void scrollRowToVisible(@NotNull ArrangementMatchingRulesControl control, int row) {
+    final Rectangle rect = control.getCellRect(row, 0, false);
+    if (row != control.getEditingRow() - 1) {
+      control.scrollRectToVisible(rect);
+    }
+    else {
+      final Rectangle editorRect = control.getCellRect(row + 1, 0, false);
+      if(!rect.isEmpty() && !editorRect.isEmpty()) {
+        final int height = (int)(rect.getHeight() + editorRect.getHeight());
+        final Rectangle visibleRect = new Rectangle((int)rect.getX(), (int)rect.getY(), (int)rect.getWidth(), height);
+        control.scrollRectToVisible(visibleRect);
+      }
+    }
+  }
+}

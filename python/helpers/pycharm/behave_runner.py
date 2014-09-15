@@ -1,13 +1,14 @@
 # coding=utf-8
 """
 Behave BDD runner.
-*FIRST* param now: folder to search "features" for.
-Each "features" folder should have features and "steps" subdir.
+See _bdd_utils#get_path_by_env for information how to pass list of features here.
+Each feature could be file, folder with feature files or folder with "features" subfolder
 
 Other args are tag expressionsin format (--tags=.. --tags=..).
 See https://pythonhosted.org/behave/behave.html#tag-expression
 """
 import functools
+import glob
 import sys
 import os
 import traceback
@@ -15,6 +16,7 @@ import traceback
 from behave.formatter.base import Formatter
 from behave.model import Step, ScenarioOutline, Feature, Scenario
 from behave.tag_expression import TagExpression
+import re
 
 import _bdd_utils
 
@@ -185,16 +187,19 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         self.__real_runner.run()
 
 
-    def __filter_scenarios_by_tag(self, scenario):
+    def __filter_scenarios_by_args(self, scenario):
         """
-        Filters out scenarios that should be skipped by tags
+        Filters out scenarios that should be skipped by tags or scenario names
         :param scenario scenario to check
         :return true if should pass
         """
         assert isinstance(scenario, Scenario), scenario
         expected_tags = self.__config.tags
+        scenario_name_re = self.__config.name_re
+        if scenario_name_re and not scenario_name_re.match(scenario.name):
+            return False
         if not expected_tags:
-            return True  # No tags are required
+            return True  # No tags nor names are required
         return isinstance(expected_tags, TagExpression) and expected_tags.check(scenario.tags)
 
 
@@ -213,7 +218,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                     scenarios.extend(scenario.scenarios)
                 else:
                     scenarios.append(scenario)
-            feature.scenarios = filter(self.__filter_scenarios_by_tag, scenarios)
+            feature.scenarios = filter(self.__filter_scenarios_by_args, scenarios)
 
         return features_to_run
 
@@ -230,18 +235,27 @@ if __name__ == "__main__":
     command_args = list(filter(None, sys.argv[1:]))
     if command_args:
         _bdd_utils.fix_win_drive(command_args[0])
+    (base_dir, scenario_names, what_to_run) = _bdd_utils.get_what_to_run_by_env(os.environ)
+
+    for scenario_name in scenario_names:
+        command_args += ["-n", re.escape(scenario_name)]  # TODO : rewite pythonic
+
     my_config = configuration.Configuration(command_args=command_args)
     formatters.register_as(_Null, "com.intellij.python.null")
     my_config.format = ["com.intellij.python.null"]  # To prevent output to stdout
     my_config.reporters = []  # To prevent summary to stdout
     my_config.stdout_capture = False  # For test output
     my_config.stderr_capture = False  # For test output
-    (base_dir, what_to_run) = _bdd_utils.get_path_by_args(sys.argv)
-    if not my_config.paths:  # No path provided, trying to load dit manually
-        if os.path.isfile(what_to_run):  # File is provided, load it
-            my_config.paths = [what_to_run]
-        else:  # Dir is provided, find subdirs ro run
-            my_config.paths = _get_dirs_to_run(base_dir)
+    features = set()
+    for feature in what_to_run:
+        if os.path.isfile(feature) or glob.glob(
+                os.path.join(feature, "*.feature")):  # File of folder with "features"  provided, load it
+            features.add(feature)
+        elif os.path.isdir(feature):
+            features |= set(_get_dirs_to_run(feature))  # Find "features" subfolder
+    my_config.paths = list(features)
+    if what_to_run and not my_config.paths:
+        raise Exception("Nothing to run in {}".format(what_to_run))
     _BehaveRunner(my_config, base_dir).run()
 
 

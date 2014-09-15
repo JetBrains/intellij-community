@@ -387,8 +387,8 @@ public class IdentifierConverter {
 
   private void buildInheritanceTree() {
 
-    HashMap<String, ClassWrapperNode> nodes = new HashMap<String, ClassWrapperNode>();
-    HashMap<String, StructClass> classes = context.getClasses();
+    Map<String, ClassWrapperNode> nodes = new HashMap<String, ClassWrapperNode>();
+    Map<String, StructClass> classes = context.getClasses();
 
     List<ClassWrapperNode> rootClasses = new ArrayList<ClassWrapperNode>();
     List<ClassWrapperNode> rootInterfaces = new ArrayList<ClassWrapperNode>();

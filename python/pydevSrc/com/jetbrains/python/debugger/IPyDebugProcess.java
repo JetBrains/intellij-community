@@ -14,7 +14,7 @@ public interface IPyDebugProcess extends PyFrameAccessor {
 
   void threadSuspended(PyThreadInfo thread);
 
-  boolean isVariable(String name);
+  boolean canSaveToTemp(String name);
 
   void threadResumed(PyThreadInfo thread);
 

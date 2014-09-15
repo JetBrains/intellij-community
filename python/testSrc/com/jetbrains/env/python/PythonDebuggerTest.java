@@ -52,8 +52,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  public void testDebugger() {
-    runPythonTest(new PyUnitTestTask("", "test_debug.py") {
+  public void testPydevTests_Debugger() {
+    unittests("tests_python/test_debugger.py");
+  }
+
+  private void unittests(final String script) {
+    runPythonTest(new PyUnitTestTask("", script) {
       @Override
       protected String getTestDataPath() {
         return PythonHelpersLocator.getPythonCommunityPath() + "/helpers/pydev";
@@ -63,7 +67,16 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void after() {
         allTestsPassed();
       }
+
+      @Override
+      protected int getTestTimeout() {
+        return 600000;
+      }
     });
+  }
+
+  public void testDebug() { //TODO: merge it into pydev tests
+    unittests("test_debug.py");
   }
 
   public void testConditionalBreakpoint() throws Exception {

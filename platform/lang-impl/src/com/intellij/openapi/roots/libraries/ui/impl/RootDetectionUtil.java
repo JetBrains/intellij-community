@@ -70,7 +70,7 @@ public class RootDetectionUtil {
         try {
           for (VirtualFile rootCandidate : rootCandidates) {
             final Collection<DetectedLibraryRoot> roots = detector.detectRoots(rootCandidate, indicator);
-            if (!roots.isEmpty() && allRootsHaveOneTypeAndEqualTo(roots, rootCandidate)) {
+            if (!roots.isEmpty() && allRootsHaveOneTypeAndEqualToOrAreDirectParentOf(roots, rootCandidate)) {
               for (DetectedLibraryRoot root : roots) {
                 final LibraryRootType libraryRootType = root.getTypes().get(0);
                 result.add(new OrderRoot(root.getFile(), libraryRootType.getType(), libraryRootType.isJarDirectory()));
@@ -81,7 +81,7 @@ public class RootDetectionUtil {
                 final HashMap<LibraryRootType, String> names = new HashMap<LibraryRootType, String>();
                 for (LibraryRootType type : root.getTypes()) {
                   final String typeName = detector.getRootTypeName(type);
-                  LOG.assertTrue(typeName != null, "Unexpected root type " + type.getType().name() + (type.isJarDirectory() ? " (jar directory)" : "") + ", detectors: " + detector);
+                  LOG.assertTrue(typeName != null, "Unexpected root type " + type.getType().name() + (type.isJarDirectory() ? " (JAR directory)" : "") + ", detectors: " + detector);
                   names.put(type, typeName);
                 }
                 suggestedRoots.add(new SuggestedChildRootInfo(rootCandidate, root, names));
@@ -141,9 +141,9 @@ public class RootDetectionUtil {
     return result;
   }
 
-  private static boolean allRootsHaveOneTypeAndEqualTo(Collection<DetectedLibraryRoot> roots, VirtualFile candidate) {
+  private static boolean allRootsHaveOneTypeAndEqualToOrAreDirectParentOf(Collection<DetectedLibraryRoot> roots, VirtualFile candidate) {
     for (DetectedLibraryRoot root : roots) {
-      if (root.getTypes().size() > 1 || !root.getFile().equals(candidate)) {
+      if (root.getTypes().size() > 1 || !root.getFile().equals(candidate) && !root.getFile().equals(candidate.getParent())) {
         return false;
       }
     }

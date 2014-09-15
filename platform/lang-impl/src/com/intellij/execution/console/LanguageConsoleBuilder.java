@@ -1,6 +1,8 @@
 package com.intellij.execution.console;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
@@ -60,6 +62,8 @@ public final class LanguageConsoleBuilder {
 
   private boolean oneLineInput;
 
+  private String processInputStateKey;
+
   // todo to be removed
   public LanguageConsoleBuilder(@SuppressWarnings("NullableProblems") @NotNull LanguageConsoleView consoleView) {
     this.consoleView = consoleView;
@@ -87,6 +91,7 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
+  @NotNull
   public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
     if (consoleView == null) {
       this.executeActionHandler = executeActionHandler;
@@ -150,6 +155,13 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
+  @NotNull
+  public LanguageConsoleBuilder processInputStateKey(@Nullable String value) {
+    processInputStateKey = value;
+    return this;
+  }
+
+  @NotNull
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
     GutteredLanguageConsole console = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
     if (oneLineInput) {
@@ -160,6 +172,17 @@ public final class LanguageConsoleBuilder {
       assert historyType != null;
       doInitAction(consoleView, executeActionHandler, historyType);
     }
+
+    if (processInputStateKey != null) {
+      assert executeActionHandler != null;
+      if (PropertiesComponent.getInstance().getBoolean(processInputStateKey, false)) {
+        executeActionHandler.useProcessStdIn = true;
+        DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(consoleView.getProject());
+        daemonCodeAnalyzer.setHighlightingEnabled(consoleView.getConsole().getFile(), false);
+      }
+      consoleView.addCustomConsoleAction(new UseConsoleInputAction(processInputStateKey));
+    }
+
     console.initComponents();
     return consoleView;
   }

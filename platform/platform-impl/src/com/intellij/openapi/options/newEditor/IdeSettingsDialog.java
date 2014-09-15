@@ -16,7 +16,6 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +24,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ActionCallback;
@@ -45,7 +45,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -114,7 +113,7 @@ public class IdeSettingsDialog extends DialogWrapper implements DataProvider {
   @Nullable
   private static Configurable getPreselectedByDisplayName(final ConfigurableGroup[] groups, final String preselectedConfigurableDisplayName,
                                                           final Project project) {
-    Configurable result = findPreselectedByDisplayName(preselectedConfigurableDisplayName, groups);
+    Configurable result = new ConfigurableVisitor.ByName(preselectedConfigurableDisplayName).find(groups);
 
     return result == null ? findLastSavedConfigurable(groups, project) : result;
   }
@@ -230,44 +229,7 @@ public class IdeSettingsDialog extends DialogWrapper implements DataProvider {
     final String id = PropertiesComponent.getInstance(project).getValue(LAST_SELECTED_CONFIGURABLE);
     if (id == null) return null;
 
-    return findConfigurableInGroups(id, groups);
-  }
-
-  @Nullable
-  private static Configurable findConfigurableInGroups(String id, Configurable.Composite... groups) {
-    // avoid unnecessary group expand: check top-level configurables in all groups before looking at children
-    for (Configurable.Composite group : groups) {
-      final Configurable[] configurables = group.getConfigurables();
-      for (Configurable c : configurables) {
-        if (c instanceof SearchableConfigurable && id.equals(((SearchableConfigurable)c).getId())) {
-          return c;
-        }
-        else if (id.equals(c.getClass().getName())) {
-          return c;
-        }
-      }
-    }
-    for (Configurable.Composite group : groups) {
-      final Configurable[] configurables = group.getConfigurables();
-      for (Configurable c : configurables) {
-        if (c instanceof Configurable.Composite) {
-          Configurable result = findConfigurableInGroups(id, (Configurable.Composite)c);
-          if (result != null) {
-            return result;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Configurable findPreselectedByDisplayName(final String preselectedConfigurableDisplayName, ConfigurableGroup[] groups) {
-    final List<Configurable> all = SearchUtil.expand(groups);
-    for (Configurable each : all) {
-      if (preselectedConfigurableDisplayName.equals(each.getDisplayName())) return each;
-    }
-    return null;
+    return new ConfigurableVisitor.ByID(id).find(groups);
   }
 
   @Override

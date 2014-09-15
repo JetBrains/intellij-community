@@ -21,13 +21,13 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
@@ -55,7 +55,7 @@ class NewClassInstanceEvaluator implements Evaluator {
     }
     ClassType classType = (ClassType)obj;
     // find constructor
-    Method method = DebuggerUtilsEx.findMethod(classType, "<init>", myConstructorSignature.getName(debugProcess));
+    Method method = DebuggerUtils.findMethod(classType, "<init>", myConstructorSignature.getName(debugProcess));
     if (method == null) {
       throw EvaluateExceptionUtil.createEvaluateException(
         DebuggerBundle.message("evaluation.error.cannot.resolve.constructor", myConstructorSignature.getDisplayName(debugProcess)));

@@ -107,6 +107,8 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     final ExternalSourceDirectorySet directorySet = externalSourceSet.getSources().get(sourceType);
     if (directorySet == null) return;
 
+    if (directorySet.isCompilerOutputPathInherited()) return;
+
     result.add(VfsUtilCore.pathToUrl(directorySet.getOutputDir().getAbsolutePath()));
   }
 }

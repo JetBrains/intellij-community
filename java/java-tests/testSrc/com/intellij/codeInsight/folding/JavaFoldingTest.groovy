@@ -578,10 +578,14 @@ class Test {
    return 0;
  }
 
+ int arrayMethod(int param)[] {
+   return new int[];
+ }
+
 }"""
     PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 3
+    assert regions.size() == 4
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
   }
 

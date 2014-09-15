@@ -379,6 +379,7 @@ public class FileDownloaderImpl implements FileDownloader {
     private final ProgressIndicator myParent;
     private final int myTasksCount;
     private final AtomicDouble myTotalFraction;
+    private final Object myLock = new Object();
     private LinkedHashMap<SubTaskProgressIndicator, String> myText2Stack = new LinkedHashMap<SubTaskProgressIndicator, String>();
 
     private ConcurrentTasksProgressManager(ProgressIndicator parent, int tasksCount) {
@@ -398,12 +399,17 @@ public class FileDownloaderImpl implements FileDownloader {
 
     public void setText2(@NotNull SubTaskProgressIndicator subTask, @Nullable String text) {
       if (text != null) {
-        myText2Stack.put(subTask, text);
+        synchronized (myLock) {
+          myText2Stack.put(subTask, text);
+        }
         myParent.setText2(text);
       }
       else {
-        myText2Stack.remove(subTask);
-        String prev = myText2Stack.getLastValue();
+        String prev;
+        synchronized (myLock) {
+          myText2Stack.remove(subTask);
+          prev = myText2Stack.getLastValue();
+        }
         if (prev != null) {
           myParent.setText2(prev);
         }

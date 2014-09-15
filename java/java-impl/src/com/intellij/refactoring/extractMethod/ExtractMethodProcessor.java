@@ -463,14 +463,14 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected void apply(final AbstractExtractDialog dialog) {
     myMethodName = dialog.getChosenMethodName();
     myVariableDatum = dialog.getChosenParameters();
-    myStatic |= dialog.isMakeStatic();
+    myStatic = isStatic() | dialog.isMakeStatic();
     myIsChainedConstructor = dialog.isChainedConstructor();
     myMethodVisibility = dialog.getVisibility();
   }
 
   protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
-    return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
-                                                         myThrownExceptions, myStatic, myCanBeStatic, myCanBeChainedConstructor,
+    return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, getTypeParameterList(),
+                                   getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
                                                          suggestInitialMethodName(),
                                                          myRefactoringName, myHelpId, myElements) {
       protected boolean areTypesDirected() {
@@ -575,10 +575,16 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     chooseAnchor();
 
-    int col = myEditor.getCaretModel().getLogicalPosition().column;
-    int line = myEditor.getCaretModel().getLogicalPosition().line;
-    LogicalPosition pos = new LogicalPosition(0, 0);
-    myEditor.getCaretModel().moveToLogicalPosition(pos);
+    LogicalPosition pos1;
+    if (myEditor != null) {
+      int col = myEditor.getCaretModel().getLogicalPosition().column;
+      int line = myEditor.getCaretModel().getLogicalPosition().line;
+      pos1 = new LogicalPosition(line, col);
+      LogicalPosition pos = new LogicalPosition(0, 0);
+      myEditor.getCaretModel().moveToLogicalPosition(pos);
+    } else {
+      pos1 = null;
+    }
 
     final SearchScope processConflictsScope = myMethodVisibility.equals(PsiModifier.PRIVATE) ?
                                         new LocalSearchScope(myTargetClass) :
@@ -610,17 +616,18 @@ public class ExtractMethodProcessor implements MatchProvider {
       ApplicationManager.getApplication().runWriteAction(extract);
     }
 
-    LogicalPosition pos1 = new LogicalPosition(line, col);
-    myEditor.getCaretModel().moveToLogicalPosition(pos1);
-    int offset = myMethodCall.getMethodExpression().getTextRange().getStartOffset();
-    myEditor.getCaretModel().moveToOffset(offset);
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    myEditor.getSelectionModel().removeSelection();
+    if (myEditor != null) {
+      myEditor.getCaretModel().moveToLogicalPosition(pos1);
+      int offset = myMethodCall.getMethodExpression().getTextRange().getStartOffset();
+      myEditor.getCaretModel().moveToOffset(offset);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      myEditor.getSelectionModel().removeSelection();
+    }
   }
 
-  private void doExtract() throws IncorrectOperationException {
+  public void doExtract() throws IncorrectOperationException {
 
-    PsiMethod newMethod = generateEmptyMethod(myThrownExceptions, myStatic);
+    PsiMethod newMethod = generateEmptyMethod(getThrownExceptions(), isStatic());
 
     myExpression = myInputVariables.replaceWrappedReferences(myElements, myExpression);
     renameInputVariables();
@@ -991,6 +998,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myTargetClass;
   }
 
+  public PsiType getReturnType() {
+    return myReturnType;
+  }
+
   private PsiMethod generateEmptyMethod(PsiClassType[] exceptions, boolean isStatic) throws IncorrectOperationException {
     PsiMethod newMethod;
     if (myIsChainedConstructor) {
@@ -1001,8 +1012,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, isStatic);
     }
     PsiUtil.setModifierProperty(newMethod, myMethodVisibility, true);
-    if (myTypeParameterList != null) {
-      newMethod.getTypeParameterList().replace(myTypeParameterList);
+    if (getTypeParameterList() != null) {
+      newMethod.getTypeParameterList().replace(getTypeParameterList());
     }
     PsiCodeBlock body = newMethod.getBody();
     LOG.assertTrue(body != null);
@@ -1399,5 +1410,29 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public InputVariables getInputVariables() {
     return myInputVariables;
+  }
+
+  public PsiTypeParameterList getTypeParameterList() {
+    return myTypeParameterList;
+  }
+
+  public PsiClassType[] getThrownExceptions() {
+    return myThrownExceptions;
+  }
+
+  public boolean isStatic() {
+    return myStatic;
+  }
+
+  public boolean isCanBeStatic() {
+    return myCanBeStatic;
+  }
+
+  public PsiElement[] getElements() {
+    return myElements;
+  }
+
+  public PsiVariable[] getOutputVariables() {
+    return myOutputVariables;
   }
 }

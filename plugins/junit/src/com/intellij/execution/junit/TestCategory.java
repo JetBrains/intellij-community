@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 
 /**
@@ -30,13 +29,8 @@ import com.intellij.psi.*;
 * Date: 4/21/11
 */
 class TestCategory extends TestPackage {
-  private final Project myProject;
-
-  public TestCategory(Project project,
-                      JUnitConfiguration configuration,
-                      ExecutionEnvironment environment) {
-    super(project, configuration, environment);
-    myProject = project;
+  public TestCategory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+    super(configuration, environment);
   }
 
   @Override
@@ -56,14 +50,14 @@ class TestCategory extends TestPackage {
 
   @Override
   protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
-    return JavaPsiFacade.getInstance(myProject).findPackage("");
+    return JavaPsiFacade.getInstance(myEnvironment.getProject()).findPackage("");
   }
 
   @Override
   public boolean isConfiguredByElement(JUnitConfiguration configuration,
                                        PsiClass testClass,
                                        PsiMethod testMethod,
-                                       PsiPackage testPackage, 
+                                       PsiPackage testPackage,
                                        PsiDirectory testDir) {
     return false;
   }

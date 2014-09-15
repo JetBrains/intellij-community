@@ -19,11 +19,22 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * User: anna
@@ -67,6 +78,26 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
         if (body instanceof PsiCodeBlock) {
           PsiExpression psiExpression = getExpression((PsiCodeBlock)body);
           if (psiExpression != null) {
+            if (!expression.isVoidCompatible() && LambdaUtil.isExpressionStatementExpression(psiExpression)) {
+              final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+              if (parent instanceof PsiExpressionList) {
+                final PsiElement gParent = parent.getParent();
+                if (gParent instanceof PsiCallExpression) {
+                  final CandidateInfo[] candidates = PsiResolveHelper.SERVICE.getInstance(gParent.getProject())
+                    .getReferencedMethodCandidates((PsiCallExpression)gParent, false);
+                  if (candidates.length > 1) {
+                    final List<CandidateInfo> info = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
+                    final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
+                    final JavaMethodsConflictResolver conflictResolver = new JavaMethodsConflictResolver((PsiExpressionList)parent, level);
+                    final int applicability = conflictResolver.checkApplicability(info);
+                    conflictResolver.checkSpecifics(info, applicability, level);
+                    if (info.size() > 1) {
+                      return;
+                    }
+                  }
+                }
+              }
+            }
             final PsiElement errorElement;
             final PsiElement parent = psiExpression.getParent();
             if (parent instanceof PsiReturnStatement) {

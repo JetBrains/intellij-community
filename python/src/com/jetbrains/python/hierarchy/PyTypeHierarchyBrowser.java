@@ -52,10 +52,10 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
 
   @Nullable
   protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (!(descriptor instanceof PyTypeHierarchyNodeDescriptor)) {
+    if (!(descriptor instanceof PyHierarchyNodeDescriptor)) {
       return null;
     }
-    return ((PyTypeHierarchyNodeDescriptor)descriptor).getClassElement();
+    return ((PyHierarchyNodeDescriptor)descriptor).getPsiElement();
   }
 
   protected void createTrees(@NotNull Map<String, JTree> trees) {

@@ -29,7 +29,7 @@ import java.util.Map;
  */
 @State(name = "PyPackageService",
        storages = {
-           @Storage( file = StoragePathMacros.APP_CONFIG + "/packages.xml")
+           @Storage(file = StoragePathMacros.APP_CONFIG + "/packages.xml")
        }
 )
 public class PyPackageService implements

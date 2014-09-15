@@ -2,10 +2,11 @@ package com.intellij.xdebugger;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.frame.XValue;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Semaphore;
+
+import static org.junit.Assert.*;
 
 public class XTestEvaluationCallback extends com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase {
   private XValue myResult;
@@ -24,8 +25,8 @@ public class XTestEvaluationCallback extends com.intellij.xdebugger.impl.ui.tree
     myFinished.release();
   }
 
-  public Pair<XValue, String> waitFor(long timeoutInMilliseconds) throws InterruptedException {
-    Assert.assertTrue("timed out", XDebuggerTestUtil.waitFor(myFinished, timeoutInMilliseconds));
+  public Pair<XValue, String> waitFor(long timeoutInMilliseconds) {
+    assertTrue("timed out", XDebuggerTestUtil.waitFor(myFinished, timeoutInMilliseconds));
     return Pair.create(myResult, myErrorMessage);
   }
 }

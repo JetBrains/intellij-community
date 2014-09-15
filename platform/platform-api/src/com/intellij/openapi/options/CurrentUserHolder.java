@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options;
 
+@Deprecated
 public interface CurrentUserHolder {
   String getCurrentUserName();
 }

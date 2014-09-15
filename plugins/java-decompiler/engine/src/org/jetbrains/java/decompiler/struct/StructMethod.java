@@ -18,11 +18,9 @@ package org.jetbrains.java.decompiler.struct;
 import org.jetbrains.java.decompiler.code.*;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
-import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +53,7 @@ public class StructMethod extends StructMember {
   private int codeFullLength = 0;
   private InstructionSequence seq;
   private boolean expanded = false;
-
+  private VBStyleCollection<StructGeneralAttribute, String> codeAttributes;
 
   public StructMethod(DataInputFullStream in, StructClass clStruct) throws IOException {
     classStruct = clStruct;
@@ -70,6 +68,10 @@ public class StructMethod extends StructMember {
     descriptor = values[1];
 
     attributes = readAttributes(in, pool);
+    if (codeAttributes != null) {
+      attributes.addAllWithKey(codeAttributes);
+      codeAttributes = null;
+    }
   }
 
   @Override
@@ -87,12 +89,12 @@ public class StructMethod extends StructMember {
         localVariables = in.readUnsignedShort();
         codeLength = in.readInt();
         in.discard(codeLength);
-        int exc_length = in.readUnsignedShort();
-        in.discard(exc_length * 8);
-        codeFullLength = codeLength + exc_length * 8 + 2;
+        int excLength = in.readUnsignedShort();
+        in.discard(excLength * 8);
+        codeFullLength = codeLength + excLength * 8 + 2;
       }
 
-      LazyLoader.skipAttributes(in);
+      codeAttributes = readAttributes(in, pool);
 
       return null;
     }
@@ -103,7 +105,7 @@ public class StructMethod extends StructMember {
   public void expandData() throws IOException {
     if (containsCode && !expanded) {
       byte[] code = classStruct.getLoader().loadBytecode(this, codeFullLength);
-      seq = parseBytecode(new DataInputFullStream(new ByteArrayInputStream(code)), codeLength, classStruct.getPool());
+      seq = parseBytecode(new DataInputFullStream(code), codeLength, classStruct.getPool());
       expanded = true;
     }
   }
@@ -115,6 +117,7 @@ public class StructMethod extends StructMember {
     }
   }
 
+  @SuppressWarnings("AssignmentToForLoopParameter")
   private InstructionSequence parseBytecode(DataInputFullStream in, int length, ConstantPool pool) throws IOException {
     VBStyleCollection<Instruction, Integer> instructions = new VBStyleCollection<Instruction, Integer>();
 

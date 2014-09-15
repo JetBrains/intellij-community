@@ -56,7 +56,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     Icon icon = getTemplatePresentation().getIcon();
     String description = getTemplatePresentation().getDescription();
     Presentation presentation = e.getPresentation();
-    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
       enable = !getCancellableProcesses(e.getProject()).isEmpty() || !getActiveDescriptors(e.getDataContext()).isEmpty();
       presentation.setText(getTemplatePresentation().getText());
     }
@@ -79,7 +79,8 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
         presentation.setText(getTemplatePresentation().getText());
       }
       else {
-        presentation.setText(ExecutionBundle.message("stop.configuration.action.name", runProfile == null ? contentDescriptor.getDisplayName() : runProfile.getName()));
+        presentation.setText(ExecutionBundle.message("stop.configuration.action.name",
+                                                     runProfile == null ? contentDescriptor.getDisplayName() : runProfile.getName()));
       }
     }
 
@@ -95,7 +96,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
 
     Project project = e.getProject();
     List<Pair<TaskInfo, ProgressIndicator>> backgroundTasks = getCancellableProcesses(project);
-    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
       if (activeProcessHandler != null && !activeProcessHandler.isProcessTerminating() && !activeProcessHandler.isProcessTerminated()
           && backgroundTasks.isEmpty()) {
         stopProcess(activeProcessHandler);

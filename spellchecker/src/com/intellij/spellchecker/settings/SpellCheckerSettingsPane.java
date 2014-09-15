@@ -18,7 +18,7 @@ package com.intellij.spellchecker.settings;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.newEditor.OptionsEditor;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -67,11 +67,11 @@ public class SpellCheckerSettingsPane implements Disposable {
     link.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
-          if (optionsEditor != null) {
-            final ErrorsConfigurable errorsConfigurable = optionsEditor.findConfigurable(ErrorsConfigurable.class);
+          Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
+          if (allSettings != null) {
+            final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
             if (errorsConfigurable != null) {
-              optionsEditor.clearSearchAndSelect(errorsConfigurable).doWhenDone(new Runnable() {
+              allSettings.select(errorsConfigurable).doWhenDone(new Runnable() {
                 public void run() {
                   errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
                 }

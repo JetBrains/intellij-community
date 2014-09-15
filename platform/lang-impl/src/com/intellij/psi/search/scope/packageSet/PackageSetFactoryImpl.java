@@ -137,8 +137,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
         else if (myLexer.getTokenType() == ScopeTokenTypes.COLON) {
           pattern.append(":");
         } else {
-          error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
-          break;
+          pattern.append(getTokenText());
         }
         myLexer.advance();
       }

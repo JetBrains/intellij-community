@@ -99,44 +99,37 @@ public class JUnitForkedStarter {
     if (workingDirsPath == null || new File(workingDirsPath).length() == 0) {
        final List children = testRunner.getChildTests(description);
        final boolean forkTillMethod = forkMode.equalsIgnoreCase("method");
-       result = processChildren(isJUnit4, listeners, out, err, parameters, testRunner, children, 0, forkTillMethod, null);
+       result = processChildren(isJUnit4, listeners, out, err, parameters, testRunner, children, 0, forkTillMethod, null, System.getProperty("java.class.path"));
     } else {
       final BufferedReader perDirReader = new BufferedReader(new FileReader(workingDirsPath));
       try {
         final String packageName = perDirReader.readLine();
         String workingDir;
         while ((workingDir = perDirReader.readLine()) != null) {
+          final String classpath = perDirReader.readLine();
           try {
-            File tempFile = File.createTempFile("idea_junit", ".tmp");
-            tempFile.deleteOnExit();
-
-            final FileOutputStream writer = new FileOutputStream(tempFile);
 
             List classNames = new ArrayList();
-            try {
-              final int classNamesSize = Integer.parseInt(perDirReader.readLine());
-              writer.write((packageName + ", working directory: \'" + workingDir + "\'\n").getBytes("UTF-8")); //instead of package name
-              for (int i = 0; i < classNamesSize; i++) {
-                String className = perDirReader.readLine();
-                if (className == null) {
-                  System.err.println("Class name is expected. Working dir: " + workingDir);
-                  return -1;
-                }
-                classNames.add(className);
-                writer.write((className + "\n").getBytes("UTF-8"));
+            final int classNamesSize = Integer.parseInt(perDirReader.readLine());
+            for (int i = 0; i < classNamesSize; i++) {
+              String className = perDirReader.readLine();
+              if (className == null) {
+                System.err.println("Class name is expected. Working dir: " + workingDir);
+                return -1;
               }
-            }
-            finally {
-              writer.close();
+              classNames.add(className);
             }
 
             final Object rootDescriptor = findByClassName(testRunner, (String)classNames.get(0), description);
             final int childResult;
             final File dir = new File(workingDir);
             if (forkMode.equals("none")) {
+              File tempFile = File.createTempFile("idea_junit", ".tmp");
+              tempFile.deleteOnExit();
+              JUnitStarter.printClassesList(classNames, packageName + ", working directory: \'" + workingDir + "\'", "", tempFile);
               childResult =
                 runChild(isJUnit4, listeners, out, err, parameters, "@" + tempFile.getAbsolutePath(), dir,
-                         String.valueOf(testRunner.getRegistry().getKnownObject(rootDescriptor) - 1));
+                         String.valueOf(testRunner.getRegistry().getKnownObject(rootDescriptor) - 1), classpath);
             } else {
               final List children = new ArrayList(testRunner.getChildTests(description));
               for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
@@ -145,7 +138,7 @@ public class JUnitForkedStarter {
                 }
               }
               final boolean forkTillMethod = forkMode.equalsIgnoreCase("method");
-              childResult = processChildren(isJUnit4, listeners, out, err, parameters, testRunner, children, result, forkTillMethod, dir);
+              childResult = processChildren(isJUnit4, listeners, out, err, parameters, testRunner, children, result, forkTillMethod, dir, classpath);
             }
             result = Math.min(childResult, result);
           }
@@ -187,7 +180,7 @@ public class JUnitForkedStarter {
                                      IdeaTestRunner testRunner,
                                      List children,
                                      int result,
-                                     boolean forkTillMethod, File workingDir) throws IOException, InterruptedException {
+                                     boolean forkTillMethod, File workingDir, String classpath) throws IOException, InterruptedException {
     for (int i = 0, argsLength = children.size(); i < argsLength; i++) {
       final Object child = children.get(i);
       final List childTests = testRunner.getChildTests(child);
@@ -195,12 +188,11 @@ public class JUnitForkedStarter {
       if (childTests.isEmpty() || !forkTillMethod) {
         final int startIndex = testRunner.getRegistry().getKnownObject(child);
         childResult =
-          runChild(isJUnit4, listeners, out, err, parameters, testRunner.getStartDescription(child), workingDir,
-                   String.valueOf(startIndex));
+          runChild(isJUnit4, listeners, out, err, parameters, testRunner.getStartDescription(child), workingDir, String.valueOf(startIndex), classpath);
       }
       else {
         childResult =
-          processChildren(isJUnit4, listeners, out, err, parameters, testRunner, childTests, result, forkTillMethod, workingDir);
+          processChildren(isJUnit4, listeners, out, err, parameters, testRunner, childTests, result, forkTillMethod, workingDir, classpath);
       }
       result = Math.min(childResult, result);
     }
@@ -213,14 +205,17 @@ public class JUnitForkedStarter {
                               SegmentedOutputStream err,
                               List parameters,
                               String description,
-                              File workingDir, 
-                              String startIndex) throws IOException, InterruptedException {
+                              File workingDir,
+                              String startIndex,
+                              String classpath) throws IOException, InterruptedException {
     //noinspection SSBasedInspection
     final File tempFile = File.createTempFile("fork", "test");
     final String testOutputPath = tempFile.getAbsolutePath();
 
     final ProcessBuilder builder = new ProcessBuilder();
     builder.add(parameters);
+    builder.add("-classpath");
+    builder.add(classpath);
     builder.add(JUnitForkedStarter.class.getName());
     builder.add(testOutputPath);
     builder.add(startIndex);

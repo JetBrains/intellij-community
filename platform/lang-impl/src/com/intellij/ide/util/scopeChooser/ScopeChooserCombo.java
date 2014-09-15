@@ -29,6 +29,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -411,21 +412,32 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       }
     }
 
-    if (dataContext != null) {
-      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-      if (files != null) {
-        final List<VirtualFile> openFiles = Arrays.asList(files);
-        result.add(new DelegatingGlobalSearchScope(GlobalSearchScope.filesScope(project, openFiles)){
+    ContainerUtil.addIfNotNull(result, getSelectedFilesScope(project, dataContext));
+
+    return ContainerUtil.newArrayList(result);
+  }
+
+  @Nullable 
+  private static SearchScope getSelectedFilesScope(final Project project, @Nullable DataContext dataContext) {
+    final VirtualFile[] filesOrDirs = dataContext == null ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (filesOrDirs != null) {
+      final List<VirtualFile> selectedFiles = ContainerUtil.filter(filesOrDirs, new Condition<VirtualFile>() {
+        @Override
+        public boolean value(VirtualFile file) {
+          return !file.isDirectory();
+        }
+      });
+      if (!selectedFiles.isEmpty()) {
+        return new DelegatingGlobalSearchScope(GlobalSearchScope.filesScope(project, selectedFiles)){
           @NotNull
           @Override
           public String getDisplayName() {
             return "Selected Files";
           }
-        });
+        };
       }
     }
-
-    return ContainerUtil.newArrayList(result);
+    return null;
   }
 
   protected static Set<VirtualFile> collectFiles(Set<Usage> usages, boolean findFirst) {

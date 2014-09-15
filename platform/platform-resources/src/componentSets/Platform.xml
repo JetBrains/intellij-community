@@ -70,11 +70,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.application.PathMacros</interface-class>
-      <implementation-class>com.intellij.application.options.PathMacrosImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.ide.ui.LafManager</interface-class>
       <implementation-class>com.intellij.ide.ui.laf.LafManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.ide.ui.laf.HeadlessLafManagerImpl</headless-implementation-class>

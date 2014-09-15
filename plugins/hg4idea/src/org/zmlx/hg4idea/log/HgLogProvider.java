@@ -22,9 +22,11 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.LogDataImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -59,18 +61,23 @@ public class HgLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root,
-                                                          @NotNull Requirements requirements) throws VcsException {
-    return HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(), Collections.<String>emptyList());
+  public DetailedLogData readFirstBlock(@NotNull VirtualFile root,
+                                                   @NotNull Requirements requirements) throws VcsException {
+    List<VcsCommitMetadata> commits = HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(),
+                                                                           Collections.<String>emptyList());
+    return new LogDataImpl(readAllRefs(root), commits);
   }
 
   @Override
-  public void readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry,
-                            @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
-    List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, userRegistry, Collections.<String>emptyList());
+  @NotNull
+  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
+    Set<VcsUser> userRegistry = ContainerUtil.newHashSet();
+    List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, new CollectConsumer<VcsUser>(userRegistry),
+                                                               Collections.<String>emptyList());
     for (TimedVcsCommit commit : commits) {
       commitConsumer.consume(commit);
     }
+    return new LogDataImpl(readAllRefs(root), userRegistry);
   }
 
   @NotNull
@@ -87,16 +94,15 @@ public class HgLogProvider implements VcsLogProvider {
   }
 
   @NotNull
-  @Override
-  public Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
+  private Set<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
     myRepositoryManager.waitUntilInitialized();
     if (myProject.isDisposed()) {
-      return Collections.emptyList();
+      return Collections.emptySet();
     }
     HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
-      return Collections.emptyList();
+      return Collections.emptySet();
     }
 
     repository.update();
@@ -106,7 +112,7 @@ public class HgLogProvider implements VcsLogProvider {
     Collection<HgNameWithHashInfo> tags = repository.getTags();
     Collection<HgNameWithHashInfo> localTags = repository.getLocalTags();
 
-    Collection<VcsRef> refs = new ArrayList<VcsRef>(branches.size() + bookmarks.size());
+    Set<VcsRef> refs = new HashSet<VcsRef>(branches.size() + bookmarks.size());
 
     for (Map.Entry<String, Set<Hash>> entry : branches.entrySet()) {
       String branchName = entry.getKey();

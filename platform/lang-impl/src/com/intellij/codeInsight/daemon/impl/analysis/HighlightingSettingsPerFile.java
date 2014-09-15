@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-@State(name="HighlightingSettingsPerFile", storages = @Storage( file = StoragePathMacros.WORKSPACE_FILE))
+@State(name="HighlightingSettingsPerFile", storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE))
 public class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element> {
   @NonNls private static final String SETTING_TAG = "setting";
   @NonNls private static final String ROOT_ATT_PREFIX = "root";

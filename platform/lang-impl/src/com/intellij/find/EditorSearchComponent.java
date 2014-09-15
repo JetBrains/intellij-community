@@ -425,6 +425,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     myToolbarComponent.setOpaque(false);
   }
 
+  public void selectAllText() {
+    mySearchField.selectAll();
+  }
+
   private boolean secondaryActionsAvailable() {
     return FindManagerImpl.ourHasSearchInCommentsAndLiterals;
   }
@@ -483,10 +487,11 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   }
 
   private void updateUIWithFindModel() {
-
+    boolean needToResetFocus = false;
     myActionsToolbar.updateActionsImmediately();
 
     if ((myFindModel.isMultiline() && mySearchField instanceof JTextField) || (!myFindModel.isMultiline() && mySearchField instanceof JTextArea)) {
+      needToResetFocus = mySearchField.hasFocus();
       myLeftComponent.removeAll();
       myRightComponent.removeAll();
       myReplaceRootComponent = null;
@@ -529,6 +534,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     updateReplaceButton();
     Utils.setSmallerFontForChildren(myToolbarComponent);
     revalidate();
+    if (needToResetFocus) mySearchField.requestFocusInWindow();
   }
 
   private static boolean wholeWordsApplicable(String stringToFind) {

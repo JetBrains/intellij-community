@@ -158,6 +158,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       this.key = key;
     }
 
+    @Override
+    public String toString() {
+      return getKey()+"@" + getGroupName();
+    }
   }
 
   private TemplateKey myLastSelectedTemplate;
@@ -749,5 +753,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   public List<TemplateKey> getDeletedTemplates() {
     return myDeletedTemplates;
+  }
+
+  public void reset() {
+    myDeletedTemplates.clear();
+    loadDefaultLiveTemplates();
   }
 }

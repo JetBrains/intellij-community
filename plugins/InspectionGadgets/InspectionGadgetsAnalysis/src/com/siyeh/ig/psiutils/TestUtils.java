@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestUtils {
+  public static final String RUN_WITH = "org.junit.runner.RunWith";
 
   private TestUtils() {
   }

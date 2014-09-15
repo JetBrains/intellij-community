@@ -40,6 +40,7 @@ public interface ExecutionResult {
    */
   AnAction[] getActions();
 
+
   /**
    * Returns the ProcessHandler attached to the running process.
    *

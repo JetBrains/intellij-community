@@ -83,16 +83,35 @@ public class ExecUtil {
 
   private ExecUtil() { }
 
+  /**
+   * Run the command using safe escaping and quoting when appropriate.
+   *
+   * @param command the command and its arguments, can contain any characters
+   * @param workDir working directory
+   * @param environment environment variables
+   * @return the running process
+   */
+  @NotNull
+  public static Process exec(@NotNull final List<String> command, @Nullable final String workDir,
+                             @Nullable final Map<String, String> environment) throws ExecutionException {
+    assert command.size() > 0;
+    final GeneralCommandLine commandLine = new GeneralCommandLine(command);
+    if (workDir != null) {
+      commandLine.setWorkDirectory(workDir);
+    }
+    if (environment != null) {
+      commandLine.getEnvironment().putAll(environment);
+    }
+    return commandLine.createProcess();
+  }
+
   public static int execAndGetResult(final String... command) throws ExecutionException, InterruptedException {
     assert command != null && command.length > 0;
     return execAndGetResult(Arrays.asList(command));
   }
 
   public static int execAndGetResult(@NotNull final List<String> command) throws ExecutionException, InterruptedException {
-    assert command.size() > 0;
-    final GeneralCommandLine commandLine = new GeneralCommandLine(command);
-    final Process process = commandLine.createProcess();
-    return process.waitFor();
+    return exec(command, null, null).waitFor();
   }
 
   @NotNull
@@ -151,10 +170,7 @@ public class ExecUtil {
   @NotNull
   public static ProcessOutput execAndGetOutput(@NotNull final List<String> command,
                                                @Nullable final String workDir) throws ExecutionException {
-    assert command.size() > 0;
-    final GeneralCommandLine commandLine = new GeneralCommandLine(command);
-    commandLine.setWorkDirectory(workDir);
-    final Process process = commandLine.createProcess();
+    final Process process = exec(command, workDir, null);
     final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
     return processHandler.runProcess();
   }
@@ -167,7 +183,7 @@ public class ExecUtil {
   @Nullable
   public static String execAndReadLine(@Nullable Charset charset, final String... command) {
     try {
-      return readFirstLine(new GeneralCommandLine(command).createProcess().getInputStream(), charset);
+      return readFirstLine(exec(Arrays.asList(command), null, null).getInputStream(), charset);
     }
     catch (Exception ignored) {
       return null;
@@ -199,12 +215,12 @@ public class ExecUtil {
    * @param command the command and its arguments, can contain any characters
    * @param prompt the prompt string for the users
    * @param workDir working directory
+   * @param environment environment variables
    * @return the results of running the process
    */
   @NotNull
-  public static ProcessOutput sudoAndGetOutput(@NotNull List<String> command,
-                                               @NotNull String prompt,
-                                               @Nullable String workDir) throws IOException, ExecutionException {
+  public static Process sudo(@NotNull final List<String> command, @NotNull final String prompt, @Nullable final String workDir,
+                             @Nullable final Map<String, String> environment) throws ExecutionException, IOException {
     if (SystemInfo.isMac) {
       final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
         @Override
@@ -213,28 +229,28 @@ public class ExecUtil {
         }
       }, " & \" \" & ");
       final String escapedScript = "do shell script " + escapedCommandLine + " with administrator privileges";
-      return execAndGetOutput(Arrays.asList(getOsascriptPath(), "-e", escapedScript), workDir);
+      return exec(Arrays.asList(getOsascriptPath(), "-e", escapedScript), workDir, environment);
     }
     else if ("root".equals(System.getenv("USER"))) {
-      return execAndGetOutput(command, workDir);
+      return exec(command, workDir, environment);
     }
     else if (hasGkSudo.getValue()) {
       final List<String> sudoCommand = new ArrayList<String>();
       sudoCommand.addAll(Arrays.asList("gksudo", "--message", prompt, "--"));
       sudoCommand.addAll(command);
-      return execAndGetOutput(sudoCommand, workDir);
+      return exec(sudoCommand, workDir, environment);
     }
     else if (hasKdeSudo.getValue()) {
       final List<String> sudoCommand = new ArrayList<String>();
       sudoCommand.addAll(Arrays.asList("kdesudo", "--comment", prompt, "--"));
       sudoCommand.addAll(command);
-      return execAndGetOutput(sudoCommand, workDir);
+      return exec(sudoCommand, workDir, environment);
     }
     else if (hasPkExec.getValue()) {
       final List<String> sudoCommand = new ArrayList<String>();
       sudoCommand.add("pkexec");
       sudoCommand.addAll(command);
-      return execAndGetOutput(sudoCommand, workDir);
+      return exec(sudoCommand, workDir, environment);
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {
       final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
@@ -253,10 +269,18 @@ public class ExecUtil {
         "echo\n" +
         "read -p \"Press Enter to close this window...\" TEMP\n" +
         "exit $STATUS\n");
-      return execAndGetOutput(getTerminalCommand("Install", script.getAbsolutePath()), workDir);
+      return exec(getTerminalCommand("Install", script.getAbsolutePath()), workDir, environment);
     }
 
     throw new UnsupportedSystemException();
+  }
+
+  @NotNull
+  public static ProcessOutput sudoAndGetOutput(@NotNull List<String> command, @NotNull String prompt,
+                                               @Nullable String workDir) throws IOException, ExecutionException {
+    final Process process = sudo(command, prompt, workDir, null);
+    final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+    return processHandler.runProcess();
   }
 
   @NotNull

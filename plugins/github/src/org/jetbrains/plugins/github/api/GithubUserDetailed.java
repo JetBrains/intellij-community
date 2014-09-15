@@ -55,13 +55,13 @@ public class GithubUserDetailed extends GithubUser {
 
   public GithubUserDetailed(@NotNull String login,
                             @NotNull String htmlUrl,
-                            @Nullable String gravatarId,
+                            @Nullable String avatarUrl,
                             @Nullable String name,
                             @Nullable String email,
                             @Nullable Integer ownedPrivateRepos,
                             @Nullable String type,
                             @Nullable UserPlan plan) {
-    super(login, htmlUrl, gravatarId);
+    super(login, htmlUrl, avatarUrl);
     myName = name;
     myEmail = email;
     myOwnedPrivateRepos = ownedPrivateRepos;

@@ -36,17 +36,14 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Set;
 
 public class ClassWrapper {
 
   private StructClass classStruct;
-
-  private HashSet<String> hideMembers = new HashSet<String>();
-
+  private Set<String> hiddenMembers = new HashSet<String>();
   private VBStyleCollection<Exprent, String> staticFieldInitializers = new VBStyleCollection<Exprent, String>();
-
   private VBStyleCollection<Exprent, String> dynamicFieldInitializers = new VBStyleCollection<Exprent, String>();
-
   private VBStyleCollection<MethodWrapper, String> methods = new VBStyleCollection<MethodWrapper, String>();
 
 
@@ -54,7 +51,6 @@ public class ClassWrapper {
     this.classStruct = classStruct;
   }
 
-  @SuppressWarnings("deprecation")
   public void init() throws IOException {
 
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS, classStruct);
@@ -110,8 +106,8 @@ public class ClassWrapper {
 
               if (System.currentTimeMillis() >= stopAt) {
                 String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
-                DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.ERROR);
-                mtthread.stop();
+                DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.ERROR);
+                killThread(mtthread);
                 isError = true;
                 break;
               }
@@ -180,6 +176,11 @@ public class ClassWrapper {
     DecompilerContext.getLogger().endClass();
   }
 
+  @SuppressWarnings("deprecation")
+  private static void killThread(Thread thread) {
+    thread.stop();
+  }
+
   public MethodWrapper getMethodWrapper(String name, String descriptor) {
     return methods.getWithKey(InterpreterUtil.makeUniqueKey(name, descriptor));
   }
@@ -192,8 +193,8 @@ public class ClassWrapper {
     return methods;
   }
 
-  public HashSet<String> getHideMembers() {
-    return hideMembers;
+  public Set<String> getHiddenMembers() {
+    return hiddenMembers;
   }
 
   public VBStyleCollection<Exprent, String> getStaticFieldInitializers() {

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -57,13 +58,13 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   }
 
   @Override
-  public void processExternalCommandLine(String[] args) {
+  public void processExternalCommandLine(String[] args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
       Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
       return;
     }
     try {
-      processCommand(args);
+      processCommand(args, currentDirectory);
     }
     catch (Exception e) {
       Messages.showMessageDialog(String.format("Error showing %s: %s", getCommandName(), e.getMessage()),
@@ -86,7 +87,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
 
   public abstract String getUsageMessage();
 
-  protected abstract void processCommand(String[] args) throws Exception;
+  protected abstract void processCommand(String[] args, @Nullable String currentDirectory) throws Exception;
 
   @Override
   public void premain(String[] args) {
@@ -99,7 +100,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   @Override
   public void main(String[] args) {
     try {
-      processCommand(args);
+      processCommand(args, null);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -116,12 +117,12 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
     System.exit(0);
   }
 
-  public static VirtualFile findOrCreateFile(String path) throws IOException {
+  public static VirtualFile findOrCreateFile(String path, @Nullable String currentDirectory) throws IOException {
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
     if (file == null) {
       boolean result = new File(path).createNewFile();
       if (result) {
-        return findFile(path);
+        return findFile(path, currentDirectory);
       }
       else {
         throw new FileNotFoundException("Can't create file " + path);
@@ -167,11 +168,10 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   }
 
   @NotNull
-  public static VirtualFile findFile(final String path) throws OperationFailedException {
+  public static VirtualFile findFile(final String path, @Nullable String currentDirectory) throws OperationFailedException {
     File ioFile = new File(path);
-    if (!ioFile.exists()) {
-      final String dir = PathManager.getOriginalWorkingDir();
-      ioFile = new File(dir + File.separator + path);
+    if (!ioFile.isAbsolute() && currentDirectory != null) {
+      ioFile = new File(currentDirectory, path);
     }
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     if (file == null) {

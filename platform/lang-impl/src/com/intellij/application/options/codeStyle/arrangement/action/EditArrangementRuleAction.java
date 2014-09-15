@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -27,7 +26,7 @@ import gnu.trove.TIntArrayList;
  * @author Denis Zhdanov
  * @since 10/29/12 11:01 AM
  */
-public class EditArrangementRuleAction extends AnAction implements DumbAware, Toggleable {
+public class EditArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware, Toggleable {
 
   public EditArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.edit.text"));
@@ -50,6 +49,8 @@ public class EditArrangementRuleAction extends AnAction implements DumbAware, To
     if (rows.size() != 1) {
       return;
     }
-    control.showEditor(rows.get(0));
+    final int row = rows.get(0);
+    control.showEditor(row);
+    scrollRowToVisible(control, row);
   }
 }

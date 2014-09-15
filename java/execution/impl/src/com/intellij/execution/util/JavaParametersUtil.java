@@ -27,7 +27,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
@@ -118,7 +117,7 @@ public class JavaParametersUtil {
     return jreHome == null ? JavaParameters.getModuleJdk(module) : createAlternativeJdk(jreHome);
   }
 
-  private static Sdk createProjectJdk(final Project project, final String jreHome) throws CantRunException {
+  public static Sdk createProjectJdk(final Project project, final String jreHome) throws CantRunException {
     return jreHome == null ? createProjectJdk(project) : createAlternativeJdk(jreHome);
   }
 

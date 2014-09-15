@@ -185,20 +185,26 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   private void doRemoveBreakpoint(XBreakpoint<?> breakpoint) {
-    XBreakpointType type = breakpoint.getType();
-    XBreakpointBase<?,?,?> breakpointBase = (XBreakpointBase<?,?,?>)breakpoint;
-    myBreakpoints.remove(type, breakpointBase);
-    myAllBreakpoints.remove(breakpointBase);
-    if (breakpointBase instanceof XLineBreakpointImpl) {
-      myLineBreakpointManager.unregisterBreakpoint((XLineBreakpointImpl)breakpointBase);
+    if (isDefaultBreakpoint(breakpoint)) {
+      // removing default breakpoint should just disable it
+      breakpoint.setEnabled(false);
     }
-    breakpointBase.dispose();
-    EventDispatcher<XBreakpointListener> dispatcher = myDispatchers.get(type);
-    if (dispatcher != null) {
-      //noinspection unchecked
-      dispatcher.getMulticaster().breakpointRemoved(breakpoint);
+    else {
+      XBreakpointType type = breakpoint.getType();
+      XBreakpointBase<?,?,?> breakpointBase = (XBreakpointBase<?,?,?>)breakpoint;
+      myBreakpoints.remove(type, breakpointBase);
+      myAllBreakpoints.remove(breakpointBase);
+      if (breakpointBase instanceof XLineBreakpointImpl) {
+        myLineBreakpointManager.unregisterBreakpoint((XLineBreakpointImpl)breakpointBase);
+      }
+      breakpointBase.dispose();
+      EventDispatcher<XBreakpointListener> dispatcher = myDispatchers.get(type);
+      if (dispatcher != null) {
+        //noinspection unchecked
+        dispatcher.getMulticaster().breakpointRemoved(breakpoint);
+      }
+      getBreakpointDispatcherMulticaster().breakpointRemoved(breakpoint);
     }
-    getBreakpointDispatcherMulticaster().breakpointRemoved(breakpoint);
   }
 
   @Override

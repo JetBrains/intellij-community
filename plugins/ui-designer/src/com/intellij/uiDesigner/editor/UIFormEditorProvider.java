@@ -15,7 +15,6 @@
  */
 package com.intellij.uiDesigner.editor;
 
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
@@ -66,9 +65,6 @@ public final class UIFormEditorProvider implements FileEditorProvider, DumbAware
   }
 
   @NotNull public FileEditorPolicy getPolicy() {
-    return
-      ApplicationManagerEx.getApplicationEx().isInternal() ?
-      FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR : FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+    return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
-
 }

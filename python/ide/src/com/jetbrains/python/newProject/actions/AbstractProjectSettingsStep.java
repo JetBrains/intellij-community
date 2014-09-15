@@ -33,15 +33,11 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
-import com.jetbrains.python.packaging.PyExternalProcessException;
-import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageManagerImpl;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.PyPySdkFlavor;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -79,22 +75,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     myCallback = callback;
     myIsWelcomeScreen = isWelcomeScreen;
     myProjectDirectory = FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
-    if (myProjectGenerator instanceof WebProjectTemplate) {
-      ((WebProjectTemplate)myProjectGenerator).getPeer().addSettingsStateListener(new WebProjectGenerator.SettingsStateListener() {
-        @Override
-        public void stateChanged(boolean validSettings) {
-          checkValid();
-        }
-      });
-    }
-    else if (myProjectGenerator instanceof PythonProjectGenerator) {
-      ((PythonProjectGenerator)myProjectGenerator).addSettingsStateListener(new PythonProjectGenerator.SettingsListener() {
-        @Override
-        public void stateChanged() {
-          checkValid();
-        }
-      });
-    }
 
     myCreateAction = new AnAction("Create", "Create Project", getIcon()) {
       @Override
@@ -112,6 +92,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   @Override
   public JPanel createPanel() {
+    initGeneratorListeners();
     final JPanel basePanel = createBasePanel();
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
@@ -140,6 +121,25 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     bottomPanel.add(myCreateButton, BorderLayout.EAST);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     return mainPanel;
+  }
+
+  private void initGeneratorListeners() {
+    if (myProjectGenerator instanceof WebProjectTemplate) {
+      ((WebProjectTemplate)myProjectGenerator).getPeer().addSettingsStateListener(new WebProjectGenerator.SettingsStateListener() {
+        @Override
+        public void stateChanged(boolean validSettings) {
+          checkValid();
+        }
+      });
+    }
+    else if (myProjectGenerator instanceof PythonProjectGenerator) {
+      ((PythonProjectGenerator)myProjectGenerator).addSettingsStateListener(new PythonProjectGenerator.SettingsListener() {
+        @Override
+        public void stateChanged() {
+          checkValid();
+        }
+      });
+    }
   }
 
   protected Icon getIcon() {
@@ -319,29 +319,13 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
       PyFrameworkProjectGenerator frameworkProjectGenerator = (PyFrameworkProjectGenerator)myProjectGenerator;
       String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
       if (sdk != null && !isFrameworkInstalled(sdk)) {
-        final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
-        final boolean onlyWithCache =
-          PythonSdkFlavor.getFlavor(sdk) instanceof JythonSdkFlavor || PythonSdkFlavor.getFlavor(sdk) instanceof PyPySdkFlavor;
         String warningText = frameworkName + " will be installed on selected interpreter";
-        try {
-          if (onlyWithCache && packageManager.cacheIsNotNull() || !onlyWithCache) {
-            final PyPackage pip = packageManager.findInstalledPackage("pip");
-            myInstallFramework = true;
-            if (pip == null) {
-              warningText = "pip and " + warningText;
-            }
-            setWarningText(warningText);
-          }
+        myInstallFramework = true;
+        final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+        if (!packageManager.hasManagement(PySdkUtil.isRemote(sdk))) {
+          warningText = "Python packaging tools and " + warningText;
         }
-        catch (PyExternalProcessException ignored) {
-          myInstallFramework = true;
-          warningText = "pip and " + warningText;
-          setWarningText(warningText);
-        }
-        if (!myInstallFramework) {
-          setErrorText("No " + frameworkName + " support installed in selected interpreter");
-          return false;
-        }
+        setWarningText(warningText);
       }
       if (isPy3k && !((PyFrameworkProjectGenerator)myProjectGenerator).supportsPython3()) {
         setErrorText(frameworkName + " is not supported for the selected interpreter");
@@ -452,6 +436,10 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   public String getProjectLocation() {
     return myLocationField.getText();
+  }
+
+  public void setLocation(@NotNull final String location) {
+    myLocationField.setText(location);
   }
 
   public boolean installFramework() {

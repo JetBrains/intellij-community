@@ -59,8 +59,8 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     }
 
     @Override
-    public void load(@NotNull final Element rootElement) {
-      super.load(rootElement);
+    public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
+      super.load(rootElement, pathMacroSubstitutor, intern);
 
       final String v = rootElement.getAttributeValue(VERSION_OPTION);
       if (v != null) {
@@ -117,7 +117,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   public BaseStorageData getMainStorageData() throws StateStorageException {
-    return (BaseStorageData) getMainStorage().getStorageData();
+    return (BaseStorageData)getMainStorage().getStorageData();
   }
 
   @Nullable

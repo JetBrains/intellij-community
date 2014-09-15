@@ -62,7 +62,7 @@ public abstract class GotoActionBase extends AnAction {
   private int myHistoryIndex = 0;
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     LOG.assertTrue(!getClass().equals(myInAction));
     try {
       myInAction = getClass();
@@ -79,7 +79,7 @@ public abstract class GotoActionBase extends AnAction {
   protected abstract void gotoActionPerformed(AnActionEvent e);
 
   @Override
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -260,7 +260,7 @@ public abstract class GotoActionBase extends AnAction {
 
     abstract class HistoryAction extends DumbAwareAction {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(historyEnabled());
       }
 
@@ -277,7 +277,7 @@ public abstract class GotoActionBase extends AnAction {
 
     new HistoryAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         List<String> strings = ourHistory.get(myInAction);
         setText(strings);
         myHistoryIndex = myHistoryIndex >= strings.size() - 1 ? 0 : myHistoryIndex + 1;
@@ -287,7 +287,7 @@ public abstract class GotoActionBase extends AnAction {
 
     new HistoryAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         List<String> strings = ourHistory.get(myInAction);
         setText(strings);
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;

@@ -16,53 +16,27 @@
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.util.Collections;
 import java.util.Set;
 
 public class EclipseCompiler implements BackendCompiler {
   private final Project myProject;
-  private static final String COMPILER_CLASS_NAME = "org.eclipse.jdt.core.compiler.batch.BatchCompiler";
-  @NonNls private static final String PATH_TO_COMPILER_JAR = findJarPah();
-
-  private static String findJarPah() {
-    try {
-      final Class<?> aClass = Class.forName(COMPILER_CLASS_NAME);
-      final String path = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-      if (path != null) {
-        return path;
-      }
-    }
-    catch (ClassNotFoundException ignored) {
-    }
-
-    File dir = new File(PathManager.getLibPath());
-    File[] jars = dir.listFiles(new FilenameFilter() {
-      public boolean accept(File dir, String name) {
-        return name.startsWith("ecj-") && name.endsWith(".jar");
-      }
-    });
-    return jars.length == 0 ? dir + "/ecj-*.jar" : jars[0].getPath();
-  }
 
   public EclipseCompiler(Project project) {
     myProject = project;
   }
 
   public static boolean isInitialized() {
-    File file = new File(PATH_TO_COMPILER_JAR);
-    return file.exists();
+    return EclipseCompilerTool.findEcjJarFile() != null;
   }
 
   @NotNull

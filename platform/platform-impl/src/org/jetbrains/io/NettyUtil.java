@@ -63,12 +63,13 @@ public final class NettyUtil {
     }
   }
 
-  public static Channel connectClient(Bootstrap bootstrap, InetSocketAddress remoteAddress, ActionCallback asyncResult) {
+  @Nullable
+  public static Channel connectClient(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @Nullable ActionCallback asyncResult) {
     return connect(bootstrap, remoteAddress, asyncResult, DEFAULT_CONNECT_ATTEMPT_COUNT);
   }
 
   @Nullable
-  public static Channel connect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @NotNull ActionCallback asyncResult, int maxAttemptCount) {
+  public static Channel connect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @Nullable ActionCallback asyncResult, int maxAttemptCount) {
     try {
       int attemptCount = 0;
 
@@ -85,7 +86,9 @@ public final class NettyUtil {
           else {
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             Throwable cause = future.cause();
-            asyncResult.reject("Cannot connect: " + (cause == null ? "unknown error" : cause.getMessage()));
+            if (asyncResult != null) {
+              asyncResult.reject("Cannot connect: " + (cause == null ? "unknown error" : cause.getMessage()));
+            }
             return null;
           }
         }
@@ -104,7 +107,9 @@ public final class NettyUtil {
             Thread.sleep(attemptCount * MIN_START_TIME);
           }
           else {
-            asyncResult.reject("Cannot connect: " + e.getMessage());
+            if (asyncResult != null) {
+              asyncResult.reject("Cannot connect: " + e.getMessage());
+            }
             return null;
           }
         }
@@ -115,7 +120,9 @@ public final class NettyUtil {
       return channel;
     }
     catch (Throwable e) {
-      asyncResult.reject("Cannot connect: " + e.getMessage());
+      if (asyncResult != null) {
+        asyncResult.reject("Cannot connect: " + e.getMessage());
+      }
       return null;
     }
   }

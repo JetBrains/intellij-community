@@ -20,202 +20,292 @@ import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.UpdateAvailableException;
+import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.net.HttpConfigurable;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.ssl.CertificateUtil;
+import org.jetbrains.annotations.NotNull;
 
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Calendar;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Aug 4, 2003
- * Time: 8:12:00 PM
- * To change this template use Options | File Templates.
+ * @author stathik
+ * @since Aug 4, 2003
  */
 public class ITNProxy {
-  @NonNls public static final String ENCODING = "UTF8";
-  public static final String POST_DELIMITER = "&";
+  private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
+  private static final String NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
+  private static final String ENCODING = "UTF8";
 
-  @NonNls public static final String NEW_THREAD_URL = "http://www.intellij.net/trackerRpc/idea/createScr";
+  public static void sendError(Project project,
+                               final String login,
+                               final String password,
+                               final ErrorBean error,
+                               final Consumer<Integer> callback,
+                               final Consumer<Exception> errback) {
+    if (StringUtil.isEmpty(login)) {
+      return;
+    }
 
-  @NonNls private static final String HTTP_CONTENT_LENGTH = "Content-Length";
-  @NonNls private static final String HTTP_CONTENT_TYPE = "Content-Type";
-  @NonNls private static final String HTTP_WWW_FORM = "application/x-www-form-urlencoded";
-  @NonNls private static final String HTTP_POST = "POST";
+    Task.Backgroundable task = new Task.Backgroundable(project, DiagnosticBundle.message("title.submitting.error.report")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          int threadId = postNewThread(login, password, error);
+          callback.consume(threadId);
+        }
+        catch (Exception ex) {
+          errback.consume(ex);
+        }
+      }
+    };
 
-  public static int postNewThread (String login, String password, ErrorBean error, String compilationTimestamp)
-    throws IOException, NoSuchEAPUserException, InternalEAPException, UpdateAvailableException {
+    if (project == null) {
+      task.run(new EmptyProgressIndicator());
+    }
+    else {
+      ProgressManager.getInstance().run(task);
+    }
+  }
 
-    @NonNls List<Couple<String>> params = createParametersFor(login,
-                                                                    password,
-                                                                    error,
-                                                                    compilationTimestamp,
-                                                                    ApplicationManager.getApplication(),
-                                                                    (ApplicationInfoEx) ApplicationInfo.getInstance(),
-                                                                    ApplicationNamesInfo.getInstance(),
-                                                                    UpdateSettings.getInstance());
+  public static String getBrowseUrl(int threadId) {
+    return NEW_THREAD_VIEW_URL + threadId;
+  }
 
-    HttpURLConnection connection = post(new URL(NEW_THREAD_URL), join(params));
+  private static SSLContext ourSslContext;
+
+  private static int postNewThread(String login, String password, ErrorBean error) throws Exception {
+    if (ourSslContext == null) {
+      ourSslContext = initContext();
+    }
+
+    Map<String, String> params = createParameters(login, password, error);
+    HttpURLConnection connection = post(new URL(NEW_THREAD_POST_URL), join(params));
     int responseCode = connection.getResponseCode();
-
     if (responseCode != HttpURLConnection.HTTP_OK) {
       throw new InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode));
     }
 
-    String reply;
-
-    InputStream is = new BufferedInputStream(connection.getInputStream());
+    String response;
+    InputStream is = connection.getInputStream();
     try {
-      reply = readFrom(is);
-    } finally {
+      byte[] bytes = FileUtil.loadBytes(is);
+      response = new String(bytes, ENCODING);
+    }
+    finally {
       is.close();
     }
 
-    if ("unauthorized".equals(reply)) {
+    if ("unauthorized".equals(response)) {
       throw new NoSuchEAPUserException(login);
     }
-
-    if (reply.startsWith("update ")) {
-      throw new UpdateAvailableException(reply.substring(7));
+    if (response.startsWith("update ")) {
+      throw new UpdateAvailableException(response.substring(7));
     }
-
-    if (reply.startsWith("message ")) {
-      throw new InternalEAPException(reply.substring(8));
+    if (response.startsWith("message ")) {
+      throw new InternalEAPException(response.substring(8));
     }
 
     try {
-      return Integer.valueOf(reply.trim()).intValue();
-    } catch (NumberFormatException ex) {
-      // Tibor!!!! :-E
+      return Integer.valueOf(response.trim()).intValue();
+    }
+    catch (NumberFormatException ex) {
       throw new InternalEAPException(DiagnosticBundle.message("error.itn.returns.wrong.data"));
     }
   }
 
-  private static List<Couple<String>> createParametersFor(String login,
-                                                                String password,
-                                                                ErrorBean error,
-                                                                String compilationTimestamp, Application application, ApplicationInfoEx appInfo,
-                                                                ApplicationNamesInfo namesInfo,
-                                                                UpdateSettings updateSettings) {
-    @NonNls List<Couple<String>> params = new ArrayList<Couple<String>>();
+  private static Map<String, String> createParameters(String login, String password, ErrorBean error) {
+    Map<String, String> params = ContainerUtil.newLinkedHashMap(40);
 
-    params.add(Couple.of("protocol.version", "1"));
+    params.put("protocol.version", "1");
 
-    params.add(Couple.of("user.login", login));
-    params.add(Couple.of("user.password", password));
+    params.put("user.login", login);
+    params.put("user.password", password);
 
-    params.add(Couple.of("os.name", SystemProperties.getOsName()));
+    params.put("os.name", SystemProperties.getOsName());
+    params.put("java.version", SystemProperties.getJavaVersion());
+    params.put("java.vm.vendor", SystemProperties.getJavaVmVendor());
 
-    params.add(Couple.of("java.version", SystemProperties.getJavaVersion()));
-    params.add(Couple.of("java.vm.vendor", SystemProperties.getJavaVmVendor()));
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
+    Application application = ApplicationManager.getApplication();
+    params.put("app.name", namesInfo.getProductName());
+    params.put("app.name.full", namesInfo.getFullProductName());
+    params.put("app.name.version", appInfo.getVersionName());
+    params.put("app.eap", Boolean.toString(appInfo.isEAP()));
+    params.put("app.internal", Boolean.toString(application.isInternal()));
+    params.put("app.build", appInfo.getBuild().asString());
+    params.put("app.version.major", appInfo.getMajorVersion());
+    params.put("app.version.minor", appInfo.getMinorVersion());
+    params.put("app.build.date", format(appInfo.getBuildDate()));
+    params.put("app.build.date.release", format(appInfo.getMajorReleaseBuildDate()));
+    params.put("app.compilation.timestamp", IdeaLogger.getOurCompilationTimestamp());
 
-    params.add(Couple.of("app.name", namesInfo.getProductName()));
-    params.add(Couple.of("app.name.full", namesInfo.getFullProductName()));
-    params.add(Couple.of("app.name.version", appInfo.getVersionName()));
-    params.add(Couple.of("app.eap", Boolean.toString(appInfo.isEAP())));
-    params.add(Couple.of("app.internal", Boolean.toString(application.isInternal())));
-    params.add(Couple.of("app.build", appInfo.getBuild().asString()));
-    params.add(Couple.of("app.version.major", appInfo.getMajorVersion()));
-    params.add(Couple.of("app.version.minor", appInfo.getMinorVersion()));
-    params.add(Couple.of("app.build.date", format(appInfo.getBuildDate())));
-    params.add(Couple.of("app.build.date.release", format(appInfo.getMajorReleaseBuildDate())));
-    params.add(Couple.of("app.compilation.timestamp", compilationTimestamp));
+    UpdateSettings updateSettings = UpdateSettings.getInstance();
+    params.put("update.channel.status", updateSettings.getSelectedChannelStatus().getCode());
+    params.put("update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ","));
 
-    params.add(Couple.of("update.channel.status", updateSettings.getSelectedChannelStatus().getCode()));
-    params.add(Couple.of("update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ",")));
+    params.put("plugin.name", error.getPluginName());
+    params.put("plugin.version", error.getPluginVersion());
 
-    params.add(Couple.of("plugin.name", error.getPluginName()));
-    params.add(Couple.of("plugin.version", error.getPluginVersion()));
+    params.put("last.action", error.getLastAction());
+    params.put("previous.exception", error.getPreviousException() == null ? null : Integer.toString(error.getPreviousException()));
 
-    params.add(Couple.of("last.action", error.getLastAction()));
-    params.add(Couple.of("previous.exception",
-                         error.getPreviousException() == null ? null : Integer.toString(error.getPreviousException())));
+    params.put("error.message", error.getMessage());
+    params.put("error.stacktrace", error.getStackTrace());
+    params.put("error.description", error.getDescription());
 
-    params.add(Couple.of("error.message", error.getMessage()));
-    params.add(Couple.of("error.stacktrace", error.getStackTrace()));
-
-    params.add(Couple.of("error.description", error.getDescription()));
-
-    params.add(Couple.of("assignee.id", error.getAssigneeId() == null ? null : Integer.toString(error.getAssigneeId())));
+    params.put("assignee.id", error.getAssigneeId() == null ? null : Integer.toString(error.getAssigneeId()));
 
     for (Attachment attachment : error.getAttachments()) {
-      params.add(Couple.of("attachment.name", attachment.getName()));
-      params.add(Couple.of("attachment.value", attachment.getEncodedBytes()));
+      params.put("attachment.name", attachment.getName());
+      params.put("attachment.value", attachment.getEncodedBytes());
     }
 
     return params;
-  }
-
-  private static String readFrom(InputStream is) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    int c;
-    while ((c = is.read()) != -1) {
-      out.write(c);
-    }
-    String s = out.toString();
-    out.close();
-    return s;
   }
 
   private static String format(Calendar calendar) {
     return calendar == null ?  null : Long.toString(calendar.getTime().getTime());
   }
 
-  private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {
-    HttpURLConnection connection = (HttpURLConnection)HttpConfigurable.getInstance().openConnection(url.toString());
+  private static byte[] join(Map<String, String> params) throws UnsupportedEncodingException {
+    StringBuilder builder = new StringBuilder();
+    for (Map.Entry<String, String> param : params.entrySet()) {
+      if (StringUtil.isEmpty(param.getKey())) {
+        throw new IllegalArgumentException(param.toString());
+      }
+      if (builder.length() > 0) {
+        builder.append('&');
+      }
+      if (StringUtil.isNotEmpty(param.getValue())) {
+        builder.append(param.getKey()).append('=').append(URLEncoder.encode(param.getValue(), ENCODING));
+      }
+    }
+    return builder.toString().getBytes(ENCODING);
+  }
 
-    connection.setRequestMethod(HTTP_POST);
+  private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {
+    HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
+
+    connection.setSSLSocketFactory(ourSslContext.getSocketFactory());
+    if (!SystemInfo.isJavaVersionAtLeast("1.7") || !SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true)) {
+      connection.setHostnameVerifier(new EaHostnameVerifier(url.getHost(), "ftp.intellij.net"));
+    }
+
+    connection.setRequestMethod("POST");
     connection.setDoInput(true);
     connection.setDoOutput(true);
-    connection.setRequestProperty(HTTP_CONTENT_TYPE, String.format("%s; charset=%s", HTTP_WWW_FORM, ENCODING));
-    connection.setRequestProperty(HTTP_CONTENT_LENGTH, Integer.toString(bytes.length));
+    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + ENCODING);
+    connection.setRequestProperty("Content-Length", Integer.toString(bytes.length));
 
-    OutputStream out = new BufferedOutputStream(connection.getOutputStream());
+    OutputStream out = connection.getOutputStream();
     try {
       out.write(bytes);
-      out.flush();
-    } finally {
+    }
+    finally {
       out.close();
     }
 
     return connection;
   }
 
-  private static byte[] join(List<Couple<String>> params) throws UnsupportedEncodingException {
-    StringBuilder builder = new StringBuilder();
+  private synchronized static SSLContext initContext() throws GeneralSecurityException, IOException {
+    CertificateFactory cf = CertificateFactory.getInstance(CertificateUtil.X509);
+    Certificate ca = cf.generateCertificate(new ByteArrayInputStream(JB_CA_CERT.getBytes(ENCODING)));
+    KeyStore ks = KeyStore.getInstance(CertificateUtil.JKS);
+    ks.load(null, null);
+    ks.setCertificateEntry("JetBrains CA", ca);
+    TrustManagerFactory tmf = TrustManagerFactory.getInstance(CertificateUtil.X509);
+    tmf.init(ks);
+    SSLContext ctx = SSLContext.getInstance("TLS");
+    ctx.init(null, tmf.getTrustManagers(), null);
+    return ctx;
+  }
 
-    Iterator<Couple<String>> it = params.iterator();
+  private static class EaHostnameVerifier implements HostnameVerifier {
+    private final Set<String> myAllowedHosts;
 
-    while (it.hasNext()) {
-      Couple<String> param = it.next();
-
-      if (StringUtil.isEmpty(param.first))
-        throw new IllegalArgumentException(param.toString());
-
-      if (StringUtil.isNotEmpty(param.second))
-        builder.append(param.first).append("=").append(URLEncoder.encode(param.second, ENCODING));
-
-      if (it.hasNext())
-        builder.append(POST_DELIMITER);
+    public EaHostnameVerifier(@NotNull String... allowedHosts) {
+      myAllowedHosts = ContainerUtil.newHashSet(allowedHosts);
     }
 
-    return builder.toString().getBytes();
+    @Override
+    public boolean verify(String hostname, SSLSession session) {
+      try {
+        Certificate[] certificates = session.getPeerCertificates();
+        if (certificates.length > 0) {
+          Certificate certificate = certificates[0];
+          if (certificate instanceof X509Certificate) {
+            String cn = CertificateUtil.getCommonName((X509Certificate)certificate);
+            return myAllowedHosts.contains(cn);
+          }
+        }
+      }
+      catch (SSLPeerUnverifiedException ignored) { }
+      return false;
+    }
   }
+
+  @SuppressWarnings("SpellCheckingInspection") private static final String JB_CA_CERT =
+    "-----BEGIN CERTIFICATE-----\n" +
+    "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\n" +
+    "-----END CERTIFICATE-----\n";
 }

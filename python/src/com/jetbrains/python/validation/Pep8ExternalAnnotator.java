@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.validation;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -173,7 +174,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     options.add("-");
     ProcessOutput output = PySdkUtil.getProcessOutput(new File(collectedInfo.interpreterPath).getParent(),
                                                       ArrayUtil.toStringArray(options),
-                                                      new String[] { "PYTHONUNBUFFERED=1" },
+                                                      ImmutableMap.of("PYTHONBUFFERED", "1"),
                                                       10000,
                                                       collectedInfo.fileText.getBytes(), false);
 

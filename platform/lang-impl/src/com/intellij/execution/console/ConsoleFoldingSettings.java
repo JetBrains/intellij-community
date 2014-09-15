@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author peter
  */
-@State(name="ConsoleFoldingSettings", storages=@Storage( file = StoragePathMacros.APP_CONFIG + "/consoleFolding.xml"))
+@State(name="ConsoleFoldingSettings", storages=@Storage(file = StoragePathMacros.APP_CONFIG + "/consoleFolding.xml"))
 public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleFoldingSettings.MyBean> {
   private final List<String> myPositivePatterns = new ArrayList<String>();
   private final List<String> myNegativePatterns = new ArrayList<String>();

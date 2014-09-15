@@ -70,6 +70,12 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return PsiFormatUtil.getExternalName(listOwner, showParamName, Integer.MAX_VALUE);
   }
 
+  @NotNull
+  static PsiModifierListOwner preferCompiledElement(@NotNull PsiModifierListOwner element) {
+    PsiElement original = element.getOriginalElement();
+    return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
+  }
+
   protected abstract boolean hasAnyAnnotationsRoots();
 
   @Override
@@ -213,7 +219,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   @Override
   @Nullable
-  public List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
+  public List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner _listOwner) {
+    final PsiModifierListOwner listOwner = preferCompiledElement(_listOwner);
     final PsiFile containingFile = listOwner.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
       return null;
@@ -233,10 +240,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       if (allValid) {
         return files;
       }
-    }
-
-    if (virtualFile == null) {
-      return null;
     }
 
     Set<PsiFile> possibleAnnotationsXmls = new THashSet<PsiFile>();

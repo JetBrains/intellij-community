@@ -76,6 +76,9 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
         //bad value was stored
       }
     }
+    else {
+      myLanguageLevel = null;
+    }
   }
 
   @Override

@@ -17,7 +17,9 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.xdebugger.frame.*;
 import com.sun.jdi.Field;
 import com.sun.jdi.ReferenceType;
@@ -57,8 +59,14 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
 
           final ReferenceType refType = myStaticDescriptor.getType();
           List<Field> fields = refType.allFields();
+
+          final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
           for (Field field : fields) {
             if (field.isStatic()) {
+              boolean isSynthetic = DebuggerUtils.isSynthetic(field);
+              if (!classRenderer.SHOW_SYNTHETICS && isSynthetic) {
+                continue;
+              }
               final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myStaticDescriptor, null, field);
               children.add(JavaValue.create(fieldDescriptor, myEvaluationContext, myNodeManager));
               //final DebuggerTreeNodeImpl node = myNodeManager.createNode(fieldDescriptor, myEvaluationContext);

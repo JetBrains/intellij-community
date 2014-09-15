@@ -440,7 +440,7 @@ public class NestedMemberAccess {
         }
       }
       if (hide) {
-        node.wrapper.getHideMembers().add(InterpreterUtil.makeUniqueKey(invexpr.getName(), invexpr.getStringDescriptor()));
+        node.wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(invexpr.getName(), invexpr.getStringDescriptor()));
       }
     }
 

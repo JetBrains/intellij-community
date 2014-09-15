@@ -62,15 +62,20 @@ public class CreateCourseArchive extends DumbAwareAction {
     final VirtualFile baseDir = project.getBaseDir();
     final Map<String, Lesson> lessons = course.getLessonsMap();
     //map to store initial task file
-    Map<TaskFile, TaskFile> taskFiles = new HashMap<TaskFile, TaskFile>();
+    final Map<TaskFile, TaskFile> taskFiles = new HashMap<TaskFile, TaskFile>();
     for (Map.Entry<String, Lesson> lesson : lessons.entrySet()) {
       final VirtualFile lessonDir = baseDir.findChild(lesson.getKey());
       if (lessonDir == null) continue;
       for (Map.Entry<String, Task> task : lesson.getValue().myTasksMap.entrySet()) {
         final VirtualFile taskDir = lessonDir.findChild(task.getKey());
         if (taskDir == null) continue;
-        for (Map.Entry<String, TaskFile> entry : task.getValue().task_files.entrySet()) {
-          createUserFile(project, taskFiles, taskDir, entry);
+        for (final Map.Entry<String, TaskFile> entry : task.getValue().task_files.entrySet()) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              createUserFile(project, taskFiles, taskDir, taskDir, entry);
+            }
+          });
         }
       }
     }
@@ -80,41 +85,32 @@ public class CreateCourseArchive extends DumbAwareAction {
     synchronize(project);
   }
 
-  private void createUserFile(@NotNull final Project project,
-                              @NotNull final Map<TaskFile, TaskFile> taskFiles,
-                              @NotNull final VirtualFile taskDir,
-                              @NotNull final Map.Entry<String, TaskFile> entry) {
-    final String name = entry.getKey();
-    VirtualFile file = taskDir.findChild(name);
+  public static void createUserFile(@NotNull final Project project,
+                                    @NotNull final Map<TaskFile, TaskFile> taskFilesCopy,
+                                    @NotNull final VirtualFile userFileDir,
+                                    @NotNull final VirtualFile answerFileDir,
+                                    @NotNull final Map.Entry<String, TaskFile> taskFiles) {
+    final String name = taskFiles.getKey();
+    VirtualFile file = userFileDir.findChild(name);
     if (file != null) {
-      final VirtualFile finalFile = file;
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            finalFile.delete(this);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
-      });
-    }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          taskDir.createChildData(this, name);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+      try {
+        file.delete(project);
       }
-    });
-    file = taskDir.findChild(name);
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    try {
+      userFileDir.createChildData(project, name);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+
+    file = userFileDir.findChild(name);
     assert file != null;
     String answerFileName = file.getNameWithoutExtension() + ".answer";
-    VirtualFile answerFile = taskDir.findChild(answerFileName);
+    VirtualFile answerFile = answerFileDir.findChild(answerFileName);
     if (answerFile == null) {
       return;
     }
@@ -124,7 +120,7 @@ public class CreateCourseArchive extends DumbAwareAction {
     }
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return;
-    final TaskFile taskFile = entry.getValue();
+    final TaskFile taskFile = taskFiles.getValue();
     TaskFile taskFileSaved = new TaskFile();
     taskFile.copy(taskFileSaved);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -138,16 +134,20 @@ public class CreateCourseArchive extends DumbAwareAction {
         });
       }
     }, "x", "qwe");
-    document.addDocumentListener(new InsertionListener(taskFile));
-    taskFiles.put(taskFile, taskFileSaved);
+    InsertionListener listener = new InsertionListener(taskFile);
+    document.addDocumentListener(listener);
+    taskFilesCopy.put(taskFile, taskFileSaved);
     Collections.sort(taskFile.getTaskWindows());
     for (int i = taskFile.getTaskWindows().size() - 1; i >= 0; i--) {
       final TaskWindow taskWindow = taskFile.getTaskWindows().get(i);
       replaceTaskWindow(project, document, taskWindow);
     }
+    document.removeDocumentListener(listener);
   }
 
-  private void replaceTaskWindow(@NotNull final Project project, @NotNull final Document document, @NotNull final TaskWindow taskWindow) {
+  private static void replaceTaskWindow(@NotNull final Project project,
+                                        @NotNull final Document document,
+                                        @NotNull final TaskWindow taskWindow) {
     final String taskText = taskWindow.getTaskText();
     final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
     final int offset = lineStartOffset + taskWindow.start;
@@ -165,13 +165,13 @@ public class CreateCourseArchive extends DumbAwareAction {
     }, "x", "qwe");
   }
 
-  private void synchronize(@NotNull final Project project) {
+  private static void synchronize(@NotNull final Project project) {
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     ProjectView.getInstance(project).refresh();
   }
 
-  private void resetTaskFiles(@NotNull final Map<TaskFile, TaskFile> taskFiles) {
-    for (Map.Entry<TaskFile, TaskFile> entry: taskFiles.entrySet()) {
+  public static void resetTaskFiles(@NotNull final Map<TaskFile, TaskFile> taskFiles) {
+    for (Map.Entry<TaskFile, TaskFile> entry : taskFiles.entrySet()) {
       TaskFile realTaskFile = entry.getKey();
       TaskFile savedTaskFile = entry.getValue();
       realTaskFile.update(savedTaskFile);
@@ -205,7 +205,7 @@ public class CreateCourseArchive extends DumbAwareAction {
     }
   }
 
-  private void generateJson(@NotNull final Project project) {
+  private static void generateJson(@NotNull final Project project) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
@@ -236,7 +236,7 @@ public class CreateCourseArchive extends DumbAwareAction {
     }
   }
 
-  private class InsertionListener extends StudyDocumentListener {
+  private static class InsertionListener extends StudyDocumentListener {
 
     public InsertionListener(TaskFile taskFile) {
       super(taskFile);

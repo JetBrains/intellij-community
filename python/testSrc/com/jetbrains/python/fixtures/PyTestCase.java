@@ -18,8 +18,14 @@ package com.jetbrains.python.fixtures;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -56,6 +62,7 @@ import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +71,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author yole
@@ -92,12 +98,12 @@ public abstract class PyTestCase extends UsefulTestCase {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                    new LightTempDirTestFixtureImpl(true));
-    myFixture.setUp();
+      myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
+                                                                                      new LightTempDirTestFixtureImpl(true));
+      myFixture.setUp();
 
-    myFixture.setTestDataPath(getTestDataPath());
-  }
+      myFixture.setTestDataPath(getTestDataPath());
+    }
 
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
@@ -148,8 +154,9 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   /**
    * Searches for quickfix itetion by its class
+   *
    * @param clazz quick fix class
-   * @param <T> quick fix class
+   * @param <T>   quick fix class
    * @return quick fix or null if nothing found
    */
   @Nullable
@@ -170,8 +177,8 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
 
-    protected static void assertNotParsed(PyFile file) {
-      assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
+  protected static void assertNotParsed(PyFile file) {
+    assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
   }
 
   /**
@@ -184,15 +191,23 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   /**
+   * @see #moveByText(com.intellij.testFramework.fixtures.CodeInsightTestFixture, String)
+   */
+  protected void moveByText(@NotNull final String testToFind) {
+    moveByText(myFixture, testToFind);
+  }
+
+  /**
    * Finds some text and moves cursor to it (if found)
    *
+   * @param fixture    test fixture
    * @param testToFind text to find
    * @throws AssertionError if element not found
    */
-  protected void moveByText(@NotNull final String testToFind) {
-    final PsiElement element = myFixture.findElementByText(testToFind, PsiElement.class);
+  public static void moveByText(@NotNull final CodeInsightTestFixture fixture, @NotNull final String testToFind) {
+    final PsiElement element = fixture.findElementByText(testToFind, PsiElement.class);
     assert element != null : "No element found by text: " + testToFind;
-    myFixture.getEditor().getCaretModel().moveToOffset(element.getTextOffset());
+    fixture.getEditor().getCaretModel().moveToOffset(element.getTextOffset());
   }
 
   /**
@@ -263,4 +278,31 @@ public abstract class PyTestCase extends UsefulTestCase {
   public static String getHelpersPath() {
     return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
   }
+
+  /**
+   * Creates run configuration from right click menu
+   *
+   * @param fixture       test fixture
+   * @param expectedClass expected class of run configuration
+   * @param <C>           expected class of run configuration
+   * @return configuration (if created) or null (otherwise)
+   */
+  @Nullable
+  public static <C extends RunConfiguration> C createRunConfigurationFromContext(
+    @NotNull final CodeInsightTestFixture fixture,
+    @NotNull final Class<C> expectedClass) {
+    final DataContext context = DataManager.getInstance().getDataContext(fixture.getEditor().getComponent());
+    for (final RunConfigurationProducer<?> producer : RunConfigurationProducer.EP_NAME.getExtensions()) {
+      final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(context));
+      if (fromContext == null) {
+        continue;
+      }
+      final C result = PyUtil.as(fromContext.getConfiguration(), expectedClass);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
 }
+
