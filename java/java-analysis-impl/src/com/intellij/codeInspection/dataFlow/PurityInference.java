@@ -58,6 +58,7 @@ public class PurityInference {
     if (body == null) return false;
 
     final Ref<Boolean> impureFound = Ref.create(false);
+    final Ref<Boolean> hasReturns = Ref.create(false);
     final List<PsiMethodCallExpression> calls = ContainerUtil.newArrayList();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -66,6 +67,14 @@ public class PurityInference {
           impureFound.set(true);
         }
         super.visitAssignmentExpression(expression);
+      }
+
+      @Override
+      public void visitReturnStatement(PsiReturnStatement statement) {
+        if (statement.getReturnValue() != null) {
+          hasReturns.set(true);
+        }
+        super.visitReturnStatement(statement);
       }
 
       @Override
@@ -95,7 +104,7 @@ public class PurityInference {
       }
     });
 
-    if (impureFound.get() || calls.size() > 1) return false;
+    if (impureFound.get() || calls.size() > 1 || !hasReturns.get()) return false;
     if (calls.isEmpty()) return true;
 
     final PsiMethod called = calls.get(0).resolveMethod();

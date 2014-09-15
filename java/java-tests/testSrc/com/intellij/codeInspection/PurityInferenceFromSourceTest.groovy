@@ -120,6 +120,15 @@ int smthPure() { return 3; }
 """
   }
 
+  public void "test don't analyze methods without returns"() {
+    assertPure false, """
+Object method() {
+    smthPure();
+}
+int smthPure() { return 3; }
+"""
+  }
+
   private void assertPure(boolean expected, String classBody) {
     def clazz = myFixture.addClass("final class Foo { $classBody }")
     assert expected == PurityInference.inferPurity(clazz.methods[0])
