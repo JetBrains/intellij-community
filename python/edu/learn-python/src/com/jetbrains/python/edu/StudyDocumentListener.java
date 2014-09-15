@@ -2,12 +2,15 @@ package com.jetbrains.python.edu;
 
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.project.Project;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
+import com.jetbrains.python.edu.editor.StudyEditor;
 
 /**
  * author: liana
@@ -17,12 +20,14 @@ import com.jetbrains.python.edu.course.TaskWindow;
  */
 public class StudyDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
+  private final Project myProject;
   private int oldLine;
   private int oldLineStartOffset;
   private TaskWindow myTaskWindow;
 
-  public StudyDocumentListener(TaskFile taskFile) {
+  public StudyDocumentListener(TaskFile taskFile, Project project) {
     myTaskFile = taskFile;
+    myProject = project;
   }
 
 
@@ -63,6 +68,11 @@ public class StudyDocumentListener extends DocumentAdapter {
       int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
       int oldEndOffsetInLine = offset + e.getOldLength() - oldLineStartOffset;
       myTaskFile.updateLine(lineChange, oldLine, newEndOffsetInLine, oldEndOffsetInLine);
+      Editor editor = StudyEditor.getSelectedEditor(myProject);
+      if (editor == null) {
+        return;
+      }
+      myTaskFile.drawAllWindows(editor);
     }
   }
 }
