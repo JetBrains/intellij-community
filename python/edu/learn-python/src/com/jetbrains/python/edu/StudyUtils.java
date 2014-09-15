@@ -136,6 +136,7 @@ public class StudyUtils {
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
           if (!taskWindow.isValid(document)) {
+            printWriter.println("#study_plugin_window = ");
             continue;
           }
           int start = taskWindow.getRealStartOffset(document);
