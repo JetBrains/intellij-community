@@ -19,19 +19,24 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.util.PathsList;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -84,19 +89,27 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
   @Override
   public Value evaluate(final EvaluationContext evaluationContext) throws EvaluateException {
+    DebugProcess process = evaluationContext.getDebugProcess();
+    ThreadReference threadReference = evaluationContext.getSuspendContext().getThread().getThreadReference();
+
+    ClassLoaderReference classLoader;
     try {
-      DebugProcess process = evaluationContext.getDebugProcess();
-      ThreadReference threadReference = evaluationContext.getSuspendContext().getThread().getThreadReference();
+      classLoader = getClassLoader(evaluationContext);
+    }
+    catch (Exception e) {
+      throw new EvaluateException("Error creating evaluation class loader: " + e, e);
+    }
 
-      ClassLoaderReference classLoader = getClassLoader(evaluationContext);
+    Collection<OutputFileObject> classes = compile();
 
-      Collection<OutputFileObject> classes = compile();
+    try {
+      defineClasses(classes, evaluationContext, process, threadReference, classLoader);
+    }
+    catch (Exception e) {
+      throw new EvaluateException("Error during classes definition " + e, e);
+    }
 
-      ClassType mainClass = defineClasses(classes, evaluationContext, process, threadReference, classLoader);
-
-      //Method foo = mainClass.methodsByName(GEN_METHOD_NAME).get(0);
-      //return mainClass.invokeMethod(threadReference, foo, Collections.<Value>emptyList() ,ClassType.INVOKE_SINGLE_THREADED);
-
+    try {
       // invoke base evaluator on call code
       final Project project = myPsiContext.getProject();
       ExpressionEvaluator evaluator =
@@ -115,7 +128,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
       return evaluator.evaluate(evaluationContext);
     }
     catch (Exception e) {
-      throw new EvaluateException(e.getMessage());
+      throw new EvaluateException("Error during generated code invocation " + e, e);
     }
   }
 
@@ -126,8 +139,16 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     ClassType loaderClass = (ClassType)process.findClass(context, "java.net.URLClassLoader", context.getClassLoader());
     Method ctorMethod = loaderClass.concreteMethodByName("<init>", "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
     ThreadReference threadReference = context.getSuspendContext().getThread().getThreadReference();
-    return (ClassLoaderReference)loaderClass.newInstance(threadReference, ctorMethod,
-                                                         Arrays.asList(createURLArray(context), context.getClassLoader()), ClassType.INVOKE_SINGLE_THREADED);
+    ClassLoaderReference reference = (ClassLoaderReference)loaderClass.newInstance(threadReference, ctorMethod,
+                                                                                   Arrays.asList(createURLArray(context),
+                                                                                                 context.getClassLoader()),
+                                                                                   ClassType.INVOKE_SINGLE_THREADED);
+    keep(reference, context);
+    return reference;
+  }
+
+  private static void keep(ObjectReference reference, EvaluationContext context) {
+    ((SuspendContextImpl)context.getSuspendContext()).keep(reference);
   }
 
   private ClassType defineClasses(Collection<OutputFileObject> classes,
@@ -144,7 +165,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
           ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
         byte[] bytes = changeSuperToMagicAccessor(cls.toByteArray());
         ArrayList<Value> args = new ArrayList<Value>();
-        args.add(proxy.mirrorOf(cls.myOrigName));
+        StringReference name = proxy.mirrorOf(cls.myOrigName);
+        keep(name, context);
+        args.add(name);
         args.add(mirrorOf(bytes, context, process));
         args.add(proxy.mirrorOf(0));
         args.add(proxy.mirrorOf(bytes.length));
@@ -173,7 +196,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
     ArrayType arrayClass = (ArrayType)process.findClass(context, "byte[]", context.getClassLoader());
     ArrayReference reference = process.newInstance(arrayClass, bytes.length);
-    reference.disableCollection();
+    keep(reference, context);
     for (int i = 0; i < bytes.length; i++) {
       reference.setValue(i, ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).mirrorOf(bytes[i]));
     }
@@ -287,11 +310,15 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     DebugProcess process = context.getDebugProcess();
     ArrayType arrayType = (ArrayType)process.findClass(context, "java.net.URL[]", context.getClassLoader());
     ArrayReference arrayRef = arrayType.newInstance(1);
+    keep(arrayRef, context);
     ClassType classType = (ClassType)process.findClass(context, "java.net.URL", context.getClassLoader());
     VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
     ThreadReference threadReference = context.getSuspendContext().getThread().getThreadReference();
+    StringReference url = proxy.mirrorOf("file:a");
+    keep(url, context);
     ObjectReference reference = classType.newInstance(threadReference, classType.concreteMethodByName("<init>", "(Ljava/lang/String;)V"),
-                                                      Arrays.asList(proxy.mirrorOf("file:a")), ClassType.INVOKE_SINGLE_THREADED);
+                                                      Arrays.asList(url), ClassType.INVOKE_SINGLE_THREADED);
+    keep(reference, context);
     arrayRef.setValues(Arrays.asList(reference));
     return arrayRef;
   }
@@ -302,10 +329,23 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     MemoryFileManager manager = new MemoryFileManager(compiler);
     DiagnosticCollector<JavaFileObject> diagnostic = new DiagnosticCollector<JavaFileObject>();
-    if (!compiler.getTask(null, manager, diagnostic, null, null, Arrays
-      .asList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))).call()) {
-      // TODO: show only errors
-      throw new EvaluateException(diagnostic.getDiagnostics().get(0).toString());
+    Module module = ModuleUtilCore.findModuleForPsiElement(myPsiContext);
+    PathsList cp = null;
+    if (module != null) {
+      cp = ModuleRootManager.getInstance(module).orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList();
+    }
+    if (!compiler.getTask(null,
+                          manager,
+                          diagnostic,
+                          cp != null ? Arrays.asList("-cp", cp.getPathsString()) : null,
+                          null,
+                          Arrays.asList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))
+    ).call()) {
+      StringBuilder res = new StringBuilder("Compilation failed:\n");
+      for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {
+        res.append(d);
+      }
+      throw new EvaluateException(res.toString());
     }
     return manager.classes;
   }
