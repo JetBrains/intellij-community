@@ -73,9 +73,12 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     }
     else if (linesWithWhiteSpaceIndent > MIN_LINES_THRESHOLD && (1 - lineWithTabsRate) > RATE_THRESHOLD) {
       int newIndentSize = getPositiveIndentSize(stats);
-      if (newIndentSize > 0 && indentOptions.INDENT_SIZE != newIndentSize) {
-        indentOptions.INDENT_SIZE = newIndentSize;
-        LOG.info("Detected indent size: " + newIndentSize + " for file " + myFile);
+      if (newIndentSize > 0) {
+        indentOptions.USE_TAB_CHARACTER = false;
+        if (indentOptions.INDENT_SIZE != newIndentSize) {
+          indentOptions.INDENT_SIZE = newIndentSize;
+          LOG.info("Detected indent size: " + newIndentSize + " for file " + myFile);
+        }
       }
     }
   }

@@ -142,6 +142,7 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
 
   private void doTestIndentSize(int indent) {
     CommonCodeStyleSettings.IndentOptions options = getIndentOptions();
+    Assert.assertFalse("Tab usage detected: ", options.USE_TAB_CHARACTER);
     Assert.assertEquals("Indent mismatch", indent, options.INDENT_SIZE);
   }
 
