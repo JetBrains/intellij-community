@@ -17,8 +17,10 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,8 +30,16 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
+  private static final Collection<BooleanOptionDescription> ourOptions = createOptions();
+
   public EditorOptionsTopHitProvider() {
-    super("editor", createOptions());
+    super("editor");
+  }
+
+  @NotNull
+  @Override
+  public Collection<BooleanOptionDescription> getOptions(Project project) {
+    return ourOptions;
   }
 
   private static Collection<BooleanOptionDescription> createOptions() {

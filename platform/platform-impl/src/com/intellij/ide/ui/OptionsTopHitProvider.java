@@ -17,11 +17,13 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,15 +33,16 @@ import java.util.List;
  */
 public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
   @NonNls private final String myId;
-  private final Collection<BooleanOptionDescription> myOptions;
 
-  public OptionsTopHitProvider(String optionId, Collection<BooleanOptionDescription> options) {
+  public OptionsTopHitProvider(String optionId) {
     myId = optionId.toLowerCase();
-    myOptions = options;
   }
 
+  @NotNull
+  public abstract Collection<BooleanOptionDescription> getOptions(Project project);
+
   @Override
-  public final void consumeTopHits(@NonNls String pattern, Consumer<Object> collector) {
+  public final void consumeTopHits(@NonNls String pattern, Consumer<Object> collector, Project project) {
     if (!pattern.startsWith("#")) return;
     pattern = pattern.substring(1);
     final List<String> parts = StringUtil.split(pattern, " ");
@@ -50,7 +53,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     if (myId.startsWith(id)) {
       pattern = pattern.substring(id.length()).trim().toLowerCase();
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-      for (BooleanOptionDescription option : myOptions) {
+      for (BooleanOptionDescription option : getOptions(project)) {
         if (matcher.matches(option.getOption())) {
           collector.consume(option);
         }
