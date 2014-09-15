@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress.impl;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -41,11 +40,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ProgressManagerImpl extends ProgressManager implements Disposable {
+public class ProgressManagerImpl extends ProgressManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.ProgressManagerImpl");
   public static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
@@ -53,21 +50,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
 
   private static volatile int ourLockedCheckCounter = 0;
   private static final boolean DISABLED = "disabled".equals(System.getProperty("idea.ProcessCanceledException"));
-  private final ScheduledFuture<?> myCheckCancelledFuture;
-
-  public ProgressManagerImpl() {
-    if (DISABLED) {
-      myCheckCancelledFuture = null;
-    }
-    else {
-      myCheckCancelledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-        @Override
-        public void run() {
-          ourNeedToCheckCancel = true;
-        }
-      }, 0, CHECK_CANCELED_DELAY_MILLIS, TimeUnit.MILLISECONDS);
-    }
-  }
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
@@ -84,7 +66,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
           ourLockedCheckCounter++;
           if (ourLockedCheckCounter > 10) {
             ourLockedCheckCounter = 0;
-            canceled();
           }
         }
         else {
@@ -344,7 +325,8 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
     });
   }
 
-  public static void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
+  @NotNull
+  public static Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
     final ProgressIndicator progressIndicator;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       progressIndicator = new EmptyProgressIndicator();
@@ -352,7 +334,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
     else {
       progressIndicator = new BackgroundableProcessIndicator(task);
     }
-    runProcessWithProgressAsynchronously(task, progressIndicator, null);
+    return runProcessWithProgressAsynchronously(task, progressIndicator, null);
   }
 
   @Override
@@ -490,11 +472,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
         }
       }
     }
-  }
-
-  @Override
-  public void dispose() {
-    if (myCheckCancelledFuture != null) myCheckCancelledFuture.cancel(false);
   }
 
   private static void maybeSleep() {

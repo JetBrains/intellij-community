@@ -16,7 +16,6 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -24,14 +23,19 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.Function;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author yole
@@ -40,15 +44,13 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   public void testCheckCanceledHasNoStackFrame() {
     ProgressIndicatorBase pib = new ProgressIndicatorBase();
     pib.cancel();
-    boolean hadException = false;
     try {
       pib.checkCanceled();
+      fail("Please restore ProgressIndicatorBase.checkCanceled() check!");
     }
     catch(ProcessCanceledException ex) {
-      hadException = true;
       assertTrue("Should have no stackframe", ex.getStackTrace().length == 0);
     }
-    assertTrue("Please restore ProgressIndicatorBase.checkCanceled() check!", hadException);
   }
 
   public void testProgressManagerCheckCanceledWorksRightAfterIndicatorBeenCanceled() {
@@ -108,28 +110,19 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testProgressIndicatorUtils() throws Throwable {
-    final AtomicBoolean run = new AtomicBoolean(true);
     final AtomicBoolean insideReadAction = new AtomicBoolean();
-    final AtomicReference<Throwable> exception = new AtomicReference<Throwable>();
     final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, new ReadTask() {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
         insideReadAction.set(true);
-        while (run.get()) {
+        while (true) {
           ProgressManager.checkCanceled();
         }
       }
 
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
-        try {
-          assertTrue(run.get()); // cancel should happen early
-          run.set(false);
-        }
-        catch (Throwable e) {
-          exception.set(e);
-        }
       }
     });
     UIUtil.dispatchAllInvocationEvents();
@@ -139,191 +132,186 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        try {
-          assertTrue(indicator.isCanceled());
-        }
-        catch (Throwable e) {
-          exception.set(e);
-        }
+        assertTrue(indicator.isCanceled());
       }
     });
-    assertFalse(run.get());
-    if (exception.get() != null) throw exception.get();
+    assertTrue(indicator.isCanceled());
   }
 
-  private static class ProgressIndicatorStub implements ProgressIndicatorEx {
+  public void testThereIsNoDelayBetweenIndicatorCancelAndProgressManagerCheckCanceled() {
+    for (int i=0; i<1000;i++) {
+      final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
+      List<Thread> threads = ContainerUtil.map(Collections.nCopies(10, ""), new Function<String, Thread>() {
+        @Override
+        public Thread fun(String s) {
+          return new Thread(new Runnable() {
+            @Override
+            public void run() {
+              ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    boolean canceled = indicator.isCanceled();
+                    indicator.cancel();
+                    ProgressManager.checkCanceled();
+                    fail("checkCanceled() must know about canceled indicator even from different thread");
+                  }
+                  catch (ProcessCanceledException ignored) {
+                  }
+                }
+              }, indicator);
+            }
+          }){{start();}};
+        }
+      });
+      ContainerUtil.process(threads, new Processor<Thread>() {
+        @Override
+        public boolean process(Thread thread) {
+          try {
+            thread.join();
+          }
+          catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+          return true;
+        }
+      });
+    }
+
+  }
+
+  private volatile boolean checkCanceledCalled;
+  private volatile boolean taskCanceled;
+  private volatile boolean taskSucceeded;
+  private volatile boolean taskFinished;
+  private volatile Throwable exception;
+  public void testProgressManagerCheckCanceledDoesNotDelegateToProgressIndicatorIfThereAreNoCanceledIndicators() throws Throwable {
+    final long warmupEnd = System.currentTimeMillis() + 1000;
+    final long end = warmupEnd + 1000;
+    checkCanceledCalled = false;
+    final ProgressIndicator myIndicator = new ProgressIndicatorStub() {
+      @Override
+      public void checkCanceled() throws ProcessCanceledException {
+        checkCanceledCalled = true;
+        assertTrue(isCanceled());
+        super.checkCanceled();
+      }
+
+      @Override
+      public void processFinish() {
+        taskFinished = true;
+      }
+    };
+    taskCanceled = taskSucceeded = taskFinished = false;
+    exception = null;
+    Future<?> future = ProgressManagerImpl.runProcessWithProgressAsynchronously(new Task.Backgroundable(getProject(), "xxx") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          assertFalse(ApplicationManager.getApplication().isDispatchThread());
+          assertSame(indicator, myIndicator);
+          while (System.currentTimeMillis() < end) {
+            ProgressManager.checkCanceled();
+          }
+        }
+        catch (RuntimeException e) {
+          exception = e;
+          throw e;
+        }
+        catch (Error e) {
+          exception = e;
+          throw e;
+        }
+      }
+
+      @Override
+      public void onCancel() {
+        taskCanceled = true;
+      }
+
+      @Override
+      public void onSuccess() {
+        taskSucceeded = true;
+      }
+    }, myIndicator, null);
+
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    while (!future.isDone()) {
+      if (System.currentTimeMillis() < warmupEnd) {
+        assertFalse(checkCanceledCalled);
+      }
+      else {
+        myIndicator.cancel();
+      }
+    }
+    assertTrue(taskFinished);
+
+    // invokeLater in runProcessWithProgressAsynchronously
+    UIUtil.dispatchAllInvocationEvents();
+
+    assertTrue(checkCanceledCalled);
+    assertFalse(taskSucceeded);
+    assertTrue(taskCanceled);
+    assertTrue(String.valueOf(exception), exception instanceof ProcessCanceledException);
+  }
+
+  private static class ProgressIndicatorStub extends EmptyProgressIndicator implements ProgressIndicatorEx {
     @Override
     public void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
-
+      throw new RuntimeException();
     }
 
     @Override
     public boolean isModalityEntered() {
-      return false;
+      throw new RuntimeException();
     }
 
     @Override
     public void finish(@NotNull TaskInfo task) {
-
     }
 
     @Override
     public boolean isFinished(@NotNull TaskInfo task) {
-      return false;
+      throw new RuntimeException();
     }
 
     @Override
     public boolean wasStarted() {
-      return false;
+      throw new RuntimeException();
     }
 
     @Override
     public void processFinish() {
-
+      throw new RuntimeException();
     }
 
     @Override
     public void initStateFrom(@NotNull ProgressIndicator indicator) {
-
+      throw new RuntimeException();
     }
 
     @NotNull
     @Override
     public Stack<String> getTextStack() {
-      return null;
+      throw new RuntimeException();
     }
 
     @NotNull
     @Override
     public DoubleArrayList getFractionStack() {
-      return null;
+      throw new RuntimeException();
     }
 
     @NotNull
     @Override
     public Stack<String> getText2Stack() {
-      return null;
+      throw new RuntimeException();
     }
 
     @Override
     public int getNonCancelableCount() {
-      return 0;
-    }
-
-    @Override
-    public void start() {
-
-    }
-
-    @Override
-    public void stop() {
-
-    }
-
-    @Override
-    public boolean isRunning() {
-      return false;
-    }
-
-    @Override
-    public void cancel() {
-
-    }
-
-    @Override
-    public boolean isCanceled() {
-      return false;
-    }
-
-    @Override
-    public void setText(String text) {
-
-    }
-
-    @Override
-    public String getText() {
-      return null;
-    }
-
-    @Override
-    public void setText2(String text) {
-
-    }
-
-    @Override
-    public String getText2() {
-      return null;
-    }
-
-    @Override
-    public double getFraction() {
-      return 0;
-    }
-
-    @Override
-    public void setFraction(double fraction) {
-
-    }
-
-    @Override
-    public void pushState() {
-
-    }
-
-    @Override
-    public void popState() {
-
-    }
-
-    @Override
-    public void startNonCancelableSection() {
-
-    }
-
-    @Override
-    public void finishNonCancelableSection() {
-
-    }
-
-    @Override
-    public boolean isModal() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public ModalityState getModalityState() {
-      return null;
-    }
-
-    @Override
-    public void setModalityProgress(ProgressIndicator modalityProgress) {
-
-    }
-
-    @Override
-    public boolean isIndeterminate() {
-      return false;
-    }
-
-    @Override
-    public void setIndeterminate(boolean indeterminate) {
-
-    }
-
-    @Override
-    public void checkCanceled() throws ProcessCanceledException {
-
-    }
-
-    @Override
-    public boolean isPopupWasShown() {
-      return false;
-    }
-
-    @Override
-    public boolean isShowing() {
-      return false;
+      throw new RuntimeException();
     }
   }
 }
