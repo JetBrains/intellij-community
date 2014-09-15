@@ -33,12 +33,13 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
   }
 
   private class OptionsPanel extends JPanel {
-    private JCheckBox myNNParameterOverridesN;
+    private JCheckBox myBreakingOverriding;
     private JCheckBox myNAMethodOverridesNN;
     private JPanel myPanel;
     private JCheckBox myReportNotAnnotatedGetter;
     private JButton myConfigureAnnotationsButton;
     private JCheckBox myIgnoreExternalSuperNotNull;
+    private JCheckBox myNNParameterOverridesNA;
 
     private OptionsPanel() {
       super(new BorderLayout());
@@ -51,7 +52,8 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
         }
       };
       myNAMethodOverridesNN.addActionListener(actionListener);
-      myNNParameterOverridesN.addActionListener(actionListener);
+      myBreakingOverriding.addActionListener(actionListener);
+      myNNParameterOverridesNA.addActionListener(actionListener);
       myReportNotAnnotatedGetter.addActionListener(actionListener);
       myIgnoreExternalSuperNotNull.addActionListener(actionListener);
       myConfigureAnnotationsButton.addActionListener(new ActionListener() {
@@ -67,19 +69,21 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
     }
 
     private void reset() {
-      myNNParameterOverridesN.setSelected(REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE);
+      myBreakingOverriding.setSelected(REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE);
       myNAMethodOverridesNN.setSelected(REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL);
       myReportNotAnnotatedGetter.setSelected(REPORT_NOT_ANNOTATED_GETTER);
       myIgnoreExternalSuperNotNull.setSelected(IGNORE_EXTERNAL_SUPER_NOTNULL);
+      myNNParameterOverridesNA.setSelected(REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED);
 
       myIgnoreExternalSuperNotNull.setEnabled(myNAMethodOverridesNN.isSelected());
     }
 
     private void apply() {
       REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = myNAMethodOverridesNN.isSelected();
-      REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = myNNParameterOverridesN.isSelected();
+      REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = myBreakingOverriding.isSelected();
       REPORT_NOT_ANNOTATED_GETTER = myReportNotAnnotatedGetter.isSelected();
       IGNORE_EXTERNAL_SUPER_NOTNULL = myIgnoreExternalSuperNotNull.isSelected();
+      REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = myNNParameterOverridesNA.isSelected();
       REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL;
 
       myIgnoreExternalSuperNotNull.setEnabled(myNAMethodOverridesNN.isSelected());

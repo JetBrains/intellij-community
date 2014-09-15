@@ -33,7 +33,9 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,6 +49,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_GETTER = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_EXTERNAL_SUPER_NOTNULL = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = false;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
@@ -306,78 +309,119 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   private void checkNullableStuffForMethod(PsiMethod method, final ProblemsHolder holder) {
     Annotated annotated = check(method, holder, method.getReturnType());
 
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-
-    List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
-    boolean reported_not_annotated_method_overrides_notnull = false;
-    boolean reported_nullable_method_overrides_notnull = false;
-    boolean[] reported_notnull_parameter_overrides_nullable = new boolean[parameters.length];
-    boolean[] reported_not_annotated_parameter_overrides_notnull = new boolean[parameters.length];
+    List<PsiMethod> superMethods = ContainerUtil.map(
+      method.findSuperMethodSignaturesIncludingStatic(true), new Function<MethodSignatureBackedByPsiMethod, PsiMethod>() {
+        @Override
+        public PsiMethod fun(MethodSignatureBackedByPsiMethod signature) {
+          return signature.getMethod();
+        }
+      });
 
     final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(holder.getProject());
-    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
-      PsiMethod superMethod = superMethodSignature.getMethod();
-      if (!reported_nullable_method_overrides_notnull
-          && REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE
-          && annotated.isDeclaredNullable
-          && isNotNullNotInferred(superMethod, true, false)) {
-        reported_nullable_method_overrides_notnull = true;
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNullables(), true);
-        holder.registerProblem(annotation != null ? annotation : method.getNameIdentifier(),
-                               InspectionsBundle.message("inspection.nullable.problems.Nullable.method.overrides.NotNull", getPresentableAnnoName(method), getPresentableAnnoName(superMethod)),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-      }
-      if (!reported_not_annotated_method_overrides_notnull
-          && REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL
-          && !annotated.isDeclaredNullable
-          && !annotated.isDeclaredNotNull
-          && isNotNullNotInferred(superMethod, true, false)) {
-        reported_not_annotated_method_overrides_notnull = true;
-        final String defaultNotNull = nullableManager.getDefaultNotNull();
-        final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
-        final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull)
-                                  ? createAnnotateMethodFix(defaultNotNull, annotationsToRemove)
-                                  : createChangeDefaultNotNullFix(nullableManager, superMethod);
-        holder.registerProblem(method.getNameIdentifier(),
-                               InspectionsBundle.message("inspection.nullable.problems.method.overrides.NotNull", getPresentableAnnoName(superMethod)),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               wrapFix(fix));
-      }
-      if (REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE || REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
-        PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
-        if (superParameters.length != parameters.length) {
-          continue;
+
+    checkSupers(method, holder, annotated, superMethods, nullableManager);
+    checkParameters(method, holder, superMethods, nullableManager);
+    checkOverriders(method, holder, annotated, nullableManager);
+  }
+
+  private void checkSupers(PsiMethod method,
+                           ProblemsHolder holder,
+                           Annotated annotated,
+                           List<PsiMethod> superMethods, NullableNotNullManager nullableManager) {
+    if (REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE) {
+      for (PsiMethod superMethod : superMethods) {
+        if (annotated.isDeclaredNullable && isNotNullNotInferred(superMethod, true, false)) {
+          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNullables(), true);
+          holder.registerProblem(annotation != null ? annotation : method.getNameIdentifier(),
+                                 InspectionsBundle.message("inspection.nullable.problems.Nullable.method.overrides.NotNull",
+                                                           getPresentableAnnoName(method), getPresentableAnnoName(superMethod)),
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          break;
         }
-        for (int i = 0; i < parameters.length; i++) {
-          PsiParameter parameter = parameters[i];
-          PsiParameter superParameter = superParameters[i];
-          if (!reported_notnull_parameter_overrides_nullable[i] && REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE &&
-              isNotNullNotInferred(parameter, false, false) &&
+      }
+    }
+
+    if (REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
+      for (PsiMethod superMethod : superMethods) {
+        if (!annotated.isDeclaredNullable && !annotated.isDeclaredNotNull && isNotNullNotInferred(superMethod, true, false)) {
+          final String defaultNotNull = nullableManager.getDefaultNotNull();
+          final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
+          final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull)
+                                    ? createAnnotateMethodFix(defaultNotNull, annotationsToRemove)
+                                    : createChangeDefaultNotNullFix(nullableManager, superMethod);
+          holder.registerProblem(method.getNameIdentifier(),
+                                 InspectionsBundle.message("inspection.nullable.problems.method.overrides.NotNull", getPresentableAnnoName(superMethod)),
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 wrapFix(fix));
+          break;
+        }
+      }
+    }
+  }
+
+  private void checkParameters(PsiMethod method, ProblemsHolder holder, List<PsiMethod> superMethods, NullableNotNullManager nullableManager) {
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+
+      List<PsiParameter> superParameters = ContainerUtil.newArrayList();
+      for (PsiMethod superMethod : superMethods) {
+        PsiParameter[] _superParameters = superMethod.getParameterList().getParameters();
+        if (_superParameters.length == parameters.length) {
+          superParameters.add(_superParameters[i]);
+        }
+      }
+
+      if (REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE) {
+        for (PsiParameter superParameter : superParameters) {
+          if (isNotNullNotInferred(parameter, false, false) &&
               isNullableNotInferred(superParameter, false)) {
-            reported_notnull_parameter_overrides_nullable[i] = true;
             final PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameter, nullableManager.getNotNulls(), true);
             holder.registerProblem(annotation != null ? annotation : parameter.getNameIdentifier(),
                                    InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
                                                              getPresentableAnnoName(parameter),
                                                              getPresentableAnnoName(superParameter)),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            break;
           }
-          if (!reported_not_annotated_parameter_overrides_notnull[i] && REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
-            if (!nullableManager.hasNullability(parameter) && isNotNullNotInferred(superParameter, false, IGNORE_EXTERNAL_SUPER_NOTNULL)) {
-              reported_not_annotated_parameter_overrides_notnull[i] = true;
-              final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, nullableManager.getDefaultNotNull())
-                                        ? new AddNotNullAnnotationFix(parameter)
-                                        : createChangeDefaultNotNullFix(nullableManager, superParameter);
-              holder.registerProblem(parameter.getNameIdentifier(),
-                                     InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull", getPresentableAnnoName(superParameter)),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                     wrapFix(fix));
-            }
+        }
+      }
+      if (REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
+        for (PsiParameter superParameter : superParameters) {
+          if (!nullableManager.hasNullability(parameter) && isNotNullNotInferred(superParameter, false, IGNORE_EXTERNAL_SUPER_NOTNULL)) {
+            final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, nullableManager.getDefaultNotNull())
+                                      ? new AddNotNullAnnotationFix(parameter)
+                                      : createChangeDefaultNotNullFix(nullableManager, superParameter);
+            holder.registerProblem(parameter.getNameIdentifier(),
+                                   InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull", getPresentableAnnoName(superParameter)),
+                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                   wrapFix(fix));
+            break;
+          }
+        }
+      }
+      if (REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED) {
+        for (PsiParameter superParameter : superParameters) {
+          if (!nullableManager.hasNullability(superParameter) && isNotNullNotInferred(parameter, false, false)) {
+            PsiAnnotation notNullAnnotation = nullableManager.getNotNullAnnotation(parameter, false);
+            assert notNullAnnotation != null;
+            final LocalQuickFix fix = new RemoveAnnotationQuickFix(notNullAnnotation, parameter);
+            holder.registerProblem(notNullAnnotation,
+                                   InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.overrides.not.annotated", getPresentableAnnoName(parameter)),
+                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                   wrapFix(fix));
+            break;
           }
         }
       }
     }
+  }
 
+  private void checkOverriders(PsiMethod method,
+                               ProblemsHolder holder,
+                               Annotated annotated,
+                               NullableNotNullManager nullableManager) {
+    PsiParameter[] parameters = method.getParameterList().getParameters();
     if (REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS) {
       boolean[] parameterAnnotated = new boolean[parameters.length];
       boolean[] parameterQuickFixSuggested = new boolean[parameters.length];

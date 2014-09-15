@@ -63,6 +63,11 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testNotNullParameterOverridesNotAnnotated() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    doTest();
+  }
+
   public void testHonorSuperParameterDefault() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
