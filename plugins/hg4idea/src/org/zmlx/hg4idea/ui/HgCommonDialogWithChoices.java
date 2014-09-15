@@ -82,7 +82,7 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
     return hgRepositorySelectorComponent.getRepository();
   }
 
-  public String getTag() {
+  private String getTag() {
     return (String)tagSelector.getSelectedItem();
   }
 
@@ -90,7 +90,7 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
     return tagOption.isSelected();
   }
 
-  public String getBranch() {
+  private String getBranch() {
     return (String)branchSelector.getSelectedItem();
   }
 
@@ -98,7 +98,11 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
     return branchOption.isSelected();
   }
 
-  public String getBookmark() {
+  private boolean isRevisionSelected() {
+    return revisionOption.isSelected();
+  }
+
+  private String getBookmark() {
     return (String)bookmarkSelector.getSelectedItem();
   }
 
@@ -106,7 +110,7 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
     return bookmarkOption.isSelected();
   }
 
-  public String getRevision() {
+  private String getRevision() {
     return revisionTxt.getText();
   }
 
@@ -141,11 +145,15 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
   }
 
   public String getTargetValue() {
-    return isBranchSelected() ? getBranch() : isBookmarkSelected() ? getBookmark() : isTagSelected() ? getTag() : getRevision();
+    return isBranchSelected()
+           ? "branch(\"" + getBranch() + "\")"
+           : isBookmarkSelected()
+             ? "bookmark(\"" + getBookmark() + "\")"
+             : isTagSelected() ? "tag(\"" + getTag() + "\")" : "\"" + getRevision() + "\"";
   }
 
   protected ValidationInfo doValidate() {
     String message = "You have to specify appropriate name or revision.";
-    return StringUtil.isEmptyOrSpaces(getTargetValue()) ? new ValidationInfo(message, myBranchesBorderPanel) : null;
+    return isRevisionSelected() && StringUtil.isEmptyOrSpaces(getRevision()) ? new ValidationInfo(message, myBranchesBorderPanel) : null;
   }
 }
