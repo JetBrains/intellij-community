@@ -8,12 +8,29 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase {
+  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public Sdk getSdk() {
+      return PsiTestUtil.addJdkAnnotations(super.getSdk());
+    }
+  };
   private final NullableStuffInspection myInspection = new NullableStuffInspection();
   {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return PROJECT_DESCRIPTOR;
   }
 
   @Override
@@ -36,6 +53,13 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testGetterSetterProblems() throws Exception{ doTest(); }
   public void testOverriddenMethods() throws Exception{
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+  }
+
+  public void testOverridingExternalNotNull() { doTest(); }
+
+  public void testIgnoreExternalNotNull() {
+    myInspection.IGNORE_EXTERNAL_SUPER_NOTNULL = true;
     doTest();
   }
 

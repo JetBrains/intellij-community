@@ -46,6 +46,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_GETTER = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_EXTERNAL_SUPER_NOTNULL = false;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
@@ -115,7 +116,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                 }
               }
               if (annotated.isDeclaredNotNull && isNullableNotInferred(getter, false) ||
-                  annotated.isDeclaredNullable && isNotNullNotInferred(getter, false)) {
+                  annotated.isDeclaredNullable && isNotNullNotInferred(getter, false, false)) {
                 holder.registerProblem(nameIdentifier, InspectionsBundle.message(
                   "inspection.nullable.problems.annotated.field.getter.conflict", getPresentableAnnoName(field), getPresentableAnnoName(getter)),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getterAnnoFix);
@@ -142,7 +143,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             }
             if (PropertyUtil.isSimpleSetter(setter)) {
               if (annotated.isDeclaredNotNull && isNullableNotInferred(parameter, false) ||
-                  annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false)) {
+                  annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false, false)) {
                 final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
                 assertValidElement(setter, parameter, nameIdentifier1);
                 holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
@@ -179,7 +180,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
                   continue;
                 }
-                if (annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false)) {
+                if (annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false, false)) {
                   boolean usedAsQualifier = !ReferencesSearch.search(parameter).forEach(new Processor<PsiReference>() {
                     @Override
                     public boolean process(PsiReference reference) {
@@ -319,7 +320,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       if (!reported_nullable_method_overrides_notnull
           && REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE
           && annotated.isDeclaredNullable
-          && isNotNullNotInferred(superMethod, true)) {
+          && isNotNullNotInferred(superMethod, true, false)) {
         reported_nullable_method_overrides_notnull = true;
         final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNullables(), true);
         holder.registerProblem(annotation != null ? annotation : method.getNameIdentifier(),
@@ -330,7 +331,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           && REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL
           && !annotated.isDeclaredNullable
           && !annotated.isDeclaredNotNull
-          && isNotNullNotInferred(superMethod, true)) {
+          && isNotNullNotInferred(superMethod, true, false)) {
         reported_not_annotated_method_overrides_notnull = true;
         final String defaultNotNull = nullableManager.getDefaultNotNull();
         final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
@@ -351,7 +352,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           PsiParameter parameter = parameters[i];
           PsiParameter superParameter = superParameters[i];
           if (!reported_notnull_parameter_overrides_nullable[i] && REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE &&
-              isNotNullNotInferred(parameter, false) &&
+              isNotNullNotInferred(parameter, false, false) &&
               isNullableNotInferred(superParameter, false)) {
             reported_notnull_parameter_overrides_nullable[i] = true;
             final PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameter, nullableManager.getNotNulls(), true);
@@ -362,7 +363,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
           if (!reported_not_annotated_parameter_overrides_notnull[i] && REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
-            if (!nullableManager.hasNullability(parameter) && isNotNullNotInferred(superParameter, false)) {
+            if (!nullableManager.hasNullability(parameter) && isNotNullNotInferred(superParameter, false, IGNORE_EXTERNAL_SUPER_NOTNULL)) {
               reported_not_annotated_parameter_overrides_notnull[i] = true;
               final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, nullableManager.getDefaultNotNull())
                                         ? new AddNotNullAnnotationFix(parameter)
@@ -383,7 +384,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       boolean hasAnnotatedParameter = false;
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
-        parameterAnnotated[i] = isNotNullNotInferred(parameter, false);
+        parameterAnnotated[i] = isNotNullNotInferred(parameter, false, false);
         hasAnnotatedParameter |= parameterAnnotated[i];
       }
       if (hasAnnotatedParameter || annotated.isDeclaredNotNull) {
@@ -399,7 +400,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           final boolean applicable = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull);
           if (!methodQuickFixSuggested
               && annotated.isDeclaredNotNull
-              && !isNotNullNotInferred(overriding, false)
+              && !isNotNullNotInferred(overriding, false, false)
               && (isNullableNotInferred(overriding, false) || !isNullableNotInferred(overriding, true))) {
             method.getNameIdentifier(); //load tree
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());
@@ -428,7 +429,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             for (int i = 0; i < psiParameters.length; i++) {
               if (parameterQuickFixSuggested[i]) continue;
               PsiParameter parameter = psiParameters[i];
-              if (parameterAnnotated[i] && !isNotNullNotInferred(parameter, false) && !isNullableNotInferred(parameter, false)) {
+              if (parameterAnnotated[i] && !isNotNullNotInferred(parameter, false, false) && !isNullableNotInferred(parameter, false)) {
                 parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
                 PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameters[i], nullableManager.getNotNulls());
                 PsiElement psiElement = annotation;
@@ -452,13 +453,15 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     }
   }
 
-  private static boolean isNotNullNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
+  private static boolean isNotNullNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean skipExternal) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     if (!manager.isNotNull(owner, checkBases)) return false;
 
     PsiAnnotation anno = manager.getNotNullAnnotation(owner, checkBases);
-    return !(anno != null && AnnotationUtil.isInferredAnnotation(anno));
+    if (anno == null || AnnotationUtil.isInferredAnnotation(anno)) return false;
+    if (skipExternal && AnnotationUtil.isExternalAnnotation(anno)) return false;
+    return true;
   }
 
   private static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {

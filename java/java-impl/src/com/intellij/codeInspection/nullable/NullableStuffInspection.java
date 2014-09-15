@@ -18,7 +18,6 @@ package com.intellij.codeInspection.nullable;
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 
@@ -39,6 +38,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
     private JPanel myPanel;
     private JCheckBox myReportNotAnnotatedGetter;
     private JButton myConfigureAnnotationsButton;
+    private JCheckBox myIgnoreExternalSuperNotNull;
 
     private OptionsPanel() {
       super(new BorderLayout());
@@ -53,6 +53,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       myNAMethodOverridesNN.addActionListener(actionListener);
       myNNParameterOverridesN.addActionListener(actionListener);
       myReportNotAnnotatedGetter.addActionListener(actionListener);
+      myIgnoreExternalSuperNotNull.addActionListener(actionListener);
       myConfigureAnnotationsButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -69,13 +70,19 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       myNNParameterOverridesN.setSelected(REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE);
       myNAMethodOverridesNN.setSelected(REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL);
       myReportNotAnnotatedGetter.setSelected(REPORT_NOT_ANNOTATED_GETTER);
+      myIgnoreExternalSuperNotNull.setSelected(IGNORE_EXTERNAL_SUPER_NOTNULL);
+
+      myIgnoreExternalSuperNotNull.setEnabled(myNAMethodOverridesNN.isSelected());
     }
 
     private void apply() {
       REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = myNAMethodOverridesNN.isSelected();
       REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = myNNParameterOverridesN.isSelected();
       REPORT_NOT_ANNOTATED_GETTER = myReportNotAnnotatedGetter.isSelected();
+      IGNORE_EXTERNAL_SUPER_NOTNULL = myIgnoreExternalSuperNotNull.isSelected();
       REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL;
+
+      myIgnoreExternalSuperNotNull.setEnabled(myNAMethodOverridesNN.isSelected());
     }
   }
 }
