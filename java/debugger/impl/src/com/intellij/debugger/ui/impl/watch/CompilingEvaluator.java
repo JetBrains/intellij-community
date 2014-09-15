@@ -148,7 +148,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
         args.add(mirrorOf(bytes, context, process));
         args.add(proxy.mirrorOf(0));
         args.add(proxy.mirrorOf(bytes.length));
-        classLoader.invokeMethod(threadReference, defineMethod, args, ClassType.INVOKE_SINGLE_THREADED);
+        process.invokeMethod(context, classLoader, defineMethod, args);
       }
     }
     return (ClassType)process.findClass(context, getGenClassFullName(), classLoader);
