@@ -19,6 +19,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -35,52 +36,6 @@ public final class SortedConfigurableGroup
   extends SearchableConfigurable.Parent.Abstract
   implements SearchableConfigurable, ConfigurableGroup, Configurable.NoScroll {
 
-  public static ConfigurableGroup getGroup(Configurable... configurables) {
-    SortedConfigurableGroup root = new SortedConfigurableGroup("root");
-    HashMap<String, SortedConfigurableGroup> map = new HashMap<String, SortedConfigurableGroup>();
-    map.put("root", root);
-    for (Configurable configurable : configurables) {
-      int weight = 0;
-      String groupId = null;
-      if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        weight = wrapper.getExtensionPoint().groupWeight;
-        groupId = wrapper.getExtensionPoint().groupId;
-      }
-      SortedConfigurableGroup composite = map.get(groupId);
-      if (composite == null) {
-        composite = new SortedConfigurableGroup(groupId);
-        map.put(groupId, composite);
-      }
-      composite.add(weight, configurable);
-    }
-    // process supported groups
-    root.add(60, map.remove("appearance"));
-    root.add(50, map.remove("editor"));
-    root.add(40, map.remove("project"));
-    SortedConfigurableGroup build = map.remove("build");
-    if (build == null) {
-      build = map.remove("build.tools");
-    }
-    else {
-      build.add(1000, map.remove("build.tools"));
-    }
-    root.add(30, build);
-    root.add(20, map.remove("language"));
-    root.add(10, map.remove("tools"));
-    root.add(-10, map.remove(null));
-    // process unsupported groups
-    if (1 < map.size()) {
-      for (SortedConfigurableGroup group : map.values()) {
-        if (root != group) {
-          group.myDisplayName = "Category: " + group.myGroupId;
-          root.add(0, group);
-        }
-      }
-    }
-    return root;
-  }
-
   private final ArrayList<WeightConfigurable> myList = new ArrayList<WeightConfigurable>();
   private final String myGroupId;
   private String myDisplayName;
@@ -89,7 +44,7 @@ public final class SortedConfigurableGroup
     myGroupId = groupId;
   }
 
-  public SortedConfigurableGroup(Configurable... configurables) {
+  public SortedConfigurableGroup(Project project, Configurable... configurables) {
     myGroupId = "root";
     // create groups from configurations
     HashMap<String, SortedConfigurableGroup> map = new HashMap<String, SortedConfigurableGroup>();
@@ -110,9 +65,15 @@ public final class SortedConfigurableGroup
       composite.add(weight, configurable);
     }
     // process supported groups
-    add(60, map.remove("appearance"));
-    add(50, map.remove("editor"));
-    add(40, map.remove("project"));
+    add(70, map.remove("appearance"));
+    add(60, map.remove("editor"));
+    SortedConfigurableGroup projectGroup = map.remove("project");
+    if (projectGroup != null && project != null && !project.isDefault()) {
+      projectGroup.myDisplayName = StringUtil.first(
+        OptionsBundle.message("configurable.group.project.named.settings.display.name", project.getName()),
+        30, true);
+    }
+    add(40, projectGroup);
     SortedConfigurableGroup build = map.remove("build");
     if (build == null) {
       build = map.remove("build.tools");
@@ -128,7 +89,7 @@ public final class SortedConfigurableGroup
     if (1 < map.size()) {
       for (SortedConfigurableGroup group : map.values()) {
         if (this != group) {
-          group.myDisplayName = "Category: " + group.myGroupId;
+          group.myDisplayName = OptionsBundle.message("configurable.group.category.named.settings.display.name", group.myGroupId);
           add(0, group);
         }
       }
