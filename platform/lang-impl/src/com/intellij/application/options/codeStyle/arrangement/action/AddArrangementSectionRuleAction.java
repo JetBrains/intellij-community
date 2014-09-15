@@ -31,11 +31,11 @@ public class AddArrangementSectionRuleAction extends AddArrangementRuleAction {
   public AddArrangementSectionRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.section.rule.add.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.section.rule.add.description"));
+    getTemplatePresentation().setIcon(SystemInfoRt.isMac ? AllIcons.CodeStyle.Mac.AddNewSectionRule : AllIcons.CodeStyle.AddNewSectionRule);
   }
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(SystemInfoRt.isMac ? AllIcons.CodeStyle.Mac.AddNewSectionRule : AllIcons.CodeStyle.AddNewSectionRule);
     final ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
     if (control == null) {
       return;

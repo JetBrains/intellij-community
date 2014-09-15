@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.util.IconUtil;
 
 import javax.swing.table.DefaultTableModel;
 
@@ -32,6 +33,7 @@ public class MoveArrangementGroupingRuleDownAction extends AnAction implements D
   public MoveArrangementGroupingRuleDownAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.move.down.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.move.down.description"));
+    getTemplatePresentation().setIcon(IconUtil.getMoveDownIcon());
   }
 
   @Override
