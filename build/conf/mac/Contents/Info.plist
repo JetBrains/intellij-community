@@ -84,7 +84,7 @@
       </dict>
 
       <key>VMOptions</key>
-      <string>@@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
+      <string>-XX:ErrorFile=$HOME/log.txt @@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
 
     </dict>
   </dict>
