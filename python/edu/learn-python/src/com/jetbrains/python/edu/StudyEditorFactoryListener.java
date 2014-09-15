@@ -72,7 +72,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                 if (taskFile != null) {
                   taskFile.navigateToFirstTaskWindow(editor);
                   editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
-                  StudyDocumentListener listener = new StudyDocumentListener(taskFile);
+                  StudyDocumentListener listener = new StudyDocumentListener(taskFile, project);
                   StudyEditor.addDocumentListener(document, listener);
                   document.addDocumentListener(listener);
                   taskFile.drawAllWindows(editor);
