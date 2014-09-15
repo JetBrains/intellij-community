@@ -49,7 +49,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       fail("Please restore ProgressIndicatorBase.checkCanceled() check!");
     }
     catch(ProcessCanceledException ex) {
-      assertTrue("Should have no stackframe", ex.getStackTrace().length == 0);
+      assertTrue("Should have no stackframe", ApplicationManager.getApplication().isInternal() ? ex.getStackTrace().length != 0 : ex.getStackTrace().length == 0);
     }
   }
 
@@ -288,7 +288,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
     @Override
     public void initStateFrom(@NotNull ProgressIndicator indicator) {
-      throw new RuntimeException();
     }
 
     @NotNull
