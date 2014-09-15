@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.lambda;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +40,39 @@ public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
     final PsiType type = ((PsiExpression)refExpr).getType();
     Assert.assertNotNull(refExpr.toString(), type);
     Assert.assertTrue(type.getCanonicalText(), type.equalsToText("java.util.List<java.lang.String>"));
+  }
+
+  public void testCashedTypes() throws Exception {
+    myFixture.configureByText("a.java", "import java.util.*;\n" +
+                                        "abstract class Main {\n" +
+                                        "    void test(List<Integer> li) {\n" +
+                                        "       foo(li, s -> <caret>s.substr(0), Collections.emptyList());\n" +
+                                        "    }\n" +
+                                        "    abstract <T, U> Collection<U> foo(Collection<T> coll, Fun<Stream<T>, U> f, List<U> it);" +
+                                        "    interface Stream<T> {\n" +
+                                        "        T substr(long startingOffset);\n" +
+                                        "    }\n" +
+                                        "    interface Fun<T, R> {\n" +
+                                        "        R _(T t);\n" +
+                                        "    }\n" +
+                                        "}\n");
+    final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    Assert.assertTrue(elementAtCaret instanceof PsiIdentifier);
+
+    final PsiElement refExpr = elementAtCaret.getParent();
+    Assert.assertTrue(refExpr.toString(), refExpr instanceof PsiExpression);
+    final PsiType type = ((PsiExpression)refExpr).getType();
+    Assert.assertNotNull(refExpr.toString(), type);
+    Assert.assertTrue(type.getCanonicalText(), type.equalsToText("Stream<java.lang.Integer>"));
+
+    final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(refExpr, PsiExpressionList.class);
+    assertNotNull(expressionList);
+    final PsiExpression[] expressions = expressionList.getExpressions();
+    assertEquals(3, expressions.length);
+
+    final PsiType ensureNotCached = expressions[2].getType();
+    assertNotNull(ensureNotCached);
+    assertTrue(ensureNotCached.getCanonicalText(), ensureNotCached.equalsToText("java.util.List<java.lang.Integer>"));
   }
 
   @NotNull
