@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -77,13 +77,13 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
-      final PsiMethod method = (PsiMethod)methodName.getParent();
-      if (method == null) {
+      final PsiElement parent = methodName.getParent();
+      if (!(parent instanceof PsiMethod)) {
         return;
       }
+      final PsiMethod method = (PsiMethod)parent;
       final PsiCodeBlock body = method.getBody();
       final PsiElementFactory factory =
         JavaPsiFacade.getElementFactory(project);
@@ -110,7 +110,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
-      if (!method.isConstructor()) {
+      if (!method.isConstructor() || method.getNameIdentifier() == null) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
@@ -140,7 +140,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
         return;
       }
       final PsiStatement firstStatement = statements[0];
-      if (isConstructorCall(firstStatement)) {
+      if (isConstructorCall(firstStatement) || PsiUtilCore.hasErrorElementChild(firstStatement)) {
         return;
       }
       registerMethodError(method);
