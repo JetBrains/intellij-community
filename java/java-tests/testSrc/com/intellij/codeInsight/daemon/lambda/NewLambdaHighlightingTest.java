@@ -101,6 +101,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDeepNestedLambdaExpressionsNoFormalParams() { doTest(); }
   public void testNestedLambdaExpressionsNoFormalParamsStopAtStandalone() { doTest(); }
 
+  public void testNestedLambdaCheckedExceptionsConstraints() throws Exception {
+    doTest();
+  }
+
   public void testIDEA127596() throws Exception {
     doTest();
   }
