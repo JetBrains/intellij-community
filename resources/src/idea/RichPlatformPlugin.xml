@@ -252,14 +252,14 @@
     <projectConfigurable groupId="language" instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable" id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle" />
 
     <!-- Scopes -->
-    <projectConfigurable groupId="project" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
+    <projectConfigurable groupId="appearance" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
 
     <!-- Application Configurables -->
 
     <!-- Path Variables -->
     <!-- the implementation of this configurable is in platform-impl but it's not registered in platform because
          it's only required in full IDEA -->
-    <applicationConfigurable groupId="project" instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
+    <applicationConfigurable groupId="build" instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
                              key="title.path.variables" bundle="messages.ApplicationBundle"/>
 
     <applicationConfigurable parentId="editor" instance="com.intellij.execution.console.ConsoleFoldingConfigurable" id="Console Folding"
