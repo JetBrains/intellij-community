@@ -24,6 +24,7 @@ public class StudyDocumentListener extends DocumentAdapter {
   private int myOldLine;
   private int myOldLineStartOffset;
   private TaskWindow myTaskWindow;
+  private boolean myEmptyDocument;
 
   public StudyDocumentListener(TaskFile taskFile, Project project) {
     myTaskFile = taskFile;
@@ -39,6 +40,7 @@ public class StudyDocumentListener extends DocumentAdapter {
     int oldEnd = offset + e.getOldLength();
     Document document = e.getDocument();
     myOldLine = document.getLineNumber(oldEnd);
+    myEmptyDocument = document.getTextLength() == 0;
     myOldLineStartOffset = document.getLineStartOffset(myOldLine);
     int line = document.getLineNumber(offset);
     int offsetInLine = offset - document.getLineStartOffset(line);
@@ -52,6 +54,13 @@ public class StudyDocumentListener extends DocumentAdapter {
     if (e instanceof DocumentEventImpl) {
       DocumentEventImpl event = (DocumentEventImpl)e;
       Document document = e.getDocument();
+      if (myEmptyDocument) {
+          Editor editor = StudyEditor.getSelectedEditor(myProject);
+          if (editor != null && editor.getDocument() == document) {
+          myTaskFile.drawAllWindows(editor);
+          return;
+        }
+      }
       int offset = e.getOffset();
       int change = event.getNewLength() - event.getOldLength();
       if (myTaskWindow != null) {
@@ -68,11 +77,6 @@ public class StudyDocumentListener extends DocumentAdapter {
       int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
       int oldEndOffsetInLine = offset + e.getOldLength() - myOldLineStartOffset;
       myTaskFile.updateLine(lineChange, myOldLine, newEndOffsetInLine, oldEndOffsetInLine);
-      Editor editor = StudyEditor.getSelectedEditor(myProject);
-      if (editor == null) {
-        return;
-      }
-      myTaskFile.drawAllWindows(editor);
     }
   }
 }
