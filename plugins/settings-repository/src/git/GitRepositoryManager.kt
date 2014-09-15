@@ -65,7 +65,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       ShutDownTracker.getInstance().registerShutdownTask(object: Runnable {
         override fun run() {
           if (dir.exists()) {
-            $repository.close()
+            repository.close()
           }
         }
       })
