@@ -45,6 +45,8 @@ class Paths {
 def paths = new Paths(out)
 setProperty("paths", paths)
 
+setProperty("maySkipAndroidPlugin", true)
+
 target(compile: "Compile project") {
   loadProject()
 
