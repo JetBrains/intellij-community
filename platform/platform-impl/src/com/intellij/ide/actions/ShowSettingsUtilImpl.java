@@ -75,7 +75,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                new IdeConfigurablesGroup()};
 
     return Registry.is("ide.new.settings.dialog")
-           ? new ConfigurableGroup[]{new SortedConfigurableGroup(getConfigurables(groups, true))}
+           ? new ConfigurableGroup[]{new SortedConfigurableGroup(project, getConfigurables(groups, true))}
            : groups;
   }
 

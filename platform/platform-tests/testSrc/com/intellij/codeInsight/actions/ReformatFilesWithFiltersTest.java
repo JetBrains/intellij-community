@@ -47,10 +47,11 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    registerCodeStyleManager(myRealCodeStyleManger);
-    LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
-
-    TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
+    if (myRealCodeStyleManger != null) registerCodeStyleManager(myRealCodeStyleManger);
+    if (myMockPlainTextFormattingModelBuilder != null) {
+      LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
+    }
+    if (myWorkingDirectory != null) TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
     super.tearDown();
   }
 
