@@ -36,13 +36,13 @@ import java.util.List;
 public class GotoRelatedSymbolAction extends AnAction {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     PsiElement element = getContextElement(e.getDataContext());
     e.getPresentation().setEnabled(element != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     PsiElement element = getContextElement(e.getDataContext());
     if (element == null) return;
 
@@ -70,7 +70,7 @@ public class GotoRelatedSymbolAction extends AnAction {
     if (file != null && editor != null) {
       return getContextElement(file, editor);
     }
-    return element;
+    return element == null ? file : element;
   }
 
   @NotNull
