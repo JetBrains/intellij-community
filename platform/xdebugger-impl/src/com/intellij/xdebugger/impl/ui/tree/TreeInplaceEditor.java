@@ -194,7 +194,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     myRemoveActions.add(new Runnable() {
       @Override
       public void run() {
-        disposable.dispose();
+        Disposer.dispose(disposable);
       }
     });
 

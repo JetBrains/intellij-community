@@ -32,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
@@ -266,7 +265,7 @@ public final class LanguageConsoleBuilder {
       });
       editor.setHorizontalScrollbarVisible(true);
 
-      JLayeredPane layeredPane = new JBLayeredPane() {
+      JLayeredPane layeredPane = new JLayeredPane() {
         @Override
         public Dimension getPreferredSize() {
           Dimension editorSize = getEditorComponent().getPreferredSize();
