@@ -46,7 +46,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     myPicoContainer = new IdeaPicoContainer(parent) {
-      private Set<Object> myDisposableComponents = new ConcurrentHashSet<Object>();
+      private final Set<Object> myDisposableComponents = new ConcurrentHashSet<Object>();
 
       @Override
       @Nullable

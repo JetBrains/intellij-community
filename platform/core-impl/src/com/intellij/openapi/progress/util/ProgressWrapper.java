@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.WrappedProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ProgressWrapper extends AbstractProgressIndicatorBase {
+public class ProgressWrapper extends AbstractProgressIndicatorBase implements WrappedProgressIndicator {
   private final ProgressIndicator myOriginal;
 
   protected ProgressWrapper(@NotNull ProgressIndicator original) {
@@ -38,6 +39,7 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase {
     return myOriginal.isCanceled();
   }
 
+  @Override
   @NotNull
   public ProgressIndicator getOriginalProgressIndicator() {
     return myOriginal;
