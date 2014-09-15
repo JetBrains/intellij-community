@@ -412,42 +412,44 @@ public class ExceptionUtil {
       return Collections.emptyList();
     }
 
+    final PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
+    if (thrownExceptions.length == 0) {
+      return Collections.emptyList();
+    }
+
     final PsiSubstitutor substitutor = result.getSubstitutor();
     if (!isArrayClone(method, methodCall) && methodCall instanceof PsiMethodCallExpression) {
-      final PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
-      if (thrownExceptions.length > 0) {
-        final PsiFile containingFile = (containingMethod == null ? methodCall : containingMethod).getContainingFile();
-        final MethodResolverProcessor processor = new MethodResolverProcessor((PsiMethodCallExpression)methodCall, containingFile);
-        try {
-          PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
-          final List<Pair<PsiMethod, PsiSubstitutor>> candidates = ContainerUtil.mapNotNull(
-            processor.getResults(), new Function<CandidateInfo, Pair<PsiMethod, PsiSubstitutor>>() {
-            @Override
-            public Pair<PsiMethod, PsiSubstitutor> fun(CandidateInfo info) {
-              PsiElement element = info.getElement();
-              if (element instanceof PsiMethod &&
-                  MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element) &&
-                  !MethodSignatureUtil.isSuperMethod((PsiMethod)element, method)) {
-                return Pair.create((PsiMethod)element, info.getSubstitutor());
-              }
-              return null;
+      final PsiFile containingFile = (containingMethod == null ? methodCall : containingMethod).getContainingFile();
+      final MethodResolverProcessor processor = new MethodResolverProcessor((PsiMethodCallExpression)methodCall, containingFile);
+      try {
+        PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
+        final List<Pair<PsiMethod, PsiSubstitutor>> candidates = ContainerUtil.mapNotNull(
+          processor.getResults(), new Function<CandidateInfo, Pair<PsiMethod, PsiSubstitutor>>() {
+          @Override
+          public Pair<PsiMethod, PsiSubstitutor> fun(CandidateInfo info) {
+            PsiElement element = info.getElement();
+            if (element instanceof PsiMethod &&
+                MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element) &&
+                !MethodSignatureUtil.isSuperMethod((PsiMethod)element, method)) {
+              return Pair.create((PsiMethod)element, info.getSubstitutor());
             }
-          });
-          if (candidates.size() > 1) {
-            final List<PsiClassType> ex = collectSubstituted(substitutor, thrownExceptions);
-            for (Pair<PsiMethod, PsiSubstitutor> pair : candidates) {
-              final PsiClassType[] exceptions = pair.first.getThrowsList().getReferencedTypes();
-              if (exceptions.length == 0) {
-                return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, PsiClassType.EMPTY_ARRAY);
-              }
-              retainExceptions(ex, collectSubstituted(pair.second, exceptions));
-            }
-            return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()]));
+            return null;
           }
+        });
+        if (candidates.size() > 1) {
+          final List<PsiClassType> ex = collectSubstituted(substitutor, thrownExceptions);
+          for (Pair<PsiMethod, PsiSubstitutor> pair : candidates) {
+            final PsiClassType[] exceptions = pair.first.getThrowsList().getReferencedTypes();
+            if (exceptions.length == 0) {
+              return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, PsiClassType.EMPTY_ARRAY);
+            }
+            retainExceptions(ex, collectSubstituted(pair.second, exceptions));
+          }
+          return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()]));
         }
-        catch (MethodProcessorSetupFailedException ignore) {
-          return Collections.emptyList();
-        }
+      }
+      catch (MethodProcessorSetupFailedException ignore) {
+        return Collections.emptyList();
       }
     }
 
