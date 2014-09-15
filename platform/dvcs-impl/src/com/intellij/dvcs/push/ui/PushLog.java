@@ -210,7 +210,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
   @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (e.getKeyCode() == KeyEvent.VK_ENTER && pressed) {
+    if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0 && pressed) {
       if (myTree.isEditing()) {
         myTree.stopEditing();
       }
