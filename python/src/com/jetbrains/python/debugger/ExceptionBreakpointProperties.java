@@ -30,4 +30,5 @@ public abstract class ExceptionBreakpointProperties<T> extends XBreakpointProper
     return myException;
   }
 
+  public abstract String getExceptionBreakpointId();
 }
