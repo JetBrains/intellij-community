@@ -24,8 +24,8 @@ import org.jetbrains.plugins.coursecreator.format.Course;
 import org.jetbrains.plugins.coursecreator.format.Lesson;
 import org.jetbrains.plugins.coursecreator.format.Task;
 
-public class CreateTask extends DumbAwareAction {
-  public CreateTask() {
+public class CCCreateTask extends DumbAwareAction {
+  public CCCreateTask() {
     super("Task", "Create new Task", PlatformIcons.DIRECTORY_CLOSED_ICON);
   }
 

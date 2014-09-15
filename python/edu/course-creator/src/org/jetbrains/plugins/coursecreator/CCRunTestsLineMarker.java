@@ -40,7 +40,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 
-public class RunTestsLineMarker implements LineMarkerProvider {
+public class CCRunTestsLineMarker implements LineMarkerProvider {
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {

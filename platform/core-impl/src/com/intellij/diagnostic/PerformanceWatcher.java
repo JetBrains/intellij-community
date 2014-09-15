@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,11 +60,13 @@ public class PerformanceWatcher implements ApplicationComponent {
     return ServiceManager.getService(PerformanceWatcher.class);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "PerformanceWatcher";
   }
 
+  @Override
   public void initComponent() {
     myThreadMXBean = ManagementFactory.getThreadMXBean();
 
@@ -93,6 +95,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         deleteOldThreadDumps();
       }
@@ -109,6 +112,7 @@ public class PerformanceWatcher implements ApplicationComponent {
       // ignore
     }
     myThread = new Thread(new Runnable() {
+      @Override
       public void run() {
         checkEDTResponsiveness();
       }
@@ -121,6 +125,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     File allLogsDir = new File(PathManager.getLogPath());
     if (allLogsDir.isDirectory()) {
       final String[] dirs = allLogsDir.list(new FilenameFilter() {
+        @Override
         public boolean accept(final File dir, final String name) {
           return name.startsWith("threadDumps-");
         }
@@ -134,6 +139,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
   }
 
+  @Override
   public void disposeComponent() {
     if (shallNotWatch()) return;
     myShutdownSemaphore.release();
@@ -267,6 +273,7 @@ public class PerformanceWatcher implements ApplicationComponent {
       myCount = count;
     }
 
+    @Override
     public void run() {
       mySwingThreadCounter = myCount;
     }

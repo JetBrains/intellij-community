@@ -121,7 +121,7 @@ public class CoreApplicationEnvironment {
 
     registerApplicationExtensionPoint(MetaDataContributor.EP_NAME, MetaDataContributor.class);
 
-    ProgressIndicatorProvider.ourInstance = createProgressIndicatorProvider();
+    registerApplicationService(ProgressManager.class, createProgressIndicatorProvider());
 
     registerApplicationService(JobLauncher.class, createJobLauncher());
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
@@ -212,23 +212,8 @@ public class CoreApplicationEnvironment {
   }
 
   @NotNull
-  protected ProgressIndicatorProvider createProgressIndicatorProvider() {
-    return new ProgressIndicatorProvider() {
-      @Override
-      public ProgressIndicator getProgressIndicator() {
-        return new EmptyProgressIndicator();
-      }
-
-      @Override
-      protected void doCheckCanceled() throws ProcessCanceledException {
-      }
-
-      @NotNull
-      @Override
-      public NonCancelableSection startNonCancelableSection() {
-        return NonCancelableSection.EMPTY;
-      }
-    };
+  protected ProgressManager createProgressIndicatorProvider() {
+    return new CoreProgressManager();
   }
 
   @NotNull

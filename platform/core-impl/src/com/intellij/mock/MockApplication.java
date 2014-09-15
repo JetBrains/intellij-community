@@ -21,12 +21,13 @@ import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.awt.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 public class MockApplication extends MockComponentManager implements Application {
   private ModalityState MODALITY_STATE_NONE;
@@ -95,13 +96,13 @@ public class MockApplication extends MockComponentManager implements Application
   @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    return ExecutorServiceHolder.ourThreadExecutorsService.submit(action);
+    return PooledThreadExecutor.INSTANCE.submit(action);
   }
 
   @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
-    return ExecutorServiceHolder.ourThreadExecutorsService.submit(action);
+    return PooledThreadExecutor.INSTANCE.submit(action);
   }
 
   @Override
@@ -265,13 +266,5 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void saveSettings() {
-  }
-
-  private static class ExecutorServiceHolder {
-    private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
-
-    private static ThreadPoolExecutor createServiceImpl() {
-      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("MockApplication pooled thread"));
-    }
   }
 }

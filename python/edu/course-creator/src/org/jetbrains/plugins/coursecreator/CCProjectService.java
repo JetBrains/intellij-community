@@ -47,7 +47,7 @@ public class CCProjectService implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CCProjectService.class.getName());
   public Course myCourse;
   public static final String COURSE_ELEMENT = "course";
-  private static final Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
+  private static final Map<Document, CCDocumentListener> myDocumentListeners = new HashMap<Document, CCDocumentListener>();
 
   public void setCourse(@NotNull final Course course) {
     myCourse = course;
@@ -123,11 +123,11 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     }
   }
 
-  public static void addDocumentListener(Document document, StudyDocumentListener listener) {
+  public static void addDocumentListener(Document document, CCDocumentListener listener) {
     myDocumentListeners.put(document, listener);
   }
 
-  public static StudyDocumentListener getListener(Document document) {
+  public static CCDocumentListener getListener(Document document) {
     return myDocumentListeners.get(document);
   }
 

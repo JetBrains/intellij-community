@@ -20,9 +20,9 @@ import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class AnswerFileTypeFactory extends FileTypeFactory {
+public class CCAnswerFileTypeFactory extends FileTypeFactory {
   @Override
   public void createFileTypes(@NotNull FileTypeConsumer fileTypeConsumer) {
-    fileTypeConsumer.consume(AnswerFileType.INSTANCE, "answer");
+    fileTypeConsumer.consume(CCAnswerFileType.INSTANCE, "answer");
   }
 }

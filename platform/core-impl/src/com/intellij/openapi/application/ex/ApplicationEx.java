@@ -18,7 +18,6 @@ package com.intellij.openapi.application.ex;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +35,6 @@ public interface ApplicationEx extends Application {
    *
    * @param optionsPath Path to /config folder
    * @throws IOException
-   * @throws InvalidDataException
    */
   void load(@Nullable String optionsPath) throws IOException;
 

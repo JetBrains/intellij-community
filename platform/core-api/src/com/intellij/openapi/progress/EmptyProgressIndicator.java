@@ -42,7 +42,7 @@ public class EmptyProgressIndicator implements ProgressIndicator {
   @Override
   public void cancel() {
     myIsCanceled = true;
-    ProgressIndicatorProvider.canceled();
+    ProgressManager.canceled(this);
   }
 
   @Override

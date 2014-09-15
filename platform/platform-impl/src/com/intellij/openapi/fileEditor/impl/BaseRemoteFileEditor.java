@@ -129,8 +129,8 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   }
 
   @Override
-  public void propertyChange(PropertyChangeEvent evt) {
-    myDispatcher.getMulticaster().propertyChange(evt);
+  public void propertyChange(@NotNull PropertyChangeEvent event) {
+    myDispatcher.getMulticaster().propertyChange(event);
   }
 
   @Override
@@ -162,7 +162,9 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
     }
 
     if (myMockTextEditor != null) {
-      EditorFactory.getInstance().releaseEditor(myMockTextEditor);
+      if (!myMockTextEditor.isDisposed()) {
+        EditorFactory.getInstance().releaseEditor(myMockTextEditor);
+      }
       myMockTextEditor = null;
     }
   }

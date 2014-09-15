@@ -467,6 +467,10 @@ public class AnnotationUtil {
     return InferredAnnotationsManager.getInstance(annotation.getProject()).isInferredAnnotation(annotation);
   }
 
+  public static boolean isExternalAnnotation(@NotNull PsiAnnotation annotation) {
+    return ExternalAnnotationsManager.getInstance(annotation.getProject()).isExternalAnnotation(annotation);
+  }
+
   @Nullable
   public static String getStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
     PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.slicer;
+package foo;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+interface A {
+  void f(double a);
+  Integer f2(Object a);
+}
 
-public abstract class SliceTestCase extends DaemonAnalyzerTestCase {
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
+class B implements A {
+  public void f(double a) {
+  }
+  public Integer f2(Object a) {
+    return 2;
   }
 }

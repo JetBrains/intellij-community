@@ -14,13 +14,13 @@ import org.jetbrains.plugins.coursecreator.format.TaskWindow;
  * Listens changes in study files and updates
  * coordinates of all the windows in current task file
  */
-public abstract class StudyDocumentListener extends DocumentAdapter {
+public abstract class CCDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
-  private int oldLine;
-  private int oldLineStartOffset;
+  private int myOldLine;
+  private int myOldLineStartOffset;
   private TaskWindow myTaskWindow;
 
-  public StudyDocumentListener(TaskFile taskFile) {
+  public CCDocumentListener(TaskFile taskFile) {
     myTaskFile = taskFile;
   }
 
@@ -32,13 +32,12 @@ public abstract class StudyDocumentListener extends DocumentAdapter {
     int offset = e.getOffset();
     int oldEnd = offset + e.getOldLength();
     Document document = e.getDocument();
-    oldLine = document.getLineNumber(oldEnd);
-    oldLineStartOffset = document.getLineStartOffset(oldLine);
+    myOldLine = document.getLineNumber(oldEnd);
+    myOldLineStartOffset = document.getLineStartOffset(myOldLine);
     int line = document.getLineNumber(offset);
     int offsetInLine = offset - document.getLineStartOffset(line);
     LogicalPosition pos = new LogicalPosition(line, offsetInLine);
     myTaskWindow = myTaskFile.getTaskWindow(document, pos);
-
   }
 
   @Override
@@ -53,11 +52,11 @@ public abstract class StudyDocumentListener extends DocumentAdapter {
       }
       int newEnd = offset + event.getNewLength();
       int newLine = document.getLineNumber(newEnd);
-      int lineChange = newLine - oldLine;
-      myTaskFile.incrementLines(oldLine + 1, lineChange);
+      int lineChange = newLine - myOldLine;
+      myTaskFile.incrementLines(myOldLine + 1, lineChange);
       int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
-      int oldEndOffsetInLine = offset + e.getOldLength() - oldLineStartOffset;
-      myTaskFile.updateLine(lineChange, oldLine, newEndOffsetInLine, oldEndOffsetInLine);
+      int oldEndOffsetInLine = offset + e.getOldLength() - myOldLineStartOffset;
+      myTaskFile.updateLine(lineChange, myOldLine, newEndOffsetInLine, oldEndOffsetInLine);
     }
   }
 

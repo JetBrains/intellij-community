@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.coursecreator.actions.DeleteTaskWindow;
-import org.jetbrains.plugins.coursecreator.actions.ShowTaskWindowText;
+import org.jetbrains.plugins.coursecreator.actions.CCDeleteTaskWindow;
+import org.jetbrains.plugins.coursecreator.actions.CCShowTaskWindowText;
 import org.jetbrains.plugins.coursecreator.format.TaskWindow;
 
 import javax.swing.*;
@@ -47,14 +47,14 @@ public class TaskTextGutter extends LineMarkerInfo.LineMarkerGutterIconRenderer 
   @Nullable
   @Override
   public AnAction getClickAction() {
-    return new ShowTaskWindowText(myTaskWindow);
+    return new CCShowTaskWindowText(myTaskWindow);
   }
 
   @Nullable
   @Override
   public ActionGroup getPopupMenuActions() {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new DeleteTaskWindow(myTaskWindow));
+    group.add(new CCDeleteTaskWindow(myTaskWindow));
     return group;
   }
 }
