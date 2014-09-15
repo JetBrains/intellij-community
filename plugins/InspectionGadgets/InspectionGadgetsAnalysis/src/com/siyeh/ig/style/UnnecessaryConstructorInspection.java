@@ -24,15 +24,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class UnnecessaryConstructorInspection extends BaseInspection {
-
-  @NonNls
-  private static final String SUPER_CALL_TEXT = PsiKeyword.SUPER + "();";
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAnnotations = false;
@@ -110,7 +106,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
         return;
       }
       final PsiMethod constructor = constructors[0];
-      if (!constructor.isPhysical()) {
+      if (!constructor.isPhysical() || constructor.getNameIdentifier() == null) {
         return;
       }
       if (!constructor.hasModifierProperty(PsiModifier.PRIVATE) &&
@@ -154,15 +150,27 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
         return;
       }
       final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
+      if (statements.length == 0 || statements.length == 1 && isSuperConstructorInvocationWithoutArguments(statements[0])) {
         registerMethodError(constructor);
       }
-      else if (statements.length == 1) {
-        final PsiStatement statement = statements[0];
-        if (SUPER_CALL_TEXT.equals(statement.getText())) {
-          registerMethodError(constructor);
-        }
+    }
+
+    private boolean isSuperConstructorInvocationWithoutArguments(PsiStatement statement) {
+      if (!(statement instanceof PsiExpressionStatement)) {
+        return false;
       }
+      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+      final PsiExpression expression = expressionStatement.getExpression();
+      if (!(expression instanceof PsiMethodCallExpression)) {
+        return false;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      if (argumentList.getExpressions().length != 0) {
+        return false;
+      }
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      return PsiKeyword.SUPER.equals(methodExpression.getReferenceName());
     }
   }
 }
