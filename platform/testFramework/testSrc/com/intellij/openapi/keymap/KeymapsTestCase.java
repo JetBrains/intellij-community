@@ -130,6 +130,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control alt DELETE", "Console.Jdbc.Terminate", "Console.Jpa.Terminate"},
     { "shift control K",          "hg4idea.push", "Git.Push"},
     { "control E",                "RecentFiles", "Vcs.ShowMessageHistory"},
+    { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     });
     put("Mac OS X 10.5+", new String[][] {
     { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
@@ -332,6 +333,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       { "shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindUsages"},
       { "shift meta K",             "hg4idea.push", "Git.Push", "FindPrevious"},
       { "shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
+      { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     });
   }};
   // @formatter:on
