@@ -20,6 +20,7 @@ import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +50,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public abstract class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.BaseExternalAnnotationsManager");
+  private static final Key<Boolean> EXTERNAL_ANNO_MARKER = Key.create("EXTERNAL_ANNO_MARKER");
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   @NotNull private static final List<PsiFile> NULL_LIST = new ArrayList<PsiFile>(0);
   @NotNull
@@ -77,6 +79,11 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   protected abstract boolean hasAnyAnnotationsRoots();
+
+  @Override
+  public boolean isExternalAnnotation(@NotNull PsiAnnotation annotation) {
+    return annotation.getUserData(EXTERNAL_ANNO_MARKER) != null;
+  }
 
   @Override
   @Nullable
@@ -358,7 +365,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     private PsiAnnotation getAnnotation(@NotNull BaseExternalAnnotationsManager context) {
       PsiAnnotation a = annotation;
       if (a == null) {
-        annotation = a = context.createAnnotationFromText("@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "("+annotationParameters+")"));
+        a = context.createAnnotationFromText("@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "("+annotationParameters+")"));
+        a.putUserData(EXTERNAL_ANNO_MARKER, Boolean.TRUE);
+        annotation = a;
       }
       return a;
     }
@@ -390,6 +399,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       if (!(element instanceof PsiAnnotation)) {
         throw new IncorrectOperationException("Incorrect annotation \"" + text + "\".");
       }
+      element.putUserData(EXTERNAL_ANNO_MARKER, Boolean.TRUE);
       return (PsiAnnotation)element;
     }
   }
