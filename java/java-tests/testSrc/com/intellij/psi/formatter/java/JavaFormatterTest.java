@@ -3089,4 +3089,75 @@ public void testSCR260() throws Exception {
       "}"
     );
   }
+
+  public void testKeepIndentsOnEmptyLines() {
+    CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getIndentOptions();
+    assertNotNull(indentOptions);
+    final String original =
+         "public class Main {\n" +
+      "    public int x;\n" +
+      "           \n" +
+      "    public int y;\n" +
+      "\n" +
+      "    public void foo(boolean a, int x, int y, int z) {\n" +
+      "        do {\n" +
+      "  \n" +
+      "            if (x > 0) {\n" +
+      "  \n" +
+      "            } else if (x < 0) {\n" +
+      "            \n" +
+      "            int r;\n" +
+      "            }\n" +
+      "    }\n" +
+      "        while (y > 0);\n" +
+      "  }\n" +
+      "}";
+
+    indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = false;
+    doTextTest(
+      original,
+
+      "public class Main {\n" +
+      "    public int x;\n" +
+      "\n" +
+      "    public int y;\n" +
+      "\n" +
+      "    public void foo(boolean a, int x, int y, int z) {\n" +
+      "        do {\n" +
+      "\n" +
+      "            if (x > 0) {\n" +
+      "\n" +
+      "            } else if (x < 0) {\n" +
+      "\n" +
+      "                int r;\n" +
+      "            }\n" +
+      "        }\n" +
+      "        while (y > 0);\n" +
+      "    }\n" +
+      "}"
+    );
+    indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = true;
+    doTextTest(
+      original,
+
+      "public class Main {\n" +
+      "    public int x;\n" +
+      "    \n" +
+      "    public int y;\n" +
+      "    \n" +
+      "    public void foo(boolean a, int x, int y, int z) {\n" +
+      "        do {\n" +
+      "            \n" +
+      "            if (x > 0) {\n" +
+      "            \n" +
+      "            } else if (x < 0) {\n" +
+      "                \n" +
+      "                int r;\n" +
+      "            }\n" +
+      "        }\n" +
+      "        while (y > 0);\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }
