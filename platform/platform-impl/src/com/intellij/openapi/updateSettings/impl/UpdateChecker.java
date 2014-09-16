@@ -329,13 +329,8 @@ public final class UpdateChecker {
   }
 
   private static List<String> getPluginHosts() {
-    ArrayList<String> hosts = new ArrayList<String>();
-    hosts.addAll(UpdateSettings.getInstance().myPluginHosts);
+    final List<String> hosts = UpdateSettings.getInstance().getPluginHosts();
     ContainerUtil.addIfNotNull(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl(), hosts);
-    final String pluginHosts = System.getProperty("idea.plugin.hosts");
-    if (pluginHosts != null) {
-      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
-    }
     return hosts;
   }
 
