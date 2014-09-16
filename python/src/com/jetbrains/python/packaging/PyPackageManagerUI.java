@@ -181,7 +181,7 @@ public class PyPackageManagerUI {
         notificationRef.set(new Notification(PACKAGING_GROUP_ID, getSuccessTitle(), getSuccessDescription(),
                                              NotificationType.INFORMATION));
       }
-      else {
+      else if (!isCancelled(exceptions)) {
         final String firstLine = getTitle() + ": error occurred.";
         final String description = createDescription(exceptions, firstLine);
         notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(),
@@ -209,6 +209,15 @@ public class PyPackageManagerUI {
           }
         }
       });
+    }
+
+    private static boolean isCancelled(@NotNull List<PyExternalProcessException> exceptions) {
+      for (PyExternalProcessException e : exceptions) {
+        if (e instanceof PyProcessCancelledException) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 
@@ -240,6 +249,10 @@ public class PyPackageManagerUI {
         indicator.setFraction((double)i / size);
         try {
           manager.install(Arrays.asList(requirement), myExtraArgs);
+        }
+        catch (PyProcessCancelledException e) {
+          exceptions.add(e);
+          break;
         }
         catch (PyExternalProcessException e) {
           exceptions.add(e);

@@ -17,12 +17,15 @@ package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
@@ -35,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
@@ -469,36 +471,53 @@ public class PyPackageManagerImpl extends PyPackageManager {
     LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
 
     final boolean canCreate = FileUtil.ensureCanCreateFile(new File(homePath));
-    if (!canCreate && !SystemInfo.isWindows && askForSudo) {   //is system site interpreter --> we need sudo privileges
-      try {
-        final ProcessOutput result = ExecUtil.sudoAndGetOutput(cmdline,
-                                                               "Please enter your password to make changes in system packages: ",
-                                                               workingDir);
-        String message = result.getStderr();
-        if (result.getExitCode() != 0) {
-          final String stdout = result.getStdout();
-          if (StringUtil.isEmptyOrSpaces(message)) {
-            message = stdout;
-          }
-          if (StringUtil.isEmptyOrSpaces(message)) {
-            message = "Failed to perform action. Permission denied.";
-          }
-          throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
+    final boolean useSudo = !canCreate && !SystemInfo.isWindows && askForSudo;
+
+    try {
+      final Process process;
+      if (useSudo) {
+        process = ExecUtil.sudo(cmdline, "Please enter your password to make changes in system packages: ", workingDir, null);
+      }
+      else {
+        process = ExecUtil.exec(cmdline, workingDir, null);
+      }
+      final CapturingProcessHandler handler = new CapturingProcessHandler(process);
+      // Make the progress indicator an explicit parameter?
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      final ProcessOutput result;
+      if (indicator != null) {
+        result = handler.runProcessWithProgressIndicator(indicator);
+      }
+      else {
+        result = handler.runProcess(TIMEOUT);
+      }
+      if (result.isCancelled()) {
+        throw new PyProcessCancelledException(helperPath, args);
+      }
+      String message = result.getStderr();
+      if (result.getExitCode() != 0) {
+        final String stdout = result.getStdout();
+        if (StringUtil.isEmptyOrSpaces(message)) {
+          message = stdout;
         }
-        if (SystemInfo.isMac && !StringUtil.isEmptyOrSpaces(message)) {
-          throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
+        if (StringUtil.isEmptyOrSpaces(message)) {
+          message = "Failed to perform action. Permission denied.";
         }
-        return result;
+        throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
       }
-      catch (ExecutionException e) {
-        throw new PyExternalProcessException(ERROR_EXECUTION, helperPath, args, e.getMessage());
+      if (SystemInfo.isMac && !StringUtil.isEmptyOrSpaces(message)) {
+        throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
       }
-      catch (IOException e) {
-        throw new PyExternalProcessException(ERROR_ACCESS_DENIED, helperPath, args, e.getMessage());
-      }
+      return result;
     }
-    else {
-      return PySdkUtil.getProcessOutput(workingDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
+    catch (PyProcessCancelledException e) {
+      throw e;
+    }
+    catch (ExecutionException e) {
+      throw new PyExternalProcessException(ERROR_EXECUTION, helperPath, args, e.getMessage());
+    }
+    catch (IOException e) {
+      throw new PyExternalProcessException(ERROR_ACCESS_DENIED, helperPath, args, e.getMessage());
     }
   }
 
