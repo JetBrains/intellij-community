@@ -10,6 +10,8 @@ import org.jetbrains.settingsRepository.PROJECTS_DIR_NAME
 import com.intellij.openapi.progress.ProcessCanceledException
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
+  indicator.checkCanceled()
+
   val index = manager.repository.computeIndexDiff()
   val changed = index.diff(JGitProgressMonitor(indicator), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit")
 
@@ -39,9 +41,7 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
     }
   }
 
-  if (indicator.isCanceled()) {
-    throw ProcessCanceledException()
-  }
+  indicator.checkCanceled()
 
   manager.createCommitCommand().setMessage("").call()
 }

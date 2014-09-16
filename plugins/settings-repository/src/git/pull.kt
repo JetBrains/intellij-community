@@ -62,7 +62,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
   fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null): MergeResult? {
-    checkCancelled()
+    indicator.checkCanceled()
 
     LOG.debug("Pull")
 
@@ -96,7 +96,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   }
 
   fun fetch(prevRefUpdateResult: RefUpdate.Result? = null): Ref? {
-    checkCancelled()
+    indicator.checkCanceled()
 
     val repository = manager.repository
 
@@ -121,7 +121,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       }
     }
 
-    checkCancelled()
+    indicator.checkCanceled()
 
     var hasChanges = false
     for (fetchRefSpec in remoteConfig.getFetchRefSpecs()) {
@@ -165,9 +165,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   }
 
   protected fun checkCancelled() {
-    if (indicator.isCanceled()) {
-      throw ProcessCanceledException()
-    }
+    indicator.checkCanceled()
   }
 
   fun merge(unpeeledRef: Ref,
@@ -177,7 +175,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
             squash: Boolean = false,
             forceMerge: Boolean = false,
             commitMessage: String? = null): MergeResult {
-    checkCancelled()
+    indicator.checkCanceled()
 
     val head = repository.getRef(Constants.HEAD)
     if (head == null) {

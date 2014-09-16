@@ -21,7 +21,7 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
 
     repository.resetHard()
 
-    checkCancelled()
+    indicator.checkCanceled()
 
     val commitMessage = "Reset to ${if (toTheirs) manager.getUpstream() else "my"}"
     // grab added/deleted/renamed/modified files
