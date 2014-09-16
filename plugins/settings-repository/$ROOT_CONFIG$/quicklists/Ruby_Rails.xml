@@ -1,0 +1,12 @@
+<list display="Ruby/Rails" description="" readonly="false">
+  <action id="org.jetbrains.plugins.ruby.rails.console.RunRailsConsoleAction" />
+  <action id="org.jetbrains.plugins.ruby.console.RunIRBConsoleAction" />
+  <action id="org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction" />
+  <action id="QuickList.$Separator$" />
+  <action id="org.jetbrains.plugins.ruby.rails.actions.execution.RunRailsScriptAction" />
+  <action id="org.jetbrains.plugins.ruby.rails.spork.RunSporkServerScriptAction" />
+  <action id="org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction" />
+  <action id="QuickList.$Separator$" />
+  <action id="org.jetbrains.plugins.ruby.rails.actions.rake.ReloadRakeTasksAction" />
+  <action id="org.jetbrains.plugins.ruby.rails.actions.generators.ReloadGeneratorsAction" />
+</list>

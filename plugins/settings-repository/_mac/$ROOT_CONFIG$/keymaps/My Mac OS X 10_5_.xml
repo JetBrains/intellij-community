@@ -1,0 +1,38 @@
+<keymap version="1" name="My Mac OS X 10.5+" parent="Mac OS X 10.5+">
+  <action id="$Delete" />
+  <action id="Editor Delete" />
+  <action id="EditorSelectWord">
+    <keyboard-shortcut first-keystroke="alt UP" />
+    <keyboard-shortcut first-keystroke="control W" />
+  </action>
+  <action id="FindNext">
+    <keyboard-shortcut first-keystroke="F3" />
+  </action>
+  <action id="GotoLine">
+    <keyboard-shortcut first-keystroke="meta L" />
+    <keyboard-shortcut first-keystroke="meta G" />
+  </action>
+  <action id="Images.Thumbnails.UpFolder" />
+  <action id="RerunFailedTests">
+    <keyboard-shortcut first-keystroke="meta F11" />
+  </action>
+  <action id="SmartTypeCompletion">
+    <keyboard-shortcut first-keystroke="meta SPACE" />
+  </action>
+  <action id="SwitchApply">
+    <keyboard-shortcut first-keystroke="control alt ENTER" />
+  </action>
+  <action id="SwitchDown">
+    <keyboard-shortcut first-keystroke="control alt DOWN" />
+  </action>
+  <action id="SwitchLeft">
+    <keyboard-shortcut first-keystroke="control alt LEFT" />
+  </action>
+  <action id="SwitchRight">
+    <keyboard-shortcut first-keystroke="control alt RIGHT" />
+  </action>
+  <action id="SwitchUp">
+    <keyboard-shortcut first-keystroke="control alt UP" />
+  </action>
+  <action id="ToggleBookmark" />
+</keymap>

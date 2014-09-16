@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="CodeInsightSettings">
+    <option name="HIGHLIGHT_SCOPE" value="true" />
+    <option name="OPTIMIZE_IMPORTS_ON_THE_FLY" value="true" />
+    <option name="ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY" value="true" />
+    <EXCLUDED_PACKAGE NAME="com.sun" />
+    <EXCLUDED_PACKAGE NAME="org.omg" />
+    <EXCLUDED_PACKAGE NAME="sun.rmi" />
+  </component>
+  <component name="DaemonCodeAnalyzerSettings" profile="Default">
+    <option name="NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST" value="false" />
+    <option name="AUTOREPARSE_DELAY" value="300" />
+    <option name="SHOW_ADD_IMPORT_HINTS" value="true" />
+    <option name="NO_AUTO_IMPORT_PATTERN" value="[a-z].?" />
+    <option name="SUPPRESS_WARNINGS" value="true" />
+    <option name="SHOW_METHOD_SEPARATORS" value="false" />
+    <option name="ERROR_STRIPE_MARK_MIN_HEIGHT" value="3" />
+    <option name="SHOW_SMALL_ICONS_IN_GUTTER" value="true" />
+  </component>
+  <component name="JavaCodeFoldingSettings">
+    <option name="collapseLambdas" value="false" />
+    <option name="COLLAPSE_CLOSURES" value="false" />
+  </component>
+</application>
+

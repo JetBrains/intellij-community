@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="UISettings">
+    <option name="FONT_FACE" value="SansSerif" />
+    <option name="HIDE_TOOL_STRIPES" value="false" />
+    <option name="ALLOW_MERGE_BUTTONS" value="false" />
+    <option name="SHOW_MAIN_TOOLBAR" value="true" />
+    <option name="SHOW_NAVIGATION_BAR" value="false" />
+    <option name="MAX_LOOKUP_LIST_HEIGHT" value="5" />
+  </component>
+</application>
+
