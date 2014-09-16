@@ -22,7 +22,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +49,8 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   public ApplicationStoreImpl(final ApplicationImpl application, PathMacroManager pathMacroManager) {
     myApplication = application;
     myStateStorageManager = new StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), ROOT_ELEMENT_NAME, application, application.getPicoContainer()) {
+      private boolean myConfigDirectoryRefreshed;
+
       @Override
       protected StorageData createStorageData(String storageSpec) {
         return new FileBasedStorage.FileStorageData(ROOT_ELEMENT_NAME);
@@ -67,17 +69,34 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
       @Override
       protected String getVersionsFilePath() {
-        String configPath = myConfigPath;
-        if (configPath == null) {
-          configPath = PathManager.getConfigPath();
-        }
-        return configPath + "/options/appComponentVersions.xml";
+        return getConfigPath() + "/options/appComponentVersions.xml";
       }
 
       @Override
       protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
         if (fileSpec.equals(StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + XML_EXTENSION)) return null;
         return super.getMacroSubstitutor(fileSpec);
+      }
+
+      @Override
+      protected void beforeFileBasedStorageCreate() {
+        if (!myConfigDirectoryRefreshed && (application.isUnitTestMode() || application.isDispatchThread())) {
+          try {
+            VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(getConfigPath());
+            if (configDir != null) {
+              VfsUtilCore.visitChildrenRecursively(configDir, new VirtualFileVisitor() {
+                @Override
+                public boolean visitFile(@NotNull VirtualFile file) {
+                  return !"componentVersions".equals(file.getName());
+                }
+              });
+              VfsUtil.markDirtyAndRefresh(false, true, false, configDir);
+            }
+          }
+          finally {
+            myConfigDirectoryRefreshed = true;
+          }
+        }
       }
     };
     myDefaultsStateStorage = new DefaultsStateStorage(null);
@@ -100,6 +119,16 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   public void setConfigPath(@NotNull final String configPath) {
     myStateStorageManager.addMacro(StoragePathMacros.ROOT_CONFIG, configPath);
     myConfigPath = configPath;
+  }
+
+  @NotNull
+  public String getConfigPath() {
+    String configPath = myConfigPath;
+    if (configPath == null) {
+      // unreal case, but we keep backward compatibility
+      configPath = PathManager.getConfigPath();
+    }
+    return configPath;
   }
 
   @Override

@@ -19,9 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -46,8 +44,6 @@ import java.util.List;
 public class FileBasedStorage extends XmlElementStorage {
   private static final Logger LOG = Logger.getInstance(FileBasedStorage.class);
 
-  private static boolean ourConfigDirectoryRefreshed = false;
-
   private final String myFilePath;
   private final File myFile;
   private volatile VirtualFile myCachedVirtualFile;
@@ -62,8 +58,6 @@ public class FileBasedStorage extends XmlElementStorage {
                           @Nullable StreamProvider streamProvider,
                           ComponentVersionProvider componentVersionProvider) {
     super(fileSpec, roamingType, pathMacroManager, parentDisposable, rootElementName, streamProvider, componentVersionProvider);
-
-    refreshConfigDirectoryOnce();
 
     myFilePath = filePath;
     myFile = new File(filePath);
@@ -95,27 +89,6 @@ public class FileBasedStorage extends XmlElementStorage {
           }
         }
       }, false, this);
-    }
-  }
-
-  private static void refreshConfigDirectoryOnce() {
-    Application app = ApplicationManager.getApplication();
-    if (!ourConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
-      try {
-        VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManager.getConfigPath());
-        if (configDir != null) {
-          VfsUtilCore.visitChildrenRecursively(configDir, new VirtualFileVisitor() {
-            @Override
-            public boolean visitFile(@NotNull VirtualFile file) {
-              return !"componentVersions".equals(file.getName());
-            }
-          });
-          VfsUtil.markDirtyAndRefresh(false, true, false, configDir);
-        }
-      }
-      finally {
-        ourConfigDirectoryRefreshed = true;
-      }
     }
   }
 
