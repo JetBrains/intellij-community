@@ -13,35 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.actions;
+package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.integrate.IMerger;
-import org.jetbrains.idea.svn.integrate.MergerFactory;
-import org.jetbrains.idea.svn.integrate.PointMerger;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
-public class ChangeSetMergerFactory implements MergerFactory {
-  private final CommittedChangeList mySelectedList;
-  private final List<Change> mySelectedChanges;
+public class ChangeListsMergerFactory implements MergerFactory {
 
-  public ChangeSetMergerFactory(final CommittedChangeList selectedList, final List<Change> selectedChanges) {
-    mySelectedList = selectedList;
-    mySelectedChanges = new ArrayList<Change>(selectedChanges);
+  @NotNull protected final List<CommittedChangeList> myChangeLists;
+  private final boolean myRecordOnly;
+  private final boolean myInvertRange;
+  private final boolean myGroupSequentialChangeLists;
+
+  public ChangeListsMergerFactory(@NotNull List<CommittedChangeList> changeLists,
+                                  boolean recordOnly,
+                                  boolean invertRange,
+                                  boolean groupSequentialChangeLists) {
+    myChangeLists = ContainerUtil.newArrayList(changeLists);
+    myRecordOnly = recordOnly;
+    myInvertRange = invertRange;
+    myGroupSequentialChangeLists = groupSequentialChangeLists;
   }
 
+  @Override
   public IMerger createMerger(final SvnVcs vcs,
                               final File target,
                               final UpdateEventHandler handler,
                               final SVNURL currentBranchUrl,
                               String branchName) {
-    return new PointMerger(vcs, mySelectedList, target, handler, currentBranchUrl, mySelectedChanges, branchName);
+    return new Merger(vcs, myChangeLists, target, handler, currentBranchUrl, branchName, myRecordOnly, myInvertRange,
+                      myGroupSequentialChangeLists);
   }
 }

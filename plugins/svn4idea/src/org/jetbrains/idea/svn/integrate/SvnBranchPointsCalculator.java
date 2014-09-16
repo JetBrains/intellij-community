@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +32,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.dialogs.FactsCalculator;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 
@@ -42,7 +43,9 @@ import java.io.IOException;
 import java.util.*;
 
 public class SvnBranchPointsCalculator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator");
+
+  private static final Logger LOG = Logger.getInstance(SvnBranchPointsCalculator.class);
+
   private FactsCalculator<KeyData, WrapperInvertor, VcsException> myCalculator;
   private PersistentHolder myPersistentHolder;
   private File myFile;

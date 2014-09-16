@@ -23,6 +23,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -132,5 +133,14 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
 
   public void forceCheckForUpdateAfterRestart() {
     LAST_TIME_CHECKED = 0;
+  }
+
+  public List<String> getPluginHosts() {
+    ArrayList<String> hosts = new ArrayList<String>();
+    final String pluginHosts = System.getProperty("idea.plugin.hosts");
+    if (pluginHosts != null) {
+      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
+    }
+    return hosts;
   }
 }

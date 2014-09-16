@@ -39,17 +39,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.AbstractIntegrateChangesAction;
-import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
-import org.jetbrains.idea.svn.actions.RecordOnlyMergerFactory;
+import org.jetbrains.idea.svn.integrate.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.actions.ShowSvnMapAction;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
-import org.jetbrains.idea.svn.integrate.*;
+import org.jetbrains.idea.svn.integrate.MergerFactory;
+import org.jetbrains.idea.svn.integrate.SelectedChangeListsChecker;
+import org.jetbrains.idea.svn.integrate.SelectedCommittedStuffChecker;
 import org.jetbrains.idea.svn.mergeinfo.ListMergeStatus;
 import org.jetbrains.idea.svn.mergeinfo.MergeInfoHolder;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -591,7 +588,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     @NotNull
     protected MergerFactory createMergerFactory(SelectedChangeListsChecker checker) {
-      return new RecordOnlyMergerFactory(checker.getSelectedLists(), false);
+      return new ChangeListsMergerFactory(checker.getSelectedLists(), true, false, false);
     }
 
     @NotNull
@@ -643,7 +640,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     @NotNull
     protected MergerFactory createMergerFactory(SelectedChangeListsChecker checker) {
-      return new RecordOnlyMergerFactory(checker.getSelectedLists(), true);
+      return new ChangeListsMergerFactory(checker.getSelectedLists(), true, true, false);
     }
 
     @NotNull
@@ -715,25 +712,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     @NotNull
     protected MergerFactory createMergerFactory(final SelectedChangeListsChecker checker) {
-      return new ChangeListsMergerFactory(checker.getSelectedLists()) {
-            @Override
-            public IMerger createMerger(final SvnVcs vcs,
-                                        final File target,
-                                        final UpdateEventHandler handler,
-                                        final SVNURL currentBranchUrl,
-                                        String branchName) {
-              return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName) {
-                @Override
-                protected SVNRevisionRange createRange() {
-                  if (myDirect) {
-                    return super.createRange();
-                  } else {
-                    return new SVNRevisionRange(SVNRevision.create(myLatestProcessed.getNumber()), SVNRevision.create(myLatestProcessed.getNumber() - 1));
-                  }
-                }
-              };
-            }
-          };
+      return new ChangeListsMergerFactory(checker.getSelectedLists(), false, !myDirect, false);
     }
 
     @NotNull

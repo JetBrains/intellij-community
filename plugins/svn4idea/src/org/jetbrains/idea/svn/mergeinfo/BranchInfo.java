@@ -381,22 +381,4 @@ public class BranchInfo {
   public Collection<String> getNotMergedPaths(final long number) {
     return myPartlyMerged.get(number);
   }
-
-  public static class MyMergeCheckerWrapper implements MergeChecker {
-    private final BranchInfo myInfo;
-    private final String myBranchPath;
-
-    public MyMergeCheckerWrapper(String branchPath, BranchInfo info) {
-      myBranchPath = branchPath;
-      myInfo = info;
-    }
-
-    public SvnMergeInfoCache.MergeCheckResult checkList(SvnChangeList list) {
-      return myInfo.checkList(list, myBranchPath);
-    }
-
-    public Collection<String> getNotMergedPaths(long number) {
-      return myInfo.getNotMergedPaths(number);
-    }
-  }
 }

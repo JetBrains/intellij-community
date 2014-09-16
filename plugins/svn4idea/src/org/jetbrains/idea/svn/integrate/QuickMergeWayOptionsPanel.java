@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import org.jetbrains.idea.svn.dialogs.QuickMergeContentsVariants;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

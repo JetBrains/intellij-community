@@ -477,7 +477,8 @@ public class SvnUtil {
     return workingCopyRoot;
   }
 
-  public static File fileFromUrl(final File baseDir, final String baseUrl, final String fullUrl) throws SVNException {
+  @NotNull
+  public static File fileFromUrl(final File baseDir, final String baseUrl, final String fullUrl) {
     assert fullUrl.startsWith(baseUrl);
 
     final String part = fullUrl.substring(baseUrl.length()).replace('/', File.separatorChar).replace('\\', File.separatorChar);
