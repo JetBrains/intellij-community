@@ -44,7 +44,7 @@ import java.util.List;
 
 public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory  {
   @NotNull
-  public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new CheckinHandler() {
       @Override
       public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {

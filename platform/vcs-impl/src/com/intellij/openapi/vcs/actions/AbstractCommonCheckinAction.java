@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -36,7 +37,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   
   private static final Logger LOG = Logger.getInstance(AbstractCommonCheckinAction.class);
   
-  public void actionPerformed(final VcsContext context) {
+  @Override
+  public void actionPerformed(@NotNull final VcsContext context) {
     LOG.debug("actionPerformed. ");
     final Project project = context.getProject();
     if (project == null) {
@@ -55,6 +57,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     final FilePath[] roots = prepareRootsForCommit(getRoots(context), project);
     ChangeListManager.getInstance(project).invokeAfterUpdate(new Runnable() {
+      @Override
       public void run() {
         performCheckIn(context, project, roots);
       }
@@ -62,7 +65,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
                                                              ModalityState.current());
   }
 
-  protected void performCheckIn(VcsContext context, Project project, FilePath[] roots) {
+  protected void performCheckIn(@NotNull VcsContext context, @NotNull Project project, @NotNull FilePath[] roots) {
     LOG.debug("invoking commit dialog after update");
     LocalChangeList initialSelection = getInitiallySelectedChangeList(context, project);
     Change[] changes = context.getSelectedChanges();
@@ -74,7 +77,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     }
   }
 
-  protected FilePath[] prepareRootsForCommit(FilePath[] roots, Project project) {
+  @NotNull
+  protected FilePath[] prepareRootsForCommit(@NotNull FilePath[] roots, @NotNull Project project) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().saveAll();
     }
@@ -127,12 +131,14 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return firstVcs;
   }
 
-  protected abstract String getActionName(VcsContext dataContext);
+  protected abstract String getActionName(@NotNull VcsContext dataContext);
 
-  protected abstract FilePath[] getRoots(VcsContext dataContext);
+  @NotNull
+  protected abstract FilePath[] getRoots(@NotNull VcsContext dataContext);
 
   protected abstract boolean approximatelyHasRoots(final VcsContext dataContext);
 
+  @Override
   protected void update(VcsContext vcsContext, Presentation presentation) {
     Project project = vcsContext.getProject();
     if (project == null) {
@@ -174,6 +180,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return false;
   }*/
 
+  @Override
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;
   }

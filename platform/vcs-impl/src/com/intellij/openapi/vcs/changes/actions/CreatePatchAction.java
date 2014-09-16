@@ -21,13 +21,15 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class CreatePatchAction extends AbstractCommitChangesAction {
-  protected String getActionName(VcsContext dataContext) {
+  @Override
+  protected String getActionName(@NotNull VcsContext dataContext) {
     return VcsBundle.message("create.patch.commit.action.title");
   }
 

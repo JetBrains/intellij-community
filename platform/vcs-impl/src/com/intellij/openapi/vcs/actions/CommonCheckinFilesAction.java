@@ -31,14 +31,14 @@ import java.util.Set;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   @Override
-  protected String getActionName(final VcsContext dataContext) {
+  protected String getActionName(@NotNull VcsContext dataContext) {
     final String checkinActionName = getCheckinActionName(dataContext);
     return modifyCheckinActionName(dataContext, checkinActionName);
   }
 
   private String modifyCheckinActionName(final VcsContext dataContext, String checkinActionName) {
     final FilePath[] roots = getRoots(dataContext);
-    if (roots == null || roots.length == 0) return checkinActionName;
+    if (roots.length == 0) return checkinActionName;
     final FilePath first = roots[0];
     if (roots.length == 1) {
       if (first.isDirectory()) {
@@ -131,8 +131,9 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
     return status != FileStatus.UNKNOWN && status != FileStatus.IGNORED;
   }
 
+  @NotNull
   @Override
-  protected FilePath[] getRoots(final VcsContext context) {
+  protected FilePath[] getRoots(@NotNull final VcsContext context) {
     return context.getSelectedFilePaths();
   }
 

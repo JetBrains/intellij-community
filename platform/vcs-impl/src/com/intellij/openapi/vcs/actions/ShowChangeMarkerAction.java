@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.LineStatusTrackerDrawing;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
@@ -36,26 +37,31 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
 
   public ShowChangeMarkerAction(final Range range, final LineStatusTracker lineStatusTracker, final Editor editor) {
     myChangeMarkerContext = new ChangeMarkerContext() {
+      @Override
       public Range getRange(VcsContext dataContext) {
         return range;
       }
 
+      @Override
       public LineStatusTracker getLineStatusTracker(VcsContext dataContext) {
         return lineStatusTracker;
       }
 
+      @Override
       public Editor getEditor(VcsContext dataContext) {
         return editor;
       }
     };
   }
 
+  @Override
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;
   }
 
   public ShowChangeMarkerAction() {
     myChangeMarkerContext = new ChangeMarkerContext() {
+      @Override
       public Range getRange(VcsContext context) {
         Editor editor = getEditor(context);
         if (editor == null) return null;
@@ -66,6 +72,7 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
         return extractRange(lineStatusTracker, editor.getCaretModel().getLogicalPosition().line, editor);
       }
 
+      @Override
       public LineStatusTracker getLineStatusTracker(VcsContext dataContext) {
         Editor editor = getEditor(dataContext);
         if (editor == null) return null;
@@ -74,6 +81,7 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
         return LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
       }
 
+      @Override
       public Editor getEditor(VcsContext dataContext) {
         return dataContext.getEditor();
       }
@@ -84,6 +92,7 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
     return myChangeMarkerContext.getRange(context) != null;
   }
 
+  @Override
   protected void update(VcsContext context, Presentation presentation) {
     boolean active = isActive(context);
     presentation.setEnabled(active);
@@ -91,7 +100,8 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
   }
 
 
-  protected void actionPerformed(VcsContext context) {
+  @Override
+  protected void actionPerformed(@NotNull VcsContext context) {
     Editor editor = myChangeMarkerContext.getEditor(context);
     LineStatusTracker lineStatusTracker = myChangeMarkerContext.getLineStatusTracker(context);
     Range range = myChangeMarkerContext.getRange(context);

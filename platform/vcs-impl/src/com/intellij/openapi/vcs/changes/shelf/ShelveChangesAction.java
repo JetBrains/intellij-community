@@ -21,13 +21,15 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.actions.AbstractCommitChangesAction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class ShelveChangesAction extends AbstractCommitChangesAction {
-  protected String getActionName(VcsContext dataContext) {
+  @Override
+  protected String getActionName(@NotNull VcsContext dataContext) {
     return VcsBundle.message("shelve.changes.action");
   }
 

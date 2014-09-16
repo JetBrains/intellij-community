@@ -72,7 +72,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return myActionInfo.getActionName(myScopeInfo.getScopeName(dataContext, myActionInfo));
   }
 
-  protected void actionPerformed(final VcsContext context) {
+  protected void actionPerformed(@NotNull final VcsContext context) {
     final Project project = context.getProject();
 
     boolean showUpdateOptions = myActionInfo.showOptions(project);

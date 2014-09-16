@@ -27,10 +27,12 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
+  @Override
   protected void update(VcsContext vcsContext, Presentation presentation) {
     updateDiffAction(presentation, vcsContext, getKey());
   }
@@ -41,6 +43,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     presentation.setVisible(isVisible(vcsContext));
   }
 
+  @Override
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;
   }
@@ -68,7 +71,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
 
     final VirtualFile[] selectedFilePaths = vcsContext.getSelectedFiles();
-    if (selectedFilePaths == null || selectedFilePaths.length != 1) return null;
+    if (selectedFilePaths.length != 1) return null;
 
     final VirtualFile selectedFile = selectedFilePaths[0];
     if (selectedFile.isDirectory()) return null;
@@ -92,7 +95,8 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
   }
 
 
-  protected void actionPerformed(VcsContext vcsContext) {
+  @Override
+  protected void actionPerformed(@NotNull VcsContext vcsContext) {
     final Project project = vcsContext.getProject();
     if (project == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not " + vcsContext.getActionName() + " now")) return;
