@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ChangeList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.ChangeList");
+  private static final Logger LOG = Logger.getInstance(ChangeList.class);
   public static final Comparator<Change> CHANGE_ORDER = new SimpleChange.ChangeOrder(FragmentSide.SIDE1);
 
   private final Project myProject;
@@ -45,7 +45,7 @@ public class ChangeList {
   private ArrayList<Change> myChanges;
   private ArrayList<Change> myAppliedChanges;
 
-  public ChangeList(@NotNull Document base, @NotNull Document version, Project project) {
+  public ChangeList(@NotNull Document base, @NotNull Document version, @Nullable Project project) {
     myDocuments[0] = base;
     myDocuments[1] = version;
     myProject = project;
@@ -78,14 +78,17 @@ public class ChangeList {
     myAppliedChanges = new ArrayList<Change>();
   }
 
-  public Project getProject() { return myProject; }
+  @Nullable
+  public Project getProject() {
+    return myProject;
+  }
 
   @NotNull
   public List<Change> getChanges() {
     return new ArrayList<Change>(myChanges);
   }
 
-  public static ChangeList build(Document base, Document version, Project project) throws FilesTooBigForDiffException {
+  public static ChangeList build(@NotNull Document base, @NotNull Document version, @NotNull Project project) throws FilesTooBigForDiffException {
     ChangeList result = new ChangeList(base, version, project);
     ArrayList<Change> changes = result.buildChanges();
     Collections.sort(changes, CHANGE_ORDER);
@@ -119,6 +122,7 @@ public class ChangeList {
     DiffFragment[] fragments = ComparisonPolicy.DEFAULT.buildDiffFragmentsFromLines(baseLines, versionLines);
     final ArrayList<Change> result = new ArrayList<Change>();
     new DiffFragmentsEnumerator(fragments) {
+      @Override
       protected void process(DiffFragment fragment) {
         if (fragment.isEqual()) return;
         Context context = getContext();
