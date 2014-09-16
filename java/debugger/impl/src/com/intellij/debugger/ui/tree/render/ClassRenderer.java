@@ -259,7 +259,8 @@ public class ClassRenderer extends NodeRendererImpl{
         return ((ArrayReference)value).length() > 0;
       }
       else if(value instanceof ObjectReference) {
-        return ((ObjectReference)value).referenceType().allFields().size() > 0;
+        return true; // if object has no fields, it contains a child-message about that
+        //return ((ObjectReference)value).referenceType().allFields().size() > 0;
       }
     }
     catch (ObjectCollectedException e) {
