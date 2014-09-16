@@ -50,10 +50,11 @@ public class Main {
 
   public static void main(String[] args) {
 
-    System.exit(0);
-
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
+    }
+    if (args.length == 1 && "exit".equals(args[0])) {
+      System.exit(0);
     }
 
     setFlags(args);
