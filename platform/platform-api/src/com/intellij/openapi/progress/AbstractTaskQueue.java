@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import java.util.Queue;
 
 @SomeQueue
 public abstract class AbstractTaskQueue<T> {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.AbstractTaskQueue");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.AbstractTaskQueue");
 
   private final Object myLock;
   private final Queue<T> myQueue;
@@ -66,6 +66,7 @@ public abstract class AbstractTaskQueue<T> {
   }
 
   private class MyWorker implements Runnable {
+    @Override
     public void run() {
       while (true) {
         try {
@@ -77,17 +78,24 @@ public abstract class AbstractTaskQueue<T> {
             // each task is executed only once, once it has been taken from the queue..
             runStuff(stuff);
           }
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
           LOG.info(t);
-        } finally {
-          synchronized (myLock) {
-            if (myQueue.isEmpty()) {
-              myActive = false;
-              return;
-            }
-          }
+        }
+        finally {
+          if (isEmpty()) return;
         }
       }
     }
+  }
+
+  public boolean isEmpty() {
+    synchronized (myLock) {
+      if (myQueue.isEmpty()) {
+        myActive = false;
+        return true;
+      }
+    }
+    return false;
   }
 }
