@@ -49,6 +49,9 @@ public class Main {
   private Main() { }
 
   public static void main(String[] args) {
+
+    System.exit(0);
+
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
     }
@@ -146,9 +149,7 @@ public class Main {
 
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
-        String launcherDir = Restarter.createTempExecutable(launcher).getPath();
-        System.out.println("VistaLauncher " + launcherDir);
-        args.add(launcherDir);
+        args.add(Restarter.createTempExecutable(launcher).getPath());
       }
 
       //noinspection SpellCheckingInspection
