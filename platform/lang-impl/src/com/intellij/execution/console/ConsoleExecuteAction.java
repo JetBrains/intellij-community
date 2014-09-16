@@ -140,7 +140,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     private boolean myAddToHistory = true;
     final boolean myPreserveMarkup;
 
-    boolean useProcessStdIn;
+    boolean myUseProcessStdIn;
 
     public ConsoleExecuteActionHandler(boolean preserveMarkup) {
       myCommandHistoryModel = new ConsoleHistoryModel();
@@ -163,14 +163,14 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     }
 
     protected void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
-      if (!useProcessStdIn) {
+      if (!myUseProcessStdIn) {
         beforeExecution(console);
       }
 
-      String text = console.prepareExecuteAction(myAddToHistory && !useProcessStdIn, myPreserveMarkup, true);
+      String text = console.prepareExecuteAction(myAddToHistory && !myUseProcessStdIn, myPreserveMarkup, true);
       ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(console.getCurrentEditor().getDocument()));
 
-      if (useProcessStdIn) {
+      if (myUseProcessStdIn) {
         assert consoleView != null;
         consoleView.print(text, ConsoleViewContentType.USER_INPUT);
         consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
