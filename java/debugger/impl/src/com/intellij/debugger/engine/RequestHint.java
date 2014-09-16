@@ -149,6 +149,17 @@ public class RequestHint {
 
   public int getNextStepDepth(final SuspendContextImpl context) {
     try {
+      final StackFrameProxyImpl frameProxy = context.getFrameProxy();
+
+      // smart step feature stop check
+      if (myMethodFilter != null &&
+          frameProxy != null &&
+          !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
+          myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location())) {
+        myTargetMethodMatched = true;
+        return STOP;
+      }
+
       if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {
         final Integer resultDepth = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
           public Integer compute() {
@@ -192,9 +203,8 @@ public class RequestHint {
 
       if (myDepth == StepRequest.STEP_INTO) {
         final DebuggerSettings settings = DebuggerSettings.getInstance();
-        final StackFrameProxyImpl frameProxy = context.getFrameProxy();
 
-        if (settings.SKIP_SYNTHETIC_METHODS && frameProxy != null) {
+        if ((settings.SKIP_SYNTHETIC_METHODS || myMethodFilter != null)&& frameProxy != null) {
           final Location location = frameProxy.location();
           final Method method = location.method();
           if (method != null) {
@@ -240,16 +250,7 @@ public class RequestHint {
         }
         // smart step feature
         if (myMethodFilter != null) {
-          if (myMethodFilter instanceof BreakpointStepMethodFilter) {
-            // continue stepping if stop criterion is implemented as breakpoint request
-            return StepRequest.STEP_OUT;
-          }
-          if (frameProxy != null) {
-            if (!myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location())) {
-              return StepRequest.STEP_OUT;
-            }
-            myTargetMethodMatched = true;
-          }
+          return StepRequest.STEP_OUT;
         }
       }
     }
