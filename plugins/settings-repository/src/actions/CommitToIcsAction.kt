@@ -1,40 +1,5 @@
 package org.jetbrains.plugins.settingsRepository.actions;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.actions.CommonCheckinFilesAction;
-import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.settingsRepository.CommitToIcsDialog;
-import org.jetbrains.plugins.settingsRepository.IcsBundle;
-import org.jetbrains.plugins.settingsRepository.IcsManager;
-import org.jetbrains.plugins.settingsRepository.ProjectId;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
 class CommitToIcsAction extends CommonCheckinFilesAction {
   static class IcsBeforeCommitDialogHandler extends CheckinHandlerFactory {
     private static final BeforeCheckinDialogHandler BEFORE_CHECKIN_DIALOG_HANDLER = new BeforeCheckinDialogHandler() {
