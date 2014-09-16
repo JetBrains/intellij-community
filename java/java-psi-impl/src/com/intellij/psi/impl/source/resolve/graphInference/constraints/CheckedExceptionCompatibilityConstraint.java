@@ -135,7 +135,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
           for (PsiType type : method.getThrowsList().getReferencedTypes()) {
             type = psiSubstitutor.substitute(type);
             if (type instanceof PsiClassType && !ExceptionUtil.isUncheckedException((PsiClassType)type)) {
-              thrownTypes.add(type);
+              thrownTypes.add(substitutor.substitute(type));
             }
           }
         }
