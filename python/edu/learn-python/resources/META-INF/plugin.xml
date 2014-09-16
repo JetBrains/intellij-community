@@ -73,7 +73,6 @@
     <fileEditorProvider implementation="com.jetbrains.python.edu.editor.StudyFileEditorProvider"/>
     <directoryProjectGenerator implementation="com.jetbrains.python.edu.StudyDirectoryProjectGenerator"/>
     <treeStructureProvider implementation="com.jetbrains.python.edu.projectView.StudyTreeStructureProvider"/>
-    <highlightErrorFilter implementation="com.jetbrains.python.edu.StudyHighlightErrorFilter"/>
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
         serviceImplementation="com.jetbrains.python.edu.StudyInstructionPainter" overrides="true"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>

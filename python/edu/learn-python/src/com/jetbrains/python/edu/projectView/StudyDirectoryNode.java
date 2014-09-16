@@ -165,4 +165,9 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
     return super.expandOnDoubleClick();
   }
+
+  @Override
+  protected boolean hasProblemFileBeneath() {
+    return false;
+  }
 }
