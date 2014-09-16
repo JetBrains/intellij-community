@@ -1,11 +1,11 @@
 package org.editorconfig.configmanagement;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.editorconfig.Utils;
@@ -40,7 +40,11 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
     newlineMap = Collections.unmodifiableMap(map);
   }
 
-  private static final Logger LOG = Logger.getInstance("#org.editorconfig.configmanagement.EditorSettingsManager");
+  private final Project myProject;
+
+  public EditorSettingsManager(Project project) {
+    myProject = project;
+  }
 
   @Override
   public void beforeDocumentSaving(@NotNull Document document) {
@@ -50,7 +54,7 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
     applySettings(file);
   }
 
-  private static void applySettings(VirtualFile file) {
+  private void applySettings(VirtualFile file) {
     if (file == null || !file.isInLocalFileSystem()) return;
     // Get editorconfig settings
     final String filePath = file.getCanonicalPath();
@@ -66,19 +70,19 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
                                insertFinalNewlineKey, insertFinalNewline, newlineMap);
   }
 
-  private static <T> void applyConfigValueToUserData(VirtualFile file, Key<T> userDataKey, String editorConfigKey,
-                                                     String configValue, Map<String, T> configMap) {
+  private <T> void applyConfigValueToUserData(VirtualFile file, Key<T> userDataKey, String editorConfigKey,
+                                              String configValue, Map<String, T> configMap) {
     if (configValue.isEmpty()) {
       file.putUserData(userDataKey, null);
     }
     else {
       final T data = configMap.get(configValue);
       if (data == null) {
-        LOG.warn(Utils.invalidConfigMessage(configValue, editorConfigKey, file.getCanonicalPath()));
+        Utils.invalidConfigMessage(myProject, configValue, editorConfigKey, file.getCanonicalPath());
       }
       else {
         file.putUserData(userDataKey, data);
-        LOG.debug("Applied " + editorConfigKey + " settings for: " + file.getCanonicalPath());
+        Utils.appliedConfigMessage(myProject, configValue, editorConfigKey, file.getCanonicalPath());
       }
     }
   }

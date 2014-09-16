@@ -1,6 +1,8 @@
 package org.editorconfig;
 
+import com.intellij.openapi.project.Project;
 import org.editorconfig.core.EditorConfig.OutPair;
+import org.editorconfig.plugincomponents.EditorConfigNotifier;
 
 import java.util.List;
 
@@ -14,11 +16,11 @@ public class Utils {
     return "";
   }
 
-  public static String invalidConfigMessage(String configValue, String configKey, String filePath) {
-    return "\"" + configValue + "\" is not a valid value for " + configKey + " for file " + filePath;
+  public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {
+    EditorConfigNotifier.getInstance().error(project, configValue, "\"" + configValue + "\" is not a valid value for " + configKey + " for file " + filePath);
   }
 
-  public static String appliedConfigMessage(String configValue, String configKey, String filePath) {
-    return "Applied \"" + configValue + "\" as " + configKey + " for file " + filePath;
+  public static void appliedConfigMessage(Project project, String configValue, String configKey, String filePath) {
+    EditorConfigNotifier.getInstance().info(project, "Applied .editorconfig settings");
   }
 }

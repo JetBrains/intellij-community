@@ -1,6 +1,5 @@
 package org.editorconfig.configmanagement;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
@@ -22,8 +21,7 @@ public class EncodingManager extends FileDocumentManagerAdapter {
   // Handles the following EditorConfig settings:
   private static final String charsetKey = "charset";
 
-  private final Logger LOG = Logger.getInstance("#org.editorconfig.codestylesettings.EncodingManager");
-  private final Project project;
+  private final Project myProject;
 
   private static final Map<String, Charset> encodingMap;
 
@@ -39,7 +37,7 @@ public class EncodingManager extends FileDocumentManagerAdapter {
   private boolean isApplyingSettings;
 
   public EncodingManager(Project project) {
-    this.project = project;
+    this.myProject = project;
     isApplyingSettings = false;
   }
 
@@ -57,15 +55,15 @@ public class EncodingManager extends FileDocumentManagerAdapter {
     isApplyingSettings = true;
     final String filePath = file.getCanonicalPath();
     final List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
-    final EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
+    final EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(myProject);
     final String charset = Utils.configValueForKey(outPairs, charsetKey);
     if (!charset.isEmpty()) {
       if (encodingMap.containsKey(charset)) {
         encodingProjectManager.setEncoding(file, encodingMap.get(charset));
-        LOG.debug(Utils.appliedConfigMessage(charset, charsetKey, filePath));
+        Utils.appliedConfigMessage(myProject, charset, charsetKey, filePath);
       }
       else {
-        LOG.warn(Utils.invalidConfigMessage(charset, charsetKey, filePath));
+        Utils.invalidConfigMessage(myProject, charset, charsetKey, filePath);
       }
     }
     isApplyingSettings = false;
