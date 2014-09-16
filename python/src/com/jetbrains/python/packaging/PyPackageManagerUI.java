@@ -181,7 +181,7 @@ public class PyPackageManagerUI {
         notificationRef.set(new Notification(PACKAGING_GROUP_ID, getSuccessTitle(), getSuccessDescription(),
                                              NotificationType.INFORMATION));
       }
-      else {
+      else if (!isCancelled(exceptions)) {
         final String firstLine = getTitle() + ": error occurred.";
         final String description = createDescription(exceptions, firstLine);
         notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(),
@@ -210,6 +210,15 @@ public class PyPackageManagerUI {
         }
       });
     }
+
+    private static boolean isCancelled(@NotNull List<PyExternalProcessException> exceptions) {
+      for (PyExternalProcessException e : exceptions) {
+        if (e instanceof PyProcessCancelledException) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 
   private static class InstallTask extends PackagingTask {
@@ -237,9 +246,19 @@ public class PyPackageManagerUI {
       for (int i = 0; i < size; i++) {
         final PyRequirement requirement = myRequirements.get(i);
         indicator.setText(String.format("Installing package '%s'...", requirement));
-        indicator.setFraction((double)i / size);
+        if (i == 0) {
+          indicator.setIndeterminate(true);
+        }
+        else {
+          indicator.setIndeterminate(false);
+          indicator.setFraction((double)i / size);
+        }
         try {
           manager.install(Arrays.asList(requirement), myExtraArgs);
+        }
+        catch (PyProcessCancelledException e) {
+          exceptions.add(e);
+          break;
         }
         catch (PyExternalProcessException e) {
           exceptions.add(e);
@@ -317,6 +336,7 @@ public class PyPackageManagerUI {
     @Override
     protected List<PyExternalProcessException> runTask(@NotNull ProgressIndicator indicator) {
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
+      indicator.setIndeterminate(true);
       try {
         manager.uninstall(myPackages);
         return Arrays.asList();

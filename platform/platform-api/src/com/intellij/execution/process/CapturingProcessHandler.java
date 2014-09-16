@@ -115,6 +115,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
         if (!isProcessTerminating() && !isProcessTerminated()) {
           destroyProcess();
         }
+        myOutput.setCancelled();
         break;
       }
     }
