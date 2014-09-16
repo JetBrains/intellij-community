@@ -32,14 +32,12 @@ import java.util.List;
  */
 public class ExternalSystemTaskManagerWrapper<S extends ExternalSystemExecutionSettings>
   extends AbstractRemoteExternalSystemServiceWrapper<S, RemoteExternalSystemTaskManager<S>>
-  implements RemoteExternalSystemTaskManager<S>
-{
+  implements RemoteExternalSystemTaskManager<S> {
 
   @NotNull private final RemoteExternalSystemProgressNotificationManager myProgressManager;
 
   public ExternalSystemTaskManagerWrapper(@NotNull RemoteExternalSystemTaskManager<S> delegate,
-                                          @NotNull RemoteExternalSystemProgressNotificationManager progressManager)
-  {
+                                          @NotNull RemoteExternalSystemProgressNotificationManager progressManager) {
     super(delegate);
     myProgressManager = progressManager;
   }
@@ -51,8 +49,7 @@ public class ExternalSystemTaskManagerWrapper<S extends ExternalSystemExecutionS
                            @Nullable S settings,
                            @NotNull List<String> vmOptions,
                            @NotNull List<String> scriptParameters,
-                           @Nullable String debuggerSetup) throws RemoteException, ExternalSystemException
-  {
+                           @Nullable String debuggerSetup) throws RemoteException, ExternalSystemException {
     myProgressManager.onQueued(id);
     try {
       getDelegate().executeTasks(id, taskNames, projectPath, settings, vmOptions, scriptParameters, debuggerSetup);
@@ -71,15 +68,8 @@ public class ExternalSystemTaskManagerWrapper<S extends ExternalSystemExecutionS
   }
 
   @Override
-  public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException, ExternalSystemException
-  {
-    myProgressManager.onQueued(id);
-    try {
-      return getDelegate().cancelTask(id);
-    }
-    finally {
-      myProgressManager.onEnd(id);
-    }
+  public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException, ExternalSystemException {
+    return getDelegate().cancelTask(id);
   }
 }
 

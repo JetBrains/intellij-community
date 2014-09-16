@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.tooling.UnsupportedVersionException;
@@ -50,6 +51,10 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     }
 
     LOG.info(String.format("Failed to import Gradle project at '%1$s'", projectPath), error);
+
+    if(error instanceof ProcessCanceledException) {
+      return new ExternalSystemException("Project import was cancelled");
+    }
 
     Pair<Throwable, String> rootCauseAndLocation = getRootCauseAndLocation(error);
 
