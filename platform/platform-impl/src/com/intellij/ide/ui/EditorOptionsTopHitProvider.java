@@ -16,21 +16,28 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
-  private static final Collection<BooleanOptionDescription> ourOptions = createOptions();
+  private static final Collection<BooleanOptionDescription> ourOptions = Collections.unmodifiableCollection(Arrays.asList(
+    option("Mouse: " + messageApp("checkbox.honor.camelhumps.words.settings.on.double.click"), "IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS"),
+    option("Mouse: " + messageApp(SystemInfo.isMac
+                                  ? "checkbox.enable.ctrl.mousewheel.changes.font.size.macos"
+                                  : "checkbox.enable.ctrl.mousewheel.changes.font.size"), "IS_WHEEL_FONTCHANGE_ENABLED"),
+    option("Mouse: " + messageApp("checkbox.enable.drag.n.drop.functionality.in.editor"), "IS_DND_ENABLED"),
+    option("Virtual Space: " + messageApp("checkbox.show.all.softwraps"), "IS_ALL_SOFTWRAPS_SHOWN"),
+    option("Virtual Space: " + messageApp("checkbox.allow.placement.of.caret.after.end.of.line"), "IS_VIRTUAL_SPACE"),
+    option("Virtual Space: " + messageApp("checkbox.allow.placement.of.caret.inside.tabs"), "IS_CARET_INSIDE_TABS"),
+    option("Virtual Space: " + messageApp("checkbox.show.virtual.space.at.file.bottom"), "ADDITIONAL_PAGE_AT_BOTTOM")));
 
   @NotNull
   @Override
@@ -43,40 +50,7 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     return "editor";
   }
 
-  private static Collection<BooleanOptionDescription> createOptions() {
-    final List<BooleanOptionDescription> options = new ArrayList<BooleanOptionDescription>();
-    options.add(editorMouse("IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS", "checkbox.honor.camelhumps.words.settings.on.double.click"));
-    options.add(editorMouse("IS_WHEEL_FONTCHANGE_ENABLED", SystemInfo.isMac
-                                                           ? "checkbox.enable.ctrl.mousewheel.changes.font.size.macos"
-                                                           : "checkbox.enable.ctrl.mousewheel.changes.font.size"));
-    options.add(editorMouse("IS_DND_ENABLED", "checkbox.enable.drag.n.drop.functionality.in.editor"));
-
-    options.add(editorVirtualSpace("IS_ALL_SOFTWRAPS_SHOWN", "checkbox.show.all.softwraps"));
-    options.add(editorVirtualSpace("IS_VIRTUAL_SPACE", "checkbox.allow.placement.of.caret.after.end.of.line"));
-    options.add(editorVirtualSpace("IS_CARET_INSIDE_TABS", "checkbox.allow.placement.of.caret.inside.tabs"));
-    options.add(editorVirtualSpace("ADDITIONAL_PAGE_AT_BOTTOM", "checkbox.show.virtual.space.at.file.bottom"));
-
-    return options;
-  }
-
-  static EditorOptionDescription editor(String fieldName, String group, String property, String configurableId) {
-    String name = "";
-    if (!StringUtil.isEmpty(group)) {
-      name += group + ": ";
-    }
-    name += StringUtil.stripHtml(ApplicationBundle.message(property), false);
-    return new EditorOptionDescription(fieldName, name, configurableId);
-  }
-
-  static EditorOptionDescription editorMouse(String fieldName, String property) {
-    return editorBehavior(fieldName, "Mouse", property);
-  }
-
-  static EditorOptionDescription editorVirtualSpace(String fieldName, String property) {
-    return editorBehavior(fieldName, "Virtual Space", property);
-  }
-
-  static EditorOptionDescription editorBehavior(String fieldName, String group, String property) {
-    return editor(fieldName, group, property, "Editor.Behavior");
+  static BooleanOptionDescription option(String option, String field) {
+    return new EditorOptionDescription(field, option, "preferences.editor");
   }
 }

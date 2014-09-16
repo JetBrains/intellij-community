@@ -15,8 +15,11 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -56,4 +59,16 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
   }
 
   public abstract String getId();
+
+  static String messageApp(String property) {
+    return StringUtil.stripHtml(ApplicationBundle.message(property), false);
+  }
+
+  static String messageIde(String property) {
+    return StringUtil.stripHtml(IdeBundle.message(property), false);
+  }
+
+  static String messageKeyMap(String property) {
+    return StringUtil.stripHtml(KeyMapBundle.message(property), false);
+  }
 }
