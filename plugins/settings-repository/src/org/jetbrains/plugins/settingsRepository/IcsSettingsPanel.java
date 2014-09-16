@@ -43,7 +43,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     for (int i = 0, n = syncTypes.length; i < n; i++) {
       final SyncType syncType = syncTypes[i];
       syncActions[i] = new DialogWrapperAction(IcsBundle.OBJECT$.message(
-        "action." + (syncType == SyncType.MERGE ? "Merge" : (syncType == SyncType.RESET_TO_THEIRS ? "ResetToTheirs" : "ResetToYours")) + "Settings.text")) {
+        "action." + (syncType == SyncType.MERGE ? "Merge" : (syncType == SyncType.RESET_TO_THEIRS ? "ResetToTheirs" : "ResetToMy")) + "Settings.text")) {
         @Override
         protected void doAction(ActionEvent event) {
           if (!saveRemoteRepositoryUrl()) {

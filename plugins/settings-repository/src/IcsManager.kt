@@ -70,9 +70,8 @@ private fun updateStoragesFromStreamProvider(appStorageManager: StateStorageMana
     val stateStorage = appStorageManager.getFileStateStorage(storageFileName)
     if (stateStorage is FileBasedStorage) {
       try {
-        val fileBasedStorage = stateStorage as FileBasedStorage
-        fileBasedStorage.resetProviderCache()
-        fileBasedStorage.updateFileExternallyFromStreamProviders()
+        stateStorage.resetProviderCache()
+        stateStorage.updateFileExternallyFromStreamProviders()
       }
       catch (e: Throwable) {
         LOG.error(e)
@@ -100,7 +99,6 @@ public class IcsManager : ApplicationLoadListener {
         catch (e: Exception) {
           LOG.error(e)
         }
-
       }
       return FileCredentialsStore(File(getPluginSystemDir(), ".git_auth"))
     }
@@ -266,10 +264,10 @@ public class IcsManager : ApplicationLoadListener {
 
     (application as ApplicationImpl).getStateStore().getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
 
-    application.getMessageBus().connect().subscribe<ProjectLifecycleListener>(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
+    application.getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
       override fun beforeProjectLoaded(project: Project) {
         if (!project.isDefault()) {
-          getInstance().registerProjectLevelProviders(project)
+          registerProjectLevelProviders(project)
         }
       }
     })
