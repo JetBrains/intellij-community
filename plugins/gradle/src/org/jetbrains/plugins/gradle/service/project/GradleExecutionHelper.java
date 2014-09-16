@@ -27,9 +27,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import org.gradle.StartParameter;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
+import org.gradle.tooling.internal.consumer.DefaultExecutorServiceFactory;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -323,7 +323,7 @@ public class GradleExecutionHelper {
             File propertiesFile = new File(settings.getWrapperPropertyFile());
             if (propertiesFile.exists()) {
               Distribution distribution =
-                new DistributionFactoryExt(StartParameter.DEFAULT_GRADLE_USER_HOME).getWrappedDistribution(propertiesFile);
+                new DistributionFactoryExt(new DefaultExecutorServiceFactory()).getWrappedDistribution(propertiesFile);
               try {
                 setField(connector, "distribution", distribution);
               }
