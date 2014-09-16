@@ -6441,7 +6441,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "AssignmentToForLoopParameter"})
     private void validateSizes() {
-      if (!myIsDirty || myLinePaintersWidth < myMaxWidth) return;
+      if (!myIsDirty && !(myLinePaintersWidth > myMaxWidth)) return;
 
       synchronized (this) {
         if (!myIsDirty) return;
