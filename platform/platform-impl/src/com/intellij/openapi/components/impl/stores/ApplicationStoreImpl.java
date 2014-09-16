@@ -121,6 +121,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
     myConfigPath = configPath;
   }
 
+  @Override
   @NotNull
   public String getConfigPath() {
     String configPath = myConfigPath;
