@@ -1,0 +1,37 @@
+<idea-plugin version="2">
+  <name>Settings Repository</name>
+  <id>org.jetbrains.plugins.settingsRepository</id>
+  <description>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers</description>
+  <version>2.0</version>
+  <idea-version since-build="138.2163"/>
+  <!--<vendor>JetBrains</vendor>-->
+
+  <!-- otherwise plugin will be not loaded -->
+  <depends>com.intellij.modules.xml</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <ApplicationLoadListener implementation="org.jetbrains.plugins.settingsRepository.IcsManager"/>
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <projectService serviceInterface="org.jetbrains.plugins.settingsRepository.ProjectId"
+                    serviceImplementation="org.jetbrains.plugins.settingsRepository.ProjectId"/>
+    <checkinHandlerFactory implementation="org.jetbrains.plugins.settingsRepository.actions.CommitToIcsAction$IcsBeforeCommitDialogHandler" order="first"/>
+  </extensions>
+
+  <actions>
+    <group id="SyncSettings" popup="true" compact="true">
+      <action id="MergeSettings" class="org.jetbrains.plugins.settingsRepository.actions.MergeAction"/>
+      <action id="ResetToTheirsSettings" class="org.jetbrains.plugins.settingsRepository.actions.ResetToTheirsAction"/>
+      <action id="ResetToMySettings" class="org.jetbrains.plugins.settingsRepository.actions.ResetToMyAction"/>
+
+      <add-to-group group-id="VcsGroups" anchor="last"/>
+    </group>
+    <action id="ConfigureIcs" class="org.jetbrains.plugins.settingsRepository.actions.ConfigureIcsAction">
+      <add-to-group group-id="ExportImportGroup"/>
+    </action>
+    <action id="CommitToIcs" class="org.jetbrains.plugins.settingsRepository.actions.CommitToIcsAction">
+      <add-to-group group-id="ChangesViewPopupMenu" relative-to-action="ChangesView.Shelve" anchor="after"/>
+    </action>
+  </actions>
+
+  <resource-bundle>messages.IcsBundle</resource-bundle>
+</idea-plugin>
