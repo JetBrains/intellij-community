@@ -25,6 +25,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
@@ -50,7 +51,8 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       fail("Please restore ProgressIndicatorBase.checkCanceled() check!");
     }
     catch(ProcessCanceledException ex) {
-      assertTrue("Should have no stackframe", ApplicationManager.getApplication().isInternal() ? ex.getStackTrace().length != 0 : ex.getStackTrace().length == 0);
+      boolean isInternal = SystemProperties.getBooleanProperty("idea.is.internal", false);
+      assertTrue("Should have no stackframe", isInternal ? ex.getStackTrace().length != 0 : ex.getStackTrace().length == 0);
     }
   }
 
