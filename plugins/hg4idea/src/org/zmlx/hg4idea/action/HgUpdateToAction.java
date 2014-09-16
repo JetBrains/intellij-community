@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public class HgUpdateToAction extends HgAbstractGlobalSingleRepoAction {
     dialog.show();
     if (dialog.isOK()) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      final String updateToValue = dialog.getTargetValue();
+      final String updateToValue = StringUtil.escapeBackSlashes(dialog.getTargetValue());
       boolean clean = dialog.isRemoveLocalChanges();
       String title = HgVcsMessages.message("hg4idea.progress.updatingTo", updateToValue);
       runUpdateToInBackground(project, title, dialog.getRepository().getRoot(), updateToValue, clean);

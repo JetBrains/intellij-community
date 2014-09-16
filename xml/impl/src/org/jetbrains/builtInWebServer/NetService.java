@@ -119,7 +119,7 @@ public abstract class NetService implements Disposable {
   }
 
   @Nullable
-  protected abstract OSProcessHandler createProcessHandler(Project project, int port) throws ExecutionException;
+  protected abstract OSProcessHandler createProcessHandler(@NotNull Project project, int port) throws ExecutionException;
 
   protected void connectToProcess(@NotNull AsyncResult<OSProcessHandler> asyncResult, int port, @NotNull OSProcessHandler processHandler, @NotNull Consumer<String> errorOutputConsumer) {
     asyncResult.setDone(processHandler);
