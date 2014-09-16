@@ -26,15 +26,12 @@ import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -74,14 +71,8 @@ public abstract class BaseMergeTask extends TaskDescriptor {
                                      @NotNull final List<CommittedChangeList> lists,
                                      @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
                                      @NotNull String title) {
-    MergerFactory factory = new ChangeListsMergerFactory(lists) {
-      @Override
-      public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
-        return new Merger(vcs, lists, target, handler, currentBranchUrl, branchName, false, false, true);
-      }
-    };
     context.next(new LocalChangesPromptTask(myMergeContext, myInteraction, false, lists, copyPoint),
-                 new MergeTask(myMergeContext, myInteraction, factory, title));
+                 new MergeTask(myMergeContext, myInteraction, new ChangeListsMergerFactory(lists, false, false, true), title));
   }
 
   @Nullable
