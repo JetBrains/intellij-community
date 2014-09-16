@@ -49,12 +49,7 @@
                      groupKey="name.json.inspection.group" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
 
-
-
-    <!-- Imported from appcode-json -->
-    <lang.elementManipulator forClass="com.intellij.json.psi.JsonLiteral"
-                             implementationClass="com.intellij.json.psi.JsonLiteralManipulator"/>
-
-
+    <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
+                             implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
   </extensions>
 </idea-plugin>

@@ -3,6 +3,7 @@ package com.intellij.json.psi.impl;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
@@ -13,10 +14,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mikhail Golubev
  */
-public class JsonNamePropertyReference implements PsiReference {
+public class JsonPropertyNameReference implements PsiReference {
   private final JsonProperty myProperty;
 
-  public JsonNamePropertyReference(@NotNull JsonProperty property) {
+  public JsonPropertyNameReference(@NotNull JsonProperty property) {
     myProperty = property;
   }
 
@@ -28,11 +29,8 @@ public class JsonNamePropertyReference implements PsiReference {
   @Override
   public TextRange getRangeInElement() {
     final JsonValue nameElement = myProperty.getNameElement();
-    final String nameText = nameElement.getText();
-    final int startOffset = nameText.startsWith("\"") || nameText.startsWith("'")? 1 : 0;
-    final int endOffset = nameText.length() > 1 && (nameText.endsWith("\"") || nameText.endsWith("'")) ? -1 : 0;
-    return new TextRange(nameElement.getStartOffsetInParent() + startOffset,
-                         nameElement.getStartOffsetInParent() + nameElement.getTextLength() + endOffset);
+    // Either value of string with quotes stripped or element's text as is
+    return ElementManipulators.getValueTextRange(nameElement);
   }
 
   @Nullable
@@ -62,6 +60,7 @@ public class JsonNamePropertyReference implements PsiReference {
     if (!(element instanceof JsonProperty)) {
       return false;
     }
+    // May reference to the property with the same name for compatibility with JavaScript JSON support
     final JsonProperty otherProperty = (JsonProperty)element;
     final PsiElement selfResolve = resolve();
     return otherProperty.getName().equals(getCanonicalText()) && selfResolve != otherProperty;
