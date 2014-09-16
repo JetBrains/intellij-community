@@ -134,3 +134,5 @@ public fun Repository.computeIndexDiff(): IndexDiff {
     workingTreeIterator.reset()
   }
 }
+
+fun ObjectReader.getCachedBytes(dirCacheEntry: DirCacheEntry) = open(dirCacheEntry.getObjectId(), Constants.OBJ_BLOB).getCachedBytes()
