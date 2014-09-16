@@ -8,6 +8,7 @@
       <action id="EditorChooseLookupItemDot" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$ChooseWithDot"/>
 
       <action id="ExpandLiveTemplateByTab" class="com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateByTabAction" use-shortcut-of="EditorTab"/>
+      <action id="ExpandLiveTemplateCustom" class="com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateCustomAction"/>
 
       <action id="NextTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.NextVariableAction"/>
       <action id="PreviousTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.PreviousVariableAction"/>

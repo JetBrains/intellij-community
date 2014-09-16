@@ -66,6 +66,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -955,13 +956,18 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   public void dispose() {
   }
 
+  @Nullable
+  public Shortcut[] getCurrentShortcuts(String actionId) {
+    return mySelectedKeymap == null ? null : mySelectedKeymap.getShortcuts(actionId);
+  }
+
   private void editSelection(InputEvent e) {
     final String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) return;
 
     DefaultActionGroup group = new DefaultActionGroup();
 
-    final Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
+    final Shortcut[] shortcuts = getCurrentShortcuts(actionId);
     final Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
 
     final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getForActionId(actionId);

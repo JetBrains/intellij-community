@@ -62,7 +62,9 @@ abstract public class LiveTemplateLookupElement extends LookupElement {
         if (shortcut == TemplateSettings.DEFAULT_CHAR) {
           shortcut = TemplateSettings.getInstance().getDefaultShortcutChar();
         }
-        presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcut) + "] ");
+        if (shortcut != TemplateSettings.CUSTOM_CHAR) {
+          presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcut) + "] ");
+        }
       }
       if (StringUtil.isNotEmpty(myDescription)) {
         presentation.setTailText(" (" + myDescription + ")", true);
