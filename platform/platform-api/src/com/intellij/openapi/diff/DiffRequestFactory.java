@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,38 +34,37 @@ public abstract class DiffRequestFactory {
    * Creates a request for a merge operation. To execute the request, obtain the diff tool instance by calling
    * {@link com.intellij.openapi.diff.DiffManager#getDiffTool()} and then call {@link DiffTool#show(DiffRequest)}.
    *
-   *
-   * @param leftText First of the changed versions of the content (to be displayed in the left pane).
-   * @param rightText Second of the changed versions of the content (to be displayed in the right pane).
-   * @param originalContent The version of the content before changes.
-   * @param file The file which is being merged.
-   * @param project The project in the context of which the operation is executed.
-   * @param okButtonPresentation Specifies the text of the OK/Apply button in the dialog and possibly an additional action which is
+   * @param leftText                 First of the changed versions of the content (to be displayed in the left pane).
+   * @param rightText                Second of the changed versions of the content (to be displayed in the right pane).
+   * @param originalContent          The version of the content before changes.
+   * @param file                     The file which is being merged.
+   * @param project                  The project in the context of which the operation is executed.
+   * @param okButtonPresentation     Specifies the text of the OK/Apply button in the dialog and possibly an additional action which is
    *                                 executed when the button is pressed.
    * @param cancelButtonPresentation Specifies the text of the Cancel button in the dialog and possibly an additional action which is
    *                                 executed when the button is pressed.
    * @return The merge operation request.
    */
-  public abstract MergeRequest createMergeRequest(String leftText,
-                                                  String rightText,
-                                                  String originalContent,
+  public abstract MergeRequest createMergeRequest(@NotNull String leftText,
+                                                  @NotNull String rightText,
+                                                  @NotNull String originalContent,
                                                   @NotNull VirtualFile file,
-                                                  Project project,
+                                                  @Nullable Project project,
                                                   @Nullable ActionButtonPresentation okButtonPresentation,
                                                   @Nullable ActionButtonPresentation cancelButtonPresentation);
 
-  public abstract MergeRequest create3WayDiffRequest(String leftText,
-                                                     String rightText,
-                                                     String originalContent,
-                                                     Project project,
+  public abstract MergeRequest create3WayDiffRequest(@NotNull String leftText,
+                                                     @NotNull String rightText,
+                                                     @NotNull String originalContent,
+                                                     @Nullable Project project,
                                                      @Nullable ActionButtonPresentation okButtonPresentation,
                                                      @Nullable ActionButtonPresentation cancelButtonPresentation);
 
-  public abstract MergeRequest create3WayDiffRequest(String leftText,
-                                                     String rightText,
-                                                     String originalContent,
+  public abstract MergeRequest create3WayDiffRequest(@NotNull String leftText,
+                                                     @NotNull String rightText,
+                                                     @NotNull String originalContent,
                                                      @Nullable FileType type,
-                                                     Project project,
+                                                     @Nullable Project project,
                                                      @Nullable ActionButtonPresentation okButtonPresentation,
                                                      @Nullable ActionButtonPresentation cancelButtonPresentation);
 }
