@@ -25,15 +25,15 @@ import com.intellij.util.Consumer;
  * @author Konstantin Bulenkov
  */
 public class UISimpleSettingsProvider implements SearchTopHitProvider {
-  private static OptionDescription CYCLING_SCROLLING = new UISettingsOptionDescription("CYCLING_SCROLLING", "Cyclic scrolling", "appearance");
-  private static OptionDescription MEMORY_INDICATOR = new UISettingsOptionDescription("SHOW_MEMORY_INDICATOR", "Show Memory Indicator", "appearance");
-  private static OptionDescription SHOW_MAIN_TOOLBAR = new UISettingsOptionDescription("SHOW_MAIN_TOOLBAR", "Show Main Toolbar", "appearance");
-  private static OptionDescription SHOW_NAVIGATION_BAR = new UISettingsOptionDescription("SHOW_NAVIGATION_BAR", "Show Navigation Bar", "appearance");
-  private static OptionDescription HIDE_TOOL_STRIPES = new UISettingsOptionDescription("HIDE_TOOL_STRIPES", "Hide Tool Window Bars", "appearance");
-  private static OptionDescription SHOW_STATUS_BAR = new UISettingsOptionDescription("SHOW_STATUS_BAR", "Show Status Bar", "appearance");
-  private static OptionDescription IS_BLOCK_CURSOR = new EditorOptionDescription("IS_BLOCK_CURSOR", "Show Block Cursor", "appearance");
-  private static OptionDescription IS_WHITESPACES_SHOWN = new EditorOptionDescription("IS_WHITESPACES_SHOWN", "Show Whitespaces", "appearance");
-  private static OptionDescription ARE_LINE_NUMBERS_SHOWN = new EditorOptionDescription("ARE_LINE_NUMBERS_SHOWN", "Show Line Numbers", "appearance");
+  private static OptionDescription CYCLING_SCROLLING = AppearanceOptionsTopHitProvider.option("Cyclic scrolling", "CYCLE_SCROLLING");
+  private static OptionDescription MEMORY_INDICATOR = AppearanceOptionsTopHitProvider.option("Show Memory Indicator", "SHOW_MEMORY_INDICATOR");
+  private static OptionDescription SHOW_MAIN_TOOLBAR = AppearanceOptionsTopHitProvider.option("Show Main Toolbar", "SHOW_MAIN_TOOLBAR");
+  private static OptionDescription SHOW_NAVIGATION_BAR = AppearanceOptionsTopHitProvider.option("Show Navigation Bar", "SHOW_NAVIGATION_BAR");
+  private static OptionDescription HIDE_TOOL_STRIPES = AppearanceOptionsTopHitProvider.option("Hide Tool Window Bars", "HIDE_TOOL_STRIPES");
+  private static OptionDescription SHOW_STATUS_BAR = AppearanceOptionsTopHitProvider.option("Show Status Bar", "SHOW_STATUS_BAR");
+  private static OptionDescription IS_BLOCK_CURSOR = EditorOptionsTopHitProvider.option("Show Block Cursor", "IS_BLOCK_CURSOR");
+  private static OptionDescription IS_WHITESPACES_SHOWN = EditorOptionsTopHitProvider.option("Show Whitespaces", "IS_WHITESPACES_SHOWN");
+  private static OptionDescription ARE_LINE_NUMBERS_SHOWN = EditorOptionsTopHitProvider.option("Show Line Numbers", "ARE_LINE_NUMBERS_SHOWN");
   private static OptionDescription SHOW_METHOD_SEPARATORS = new DaemonCodeAnalyzerOptionDescription("SHOW_METHOD_SEPARATORS", "Show Method Separators", "appearance");
 
 
