@@ -56,4 +56,6 @@ public trait RepositoryManager {
   public fun resetToTheirs(indicator: ProgressIndicator)
 
   public fun resetToMy(indicator: ProgressIndicator)
+
+  public fun canCommit(): Boolean
 }

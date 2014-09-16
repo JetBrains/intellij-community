@@ -25,7 +25,7 @@ public class IcsSettingsPanel extends DialogWrapper {
   private final Action[] syncActions;
   private final IcsManager icsManager;
 
-  public IcsSettingsPanel(@Nullable final Project project) {
+  public IcsSettingsPanel(@NotNull final Project project) {
     super(project, true);
 
     icsManager = IcsManager.OBJECT$.getInstance();

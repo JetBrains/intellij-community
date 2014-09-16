@@ -169,6 +169,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   override fun resetToMy(indicator: ProgressIndicator) {
     Reset(this, indicator).reset(false)
   }
+
+  override fun canCommit() = repository.getRepositoryState().canCommit()
 }
 
 fun printMessages(fetchResult: OperationResult) {

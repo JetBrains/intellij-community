@@ -41,6 +41,9 @@
   <item name='org.eclipse.jgit.lib.IndexDiff java.util.Set&lt;java.lang.String&gt; getUntrackedFolders()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.lib.ObjectLoader byte[] getCachedBytes()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.lib.ProgressMonitor void beginTask(java.lang.String, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -60,6 +63,9 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.ObjectInserter newObjectInserter()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.ObjectLoader open(org.eclipse.jgit.lib.AnyObjectId)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.ObjectReader newObjectReader()'>

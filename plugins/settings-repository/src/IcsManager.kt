@@ -190,7 +190,10 @@ public class IcsManager : ApplicationLoadListener {
 
           try {
             // we commit before even if sync "RESET_TO_THEIRS" — preserve history and ability to undo
-            repositoryManager.commit(indicator)
+            if (repositoryManager.canCommit()) {
+              repositoryManager.commit(indicator)
+            }
+            // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
           }
           catch (e: Exception) {
             LOG.error(e)

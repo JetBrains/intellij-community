@@ -27,6 +27,11 @@ import org.eclipse.jgit.merge.ResolveMerger
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.AuthenticationException
 import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.settingsRepository.resolveConflicts
+import com.intellij.openapi.vfs.VirtualFile
+import java.util.ArrayList
+import org.jetbrains.settingsRepository.RepositoryFakeVirtualFile
+import git.JGitMergeProvider
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
   val message = e.getMessage()!!
@@ -39,6 +44,14 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
   else {
     throw e
   }
+}
+
+private fun conflictsToVirtualFiles(map: Map<String, Array<IntArray?>?>): List<VirtualFile> {
+  val result = ArrayList<VirtualFile>(map.size)
+  for (path in map.keySet()) {
+    result.add(RepositoryFakeVirtualFile(path))
+  }
+  return result
 }
 
 open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndicator) {
@@ -69,7 +82,13 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     if (LOG.isDebugEnabled()) {
       LOG.debug(mergeStatus.toString())
     }
-    if (!mergeStatus.isSuccessful()) {
+
+    if (mergeStatus == MergeStatus.CONFLICTING) {
+      val mergedCommits = mergeResult.getMergedCommits()
+      assert(mergedCommits.size == 2)
+      resolveConflicts(conflictsToVirtualFiles(mergeResult.getConflicts()!!), JGitMergeProvider(repository, mergedCommits[0], mergedCommits[1]))
+    }
+    else if (!mergeStatus.isSuccessful()) {
       throw IllegalStateException(mergeResult.toString())
     }
 
@@ -292,7 +311,6 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         }
         else {
           if (failingPaths == null) {
-            //noinspection ConstantConditions
             val mergeMessageWithConflicts = MergeMessageFormatter().formatWithConflicts(mergeMessage, unmergedPaths)
             repository.writeMergeCommitMsg(mergeMessageWithConflicts)
             return MergeResult(null, merger.getBaseCommitId(), array(headCommit.getId(), srcCommit.getId()), MergeResult.MergeStatus.CONFLICTING, mergeStrategy, lowLevelResults)

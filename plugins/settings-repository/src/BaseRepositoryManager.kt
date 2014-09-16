@@ -6,6 +6,15 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
+import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
+import com.intellij.openapi.vcs.merge.MergeProvider
+import javax.swing.SwingUtilities
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.PathUtilRt
+import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.vfs.CharsetToolkit
 
 public abstract class BaseRepositoryManager protected() : RepositoryManager {
   protected var dir: File = File(getPluginSystemDir(), "repository")
@@ -98,4 +107,18 @@ fun removeFileAndParentDirectoryIfEmpty(file: File, isFile: Boolean, root: File)
       parent = parent!!.getParentFile()
     }
   }
+}
+
+fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider): List<VirtualFile>? {
+  var processedFiles: List<VirtualFile>? = null
+  SwingUtilities.invokeAndWait {
+    val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, MergeDialogCustomizer())
+    fileMergeDialog.show()
+    processedFiles = fileMergeDialog.getProcessedFiles()
+  }
+  return processedFiles
+}
+
+class RepositoryFakeVirtualFile(private val path: String) : LightVirtualFile(PathUtilRt.getFileName(path), StdFileTypes.XML, "", CharsetToolkit.UTF8_CHARSET, 1L) {
+  override fun getPath() = path
 }

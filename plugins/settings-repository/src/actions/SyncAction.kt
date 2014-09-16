@@ -18,7 +18,7 @@ abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val project = event.getProject()
+    val project = event.getProject()!!
     try {
       IcsManager.getInstance().sync(syncType, project)
     }
@@ -39,7 +39,7 @@ class ResetToMyAction : SyncAction(SyncType.RESET_TO_MY)
 class ConfigureIcsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     IcsManager.getInstance().runInAutoCommitDisabledMode() {
-      IcsSettingsPanel(e.getProject()).show()
+      IcsSettingsPanel(e.getProject()!!).show()
     }
   }
 }

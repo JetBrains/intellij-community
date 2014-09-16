@@ -321,11 +321,9 @@ class GitTest {
   }
 
   private fun sync(syncType: SyncType) {
-    SwingUtilities.invokeAndWait(object : Runnable {
-      override fun run() {
-        IcsManager.getInstance().sync(syncType, fixture!!.getProject())
-      }
-    })
+    SwingUtilities.invokeAndWait {
+      IcsManager.getInstance().sync(syncType, fixture!!.getProject())
+    }
   }
 
   private fun createFileRemote(branchName: String?): File {
