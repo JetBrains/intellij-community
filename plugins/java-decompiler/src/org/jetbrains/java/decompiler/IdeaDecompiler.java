@@ -106,7 +106,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     }
     catch (Exception e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        AssertionError error = new AssertionError();
+        AssertionError error = new AssertionError(file.getUrl());
         error.initCause(e);
         throw error;
       }
