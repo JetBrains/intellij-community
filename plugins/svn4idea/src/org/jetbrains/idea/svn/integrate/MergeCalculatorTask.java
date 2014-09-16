@@ -53,7 +53,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class MergeCalculatorTask extends BaseMergeTask implements
                                                        Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> {
-  private final static String ourOneShotStrategy = "svn.quickmerge.oneShotStrategy";
   private final
   AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>>
     myCopyData;
@@ -72,14 +71,11 @@ public class MergeCalculatorTask extends BaseMergeTask implements
     super(mergeContext, interaction, "Calculating not merged revisions", Where.POOLED);
     myNotMerged = new LinkedList<CommittedChangeList>();
     myMergeTitle = "Merge from " + myMergeContext.getBranchName();
-    //      if (Boolean.TRUE.equals(Boolean.getBoolean(ourOneShotStrategy))) {
+    // TODO: Previously it was configurable - either to use OneShotMergeInfoHelper or BranchInfo as merge checker, but later that logic
+    // TODO: was commented (in 80ebdbfea5210f6c998e67ddf28ca9c670fa4efe on 5/28/2010).
+    // TODO: Still check if we need to preserve such configuration or it is sufficient to always use OneShotMergeInfoHelper.
     myMergeChecker = new OneShotMergeInfoHelper(myMergeContext);
     ((OneShotMergeInfoHelper)myMergeChecker).prepare();
-/*      } else {
-      myMergeChecker = new BranchInfo.MyMergeCheckerWrapper(myWcInfo.getPath(), new BranchInfo(myVcs, myWcInfo.getRepositoryRoot(),
-                                                                                               myWcInfo.getRootUrl(), mySourceUrl,
-                                                                                               mySourceUrl, myVcs.createWCClient()));
-    }*/
     myCopyData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>>();
   }
 
