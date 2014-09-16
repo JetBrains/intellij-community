@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,9 +35,6 @@ import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,8 +78,6 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       return ClsFileImpl.decompile(file);
     }
 
-    checkFile(file);
-
     try {
       Map<String, VirtualFile> files = ContainerUtil.newLinkedHashMap();
       files.put(file.getPath(), file);
@@ -113,36 +107,6 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       else {
         throw new CannotDecompileException(e);
       }
-    }
-  }
-
-  private static void checkFile(VirtualFile file) throws CannotDecompileException {
-    final Ref<Boolean> isGroovy = Ref.create(false);
-    try {
-      new ClassReader(file.contentsToByteArray()).accept(new ClassVisitor(Opcodes.ASM5) {
-        @Override
-        public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-          for (String anInterface : interfaces) {
-            if ("groovy/lang/GroovyObject".equals(anInterface)) {
-              isGroovy.set(true);
-              break;
-            }
-          }
-        }
-
-        @Override
-        public void visitSource(String source, String debug) {
-          if (source != null && source.endsWith(".groovy")) {
-            isGroovy.set(true);
-          }
-        }
-      }, ClassReader.SKIP_CODE);
-    }
-    catch (Exception e) {
-      throw new CannotDecompileException(e);
-    }
-    if (isGroovy.get()) {
-      throw new CannotDecompileException("Groovy class rejected");
     }
   }
 
