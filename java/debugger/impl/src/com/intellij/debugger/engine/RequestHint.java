@@ -173,7 +173,7 @@ public class RequestHint {
               try {
                 frameCount = contextThread.frameCount();
               }
-              catch (EvaluateException e) {
+              catch (EvaluateException ignored) {
               }
             }
             final boolean filesEqual = myPosition.getFile().equals(locationPosition.getFile());
@@ -206,12 +206,14 @@ public class RequestHint {
 
         if ((settings.SKIP_SYNTHETIC_METHODS || myMethodFilter != null)&& frameProxy != null) {
           final Location location = frameProxy.location();
-          final Method method = location.method();
-          if (method != null) {
-            if (myVirtualMachineProxy.canGetSyntheticAttribute()? method.isSynthetic() : method.name().indexOf('$') >= 0) {
-              // step into lambda methods
-              if (!method.name().startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
-                return myDepth;
+          if (location != null) {
+            final Method method = location.method();
+            if (method != null) {
+              if (myVirtualMachineProxy.canGetSyntheticAttribute() ? method.isSynthetic() : method.name().indexOf('$') >= 0) {
+                // step into lambda methods
+                if (!method.name().startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
+                  return myDepth;
+                }
               }
             }
           }
@@ -234,15 +236,17 @@ public class RequestHint {
           if (frameProxy != null) {
             if (settings.SKIP_CONSTRUCTORS) {
               final Location location = frameProxy.location();
-              final Method method = location.method();
-              if (method != null && method.isConstructor()) {
-                return StepRequest.STEP_OUT;
+              if (location != null) {
+                final Method method = location.method();
+                if (method != null && method.isConstructor()) {
+                  return StepRequest.STEP_OUT;
+                }
               }
             }
 
             if (settings.SKIP_CLASSLOADERS) {
               final Location location = frameProxy.location();
-              if (DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
+              if (location != null && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
                 return StepRequest.STEP_OUT;
               }
             }
@@ -254,7 +258,7 @@ public class RequestHint {
         }
       }
     }
-    catch (VMDisconnectedException e) {
+    catch (VMDisconnectedException ignored) {
     }
     catch (EvaluateException e) {
       LOG.error(e);
