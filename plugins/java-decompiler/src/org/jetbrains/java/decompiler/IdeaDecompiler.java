@@ -56,7 +56,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     "//\n\n";
 
   private final IFernflowerLogger myLogger = new IdeaLogger();
-  private final HashMap<String, Object> myOptions = new HashMap<String, Object>();
+  private final Map<String, Object> myOptions = new HashMap<String, Object>();
 
   public IdeaDecompiler() {
     myOptions.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");
