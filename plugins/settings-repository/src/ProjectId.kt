@@ -15,7 +15,7 @@ class ProjectId : PersistentStateComponent<ProjectId> {
     return this
   }
 
-  override fun loadState(state: ProjectId) {
-    XmlSerializerUtil.copyBean<ProjectId>(state, this)
+  override fun loadState(state: ProjectId?) {
+    XmlSerializerUtil.copyBean<ProjectId>(state!!, this)
   }
 }
