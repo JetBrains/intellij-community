@@ -26,14 +26,13 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
     val commitMessage = "Reset to ${if (toTheirs) manager.getUpstream() else "my"}"
     // grab added/deleted/renamed/modified files
     val mergeStrategy = if (toTheirs) MergeStrategy.THEIRS else MergeStrategy.OURS
-    var mergeResult = pull(mergeStrategy, commitMessage)
-    if (mergeResult == null) {
+    if (pull(mergeStrategy, commitMessage) == null) {
       // nothing to merge, so, we merge latest origin commit
       val fetchRefSpecs = remoteConfig.getFetchRefSpecs()
       assert(fetchRefSpecs.size == 1)
 
-      mergeResult = merge(repository.getRef(fetchRefSpecs[0].getDestination()!!)!!, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
-      if (mergeResult?.getMergeStatus()?.isSuccessful() !== true) {
+      val mergeResult = merge(repository.getRef(fetchRefSpecs[0].getDestination()!!)!!, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
+      if (!mergeResult.getMergeStatus().isSuccessful()) {
         throw IllegalStateException(mergeResult.toString())
       }
     }

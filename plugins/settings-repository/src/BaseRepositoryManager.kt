@@ -15,6 +15,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.vfs.CharsetToolkit
+import java.io.OutputStream
 
 public abstract class BaseRepositoryManager protected() : RepositoryManager {
   protected var dir: File = File(getPluginSystemDir(), "repository")
@@ -109,16 +110,31 @@ fun removeFileAndParentDirectoryIfEmpty(file: File, isFile: Boolean, root: File)
   }
 }
 
-fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider): List<VirtualFile>? {
+fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider): List<VirtualFile> {
   var processedFiles: List<VirtualFile>? = null
   SwingUtilities.invokeAndWait {
     val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, MergeDialogCustomizer())
     fileMergeDialog.show()
     processedFiles = fileMergeDialog.getProcessedFiles()
   }
-  return processedFiles
+  return processedFiles!!
 }
 
-class RepositoryFakeVirtualFile(private val path: String) : LightVirtualFile(PathUtilRt.getFileName(path), StdFileTypes.XML, "", CharsetToolkit.UTF8_CHARSET, 1L) {
+class RepositoryVirtualFile(private val path: String) : LightVirtualFile(PathUtilRt.getFileName(path), StdFileTypes.XML, "", CharsetToolkit.UTF8_CHARSET, 1L) {
+  var content: ByteArray? = null
+    private set
+
   override fun getPath() = path
+
+  override fun setBinaryContent(content: ByteArray, newModificationStamp: Long, newTimeStamp: Long, requestor: Any?) {
+    $content = content
+  }
+
+  override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {
+    throw IllegalStateException("You must use setBinaryContent")
+  }
+
+  override fun setContent(requestor: Any?, content: CharSequence?, fireEvent: Boolean) {
+    throw IllegalStateException("You must use setBinaryContent")
+  }
 }

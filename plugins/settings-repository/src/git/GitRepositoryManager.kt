@@ -21,6 +21,9 @@ import org.jetbrains.settingsRepository.RepositoryService
 import org.jetbrains.settingsRepository.CredentialsStore
 import org.jetbrains.settingsRepository.BaseRepositoryManager
 import org.jetbrains.settingsRepository.LOG
+import org.jetbrains.jgit.dirCache.edit
+import org.jetbrains.jgit.dirCache.AddLoadedFile
+import org.jetbrains.jgit.dirCache.remove
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {

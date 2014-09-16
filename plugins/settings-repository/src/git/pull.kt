@@ -30,8 +30,9 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.settingsRepository.resolveConflicts
 import com.intellij.openapi.vfs.VirtualFile
 import java.util.ArrayList
-import org.jetbrains.settingsRepository.RepositoryFakeVirtualFile
 import git.JGitMergeProvider
+import org.jetbrains.settingsRepository.RepositoryVirtualFile
+import org.jetbrains.jgit.dirCache.AddLoadedFile
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
   val message = e.getMessage()!!
@@ -49,7 +50,7 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
 private fun conflictsToVirtualFiles(map: Map<String, Array<IntArray?>?>): List<VirtualFile> {
   val result = ArrayList<VirtualFile>(map.size)
   for (path in map.keySet()) {
-    result.add(RepositoryFakeVirtualFile(path))
+    result.add(RepositoryVirtualFile(path))
   }
   return result
 }
@@ -86,7 +87,8 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     if (mergeStatus == MergeStatus.CONFLICTING) {
       val mergedCommits = mergeResult.getMergedCommits()
       assert(mergedCommits.size == 2)
-      resolveConflicts(conflictsToVirtualFiles(mergeResult.getConflicts()!!), JGitMergeProvider(repository, mergedCommits[0], mergedCommits[1]))
+      val unresolvedFiles = conflictsToVirtualFiles(mergeResult.getConflicts()!!)
+      val resolvedFiles = resolveConflicts(unresolvedFiles, JGitMergeProvider(repository, mergedCommits[0], mergedCommits[1]))
     }
     else if (!mergeStatus.isSuccessful()) {
       throw IllegalStateException(mergeResult.toString())

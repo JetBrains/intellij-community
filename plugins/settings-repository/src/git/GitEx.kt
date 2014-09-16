@@ -39,44 +39,6 @@ fun Config.getRemoteBranchFullName(): String {
   return name!!
 }
 
-class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int, private val lastModified: Long) : PathEdit(Constants.encode(path)) {
-  override fun apply(entry: DirCacheEntry, repository: Repository) {
-    entry.setFileMode(FileMode.REGULAR_FILE)
-    entry.setLength(size)
-    entry.setLastModified(lastModified)
-
-    val inserter = repository.newObjectInserter()
-    try {
-      entry.setObjectId(inserter.insert(Constants.OBJ_BLOB, content, 0, size))
-      inserter.flush()
-    }
-    finally {
-      inserter.release()
-    }
-  }
-}
-
-class AddFile(private val pathString: String) : PathEdit(Constants.encode(pathString)) {
-  override fun apply(entry: DirCacheEntry, repository: Repository) {
-    val file = File(repository.getWorkTree(), pathString)
-    entry.setFileMode(FileMode.REGULAR_FILE)
-    val length = file.length()
-    entry.setLength(length)
-    entry.setLastModified(file.lastModified())
-
-    val input = FileInputStream(file)
-    val inserter = repository.newObjectInserter()
-    try {
-      entry.setObjectId(inserter.insert(Constants.OBJ_BLOB, length, input))
-      inserter.flush()
-    }
-    finally {
-      inserter.release()
-      input.close()
-    }
-  }
-}
-
 throws(javaClass<IOException>())
 fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER) {
   // our local branch named 'master' in any case
@@ -101,28 +63,6 @@ fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER) 
     config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_MERGE, Constants.R_HEADS + branchName)
   }
   config.save()
-}
-
-public fun Repository.edit(edit: PathEdit) {
-  edit(Collections.singletonList(edit))
-}
-
-public fun Repository.edit(edits: List<PathEdit>) {
-  if (edits.isEmpty()) {
-    return
-  }
-
-  val dirCache = lockDirCache()
-  try {
-    DirCacheEditor(edits, this, dirCache, dirCache.getEntryCount() + 4).commit()
-  }
-  finally {
-    dirCache.unlock()
-  }
-}
-
-public fun Repository.remove(path: String, isFile: Boolean) {
-  edit((if (isFile) DeleteFile(path) else DeleteDirectory(path)))
 }
 
 public fun Repository.computeIndexDiff(): IndexDiff {

@@ -7,7 +7,8 @@ import org.jetbrains.jgit.dirCache.PathEdit
 import com.intellij.util.SmartList
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.PROJECTS_DIR_NAME
-import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.jgit.dirCache.edit
+import org.jetbrains.jgit.dirCache.AddFile
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   indicator.checkCanceled()
