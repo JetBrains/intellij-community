@@ -43,12 +43,25 @@ public class ClassFileDecompilers {
    * without changing it's structure - i.e. providing additional information in comments,
    * or replacing standard "compiled code" method body comment with something more meaningful.</p>
    *
+   * <p>If a plugin by somewhat reason cannot decompile a file it can throw {@link Light.CannotDecompileException}
+   * and thus make IDEA to fall back to a built-in decompiler implementation.</p>
+   *
    * <p>Plugins registering extension of this type normally should accept all files and use {@code order="last"}
    * attribute to avoid interfering with other decompilers.</p>
    */
   public abstract static class Light implements Decompiler {
+    public static class CannotDecompileException extends RuntimeException {
+      public CannotDecompileException(String message) {
+        super(message);
+      }
+
+      public CannotDecompileException(Throwable cause) {
+        super(cause);
+      }
+    }
+
     @NotNull
-    public abstract CharSequence getText(@NotNull VirtualFile file);
+    public abstract CharSequence getText(@NotNull VirtualFile file) throws CannotDecompileException;
   }
 
 

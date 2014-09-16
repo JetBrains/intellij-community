@@ -16,7 +16,7 @@
 package org.jetbrains.java.decompiler;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
@@ -47,8 +47,6 @@ import java.util.Map;
 import java.util.jar.Manifest;
 
 public class IdeaDecompiler extends ClassFileDecompilers.Light {
-  private static final Logger LOG = Logger.getInstance(IdeaDecompiler.class);
-
   public static final String BANNER =
     "//\n" +
     "// Source code recreated from a .class file by IntelliJ IDEA\n" +
@@ -79,10 +77,12 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
 
   @NotNull
   @Override
-  public CharSequence getText(@NotNull VirtualFile file) {
-    if (!canHandle(file)) {
+  public CharSequence getText(@NotNull VirtualFile file) throws CannotDecompileException {
+    if ("package-info.class".equals(file.getName())) {
       return ClsFileImpl.decompile(file);
     }
+
+    checkFile(file);
 
     try {
       Map<String, VirtualFile> files = ContainerUtil.newLinkedHashMap();
@@ -105,17 +105,18 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       return BANNER + saver.myResult;
     }
     catch (Exception e) {
-      LOG.error(file.getUrl(), e);
-      return ClsFileImpl.decompile(file);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        AssertionError error = new AssertionError();
+        error.initCause(e);
+        throw error;
+      }
+      else {
+        throw new CannotDecompileException(e);
+      }
     }
   }
 
-  private static boolean canHandle(VirtualFile file) {
-    if ("package-info.class".equals(file.getName())) {
-      LOG.info("skipped: " + file.getUrl());
-      return false;
-    }
-
+  private static void checkFile(VirtualFile file) throws CannotDecompileException {
     final Ref<Boolean> isGroovy = Ref.create(false);
     try {
       new ClassReader(file.contentsToByteArray()).accept(new ClassVisitor(Opcodes.ASM5) {
@@ -138,14 +139,11 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       }, ClassReader.SKIP_CODE);
     }
     catch (Exception e) {
-      throw new RuntimeException("corrupted file: " + file.getUrl(), e);
+      throw new CannotDecompileException(e);
     }
     if (isGroovy.get()) {
-      LOG.info("skipped Groovy class: " + file.getUrl());
-      return false;
+      throw new CannotDecompileException("Groovy class rejected");
     }
-
-    return true;
   }
 
   private static class MyBytecodeProvider implements IBytecodeProvider {
