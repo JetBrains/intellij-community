@@ -6,7 +6,14 @@ import java.io.IOException
 import java.io.InputStream
 
 public trait RepositoryManager {
-  public fun createRepositoryIfNeed(): RepositoryManager
+  public fun createRepositoryIfNeed(): Boolean
+
+  /**
+   * Think twice before use
+   */
+  public fun deleteRepository()
+
+  public fun isRepositoryExists(): Boolean
 
   public fun getUpstream(): String?
 

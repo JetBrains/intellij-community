@@ -20,6 +20,10 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
     return listOf(*files)
   }
 
+  override fun deleteRepository() {
+    FileUtil.delete(dir)
+  }
+
   throws(javaClass<IOException>())
   override fun read(path: String): InputStream? {
     val file = File(dir, path)

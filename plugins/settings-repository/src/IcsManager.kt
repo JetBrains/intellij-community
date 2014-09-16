@@ -120,9 +120,9 @@ public class IcsManager : ApplicationLoadListener {
   }, settings.commitDelay)
 
   private volatile var autoCommitEnabled = true
-  private volatile var writeAndDeleteProhibited: Boolean = false
+  private volatile var writeAndDeleteProhibited = false
 
-  volatile var repositoryActive: Boolean = false
+  volatile var repositoryActive = false
 
   private fun scheduleCommit() {
     if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode()) {
@@ -241,14 +241,14 @@ public class IcsManager : ApplicationLoadListener {
     }
   }
 
-  public fun runInAutoCommitDisabledMode(task: ()->Unit) {
+  fun runInAutoCommitDisabledMode(task: ()->Unit) {
     cancelAndDisableAutoCommit()
     try {
       task()
     }
     finally {
       autoCommitEnabled = true
-      repositoryActive = repositoryManager.hasUpstream()
+      repositoryActive = repositoryManager.isRepositoryExists()
     }
   }
 
@@ -260,7 +260,7 @@ public class IcsManager : ApplicationLoadListener {
       LOG.error(e)
     }
 
-    repositoryActive = repositoryManager.hasUpstream()
+    repositoryActive = repositoryManager.isRepositoryExists()
 
     (application as ApplicationImpl).getStateStore().getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
 

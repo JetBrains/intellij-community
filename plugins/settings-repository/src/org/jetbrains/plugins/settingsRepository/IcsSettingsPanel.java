@@ -9,10 +9,8 @@ import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.settingsRepository.actions.ActionsPackage;
@@ -25,11 +23,12 @@ public class IcsSettingsPanel extends DialogWrapper {
   private JPanel panel;
   private TextFieldWithBrowseButton urlTextField;
   private final Action[] syncActions;
+  private final IcsManager icsManager;
 
   public IcsSettingsPanel(@Nullable final Project project) {
     super(project, true);
 
-    IcsManager icsManager = IcsManager.OBJECT$.getInstance();
+    icsManager = IcsManager.OBJECT$.getInstance();
     //shareProjectWorkspaceCheckBox.setSelected(settings.getShareProjectWorkspace());
     urlTextField.setText(icsManager.getRepositoryManager().getUpstream());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
@@ -46,12 +45,12 @@ public class IcsSettingsPanel extends DialogWrapper {
         "action." + (syncType == SyncType.MERGE ? "Merge" : (syncType == SyncType.RESET_TO_THEIRS ? "ResetToTheirs" : "ResetToMy")) + "Settings.text")) {
         @Override
         protected void doAction(ActionEvent event) {
-          if (!saveRemoteRepositoryUrl()) {
+          if (!saveRemoteRepositoryUrl(syncType)) {
             return;
           }
 
           try {
-            IcsManager.OBJECT$.getInstance().sync(syncType, project);
+            icsManager.sync(syncType, project);
           }
           catch (Exception e) {
             Messages.showErrorDialog(getContentPane(), StringUtil.notNullize(e.getMessage(), "Internal error"), IcsBundle.OBJECT$.message("sync.rejected.title"));
@@ -79,8 +78,15 @@ public class IcsSettingsPanel extends DialogWrapper {
   }
 
   private void updateSyncButtonState() {
-    String url = urlTextField.getText();
-    boolean enabled = !StringUtil.isEmptyOrSpaces(url) && url.length() > 1;
+    String url = StringUtil.nullize(urlTextField.getText());
+    boolean enabled;
+    try {
+      enabled = url != null && url.length() > 1 && icsManager.getRepositoryService().checkUrl(url, null);
+    }
+    catch (Exception e) {
+      enabled = false;
+    }
+
     for (Action syncAction : syncActions) {
       syncAction.setEnabled(enabled);
     }
@@ -104,28 +110,37 @@ public class IcsSettingsPanel extends DialogWrapper {
     return syncActions;
   }
 
-  private boolean saveRemoteRepositoryUrl() {
+  private boolean saveRemoteRepositoryUrl(@NotNull SyncType syncType) {
     String url = StringUtil.nullize(urlTextField.getText());
     if (url != null) {
-      boolean isFile;
-      if (url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
-        url = url.substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length());
-        isFile = true;
+      try {
+        if (!icsManager.getRepositoryService().checkUrl(url, getContentPane())) {
+          return false;
+        }
       }
-      else {
-        isFile = !url.startsWith("git@") && !URLUtil.containsScheme(url);
-      }
-
-      if (isFile && !IcsManager.OBJECT$.getInstance().getRepositoryService().checkFileRepo(url, getContentPane())) {
+      catch (Exception e) {
         return false;
       }
     }
 
     try {
-      IcsManager.OBJECT$.getInstance().getRepositoryManager().createRepositoryIfNeed().setUpstream(url, null);
+      RepositoryManager repositoryManager = icsManager.getRepositoryManager();
+      if (repositoryManager.createRepositoryIfNeed() && syncType != SyncType.RESET_TO_THEIRS) {
+        // we must copy current app config
+        try {
+          SettingsRepositoryPackage.copyLocalConfig();
+        }
+        catch (Throwable e) {
+          // remove created repository
+          repositoryManager.deleteRepository();
+          throw e;
+        }
+      }
+      repositoryManager.setUpstream(url, null);
       return true;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
+      SettingsRepositoryPackage.getLOG().warn(e);
       Messages.showErrorDialog(getContentPane(), IcsBundle.OBJECT$.message("set.upstream.failed.message", e.getMessage()), IcsBundle.OBJECT$.message("set.upstream.failed.title"));
       return false;
     }

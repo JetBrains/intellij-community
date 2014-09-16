@@ -18,7 +18,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.plugins.settingsRepository.git.*
@@ -34,6 +33,7 @@ import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.Matchers.contains
 import org.hamcrest.Matchers.empty
 import org.junit.Assert.assertThat
+import com.intellij.openapi.util.io.FileUtilRt
 
 class GitTest {
   data class FileInfo (val name: String, val data: ByteArray)
@@ -67,7 +67,8 @@ class GitTest {
     public fun setIcsDir() {
       val icsDirPath = System.getProperty("ics.settingsRepository")
       if (icsDirPath == null) {
-        ICS_DIR = FileUtil.generateRandomTemporaryPath()
+        // we must not create file (i.e. this file doesn't exist)
+        ICS_DIR = FileUtilRt.generateRandomTemporaryPath()
         System.setProperty("ics.settingsRepository", ICS_DIR!!.getAbsolutePath())
       }
       else {
@@ -144,8 +145,7 @@ class GitTest {
     }
   }
 
-  Test
-  public fun add() {
+  public Test fun add() {
     val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
     val addedFile = "\$APP_CONFIG$/remote.xml"
     getProvider().saveContent(addedFile, data, data.size, RoamingType.PER_USER, false)
@@ -160,8 +160,7 @@ class GitTest {
     assertThat(diff.getUntrackedFolders(), empty())
   }
 
-  Test
-  public fun addSeveral() {
+  public Test fun addSeveral() {
     val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
     val data2 = FileUtil.loadFileBytes(File(testDataPath, "local.xml"))
     val addedFile = "\$APP_CONFIG$/remote.xml"
@@ -179,15 +178,13 @@ class GitTest {
     assertThat(diff.getUntrackedFolders(), empty())
   }
 
-  Test
-  public fun delete() {
+  public Test fun delete() {
     val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
     delete(data, false)
     delete(data, true)
   }
 
-  Test
-  public fun setUpstream() {
+  public Test fun setUpstream() {
     val url = "https://github.com/user/repo.git"
     repositoryManager.setUpstream(url, null)
     assertThat(repositoryManager.getUpstream(), equalTo(url))
@@ -198,8 +195,7 @@ class GitTest {
     doPullToRepositoryWithoutCommits(null)
   }
 
-  Test
-  public fun pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() {
+  public Test fun pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() {
     doPullToRepositoryWithoutCommits("customRemoteBranchName")
   }
 
@@ -210,13 +206,11 @@ class GitTest {
     compareFiles(repository.getWorkTree(), remoteRepository)
   }
 
-  Test
-  public fun pullToRepositoryWithCommits() {
+  public Test fun pullToRepositoryWithCommits() {
     doPullToRepositoryWithCommits(null)
   }
 
-  Test
-  public fun pullToRepositoryWithCommitsAndCustomRemoteBranchName() {
+  public Test fun pullToRepositoryWithCommitsAndCustomRemoteBranchName() {
     doPullToRepositoryWithCommits("customRemoteBranchName")
   }
 
@@ -238,8 +232,7 @@ class GitTest {
   }
 
   // never was merged. we reset using "merge with strategy "theirs", so, we must test - what's happen if it is not first merge? - see next test
-  Test
-  public fun resetToTheirsIfFirstMerge() {
+  public Test fun resetToTheirsIfFirstMerge() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.RESET_TO_THEIRS)
     val fs = MockVirtualFileSystem()
@@ -247,8 +240,7 @@ class GitTest {
     compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
   }
 
-  Test
-  public fun resetToTheirsISecondMergeIsNull() {
+  public Test fun resetToTheirsISecondMergeIsNull() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.MERGE)
 

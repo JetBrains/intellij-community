@@ -6,7 +6,7 @@
   <idea-version since-build="138.2163"/>
   <!--<vendor>JetBrains</vendor>-->
 
-  <!-- otherwise plugin will be not loaded -->
+  <!-- otherwise plugin will be not loaded in tests -->
   <depends>com.intellij.modules.xml</depends>
 
   <extensions defaultExtensionNs="com.intellij">

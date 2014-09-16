@@ -72,17 +72,21 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     }
   }
 
-  override fun createRepositoryIfNeed(): GitRepositoryManager {
-    if (!dir.exists()) {
-      repository.create()
-      repository.disableAutoCrLf()
+  override fun createRepositoryIfNeed(): Boolean {
+    if (dir.exists()) {
+      return false
     }
-    return this
+
+    repository.create()
+    repository.disableAutoCrLf()
+    return true
   }
 
   TestOnly fun recreateRepository() {
-    $repository = FileRepositoryBuilder().setWorkTree(dir).build()
-    $git = Git(repository)
+    if (dir.exists()) {
+      $repository = FileRepositoryBuilder().setWorkTree(dir).build()
+      $git = Git(repository)
+    }
     createRepositoryIfNeed()
   }
 
@@ -99,6 +103,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     val committer = PersonIdent(ApplicationInfoEx.getInstanceEx()!!.getFullApplicationName(), author.getEmailAddress())
     return git.commit().setAuthor(author).setCommitter(committer)
   }
+
+  override fun isRepositoryExists() = dir.exists()
 
   override fun hasUpstream() = getUpstream() != null
 
