@@ -15,12 +15,16 @@
  */
 package com.intellij;
 
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -51,7 +55,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
 
-  private final Map<String, List<Pattern>> myPatterns = new HashMap<String, List<Pattern>>();
+  private final MultiMap<String, Pattern> myPatterns = MultiMap.create();
   private final List<Pattern> myAllPatterns = new ArrayList<Pattern>();
   private final List<Pattern> myTestGroupPatterns;
   private boolean myContainsAllExcludeDefinedGroup;
@@ -70,7 +74,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
 
   private void addPatterns(String groupName, List<String> filterList) {
     List<Pattern> patterns = compilePatterns(filterList);
-    myPatterns.put(groupName, patterns);
+    myPatterns.putValues(groupName, patterns);
     myAllPatterns.addAll(patterns);
   }
 
@@ -177,9 +181,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   private List<Pattern> collectPatternsFor(List<String> groupNames) {
     List<Pattern> patterns = new ArrayList<Pattern>();
     for (String groupName : groupNames) {
-      if (myPatterns.containsKey(groupName)) {
-        patterns.addAll(myPatterns.get(groupName));
-      }
+      patterns.addAll(myPatterns.get(groupName));
     }
     return patterns;
   }
