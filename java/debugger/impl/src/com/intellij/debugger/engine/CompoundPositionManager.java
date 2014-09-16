@@ -24,6 +24,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VMDisconnectedException;
@@ -64,6 +65,8 @@ public class CompoundPositionManager extends PositionManagerEx {
       catch (VMDisconnectedException e) {
         throw e;
       }
+      catch (InternalException ignored) {
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -86,6 +89,8 @@ public class CompoundPositionManager extends PositionManagerEx {
       catch (VMDisconnectedException e) {
         throw e;
       }
+      catch (InternalException ignored) {
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -107,6 +112,8 @@ public class CompoundPositionManager extends PositionManagerEx {
       }
       catch (VMDisconnectedException e) {
         throw e;
+      }
+      catch (InternalException ignored) {
       }
       catch (Exception e) {
         LOG.error(e);
