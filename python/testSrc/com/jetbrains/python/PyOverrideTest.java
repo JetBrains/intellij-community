@@ -64,6 +64,10 @@ public class PyOverrideTest extends PyTestCase {
     doTest();
   }
 
+  public void testStaticMethod() {
+    doTest();
+  }
+
   public void testNewStyle() {
     doTest();
   }

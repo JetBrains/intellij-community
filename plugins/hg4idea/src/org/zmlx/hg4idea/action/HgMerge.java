@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -42,7 +43,7 @@ public class HgMerge extends HgAbstractGlobalSingleRepoAction {
     final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, selectedRepo);
     mergeDialog.show();
     if (mergeDialog.isOK()) {
-      final String targetValue = mergeDialog.getTargetValue();
+      final String targetValue = StringUtil.escapeBackSlashes(mergeDialog.getTargetValue());
       final VirtualFile repoRoot = mergeDialog.getRepository().getRoot();
       new Task.Backgroundable(project, "Merging changes...") {
         @Override

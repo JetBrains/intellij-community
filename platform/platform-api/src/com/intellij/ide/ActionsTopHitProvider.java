@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 
@@ -24,7 +25,7 @@ import com.intellij.util.Consumer;
  */
 public abstract class ActionsTopHitProvider implements SearchTopHitProvider {
   @Override
-  public void consumeTopHits(String pattern, Consumer<Object> collector) {
+  public void consumeTopHits(String pattern, Consumer<Object> collector, Project project) {
     final ActionManager actionManager = ActionManager.getInstance();
     for (String[] strings : getActionsMatrix()) {
       if (StringUtil.isBetween(pattern, strings[0], strings[1])) {

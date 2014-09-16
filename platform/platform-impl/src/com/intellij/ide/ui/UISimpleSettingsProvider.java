@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 
@@ -37,7 +38,7 @@ public class UISimpleSettingsProvider implements SearchTopHitProvider {
 
 
   @Override
-  public void consumeTopHits(String pattern, Consumer<Object> collector) {
+  public void consumeTopHits(String pattern, Consumer<Object> collector, Project project) {
     pattern = pattern.trim().toLowerCase();
     if (StringUtil.isBetween(pattern, "cyc", "cyclic ") || StringUtil.isBetween(pattern, "scr", "scroll ")) {
       collector.consume(CYCLING_SCROLLING);

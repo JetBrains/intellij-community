@@ -278,7 +278,7 @@ public class InferenceSession {
           //If the expression is a poly class instance creation expression (15.9) or a poly method invocation expression (15.12), 
           //the set contains all constraint formulas that would appear in the set C when determining the poly expression's invocation type.
           final PsiMethod calledMethod = getCalledMethod((PsiCallExpression)arg);
-          if (PsiPolyExpressionUtil.isMethodCallPolyExpression(arg, calledMethod)) {
+          if (calledMethod != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(arg, calledMethod)) {
             collectAdditionalConstraints(additionalConstraints, (PsiCallExpression)arg);
           }
         } else if (arg instanceof PsiLambdaExpression) {
@@ -294,12 +294,32 @@ public class InferenceSession {
       return null;
     }
 
+    boolean found = false;
+    for (PsiExpression expression : argumentList.getExpressions()) {
+      expression = PsiUtil.skipParenthesizedExprDown(expression);
+      if (expression instanceof PsiConditionalExpression ||
+          expression instanceof PsiCallExpression ||
+          expression instanceof PsiLambdaExpression ||
+          expression instanceof PsiMethodReferenceExpression) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      return null;
+    }
+
     MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
     if (properties != null) {
       return properties.getMethod();
     }
     final JavaResolveResult resolveResult = getMethodResult(arg);
-    return resolveResult instanceof MethodCandidateInfo ? (PsiMethod)resolveResult.getElement() : null;
+    if (resolveResult instanceof MethodCandidateInfo) {
+      return (PsiMethod)resolveResult.getElement();
+    }
+    else {
+      return null;
+    }
   }
 
   private void collectLambdaReturnExpression(Set<ConstraintFormula> additionalConstraints,
@@ -319,7 +339,7 @@ public class InferenceSession {
                                        PsiType functionalType) {
     if (returnExpression instanceof PsiCallExpression) {
       final PsiMethod calledMethod = getCalledMethod((PsiCallExpression)returnExpression);
-      if (PsiPolyExpressionUtil.isMethodCallPolyExpression(returnExpression, calledMethod)) {
+      if (calledMethod != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(returnExpression, calledMethod)) {
         collectAdditionalConstraints(additionalConstraints, (PsiCallExpression)returnExpression);
       }
     }
@@ -365,7 +385,7 @@ public class InferenceSession {
     };
     MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
     return properties != null ? null :
-           expression == null
+           expression == null || !PsiResolveHelper.ourGraphGuard.currentStack().contains(expression)
            ? computableResolve.compute()
            : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
   }

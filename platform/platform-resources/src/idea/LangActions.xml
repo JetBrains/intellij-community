@@ -844,24 +844,22 @@
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
     </action>
 
-    <action id="Arrangement.Rule.Add" class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
-    <action id="Arrangement.Rule.Section.Add" class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
-    <action id="Arrangement.Rule.Remove" class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
+    <action id="Arrangement.Rule.Add"
+            class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
+    <action id="Arrangement.Rule.Section.Add"
+            class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
+    <action id="Arrangement.Rule.Remove"
+            class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
     <action id="Arrangement.Rule.Edit"
-            class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction"
-            icon="AllIcons.Actions.Edit"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction"/>
     <action id="Arrangement.Rule.Match.Condition.Move.Up"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction"
-            icon="AllIcons.ToolbarDecorator.MoveUp"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction"/>
     <action id="Arrangement.Rule.Match.Condition.Move.Down"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction"
-            icon="AllIcons.ToolbarDecorator.MoveDown"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction"/>
     <action id="Arrangement.Rule.Group.Condition.Move.Up"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleUpAction"
-            icon="AllIcons.ToolbarDecorator.MoveUp"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleUpAction"/>
     <action id="Arrangement.Rule.Group.Condition.Move.Down"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"
-            icon="AllIcons.ToolbarDecorator.MoveDown"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"/>
 
     <group id="Arrangement.Rule.Match.Control.Context.Menu">
       <reference ref="Arrangement.Rule.Add"/>
