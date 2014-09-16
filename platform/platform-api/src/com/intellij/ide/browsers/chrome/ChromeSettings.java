@@ -29,13 +29,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public final class ChromeSettings extends BrowserSpecificSettings {
   public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
   private @Nullable String myCommandLineOptions;
   private @Nullable String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
-  private @NotNull THashMap<String, String> myEnvironmentVariables = new THashMap<String, String>();
+  private @NotNull Map<String, String> myEnvironmentVariables = new THashMap<String, String>();
 
   public ChromeSettings() {
   }
@@ -92,11 +93,11 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   @NotNull
   @Tag("environment-variables")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-  public THashMap<String, String> getEnvironmentVariables() {
+  public Map<String, String> getEnvironmentVariables() {
     return myEnvironmentVariables;
   }
 
-  public void setEnvironmentVariables(@NotNull final THashMap<String, String> environmentVariables) {
+  public void setEnvironmentVariables(@NotNull final Map<String, String> environmentVariables) {
     myEnvironmentVariables = environmentVariables;
   }
 
@@ -109,7 +110,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   @Override
   public ChromeSettings clone() {
     ChromeSettings clone = (ChromeSettings)super.clone();
-    clone.myEnvironmentVariables = myEnvironmentVariables.clone();
+    clone.myEnvironmentVariables = new THashMap<String, String>(myEnvironmentVariables);
     return clone;
   }
 
