@@ -154,7 +154,7 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
         LanguageFileType type = lang.getAssociatedFileType();
         if (type == null) return false;
         String name = lang.getDisplayName();
-        if (StringUtil.startsWith(name, "<") || StringUtil.startsWith(name, "[") || StringUtil.isEmpty(name)) return false;
+        if (StringUtil.startsWith(name, "<") || StringUtil.startsWith(name, "[") || StringUtil.isEmpty(name) || StringUtil.equalsIgnoreCase(name, "SQL")) return false;
         return !StringUtil.isEmpty(type.getDefaultExtension());
       }
     });
