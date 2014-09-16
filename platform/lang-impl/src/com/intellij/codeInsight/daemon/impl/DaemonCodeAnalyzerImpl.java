@@ -46,6 +46,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -283,7 +284,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     if (application.isWriteAccessAllowed()) {
       throw new AssertionError("Must not start highlighting from within write action, or deadlock is imminent");
     }
-
+    DaemonProgressIndicator.setDebug(true);
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     // pump first so that queued event do not interfere
     UIUtil.dispatchAllInvocationEvents();
@@ -297,6 +298,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
 
     Project project = file.getProject();
     setUpdateByTimerEnabled(false);
+    FileStatusMap.getAndClearLog();
     FileStatusMap fileStatusMap = getFileStatusMap();
     fileStatusMap.allowDirt(canChangeDocument);
 
@@ -342,8 +344,15 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
       return getHighlights(document, null, project);
     }
     finally {
+      DaemonProgressIndicator.setDebug(false);
+      String log = FileStatusMap.getAndClearLog();
       fileStatusMap.allowDirt(true);
-      waitForTermination();
+      try {
+        waitForTermination();
+      }
+      catch (Throwable e) {
+        LOG.error(log, e);
+      }
     }
   }
 
@@ -741,7 +750,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
 
             if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
               // makes no sense to start from within write action, will cancel anyway
-              // we'll restart when write action finish
+              // we'll restart when the write action finish
               return;
             }
             if (documentManager.hasUncommitedDocuments()) {
@@ -811,28 +820,30 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     // Editors in modal context
     List<Editor> editors = getActiveEditors();
 
-    Collection<FileEditor> activeFileEditors = new THashSet<FileEditor>(editors.size());
+    Collection<FileEditor> activeTextEditors = new THashSet<FileEditor>(editors.size());
     for (Editor editor : editors) {
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-      activeFileEditors.add(textEditor);
+      activeTextEditors.add(textEditor);
     }
     if (ApplicationManager.getApplication().getCurrentModalityState() != ModalityState.NON_MODAL) {
-      return activeFileEditors;
+      return activeTextEditors;
     }
 
     // Editors in tabs.
     Collection<FileEditor> result = new THashSet<FileEditor>();
-    Collection<Document> documents = new THashSet<Document>(activeFileEditors.size());
+    Collection<VirtualFile> files = new THashSet<VirtualFile>(activeTextEditors.size());
     final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
     for (FileEditor tabEditor : tabEditors) {
-      if (tabEditor instanceof TextEditor) {
-        documents.add(((TextEditor)tabEditor).getEditor().getDocument());
+      VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(tabEditor);
+      if (file != null) {
+        files.add(file);
       }
       result.add(tabEditor);
     }
     // do not duplicate documents
-    for (FileEditor fileEditor : activeFileEditors) {
-      if (fileEditor instanceof TextEditor && documents.contains(((TextEditor)fileEditor).getEditor().getDocument())) continue;
+    for (FileEditor fileEditor : activeTextEditors) {
+      VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor);
+      if (file != null && files.contains(file)) continue;
       result.add(fileEditor);
     }
     return result;
