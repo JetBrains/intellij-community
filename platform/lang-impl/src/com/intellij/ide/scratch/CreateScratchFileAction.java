@@ -55,12 +55,12 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null && Registry.is("ide.scratch.enabled"));
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
     List<Language> languages = getLanguages();
@@ -154,7 +154,7 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
         LanguageFileType type = lang.getAssociatedFileType();
         if (type == null) return false;
         String name = lang.getDisplayName();
-        if (StringUtil.startsWith(name, "<") || StringUtil.startsWith(name, "[") || StringUtil.isEmpty(name)) return false;
+        if (StringUtil.startsWith(name, "<") || StringUtil.startsWith(name, "[") || StringUtil.isEmpty(name) || StringUtil.equalsIgnoreCase(name, "SQL")) return false;
         return !StringUtil.isEmpty(type.getDefaultExtension());
       }
     });

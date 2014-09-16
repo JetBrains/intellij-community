@@ -45,11 +45,11 @@ import java.awt.*;
  */
 public class ShowBaseRevisionAction extends AbstractVcsAction {
   @Override
-  protected void actionPerformed(VcsContext vcsContext) {
+  protected void actionPerformed(@NotNull VcsContext vcsContext) {
     final AbstractVcs vcs = AbstractShowDiffAction.isEnabled(vcsContext, null);
     if (vcs == null) return;
     final VirtualFile[] selectedFilePaths = vcsContext.getSelectedFiles();
-    if (selectedFilePaths == null || selectedFilePaths.length != 1) return;
+    if (selectedFilePaths.length != 1) return;
     final VirtualFile selectedFile = selectedFilePaths[0];
     if (selectedFile.isDirectory()) return;
 

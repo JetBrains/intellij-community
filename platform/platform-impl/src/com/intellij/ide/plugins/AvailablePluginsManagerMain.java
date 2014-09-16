@@ -66,7 +66,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         @Override
         public void actionPerformed(@NotNull ActionEvent e) {
           if (ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable())) {
-            final ArrayList<String> pluginHosts = UpdateSettings.getInstance().myPluginHosts;
+            final List<String> pluginHosts = UpdateSettings.getInstance().getPluginHosts();
             if (!pluginHosts.contains(((AvailablePluginsTableModel)pluginsModel).getRepository())) {
               ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, myFilter.getFilter().toLowerCase(Locale.ENGLISH));
             }
@@ -249,7 +249,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      boolean empty = UpdateSettings.getInstance().myPluginHosts.isEmpty();
+      boolean empty = UpdateSettings.getInstance().getPluginHosts().isEmpty();
       e.getPresentation().setVisible(!empty || ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl() != null);
       String repository = ((AvailablePluginsTableModel)pluginsModel).getRepository();
       if (repository.length() > LENGTH) {
@@ -267,7 +267,8 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       if (ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl() != null) {
         gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.BUILTIN_REPO));
       }
-      for (final String host : UpdateSettings.getInstance().myPluginHosts) {
+
+      for (final String host : UpdateSettings.getInstance().getPluginHosts()) {
         gr.add(createFilterByRepositoryAction(host));
       }
       return gr;

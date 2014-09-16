@@ -117,7 +117,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         }
       });
 
-      myTreatUnknownMembersAsNullable = new JCheckBox("Treat non-annotated methods and fields as @Nullable");
+      myTreatUnknownMembersAsNullable = new JCheckBox("Treat non-annotated members and parameters as @Nullable");
       myTreatUnknownMembersAsNullable.setSelected(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE);
       myTreatUnknownMembersAsNullable.getModel().addChangeListener(new ChangeListener() {
         @Override

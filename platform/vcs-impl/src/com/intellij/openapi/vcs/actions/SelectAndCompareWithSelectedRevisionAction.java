@@ -25,12 +25,14 @@ import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author lesya
  */
 public class SelectAndCompareWithSelectedRevisionAction extends AbstractVcsAction{
-  protected void actionPerformed(VcsContext vcsContext) {
+  @Override
+  protected void actionPerformed(@NotNull VcsContext vcsContext) {
 
     final VirtualFile file = vcsContext.getSelectedFiles()[0];
     final Project project = vcsContext.getProject();
@@ -53,10 +55,12 @@ public class SelectAndCompareWithSelectedRevisionAction extends AbstractVcsActio
 
   
 
+  @Override
   protected void update(VcsContext vcsContext, Presentation presentation) {
     AbstractShowDiffAction.updateDiffAction(presentation, vcsContext, VcsBackgroundableActions.COMPARE_WITH);
   }
 
+  @Override
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;
   }

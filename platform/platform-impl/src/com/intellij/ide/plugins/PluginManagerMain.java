@@ -318,7 +318,7 @@ public abstract class PluginManagerMain implements Disposable {
         if (builtinPluginsUrl != null) {
           processPluginHost(builtinPluginsUrl, true);
         }
-        for (String host : UpdateSettings.getInstance().myPluginHosts) {
+        for (String host : UpdateSettings.getInstance().getPluginHosts()) {
           processPluginHost(host, false);
         }
         return list;

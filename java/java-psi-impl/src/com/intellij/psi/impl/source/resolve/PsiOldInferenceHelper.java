@@ -603,7 +603,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
 
       PsiClassType.ClassResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
       PsiClass argClass = argResult.getElement();
-      if (argClass != paramClass) {
+      if (!paramClass.isEquivalentTo(argClass)) {
         return inferBySubtypingConstraint(patternType, constraintType, depth, paramClass, argClass);
       }
 

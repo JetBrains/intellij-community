@@ -817,7 +817,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Override
-  public void saveChangedProjectFile(final VirtualFile file, final Project project) {
+  public void saveChangedProjectFile(@NotNull VirtualFile file, @Nullable Project project) {
     if (file.exists()) {
       copyToTemp(file);
     }
@@ -831,7 +831,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     registerProjectToReload(project, file, storage);
   }
 
-  private void registerProjectToReload(@Nullable final Project project, final VirtualFile cause, @Nullable final StateStorage storage) {
+  private void registerProjectToReload(@Nullable Project project, VirtualFile cause, @Nullable StateStorage storage) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("[RELOAD] Registering project to reload: " + cause, new Exception());
     }

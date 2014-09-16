@@ -197,7 +197,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final CaretModelImpl myCaretModel;
   @NotNull private final SoftWrapModelImpl mySoftWrapModel;
 
-  @NotNull private static final RepaintCursorCommand ourCaretBlinkingCommand;
+  @NotNull private static final RepaintCursorCommand ourCaretBlinkingCommand = new RepaintCursorCommand();
   private                       MessageBusConnection myConnection;
 
   private           int        myMouseSelectionState = MOUSE_SELECTION_STATE_NONE;
@@ -308,7 +308,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private CaretImpl myPrimaryCaret;
 
   static {
-    ourCaretBlinkingCommand = new RepaintCursorCommand();
     ourCaretBlinkingCommand.start();
   }
 
@@ -551,7 +550,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static void updateCaretVisualPosition(CaretEvent e) {
-    CaretImpl caretImpl = ((CaretImpl)e.getCaret());
+    CaretImpl caretImpl = (CaretImpl)e.getCaret();
     if (caretImpl != null) {
       caretImpl.updateVisualPosition(); // repainting caret region
     }
@@ -749,7 +748,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void initTabPainter() {
     myTabPainter = new ArrowPainter(
       ColorProvider.byColorsScheme(myScheme, EditorColors.WHITESPACES_COLOR),
-      new Computable.PredefinedValueComputable(EditorUtil.getSpaceWidth(Font.PLAIN, this)),
+      new Computable.PredefinedValueComputable<Integer>(EditorUtil.getSpaceWidth(Font.PLAIN, this)),
       new Computable<Integer>() {
         @Override
         public Integer compute() {
@@ -884,7 +883,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent.addFocusListener(new FocusAdapter() {
       @Override
-      public void focusGained(FocusEvent e) {
+      public void focusGained(@NotNull FocusEvent e) {
         myCaretCursor.activate();
         for (Caret caret : myCaretModel.getAllCarets()) {
           int caretLine = caret.getLogicalPosition().line;
@@ -894,7 +893,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       @Override
-      public void focusLost(FocusEvent e) {
+      public void focusLost(@NotNull FocusEvent e) {
         clearCaretThread();
         for (Caret caret : myCaretModel.getAllCarets()) {
           int caretLine = caret.getLogicalPosition().line;
@@ -916,7 +915,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (dropTarget != null) { // might be null in headless environment
         dropTarget.addDropTargetListener(new DropTargetAdapter() {
           @Override
-          public void drop(DropTargetDropEvent e) {
+          public void drop(@NotNull DropTargetDropEvent e) {
           }
 
           @Override
@@ -935,7 +934,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myPanel.addComponentListener(new ComponentAdapter() {
       @Override
-      public void componentResized(ComponentEvent e) {
+      public void componentResized(@NotNull ComponentEvent e) {
         myMarkupModel.recalcEditorDimensions();
         myMarkupModel.repaint(-1, -1);
       }
@@ -1204,7 +1203,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           else {
             column++;
           }
-          break outer;
+          break;
         }
         else {
           CharSequence softWrapText = softWrap.getText();
@@ -1225,7 +1224,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           x += charWidth;
           if (x >= px) {
             onSoftWrapDrawing = true;
-            break outer;
+            break;
           }
           column++;
           activeSoftWrapProcessed = true;
@@ -1466,7 +1465,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int i = -1;
 
     while (low <= high) {
-      int mid = (low + high) >>> 1;
+      int mid = low + high >>> 1;
       FoldRegion midVal = regions[mid];
 
       if (midVal.getStartOffset() <= startOffset && midVal.getEndOffset() > startOffset) {
@@ -1782,13 +1781,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return StringUtil.countNewLines(c);
   }
 
+  private boolean updatingSize;
   private void updateGutterSize() {
-    LaterInvocator.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myGutterComponent.updateSize();
-      }
-    });
+    assertIsDispatchThread();
+    if (!updatingSize) {
+      updatingSize = true;
+      LaterInvocator.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            myGutterComponent.updateSize();
+          }
+          finally {
+            updatingSize = false;
+          }
+        }
+      });
+    }
   }
 
   void validateSize() {
@@ -2775,7 +2784,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               if (extensions != null && !extensions.isEmpty()) {
                 for (LineExtensionInfo info : extensions) {
                   final String text = info.getText();
-                  additionalText += text;
                   drawStringWithSoftWraps(g, text, 0, text.length(), position, clip,
                                           info.getEffectColor() == null ? effectColor : info.getEffectColor(),
                                           info.getEffectType() == null ? effectType : info.getEffectType(),
@@ -4683,7 +4691,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       myTimer = UIUtil.createNamedTimer("Editor scroll timer", TIMER_PERIOD, new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           myCommandProcessor.executeCommand(myProject, new DocumentRunnable(myDocument, myProject) {
             @Override
             public void run() {
@@ -4816,7 +4824,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public void paint(Graphics g) {
+    public void paint(@NotNull Graphics g) {
       super.paint(g);
       if (myRepaintCallback != null) {
         myRepaintCallback.call(g);
@@ -5003,7 +5011,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myScheme;
   }
 
-  void assertIsDispatchThread() {
+  static void assertIsDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
@@ -5141,6 +5149,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDelegate = delegate;
     }
 
+    @NotNull
     @Override
     public Rectangle getTextLocation(final TextHitInfo offset) {
       return execute(new Computable<Rectangle>() {
@@ -5171,6 +5180,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       });
     }
 
+    @NotNull
     @Override
     public AttributedCharacterIterator getCommittedText(final int beginIndex, final int endIndex,
                                                         final AttributedCharacterIterator.Attribute[] attributes) {
@@ -5293,6 +5303,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return "";
     }
 
+    @NotNull
     @Override
     public AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex, AttributedCharacterIterator.Attribute[] attributes) {
       int composedStartIndex = 0;
@@ -6117,7 +6128,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public boolean importData(final JComponent comp, @NotNull final Transferable t) {
+    public boolean importData(@NotNull final JComponent comp, @NotNull final Transferable t) {
       final EditorImpl editor = (EditorImpl)getEditor(comp);
 
       final EditorDropHandler dropHandler = editor.getDropHandler();
@@ -6185,7 +6196,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public boolean canImport(JComponent comp, @NotNull DataFlavor[] transferFlavors) {
+    public boolean canImport(@NotNull JComponent comp, @NotNull DataFlavor[] transferFlavors) {
       Editor editor = getEditor(comp);
       final EditorDropHandler dropHandler = ((EditorImpl)editor).getDropHandler();
       if (dropHandler != null && dropHandler.canHandleDrop(transferFlavors)) {
@@ -6217,7 +6228,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public int getSourceActions(JComponent c) {
+    public int getSourceActions(@NotNull JComponent c) {
       return COPY_OR_MOVE;
     }
 

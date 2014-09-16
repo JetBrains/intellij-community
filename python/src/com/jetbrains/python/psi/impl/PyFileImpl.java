@@ -896,13 +896,4 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     };
   }
-
-  @Override
-  public boolean isPhysical() {
-    VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile != null && virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) {
-      return false;
-    }
-    return super.isPhysical();
-  }
 }

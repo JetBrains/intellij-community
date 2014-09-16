@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.dialogs.MergeContext;
+import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;

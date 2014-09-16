@@ -46,6 +46,8 @@ public class LoadingTreeNode extends DefaultMutableTreeNode implements CustomRen
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     renderer.setIcon(myLoadingIcon);
+    // loading icon should be on the left and do not inherit parent config
+    renderer.setIconOnTheRight(false);
     renderer.append("Loading Commits...", new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, JBColor.GRAY));
   }
 }

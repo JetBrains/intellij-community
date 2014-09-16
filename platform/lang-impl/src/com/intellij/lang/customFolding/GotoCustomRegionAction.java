@@ -130,6 +130,6 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
       .setHideOnKeyOutside(true)
       .createBalloon();
     Disposer.register(project, balloon);
-    balloon.show(popupFactory.guessBestPopupLocation(editor), Balloon.Position.above);
+    balloon.show(popupFactory.guessBestPopupLocation(editor), Balloon.Position.below);
   }
 }

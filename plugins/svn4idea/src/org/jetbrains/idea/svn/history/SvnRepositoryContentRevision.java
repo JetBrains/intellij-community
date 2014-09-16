@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +40,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -49,13 +49,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsContentRevision {
-  private final SvnVcs myVcs;
-  private final String myPath;
+
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final String myPath;
   @NotNull private final FilePath myFilePath;
   private final long myRevision;
 
-  public SvnRepositoryContentRevision(final SvnVcs vcs, @NotNull final FilePath remotePath, @Nullable final FilePath localPath,
-                                      final long revision) {
+  public SvnRepositoryContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath remotePath, @Nullable FilePath localPath, long revision) {
     myVcs = vcs;
     myPath = FileUtil.toSystemIndependentName(remotePath.getPath());
     myFilePath = localPath != null ? localPath : remotePath;
@@ -67,19 +67,20 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
     try {
       myFilePath.hardRefresh();
       return ContentRevisionCache.getOrLoadAsString(myVcs.getProject(), myFilePath, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
-                                             ContentRevisionCache.UniqueType.REPOSITORY_CONTENT, new Throwable2Computable<byte[], VcsException, IOException>() {
-        @Override
-        public byte[] compute() throws VcsException, IOException {
-          final ByteArrayOutputStream buffer = loadContent();
-          return buffer.toByteArray();
-        }
-      });
+                                                    ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
+                                                    new Throwable2Computable<byte[], VcsException, IOException>() {
+                                                      @Override
+                                                      public byte[] compute() throws VcsException, IOException {
+                                                        return loadContent().toByteArray();
+                                                      }
+                                                    });
     }
     catch (IOException e) {
       throw new VcsException(e);
     }
   }
 
+  @NotNull
   protected ByteArrayOutputStream loadContent() throws VcsException {
     final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     ContentLoader loader = new ContentLoader(myPath, buffer, myRevision);
@@ -104,7 +105,7 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
   }
 
   @NotNull
-  public VcsRevisionNumber getRevisionNumber() {
+  public SvnRevisionNumber getRevisionNumber() {
     return new SvnRevisionNumber(SVNRevision.create(myRevision));
   }
 
@@ -178,6 +179,7 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
     }
   }
 
+  @NotNull
   public String getFullPath() {
     return myPath;
   }
@@ -189,5 +191,10 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
   @Override
   public VcsKey getVcsKey() {
     return SvnVcs.getKey();
+  }
+
+  @NotNull
+  public SvnTarget toTarget() throws SvnBindException {
+    return SvnTarget.fromURL(SvnUtil.createUrl(getFullPath()), getRevisionNumber().getRevision());
   }
 }

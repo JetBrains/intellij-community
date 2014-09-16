@@ -116,6 +116,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                 private PsiSubstitutor inferTypeArguments() {
                   if (interfaceMethod == null) return substitutor;
                   final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, reference.getManager(), reference);
+                  session.initThrowsConstraints(method);
                   final PsiSubstitutor psiSubstitutor = session.collectApplicabilityConstraints(reference, this, functionalInterfaceType);
                   if (psiSubstitutor != null) {
                     return psiSubstitutor;

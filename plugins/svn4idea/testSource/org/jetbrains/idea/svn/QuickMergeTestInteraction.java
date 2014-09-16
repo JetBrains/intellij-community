@@ -20,9 +20,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.LocalChangesAction;
+import org.jetbrains.idea.svn.integrate.LocalChangesAction;
 import org.jetbrains.idea.svn.dialogs.MergeDialogI;
-import org.jetbrains.idea.svn.dialogs.QuickMergeContentsVariants;
+import org.jetbrains.idea.svn.integrate.QuickMergeContentsVariants;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteraction;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 

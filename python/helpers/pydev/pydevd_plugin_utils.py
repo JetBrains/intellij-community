@@ -48,8 +48,9 @@ class PluginManager(object):
         return None
 
     def activate(self, plugin):
-        self.active_plugins.append(plugin)
-        self.rebind_methods()
+        if not plugin in self.active_plugins:
+            self.active_plugins.append(plugin)
+            self.rebind_methods()
 
     def rebind_methods(self):
         if len(self.active_plugins) == 0:

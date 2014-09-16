@@ -114,7 +114,7 @@ public class PushController implements Disposable {
       if (model.isSelected()) {
         priorityLoading.put(entry.getKey(), model);
       }
-      else {
+      else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories()) {
         others.put(entry.getKey(), model);
       }
     }
@@ -197,6 +197,10 @@ public class PushController implements Disposable {
         model.setSelected(isSelected);
         repoNode.setChecked(isSelected);
         myDialog.updateButtons();
+        if (isSelected && !model.hasCommitInfo() && !model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories()) {
+          //download incoming if was not loaded before and marked as selected
+          loadCommits(model, repoNode, false);
+        }
       }
     });
     rootNode.add(repoNode);
@@ -388,7 +392,7 @@ public class PushController implements Disposable {
     @Nullable VcsError myTargetError;
 
     int myNumberOfShownCommits;
-    List<? extends VcsFullCommitDetails> myLoadedCommits;
+    @NotNull List<? extends VcsFullCommitDetails> myLoadedCommits = Collections.emptyList();
     boolean myIsSelected;
 
     public MyRepoModel(@NotNull Repo repository,
@@ -464,12 +468,17 @@ public class PushController implements Disposable {
       myNumberOfShownCommits *= 2;
     }
 
+    @NotNull
     public List<? extends VcsFullCommitDetails> getLoadedCommits() {
       return myLoadedCommits;
     }
 
-    public void setLoadedCommits(List<? extends VcsFullCommitDetails> loadedCommits) {
+    public void setLoadedCommits(@NotNull List<? extends VcsFullCommitDetails> loadedCommits) {
       myLoadedCommits = loadedCommits;
+    }
+
+    public boolean hasCommitInfo() {
+      return myTargetError != null || !myLoadedCommits.isEmpty();
     }
   }
 

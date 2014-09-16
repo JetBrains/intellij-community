@@ -46,10 +46,12 @@ public class CachedCvsContext implements CvsContext{
     myVcsContext = baseContext;
   }
 
+  @Override
   public Project getProject() {
     return myVcsContext.getProject();
   }
 
+  @Override
   public VirtualFile getSelectedFile() {
     return myVcsContext.getSelectedFile();
   }
@@ -59,64 +61,80 @@ public class CachedCvsContext implements CvsContext{
     return myVcsContext.getActionName();
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSelectedFiles() {
     return myVcsContext.getSelectedFiles();
   }
 
+  @Override
   public Editor getEditor() {
     return myVcsContext.getEditor();
   }
 
+  @Override
   public Collection<VirtualFile> getSelectedFilesCollection() {
     return myVcsContext.getSelectedFilesCollection();
   }
 
+  @Override
   public File[] getSelectedIOFiles() {
     return myVcsContext.getSelectedIOFiles();
   }
 
+  @Override
   public int getModifiers() {
     return myVcsContext.getModifiers();
   }
 
+  @Override
   public Refreshable getRefreshableDialog() {
     return myVcsContext.getRefreshableDialog();
   }
 
+  @Override
   public String getPlace() {
     return myVcsContext.getPlace();
   }
 
+  @Override
   public File getSelectedIOFile() {
     return myVcsContext.getSelectedIOFile();
   }
 
+  @Override
   public boolean cvsIsActive() {
     return myIsActive;
   }
 
+  @Override
   public Collection<String> getDeletedFileNames() {
     return myDeletedFileNames;
   }
 
+  @Override
   public CvsLightweightFile[] getSelectedLightweightFiles() {
     return myCvsLightweightFiles;
   }
 
+  @Override
+  @NotNull
   public FilePath[] getSelectedFilePaths() {
     return myVcsContext.getSelectedFilePaths();
   }
 
+  @Override
   public FilePath getSelectedFilePath() {
     return myVcsContext.getSelectedFilePath();
   }
 
+  @Override
   @Nullable
   public ChangeList[] getSelectedChangeLists() {
     return myVcsContext.getSelectedChangeLists();
   }
 
+  @Override
   @Nullable
   public Change[] getSelectedChanges() {
     return myVcsContext.getSelectedChanges();

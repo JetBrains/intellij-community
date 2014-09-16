@@ -33,7 +33,7 @@ public abstract class VcsCheckinHandlerFactory implements BaseCheckinHandlerFact
 
   @NotNull
   @Override
-  public CheckinHandler createHandler(CheckinProjectPanel panel, CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     if (! panel.vcsIsAffected(myKey.getName())) return CheckinHandler.DUMMY;
     return createVcsHandler(panel);
   }
@@ -46,7 +46,7 @@ public abstract class VcsCheckinHandlerFactory implements BaseCheckinHandlerFact
   }
 
   @Override
-  public BeforeCheckinDialogHandler createSystemReadyHandler(Project project) {
+  public BeforeCheckinDialogHandler createSystemReadyHandler(@NotNull Project project) {
     return null;
   }
 }

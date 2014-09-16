@@ -49,7 +49,7 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
 
   @NotNull
   @Override
-  public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     final ToolsProjectConfig config = ToolsProjectConfig.getInstance(panel.getProject());
 
     return new CheckinHandler() {
