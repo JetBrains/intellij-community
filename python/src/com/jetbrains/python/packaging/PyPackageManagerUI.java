@@ -246,7 +246,13 @@ public class PyPackageManagerUI {
       for (int i = 0; i < size; i++) {
         final PyRequirement requirement = myRequirements.get(i);
         indicator.setText(String.format("Installing package '%s'...", requirement));
-        indicator.setFraction((double)i / size);
+        if (i == 0) {
+          indicator.setIndeterminate(true);
+        }
+        else {
+          indicator.setIndeterminate(false);
+          indicator.setFraction((double)i / size);
+        }
         try {
           manager.install(Arrays.asList(requirement), myExtraArgs);
         }
@@ -330,6 +336,7 @@ public class PyPackageManagerUI {
     @Override
     protected List<PyExternalProcessException> runTask(@NotNull ProgressIndicator indicator) {
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
+      indicator.setIndeterminate(true);
       try {
         manager.uninstall(myPackages);
         return Arrays.asList();
