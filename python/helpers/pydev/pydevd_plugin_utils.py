@@ -1,9 +1,9 @@
-import os
 import types
 
 import pydev_log
 import pydevd_trace_api
 from third_party.pluginbase import PluginBase
+from pydevd_constants import *  # @UnusedWildImport
 
 def load_plugins(package):
     plugin_base = PluginBase(package=package)
@@ -22,10 +22,10 @@ def load_plugins(package):
 
 
 def bind_func_to_method(func, obj, method_name):
-    foo = types.MethodType(func, obj)
+    bound_method = types.MethodType(func, obj)
 
-    setattr(obj, method_name, foo)
-    return foo
+    setattr(obj, method_name, bound_method)
+    return bound_method
 
 
 class PluginManager(object):
@@ -64,7 +64,7 @@ class PluginManager(object):
         for name in dir(interface):
             func = function_factory(arg, name)
             if type(func) == types.FunctionType:
-                    bind_func_to_method(func, self, name)
+                bind_func_to_method(func, self, name)
 
 
 def create_dispatch(obj, name):
