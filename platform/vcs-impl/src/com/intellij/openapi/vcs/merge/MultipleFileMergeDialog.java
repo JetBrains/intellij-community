@@ -42,6 +42,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
@@ -74,7 +75,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   @Nullable
   private final Project myProject;
   private final ProjectManagerEx myProjectManager;
-  private final List<VirtualFile> myProcessedFiles = new ArrayList<VirtualFile>();
+  private final List<VirtualFile> myProcessedFiles = new SmartList<VirtualFile>();
   private final Set<VirtualFile> myBinaryFiles = new HashSet<VirtualFile>();
   private final MergeDialogCustomizer myMergeDialogCustomizer;
 
@@ -354,6 +355,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     return StringUtil.convertLineSeparators(CharsetToolkit.bytesToString(content, file.getCharset()));
   }
 
+  @NotNull
   public List<VirtualFile> getProcessedFiles() {
     return myProcessedFiles;
   }
