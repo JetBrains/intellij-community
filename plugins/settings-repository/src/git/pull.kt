@@ -26,11 +26,15 @@ import org.eclipse.jgit.merge.MergeMessageFormatter
 import org.eclipse.jgit.merge.ResolveMerger
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.AuthenticationException
+import com.intellij.openapi.progress.ProcessCanceledException
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
   val message = e.getMessage()!!
   if (message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") || message.contains(": reject HostKey:") /* JSch */) {
     throw AuthenticationException(message, e)
+  }
+  else if (message == "Download cancelled") {
+    throw ProcessCanceledException()
   }
   else {
     throw e
@@ -45,6 +49,8 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
   fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null): MergeResult? {
+    checkCancelled()
+
     LOG.debug("Pull")
 
     val repository = manager.repository
@@ -71,6 +77,8 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   }
 
   fun fetch(prevRefUpdateResult: RefUpdate.Result? = null): Ref? {
+    checkCancelled()
+
     val repository = manager.repository
 
     val transport = Transport.open(repository, remoteConfig)
@@ -93,6 +101,8 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         LOG.debug(refUpdate.toString())
       }
     }
+
+    checkCancelled()
 
     var hasChanges = false
     for (fetchRefSpec in remoteConfig.getFetchRefSpecs()) {
@@ -135,6 +145,12 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     return refToMerge
   }
 
+  protected fun checkCancelled() {
+    if (indicator.isCanceled()) {
+      throw ProcessCanceledException()
+    }
+  }
+
   fun merge(unpeeledRef: Ref,
             mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE,
             commit: Boolean = true,
@@ -142,6 +158,8 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
             squash: Boolean = false,
             forceMerge: Boolean = false,
             commitMessage: String? = null): MergeResult {
+    checkCancelled()
+
     val head = repository.getRef(Constants.HEAD)
     if (head == null) {
       throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)

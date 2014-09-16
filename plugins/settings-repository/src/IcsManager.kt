@@ -28,6 +28,7 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue
 import com.intellij.openapi.util.SystemInfo
 import com.mcdermottroe.apple.OSXKeychain
 import org.jetbrains.settingsRepository.git.GitRepositoryService
+import com.intellij.openapi.progress.ProcessCanceledException
 
 val PLUGIN_NAME: String = "Settings Repository"
 
@@ -201,6 +202,10 @@ public class IcsManager : ApplicationLoadListener {
             }
           }
 
+          if (indicator.isCanceled()) {
+            return
+          }
+
           try {
             when (syncType) {
               SyncType.MERGE -> {
@@ -214,6 +219,8 @@ public class IcsManager : ApplicationLoadListener {
                 repositoryManager.push(indicator)
               }
             }
+          }
+          catch (e: ProcessCanceledException) {
           }
           catch (e: Exception) {
             if (e !is AuthenticationException) {

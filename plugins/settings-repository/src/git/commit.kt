@@ -7,6 +7,7 @@ import org.jetbrains.jgit.dirCache.PathEdit
 import com.intellij.util.SmartList
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.PROJECTS_DIR_NAME
+import com.intellij.openapi.progress.ProcessCanceledException
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   val index = manager.repository.computeIndexDiff()
@@ -36,6 +37,10 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
     if (edits != null) {
       manager.repository.edit(edits!!)
     }
+  }
+
+  if (indicator.isCanceled()) {
+    throw ProcessCanceledException()
   }
 
   manager.createCommitCommand().setMessage("").call()
