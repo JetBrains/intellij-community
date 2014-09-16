@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +47,13 @@ class HardcodedContracts {
     }
     else if ("com.google.common.base.Preconditions".equals(className)) {
       if ("checkNotNull".equals(methodName) && paramCount > 0) {
+        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+        constraints[0] = NULL_VALUE;
+        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+      }
+    }
+    else if ("java.util.Objects".equals(className)) {
+      if ("requireNonNull".equals(methodName) && paramCount > 0) {
         MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
         constraints[0] = NULL_VALUE;
         return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
