@@ -482,7 +482,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private void disposeProject(@NotNull CompositeException result) /* throws nothing */ {
     try {
       DocumentCommitThread.getInstance().clearQueue();
-      UIUtil.dispatchAllInvocationEvents();
+      // sometimes SwingUtilities maybe confused about EDT at this point
+      if (SwingUtilities.isEventDispatchThread()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
     }
     catch (Exception e) {
       result.add(e);

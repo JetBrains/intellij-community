@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
@@ -26,7 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -385,6 +386,9 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
+        if (commitThread.isEnabled()) {
+          System.err.println("commitThread: "+commitThread + ";\n"+commitThread.log+";\n"+ThreadDumper.dumpThreadsToString());
+        }
         assertFalse(commitThread.isEnabled());
         WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           @Override
@@ -451,7 +455,7 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
     WriteCommandAction.runWriteCommandAction(myProject, new ThrowableComputable<Object, Exception>() {
       @Override
       public Object compute() throws Exception {
-        VfsUtil.saveText(vFile, StringUtil.repeat("a", FileUtil.LARGE_FOR_CONTENT_LOADING + 1));
+        VfsUtil.saveText(vFile, StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1));
         return null;
       }
     });

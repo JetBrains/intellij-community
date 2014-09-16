@@ -2768,7 +2768,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                 effectType, fontType, currentColor, logicalPosition);
           final VirtualFile file = getVirtualFile();
           if (myProject != null && file != null && !isOneLineMode()) {
-            int offset = lIterator.getStart();
+            int offset = position.x;
             String additionalText = "";
             for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
               Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, file, lIterator.getLineNumber());
@@ -2785,7 +2785,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 }
               }
             }
-            myLinePaintersWidth = Math.max(myLinePaintersWidth, position.x);
+            for (char ch : additionalText.toCharArray()) {
+              offset += EditorUtil.charWidth(ch, Font.ITALIC, this);
+            }
+            myLinePaintersWidth = Math.max(myLinePaintersWidth, offset);
           }
 
           position.x = 0;

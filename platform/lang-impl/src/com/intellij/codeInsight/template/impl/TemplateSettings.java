@@ -68,10 +68,12 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   public static final char TAB_CHAR = '\t';
   public static final char ENTER_CHAR = '\n';
   public static final char DEFAULT_CHAR = 'D';
+  public static final char CUSTOM_CHAR = 'C';
 
   @NonNls private static final String SPACE = "SPACE";
   @NonNls private static final String TAB = "TAB";
   @NonNls private static final String ENTER = "ENTER";
+  @NonNls private static final String CUSTOM = "CUSTOM";
 
   @NonNls private static final String NAME = "name";
   @NonNls private static final String VALUE = "value";
@@ -265,13 +267,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     Element element = parentNode.getChild(DEFAULT_SHORTCUT);
     if (element != null) {
       String shortcut = element.getAttributeValue(SHORTCUT);
-      if (TAB.equals(shortcut)) {
-        myDefaultShortcutChar = TAB_CHAR;
-      } else if (ENTER.equals(shortcut)) {
-        myDefaultShortcutChar = ENTER_CHAR;
-      } else {
-        myDefaultShortcutChar = SPACE_CHAR;
-      }
+      myDefaultShortcutChar = TAB.equals(shortcut) ? TAB_CHAR :
+                              ENTER.equals(shortcut) ? ENTER_CHAR :
+                              CUSTOM.equals(shortcut) ? CUSTOM_CHAR :
+                              SPACE_CHAR;
     }
 
     ExportableTemplateSettings exportableSettings = ServiceManager.getService(ExportableTemplateSettings.class);
@@ -313,13 +312,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   public Element getState()  {
     Element parentNode = new Element("TemplateSettings");
     Element element = new Element(DEFAULT_SHORTCUT);
-    if (myDefaultShortcutChar == TAB_CHAR) {
-      element.setAttribute(SHORTCUT, TAB);
-    } else if (myDefaultShortcutChar == ENTER_CHAR) {
-      element.setAttribute(SHORTCUT, ENTER);
-    } else {
-      element.setAttribute(SHORTCUT, SPACE);
-    }
+    element.setAttribute(SHORTCUT, myDefaultShortcutChar == TAB_CHAR ? TAB :
+                                   myDefaultShortcutChar == ENTER_CHAR ? ENTER :
+                                   myDefaultShortcutChar == CUSTOM_CHAR ? CUSTOM :
+                                   SPACE);
     parentNode.addContent(element);
 
     return parentNode;

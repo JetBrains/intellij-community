@@ -165,6 +165,8 @@ public class DfaVariableValue extends DfaValue {
       return nullability;
     }
 
+    Nullness defaultNullability = var instanceof PsiMember && myFactory.isUnknownMembersAreNullable() ? Nullness.NULLABLE : Nullness.UNKNOWN;
+
     if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
       PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
       if (iteratedValue != null) {
@@ -178,7 +180,7 @@ public class DfaVariableValue extends DfaValue {
     if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers((PsiField)var);
       if (initializers.isEmpty()) {
-        return Nullness.UNKNOWN;
+        return defaultNullability;
       }
 
       boolean hasUnknowns = false;
@@ -204,13 +206,13 @@ public class DfaVariableValue extends DfaValue {
         if (DfaPsiUtil.isInitializedNotNull((PsiField)var)) {
           return Nullness.NOT_NULL;
         }
-        return Nullness.UNKNOWN;
+        return defaultNullability;
       }
       
       return Nullness.NOT_NULL;
     }
 
-    return Nullness.UNKNOWN;
+    return defaultNullability;
   }
 
   public boolean isFlushableByCalls() {

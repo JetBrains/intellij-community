@@ -41,7 +41,10 @@ public class StandardDataFlowRunner extends DataFlowRunner {
   private boolean myIsInMethod = false;
 
   public StandardDataFlowRunner(PsiElement block) {
-    super(block);
+    this (block, false);
+  }
+  public StandardDataFlowRunner(PsiElement block, boolean unknownMembersAreNullable) {
+    super(block, unknownMembersAreNullable);
   }
 
   @Override
