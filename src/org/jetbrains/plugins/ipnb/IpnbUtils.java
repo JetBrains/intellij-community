@@ -151,7 +151,9 @@ public class IpnbUtils {
   }
 
   private static String prepareLatex(@NotNull String string) {
-    return string.replace("\n", " \n");
+    string = string.replace("\n", " \n");
+    string = string.replace("\\cr", "\\\\");
+    return string;
   }
 
 
