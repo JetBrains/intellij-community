@@ -68,7 +68,10 @@ public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFuncti
       @Override
       public Query<PsiFunctionalExpression> compute() {
         if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
-          return INSTANCE.createUniqueResultsQuery(new SearchParameters(psiMethod.getContainingClass(), scope));
+          final PsiClass containingClass = psiMethod.getContainingClass();
+          if (containingClass != null) {
+            return INSTANCE.createUniqueResultsQuery(new SearchParameters(containingClass, scope));
+          }
         }
 
         return EmptyQuery.getEmptyQuery();
