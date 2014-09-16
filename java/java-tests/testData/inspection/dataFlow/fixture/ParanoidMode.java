@@ -7,6 +7,10 @@ class Test {
     <warning descr="Method invocation 'o.hashCode()' may produce 'java.lang.NullPointerException'">o.hashCode()</warning>;
   }
 
+  void parameter(Object o) {
+    <warning descr="Method invocation 'o.hashCode()' may produce 'java.lang.NullPointerException'">o.hashCode()</warning>;
+  }
+
   void callUnknownMethod() {
     <warning descr="Method invocation 'unknownObject().hashCode()' may produce 'java.lang.NullPointerException'">unknownObject().hashCode()</warning>;
   }
