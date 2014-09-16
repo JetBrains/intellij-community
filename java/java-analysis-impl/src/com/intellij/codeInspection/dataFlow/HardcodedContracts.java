@@ -21,6 +21,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,8 +32,8 @@ import static com.intellij.codeInspection.dataFlow.MethodContract.createConstrai
 /**
  * @author peter
  */
-class HardcodedContracts {
-  static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @NotNull PsiMethodCallExpression call) {
+public class HardcodedContracts {
+  public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
     if (owner == null) return Collections.emptyList();
 
@@ -92,8 +93,8 @@ class HardcodedContracts {
   }
 
   private static List<MethodContract> handleTestFrameworks(int paramCount, String className, String methodName,
-                                                           @NotNull PsiMethodCallExpression call) {
-    if ("assertThat".equals(methodName)) {
+                                                           @Nullable PsiMethodCallExpression call) {
+    if ("assertThat".equals(methodName) && call != null) {
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length == paramCount) {
         for (int i = 1; i < args.length; i++) {
