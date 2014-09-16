@@ -22,10 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -36,9 +34,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.DisplayPriority;
-import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
@@ -50,10 +45,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -87,24 +78,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
     super(settings);
 
-    final List<FileTypeIndentOptionsProvider> indentOptionsProviders =
-      Arrays.asList(Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME));
-    Collections.sort(indentOptionsProviders, new Comparator<FileTypeIndentOptionsProvider>() {
-      @Override
-      public int compare(FileTypeIndentOptionsProvider p1, FileTypeIndentOptionsProvider p2) {
-        Language lang1 = getLanguage(p1.getFileType());
-        if (lang1 == null) return -1;
-        Language lang2 = getLanguage(p2.getFileType());
-        if (lang2 == null) return 1;
-        DisplayPriority priority1 = LanguageCodeStyleSettingsProvider.getDisplayPriority(lang1);
-        DisplayPriority priority2 = LanguageCodeStyleSettingsProvider.getDisplayPriority(lang2);
-        if (priority1.equals(priority2)) {
-          return lang1.getDisplayName().compareTo(lang2.getDisplayName());
-        }
-        return priority1.compareTo(priority2);
-      }
-    });
-
     myLineSeparatorCombo.addItem(SYSTEM_DEPENDANT_STRING);
     myLineSeparatorCombo.addItem(UNIX_STRING);
     myLineSeparatorCombo.addItem(WINDOWS_STRING);
@@ -131,11 +104,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myScrollPane = new JBScrollPane(myPanel,
                                     ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myScrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
-  }
-
-  @Nullable
-  private static Language getLanguage(FileType fileType) {
-    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 
   @Override
@@ -192,11 +160,11 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     }
   }
 
-  private static String getTagText(JTextField field, String defualtValue) {
+  private static String getTagText(JTextField field, String defaultValue) {
     String fieldText = field.getText();
     if (StringUtil.isEmpty(field.getText())) {
-      field.setText(defualtValue);
-      return defualtValue;
+      field.setText(defaultValue);
+      return defaultValue;
     }
     return fieldText;
   }
