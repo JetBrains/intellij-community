@@ -8,6 +8,12 @@ import org.eclipse.jgit.lib.Repository
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.settingsRepository.Credentials
+import org.jetbrains.settingsRepository.nullize
+import org.jetbrains.settingsRepository.isOSXCredentialsStoreSupported
+import org.jetbrains.settingsRepository.isFulfilled
+import org.jetbrains.settingsRepository.showAuthenticationForm
+import org.jetbrains.settingsRepository.CredentialsStore
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
   private var credentialsFromGit: Credentials? = null

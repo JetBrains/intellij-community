@@ -10,6 +10,8 @@ import org.jetbrains.jgit.dirCache.PathEdit
 import org.eclipse.jgit.merge.MergeStrategy
 import org.jetbrains.jgit.dirCache.DeleteFile
 import java.io.File
+import org.jetbrains.settingsRepository.LOG
+import org.jetbrains.settingsRepository.removeFileAndParentDirectoryIfEmpty
 
 class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset(toTheirs: Boolean) {

@@ -23,11 +23,11 @@ import com.intellij.util.SingleAlarm
 
 import java.io.File
 import java.io.InputStream
-import org.jetbrains.plugins.settingsRepository.git.GitRepositoryManager
+import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import com.intellij.openapi.util.AtomicNotNullLazyValue
 import com.intellij.openapi.util.SystemInfo
 import com.mcdermottroe.apple.OSXKeychain
-import org.jetbrains.plugins.settingsRepository.git.GitRepositoryService
+import org.jetbrains.settingsRepository.git.GitRepositoryService
 
 val PLUGIN_NAME: String = "Settings Repository"
 

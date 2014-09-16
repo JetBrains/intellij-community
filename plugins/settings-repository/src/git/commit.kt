@@ -5,6 +5,8 @@ import org.eclipse.jgit.lib.IndexDiff
 import org.eclipse.jgit.lib.ProgressMonitor
 import org.jetbrains.jgit.dirCache.PathEdit
 import com.intellij.util.SmartList
+import org.jetbrains.settingsRepository.LOG
+import org.jetbrains.settingsRepository.PROJECTS_DIR_NAME
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   val index = manager.repository.computeIndexDiff()

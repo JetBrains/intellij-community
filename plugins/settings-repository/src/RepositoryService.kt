@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.Messages
 import java.io.IOException
 import org.eclipse.jgit.transport.URIish
 import com.intellij.util.io.URLUtil
+import org.jetbrains.settingsRepository.git.createBareRepository
 
 public trait RepositoryService {
   public fun checkUrl(uriString: String, messageParent: Container? = null): Boolean {

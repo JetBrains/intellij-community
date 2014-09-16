@@ -4,7 +4,7 @@ import org.junit.Test
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.CredentialItem
 import com.intellij.openapi.util.NotNullLazyValue
-import org.jetbrains.plugins.settingsRepository.git.JGitCredentialsProvider
+import org.jetbrains.settingsRepository.git.JGitCredentialsProvider
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 
 import org.hamcrest.CoreMatchers.*

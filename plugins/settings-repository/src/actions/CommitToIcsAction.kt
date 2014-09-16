@@ -1,159 +1,156 @@
-package org.jetbrains.plugins.settingsRepository.actions;
+package org.jetbrains.settingsRepository.actions
 
-class CommitToIcsAction extends CommonCheckinFilesAction {
-  static class IcsBeforeCommitDialogHandler extends CheckinHandlerFactory {
-    private static final BeforeCheckinDialogHandler BEFORE_CHECKIN_DIALOG_HANDLER = new BeforeCheckinDialogHandler() {
-      @Override
-      public boolean beforeCommitDialogShown(@NotNull Project project,
-                                             @NotNull List<Change> changes,
-                                             @NotNull Iterable<CommitExecutor> executors,
-                                             boolean showVcsCommit) {
-        ProjectChangeCollectConsumer collectConsumer = new ProjectChangeCollectConsumer(project);
-        collectProjectChanges(changes, collectConsumer);
-        showDialog(project, collectConsumer, null);
-        return true;
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.actions.CommonCheckinFilesAction
+import com.intellij.openapi.vcs.actions.VcsContext
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler
+import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.SmartList
+import org.jetbrains.settingsRepository.CommitToIcsDialog
+import org.jetbrains.settingsRepository.IcsBundle
+import org.jetbrains.settingsRepository.IcsManager
+import org.jetbrains.settingsRepository.ProjectId
+import java.util.UUID
+
+class CommitToIcsAction : CommonCheckinFilesAction() {
+  class IcsBeforeCommitDialogHandler : CheckinHandlerFactory() {
+    override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+      return CheckinHandler.DUMMY
+    }
+
+    override fun createSystemReadyHandler(project: Project): BeforeCheckinDialogHandler? {
+      return BEFORE_CHECKIN_DIALOG_HANDLER
+    }
+
+    class object {
+      private val BEFORE_CHECKIN_DIALOG_HANDLER = object : BeforeCheckinDialogHandler() {
+        override fun beforeCommitDialogShown(project: Project, changes: List<Change>, executors: Iterable<CommitExecutor>, showVcsCommit: Boolean): Boolean {
+          val collectConsumer = ProjectChangeCollectConsumer(project)
+          collectProjectChanges(changes, collectConsumer)
+          showDialog(project, collectConsumer, null)
+          return true
+        }
       }
-    };
-
-    @NotNull
-    @Override
-    public CheckinHandler createHandler(CheckinProjectPanel panel, CommitContext commitContext) {
-      return CheckinHandler.DUMMY;
-    }
-
-    @Override
-    public BeforeCheckinDialogHandler createSystemReadyHandler(Project project) {
-      return BEFORE_CHECKIN_DIALOG_HANDLER;
     }
   }
 
-  @Override
-  protected String getActionName(VcsContext dataContext) {
-    return IcsBundle.OBJECT$.message("action.CommitToIcs.text");
+  override fun getActionName(dataContext: VcsContext) = IcsBundle.message("action.CommitToIcs.text")
+
+  override fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean {
+    val project = dataContext.getProject()
+    return project is ProjectEx && (project as ProjectEx).getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory() && isProjectConfigFile(file, dataContext.getProject()!!)
   }
 
-  @Override
-  protected boolean isApplicableRoot(@NotNull VirtualFile file, @NotNull FileStatus status, @NotNull VcsContext dataContext) {
-    Project project = dataContext.getProject();
-    return project instanceof ProjectEx && ((ProjectEx)project).getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED &&
-           super.isApplicableRoot(file, status, dataContext) &&
-           !file.isDirectory() &&
-           isProjectConfigFile(file, dataContext.getProject());
-  }
+  override fun prepareRootsForCommit(roots: Array<out FilePath>, project: Project) = roots as Array<FilePath>
 
-  private static boolean isProjectConfigFile(@Nullable VirtualFile file, Project project) {
-    if (file == null) {
-      return false;
-    }
-
-    VirtualFile projectFile = project.getProjectFile();
-    VirtualFile projectConfigDir = projectFile == null ? null : projectFile.getParent();
-    return projectConfigDir != null && VfsUtilCore.isAncestor(projectConfigDir, file, true);
-  }
-
-  @Override
-  protected FilePath[] prepareRootsForCommit(FilePath[] roots, Project project) {
-    return null;
-  }
-
-  @Override
-  protected void performCheckIn(VcsContext context, Project project, FilePath[] roots) {
-    String projectId = getProjectId(project);
+  override fun performCheckIn(context: VcsContext, project: Project, roots: Array<out FilePath>) {
+    val projectId = getProjectId(project)
     if (projectId == null) {
-      return;
+      return
     }
 
-    Change[] changes = context.getSelectedChanges();
-    ProjectChangeCollectConsumer collectConsumer = new ProjectChangeCollectConsumer(project);
-    if (changes != null && changes.length > 0) {
-      for (Change change : changes) {
-        collectConsumer.consume(change);
+    val changes = context.getSelectedChanges()
+    val collectConsumer = ProjectChangeCollectConsumer(project)
+    if (changes != null && changes.size > 0) {
+      for (change in changes) {
+        collectConsumer.consume(change)
       }
     }
     else {
-      ChangeListManager manager = ChangeListManager.getInstance(project);
-      FilePath[] paths = getRoots(context);
-      for (FilePath path : paths) {
-        collectProjectChanges(manager.getChangesIn(path), collectConsumer);
+      val manager = ChangeListManager.getInstance(project)
+      for (path in getRoots(context)) {
+        collectProjectChanges(manager.getChangesIn(path), collectConsumer)
       }
     }
 
-    showDialog(project, collectConsumer, projectId);
+    showDialog(project, collectConsumer, projectId)
   }
+}
 
-  @Nullable
-  private static String getProjectId(@NotNull Project project) {
-    ProjectId projectId = ServiceManager.getService(project, ProjectId.class);
-    if (projectId.uid == null) {
-      if (MessageDialogBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(
-        new DialogWrapper.PropertyDoNotAskOption("") {
-          @Override
-          public void setToBeShown(boolean value, int exitCode) {
-            IcsManager.OBJECT$.getInstance().getSettings().setDoNoAskMapProject(!value);
-          }
+private class ProjectChangeCollectConsumer(private val project: Project) {
+  private var projectChanges: MutableList<Change>? = null
 
-          @Override
-          public boolean isToBeShown() {
-            return !IcsManager.OBJECT$.getInstance().getSettings().getDoNoAskMapProject();
-          }
-
-          @Override
-          public boolean canBeHidden() {
-            return true;
-          }
-        }).show() == Messages.YES) {
-        projectId.uid = UUID.randomUUID().toString();
+  fun consume(change: Change) {
+    if (isProjectConfigFile(change.getVirtualFile(), project)) {
+      if (projectChanges == null) {
+        projectChanges = SmartList<Change>()
       }
+      projectChanges!!.add(change)
     }
-
-    return projectId.uid;
   }
 
-  private static void showDialog(Project project, ProjectChangeCollectConsumer collectConsumer, String projectId) {
-    if (!collectConsumer.hasResult()) {
-      return;
-    }
+  fun getResult() = if (projectChanges == null) listOf<Change>() else projectChanges!!
 
-    if (projectId == null) {
-      projectId = getProjectId(project);
-      if (projectId == null) {
-        return;
+  fun hasResult() = projectChanges != null
+}
+
+private fun getProjectId(project: Project): String? {
+  val projectId = ServiceManager.getService<ProjectId>(project, javaClass<ProjectId>())!!
+  if (projectId.uid == null) {
+    if (MessageDialogBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(object : DialogWrapper.PropertyDoNotAskOption("") {
+      override fun setToBeShown(value: Boolean, exitCode: Int) {
+        IcsManager.getInstance().getSettings().doNoAskMapProject = !value
       }
-    }
 
-    new CommitToIcsDialog(project, projectId, collectConsumer.getResult()).show();
-  }
-
-  private static void collectProjectChanges(Collection<Change> changes, ProjectChangeCollectConsumer collectConsumer) {
-    for (Change change : changes) {
-      collectConsumer.consume(change);
-    }
-  }
-
-  private static final class ProjectChangeCollectConsumer implements Consumer<Change> {
-    private final Project project;
-    private List<Change> projectChanges;
-
-    private ProjectChangeCollectConsumer(Project project) {
-      this.project = project;
-    }
-
-    @Override
-    public void consume(Change change) {
-      if (isProjectConfigFile(change.getVirtualFile(), project)) {
-        if (projectChanges == null) {
-          projectChanges = new SmartList<Change>();
-        }
-        projectChanges.add(change);
+      override fun isToBeShown(): Boolean {
+        return !IcsManager.getInstance().getSettings().doNoAskMapProject
       }
-    }
 
-    public List<Change> getResult() {
-      return projectChanges == null ? Collections.<Change>emptyList() : projectChanges;
-    }
-
-    public boolean hasResult() {
-      return projectChanges != null;
+      override fun canBeHidden(): Boolean {
+        return true
+      }
+    }).show() == Messages.YES) {
+      projectId.uid = UUID.randomUUID().toString()
     }
   }
+
+  return projectId.uid
+}
+
+private fun showDialog(project: Project, collectConsumer: ProjectChangeCollectConsumer, projectId: String?) {
+  if (!collectConsumer.hasResult()) {
+    return
+  }
+
+  var effectiveProjectId = projectId
+  if (effectiveProjectId == null) {
+    effectiveProjectId = getProjectId(project)
+    if (effectiveProjectId == null) {
+      return
+    }
+  }
+
+  CommitToIcsDialog(project, effectiveProjectId, collectConsumer.getResult()).show()
+}
+
+private fun collectProjectChanges(changes: Collection<Change>, collectConsumer: ProjectChangeCollectConsumer) {
+  for (change in changes) {
+    collectConsumer.consume(change)
+  }
+}
+
+private fun isProjectConfigFile(file: VirtualFile?, project: Project): Boolean {
+  if (file == null) {
+    return false
+  }
+
+  val projectFile = project.getProjectFile()
+  val projectConfigDir = projectFile?.getParent()
+  return projectConfigDir != null && VfsUtilCore.isAncestor(projectConfigDir, file, true)
 }

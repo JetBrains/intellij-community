@@ -5,6 +5,8 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.execution.process.ProcessNotCreatedException
 import org.eclipse.jgit.lib.Repository
+import org.jetbrains.settingsRepository.LOG
+import org.jetbrains.settingsRepository.Credentials
 
 private var canUseGitExe = true
 

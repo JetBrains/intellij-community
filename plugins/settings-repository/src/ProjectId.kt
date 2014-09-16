@@ -1,18 +1,21 @@
-package org.jetbrains.plugins.settingsRepository;
+package org.jetbrains.settingsRepository
 
-@State(name = "IcsProjectId", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
-public class ProjectId implements PersistentStateComponent<ProjectId> {
-  public String uid;
-  public String path;
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.util.xmlb.XmlSerializerUtil
 
-  @Nullable
-  @Override
-  public ProjectId getState() {
-    return this;
+State(name = "IcsProjectId", storages = array(Storage(file = StoragePathMacros.WORKSPACE_FILE)))
+class ProjectId : PersistentStateComponent<ProjectId> {
+  var uid: String? = null
+  var path: String? = null
+
+  override fun getState(): ProjectId? {
+    return this
   }
 
-  @Override
-  public void loadState(ProjectId state) {
-    XmlSerializerUtil.copyBean(state, this);
+  override fun loadState(state: ProjectId) {
+    XmlSerializerUtil.copyBean<ProjectId>(state, this)
   }
 }

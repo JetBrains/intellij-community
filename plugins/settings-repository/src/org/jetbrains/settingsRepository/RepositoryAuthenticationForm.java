@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.settingsRepository;
+package org.jetbrains.settingsRepository;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;

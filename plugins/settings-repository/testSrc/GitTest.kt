@@ -33,6 +33,11 @@ import org.hamcrest.Matchers.contains
 import org.hamcrest.Matchers.empty
 import org.junit.Assert.assertThat
 import com.intellij.openapi.util.io.FileUtilRt
+import org.jetbrains.settingsRepository.git.computeIndexDiff
+import org.jetbrains.settingsRepository.git.GitRepositoryManager
+import org.jetbrains.settingsRepository.git.resetHard
+import org.jetbrains.settingsRepository.git.edit
+import org.jetbrains.settingsRepository.git.AddFile
 
 class GitTest {
   data class FileInfo (val name: String, val data: ByteArray)

@@ -17,6 +17,10 @@ import org.eclipse.jgit.api.Git
 import org.jetbrains.annotations.TestOnly
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.application.ApplicationManager
+import org.jetbrains.settingsRepository.RepositoryService
+import org.jetbrains.settingsRepository.CredentialsStore
+import org.jetbrains.settingsRepository.BaseRepositoryManager
+import org.jetbrains.settingsRepository.LOG
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {

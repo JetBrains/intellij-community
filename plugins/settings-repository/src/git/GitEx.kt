@@ -15,6 +15,7 @@ import org.jetbrains.jgit.dirCache.DirCacheEditor
 import org.jetbrains.jgit.dirCache.DeleteFile
 import org.jetbrains.jgit.dirCache.DeleteDirectory
 import org.eclipse.jgit.api.ResetCommand
+import org.jetbrains.settingsRepository.LOG
 
 fun Repository.disableAutoCrLf() {
   val config = getConfig()

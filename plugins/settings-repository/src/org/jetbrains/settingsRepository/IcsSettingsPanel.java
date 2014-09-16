@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.settingsRepository;
+package org.jetbrains.settingsRepository;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -13,7 +13,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.settingsRepository.actions.ActionsPackage;
+import org.jetbrains.settingsRepository.actions.ActionsPackage;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

@@ -4,7 +4,11 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.settingsRepository.IcsSettingsPanel
+import org.jetbrains.settingsRepository.IcsSettingsPanel
+import org.jetbrains.settingsRepository.PLUGIN_NAME
+import org.jetbrains.settingsRepository.SyncType
+import org.jetbrains.settingsRepository.IcsManager
+import org.jetbrains.settingsRepository.IcsBundle
 
 val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
 

@@ -24,6 +24,8 @@ import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.merge.SquashMessageFormatter
 import org.eclipse.jgit.merge.MergeMessageFormatter
 import org.eclipse.jgit.merge.ResolveMerger
+import org.jetbrains.settingsRepository.LOG
+import org.jetbrains.settingsRepository.AuthenticationException
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
   val message = e.getMessage()!!
