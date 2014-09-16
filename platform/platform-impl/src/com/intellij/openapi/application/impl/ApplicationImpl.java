@@ -493,8 +493,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   public void load(@NotNull String configPath, @NotNull String optionsPath) throws IOException {
-    getStateStore().setOptionsPath(optionsPath);
-    getStateStore().setConfigPath(configPath);
+    IApplicationStore store = getStateStore();
+    store.setOptionsPath(optionsPath);
+    store.setConfigPath(configPath);
 
     myIsFiringLoadingEvent = true;
     try {
@@ -506,7 +507,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     HeavyProcessLatch.INSTANCE.processStarted();
     try {
-      getStateStore().load();
+      store.load();
     }
     catch (StateStorageException e) {
       throw new IOException(e.getMessage());
