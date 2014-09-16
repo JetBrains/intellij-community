@@ -48,7 +48,7 @@ public class PsiMethodReferenceUtil {
       LOG.assertTrue(containingClass != null);
       PsiSubstitutor subst = result.getSubstitutor();
       PsiClass qContainingClass = getQualifierResolveResult(expression).getContainingClass();
-      if (qContainingClass != null && InheritanceUtil.isInheritorOrSelf(qContainingClass, containingClass, true)) {
+      if (qContainingClass != null && isReceiverType(functionalInterfaceType, containingClass, (PsiMethod)resolve)) {
         subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
         LOG.assertTrue(subst != null);
       }
@@ -205,9 +205,11 @@ public class PsiMethodReferenceUtil {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(receiverType);
     final PsiClass receiverClass = resolveResult.getElement();
     if (receiverClass != null && isReceiverType(receiverClass, containingClass)) {
-      LOG.assertTrue(containingClass != null);
-      return emptyOrRaw(containingClass, psiSubstitutor) ||
-             TypeConversionUtil.isAssignable(JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, psiSubstitutor), receiverType);
+      if (emptyOrRaw(containingClass, psiSubstitutor)) {
+        return true;
+      }
+      final PsiSubstitutor derivedSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, receiverClass, psiSubstitutor);
+      return derivedSubstitutor != null && TypeConversionUtil.isAssignable(JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, derivedSubstitutor), receiverType);
     }
     return false;
   }
