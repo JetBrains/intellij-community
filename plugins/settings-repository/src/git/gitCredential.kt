@@ -1,12 +1,10 @@
-package org.jetbrains.plugins.settingsRepository.git
+package org.jetbrains.settingsRepository.git
 
 import org.eclipse.jgit.transport.URIish
-import org.jetbrains.plugins.settingsRepository.Credentials
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.execution.process.ProcessNotCreatedException
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.plugins.settingsRepository.LOG
 
 private var canUseGitExe = true
 

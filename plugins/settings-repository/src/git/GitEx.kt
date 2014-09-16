@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.settingsRepository.git
+package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.dircache.*
@@ -8,7 +8,6 @@ import org.eclipse.jgit.treewalk.FileTreeIterator
 
 import java.io.File
 import java.io.IOException
-import org.jetbrains.plugins.settingsRepository.LOG
 import java.io.FileInputStream
 import java.util.Collections
 import org.jetbrains.jgit.dirCache.PathEdit

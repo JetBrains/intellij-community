@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.settingsRepository
+package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.progress.ProgressIndicator
 

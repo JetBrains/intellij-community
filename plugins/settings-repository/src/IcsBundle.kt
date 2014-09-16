@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.settingsRepository
+package org.jetbrains.settingsRepository
 
 import com.intellij.CommonBundle
 import org.jetbrains.annotations.PropertyKey

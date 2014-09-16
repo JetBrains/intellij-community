@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.settingsRepository
+package org.jetbrains.settingsRepository
 
 import org.junit.Test
 import org.eclipse.jgit.transport.URIish

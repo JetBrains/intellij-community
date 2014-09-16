@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.settingsRepository.git
+package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.progress.ProgressIndicator
@@ -10,14 +10,10 @@ import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.*
-import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager
-import org.jetbrains.plugins.settingsRepository.CredentialsStore
 
 import java.io.File
 import java.io.IOException
-import org.jetbrains.plugins.settingsRepository.LOG
 import org.eclipse.jgit.api.Git
-import org.jetbrains.plugins.settingsRepository.RepositoryService
 import org.jetbrains.annotations.TestOnly
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.application.ApplicationManager

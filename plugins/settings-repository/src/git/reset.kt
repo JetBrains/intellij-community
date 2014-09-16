@@ -1,10 +1,6 @@
-package org.jetbrains.plugins.settingsRepository.git
+package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.plugins.settingsRepository.LOG
-import org.eclipse.jgit.treewalk.AbstractTreeIterator
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.lib.MutableObjectId
 import org.eclipse.jgit.lib.AbbreviatedObjectId
@@ -14,10 +10,6 @@ import org.jetbrains.jgit.dirCache.PathEdit
 import org.eclipse.jgit.merge.MergeStrategy
 import org.jetbrains.jgit.dirCache.DeleteFile
 import java.io.File
-import org.jetbrains.plugins.settingsRepository.removeFileAndParentDirectoryIfEmpty
-import org.eclipse.jgit.lib.Ref
-import org.eclipse.jgit.api.MergeResult.MergeStatus
-import org.eclipse.jgit.api.ResetCommand
 
 class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset(toTheirs: Boolean) {

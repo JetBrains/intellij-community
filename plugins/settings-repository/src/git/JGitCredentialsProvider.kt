@@ -1,16 +1,10 @@
-package org.jetbrains.plugins.settingsRepository.git
+package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.util.NotNullLazyValue
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.URIish
-import org.jetbrains.plugins.settingsRepository.CredentialsStore
-import org.jetbrains.plugins.settingsRepository.showAuthenticationForm
-import org.jetbrains.plugins.settingsRepository.Credentials
-import org.jetbrains.plugins.settingsRepository.nullize
-import org.jetbrains.plugins.settingsRepository.isFulfilled
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.plugins.settingsRepository.isOSXCredentialsStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ui.UIUtil

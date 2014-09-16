@@ -1,12 +1,10 @@
-package org.jetbrains.plugins.settingsRepository.git
+package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.lib.IndexDiff
 import org.eclipse.jgit.lib.ProgressMonitor
-import org.jetbrains.plugins.settingsRepository.LOG
 import org.jetbrains.jgit.dirCache.PathEdit
 import com.intellij.util.SmartList
-import org.jetbrains.plugins.settingsRepository.PROJECTS_DIR_NAME
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   val index = manager.repository.computeIndexDiff()

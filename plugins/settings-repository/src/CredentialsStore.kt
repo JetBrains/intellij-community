@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.settingsRepository
+package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.transport.URIish

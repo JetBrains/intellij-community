@@ -1,10 +1,9 @@
-package org.jetbrains.plugins.settingsRepository
+package org.jetbrains.settingsRepository
 
 import java.awt.Container
 import org.eclipse.jgit.lib.Constants
 import java.io.File
 import com.intellij.openapi.ui.Messages
-import org.jetbrains.plugins.settingsRepository.git.createBareRepository
 import java.io.IOException
 import org.eclipse.jgit.transport.URIish
 import com.intellij.util.io.URLUtil

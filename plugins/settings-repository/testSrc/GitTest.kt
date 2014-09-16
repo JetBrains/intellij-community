@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.settingsRepository
+package org.jetbrains.settingsRepository
 
 import com.intellij.mock.MockVirtualFileSystem
 import com.intellij.openapi.application.ApplicationManager
@@ -20,7 +20,6 @@ import com.intellij.util.PathUtilRt
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.plugins.settingsRepository.git.*
 import org.junit.*
 
 import javax.swing.*

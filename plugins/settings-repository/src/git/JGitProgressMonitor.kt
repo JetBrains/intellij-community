@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.settingsRepository.git
+package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.lib.ProgressMonitor

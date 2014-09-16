@@ -1,8 +1,6 @@
-package org.jetbrains.plugins.settingsRepository.git
+package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.text.StringUtil
-import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode
 import org.eclipse.jgit.api.errors.CheckoutConflictException
 import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException
@@ -17,18 +15,15 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.RevWalkUtils
 import org.eclipse.jgit.transport.*
 import org.eclipse.jgit.treewalk.FileTreeIterator
-import org.jetbrains.plugins.settingsRepository.AuthenticationException
 
 import java.io.IOException
 import java.text.MessageFormat
 
 import org.eclipse.jgit.api.MergeResult
-import org.eclipse.jgit.merge.MergeConfig
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.merge.SquashMessageFormatter
 import org.eclipse.jgit.merge.MergeMessageFormatter
 import org.eclipse.jgit.merge.ResolveMerger
-import org.jetbrains.plugins.settingsRepository.LOG
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
   val message = e.getMessage()!!
