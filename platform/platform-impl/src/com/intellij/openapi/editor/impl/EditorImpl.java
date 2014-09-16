@@ -197,7 +197,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final CaretModelImpl myCaretModel;
   @NotNull private final SoftWrapModelImpl mySoftWrapModel;
 
-  @NotNull private static final RepaintCursorCommand ourCaretBlinkingCommand;
+  @NotNull private static final RepaintCursorCommand ourCaretBlinkingCommand = new RepaintCursorCommand();
   private                       MessageBusConnection myConnection;
 
   private           int        myMouseSelectionState = MOUSE_SELECTION_STATE_NONE;
@@ -308,7 +308,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private CaretImpl myPrimaryCaret;
 
   static {
-    ourCaretBlinkingCommand = new RepaintCursorCommand();
     ourCaretBlinkingCommand.start();
   }
 
@@ -749,7 +748,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void initTabPainter() {
     myTabPainter = new ArrowPainter(
       ColorProvider.byColorsScheme(myScheme, EditorColors.WHITESPACES_COLOR),
-      new Computable.PredefinedValueComputable(EditorUtil.getSpaceWidth(Font.PLAIN, this)),
+      new Computable.PredefinedValueComputable<Integer>(EditorUtil.getSpaceWidth(Font.PLAIN, this)),
       new Computable<Integer>() {
         @Override
         public Integer compute() {
@@ -1204,7 +1203,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           else {
             column++;
           }
-          break outer;
+          break;
         }
         else {
           CharSequence softWrapText = softWrap.getText();
@@ -1225,7 +1224,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           x += charWidth;
           if (x >= px) {
             onSoftWrapDrawing = true;
-            break outer;
+            break;
           }
           column++;
           activeSoftWrapProcessed = true;
@@ -1782,13 +1781,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return StringUtil.countNewLines(c);
   }
 
+  private boolean updatingSize;
   private void updateGutterSize() {
-    LaterInvocator.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myGutterComponent.updateSize();
-      }
-    });
+    assertIsDispatchThread();
+    if (!updatingSize) {
+      updatingSize = true;
+      LaterInvocator.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            myGutterComponent.updateSize();
+          }
+          finally {
+            updatingSize = false;
+          }
+        }
+      });
+    }
   }
 
   void validateSize() {
@@ -2775,7 +2784,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               if (extensions != null && !extensions.isEmpty()) {
                 for (LineExtensionInfo info : extensions) {
                   final String text = info.getText();
-                  additionalText += text;
                   drawStringWithSoftWraps(g, text, 0, text.length(), position, clip,
                                           info.getEffectColor() == null ? effectColor : info.getEffectColor(),
                                           info.getEffectType() == null ? effectType : info.getEffectType(),
@@ -5003,7 +5011,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myScheme;
   }
 
-  void assertIsDispatchThread() {
+  static void assertIsDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
