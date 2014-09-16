@@ -77,7 +77,7 @@ public abstract class BaseMergeTask extends TaskDescriptor {
     MergerFactory factory = new ChangeListsMergerFactory(lists) {
       @Override
       public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
-        return new GroupMerger(vcs, lists, target, handler, currentBranchUrl, branchName, false, false, false);
+        return new Merger(vcs, lists, target, handler, currentBranchUrl, branchName, false, false, true);
       }
     };
     context.next(new LocalChangesPromptTask(myMergeContext, myInteraction, false, lists, copyPoint),

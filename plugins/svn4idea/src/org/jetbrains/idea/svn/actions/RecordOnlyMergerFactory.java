@@ -38,6 +38,6 @@ public class RecordOnlyMergerFactory extends ChangeListsMergerFactory {
                               final UpdateEventHandler handler,
                               final SVNURL currentBranchUrl,
                               String branchName) {
-    return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName, true, myUndo);
+    return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName, true, myUndo, false);
   }
 }

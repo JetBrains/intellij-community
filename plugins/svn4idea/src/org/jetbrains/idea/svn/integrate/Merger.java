@@ -20,8 +20,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -36,17 +36,13 @@ import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
   @Nullable protected final ProgressTracker myHandler;
-  protected int myCount;
   private final ProgressIndicator myProgressIndicator;
-  protected CommittedChangeList myLatestProcessed;
   protected final SVNURL myCurrentBranchUrl;
   private final StringBuilder myCommitMessage;
   protected final SvnConfiguration mySvnConfig;
@@ -55,6 +51,9 @@ public class Merger implements IMerger {
   private final String myBranchName;
   private final boolean myRecordOnly;
   private final boolean myInvertRange;
+  private final boolean myGroupSequentialChangeLists;
+
+  private MergeChunk myMergeChunk;
 
   public Merger(final SvnVcs vcs,
                 final List<CommittedChangeList> changeLists,
@@ -62,7 +61,7 @@ public class Merger implements IMerger {
                 final UpdateEventHandler handler,
                 final SVNURL currentBranchUrl,
                 String branchName) {
-    this(vcs, changeLists, target, handler, currentBranchUrl, branchName, false, false);
+    this(vcs, changeLists, target, handler, currentBranchUrl, branchName, false, false, false);
   }
 
   public Merger(final SvnVcs vcs,
@@ -72,81 +71,109 @@ public class Merger implements IMerger {
                 final SVNURL currentBranchUrl,
                 String branchName,
                 boolean recordOnly,
-                boolean invertRange) {
+                boolean invertRange,
+                boolean groupSequentialChangeLists) {
     myBranchName = branchName;
     myVcs = vcs;
     myProject = vcs.getProject();
     mySvnConfig = SvnConfiguration.getInstance(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
-    myChangeLists = changeLists;
-
-    Collections.sort(myChangeLists, ByNumberChangeListComparator.getInstance());
-
+    myChangeLists = ContainerUtil.sorted(changeLists, ByNumberChangeListComparator.getInstance());
     myTarget = target;
-    myCount = 0;
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     myHandler = handler;
     myCommitMessage = new StringBuilder();
     myRecordOnly = recordOnly;
     myInvertRange = invertRange;
+    myGroupSequentialChangeLists = groupSequentialChangeLists;
   }
 
   public boolean hasNext() {
-    return myCount < myChangeLists.size();
+    return isInBounds(getNextChunkStart());
   }
 
   public void mergeNext() throws VcsException {
-    myLatestProcessed = myChangeLists.get(myCount);
-    ++myCount;
+    myMergeChunk = getNextChunk();
 
-    if (myProgressIndicator != null) {
-      myProgressIndicator.setText2(SvnBundle.message("action.Subversion.integrate.changes.progress.integrating.details.text",
-                                                     myLatestProcessed.getNumber()));
-    }
+    assert myMergeChunk != null;
+
+    setMergeIndicator();
     doMerge();
-
     appendComment();
   }
 
-  private void appendComment() {
-    if (myCommitMessage.length() == 0) {
-      myCommitMessage.append("Merged from ").append(myBranchName);
-    }
-    final String nextComment = myLatestProcessed.getComment();
-    if (nextComment.trim().length() > 0) {
-      myCommitMessage.append('\n').append(nextComment).append(" [from revision ").append(myLatestProcessed.getNumber()).append("]");
+  private void setMergeIndicator() {
+    if (myProgressIndicator != null) {
+      // TODO: Use values from SvnBundle
+      myProgressIndicator.setText2("Merging changelist(s) " + myMergeChunk);
     }
   }
 
-  protected SVNRevisionRange createRange() {
-    SVNRevision start = SVNRevision.create(myLatestProcessed.getNumber() - 1);
-    SVNRevision end = SVNRevision.create(myLatestProcessed.getNumber());
+  private int getNextChunkStart() {
+    return myMergeChunk == null ? 0 : myMergeChunk.nextChunkStart();
+  }
 
-    return myInvertRange ? new SVNRevisionRange(end, start) : new SVNRevisionRange(start, end);
+  @Nullable
+  private MergeChunk getNextChunk() {
+    int start = getNextChunkStart();
+    int size = 0;
+
+    if (isInBounds(start)) {
+      size = myGroupSequentialChangeLists ? getGroupSize(start) : 1;
+    }
+
+    return size > 0 ? new MergeChunk(start, size) : null;
+  }
+
+  private int getGroupSize(int start) {
+    assert isInBounds(start);
+
+    int size = 1;
+
+    while (isInBounds(start + size) && areSequential(listAt(start + size - 1), listAt(start + size))) {
+      size++;
+    }
+
+    return size;
+  }
+
+  private void appendComment() {
+    appendComment(myCommitMessage, myBranchName, myMergeChunk.changeLists());
+  }
+
+  public static void appendComment(@NotNull StringBuilder builder,
+                                   @NotNull String branch,
+                                   @NotNull Iterable<CommittedChangeList> changeLists) {
+    if (builder.length() == 0) {
+      builder.append("Merged from ").append(branch);
+    }
+    for (CommittedChangeList list : changeLists) {
+      builder.append('\n').append(list.getComment().trim()).append(" [from revision ").append(list.getNumber()).append("]");
+    }
   }
 
   protected void doMerge() throws VcsException {
     SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
 
-    client.merge(source, createRange(), myTarget, Depth.INFINITY, mySvnConfig.isMergeDryRun(), myRecordOnly, true,
+    client.merge(source, myMergeChunk.revisionRange(), myTarget, Depth.INFINITY, mySvnConfig.isMergeDryRun(), myRecordOnly, true,
                  mySvnConfig.getMergeOptions(), myHandler);
-  }
-
-  @NonNls
-  private List<CommittedChangeList> getTail() {
-    return (myCount < myChangeLists.size()) ?
-           new ArrayList<CommittedChangeList>(myChangeLists.subList(myCount, myChangeLists.size())) :
-           Collections.<CommittedChangeList>emptyList();
   }
 
   @Nullable
   public String getInfo() {
     String result = null;
 
-    if (myLatestProcessed != null) {
-      result = SvnBundle.message("action.Subversion.integrate.changes.warning.failed.list.text", myLatestProcessed.getNumber(),
-                                 myLatestProcessed.getComment().replace('\n', '|'));
+    if (myMergeChunk != null) {
+      // TODO: Use values from SvnBundle
+      StringBuilder builder = new StringBuilder("Changelist(s) :");
+
+      for (CommittedChangeList list : myMergeChunk.changeLists()) {
+        final String nextComment = list.getComment().trim().replace('\n', '|');
+        builder.append("\n").append(list.getNumber()).append(" (").append(nextComment).append(")");
+      }
+      builder.append(" merging faced problems");
+      result = builder.toString();
     }
 
     return result;
@@ -154,7 +181,7 @@ public class Merger implements IMerger {
 
   @Nullable
   public String getSkipped() {
-    return getSkippedMessage(getTail());
+    return getSkippedMessage(myMergeChunk != null ? myMergeChunk.chunkAndAfterLists() : ContainerUtil.<CommittedChangeList>emptyList());
   }
 
   @Nullable
@@ -187,8 +214,17 @@ public class Merger implements IMerger {
   }
 
   public void afterProcessing() {
-    myProject.getMessageBus().syncPublisher(COMMITTED_CHANGES_MERGED_STATE)
-      .event(new ArrayList<CommittedChangeList>(myChangeLists.subList(0, myCount)));
+    // TODO: Previous logic (previously used GroupMerger) that was applied when grouping was enabled contained its own Topic with no
+    // TODO: subscribers - so currently message is sent only when grouping is disabled.
+    // TODO: Check if corresponding event is also necessary when grouping is enabled and update subscribers correspondingly.
+    if (!myGroupSequentialChangeLists) {
+      List<CommittedChangeList> processed =
+        myMergeChunk != null
+        ? ContainerUtil.newArrayList(myMergeChunk.chunkAndBeforeLists())
+        : ContainerUtil.<CommittedChangeList>emptyList();
+
+      myProject.getMessageBus().syncPublisher(COMMITTED_CHANGES_MERGED_STATE).event(processed);
+    }
   }
 
   public static final Topic<CommittedChangesMergedStateChanged> COMMITTED_CHANGES_MERGED_STATE =
@@ -196,5 +232,81 @@ public class Merger implements IMerger {
 
   public interface CommittedChangesMergedStateChanged {
     void event(final List<CommittedChangeList> list);
+  }
+
+  @NotNull
+  private CommittedChangeList listAt(int index) {
+    return myChangeLists.get(index);
+  }
+
+  private boolean isInBounds(int index) {
+    return index >= 0 && index < myChangeLists.size();
+  }
+
+  private static boolean areSequential(@NotNull CommittedChangeList list1, @NotNull CommittedChangeList list2) {
+    return list1.getNumber() + 1 == list2.getNumber();
+  }
+
+  private class MergeChunk {
+
+    private final int myStart;
+    private final int mySize;
+
+    public MergeChunk(int start, int size) {
+      myStart = start;
+      mySize = size;
+    }
+
+    public int start() {
+      return myStart;
+    }
+
+    public int end() {
+      return myStart + mySize - 1;
+    }
+
+    public int size() {
+      return mySize;
+    }
+
+    public int nextChunkStart() {
+      return end() + 1;
+    }
+
+    public long lowestNumber() {
+      return myChangeLists.get(start()).getNumber();
+    }
+
+    public long highestNumber() {
+      return myChangeLists.get(end()).getNumber();
+    }
+
+    @NotNull
+    public List<CommittedChangeList> changeLists() {
+      return myChangeLists.subList(start(), nextChunkStart());
+    }
+
+    @NotNull
+    public List<CommittedChangeList> chunkAndBeforeLists() {
+      return myChangeLists.subList(0, nextChunkStart());
+    }
+
+    @NotNull
+    public List<CommittedChangeList> chunkAndAfterLists() {
+      return ContainerUtil.subList(myChangeLists, start());
+    }
+
+    @NotNull
+    public SVNRevisionRange revisionRange() {
+      SVNRevision startRevision = SVNRevision.create(lowestNumber() - 1);
+      SVNRevision endRevision = SVNRevision.create(highestNumber());
+
+      return myInvertRange ? new SVNRevisionRange(endRevision, startRevision) : new SVNRevisionRange(startRevision, endRevision);
+    }
+
+    @Override
+    public String toString() {
+      return highestNumber() == lowestNumber() ? String.valueOf(lowestNumber()) : lowestNumber() + "-" + highestNumber();
+    }
   }
 }

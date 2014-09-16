@@ -720,7 +720,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
                                         final UpdateEventHandler handler,
                                         final SVNURL currentBranchUrl,
                                         String branchName) {
-              return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName, false, !myDirect);
+              return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName, false, !myDirect, false);
             }
           };
     }
