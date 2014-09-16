@@ -86,6 +86,7 @@ public class IpnbUtils {
     boolean hasFormula = false;
     boolean isEscaped = false;
     boolean inFormula = false;
+    boolean isMultiline = false;
     if (isStyleOrScript(StringUtil.join(source))) return;
     for (String string : source) {
       string = StringUtil.replace(string, "\\(", "(");
@@ -104,6 +105,8 @@ public class IpnbUtils {
       if ((StringUtil.trimTrailing(string).endsWith("$$")) && inFormula) {
         inFormula = false;
         string = StringUtil.trimTrailing(string);
+        if (isMultiline)
+          string = StringUtil.trimEnd(string, "$$");
         string = prepareLatex(string);
         formula.append(string);
         addFormula(panel, formula.toString());
@@ -111,6 +114,10 @@ public class IpnbUtils {
         formula = new StringBuilder();
       }
       else if (string.trim().startsWith("$$") && !isEscaped) {
+        if (string.contains("\\begin")) {
+          string = string.substring(2);
+          isMultiline = true;
+        }
         string = prepareLatex(string);
         formula.append(string);
         hasFormula = true;
@@ -144,12 +151,7 @@ public class IpnbUtils {
   }
 
   private static String prepareLatex(@NotNull String string) {
-    string = string.replace("\n", " \n");
-    if (string.contains("{align}"))
-      string = string.replace("{align}", "{eqnarray*}");
-    if (string.contains("{equation*}"))
-      string = string.replace("{equation*}", "{eqnarray*}");
-    return string;
+    return string.replace("\n", " \n");
   }
 
 
