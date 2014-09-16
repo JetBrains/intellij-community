@@ -356,6 +356,16 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @NotNull
   @Override
+  public String collapseMacros(@NotNull String path) {
+    String result = path;
+    for (String macro : myMacros.keySet()) {
+      result = StringUtil.replace(result, myMacros.get(macro), macro);
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override
   public ExternalizationSession startExternalization() {
     if (mySession != null) {
       LOG.error("Starting duplicate externalization session: " + mySession);
