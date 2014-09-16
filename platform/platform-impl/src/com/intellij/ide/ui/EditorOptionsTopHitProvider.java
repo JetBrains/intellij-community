@@ -32,14 +32,15 @@ import java.util.List;
 public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
   private static final Collection<BooleanOptionDescription> ourOptions = createOptions();
 
-  public EditorOptionsTopHitProvider() {
-    super("editor");
-  }
-
   @NotNull
   @Override
   public Collection<BooleanOptionDescription> getOptions(Project project) {
     return ourOptions;
+  }
+
+  @Override
+  public String getId() {
+    return "editor";
   }
 
   private static Collection<BooleanOptionDescription> createOptions() {

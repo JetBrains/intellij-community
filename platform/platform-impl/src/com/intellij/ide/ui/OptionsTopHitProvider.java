@@ -32,12 +32,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
-  @NonNls private final String myId;
-
-  public OptionsTopHitProvider(String optionId) {
-    myId = optionId.toLowerCase();
-  }
-
   @NotNull
   public abstract Collection<BooleanOptionDescription> getOptions(Project project);
 
@@ -50,7 +44,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     if (parts.size() == 0) return;
 
     String id = parts.get(0);
-    if (myId.startsWith(id)) {
+    if (getId().startsWith(id)) {
       pattern = pattern.substring(id.length()).trim().toLowerCase();
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       for (BooleanOptionDescription option : getOptions(project)) {
@@ -60,4 +54,6 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
       }
     }
   }
+
+  public abstract String getId();
 }
