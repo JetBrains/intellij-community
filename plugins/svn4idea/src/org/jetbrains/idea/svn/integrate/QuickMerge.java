@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.CalledInAwt;
@@ -22,10 +22,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.continuation.Continuation;
 import com.intellij.util.continuation.TaskDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.integrate.CheckRepositorySupportsMergeInfoTask;
-import org.jetbrains.idea.svn.integrate.MergeInitChecksTask;
-import org.jetbrains.idea.svn.integrate.QuickMergeInteraction;
-import org.jetbrains.idea.svn.integrate.SourceUrlCorrectionTask;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.util.Arrays;

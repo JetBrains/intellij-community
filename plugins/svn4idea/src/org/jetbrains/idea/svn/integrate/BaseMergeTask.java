@@ -26,10 +26,7 @@ import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.dialogs.MergeContext;
-import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.List;

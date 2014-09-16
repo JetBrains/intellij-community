@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.MergeContext;
+import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
 import java.util.*;

@@ -21,7 +21,6 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.dialogs.MergeContext;
 
 import java.util.List;
 

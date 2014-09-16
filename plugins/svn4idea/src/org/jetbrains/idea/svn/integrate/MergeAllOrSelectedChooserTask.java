@@ -21,8 +21,6 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.dialogs.LoadRecentBranchRevisions;
-import org.jetbrains.idea.svn.dialogs.MergeContext;
 
 /**
  * @author Konstantin Kolosovsky.

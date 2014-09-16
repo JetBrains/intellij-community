@@ -26,10 +26,7 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.LoadRecentBranchRevisions;
-import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.dialogs.MergeDialogI;
-import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 
 import java.util.Collections;
 import java.util.List;
