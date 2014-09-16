@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ public class SvnBindException extends VcsException {
   }
 
   public SvnBindException(@Nullable String message, @Nullable Throwable cause) {
-    super(message, cause);
+    super(ObjectUtils.chooseNotNull(message, getMessage(cause)), cause);
 
     init(message);
     init(cause);

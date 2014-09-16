@@ -22,53 +22,60 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.vfs.newvfs.RefreshSessionImpl;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.MergeContext;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public class ShelveLocalChangesTask extends BaseMergeTask {
-  private final Intersection myIntersection;
+
+  @NotNull private final Intersection myIntersection;
 
   public ShelveLocalChangesTask(@NotNull MergeContext mergeContext,
                                 @NotNull QuickMergeInteraction interaction,
-                                final Intersection intersection) {
+                                @NotNull Intersection intersection) {
     super(mergeContext, interaction, "Shelving local changes before merge", Where.POOLED);
+
     myIntersection = intersection;
   }
 
   @Override
   public void run(final ContinuationContext context) {
-    final MultiMap<String, Change> map = myIntersection.getChangesSubset();
+    List<VirtualFile> changedFiles = shelveChanges(context);
 
-    final RefreshSessionImpl session = new RefreshSessionImpl(true, false, new Runnable() {
+    context.suspend();
+    RefreshQueue.getInstance().refresh(true, false, new Runnable() {
+      @Override
       public void run() {
         context.ping();
       }
-    });
+    }, changedFiles);
+  }
 
-    for (String name : map.keySet()) {
+  @NotNull
+  private List<VirtualFile> shelveChanges(@NotNull ContinuationContext context) {
+    List<VirtualFile> changedFiles = ContainerUtil.newArrayList();
+    ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
+
+    for (Map.Entry<String, Collection<Change>> entry : myIntersection.getChangesSubset().entrySet()) {
       try {
-        final Collection<Change> changes = map.get(name);
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveAllDocuments();
-          }
-        }, ModalityState.NON_MODAL);
-        ShelveChangesManager.getInstance(myMergeContext.getProject()).shelveChanges(changes, myIntersection.getComment(name) +
-                                                                                             " (auto shelve before merge)",
-                                                                                    true
-        );
-        session.addAllFiles(ChangesUtil.getFilesFromChanges(changes));
+        // TODO: Could this be done once before for loop?
+        saveAllDocuments();
+
+        shelveManager.shelveChanges(entry.getValue(), myIntersection.getComment(entry.getKey()) + " (auto shelve before merge)", true);
+        // TODO: ChangesUtil.getFilesFromChanges() performs refresh of several files.
+        // TODO: Check if logic of collecting files to refresh could be revised here.
+        ContainerUtil.addAll(changedFiles, ChangesUtil.getFilesFromChanges(entry.getValue()));
       }
       catch (IOException e) {
         finishWithError(context, e.getMessage(), true);
@@ -77,8 +84,16 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
         finishWithError(context, e.getMessage(), true);
       }
     }
-    // first suspend to guarantee stop->then start back sequence
-    context.suspend();
-    session.launch();
+
+    return changedFiles;
+  }
+
+  private static void saveAllDocuments() {
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    }, ModalityState.NON_MODAL);
   }
 }

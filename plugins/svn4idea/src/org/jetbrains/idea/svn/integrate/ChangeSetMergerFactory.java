@@ -13,46 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.actions;
+package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.integrate.IMerger;
-import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 import java.io.File;
 import java.util.List;
 
-public class RecordOnlyMergerFactory extends ChangeListsMergerFactory {
-  private final boolean myUndo;
+public class ChangeSetMergerFactory implements MergerFactory {
 
-  public RecordOnlyMergerFactory(final List<CommittedChangeList> changeListsList, final boolean isUndo) {
-    super(changeListsList);
-    myUndo = isUndo;
+  @NotNull private final CommittedChangeList myChangeList;
+  @NotNull private final List<Change> myChanges;
+
+  public ChangeSetMergerFactory(@NotNull CommittedChangeList changeList, @NotNull List<Change> changes) {
+    myChangeList = changeList;
+    myChanges = ContainerUtil.newArrayList(changes);
   }
 
+  @Override
   public IMerger createMerger(final SvnVcs vcs,
                               final File target,
                               final UpdateEventHandler handler,
                               final SVNURL currentBranchUrl,
                               String branchName) {
-    return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName) {
-      @Override
-      protected SVNRevisionRange createRange() {
-        if (myUndo) {
-            return new SVNRevisionRange(SVNRevision.create(myLatestProcessed.getNumber()), SVNRevision.create(myLatestProcessed.getNumber() - 1));
-        }
-        return super.createRange();
-      }
-
-      @Override
-      protected boolean isRecordOnly() {
-        return true;
-      }
-    };
+    return new PointMerger(vcs, myChangeList, target, handler, currentBranchUrl, myChanges, branchName);
   }
 }

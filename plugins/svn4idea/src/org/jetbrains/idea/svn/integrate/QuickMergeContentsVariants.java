@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package org.jetbrains.idea.svn.integrate;
 
 /**
-* Created with IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 3/27/13
-* Time: 12:37 PM
-*/
-public enum LocalChangesAction {
-  cancel,
-  continueMerge,
-  shelve,
-  inspect
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 3/27/13
+ * Time: 7:53 PM
+ */
+public enum QuickMergeContentsVariants {
+  all, select, cancel, showLatest
 }

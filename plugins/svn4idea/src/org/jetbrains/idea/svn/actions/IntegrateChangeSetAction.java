@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.actions;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.integrate.ChangeSetMergerFactory;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SelectedChangeSetChecker;
 import org.jetbrains.idea.svn.integrate.SelectedCommittedStuffChecker;

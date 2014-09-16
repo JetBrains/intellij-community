@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.jetbrains.idea.svn.integrate.IMerger;
-import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -72,7 +69,7 @@ public class BranchMerger implements IMerger {
     return myAtStart;
   }
 
-  public void mergeNext() throws SVNException, VcsException {
+  public void mergeNext() throws VcsException {
     myAtStart = false;
 
     File destination = new File(myTargetPath);
@@ -92,7 +89,9 @@ public class BranchMerger implements IMerger {
     return myVcs.getSvnConfiguration().getMergeOptions();
   }
 
-  public void getInfo(Consumer<String> holder, boolean getLatest) {
+  @Nullable
+  public String getInfo() {
+    return null;
   }
 
   public File getMergeInfoHolder() {
@@ -102,7 +101,9 @@ public class BranchMerger implements IMerger {
   public void afterProcessing() {
   }
 
-  public void getSkipped(Consumer<String> holder) {
+  @Nullable
+  public String getSkipped() {
+    return null;
   }
 
   @NotNull

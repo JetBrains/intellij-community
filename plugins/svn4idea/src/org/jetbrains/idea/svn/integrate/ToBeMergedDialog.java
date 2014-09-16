@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -47,6 +47,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.MoreAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.dialogs.BasePageEngine;
+import org.jetbrains.idea.svn.dialogs.MergeDialogI;
+import org.jetbrains.idea.svn.dialogs.PageEngine;
+import org.jetbrains.idea.svn.dialogs.PagedListWithActions;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.mergeinfo.ListMergeStatus;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
@@ -230,6 +234,8 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
 
   @Override
   protected String getDimensionServiceKey() {
+    // TODO: Currently class is in other package, but key to persist dimension is preserved.
+    // TODO: Rename later to some "neutral" constant not to be confusing relative to current class location.
     return "org.jetbrains.idea.svn.dialogs.ToBeMergedDialog";
   }
 
