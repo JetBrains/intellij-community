@@ -15,10 +15,10 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.CapturingProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.*;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -475,17 +476,35 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
     try {
       final Process process;
+      final Map<String, String> environment = PySdkUtil.mergeEnvVariables(System.getenv(), ImmutableMap.of("PYTHONUNBUFFERED", "1"));
       if (useSudo) {
-        process = ExecUtil.sudo(cmdline, "Please enter your password to make changes in system packages: ", workingDir, null);
+        process = ExecUtil.sudo(cmdline, "Please enter your password to make changes in system packages: ", workingDir, environment);
       }
       else {
-        process = ExecUtil.exec(cmdline, workingDir, null);
+        process = ExecUtil.exec(cmdline, workingDir, environment);
       }
       final CapturingProcessHandler handler = new CapturingProcessHandler(process);
       // Make the progress indicator an explicit parameter?
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       final ProcessOutput result;
       if (indicator != null) {
+        handler.addProcessListener(new ProcessAdapter() {
+          @Override
+          public void onTextAvailable(ProcessEvent event, Key outputType) {
+            if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
+              for (String line : StringUtil.splitByLines(event.getText())) {
+                final String trimmed = line.trim();
+                if (isMeaningfulOutput(trimmed)) {
+                  indicator.setText2(trimmed);
+                }
+              }
+            }
+          }
+
+          private boolean isMeaningfulOutput(@NotNull String trimmed) {
+            return trimmed.length() > 3;
+          }
+        });
         result = handler.runProcessWithProgressIndicator(indicator);
       }
       else {
