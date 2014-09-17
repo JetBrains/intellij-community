@@ -326,7 +326,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         if (parameter == null) {
           continue;
         }
-        notNull(project, field, parameter);
+        notNull(field, parameter);
         cleanupElements.add(parameter);
         final PsiElement assignmentStatement = AssignFieldFromParameterAction.addFieldAssignmentStatement(project, field, parameter, editor);
         if (assignmentStatement != null) {
@@ -338,11 +338,10 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     return created;
   }
 
-  private static void notNull(Project project, PsiField field, PsiParameter parameter) {
-    final String notNull = NullableNotNullManager.getInstance(field.getProject()).getNotNull(field);
+  private static void notNull(PsiField field, PsiParameter parameter) {
+    final PsiAnnotation notNull = NullableNotNullManager.getInstance(field.getProject()).copyNotNullAnnotation(field);
     if (notNull != null) {
-      final PsiAnnotation annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + notNull, field);
-      parameter.getModifierList().addBefore(annotation, null);
+      parameter.getModifierList().addBefore(notNull, null);
     }
   }
 

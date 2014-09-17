@@ -62,6 +62,14 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
     doTestMaxUsedIndent(2);
   }
 
+  public void testSmallFileWithIndent8() {
+    doTestMaxUsedIndent(8);
+  }
+
+  public void testSmallFileWithTabs() {
+    doTestTabsUsed();
+  }
+
   public void testSpacesToNumbers() throws Exception {
     String text = "     i\n" +
                   "    a\n" +

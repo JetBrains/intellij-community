@@ -54,7 +54,7 @@ public class VisibleEditorsTracker extends CommandAdapter {
         myEditorsVisibleOnCommandStart.add(editor);
       }
 
-      ((ScrollingModelImpl)editor.getScrollingModel()).commandStarted();
+      ((ScrollingModelImpl)editor.getScrollingModel()).finishAnimation();
       myCurrentCommandStart = System.currentTimeMillis();
     }
   }

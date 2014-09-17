@@ -1,0 +1,1 @@
+{"aaa": <error descr="JSON standard does not allow identifiers">b<caret>bb</error>}
