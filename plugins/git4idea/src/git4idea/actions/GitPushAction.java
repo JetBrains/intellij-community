@@ -29,11 +29,13 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class GitPushAction extends DumbAwareAction {
 
@@ -46,17 +48,14 @@ public class GitPushAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static Collection<GitRepository> collectRepositories(@NotNull Project project,
-                                                               @Nullable VirtualFile[] files) {
+  private static Collection<GitRepository> collectRepositories(@NotNull Project project, @Nullable VirtualFile[] files) {
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     Collection<GitRepository> repositories;
-    if (files == null) {
-      if (GitVcsSettings.getInstance(project).getSyncSetting() == DvcsBranchSync.SYNC) {
-        repositories = manager.getRepositories();
-      }
-      else {
-        repositories = Collections.singletonList(GitBranchUtil.getCurrentRepository(project));
-      }
+    if (GitVcsSettings.getInstance(project).getSyncSetting() == DvcsBranchSync.SYNC && !diverged(manager.getRepositories())) {
+      repositories = manager.getRepositories();
+    }
+    else if (files == null) {
+      repositories = Collections.singletonList(GitBranchUtil.getCurrentRepository(project));
     }
     else {
       repositories = ContainerUtil.newHashSet();
@@ -68,6 +67,10 @@ public class GitPushAction extends DumbAwareAction {
       }
     }
     return repositories;
+  }
+
+  private static boolean diverged(List<GitRepository> repositories) {
+    return new GitMultiRootBranchConfig(repositories).diverged();
   }
 
   @Override
