@@ -46,7 +46,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
   private class MyDialog extends DialogWrapper {
     public JTable myTable;
     private Project myProject;
-    private ArrayTableComponent myComponent;
+    private ArrayTableForm myComponent;
 
     private MyDialog(Project project) {
       super(project, false);
@@ -56,7 +56,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
       myProject = project;
 
-      myComponent = new ArrayTableComponent();
+      myComponent = new ArrayTableForm();
       myTable = myComponent.getTable();
 
       init();
@@ -133,7 +133,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
     @Override
     protected JComponent createCenterPanel() {
-      return myComponent;
+      return myComponent.getMainPanel();
     }
   }
 }

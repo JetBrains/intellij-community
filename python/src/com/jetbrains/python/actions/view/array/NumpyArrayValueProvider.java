@@ -36,14 +36,13 @@ import javax.swing.table.DefaultTableModel;
  * @author amarch
  */
 class NumpyArrayValueProvider extends ArrayValueProvider {
-
-  private ArrayTableComponent myComponent;
+  private ArrayTableForm myComponent;
   private JTable myTable;
   private Project myProject;
   private PyDebuggerEvaluator myEvaluator;
   private NumpyArrayPresentation myLastPresentation;
 
-  public NumpyArrayValueProvider(@NotNull XValueNode node, @NotNull ArrayTableComponent component, @NotNull Project project) {
+  public NumpyArrayValueProvider(@NotNull XValueNode node, @NotNull ArrayTableForm component, @NotNull Project project) {
     super(node);
     myComponent = component;
     myProject = project;
@@ -52,7 +51,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     myLastPresentation = new NumpyArrayPresentation(((XValueNodeImpl)node).getName(), this);
   }
 
-  public ArrayTableComponent getComponent(){
+  public ArrayTableForm getComponent(){
     return myComponent;
   }
 
@@ -191,7 +190,8 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       }
     });
     enableColor(data);
-    myComponent.getTextField().setText(myLastPresentation.getSlice());
+    myComponent.getSliceTextField().setText(myLastPresentation.getSlice());
+    myComponent.getFormatTextField().setText(myLastPresentation.getFormat());
   }
 
   private static String[] range(int min, int max) {
