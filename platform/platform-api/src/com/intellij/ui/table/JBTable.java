@@ -348,7 +348,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   public void paint(@NotNull Graphics g) {
     if (!isEnabled()) {
-      g = new TableGrayer((Graphics2D)g);
+      g = new Grayer((Graphics2D)g, getBackground());
     }
     super.paint(g);
     if (myBusyIcon != null) {
@@ -710,7 +710,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         GraphicsUtil.setupAntialiasing(g);
       }
       if (!JBTable.this.isEnabled()) {
-        g = new TableGrayer((Graphics2D)g);
+        g = new Grayer((Graphics2D)g, getBackground());
       }
       super.paint(g);
     }
@@ -728,32 +728,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
       }
       return super.getToolTipText(event);
-    }
-  }
-
-  /**
-   * Make it possible to disable a JBTable
-   *
-   * @author Konstantin Bulenkov
-   */
-  private final class TableGrayer extends Graphics2DDelegate {
-    public TableGrayer(Graphics2D g2d) {
-      super(g2d);
-    }
-
-    @Override
-    public void setColor(Color color) {
-      if (color != null && (!UIUtil.isUnderDarcula() || !JBTable.this.getBackground().equals(color))) {
-        //noinspection UseJBColor
-        color = new Color(UIUtil.getGrayFilter().filterRGB(0, 0, color.getRGB()));
-      }
-      super.setColor(color);
-    }
-
-    @NotNull
-    @Override
-    public Graphics create() {
-      return new TableGrayer((Graphics2D)super.create());
     }
   }
 }

@@ -16,16 +16,21 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.compiler.ModuleSourceSet;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Chunk;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphAlgorithms;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -49,18 +54,21 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
 
   @Override
   public void check(ProjectStructureProblemsHolder problemsHolder) {
-    final Graph<Chunk<ModuleRootModel>> graph = ModuleCompilerUtil.toChunkGraph(myContext.getModulesConfigurator().createGraphGenerator());
-    final Collection<Chunk<ModuleRootModel>> chunks = graph.getNodes();
+    Graph<ModuleSourceSet> graph = ModuleCompilerUtil.createModuleSourceDependenciesGraph(myContext.getModulesConfigurator());
+    Collection<Chunk<ModuleSourceSet>> allSourceSetCycles = extractCycles(
+      GraphAlgorithms.getInstance().computeStronglyConnectedComponents(graph));
+    List<Chunk<ModuleSourceSet>> sourceSetCycles = filterDuplicates(allSourceSetCycles);
+
     List<String> cycles = new ArrayList<String>();
-    for (Chunk<ModuleRootModel> chunk : chunks) {
-      final Set<ModuleRootModel> modules = chunk.getNodes();
+
+    for (Chunk<ModuleSourceSet> chunk : sourceSetCycles) {
+      final Set<ModuleSourceSet> sourceSets = chunk.getNodes();
       List<String> names = new ArrayList<String>();
-      for (ModuleRootModel model : modules) {
-        names.add(model.getModule().getName());
+      for (ModuleSourceSet sourceSet : sourceSets) {
+        String name = sourceSet.getDisplayName();
+        names.add(names.isEmpty() ? name : StringUtil.decapitalize(name));
       }
-      if (modules.size() > 1) {
-        cycles.add(StringUtil.join(names, ", "));
-      }
+      cycles.add(StringUtil.join(names, ", "));
     }
     if (!cycles.isEmpty()) {
       final Project project = myContext.getProject();
@@ -77,13 +85,62 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
         description = ProjectBundle.message("module.circular.dependency.warning.description", cyclesString);
       }
       else {
-        message = ProjectBundle.message("module.circular.dependency.warning.short", cycles.get(0));
+        message = ProjectBundle.message("module.circular.dependency.warning.short", StringUtil.decapitalize(cycles.get(0)));
         description = null;
       }
       problemsHolder.registerProblem(new ProjectStructureProblemDescription(message, description, place,
                                                                             ProjectStructureProblemType.warning("module-circular-dependency"),
                                                                             Collections.<ConfigurationErrorQuickFix>emptyList()));
     }
+  }
+
+  private static Collection<Chunk<ModuleSourceSet>> extractCycles(Collection<Chunk<ModuleSourceSet>> chunks) {
+    return ContainerUtil.filter(chunks, new Condition<Chunk<ModuleSourceSet>>() {
+      @Override
+      public boolean value(Chunk<ModuleSourceSet> chunk) {
+        return chunk.getNodes().size() > 1;
+      }
+    });
+  }
+
+  /**
+   * Remove cycles in tests included in cycles between production parts
+   */
+  @NotNull
+  private static List<Chunk<ModuleSourceSet>> filterDuplicates(@NotNull Collection<Chunk<ModuleSourceSet>> sourceSetCycles) {
+    final List<Set<Module>> productionCycles = new ArrayList<Set<Module>>();
+
+    for (Chunk<ModuleSourceSet> cycle : sourceSetCycles) {
+      ModuleSourceSet.Type type = getCommonType(cycle);
+      if (type == ModuleSourceSet.Type.PRODUCTION) {
+        productionCycles.add(ModuleSourceSet.getModules(cycle.getNodes()));
+      }
+    }
+
+    return ContainerUtil.filter(sourceSetCycles, new Condition<Chunk<ModuleSourceSet>>() {
+      @Override
+      public boolean value(Chunk<ModuleSourceSet> chunk) {
+        if (getCommonType(chunk) != ModuleSourceSet.Type.TEST) return true;
+        for (Set<Module> productionCycle : productionCycles) {
+          if (productionCycle.containsAll(ModuleSourceSet.getModules(chunk.getNodes()))) return false;
+        }
+        return true;
+      }
+    });
+  }
+
+  @Nullable
+  private static ModuleSourceSet.Type getCommonType(@NotNull Chunk<ModuleSourceSet> cycle) {
+    ModuleSourceSet.Type type = null;
+    for (ModuleSourceSet set : cycle.getNodes()) {
+      if (type == null) {
+        type = set.getType();
+      }
+      else if (type != set.getType()) {
+        return null;
+      }
+    }
+    return type;
   }
 
   @Override
