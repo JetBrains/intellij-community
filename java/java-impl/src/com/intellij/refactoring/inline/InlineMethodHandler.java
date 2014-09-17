@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -120,6 +121,10 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       if (reference != null && !method.getManager().areElementsEquivalent(method, reference.resolve())) {
         reference = null;
       }
+    }
+
+    if (reference != null && PsiTreeUtil.getParentOfType(reference.getElement(), PsiImportStaticStatement.class) != null) {
+      reference = null;
     }
 
     final boolean invokedOnReference = reference != null;
