@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
@@ -180,6 +181,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static Editor createEditor(@NotNull VirtualFile file) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
+    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+
     ((EditorImpl)editor).setCaretActive();
     return editor;
   }
