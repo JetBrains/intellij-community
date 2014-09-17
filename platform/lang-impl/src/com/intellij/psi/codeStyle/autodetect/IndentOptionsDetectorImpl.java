@@ -62,16 +62,10 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     int linesWithWhiteSpaceIndent = stats.getTotalLinesWithLeadingSpaces();
 
     if (linesWithTabs > linesWithWhiteSpaceIndent) {
-      if (!indentOptions.USE_TAB_CHARACTER) {
-        indentOptions.USE_TAB_CHARACTER = true;
-        LOG.info("Detected tab usage in" + myFile);
-      }
+      setUseTabs(indentOptions, true);
     }
     else {
-      if (indentOptions.USE_TAB_CHARACTER) {
-        indentOptions.USE_TAB_CHARACTER = false;
-        LOG.info("No tab usage detected " + myFile);
-      }
+      setUseTabs(indentOptions, false);
 
       int newIndentSize = getPositiveIndentSize(stats);
       if (newIndentSize > 0) {
@@ -80,6 +74,13 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
           LOG.info("Detected indent size: " + newIndentSize + " for file " + myFile);
         }
       }
+    }
+  }
+
+  private void setUseTabs(@NotNull IndentOptions indentOptions, boolean useTabs) {
+    if (indentOptions.USE_TAB_CHARACTER != useTabs) {
+      indentOptions.USE_TAB_CHARACTER = useTabs;
+      LOG.info("Tab usage set to " + useTabs + " for file " + myFile);
     }
   }
 
