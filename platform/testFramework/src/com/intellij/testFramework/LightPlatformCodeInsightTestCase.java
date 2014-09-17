@@ -178,6 +178,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   protected static Editor createEditor(@NotNull VirtualFile file) {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
     ((EditorImpl)editor).setCaretActive();
     return editor;

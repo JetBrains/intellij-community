@@ -1468,6 +1468,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private Editor createEditor(@NotNull VirtualFile file) {
     final Project project = getProject();
     final FileEditorManager instance = FileEditorManager.getInstance(project);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(project, file), false);
     if (editor != null) {
       editor.getCaretModel().moveToOffset(0);
