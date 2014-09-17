@@ -64,7 +64,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   private int mySavedCaretX;
   private int mySavedCaretY;
-  private int mySavedCaretPositionBeforeBatchFolding;
+  private int mySavedCaretShift;
   private boolean myCaretPositionSaved;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<FoldingGroup, FoldRegion>();
   private boolean myDocumentChangeProcessed = true;
@@ -205,7 +205,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
     if (!oldBatchFlag) {
-      mySavedCaretPositionBeforeBatchFolding = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line);
+      ((ScrollingModelImpl)myEditor.getScrollingModel()).finishAnimation();
+      mySavedCaretShift = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
     }
 
     myIsBatchFoldingProcessing = true;
@@ -236,7 +237,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
    * Should be called from inside batch operation runnable.
    */
   public void flushCaretShift() {
-    mySavedCaretPositionBeforeBatchFolding = -1;
+    mySavedCaretShift = -1;
   }
 
   @Override
@@ -429,18 +430,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
 
-    if (mySavedCaretPositionBeforeBatchFolding >= 0) {
-      final int offset = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretPositionBeforeBatchFolding;
+    if (mySavedCaretShift > 0) {
       final ScrollingModel scrollingModel = myEditor.getScrollingModel();
-      scrollingModel.runActionOnScrollingFinished(new Runnable() {
-        @Override
-        public void run() {
-          scrollingModel.disableAnimation();
-          int pos = scrollingModel.getVerticalScrollOffset();
-          scrollingModel.scrollVertically(pos + offset);
-          scrollingModel.enableAnimation();
-        }
-      });
+      scrollingModel.disableAnimation();
+      scrollingModel.scrollVertically(myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretShift);
+      scrollingModel.enableAnimation();
     }
   }
 
