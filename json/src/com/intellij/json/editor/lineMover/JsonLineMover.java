@@ -4,7 +4,6 @@ import com.intellij.codeInsight.editorActions.moveUpDown.LineMover;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -74,25 +73,9 @@ public class JsonLineMover extends LineMover {
 
   @NotNull
   private Pair<PsiElement, PsiElement> expandCommentsInRange(@NotNull Pair<PsiElement, PsiElement> range) {
-    final PsiElement firstElement = expandComment(range.first, true);
-    final PsiElement lastElement = expandComment(range.second, false);
-    return Pair.create(firstElement, lastElement);
-  }
-
-  @NotNull
-  private PsiElement expandComment(@NotNull PsiElement first, boolean before) {
-    ASTNode node = first.getNode();
-    if (node.getElementType() != JsonElementTypes.LINE_COMMENT) {
-      return first;
-    }
-    ASTNode sibling;
-    do {
-      sibling = node;
-      node = before ? node.getTreePrev() : node.getTreeNext();
-    }
-    while (node != null && (node.getElementType() == JsonElementTypes.LINE_COMMENT ||
-                            sibling.getElementType() == JsonElementTypes.LINE_COMMENT));
-    return (before ? sibling.getTreeNext() : sibling.getTreePrev()).getPsi();
+    final PsiElement upper = JsonPsiUtil.findOutermostLineComment(range.getFirst(), false);
+    final PsiElement lower = JsonPsiUtil.findOutermostLineComment(range.getSecond(), true);
+    return Pair.create(upper, lower);
   }
 
   @Override
