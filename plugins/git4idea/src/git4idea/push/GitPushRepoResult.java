@@ -15,13 +15,17 @@
  */
 package git4idea.push;
 
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Result of pushing one repository.
@@ -36,6 +40,7 @@ class GitPushRepoResult {
   enum Type {
     SUCCESS,
     NEW_BRANCH,
+    UP_TO_DATE,
     FORCED,
     REJECTED,
     ERROR,
@@ -53,33 +58,55 @@ class GitPushRepoResult {
   private final int myCommits;
   @NotNull private final String mySourceBranch;
   @NotNull private final String myTargetBranch;
+  @NotNull private final String myTargetRemote;
+  @NotNull private final List<String> myPushedTags;
   @Nullable private final String myError;
   @Nullable private final GitUpdateResult myUpdateResult;
 
   @NotNull
   static GitPushRepoResult convertFromNative(@NotNull GitPushNativeResult result,
-                                             int commits, @NotNull GitLocalBranch source, @NotNull GitRemoteBranch target) {
+                                             @NotNull List<GitPushNativeResult> tagResults,
+                                             int commits,
+                                             @NotNull GitLocalBranch source,
+                                             @NotNull GitRemoteBranch target) {
+    List<String> tags = ContainerUtil.map(tagResults, new Function<GitPushNativeResult, String>() {
+      @Override
+      public String fun(GitPushNativeResult result) {
+        return result.getSourceRef();
+      }
+    });
     return new GitPushRepoResult(convertType(result.getType()), commits, source.getFullName(), target.getFullName(),
-                                 result.getErrorOutput(), null);
+                                 target.getRemote().getName(), tags, null, null);
+  }
+
+  @NotNull
+  static GitPushRepoResult error(@NotNull GitLocalBranch source, @NotNull GitRemoteBranch target, @NotNull String error) {
+    return new GitPushRepoResult(Type.ERROR, -1, source.getFullName(), target.getFullName(),
+                                 target.getRemote().getName(), Collections.<String>emptyList(), error, null);
   }
 
   @NotNull
   static GitPushRepoResult notPushed(GitLocalBranch source, GitRemoteBranch target) {
-    return new GitPushRepoResult(Type.NOT_PUSHED, -1, source.getFullName(), target.getFullName(), null, null);
+    return new GitPushRepoResult(Type.NOT_PUSHED, -1, source.getFullName(), target.getFullName(),
+                                 target.getRemote().getName(), Collections.<String>emptyList(), null, null);
   }
 
   @NotNull
   static GitPushRepoResult addUpdateResult(GitPushRepoResult original, GitUpdateResult updateResult) {
     return new GitPushRepoResult(original.getType(), original.getNumberOfPushedCommits(), original.getSourceBranch(),
-                                 original.getTargetBranch(), original.getError(), updateResult);
+                                 original.getTargetBranch(), original.getTargetRemote(), original.getPushedTags(),
+                                 original.getError(), updateResult);
   }
 
   private GitPushRepoResult(@NotNull Type type, int pushedCommits, @NotNull String sourceBranch, @NotNull String targetBranch,
-                    @Nullable String error, @Nullable GitUpdateResult result) {
+                            @NotNull String targetRemote,
+                            @NotNull List<String> pushedTags, @Nullable String error, @Nullable GitUpdateResult result) {
     myType = type;
     myCommits = pushedCommits;
     mySourceBranch = sourceBranch;
     myTargetBranch = targetBranch;
+    myTargetRemote = targetRemote;
+    myPushedTags = pushedTags;
     myError = error;
     myUpdateResult = result;
   }
@@ -120,6 +147,16 @@ class GitPushRepoResult {
   }
 
   @NotNull
+  List<String> getPushedTags() {
+    return myPushedTags;
+  }
+
+  @NotNull
+  public String getTargetRemote() {
+    return myTargetRemote;
+  }
+
+  @NotNull
   private static Type convertType(@NotNull GitPushNativeResult.Type nativeType) {
     switch (nativeType) {
       case SUCCESS:
@@ -131,7 +168,7 @@ class GitPushRepoResult {
       case REJECTED:
         return Type.REJECTED;
       case UP_TO_DATE:
-        return Type.SUCCESS;
+        return Type.UP_TO_DATE;
       case ERROR:
         return Type.ERROR;
       case DELETED:

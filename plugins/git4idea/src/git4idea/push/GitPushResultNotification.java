@@ -64,7 +64,8 @@ class GitPushResultNotification extends Notification {
     super(groupDisplayId, title, content, type, listener);
   }
 
-  static GitPushResultNotification create(Project project, GitPushResult pushResult, boolean multiRepoProject) {
+  @NotNull
+  static GitPushResultNotification create(@NotNull Project project, @NotNull GitPushResult pushResult, boolean multiRepoProject) {
     GroupedPushResult grouped = GroupedPushResult.group(pushResult.getResults());
 
     String title;
@@ -109,7 +110,7 @@ class GitPushResultNotification extends Notification {
     return new GitPushResultNotification(group.getDisplayId(), title, description, type, listener);
   }
 
-  private static String formDescription(Map<GitRepository, GitPushRepoResult> results, final boolean multiRepoProject) {
+  private static String formDescription(@NotNull Map<GitRepository, GitPushRepoResult> results, final boolean multiRepoProject) {
     List<Map.Entry<GitRepository, GitPushRepoResult>> entries = ContainerUtil.sorted(results.entrySet(),
       new Comparator<Map.Entry<GitRepository, GitPushRepoResult>>() {
         @Override
@@ -141,17 +142,33 @@ class GitPushResultNotification extends Notification {
     }, "<br/>");
   }
 
-  private static String formRepoDescription(GitPushRepoResult result) {
+  private static String formRepoDescription(@NotNull GitPushRepoResult result) {
     String description;
     String sourceBranch = GitBranchUtil.stripRefsPrefix(result.getSourceBranch());
     String targetBranch = GitBranchUtil.stripRefsPrefix(result.getTargetBranch());
+    String tagDescription = formTagDescription(result.getPushedTags(), result.getTargetRemote());
     switch (result.getType()) {
       case SUCCESS:
-        int commits = result.getNumberOfPushedCommits();
-        description = String.format("pushed %d %s to %s", commits, StringUtil.pluralize("commit", commits), targetBranch);
+        int commitNum = result.getNumberOfPushedCommits();
+        String commits = StringUtil.pluralize("commit", commitNum);
+        description = String.format("pushed %d %s to %s", commitNum, commits, targetBranch);
+        if (tagDescription != null) {
+          description += ", and " + tagDescription;
+        }
         break;
       case NEW_BRANCH:
         description = String.format("pushed %s to new branch %s", sourceBranch, targetBranch);
+        if (tagDescription != null) {
+          description += ", and " + tagDescription;
+        }
+        break;
+      case UP_TO_DATE:
+        if (tagDescription != null) {
+          description = "pushed " + tagDescription;
+        }
+        else {
+          description = "everything is up-to-date";
+        }
         break;
       case FORCED:
         description = String.format("force pushed %s to %s", sourceBranch, targetBranch);
@@ -168,6 +185,17 @@ class GitPushResultNotification extends Notification {
         break;
     }
     return description;
+  }
+
+  @Nullable
+  private static String formTagDescription(@NotNull List<String> pushedTags, @NotNull String remoteName) {
+    if (pushedTags.isEmpty()) {
+      return null;
+    }
+    if (pushedTags.size() == 1) {
+      return "tag " + GitBranchUtil.stripRefsPrefix(pushedTags.get(0)) + " to " + remoteName;
+    }
+    return pushedTags.size() + " tags to " + remoteName;
   }
 
   private static String formDescriptionBasedOnUpdateResult(GitUpdateResult updateResult, String targetBranch) {

@@ -28,6 +28,7 @@ import git4idea.commands.GitLineHandlerListener;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +36,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
-import static git4idea.test.GitExecutor.*;
+import static git4idea.test.GitExecutor.cd;
 
 public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
 
@@ -76,17 +77,18 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
 
     @NotNull
     @Override
-    public GitCommandResult push(GitRepository repository,
-                                 GitLocalBranch source,
-                                 GitRemoteBranch target,
+    public GitCommandResult push(@NotNull GitRepository repository,
+                                 @NotNull GitLocalBranch source,
+                                 @NotNull GitRemoteBranch target,
                                  boolean force,
                                  boolean updateTracking,
+                                 @Nullable String tagMode,
                                  GitLineHandlerListener... listeners) {
       if (myPushShouldFail.value(repository)) {
         return new GitCommandResult(false, 128, Arrays.asList("Failed to push to " + target.getName()),
                                     Collections.<String>emptyList(), null);
       }
-      return super.push(repository, source, target, force, updateTracking, listeners);
+      return super.push(repository, source, target, force, updateTracking, tagMode, listeners);
     }
   }
 
@@ -110,7 +112,7 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
     Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> map = ContainerUtil.newHashMap();
     map.put(myRepository, spec1);
     map.put(myCommunity, spec2);
-    GitPushResult result = new GitPushOperation(myProject, map, false).execute();
+    GitPushResult result = new GitPushOperation(myProject, map, null, false).execute();
 
     GitPushRepoResult result1 = result.getResults().get(myRepository);
     GitPushRepoResult result2 = result.getResults().get(myCommunity);

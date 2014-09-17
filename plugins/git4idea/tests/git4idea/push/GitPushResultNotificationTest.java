@@ -41,10 +41,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static git4idea.push.GitPushNativeResult.Type.*;
+import static git4idea.push.GitPushRepoResult.convertFromNative;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 public class GitPushResultNotificationTest extends GitPlatformTest {
 
-  private static Project ourProject;
+  private static Project ourProject; // for static map initialization
 
   @Override
   public void setUp() throws Exception {
@@ -115,6 +118,56 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   }
 
+  public void test_commits_and_tags() {
+    GitPushNativeResult branchResult = new GitPushNativeResult(SUCCESS, "refs/heads/master", "");
+    GitPushNativeResult tagResult = new GitPushNativeResult(NEW_REF, "refs/tags/v0.1", null);
+    GitPushResultNotification notification = notification(convertFromNative(branchResult, singletonList(tagResult), 1,
+                                                                            from("master"), to("origin/master")));
+    assertNotification(NotificationType.INFORMATION, "Push successful",
+                       "Pushed 1 commit to origin/master, and tag v0.1 to origin", notification);
+  }
+
+  public void test_nothing() {
+    GitPushNativeResult branchResult = new GitPushNativeResult(UP_TO_DATE, "refs/heads/master", null);
+    GitPushResultNotification notification = notification(convertFromNative(branchResult, Collections.<GitPushNativeResult>emptyList(),
+                                                                            0, from("master"), to("origin/master")));
+    assertNotification(NotificationType.INFORMATION, "Push successful", "Everything is up-to-date", notification);
+  }
+
+  public void test_only_tags() {
+    GitPushNativeResult branchResult = new GitPushNativeResult(UP_TO_DATE, "refs/heads/master", null);
+    GitPushNativeResult tagResult = new GitPushNativeResult(NEW_REF, "refs/tags/v0.1", null);
+    GitPushResultNotification notification = notification(convertFromNative(branchResult, singletonList(tagResult), 0,
+                                                                            from("master"), to("origin/master")));
+    assertNotification(NotificationType.INFORMATION, "Push successful", "Pushed tag v0.1 to origin", notification);
+  }
+
+  public void test_two_repo_with_tags() {
+    GitPushNativeResult branchSuccess = new GitPushNativeResult(SUCCESS, "refs/heads/master", "");
+    GitPushNativeResult branchUpToDate = new GitPushNativeResult(UP_TO_DATE, "refs/heads/master", null);
+    GitPushNativeResult tagResult = new GitPushNativeResult(NEW_REF, "refs/tags/v0.1", null);
+    final GitPushRepoResult comRes = convertFromNative(branchSuccess, singletonList(tagResult), 1, from("master"), to("origin/master"));
+    final GitPushRepoResult ultRes = convertFromNative(branchUpToDate, singletonList(tagResult), 0, from("master"), to("origin/master"));
+
+    GitPushResultNotification notification = notification(new HashMap<GitRepository, GitPushRepoResult>() {{
+      put(repo("community"), comRes);
+      put(repo("ultimate"), ultRes);
+    }});
+
+    assertNotification(NotificationType.INFORMATION, "Push successful",
+                       "community: pushed 1 commit to origin/master, and tag v0.1 to origin<br/>" +
+                       "ultimate: pushed tag v0.1 to origin", notification);
+  }
+
+  public void test_two_tags() {
+    GitPushNativeResult branchResult = new GitPushNativeResult(UP_TO_DATE, "refs/heads/master", null);
+    GitPushNativeResult tag1 = new GitPushNativeResult(NEW_REF, "refs/tags/v0.1", null);
+    GitPushNativeResult tag2 = new GitPushNativeResult(NEW_REF, "refs/tags/v0.2", null);
+    GitPushResultNotification notification = notification(convertFromNative(branchResult, asList(tag1, tag2), 0,
+                                                                            from("master"), to("origin/master")));
+    assertNotification(NotificationType.INFORMATION, "Push successful", "Pushed 2 tags to origin", notification);
+  }
+
   private static Map<GitRepository, GitPushRepoResult> singleResult(final GitPushNativeResult.Type type,
                                                                        final String from,
                                                                        final String to,
@@ -131,9 +184,10 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   private static GitPushRepoResult repoResult(GitPushNativeResult.Type nativeType, String from, String to, int commits,
                                                  @Nullable GitUpdateResult updateResult) {
-    GitPushNativeResult nr = new GitPushNativeResult(nativeType, "");
-    return GitPushRepoResult.addUpdateResult(GitPushRepoResult.convertFromNative(nr, commits, makeLocalBranch(from), makeRemoteBranch(to)),
-                                             updateResult);
+    GitPushNativeResult nr = new GitPushNativeResult(nativeType, from, "");
+    return GitPushRepoResult.addUpdateResult(
+      convertFromNative(nr, Collections.<GitPushNativeResult>emptyList(), commits, from(from), to(to)),
+      updateResult);
   }
 
   private static Map<GitRepository, GitPushRepoResult> singleResult(final GitPushNativeResult.Type type,
@@ -145,19 +199,22 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   // keep params for unification
   @SuppressWarnings("UnusedParameters")
   private static GitPushRepoResult repoResult(GitPushNativeResult.Type nativeType, String from, String to, String errorText) {
-    GitPushNativeResult nr1 = GitPushNativeResult.error(errorText);
-    return GitPushRepoResult.convertFromNative(nr1, -1, makeLocalBranch(from), makeRemoteBranch(to));
+    return GitPushRepoResult.error(from(from), to(to), errorText);
   }
 
-  private static GitLocalBranch makeLocalBranch(String from) {
+  private static GitLocalBranch from(String from) {
     return new GitLocalBranch(from, GitBranch.DUMMY_HASH);
   }
 
-  private static GitRemoteBranch makeRemoteBranch(String to) {
+  private static GitRemoteBranch to(String to) {
     int firstSlash = to.indexOf('/');
     GitRemote remote = new GitRemote(to.substring(0, firstSlash), Collections.<String>emptyList(), Collections.<String>emptyList(),
                                      Collections.<String>emptyList(), Collections.<String>emptyList());
     return new GitStandardRemoteBranch(remote, to.substring(firstSlash + 1), GitBranch.DUMMY_HASH);
+  }
+
+  private GitPushResultNotification notification(GitPushRepoResult singleResult) {
+    return notification(Collections.<GitRepository, GitPushRepoResult>singletonMap(repo("community"), singleResult));
   }
 
   private GitPushResultNotification notification(Map<GitRepository, GitPushRepoResult> map) {

@@ -375,12 +375,13 @@ public class GitImpl implements Git {
   @NotNull
   public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @Nullable String url, @NotNull String spec,
                                boolean updateTracking, @NotNull GitLineHandlerListener... listeners) {
-    return doPush(repository, remote, url, spec, false, updateTracking, listeners);
+    return doPush(repository, remote, url, spec, false, updateTracking, null, listeners);
   }
 
   @NotNull
   private GitCommandResult doPush(@NotNull final GitRepository repository, @NotNull final String remote, @Nullable final String url,
                                @NotNull final String spec, final boolean force, final boolean updateTracking,
+                               @Nullable final String tagMode,
                                @NotNull final GitLineHandlerListener... listeners) {
     return runCommand(new Computable<GitLineHandler>() {
       @Override
@@ -402,6 +403,9 @@ public class GitImpl implements Git {
         if (force) {
           h.addParameters("--force");
         }
+        if (tagMode != null) {
+          h.addParameters(tagMode);
+        }
         return h;
       }
     });
@@ -416,8 +420,8 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult push(GitRepository repository, GitLocalBranch source, GitRemoteBranch target,
-                               boolean force, boolean updateTracking, GitLineHandlerListener... listeners) {
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitLocalBranch source, @NotNull GitRemoteBranch target,
+                               boolean force, boolean updateTracking, @Nullable String tagMode, GitLineHandlerListener... listeners) {
     GitRemote remote = target.getRemote();
     Collection<String> pushUrls = remote.getPushUrls(); // TODO handle the case with multiple pushurls with different protocols
     String url;
@@ -429,7 +433,7 @@ public class GitImpl implements Git {
       url = pushUrls.iterator().next();
     }
     String spec = source.getFullName() + ":" + target.getNameForRemoteOperations();
-    return doPush(repository, remote.getName(), url, spec, force, updateTracking, listeners);
+    return doPush(repository, remote.getName(), url, spec, force, updateTracking, tagMode, listeners);
   }
 
   @NotNull

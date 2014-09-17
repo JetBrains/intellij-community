@@ -37,22 +37,13 @@ class GitPushNativeResult {
   }
 
   @NotNull private final Type myType;
+  private final String mySourceRef;
   @Nullable private final String myRange;
-  @Nullable private final String myErrorOutput;
 
-  private GitPushNativeResult(@NotNull Type type, @Nullable String range, @Nullable String errorOutput) {
+  GitPushNativeResult(@NotNull Type type, String sourceRef, @Nullable String range) {
     myType = type;
+    mySourceRef = sourceRef;
     myRange = range;
-    myErrorOutput = errorOutput;
-  }
-
-  public GitPushNativeResult(@NotNull Type type, @Nullable String range) {
-    this(type, range, null);
-  }
-
-  @NotNull
-  public static GitPushNativeResult error(@NotNull String errorOutput) {
-    return new GitPushNativeResult(Type.ERROR, null, errorOutput);
   }
 
   @NotNull
@@ -65,13 +56,12 @@ class GitPushNativeResult {
     return myRange;
   }
 
-  @Nullable
-  public String getErrorOutput() {
-    return myErrorOutput;
+  public String getSourceRef() {
+    return mySourceRef;
   }
 
   @Override
   public String toString() {
-    return String.format("%s: '%s', stderr:[%s]", myType, myRange, myErrorOutput);
+    return String.format("%s: '%s', '%s'", myType, mySourceRef, myRange);
   }
 }

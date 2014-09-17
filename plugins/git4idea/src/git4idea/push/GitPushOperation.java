@@ -72,6 +72,7 @@ public class GitPushOperation {
 
   private final Project myProject;
   private final Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> myPushSpecs;
+  @Nullable private final GitPushTagMode myTagMode;
   private final boolean myForce;
   private final Git myGit;
   private final ProgressIndicator myProgressIndicator;
@@ -79,9 +80,13 @@ public class GitPushOperation {
   private final GitPushSettings myPushSettings;
   private final GitPlatformFacade myPlatformFacade;
 
-  public GitPushOperation(Project project, Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs, boolean force) {
+  public GitPushOperation(@NotNull Project project,
+                          @NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
+                          @Nullable GitPushTagMode tagMode,
+                          boolean force) {
     myProject = project;
     myPushSpecs = pushSpecs;
+    myTagMode = tagMode;
     myForce = force;
     myGit = ServiceManager.getService(Git.class);
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
@@ -235,14 +240,33 @@ public class GitPushOperation {
     Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newLinkedHashMap();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
-      GitPushNativeResult result = doPush(repository, spec);
-      LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + result);
+      Pair<List<GitPushNativeResult>, String> resultOrError = doPush(repository, spec);
+      LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultOrError);
 
-      int commits = collectNumberOfPushedCommits(repository.getRoot(), result);
-
+      GitLocalBranch source = spec.getSource().getBranch();
       GitPushTarget target = spec.getTarget();
-      assert target != null;
-      GitPushRepoResult repoResult = GitPushRepoResult.convertFromNative(result, commits, spec.getSource().getBranch(), target.getBranch());
+      GitPushRepoResult repoResult;
+      if (resultOrError.second != null) {
+        repoResult = GitPushRepoResult.error(source, target.getBranch(), resultOrError.second);
+      }
+      else {
+        List<GitPushNativeResult> result = resultOrError.first;
+        final GitPushNativeResult branchResult = getBranchResult(result);
+        if (branchResult == null) {
+          LOG.error("No result for branch among: [" + result + "]");
+          continue;
+        }
+        List<GitPushNativeResult> tagResults = ContainerUtil.filter(result, new Condition<GitPushNativeResult>() {
+          @Override
+          public boolean value(GitPushNativeResult result) {
+            return !result.equals(branchResult) &&
+                   (result.getType() == GitPushNativeResult.Type.NEW_REF || result.getType() == GitPushNativeResult.Type.FORCED_UPDATE);
+          }
+        });
+        int commits = collectNumberOfPushedCommits(repository.getRoot(), branchResult);
+        repoResult = GitPushRepoResult.convertFromNative(branchResult, tagResults, commits, source, target.getBranch());
+      }
+
       LOG.debug("Converted result: " + repoResult);
       results.put(repository, repoResult);
     }
@@ -255,6 +279,23 @@ public class GitPushOperation {
       }
     }
     return results;
+  }
+
+  @Nullable
+  private static GitPushNativeResult getBranchResult(@NotNull List<GitPushNativeResult> results) {
+    return ContainerUtil.find(results, new Condition<GitPushNativeResult>() {
+      @Override
+      public boolean value(GitPushNativeResult result) {
+        return result.getSourceRef().startsWith("refs/heads/");
+      }
+    });
+  }
+
+  @NotNull
+  private static <T> List<T> without(@NotNull List<T> collection, @NotNull T toRemove) {
+    List<T> result = ContainerUtil.newArrayList(collection);
+    result.remove(toRemove);
+    return result;
   }
 
   private int collectNumberOfPushedCommits(@NotNull VirtualFile root, @NotNull GitPushNativeResult result) {
@@ -286,21 +327,22 @@ public class GitPushOperation {
   }
 
   @NotNull
-  private GitPushNativeResult doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
+  private Pair<List<GitPushNativeResult>, String> doPush(@NotNull GitRepository repository,
+                                                         @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
     GitPushTarget target = pushSpec.getTarget();
-    assert target != null;
     GitLocalBranch sourceBranch = pushSpec.getSource().getBranch();
     GitRemoteBranch targetBranch = target.getBranch();
 
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
     boolean setUpstream = pushSpec.getTarget().isNewBranchCreated() && !branchTrackingInfoIsSet(repository, sourceBranch);
-    GitCommandResult res = myGit.push(repository, sourceBranch, targetBranch, myForce, setUpstream, progressListener);
+    String tagMode = myTagMode == null ? null : myTagMode.getArgument();
+    GitCommandResult res = myGit.push(repository, sourceBranch, targetBranch, myForce, setUpstream, tagMode, progressListener);
 
-    GitPushNativeResult result = GitPushNativeResultParser.parse(res.getOutput());
-    if (result == null) {
-      result = GitPushNativeResult.error(res.getErrorOutputAsJoinedString());
+    List<GitPushNativeResult> result = GitPushNativeResultParser.parse(res.getOutput());
+    if (result.isEmpty()) {
+      return Pair.create(null, res.getErrorOutputAsJoinedString());
     }
-    return result;
+    return Pair.create(result, null);
   }
 
   private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, @NotNull final GitLocalBranch source) {

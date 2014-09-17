@@ -110,11 +110,12 @@ public interface Git {
                         @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult push(GitRepository repository,
-                        GitLocalBranch source,
-                        GitRemoteBranch target,
+  GitCommandResult push(@NotNull GitRepository repository,
+                        @NotNull GitLocalBranch source,
+                        @NotNull GitRemoteBranch target,
                         boolean force,
                         boolean updateTracking,
+                        @Nullable String tagMode,
                         GitLineHandlerListener... listeners);
 
   @NotNull

@@ -17,8 +17,11 @@ package git4idea.push;
 
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.List;
 
+import static git4idea.push.GitPushNativeResult.Type.*;
+import static git4idea.push.GitPushNativeResultParser.parse;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class GitPushNativeResultParserTest {
@@ -61,41 +64,64 @@ public class GitPushNativeResultParserTest {
   @Test
   public void success() {
     String output = " \trefs/heads/master:refs/heads/master\t3e62822..a537351";
-    GitPushNativeResult result = GitPushNativeResultParser.parse(Arrays.asList(STANDARD_PREFIX, TARGET_PREFIX, output, SUCCESS_SUFFIX));
-    assertResult(GitPushNativeResult.Type.SUCCESS, "3e62822..a537351", result);
+    List<GitPushNativeResult> results = parse(asList(STANDARD_PREFIX, TARGET_PREFIX, output, SUCCESS_SUFFIX));
+    assertSingleResult(SUCCESS, "refs/heads/master", "3e62822..a537351", results);
   }
 
   @Test
   public void rejected() {
     String output = "!\trefs/heads/master:refs/heads/master\t[rejected] (non-fast-forward)";
-    GitPushNativeResult result = GitPushNativeResultParser.parse(Arrays.asList(STANDARD_PREFIX, TARGET_PREFIX, output, REJECT_SUFFIX));
-    assertResult(GitPushNativeResult.Type.REJECTED, null, result);
+    List<GitPushNativeResult> results = parse(asList(STANDARD_PREFIX, TARGET_PREFIX, output, REJECT_SUFFIX));
+    assertSingleResult(REJECTED, "refs/heads/master", null, results);
   }
+
 
   @Test
   public void forcedUpdate() {
     String output = "+\trefs/heads/master:refs/heads/master\tb9b3235...23760f8 (forced update)";
-    GitPushNativeResult result = GitPushNativeResultParser.parse(Arrays.asList(PUSH_DEFAULT_WARNING, TARGET_PREFIX, output));
-    assertResult(GitPushNativeResult.Type.FORCED_UPDATE, "b9b3235...23760f8", result);
+    List<GitPushNativeResult> result = parse(asList(PUSH_DEFAULT_WARNING, TARGET_PREFIX, output));
+    assertSingleResult(FORCED_UPDATE, "refs/heads/master", "b9b3235...23760f8", result);
   }
 
   @Test
   public void upToDate() {
     String output = "=\trefs/heads/master:refs/heads/master\t[up to date]";
-    GitPushNativeResult result = GitPushNativeResultParser.parse(Arrays.asList(TARGET_PREFIX, output));
-    assertResult(GitPushNativeResult.Type.UP_TO_DATE, null, result);
+    List<GitPushNativeResult> result = parse(asList(TARGET_PREFIX, output));
+    assertSingleResult(UP_TO_DATE, "refs/heads/master", null, result);
   }
   
   @Test
   public void newRef() {
     String output = "*\trefs/heads/feature:refs/heads/feature2\t[new branch]";
-    GitPushNativeResult result = GitPushNativeResultParser.parse(Arrays.asList(STANDARD_PREFIX, TARGET_PREFIX, output));
-    assertResult(GitPushNativeResult.Type.NEW_REF, null, result);
+    List<GitPushNativeResult> result = parse(asList(STANDARD_PREFIX, TARGET_PREFIX, output));
+    assertSingleResult(NEW_REF, "refs/heads/feature", null, result);
   }
 
-  private static void assertResult(GitPushNativeResult.Type expectedType, String expectedRange, GitPushNativeResult actualResult) {
+  @Test
+  public void withTags() {
+    String[] output = {
+      " \trefs/heads/master:refs/heads/master\t7aabf91..d8369de",
+      "*\trefs/tags/some_tag:refs/tags/some_tag\t[new tag]" };
+    List<GitPushNativeResult> results = parse(asList(output));
+    assertEquals(2, results.size());
+    assertResult(SUCCESS, "refs/heads/master", "7aabf91..d8369de", results.get(0));
+    assertResult(NEW_REF, "refs/tags/some_tag", null, results.get(1));
+  }
+
+  private static void assertResult(GitPushNativeResult.Type expectedType,
+                                   String expectedSource,
+                                   String expectedRange,
+                                   GitPushNativeResult actualResult) {
     assertEquals(expectedType, actualResult.getType());
+    assertEquals(expectedSource, actualResult.getSourceRef());
     assertEquals(expectedRange, actualResult.getRange());
   }
 
+  private static void assertSingleResult(GitPushNativeResult.Type expectedType,
+                                         String expectedSource, String expectedRange,
+                                         List<GitPushNativeResult> actualResults) {
+    assertEquals(1, actualResults.size());
+    GitPushNativeResult result = actualResults.get(0);
+    assertResult(expectedType, expectedSource, expectedRange, result);
+  }
 }

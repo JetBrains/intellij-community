@@ -16,6 +16,7 @@
 package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,15 +92,16 @@ public class GitPushNativeResultParser {
   private static final Pattern PATTERN = Pattern.compile("^.*([ +\\-\\*!=])\\s(\\S+):(\\S+)\\s(\\S+).*$");
   private static final Pattern RANGE = Pattern.compile("[0-9a-f]+[\\.]{2,3}[0-9a-f]+");
 
-  @Nullable
-  public static GitPushNativeResult parse(@NotNull List<String> output) {
+  @NotNull
+  public static List<GitPushNativeResult> parse(@NotNull List<String> output) {
+    List<GitPushNativeResult> results = ContainerUtil.newArrayList();
     for (String line : output) {
       Matcher matcher = PATTERN.matcher(line);
       if (matcher.matches()) {
-        return parseRefResult(matcher, line);
+        results.add(parseRefResult(matcher, line));
       }
     }
-    return null;
+    return results;
   }
 
   @Nullable
@@ -114,8 +116,11 @@ public class GitPushNativeResultParser {
       LOG.error("Couldn't parse push result type from flag [" + flag + "] in [" + line + "]");
       return null;
     }
+    if (matcher.groupCount() < 4) {
+      return null;
+    }
     String range = RANGE.matcher(summary).matches() ? summary : null;
-    return new GitPushNativeResult(type, range);
+    return new GitPushNativeResult(type, from, range);
   }
 
   private static GitPushNativeResult.Type parseType(String flag) {

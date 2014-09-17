@@ -161,7 +161,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     refresh();
     PushSpec<GitPushSource, GitPushTarget> pushSpec = makePushSpec(myRepository, "master", "origin/master");
 
-    GitPushResult result = new GitPushOperation(myProject, Collections.singletonMap(myRepository, pushSpec), false) {
+    GitPushResult result = new GitPushOperation(myProject, Collections.singletonMap(myRepository, pushSpec), null, false) {
       @NotNull
       @Override
       protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
@@ -242,7 +242,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
   private GitPushResult push(@NotNull String from, @NotNull String to, boolean force) {
     refresh();
     PushSpec<GitPushSource, GitPushTarget> spec = makePushSpec(myRepository, from, to);
-    return new GitPushOperation(myProject, Collections.singletonMap(myRepository, spec), force).execute();
+    return new GitPushOperation(myProject, Collections.singletonMap(myRepository, spec), null, force).execute();
   }
 
   private void agreeToUpdate(final int exitCode) {

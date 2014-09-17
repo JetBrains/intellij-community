@@ -15,13 +15,13 @@
  */
 package com.intellij.dvcs.push;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public abstract class VcsPushOptionsPanel extends JPanel {
 
-  @NotNull
+  @Nullable
   public abstract VcsPushOptionValue getValue();
 
 }

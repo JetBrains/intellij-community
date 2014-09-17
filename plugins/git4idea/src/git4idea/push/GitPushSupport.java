@@ -15,10 +15,7 @@
  */
 package git4idea.push;
 
-import com.intellij.dvcs.push.OutgoingCommitsProvider;
-import com.intellij.dvcs.push.PushSupport;
-import com.intellij.dvcs.push.PushTargetPanel;
-import com.intellij.dvcs.push.Pusher;
+import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +28,7 @@ import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitSharedSettings;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -156,4 +154,9 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
     return mySettings.isForcePushAllowed();
   }
 
+  @Nullable
+  @Override
+  public VcsPushOptionsPanel createOptionsPanel() {
+    return new GitPushTagPanel(GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs.getVersion()));
+  }
 }
