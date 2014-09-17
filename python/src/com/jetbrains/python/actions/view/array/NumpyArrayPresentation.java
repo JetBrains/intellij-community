@@ -42,6 +42,14 @@ class NumpyArrayPresentation {
   private String myDtype;
   private NumpyArrayValueProvider myValueProvider;
 
+  public final static String DEFAULT_STRING_FORMAT = "\'%s\'";
+
+  public final static String DEFAULT_FLOAT_FORMAT = "\'%.3f\'";
+
+  public final static String DEFAULT_INT_FORMAT = "\'%d\'";
+
+  public final static String DEFAULT_COMPLEX_FORMAT = "\'%d\'";
+
   public NumpyArrayPresentation(String name, NumpyArrayValueProvider valueProvider) {
     myArrayName = name;
     myValueProvider = valueProvider;
@@ -208,11 +216,11 @@ class NumpyArrayPresentation {
       @Override
       public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
         String fullName = ((XValueNodeImpl)node).getName();
-        int row = 0;
+        int row = -1;
         if (fullName != null && fullName.contains("[")) {
           row = Integer.parseInt(fullName.substring(fullName.lastIndexOf('[') + 1, fullName.length() - 2));
         }
-        if (myData[row][0] == null) {
+        if (row != -1 && myData[row][0] == null) {
           for (int i = 0; i < node.getChildCount() - 1; i++) {
             myData[row][i] = ((XValueNodeImpl)node.getChildAt(i + 1)).getRawValue();
           }
@@ -275,6 +283,23 @@ class NumpyArrayPresentation {
     }
 
     setSlice(presentation);
+  }
+
+
+  public String getFormat() {
+    if (isNumeric()){
+      return DEFAULT_FLOAT_FORMAT;
+    } else {
+      return DEFAULT_STRING_FORMAT;
+    }
+  }
+
+  public boolean isNumeric() {
+    if (getDtype() != null) {
+      return "biufc".contains(getDtype().substring(0, 1));
+    }
+    return false;
+
   }
 }
 
