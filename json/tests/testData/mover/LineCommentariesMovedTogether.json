@@ -1,0 +1,6 @@
+{
+  "foo": true,
+  // Line<caret> 1
+  // Line 2
+  "bar": false
+}
