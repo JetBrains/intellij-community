@@ -15,8 +15,11 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -32,12 +35,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
-  @NonNls private final String myId;
-
-  public OptionsTopHitProvider(String optionId) {
-    myId = optionId.toLowerCase();
-  }
-
   @NotNull
   public abstract Collection<BooleanOptionDescription> getOptions(Project project);
 
@@ -50,7 +47,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     if (parts.size() == 0) return;
 
     String id = parts.get(0);
-    if (myId.startsWith(id)) {
+    if (getId().startsWith(id)) {
       pattern = pattern.substring(id.length()).trim().toLowerCase();
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       for (BooleanOptionDescription option : getOptions(project)) {
@@ -59,5 +56,19 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
         }
       }
     }
+  }
+
+  public abstract String getId();
+
+  static String messageApp(String property) {
+    return StringUtil.stripHtml(ApplicationBundle.message(property), false);
+  }
+
+  static String messageIde(String property) {
+    return StringUtil.stripHtml(IdeBundle.message(property), false);
+  }
+
+  static String messageKeyMap(String property) {
+    return StringUtil.stripHtml(KeyMapBundle.message(property), false);
   }
 }

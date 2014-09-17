@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.service.task;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.task.AbstractExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
@@ -30,6 +29,8 @@ import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildLauncher;
+import org.gradle.tooling.CancellationTokenSource;
+import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -51,6 +53,11 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
   implements ExternalSystemTaskManager<GradleExecutionSettings> {
 
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
+
+  private final Map<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = ContainerUtil.newConcurrentMap();
+
+  public GradleTaskManager() {
+  }
 
   @Override
   public void executeTasks(@NotNull final ExternalSystemTaskId id,
@@ -113,7 +120,15 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
 
         BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener, vmOptions, scriptParameters);
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
-        launcher.run();
+        final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
+        launcher.withCancellationToken(cancellationTokenSource.token());
+        myCancellationMap.put(id, cancellationTokenSource);
+        try {
+          launcher.run();
+        }
+        finally {
+          myCancellationMap.remove(id);
+        }
         return null;
       }
     };
@@ -131,11 +146,10 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
       }
     }
 
-    // TODO replace with cancellation gradle API invocation when it will be ready, see http://issues.gradle.org/browse/GRADLE-1539
-    if (!ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
-      listener.onStatusChange(new ExternalSystemTaskNotificationEvent(id, "Cancelling the task...\n"));
-      System.exit(0);
+    final CancellationTokenSource cancellationTokenSource = myCancellationMap.get(id);
+    if (cancellationTokenSource != null) {
+      cancellationTokenSource.cancel();
     }
-    return false;
+    return true;
   }
 }

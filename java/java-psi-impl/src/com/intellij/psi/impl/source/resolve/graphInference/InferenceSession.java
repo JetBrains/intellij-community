@@ -121,12 +121,24 @@ public class InferenceSession {
         method = currentProperties.getMethod();
       }
     }
+    if (method != null) {
+      initThrowsConstraints(method);
+    }
     if (parameters.length > 0) {
       for (int i = 0; i < args.length; i++) {
         if (args[i] != null && isPertinentToApplicability(args[i], method)) {
           PsiType parameterType = getParameterType(parameters, i, mySiteSubstitutor, varargs);
           addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType)));
         }
+      }
+    }
+  }
+
+  public void initThrowsConstraints(PsiMethod method) {
+    for (PsiClassType thrownType : method.getThrowsList().getReferencedTypes()) {
+      final InferenceVariable variable = getInferenceVariable(substituteWithInferenceVariables(thrownType));
+      if (variable != null) {
+        variable.setThrownBound();
       }
     }
   }
@@ -454,13 +466,6 @@ public class InferenceSession {
         if (targetType != null && !PsiType.VOID.equals(targetType)) {
           registerReturnTypeConstraints(PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType);
         }
-      }
-    }
-
-    for (PsiClassType thrownType : method.getThrowsList().getReferencedTypes()) {
-      final InferenceVariable variable = getInferenceVariable(substituteWithInferenceVariables(thrownType));
-      if (variable != null) {
-        variable.setThrownBound();
       }
     }
   }

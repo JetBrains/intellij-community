@@ -438,10 +438,12 @@ class NdArrayResolver:
         ret['shape'] = obj.shape
         ret['dtype'] = obj.dtype
         ret['size'] = obj.size
-        ret['[0:%s]' % (len(obj))] = list(obj)
+        ret['[0:%s] ' % (len(obj))] = list(obj[0:MAX_ITEMS_TO_HANDLE])
         return ret
 
 class NdArrayItemsContainer: pass
+
+
 #=======================================================================================================================
 # FrameResolver
 #=======================================================================================================================

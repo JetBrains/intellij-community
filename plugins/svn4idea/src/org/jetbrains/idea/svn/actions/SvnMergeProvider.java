@@ -56,7 +56,7 @@ public class SvnMergeProvider implements MergeProvider {
   }
 
   @NotNull
-  public MergeData loadRevisions(final VirtualFile file) throws VcsException {
+  public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
     final MergeData data = new MergeData();
     VcsRunnable runnable = new VcsRunnable() {
       public void run() throws VcsException {
@@ -137,7 +137,7 @@ public class SvnMergeProvider implements MergeProvider {
     }
   }
 
-  public void conflictResolvedForFile(VirtualFile file) {
+  public void conflictResolvedForFile(@NotNull VirtualFile file) {
     // TODO: Add possibility to resolve content conflicts separately from property conflicts.
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     File path = new File(file.getPath());

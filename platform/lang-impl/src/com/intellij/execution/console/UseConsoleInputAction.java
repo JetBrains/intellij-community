@@ -51,6 +51,6 @@ final class UseConsoleInputAction extends ToggleAction implements DumbAware {
 
     List<AnAction> actions = ActionUtil.getActions(consoleView.getConsole().getConsoleEditor().getComponent());
     ConsoleExecuteAction action = ContainerUtil.findInstance(actions, ConsoleExecuteAction.class);
-    action.myExecuteActionHandler.useProcessStdIn = !state;
+    action.myExecuteActionHandler.myUseProcessStdIn = !state;
   }
 }

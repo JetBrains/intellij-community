@@ -29,9 +29,9 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class InspectionsTopHitProvider extends OptionsTopHitProvider {
-
-  public InspectionsTopHitProvider() {
-    super("inspections");
+  @Override
+  public String getId() {
+    return "inspections";
   }
 
   @NotNull

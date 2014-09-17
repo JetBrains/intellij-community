@@ -93,7 +93,7 @@ public class HgStatusWidget extends EditorBasedWidget
   @Override
   public ListPopup getPopupStep() {
     Project project = getProject();
-    if (project == null) {
+    if (project == null || project.isDisposed()) {
       return null;
     }
     VirtualFile root = HgUtil.getRootForSelectedFile(project);

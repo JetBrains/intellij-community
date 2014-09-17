@@ -3100,11 +3100,15 @@
   <item name="org.apache.commons.lang.Validate void notEmpty(java.util.Map, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="org.apache.commons.lang.Validate void notNull(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
+  <item name="org.apache.commons.lang.Validate void notNull(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null -&gt; fail&quot;"/>
+    </annotation>
   </item>
-  <item name="org.apache.commons.lang.Validate void notNull(java.lang.Object, java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
+  <item name="org.apache.commons.lang.Validate void notNull(java.lang.Object, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null, _ -&gt; fail&quot;"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.WordUtils boolean isDelimiter(char, char[]) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>

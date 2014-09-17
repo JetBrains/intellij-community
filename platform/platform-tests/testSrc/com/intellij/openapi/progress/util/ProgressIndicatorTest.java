@@ -25,6 +25,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -49,7 +51,8 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       fail("Please restore ProgressIndicatorBase.checkCanceled() check!");
     }
     catch(ProcessCanceledException ex) {
-      assertTrue("Should have no stackframe", ex.getStackTrace().length == 0);
+      boolean isInternal = SystemProperties.getBooleanProperty("idea.is.internal", false);
+      assertTrue("Should have no stackframe", isInternal ? ex.getStackTrace().length != 0 : ex.getStackTrace().length == 0);
     }
   }
 
@@ -138,8 +141,8 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     assertTrue(indicator.isCanceled());
   }
 
-  public void testThereIsNoDelayBetweenIndicatorCancelAndProgressManagerCheckCanceled() {
-    for (int i=0; i<1000;i++) {
+  public void testThereIsNoDelayBetweenIndicatorCancelAndProgressManagerCheckCanceled() throws Throwable {
+    for (int i=0; i<100;i++) {
       final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
       List<Thread> threads = ContainerUtil.map(Collections.nCopies(10, ""), new Function<String, Thread>() {
         @Override
@@ -151,12 +154,15 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
                 @Override
                 public void run() {
                   try {
-                    boolean canceled = indicator.isCanceled();
+                    Thread.sleep(new Random().nextInt(100));
                     indicator.cancel();
                     ProgressManager.checkCanceled();
                     fail("checkCanceled() must know about canceled indicator even from different thread");
                   }
                   catch (ProcessCanceledException ignored) {
+                  }
+                  catch (Throwable e) {
+                    exception = e;
                   }
                 }
               }, indicator);
@@ -177,7 +183,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         }
       });
     }
-
+    if (exception != null) throw exception;
   }
 
   private volatile boolean checkCanceledCalled;
@@ -288,7 +294,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
     @Override
     public void initStateFrom(@NotNull ProgressIndicator indicator) {
-      throw new RuntimeException();
     }
 
     @NotNull

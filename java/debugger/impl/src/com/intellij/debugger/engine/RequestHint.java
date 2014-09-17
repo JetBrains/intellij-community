@@ -149,6 +149,17 @@ public class RequestHint {
 
   public int getNextStepDepth(final SuspendContextImpl context) {
     try {
+      final StackFrameProxyImpl frameProxy = context.getFrameProxy();
+
+      // smart step feature stop check
+      if (myMethodFilter != null &&
+          frameProxy != null &&
+          !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
+          myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location())) {
+        myTargetMethodMatched = true;
+        return STOP;
+      }
+
       if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {
         final Integer resultDepth = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
           public Integer compute() {
@@ -162,7 +173,7 @@ public class RequestHint {
               try {
                 frameCount = contextThread.frameCount();
               }
-              catch (EvaluateException e) {
+              catch (EvaluateException ignored) {
               }
             }
             final boolean filesEqual = myPosition.getFile().equals(locationPosition.getFile());
@@ -192,16 +203,17 @@ public class RequestHint {
 
       if (myDepth == StepRequest.STEP_INTO) {
         final DebuggerSettings settings = DebuggerSettings.getInstance();
-        final StackFrameProxyImpl frameProxy = context.getFrameProxy();
 
-        if (settings.SKIP_SYNTHETIC_METHODS && frameProxy != null) {
+        if ((settings.SKIP_SYNTHETIC_METHODS || myMethodFilter != null)&& frameProxy != null) {
           final Location location = frameProxy.location();
-          final Method method = location.method();
-          if (method != null) {
-            if (myVirtualMachineProxy.canGetSyntheticAttribute()? method.isSynthetic() : method.name().indexOf('$') >= 0) {
-              // step into lambda methods
-              if (!method.name().startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
-                return myDepth;
+          if (location != null) {
+            final Method method = location.method();
+            if (method != null) {
+              if (myVirtualMachineProxy.canGetSyntheticAttribute() ? method.isSynthetic() : method.name().indexOf('$') >= 0) {
+                // step into lambda methods
+                if (!method.name().startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
+                  return myDepth;
+                }
               }
             }
           }
@@ -224,15 +236,17 @@ public class RequestHint {
           if (frameProxy != null) {
             if (settings.SKIP_CONSTRUCTORS) {
               final Location location = frameProxy.location();
-              final Method method = location.method();
-              if (method != null && method.isConstructor()) {
-                return StepRequest.STEP_OUT;
+              if (location != null) {
+                final Method method = location.method();
+                if (method != null && method.isConstructor()) {
+                  return StepRequest.STEP_OUT;
+                }
               }
             }
 
             if (settings.SKIP_CLASSLOADERS) {
               final Location location = frameProxy.location();
-              if (DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
+              if (location != null && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
                 return StepRequest.STEP_OUT;
               }
             }
@@ -240,20 +254,11 @@ public class RequestHint {
         }
         // smart step feature
         if (myMethodFilter != null) {
-          if (myMethodFilter instanceof BreakpointStepMethodFilter) {
-            // continue stepping if stop criterion is implemented as breakpoint request
-            return StepRequest.STEP_OUT;
-          }
-          if (frameProxy != null) {
-            if (!myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location())) {
-              return StepRequest.STEP_OUT;
-            }
-            myTargetMethodMatched = true;
-          }
+          return StepRequest.STEP_OUT;
         }
       }
     }
-    catch (VMDisconnectedException e) {
+    catch (VMDisconnectedException ignored) {
     }
     catch (EvaluateException e) {
       LOG.error(e);

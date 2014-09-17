@@ -71,7 +71,7 @@ import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnExecutableChecker;
-import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
+import org.jetbrains.idea.svn.integrate.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;

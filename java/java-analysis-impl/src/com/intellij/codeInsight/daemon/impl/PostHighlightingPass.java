@@ -149,7 +149,8 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     myInLibrary = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
 
     myRefCountHolder = RefCountHolder.endUsing(myFile, progress);
-    if (myRefCountHolder == null || !myRefCountHolder.retrieveUnusedReferencesInfo(progress, new Runnable() {
+    boolean r = true;
+    if (myRefCountHolder == null || !(r=myRefCountHolder.retrieveUnusedReferencesInfo(progress, new Runnable() {
       @Override
       public void run() {
         boolean errorFound = collectHighlights(elementSet, highlights, progress);
@@ -158,8 +159,9 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
           fileStatusMap.setErrorFoundFlag(myDocument, true);
         }
       }
-    })) {
+    }))) {
       // we must be sure GHP will restart
+      FileStatusMap.log("myRefCountHolder: ", myRefCountHolder, "; retrieved: ", r);
       fileStatusMap.markFileScopeDirty(getDocument(), Pass.UPDATE_ALL);
       GeneralHighlightingPass.cancelAndRestartDaemonLater(progress, myProject, this);
     }

@@ -37,10 +37,8 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import org.gradle.tooling.BuildActionExecuter;
-import org.gradle.tooling.ModelBuilder;
-import org.gradle.tooling.ProjectConnection;
-import org.gradle.tooling.UnsupportedVersionException;
+import com.intellij.util.containers.MultiMap;
+import org.gradle.tooling.*;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
@@ -68,6 +66,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   @NotNull private final GradleExecutionHelper myHelper;
   private final GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();
+
+  private final MultiMap<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = MultiMap.create();
 
   // This constructor is called by external system API, see AbstractExternalSystemFacadeImpl class constructor.
   @SuppressWarnings("UnusedDeclaration")
@@ -109,8 +109,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   @Override
   public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener) {
-    // TODO implement cancellation using gradle API invocation when it will be ready, see http://issues.gradle.org/browse/GRADLE-1539
-    return false;
+    synchronized (myCancellationMap) {
+      for (CancellationTokenSource cancellationTokenSource : myCancellationMap.get(id)) {
+        cancellationTokenSource.cancel();
+      }
+    }
+    return true;
   }
 
   @NotNull
@@ -164,7 +168,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       parametersList.getParameters(), commandLineArgs, resolverCtx.getConnection());
 
     ProjectImportAction.AllModels allModels;
+    final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     try {
+      buildActionExecutor.withCancellationToken(cancellationTokenSource.token());
+      synchronized (myCancellationMap) {
+        myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
+      }
       allModels = buildActionExecutor.run();
       if (allModels == null) {
         throw new IllegalStateException("Unable to get project model for the project: " + resolverCtx.getProjectPath());
@@ -184,6 +193,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       final IdeaProject ideaProject = modelBuilder.get();
       allModels = new ProjectImportAction.AllModels(ideaProject);
+    }
+    finally {
+      synchronized (myCancellationMap) {
+        myCancellationMap.remove(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
+      }
     }
 
     final BuildEnvironment buildEnvironment = getBuildEnvironment(resolverCtx);

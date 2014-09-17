@@ -60,7 +60,9 @@ public class UpdateOutputLineConverter {
   // export from working copy
   private final static Pattern ourExportComplete = Pattern.compile("Export complete\\.");
 
-  private final static Pattern ourExternal = Pattern.compile("External at (\\d+)\\.");
+  // update operation with no changes - still we're interested in revision number
+  private final static Pattern ourExternal = Pattern.compile("External at revision (\\d+)\\.");
+  // update operation with some changes
   private final static Pattern ourUpdatedExternal = Pattern.compile("Updated external to revision (\\d+)\\.");
   private final static Pattern ourCheckedOutExternal = Pattern.compile("Checked out external at revision (\\d+)\\.");
 

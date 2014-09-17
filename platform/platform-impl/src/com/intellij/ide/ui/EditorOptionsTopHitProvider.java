@@ -16,25 +16,35 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
-  private static final Collection<BooleanOptionDescription> ourOptions = createOptions();
-
-  public EditorOptionsTopHitProvider() {
-    super("editor");
-  }
+  private static final Collection<BooleanOptionDescription> ourOptions = Collections.unmodifiableCollection(Arrays.asList(
+    editor("Mouse: " + messageApp("checkbox.honor.camelhumps.words.settings.on.double.click"),
+           "IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS"),
+    editor("Mouse: " + messageApp(SystemInfo.isMac
+                                  ? "checkbox.enable.ctrl.mousewheel.changes.font.size.macos"
+                                  : "checkbox.enable.ctrl.mousewheel.changes.font.size"), "IS_WHEEL_FONTCHANGE_ENABLED"),
+    editor("Mouse: " + messageApp("checkbox.enable.drag.n.drop.functionality.in.editor"), "IS_DND_ENABLED"),
+    editor("Virtual Space: " + messageApp("checkbox.show.all.softwraps"), "IS_ALL_SOFTWRAPS_SHOWN"),
+    editor("Virtual Space: " + messageApp("checkbox.allow.placement.of.caret.after.end.of.line"), "IS_VIRTUAL_SPACE"),
+    editor("Virtual Space: " + messageApp("checkbox.allow.placement.of.caret.inside.tabs"), "IS_CARET_INSIDE_TABS"),
+    editor("Virtual Space: " + messageApp("checkbox.show.virtual.space.at.file.bottom"), "ADDITIONAL_PAGE_AT_BOTTOM"),
+    editorTabs("Tabs: " + messageApp("checkbox.editor.tabs.in.single.row"), "SCROLL_TAB_LAYOUT_IN_EDITOR"),
+    editorTabs("Tabs: " + messageApp("checkbox.hide.file.extension.in.editor.tabs"), "HIDE_KNOWN_EXTENSION_IN_TABS"),
+    editorTabs("Tabs: Show directory in editor tabs for non-unique filenames", "SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES"),
+    editorTabs("Tabs: " + messageApp("checkbox.editor.tabs.show.close.button"), "SHOW_CLOSE_BUTTON"),
+    editorTabs("Tabs: " + messageApp("checkbox.mark.modified.tabs.with.asterisk"), "MARK_MODIFIED_TABS_WITH_ASTERISK"),
+    editorTabs("Tabs: " + messageApp("checkbox.show.tabs.tooltips"), "SHOW_TABS_TOOLTIPS")));
 
   @NotNull
   @Override
@@ -42,40 +52,20 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     return ourOptions;
   }
 
-  private static Collection<BooleanOptionDescription> createOptions() {
-    final List<BooleanOptionDescription> options = new ArrayList<BooleanOptionDescription>();
-    options.add(editorMouse("IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS", "checkbox.honor.camelhumps.words.settings.on.double.click"));
-    options.add(editorMouse("IS_WHEEL_FONTCHANGE_ENABLED", SystemInfo.isMac
-                                                           ? "checkbox.enable.ctrl.mousewheel.changes.font.size.macos"
-                                                           : "checkbox.enable.ctrl.mousewheel.changes.font.size"));
-    options.add(editorMouse("IS_DND_ENABLED", "checkbox.enable.drag.n.drop.functionality.in.editor"));
-
-    options.add(editorVirtualSpace("IS_ALL_SOFTWRAPS_SHOWN", "checkbox.show.all.softwraps"));
-    options.add(editorVirtualSpace("IS_VIRTUAL_SPACE", "checkbox.allow.placement.of.caret.after.end.of.line"));
-    options.add(editorVirtualSpace("IS_CARET_INSIDE_TABS", "checkbox.allow.placement.of.caret.inside.tabs"));
-    options.add(editorVirtualSpace("ADDITIONAL_PAGE_AT_BOTTOM", "checkbox.show.virtual.space.at.file.bottom"));
-
-    return options;
+  @Override
+  public String getId() {
+    return "editor";
   }
 
-  static EditorOptionDescription editor(String fieldName, String group, String property, String configurableId) {
-    String name = "";
-    if (!StringUtil.isEmpty(group)) {
-      name += group + ": ";
-    }
-    name += StringUtil.stripHtml(ApplicationBundle.message(property), false);
-    return new EditorOptionDescription(fieldName, name, configurableId);
+  static BooleanOptionDescription editor(String option, String field) {
+    return option(option, field, "preferences.editor");
   }
 
-  static EditorOptionDescription editorMouse(String fieldName, String property) {
-    return editorBehavior(fieldName, "Mouse", property);
+  static BooleanOptionDescription editorTabs(String option, String field) {
+    return AppearanceOptionsTopHitProvider.option(option, field, "editor.preferences.tabs");
   }
 
-  static EditorOptionDescription editorVirtualSpace(String fieldName, String property) {
-    return editorBehavior(fieldName, "Virtual Space", property);
-  }
-
-  static EditorOptionDescription editorBehavior(String fieldName, String group, String property) {
-    return editor(fieldName, group, property, "Editor.Behavior");
+  static BooleanOptionDescription option(String option, String field, String configurableId) {
+    return new EditorOptionDescription(field, option, configurableId);
   }
 }

@@ -50,6 +50,7 @@ public interface VcsContext extends PlaceProvider<String> {
 
   File getSelectedIOFile();
 
+  @NotNull
   FilePath[] getSelectedFilePaths();
   
   @Nullable

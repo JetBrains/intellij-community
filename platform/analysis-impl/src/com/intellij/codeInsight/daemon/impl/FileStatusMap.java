@@ -21,6 +21,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -28,8 +29,10 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
@@ -39,7 +42,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
@@ -366,5 +372,28 @@ public class FileStatusMap implements Disposable {
       throw new UnsupportedOperationException();
     }
   };
+
+  // logging
+  private static final ConcurrentMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
+  private static int getThreadNum() {
+    return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
+  }
+  private static final StringBuffer log = new StringBuffer();
+  private static final boolean IN_TESTS = ApplicationManager.getApplication().isUnitTestMode();
+  static void log(@NonNls Object... info) {
+    if (IN_TESTS) {
+      if (log.length() > 10000) {
+        log.replace(0, log.length()-5000, "");
+      }
+      String s = StringUtil.repeatSymbol(' ', getThreadNum() * 4) + Arrays.asList(info) + "\n";
+      log.append(s);
+    }
+  }
+  @NotNull
+  public static String getAndClearLog() {
+    String l = log.toString();
+    log.setLength(0);
+    return l;
+  }
 
 }

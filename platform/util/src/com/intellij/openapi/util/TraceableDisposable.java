@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /**
  * Traces creation and disposal by storing corresponding stacktraces.
@@ -71,5 +73,12 @@ public class TraceableDisposable {
       s.println("-------------Own trace:");
       super.printStackTrace(s);
     }
+  }
+
+  @NotNull
+  public String getStackTrace() {
+    StringWriter out = new StringWriter();
+    new DisposalException("").printStackTrace(new PrintWriter(out));
+    return out.toString();
   }
 }

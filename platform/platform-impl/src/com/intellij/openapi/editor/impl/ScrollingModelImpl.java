@@ -376,7 +376,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     LOG.assertTrue(success);
   }
 
-  public void commandStarted() {
+  public void finishAnimation() {
     cancelAnimatedScrolling(true);
   }
 

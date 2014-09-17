@@ -56,9 +56,10 @@ public class HgMergeProvider implements MergeProvider {
 
   @NotNull
   @Override
-  public MergeData loadRevisions(final VirtualFile file) throws VcsException {
+  public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
     final MergeData mergeData = new MergeData();
     final VcsRunnable runnable = new VcsRunnable() {
+      @Override
       public void run() throws VcsException {
         final HgWorkingCopyRevisionsCommand command = new HgWorkingCopyRevisionsCommand(myProject);
         final VirtualFile repo = HgUtil.getHgRootOrThrow(myProject, file);
@@ -144,7 +145,7 @@ public class HgMergeProvider implements MergeProvider {
   }
 
   @Override
-  public void conflictResolvedForFile(VirtualFile file) {
+  public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
       new HgResolveCommand(myProject).markResolved(HgUtil.getHgRootOrThrow(myProject, file), file);
     } catch (VcsException e) {

@@ -33,8 +33,9 @@ import java.util.List;
 
 
 public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
+  @Override
   @NotNull
-  public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new CleanupCodeCheckinHandler(panel);
   }
 
@@ -51,6 +52,7 @@ public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
     public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
       final JCheckBox cleanupCodeCb = new JCheckBox("Cleanup code");
       return new RefreshableOnComponent() {
+        @Override
         public JComponent getComponent() {
           final JPanel cbPanel = new JPanel(new BorderLayout());
           cbPanel.add(cleanupCodeCb, BorderLayout.WEST);
@@ -59,13 +61,16 @@ public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
           return cbPanel;
         }
 
+        @Override
         public void refresh() {
         }
 
+        @Override
         public void saveState() {
           VcsConfiguration.getInstance(myProject).CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT = cleanupCodeCb.isSelected();
         }
 
+        @Override
         public void restoreState() {
           cleanupCodeCb.setSelected(VcsConfiguration.getInstance(myProject).CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT);
         }

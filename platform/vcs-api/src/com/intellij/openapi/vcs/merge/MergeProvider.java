@@ -22,11 +22,13 @@ import org.jetbrains.annotations.NotNull;
 
 
 public interface MergeProvider extends VcsProviderMarker {
-  @NotNull MergeData loadRevisions(final VirtualFile file) throws VcsException;
+  @NotNull
+  MergeData loadRevisions(@NotNull VirtualFile file) throws VcsException;
 
   /**
    * called for text conflict
    */
-  void conflictResolvedForFile(VirtualFile file);
+  void conflictResolvedForFile(@NotNull VirtualFile file);
+
   boolean isBinary(@NotNull VirtualFile file);
 }

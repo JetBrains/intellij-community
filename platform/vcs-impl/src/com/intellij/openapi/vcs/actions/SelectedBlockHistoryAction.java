@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -63,7 +64,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
     return true;
   }
 
-  public void actionPerformed(final VcsContext context) {
+  public void actionPerformed(@NotNull final VcsContext context) {
     try {
       final VcsSelection selection = VcsSelectionUtil.getSelection(context);
       VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());

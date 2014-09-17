@@ -68,6 +68,9 @@ public interface StateStorageManager {
   @NotNull
   String expandMacros(@NotNull String file);
 
+  @NotNull
+  String collapseMacros(@NotNull String path);
+
   @Deprecated
   void registerStreamProvider(@SuppressWarnings("deprecation") StreamProvider streamProvider, final RoamingType type);
 

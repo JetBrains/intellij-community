@@ -64,6 +64,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
   public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS = false;
+  public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = false;
   public boolean IGNORE_ASSERT_STATEMENTS = false;
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
 
@@ -81,6 +82,9 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
     if (!REPORT_CONSTANT_REFERENCE_VALUES) {
       node.addContent(new Element("option").setAttribute("name", "REPORT_CONSTANT_REFERENCE_VALUES").setAttribute("value", "false"));
+    }
+    if (TREAT_UNKNOWN_MEMBERS_AS_NULLABLE) {
+      node.addContent(new Element("option").setAttribute("name", "TREAT_UNKNOWN_MEMBERS_AS_NULLABLE").setAttribute("value", "true"));
     }
   }
 
@@ -121,7 +125,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) return;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(scope) {
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(scope, TREAT_UNKNOWN_MEMBERS_AS_NULLABLE) {
       @Override
       protected boolean shouldCheckTimeLimit() {
         if (!onTheFly) return false;

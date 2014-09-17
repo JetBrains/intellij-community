@@ -39,7 +39,7 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
 
   @NotNull
   @Override
-  public CheckinHandler createHandler(final CheckinProjectPanel panel, final CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull final CommitContext commitContext) {
     return new CheckinHandler() {
       @Override
       public void checkinSuccessful() {

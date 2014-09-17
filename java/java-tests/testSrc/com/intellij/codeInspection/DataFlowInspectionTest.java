@@ -137,6 +137,13 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
+  public void testParanoidMode() {
+    final DataFlowInspection inspection = new DataFlowInspection();
+    inspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
   public void testReportConstantReferences() {
     doTestReportConstantReferences();
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));

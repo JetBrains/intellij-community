@@ -1085,9 +1085,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         };
         if (immediately) {
           model.runBatchFoldingOperation(operation);
-          if (isCaretAtLastLine()) {
-            EditorUtil.scrollToTheEnd(myEditor);
-          }
         }
         else {
           model.runBatchFoldingOperationDoNotCollapseCaret(operation);

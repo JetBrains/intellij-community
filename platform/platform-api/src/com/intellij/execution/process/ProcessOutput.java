@@ -29,6 +29,7 @@ public class ProcessOutput {
   private final StringBuilder myStderrBuilder = new StringBuilder();
   private int myExitCode;
   private boolean myTimeout;
+  private boolean myCancelled;
 
   public ProcessOutput() {
     myExitCode = -1; // until set explicitly, exit code denotes an error.
@@ -95,5 +96,13 @@ public class ProcessOutput {
       return false;
     }
     return true;
+  }
+
+  public boolean isCancelled() {
+    return myCancelled;
+  }
+
+  public void setCancelled() {
+    myCancelled = true;
   }
 }

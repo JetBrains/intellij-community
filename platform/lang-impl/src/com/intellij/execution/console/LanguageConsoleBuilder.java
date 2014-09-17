@@ -175,7 +175,7 @@ public final class LanguageConsoleBuilder {
     if (processInputStateKey != null) {
       assert executeActionHandler != null;
       if (PropertiesComponent.getInstance().getBoolean(processInputStateKey, false)) {
-        executeActionHandler.useProcessStdIn = true;
+        executeActionHandler.myUseProcessStdIn = true;
         DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(consoleView.getProject());
         daemonCodeAnalyzer.setHighlightingEnabled(consoleView.getConsole().getFile(), false);
       }

@@ -32,28 +32,34 @@ import java.util.Collection;
  * author: lesya
  */
 public class CvsContextAdapter implements CvsContext{
+  @Override
   public Project getProject() {
     return null;
   }
 
+  @Override
   public boolean cvsIsActive() {
     return false;
   }
 
+  @Override
   @Nullable
   public VirtualFile getSelectedFile() {
     return null;
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSelectedFiles() {
     return VirtualFile.EMPTY_ARRAY;
   }
 
+  @Override
   public Refreshable getRefreshableDialog() {
     return null;
   }
 
+  @Override
   public Collection<String> getDeletedFileNames() {
     return null;
   }
@@ -63,47 +69,59 @@ public class CvsContextAdapter implements CvsContext{
     return null;
   }
 
+  @Override
   public Editor getEditor() {
     return null;
   }
 
+  @Override
   public Collection<VirtualFile> getSelectedFilesCollection() {
     return null;
   }
 
+  @Override
   public File[] getSelectedIOFiles() {
     return new File[0];
   }
 
+  @Override
   public int getModifiers() {
     return 0;
   }
 
+  @Override
   public CvsLightweightFile[] getSelectedLightweightFiles() {
     return new CvsLightweightFile[0];
   }
 
+  @Override
   public String getPlace() {
     return null;
   }
 
+  @Override
   public File getSelectedIOFile() {
     return null;
   }
 
+  @Override
+  @NotNull
   public FilePath[] getSelectedFilePaths() {
-    return null;
+    return new FilePath[] {};
   }
 
+  @Override
   public FilePath getSelectedFilePath() {
     return null;
   }
 
+  @Override
   @Nullable
   public ChangeList[] getSelectedChangeLists() {
     return null;
   }
 
+  @Override
   @Nullable
   public Change[] getSelectedChanges() {
     return null;
