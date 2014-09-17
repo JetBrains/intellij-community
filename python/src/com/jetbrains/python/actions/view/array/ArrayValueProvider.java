@@ -16,6 +16,8 @@
 package com.jetbrains.python.actions.view.array;
 
 import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 
 /**
 * @author amarch
@@ -28,4 +30,12 @@ abstract class ArrayValueProvider {
   }
 
   public abstract boolean isNumeric();
+
+  public String getNodeName() {
+    return ((XValueNodeImpl)myBaseNode).getName();
+  }
+
+  public XDebuggerTree getTree() {
+    return ((XValueNodeImpl)myBaseNode).getTree();
+  }
 }

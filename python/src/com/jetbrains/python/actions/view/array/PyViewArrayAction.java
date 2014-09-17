@@ -18,15 +18,12 @@ package com.jetbrains.python.actions.view.array;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author amarch
@@ -71,53 +68,17 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
           myComponent.setDefaultSpinnerText();
           final NumpyArrayValueProvider valueProvider = new NumpyArrayValueProvider(node, myComponent, myProject);
           try {
-            valueProvider.startFillTable(null);
+            valueProvider.startFillTable();
           }
           catch (Exception e) {
             myComponent.setErrorSpinnerText(e);
           }
         }
         else {
-          //show hint about 'not applicable'
           myComponent.setNotApplicableSpinner(node);
           //this.close(CLOSE_EXIT_CODE);
         }
       }
-    }
-
-    private String evaluateFullValue(XValueNodeImpl node) {
-      final String[] result = new String[1];
-
-      XFullValueEvaluator.XFullValueEvaluationCallback valueEvaluationCallback = new XFullValueEvaluator.XFullValueEvaluationCallback() {
-        @Override
-        public void evaluated(@NotNull String fullValue) {
-          result[0] = fullValue;
-        }
-
-        @Override
-        public void evaluated(@NotNull String fullValue, @Nullable Font font) {
-          result[0] = fullValue;
-        }
-
-        @Override
-        public void errorOccurred(@NotNull String errorMessage) {
-          result[0] = errorMessage;
-        }
-
-        @Override
-        public boolean isObsolete() {
-          return false;
-        }
-      };
-
-      if (node.getFullValueEvaluator() != null) {
-        node.getFullValueEvaluator().startEvaluation(valueEvaluationCallback);
-      }
-      else {
-        return node.getRawValue();
-      }
-
-      return result[0];
     }
 
     @Override

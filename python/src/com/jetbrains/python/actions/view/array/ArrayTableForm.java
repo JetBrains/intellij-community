@@ -43,6 +43,16 @@ public class ArrayTableForm {
   public ArrayTableForm(){
   }
 
+  private void createUIComponents() {
+    myTable = new JBTable() {
+      public boolean getScrollableTracksViewportWidth() {
+        return getPreferredSize().width < getParent().getWidth();
+      }
+    };
+    myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+    myTable.setRowSelectionAllowed(false);
+  }
+
   public JTextField getSliceTextField() {
     return mySliceTextField;
   }
@@ -79,28 +89,15 @@ public class ArrayTableForm {
   }
 
   public void setErrorSpinnerText(String message) {
-    //todo: Access to realized (ever shown) UI components
-    // should be done only from the AWT event dispatch thread,
-    // revalidate(), invalidate() & repaint() is ok from any thread
     setSpinnerText(message);
   }
+
 
   public void setNotApplicableSpinner(XValueNodeImpl node) {
     setSpinnerText(NOT_APPLICABLE + node.getName());
   }
 
-
   public JComponent getMainPanel() {
     return myMainPanel;
-  }
-
-  private void createUIComponents() {
-    myTable = new JBTable() {
-      public boolean getScrollableTracksViewportWidth() {
-        return getPreferredSize().width < getParent().getWidth();
-      }
-    };
-    myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-    myTable.setRowSelectionAllowed(false);
   }
 }
