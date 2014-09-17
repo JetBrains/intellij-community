@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -63,6 +64,14 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
       }
     });
     myApplication = (ApplicationImpl)ApplicationManager.getApplication();
+  }
+
+  @Override
+  public void paint(@NotNull Graphics g) {
+    if (!isEnabled()) {
+      g = new Grayer((Graphics2D)g, EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    }
+    super.paint(g);
   }
 
   @NotNull

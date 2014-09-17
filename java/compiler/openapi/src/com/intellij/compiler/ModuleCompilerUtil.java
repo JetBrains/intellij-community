@@ -22,15 +22,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.Chunk;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -173,5 +176,65 @@ public final class ModuleCompilerUtil {
 
   public static <T extends ModuleRootModel> Collection<Chunk<T>> buildChunks(final Map<Module, T> models) {
     return toChunkGraph(createGraphGenerator(models)).getNodes();
+  }
+
+  public static List<Chunk<ModuleSourceSet>> getCyclicDependencies(@NotNull Project project, @NotNull List<Module> modules) {
+    Graph<ModuleSourceSet> graph = createModuleSourceDependenciesGraph(new DefaultModulesProvider(project));
+    Collection<Chunk<ModuleSourceSet>> chunks = GraphAlgorithms.getInstance().computeStronglyConnectedComponents(graph);
+    final Set<Module> modulesSet = new HashSet<Module>(modules);
+    return ContainerUtil.filter(chunks, new Condition<Chunk<ModuleSourceSet>>() {
+      @Override
+      public boolean value(Chunk<ModuleSourceSet> chunk) {
+        for (ModuleSourceSet sourceSet : chunk.getNodes()) {
+          if (modulesSet.contains(sourceSet.getModule())) {
+            return true;
+          }
+        }
+        return false;
+      }
+    });
+  }
+
+  public static Graph<ModuleSourceSet> createModuleSourceDependenciesGraph(final RootModelProvider provider) {
+    return GraphGenerator.create(new CachingSemiGraph<ModuleSourceSet>(new GraphGenerator.SemiGraph<ModuleSourceSet>() {
+      @Override
+      public Collection<ModuleSourceSet> getNodes() {
+        Module[] modules = provider.getModules();
+        List<ModuleSourceSet> result = new ArrayList<ModuleSourceSet>(modules.length * 2);
+        for (Module module : modules) {
+          addSourceSetIfAny(result, module, ModuleSourceSet.Type.PRODUCTION, provider);
+          addSourceSetIfAny(result, module, ModuleSourceSet.Type.TEST, provider);
+        }
+        return result;
+      }
+
+      @Override
+      public Iterator<ModuleSourceSet> getIn(final ModuleSourceSet n) {
+        ModuleRootModel model = provider.getRootModel(n.getModule());
+        OrderEnumerator enumerator = model.orderEntries().compileOnly();
+        if (n.getType() == ModuleSourceSet.Type.PRODUCTION) {
+          enumerator = enumerator.productionOnly();
+        }
+        final List<ModuleSourceSet> deps = new ArrayList<ModuleSourceSet>();
+        enumerator.forEachModule(new Processor<Module>() {
+          @Override
+          public boolean process(Module module) {
+            addSourceSetIfAny(deps, module, n.getType(), provider);
+            return true;
+          }
+        });
+        if (n.getType() == ModuleSourceSet.Type.TEST) {
+          addSourceSetIfAny(deps, n.getModule(), ModuleSourceSet.Type.PRODUCTION, provider);
+        }
+        return deps.iterator();
+      }
+    }));
+  }
+
+  private static void addSourceSetIfAny(List<ModuleSourceSet> result, Module module, ModuleSourceSet.Type type, RootModelProvider provider) {
+    JpsModuleSourceRootType<?> rootType = type == ModuleSourceSet.Type.PRODUCTION ? JavaSourceRootType.SOURCE : JavaSourceRootType.TEST_SOURCE;
+    if (!provider.getRootModel(module).getSourceRoots(rootType).isEmpty()) {
+      result.add(new ModuleSourceSet(module, type));
+    }
   }
 }

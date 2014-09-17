@@ -72,6 +72,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -689,11 +690,23 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       title.setFont(title.getFont().deriveFont(Font.BOLD));
     }
     topPanel.add(title, BorderLayout.WEST);
+    final JPanel controls = new JPanel(new BorderLayout());
+    controls.setOpaque(false);
+    final JLabel settings = new JLabel(AllIcons.General.WebSettings);
+    new ClickListener(){
+      @Override
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        showSettings();
+        return true;
+      }
+    }.installOn(settings);
+    controls.add(settings, BorderLayout.EAST);
     myNonProjectCheckBox.setForeground(new JBColor(Gray._240, Gray._200));
-    myNonProjectCheckBox.setText("Include non-project items (" + getShortcut() + ")");
+    myNonProjectCheckBox.setText("Include non-project items (" + getShortcut() + ")  ");
     if (!NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
-      topPanel.add(myNonProjectCheckBox, BorderLayout.EAST);
+      controls.add(myNonProjectCheckBox, BorderLayout.WEST);
     }
+    topPanel.add(controls, BorderLayout.EAST);
     panel.add(myPopupField, BorderLayout.CENTER);
     panel.add(topPanel, BorderLayout.NORTH);
     panel.setBorder(IdeBorderFactory.createEmptyBorder(3, 5, 4, 5));
@@ -744,6 +757,50 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
     focusManager.requestFocus(editor, true);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
+  }
+
+  private void showSettings() {
+    myPopupField.setText("");
+    final SearchListModel model = new SearchListModel();
+    model.addElement(new SEOption("Show files", "search.everywhere.files"));
+    model.addElement(new SEOption("Show symbols", "search.everywhere.symbols"));
+    model.addElement(new SEOption("Show tool windows", "search.everywhere.toolwindows"));
+    model.addElement(new SEOption("Show run configurations", "search.everywhere.configurations"));
+    model.addElement(new SEOption("Show actions", "search.everywhere.actions"));
+    model.addElement(new SEOption("Show IDE settings", "search.everywhere.settings"));
+
+    if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
+      myCurrentWorker = myCalcThread.cancel();
+    }
+    if (myCalcThread != null && !myCalcThread.isCanceled()) {
+      myCalcThread.cancel();
+    }
+    myCurrentWorker.doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        myList.setModel(model);
+        updatePopupBounds();
+      }
+    });
+  }
+
+  static class SEOption extends BooleanOptionDescription {
+    private final String myKey;
+
+    public SEOption(String option, String registryKey) {
+      super(option, null);
+      myKey = registryKey;
+    }
+
+    @Override
+    public boolean isOptionEnabled() {
+      return Registry.is(myKey);
+    }
+
+    @Override
+    public void setOptionState(boolean enabled) {
+      Registry.get(myKey).setValue(enabled);
+    }
   }
 
   private static void saveHistory(Project project, String text, Object value) {
@@ -1298,6 +1355,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildToolWindows(String pattern) {
+      if (!Registry.is("search.everywhere.toolwindows")) {
+        return;
+      }
       final List<ActivateToolWindowAction> actions = new ArrayList<ActivateToolWindowAction>();
       for (ActivateToolWindowAction action : ToolWindowsGroup.getToolWindowActions(project)) {
         String text = action.getTemplatePresentation().getText();
@@ -1329,6 +1389,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private SearchResult getActionsOrSettings(final String pattern, final int max, final boolean actions) {
       final SearchResult result = new SearchResult();
+      if ((actions && !Registry.is("search.everywhere.actions")) || (!actions && !Registry.is("search.everywhere.settings"))) {
+        return result;
+      }
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
       if (myActionProvider == null) {
         myActionProvider = createActionProvider();
@@ -1463,6 +1526,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private SearchResult getConfigurations(String pattern, int max) {
       SearchResult configurations = new SearchResult();
+      if (!Registry.is("search.everywhere.configurations")) {
+        return configurations;
+      }
       MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
       final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
         ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
@@ -1519,9 +1585,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private SearchResult getSymbols(String pattern, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult symbols = new SearchResult();
+      if (!Registry.is("search.everywhere.symbols")) {
+        return symbols;
+      }
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
-      chooseByNamePopup.getProvider().filterElements(chooseByNamePopup, pattern, false,
-                                                         myProgressIndicator, new Processor<Object>() {
+      if (chooseByNamePopup == null) return symbols;
+      final ChooseByNameItemProvider provider = chooseByNamePopup.getProvider();
+      provider.filterElements(chooseByNamePopup, pattern, false,
+                              myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
             if (o instanceof PsiElement) {
@@ -1567,7 +1638,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private SearchResult getFiles(final String pattern, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult files = new SearchResult();
-      if (chooseByNamePopup == null) {
+      if (chooseByNamePopup == null || !Registry.is("search.everywhere.files")) {
         return files;
       }
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);

@@ -37,8 +37,16 @@ import org.jetbrains.annotations.Nullable;
 * @author Dmitry Batkovich
 */
 class NewPropertyAction extends AnAction {
+
+  private final boolean myEnabledForce;
+
   public NewPropertyAction() {
+    this(false);
+  }
+
+  public NewPropertyAction(final boolean enabledForce) {
     super("New Property", null, AllIcons.General.Add);
+    myEnabledForce = enabledForce;
   }
 
   @Override
@@ -86,6 +94,14 @@ class NewPropertyAction extends AnAction {
                              Messages.getQuestionIcon(),
                              null,
                              new NewPropertyNameValidator(resourceBundle, prefix, separator));
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (!myEnabledForce) {
+      final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext());
+      e.getPresentation().setEnabledAndVisible(editor instanceof ResourceBundleEditor);
+    }
   }
 
   private static class NewPropertyNameValidator implements InputValidator {

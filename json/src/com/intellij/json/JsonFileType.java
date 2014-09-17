@@ -27,7 +27,7 @@ public class JsonFileType extends LanguageFileType{
   @NotNull
   @Override
   public String getDescription() {
-    return "JSON language";
+    return "JSON files";
   }
 
   @NotNull

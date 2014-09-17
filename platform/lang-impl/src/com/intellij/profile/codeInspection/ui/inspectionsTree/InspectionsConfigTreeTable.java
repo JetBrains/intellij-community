@@ -26,12 +26,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
+import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,8 +82,18 @@ public class InspectionsConfigTreeTable extends TreeTable {
         if (maybeIcon instanceof MultiScopeSeverityIcon) {
           final LinkedHashMap<String, HighlightSeverity> scopeToAverageSeverityMap =
             ((MultiScopeSeverityIcon)maybeIcon).getScopeToAverageSeverityMap();
+          final JComponent component;
+          if (scopeToAverageSeverityMap.size() == 1) {
+            final HighlightSeverity severity = ContainerUtil.getFirstItem(scopeToAverageSeverityMap.values());
+            final JLabel label = new JLabel();
+            label.setIcon(HighlightDisplayLevel.find(severity).getIcon());
+            label.setText(SingleInspectionProfilePanel.renderSeverity(severity));
+            component = label;
+          } else {
+            component = new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap);
+          }
           IdeTooltipManager.getInstance().show(
-            new IdeTooltip(InspectionsConfigTreeTable.this, point, new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap)), false);
+            new IdeTooltip(InspectionsConfigTreeTable.this, point, component), false);
         }
       }
     });

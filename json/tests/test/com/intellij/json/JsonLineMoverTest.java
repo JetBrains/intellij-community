@@ -22,6 +22,12 @@ public class JsonLineMoverTest extends JsonTestCase {
     }
   }
 
+  private void doTest() {
+    doTest(false);
+    FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()));
+    doTest(true);
+  }
+
   public void testLastArrayElementMovedUp() {
     doTest(false);
   }
@@ -38,12 +44,13 @@ public class JsonLineMoverTest extends JsonTestCase {
     doTest(true);
   }
 
+  public void testLineCommentariesMovedTogether() {
+    doTest(true);
+  }
 
   // Moved from JavaScript
 
   public void testWeb_10585() {
-    doTest(false);
-    FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()));
-    doTest(true);
+    doTest();
   }
 }

@@ -140,10 +140,13 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   @Override
   public Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @Nullable String message) {
-    //noinspection HardCodedStringLiteral
-    //TODO: FIXME
-    @NonNls
-    String tooltip = message == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
+    @NonNls String tooltip = message == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
+    return createAnnotation(severity, range, message, tooltip);
+  }
+
+  @Override
+  public Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @Nullable String message,
+                                     @Nullable String tooltip) {
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     add(annotation);
     return annotation;
