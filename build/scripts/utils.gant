@@ -303,6 +303,7 @@ binding.setVariable("platformImplementationModules", [
   "xml-analysis-impl",
   "xml-psi-impl",
   "xml-structure-view-impl",
+  "json",
   "protocol-reader-runtime",
   "script-debugger-backend",
   "script-debugger-ui"

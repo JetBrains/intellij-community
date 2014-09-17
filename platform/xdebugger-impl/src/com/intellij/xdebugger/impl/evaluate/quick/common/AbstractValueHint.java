@@ -39,6 +39,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IconUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -173,6 +174,7 @@ public abstract class AbstractValueHint {
     return myProject;
   }
 
+  @NotNull
   protected Editor getEditor() {
     return myEditor;
   }
@@ -238,6 +240,7 @@ public abstract class AbstractValueHint {
     }
   }
 
+  @Nullable
   protected TextRange getCurrentRange() {
     return myCurrentRange;
   }

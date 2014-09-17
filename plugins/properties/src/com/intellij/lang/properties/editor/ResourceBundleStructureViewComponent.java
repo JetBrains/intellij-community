@@ -18,6 +18,7 @@ package com.intellij.lang.properties.editor;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -54,6 +55,13 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
     super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle));
     myResourceBundle = resourceBundle;
     tunePopupActionGroup();
+  }
+
+  @Override
+  protected ActionGroup createActionGroup() {
+    final DefaultActionGroup result = (DefaultActionGroup) super.createActionGroup();
+    result.add(new ContextHelpAction(getHelpID()), Constraints.LAST);
+    return result;
   }
 
   @Override
