@@ -64,6 +64,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final String SETUPTOOLS_PRE_26_VERSION = "1.4.2";
   public static final String PIP_PRE_26_VERSION = "1.1";
 
+  public static final String SETUPTOOLS_VERSION = "5.7";
+  public static final String PIP_VERSION = "1.5.6";
+
   public static final int OK = 0;
   public static final int ERROR_NO_PIP = 2;
   public static final int ERROR_NO_SETUPTOOLS = 3;
@@ -117,11 +120,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public void installManagement() throws PyExternalProcessException {
     final boolean pre26 = PythonSdkType.getLanguageLevelForSdk(mySdk).isOlderThan(LanguageLevel.PYTHON26);
     if (!hasPackage(SETUPTOOLS, false) && !hasPackage(DISTRIBUTE, false)) {
-      final String name = SETUPTOOLS + (pre26 ? "-" + SETUPTOOLS_PRE_26_VERSION : "") + ".tar.gz";
+      final String name = SETUPTOOLS + "-" + (pre26 ? SETUPTOOLS_PRE_26_VERSION : SETUPTOOLS_VERSION);
       installManagement(name);
     }
     if (!hasPackage(PIP, false)) {
-      final String name = PIP + (pre26 ? "-" + PIP_PRE_26_VERSION : "") + ".tar.gz";
+      final String name = PIP + "-" + (pre26 ? PIP_PRE_26_VERSION : PIP_VERSION);
       installManagement(name);
     }
   }
@@ -133,7 +136,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   protected void installManagement(@NotNull String name) throws PyExternalProcessException {
-    final String dirName = extractHelper(name);
+    final String dirName = extractHelper(name + ".tar.gz");
     try {
       final String fileName = dirName + name + File.separatorChar + "setup.py";
       getPythonProcessResult(fileName, Collections.singletonList(INSTALL), true, dirName + name);
