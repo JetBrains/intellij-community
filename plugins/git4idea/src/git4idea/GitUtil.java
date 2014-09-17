@@ -1024,4 +1024,14 @@ public class GitUtil {
     }
     return msg;
   }
+
+  @Nullable
+  public static GitRemote getDefaultRemote(@NotNull Collection<GitRemote> remotes) {
+    for (GitRemote remote : remotes) {
+      if (remote.getName().equals(GitRemote.ORIGIN_NAME)) {
+        return remote;
+      }
+    }
+    return null;
+  }
 }
