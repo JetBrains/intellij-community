@@ -24,6 +24,7 @@ import uk.ac.ed.ph.snuggletex.XMLStringOutputOptions;
 import javax.swing.*;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -48,9 +49,23 @@ public class IpnbUtils {
       if (line.startsWith(" ")) {
         processedLine = line.substring(1);
       }
-      processedLine = processedLine
-        .replace("<pre>", "```").replace("</pre>", "```")
-        .replace("<code>", "```").replace("</code>", "```");
+
+      final StringBuilder builder = new StringBuilder();
+      for (char s : processedLine.toCharArray()) {
+        if (s == '`') {
+          isInCode = !isInCode;
+          if (isInCode) {
+            builder.append("<code>");
+          }
+          else {
+            builder.append("</code>");
+          }
+        }
+        else {
+          builder.append(s);
+        }
+      }
+      processedLine = builder.toString();
       if (processedLine.contains("```")) isInCode = !isInCode;
       if (isInCode) {
         processedLine = processedLine
@@ -67,7 +82,7 @@ public class IpnbUtils {
     MarkdownUtil.replaceHeaders(processedLines);
     MarkdownUtil.removeImages(processedLines);
     MarkdownUtil.generateLists(processedLines);
-    //MarkdownUtil.replaceCodeBlock(processedLines);
+    MarkdownUtil.replaceCodeBlock(processedLines);
     final String[] lineArray = ArrayUtil.toStringArray(processedLines);
     final String normalizedMarkdown = StringUtil.join(lineArray, "\n");
     String html = ourMarkdownProcessor.markdown(normalizedMarkdown);
@@ -196,35 +211,43 @@ public class IpnbUtils {
 
   private static void addMarkdown(@NotNull final JPanel panel, List<String> strings) {
     StringBuilder stringBuilder = new StringBuilder();
-    boolean isEscaped = false;
+    boolean inCode = false;
     for (String string : strings) {
-      if (string.startsWith("```") && !isEscaped) {
-        isEscaped = true;
+      if (string.startsWith("```") && !inCode) {
+        inCode = true;
         string = StringUtil.trimStart(string, "```");
-        stringBuilder.append("<p>").append(string).append("</p>");
+        stringBuilder.append("<code>").append(string).append("<br>");
       }
-      else if (StringUtil.trimTrailing(string).endsWith("```") && isEscaped) {
-        isEscaped = false;
+      else if (StringUtil.trimTrailing(string).endsWith("```") && inCode) {
+        inCode = false;
         string = StringUtil.trimTrailing(string);
         string = StringUtil.trimEnd(string, "```");
-        stringBuilder.append("<p>").append(string).append("</p>");
+        stringBuilder.append(string).append("</code>").append("\n");
       }
-      else if (!isEscaped) {
-        stringBuilder.append(IpnbUtils.markdown2Html(string));
+      else if (inCode) {
+        stringBuilder.append(string).append("<br>");
       }
       else {
-        stringBuilder.append("<p>").append(string).append("</p>");
+        stringBuilder.append(string).append("\n");
       }
 
     }
+    final String string = IpnbUtils.markdown2Html(stringBuilder.toString());
 
     final JEditorPane editorPane = new JEditorPane();
     editorPane.setContentType(new HTMLEditorKit().getContentType());
-    editorPane.setText("<html><body style='width: " + IpnbEditorUtil.PANEL_WIDTH + "px'>" + stringBuilder.toString() + "</body></html>");
+    editorPane.setText("<html><body>" + string + "</body></html>");
+    
     final Font font = new Font(Font.SERIF, Font.PLAIN, 16);
-    String bodyRule = "body { font-family: " + font.getFamily() + "; " +
-                      "font-size: " + font.getSize() + "pt; }";
-    ((HTMLDocument)editorPane.getDocument()).getStyleSheet().addRule(bodyRule);
+    String bodyRule = "body { font-family: \"Helvetica Neue\",Helvetica,Arial,sans-serif;; " +
+                             "font-size: " + font.getSize() + "pt; " +
+                             "width: " + IpnbEditorUtil.PANEL_WIDTH + "px;}";
+
+    String codeRule = "code { font-family: \"Helvetica Neue\",Helvetica,Arial,sans-serif; " +
+                             "font-size: " + font.getSize() + "pt;}";
+    final StyleSheet sheet = ((HTMLDocument)editorPane.getDocument()).getStyleSheet();
+    sheet.addRule(bodyRule);
+    sheet.addRule(codeRule);
 
     editorPane.setEditable(false);
     editorPane.addMouseListener(new MouseAdapter() {
