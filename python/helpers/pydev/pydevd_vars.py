@@ -214,8 +214,8 @@ def getVariable(thread_id, frame_id, scope, attrs):
         else:
             # for a frame access both locals and globals as Python does
             var = {}
-            var.update(frame.f_locals)
             var.update(frame.f_globals)
+            var.update(frame.f_locals)
 
         for k in attrList:
             _type, _typeName, resolver = getType(var)
