@@ -30,9 +30,10 @@ import java.awt.event.ItemListener;
  */
 class ArrayTableComponent extends JPanel {
   private JScrollPane myScrollPane;
-  private JTextField myTextField;
+  private JTextField mySliceTextField;
+  private JTextField myFormatTextField;
   private JBTable myTable;
-  private JCheckBox myCheckBox;
+  private JCheckBox myColoredCheckbox;
 
   private static final String DATA_LOADING_IN_PROCESS = "Please wait, load array data.";
 
@@ -41,9 +42,13 @@ class ArrayTableComponent extends JPanel {
   public ArrayTableComponent() {
     super(new GridBagLayout());
 
-    myTextField = new JTextField();
-    myTextField.setToolTipText("Current slice");
-    myTextField.setEditable(false);
+    mySliceTextField = new JTextField();
+    mySliceTextField.setToolTipText("Current slice");
+    mySliceTextField.setEditable(false);
+
+    myFormatTextField = new JTextField();
+    myFormatTextField.setToolTipText("Value format");
+    myFormatTextField.setEditable(false);
 
     myTable = new JBTable() {
       public boolean getScrollableTracksViewportWidth() {
@@ -53,16 +58,16 @@ class ArrayTableComponent extends JPanel {
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     myTable.setRowSelectionAllowed(false);
 
-    myCheckBox = new JCheckBox();
-    myCheckBox.setText("Colored");
-    myCheckBox.setSelected(true);
-    myCheckBox.addItemListener(new ItemListener() {
+    myColoredCheckbox = new JCheckBox();
+    myColoredCheckbox.setText("Colored");
+    myColoredCheckbox.setSelected(true);
+    myColoredCheckbox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        if (e.getSource() == myCheckBox) {
+        if (e.getSource() == myColoredCheckbox) {
           if (myTable.getColumnCount() > 0 && myTable.getCellRenderer(0, 0) instanceof ArrayTableCellRenderer) {
             ArrayTableCellRenderer renderer = (ArrayTableCellRenderer)myTable.getCellRenderer(0, 0);
-            if (myCheckBox.isSelected()) {
+            if (myColoredCheckbox.isSelected()) {
               renderer.setColored(true);
             }
             else {
@@ -84,15 +89,23 @@ class ArrayTableComponent extends JPanel {
                            rowTable.getTableHeader());
 
     add(myScrollPane,
-        new GridBagConstraints(0, 0, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    add(myTextField,
+        new GridBagConstraints(0, 0, 4, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    add(mySliceTextField,
         new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    add(myCheckBox,
+    add(new JLabel("Format:"),
         new GridBagConstraints(1, 1, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    add(myFormatTextField,
+        new GridBagConstraints(2, 1, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    add(myColoredCheckbox,
+        new GridBagConstraints(3, 1, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
-  public JTextField getTextField() {
-    return myTextField;
+  public JTextField getSliceTextField() {
+    return mySliceTextField;
+  }
+
+  public JTextField getFormatTextField() {
+    return myFormatTextField;
   }
 
   public JBTable getTable() {
@@ -100,7 +113,7 @@ class ArrayTableComponent extends JPanel {
   }
 
   public JCheckBox getColored() {
-    return myCheckBox;
+    return myColoredCheckbox;
   }
 
   private void setSpinnerText(String text) {
