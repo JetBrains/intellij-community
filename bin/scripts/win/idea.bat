@@ -49,7 +49,7 @@ IF EXIST "%VM_OPTIONS_FILE%" SET ACC=%ACC% -Djb.vmOptionsFile="%VM_OPTIONS_FILE%
 
 SET COMMON_JVM_ARGS="-Xbootclasspath/a:%IDE_HOME%/lib/boot.jar" -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
 SET IDE_JVM_ARGS=@@ide_jvm_args@@
-SET ALL_JVM_ARGS=%ACC% %COMMON_JVM_ARGS% %IDE_JVM_ARGS% %REQUIRED_JVM_ARGS%
+SET ALL_JVM_ARGS="-XX:ErrorFile=%USERPROFILE%\java_error.log" %ACC% %COMMON_JVM_ARGS% %IDE_JVM_ARGS% %REQUIRED_JVM_ARGS%
 
 @@class_path@@
 IF NOT "%@@product_uc@@_CLASS_PATH%" == "" SET CLASS_PATH=%CLASS_PATH%;%@@product_uc@@_CLASS_PATH%
