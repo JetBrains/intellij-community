@@ -28,28 +28,28 @@ import java.util.Collections;
  */
 public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
   private static final Collection<BooleanOptionDescription> ourOptions = Collections.unmodifiableCollection(Arrays.asList(
-    option("UI: " + messageIde("checkboox.cyclic.scrolling.in.lists"), "CYCLE_SCROLLING"),
-    option("UI: " + messageIde("checkbox.show.icons.in.quick.navigation"), "SHOW_ICONS_IN_QUICK_NAVIGATION"),
-    option("UI: " + messageIde("checkbox.position.cursor.on.default.button"), "MOVE_MOUSE_ON_DEFAULT_BUTTON"),
-    option("UI: Hide navigation popups on focus loss", "HIDE_NAVIGATION_ON_FOCUS_LOSS"),
-    option("UI: Drag-n-Drop with ALT pressed only", "DND_WITH_PRESSED_ALT_ONLY"),
-    option("View: " + messageIde("checkbox.animate.windows"), "SHOW_MAIN_TOOLBAR"),
-    option("View: " + messageIde("checkbox.animate.windows"), "SHOW_STATUS_BAR"),
-    option("View: " + messageIde("checkbox.animate.windows"), "SHOW_NAVIGATION_BAR"),
-    option("Window: " + messageIde("checkbox.animate.windows"), "ANIMATE_WINDOWS"),
-    option("Window: " + messageIde("checkbox.show.memory.indicator"), "SHOW_MEMORY_INDICATOR"),
-    option("Window: " + messageKeyMap("disable.mnemonic.in.menu.check.box"), "DISABLE_MNEMONICS"),
-    option("Window: " + messageKeyMap("disable.mnemonic.in.controls.check.box"), "DISABLE_MNEMONICS_IN_CONTROLS"),
-    option("Window: " + messageIde("checkbox.show.icons.in.menu.items"), "SHOW_ICONS_IN_MENUS"),
-    option("Window: " + messageIde("checkbox.left.toolwindow.layout"), "LEFT_HORIZONTAL_SPLIT"),
-    option("Window: " + messageIde("checkbox.show.editor.preview.popup"), "SHOW_EDITOR_TOOLTIP"),
-    option("Window: " + messageIde("checkbox.show.tool.window.bars"), "HIDE_TOOL_STRIPES"),
-    option("Window: " + messageIde("checkbox.show.tool.window.numbers"), "SHOW_TOOL_WINDOW_NUMBERS"),
-    option("Window: Allow merging buttons on dialogs", "ALLOW_MERGE_BUTTONS"),
-    option("Window: Small labels in editor tabs", "USE_SMALL_LABELS_ON_TABS"),
-    option("Window: " + messageIde("checkbox.widescreen.tool.window.layout"), "WIDESCREEN_SUPPORT"),
-    option("Window: " + messageIde("checkbox.right.toolwindow.layout"), "RIGHT_HORIZONTAL_SPLIT"),
-    option("Window: " + messageIde("checkbox.use.preview.window"), "NAVIGATE_TO_PREVIEW")));
+    appearance("UI: " + messageIde("checkboox.cyclic.scrolling.in.lists"), "CYCLE_SCROLLING"),
+    appearance("UI: " + messageIde("checkbox.show.icons.in.quick.navigation"), "SHOW_ICONS_IN_QUICK_NAVIGATION"),
+    appearance("UI: " + messageIde("checkbox.position.cursor.on.default.button"), "MOVE_MOUSE_ON_DEFAULT_BUTTON"),
+    appearance("UI: Hide navigation popups on focus loss", "HIDE_NAVIGATION_ON_FOCUS_LOSS"),
+    appearance("UI: Drag-n-Drop with ALT pressed only", "DND_WITH_PRESSED_ALT_ONLY"),
+    appearance("View: " + messageIde("checkbox.animate.windows"), "SHOW_MAIN_TOOLBAR"),
+    appearance("View: " + messageIde("checkbox.animate.windows"), "SHOW_STATUS_BAR"),
+    appearance("View: " + messageIde("checkbox.animate.windows"), "SHOW_NAVIGATION_BAR"),
+    appearance("Window: " + messageIde("checkbox.animate.windows"), "ANIMATE_WINDOWS"),
+    appearance("Window: " + messageIde("checkbox.show.memory.indicator"), "SHOW_MEMORY_INDICATOR"),
+    appearance("Window: " + messageKeyMap("disable.mnemonic.in.menu.check.box"), "DISABLE_MNEMONICS"),
+    appearance("Window: " + messageKeyMap("disable.mnemonic.in.controls.check.box"), "DISABLE_MNEMONICS_IN_CONTROLS"),
+    appearance("Window: " + messageIde("checkbox.show.icons.in.menu.items"), "SHOW_ICONS_IN_MENUS"),
+    appearance("Window: " + messageIde("checkbox.left.toolwindow.layout"), "LEFT_HORIZONTAL_SPLIT"),
+    appearance("Window: " + messageIde("checkbox.show.editor.preview.popup"), "SHOW_EDITOR_TOOLTIP"),
+    appearance("Window: " + messageIde("checkbox.show.tool.window.bars"), "HIDE_TOOL_STRIPES"),
+    appearance("Window: " + messageIde("checkbox.show.tool.window.numbers"), "SHOW_TOOL_WINDOW_NUMBERS"),
+    appearance("Window: Allow merging buttons on dialogs", "ALLOW_MERGE_BUTTONS"),
+    appearance("Window: Small labels in editor tabs", "USE_SMALL_LABELS_ON_TABS"),
+    appearance("Window: " + messageIde("checkbox.widescreen.tool.window.layout"), "WIDESCREEN_SUPPORT"),
+    appearance("Window: " + messageIde("checkbox.right.toolwindow.layout"), "RIGHT_HORIZONTAL_SPLIT"),
+    appearance("Window: " + messageIde("checkbox.use.preview.window"), "NAVIGATE_TO_PREVIEW")));
 
   @NotNull
   @Override
@@ -62,8 +62,12 @@ public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider
     return "appearance";
   }
 
-  static BooleanOptionDescription option(String option, String field) {
-    return new PublicFieldBasedOptionDescription(option, "preferences.lookFeel", field) {
+  static BooleanOptionDescription appearance(String option, String field) {
+    return option(option, field, "preferences.lookFeel");
+  }
+
+  static BooleanOptionDescription option(String option, String field, String configurableId) {
+    return new PublicFieldBasedOptionDescription(option, configurableId, field) {
       @Override
       public Object getInstance() {
         return UISettings.getInstance();
