@@ -32,6 +32,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -200,8 +202,8 @@ public final class ModuleCompilerUtil {
         Module[] modules = provider.getModules();
         List<ModuleSourceSet> result = new ArrayList<ModuleSourceSet>(modules.length * 2);
         for (Module module : modules) {
-          result.add(new ModuleSourceSet(module, ModuleSourceSet.Type.PRODUCTION));
-          result.add(new ModuleSourceSet(module, ModuleSourceSet.Type.TEST));
+          addSourceSetIfAny(result, module, ModuleSourceSet.Type.PRODUCTION, provider);
+          addSourceSetIfAny(result, module, ModuleSourceSet.Type.TEST, provider);
         }
         return result;
       }
@@ -217,15 +219,22 @@ public final class ModuleCompilerUtil {
         enumerator.forEachModule(new Processor<Module>() {
           @Override
           public boolean process(Module module) {
-            deps.add(new ModuleSourceSet(module, n.getType()));
+            addSourceSetIfAny(deps, module, n.getType(), provider);
             return true;
           }
         });
         if (n.getType() == ModuleSourceSet.Type.TEST) {
-          deps.add(new ModuleSourceSet(n.getModule(), ModuleSourceSet.Type.PRODUCTION));
+          addSourceSetIfAny(deps, n.getModule(), ModuleSourceSet.Type.PRODUCTION, provider);
         }
         return deps.iterator();
       }
     }));
+  }
+
+  private static void addSourceSetIfAny(List<ModuleSourceSet> result, Module module, ModuleSourceSet.Type type, RootModelProvider provider) {
+    JpsModuleSourceRootType<?> rootType = type == ModuleSourceSet.Type.PRODUCTION ? JavaSourceRootType.SOURCE : JavaSourceRootType.TEST_SOURCE;
+    if (!provider.getRootModel(module).getSourceRoots(rootType).isEmpty()) {
+      result.add(new ModuleSourceSet(module, type));
+    }
   }
 }
