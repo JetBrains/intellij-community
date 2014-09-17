@@ -286,7 +286,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     return result == null ? defaultName : result;
   }
 
-  private void expandTree(final JTree tree) {
+  private static void expandTree(final JTree tree) {
     int oldRowCount = 0;
     do {
       int rowCount = tree.getRowCount();
@@ -368,7 +368,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     @Nullable final String groupName;
     private boolean myEnabled = false;
 
-    public Option(Class<? extends CustomCodeStyleSettings> clazz,
+    public Option(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
                   @NotNull String fieldName,
                   @NotNull String title,
                   @Nullable String groupName,
@@ -476,7 +476,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
           }
         }
       }
-      catch (IllegalAccessException e) {
+      catch (IllegalAccessException ignore) {
       }
     }
   }
@@ -597,7 +597,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
     @Override
     public boolean isCellEditable(Object o) {
-      return (o instanceof MyTreeNode) && (((MyTreeNode)o).isEnabled());
+      return o instanceof MyTreeNode && ((MyTreeNode)o).isEnabled();
     }
 
     @Override
@@ -612,8 +612,9 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   private final TreeCellRenderer myTitleRenderer = new TreeCellRenderer() {
     private final JLabel myLabel = new JLabel();
 
+    @NotNull
     @Override
-    public Component getTreeCellRendererComponent(JTree tree,
+    public Component getTreeCellRendererComponent(@NotNull JTree tree,
                                                   Object value,
                                                   boolean selected,
                                                   boolean expanded,
@@ -690,8 +691,9 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     private final JPanel myEmptyLabel = new JPanel();
     private final JLabel myIntLabel = new JLabel();
 
+    @NotNull
     @Override
-    public Component getTableCellRendererComponent(JTable table,
+    public Component getTableCellRendererComponent(@NotNull JTable table,
                                                    Object value,
                                                    boolean isSelected,
                                                    boolean hasFocus,
@@ -792,7 +794,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     public MyValueEditor() {
       final ActionListener itemChoosen = new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           if (myCurrentNode != null) {
             myCurrentNode.setValue(getCellEditorValue());
             somethingChanged();
