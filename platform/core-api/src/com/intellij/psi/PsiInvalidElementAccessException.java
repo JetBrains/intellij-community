@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
@@ -39,6 +39,7 @@ import java.lang.ref.SoftReference;
 public class PsiInvalidElementAccessException extends RuntimeException implements ExceptionWithAttachments {
   private static final Key<Object> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
   private static final Key<Boolean> REPORTING_EXCEPTION = Key.create("REPORTING_EXCEPTION");
+
   private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, since exceptions are stored in IdeaLogger
   private final Attachment[] myDiagnostic;
   private final String myMessage;
@@ -62,10 +63,12 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     if (element == null) {
       myMessage = message;
       myDiagnostic = Attachment.EMPTY_ARRAY;
-    } else if (element == PsiUtilCore.NULL_PSI_ELEMENT) {
+    }
+    else if (element == PsiUtilCore.NULL_PSI_ELEMENT) {
       myMessage = "NULL_PSI_ELEMENT ;" + message;
       myDiagnostic = Attachment.EMPTY_ARRAY;
-    } else {
+    }
+    else {
       boolean recursiveInvocation = Boolean.TRUE.equals(element.getUserData(REPORTING_EXCEPTION));
       element.putUserData(REPORTING_EXCEPTION, Boolean.TRUE);
 
@@ -74,7 +77,8 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
         myMessage = getMessageWithReason(element, message, recursiveInvocation, trace);
         if (trace == null) {
           myDiagnostic = Attachment.EMPTY_ARRAY;
-        } else {
+        }
+        else {
           String diagnostic = trace instanceof Throwable ? ExceptionUtil.getThrowableText((Throwable)trace) : trace.toString();
           myDiagnostic = new Attachment[]{new Attachment("diagnostic.txt", diagnostic)};
         }
@@ -85,7 +89,10 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     }
   }
 
-  private static String getMessageWithReason(@NotNull PsiElement element, @Nullable String message, boolean recursiveInvocation, @Nullable Object trace) {
+  private static String getMessageWithReason(@NotNull PsiElement element,
+                                             @Nullable String message,
+                                             boolean recursiveInvocation,
+                                             @Nullable Object trace) {
     String reason = "Element: " + element.getClass();
     if (!recursiveInvocation) {
       String traceText = !isTrackingInvalidation() ? "disabled" :
@@ -128,35 +135,50 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
 
   @NonNls
   @NotNull
-  private static String reason(@NotNull PsiElement root){
+  private static String reason(@NotNull PsiElement root) {
     if (root == PsiUtilCore.NULL_PSI_ELEMENT) return "NULL_PSI_ELEMENT";
+
     PsiElement element = root instanceof PsiFile ? root : root.getParent();
-    if (element == null) return "parent is null";
-    while (element != null && !(element instanceof PsiFile) && element.getParent() != null) {
-      element = element.getParent();
+    if (element == null) {
+      String m = "parent is null";
+      if (root instanceof StubBasedPsiElement) {
+        StubElement stub = ((StubBasedPsiElement)root).getStub();
+        m += "; stub=" + stub;
+        if (stub != null) m += "; p.s.=" + stub.getParentStub();
+      }
+      return m;
     }
-    PsiFile file = element instanceof PsiFile ? (PsiFile)element : null;
+
+    while (element != null && !(element instanceof PsiFile)) element = element.getParent();
+    PsiFile file = (PsiFile)element;
     if (file == null) return "containing file is null";
+
     FileViewProvider provider = file.getViewProvider();
     VirtualFile vFile = provider.getVirtualFile();
-    if (!vFile.isValid()) return vFile+" is invalid";
+    if (!vFile.isValid()) return vFile + " is invalid";
     if (!provider.isPhysical()) {
       PsiElement context = file.getContext();
       if (context != null && !context.isValid()) {
         return "invalid context: " + reason(context);
       }
     }
+
     PsiManager manager = file.getManager();
     if (manager.getProject().isDisposed()) return "project is disposed";
-    Language language = file.getLanguage();
-    if (language != provider.getBaseLanguage()) return "File language:"+language+" != Provider base language:"+provider.getBaseLanguage();
 
-    FileViewProvider provider1 = manager.findViewProvider(vFile);
-    if (provider != provider1) return "different providers: "+provider+"("+Integer.toHexString(System.identityHashCode(provider))+"); "+provider1+"("+Integer.toHexString(System.identityHashCode(provider1))+")";
-    if (!provider.isPhysical()) {
-      return "non-physical provider: " + provider; // "dummy" file?
-    }
+    Language language = file.getLanguage();
+    if (language != provider.getBaseLanguage()) return "File language:" + language + " != Provider base language:" + provider.getBaseLanguage();
+
+    FileViewProvider p = manager.findViewProvider(vFile);
+    if (provider != p) return "different providers: " + provider + "(" + id(provider) + "); " + p + "(" + id(p) + ")";
+
+    if (!provider.isPhysical()) return "non-physical provider: " + provider; // "dummy" file?
+
     return "psi is outdated";
+  }
+
+  private static String id(FileViewProvider provider) {
+    return Integer.toHexString(System.identityHashCode(provider));
   }
 
   public static void setInvalidationTrace(UserDataHolder element, Object trace) {
