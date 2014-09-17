@@ -76,7 +76,7 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   }
 
   @Nullable
-  public VcsPushOptionsPanel getVcsPushOptionsPanel() {
+  public VcsPushOptionsPanel createOptionsPanel() {
     return new HgPushOptionsPanel();
   }
 

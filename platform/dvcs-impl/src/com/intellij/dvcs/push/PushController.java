@@ -41,8 +41,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,7 +54,6 @@ public class PushController implements Disposable {
   @NotNull private final VcsPushDialog myDialog;
   private boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
-  private final Map<PushSupport, MyPushOptionValueModel> myAdditionalValuesMap;
   private final ExecutorService myExecutorService = Executors.newSingleThreadExecutor();
 
   private final Map<RepositoryNode, MyRepoModel> myView2Model = new TreeMap<RepositoryNode, MyRepoModel>();
@@ -66,17 +63,25 @@ public class PushController implements Disposable {
                         @NotNull VcsPushDialog dialog,
                         @NotNull List<? extends Repository> preselectedRepositories) {
     myProject = project;
-    //todo what would be in case of null
-    myPushSupports = Arrays.asList(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, myProject));
+    myPushSupports = getAffectedSupports();
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
     mySingleRepoProject = createTreeModel(rootNode, preselectedRepositories);
     myPushLog = new PushLog(myProject, rootNode);
-    myAdditionalValuesMap = new HashMap<PushSupport, MyPushOptionValueModel>();
     myDialog = dialog;
     myDialog.updateButtons();
     startLoadingCommits();
     Disposer.register(dialog.getDisposable(), this);
     selectFirstChecked();
+  }
+
+  @NotNull
+  private List<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> getAffectedSupports() {
+    return ContainerUtil.filter(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, myProject), new Condition<PushSupport>() {
+      @Override
+      public boolean value(PushSupport support) {
+        return !support.getRepositoryManager().getRepositories().isEmpty();
+      }
+    });
   }
 
   public boolean isForcePushEnabled() {
@@ -294,8 +299,7 @@ public class PushController implements Disposable {
 
   private <R extends Repository, S extends PushSource, T extends PushTarget> void doPush(@NotNull PushSupport<R, S, T> support,
                                                                                          boolean force) {
-    MyPushOptionValueModel additionalOptionsModel = myAdditionalValuesMap.get(support);
-    VcsPushOptionValue options = additionalOptionsModel == null ? null : additionalOptionsModel.getCurrentValue();
+    VcsPushOptionValue options = myDialog.getAdditionalOptionValue(support);
     Pusher<R, S, T> pusher = support.getPusher();
     pusher.push(collectPushSpecsForVcs(support), options, force);
   }
@@ -373,33 +377,12 @@ public class PushController implements Disposable {
   }
 
   @NotNull
-  public List<VcsPushOptionsPanel> getAdditionalPanels() {
-    List<VcsPushOptionsPanel> additionalPanels = new ArrayList<VcsPushOptionsPanel>();
-    for (final PushSupport support : myPushSupports) {
-      if (hasRepoForPushSupport(support)) {
-        final VcsPushOptionsPanel panel = support.getVcsPushOptionsPanel();
-        if (panel != null) {
-          additionalPanels.add(panel);
-          myAdditionalValuesMap.put(support, new MyPushOptionValueModel(panel.getValue()));
-          panel.addValueChangeListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-              myAdditionalValuesMap.get(support).setCurrentValue(panel.getValue());
-            }
-          });
-        }
-      }
+  public Map<PushSupport, VcsPushOptionsPanel> createAdditionalPanels() {
+    Map<PushSupport, VcsPushOptionsPanel> result = ContainerUtil.newLinkedHashMap();
+    for (PushSupport support : myPushSupports) {
+      ContainerUtil.putIfNotNull(support, support.createOptionsPanel(), result);
     }
-    return additionalPanels;
-  }
-
-  private boolean hasRepoForPushSupport(@NotNull final PushSupport support) {
-    return ContainerUtil.exists(myView2Model.values(), new Condition<MyRepoModel>() {
-      @Override
-      public boolean value(MyRepoModel model) {
-        return support.equals(model.getSupport());
-      }
-    });
+    return result;
   }
 
   private static class MyRepoModel<Repo extends Repository, S extends PushSource, T extends PushTarget> {
@@ -497,23 +480,6 @@ public class PushController implements Disposable {
 
     public boolean hasCommitInfo() {
       return myTargetError != null || !myLoadedCommits.isEmpty();
-    }
-  }
-
-  private static class MyPushOptionValueModel {
-    @NotNull private VcsPushOptionValue myCurrentValue;
-
-    public MyPushOptionValueModel(@NotNull VcsPushOptionValue currentValue) {
-      myCurrentValue = currentValue;
-    }
-
-    public void setCurrentValue(@NotNull VcsPushOptionValue currentValue) {
-      myCurrentValue = currentValue;
-    }
-
-    @NotNull
-    public VcsPushOptionValue getCurrentValue() {
-      return myCurrentValue;
     }
   }
 }

@@ -59,7 +59,7 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public abstract RepositoryManager<Repo> getRepositoryManager();
 
   @Nullable
-  public VcsPushOptionsPanel getVcsPushOptionsPanel() {
+  public VcsPushOptionsPanel createOptionsPanel() {
     return null;
   }
 

@@ -16,8 +16,7 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.dvcs.push.PushController;
-import com.intellij.dvcs.push.VcsPushOptionsPanel;
+import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -33,6 +32,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.ui.Messages.OK;
 
@@ -41,7 +41,7 @@ public class VcsPushDialog extends DialogWrapper {
   @NotNull private final Project myProject;
   private final PushLog myListPanel;
   private final PushController myController;
-  @NotNull private final JPanel myAdditionalOptionsFromVcsPanel;
+  private final Map<PushSupport, VcsPushOptionsPanel> myAdditionalPanels;
 
   private Action myPushAction;
   @Nullable private ForcePushAction myForcePushAction;
@@ -50,8 +50,9 @@ public class VcsPushDialog extends DialogWrapper {
     super(project);
     myProject = project;
     myController = new PushController(project, this, selectedRepositories);
+    myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
-    myAdditionalOptionsFromVcsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
+
     init();
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
@@ -62,10 +63,11 @@ public class VcsPushDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JComponent rootPanel = new JPanel(new BorderLayout(0, 15));
     rootPanel.add(myListPanel, BorderLayout.CENTER);
-    for (VcsPushOptionsPanel panel : myController.getAdditionalPanels()) {
-      myAdditionalOptionsFromVcsPanel.add(panel);
+    JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
+    for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
+      optionsPanel.add(panel);
     }
-    rootPanel.add(myAdditionalOptionsFromVcsPanel, BorderLayout.SOUTH);
+    rootPanel.add(optionsPanel, BorderLayout.SOUTH);
     return rootPanel;
   }
 
@@ -126,6 +128,12 @@ public class VcsPushDialog extends DialogWrapper {
   @Override
   protected boolean postponeValidation() {
     return false;
+  }
+
+  @Nullable
+  public VcsPushOptionValue getAdditionalOptionValue(@NotNull PushSupport support) {
+    VcsPushOptionsPanel panel = myAdditionalPanels.get(support);
+    return panel == null ? null : panel.getValue();
   }
 
   private class SimplePushAction extends AbstractAction {
