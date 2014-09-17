@@ -24,8 +24,10 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -38,6 +40,8 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +49,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -56,7 +61,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String UNIX_STRING = ApplicationBundle.message("combobox.crlf.unix");
   private static final String WINDOWS_STRING = ApplicationBundle.message("combobox.crlf.windows");
   private static final String MACINTOSH_STRING = ApplicationBundle.message("combobox.crlf.mac");
-
+  private final List<GeneralCodeStyleOptionsProvider> myAdditionalOptions;
 
   private JSpinner myRightMarginSpinner;
   private JComboBox myLineSeparatorCombo;
@@ -71,6 +76,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JBLabel myFormatterOffLabel;
   private JBLabel myFormatterOnLabel;
   private JPanel myMarkerOptionsPanel;
+  private JPanel myAdditionalSettingsPanel;
   private final SmartIndentOptionsEditor myIndentOptionsEditor;
   private final JBScrollPane myScrollPane;
 
@@ -104,6 +110,13 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myScrollPane = new JBScrollPane(myPanel,
                                     ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myScrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
+
+    myAdditionalSettingsPanel.setLayout(new VerticalFlowLayout(true, true));
+    myAdditionalSettingsPanel.removeAll();
+    myAdditionalOptions = ConfigurableWrapper.createConfigurables(GeneralCodeStyleOptionsProviderEP.EP_NAME);
+    for (GeneralCodeStyleOptionsProvider provider : myAdditionalOptions) {
+      myAdditionalSettingsPanel.add(provider.createComponent());
+    }
   }
 
   @Override
@@ -146,6 +159,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     settings.FORMATTER_ON_TAG = getTagText(myFormatterOnTagField, settings.FORMATTER_ON_TAG);
     settings.setFormatterOnPattern(compilePattern(settings, myFormatterOnTagField, settings.FORMATTER_ON_TAG));
+
+    for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
+      option.apply(settings);
+    }
   }
 
   @Nullable
@@ -208,6 +225,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       if (settings.FORMATTER_TAGS_ENABLED) return true;
     }
 
+    for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
+      if (option.isModified(settings)) return true;
+    }
+
     return myIndentOptionsEditor.isModified(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
@@ -245,6 +266,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myFormatterOffTagField.setText(settings.FORMATTER_OFF_TAG);
 
     setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
+
+    for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
+      option.reset(settings);
+    }
   }
 
   private void setFormatterTagControlsEnabled(boolean isEnabled) {
