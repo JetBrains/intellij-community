@@ -15,6 +15,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="org.editorconfig.plugincomponents.EditorConfigNotifier"
                         serviceImplementation="org.editorconfig.plugincomponents.EditorConfigNotifier"/>
+    <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
+    <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
   </extensions>
 
   <application-components>

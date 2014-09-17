@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.LineSeparatorPanel;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.LineSeparator;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
@@ -67,6 +68,7 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
 
   private void applySettings(VirtualFile file) {
     if (file == null || !file.isInLocalFileSystem()) return;
+    if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
 
     final String filePath = file.getCanonicalPath();
     final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);

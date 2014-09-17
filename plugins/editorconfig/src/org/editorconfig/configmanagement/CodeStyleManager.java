@@ -72,6 +72,7 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
       // Prepare a new settings object, which will maintain the standard settings if no
       // editorconfig settings apply
       final CodeStyleSettings currentSettings = codeStyleSettingsManager.getCurrentSettings();
+      if (!Utils.isEnabled(currentSettings)) return;
       final CodeStyleSettings newSettings = new CodeStyleSettings();
       newSettings.copyFrom(currentSettings);
       // Get editorconfig settings

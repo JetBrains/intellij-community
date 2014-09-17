@@ -1,8 +1,10 @@
 package org.editorconfig;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.plugincomponents.EditorConfigNotifier;
+import org.editorconfig.settings.EditorConfigSettings;
 
 import java.util.List;
 
@@ -14,6 +16,10 @@ public class Utils {
       }
     }
     return "";
+  }
+
+  public static boolean isEnabled(CodeStyleSettings currentSettings) {
+    return currentSettings.getCustomSettings(EditorConfigSettings.class).ENABLED;
   }
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {

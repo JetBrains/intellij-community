@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
@@ -51,6 +52,8 @@ public class EncodingManager extends FileDocumentManagerAdapter {
 
   private void applySettings(VirtualFile file) {
     if (file == null || !file.isInLocalFileSystem()) return;
+    if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
+
     // Prevent "setEncoding" calling "saveAll" from causing an endless loop
     isApplyingSettings = true;
     final String filePath = file.getCanonicalPath();

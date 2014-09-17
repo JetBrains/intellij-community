@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
@@ -56,6 +57,7 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
 
   private void applySettings(VirtualFile file) {
     if (file == null || !file.isInLocalFileSystem()) return;
+    if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
     // Get editorconfig settings
     final String filePath = file.getCanonicalPath();
     final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
