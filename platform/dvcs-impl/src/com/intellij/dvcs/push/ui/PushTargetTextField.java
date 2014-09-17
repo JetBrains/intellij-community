@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.push;
+package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
