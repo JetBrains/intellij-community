@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeTableSpeedSearch;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
@@ -685,7 +686,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   private class MyValueRenderer implements TableCellRenderer {
     private final JLabel myComboBox = new JLabel();
-    private final JCheckBox myCheckBox = new JCheckBox();
+    private final JCheckBox myCheckBox = new JBCheckBox();
     private final JPanel myEmptyLabel = new JPanel();
     private final JLabel myIntLabel = new JLabel();
 
@@ -701,6 +702,9 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         getPathForRow(row).getLastPathComponent();
       if (node instanceof MyTreeNode) {
         isEnabled = ((MyTreeNode)node).isEnabled();
+      }
+      if (!table.isEnabled()) {
+        isEnabled = false;
       }
 
       Color background = table.getBackground();
@@ -779,7 +783,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
    * @author Konstantin Bulenkov
    */
   private class MyValueEditor extends AbstractTableCellEditor {
-    private final JCheckBox myBooleanEditor = new JCheckBox();
+    private final JCheckBox myBooleanEditor = new JBCheckBox();
     private JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
     private MyIntOptionEditor myIntOptionsEditor = new MyIntOptionEditor();
     private Component myCurrentEditor = null;
