@@ -133,23 +133,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   protected void installManagement(@NotNull String name) throws PyExternalProcessException {
-    final String helperPath = getHelperPath(name);
-
-    ArrayList<String> args = Lists.newArrayList(UNTAR, helperPath);
-
-    ProcessOutput output = getHelperOutput(PACKAGING_TOOL, args, false, null);
-
-    if (output.getExitCode() != 0) {
-      throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL,
-                                           args, output.getStderr());
-    }
-    String dirName = FileUtil.toSystemDependentName(output.getStdout().trim());
-    if (!dirName.endsWith(File.separator)) {
-      dirName += File.separator;
-    }
-    final String fileName = dirName + name + File.separatorChar + "setup.py";
+    final String dirName = extractHelper(name);
     try {
-      output = getProcessOutput(fileName, Collections.singletonList(INSTALL), true, dirName + name);
+      final String fileName = dirName + name + File.separatorChar + "setup.py";
+      final ProcessOutput output = getProcessOutput(fileName, Collections.singletonList(INSTALL), true, dirName + name);
       final int retcode = output.getExitCode();
       if (output.isTimeout()) {
         throw new PyExternalProcessException(ERROR_TIMEOUT, fileName, Lists.newArrayList(INSTALL), "Timed out");
@@ -167,6 +154,21 @@ public class PyPackageManagerImpl extends PyPackageManager {
       clearCaches();
       FileUtil.delete(new File(dirName));
     }
+  }
+
+  @NotNull
+  private String extractHelper(@NotNull String name) throws PyExternalProcessException {
+    final String helperPath = getHelperPath(name);
+    final ArrayList<String> args = Lists.newArrayList(UNTAR, helperPath);
+    final ProcessOutput output = getHelperOutput(PACKAGING_TOOL, args, false, null);
+    if (output.getExitCode() != 0) {
+      throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL, args, output.getStderr());
+    }
+    String dirName = FileUtil.toSystemDependentName(output.getStdout().trim());
+    if (!dirName.endsWith(File.separator)) {
+      dirName += File.separator;
+    }
+    return dirName;
   }
 
   private boolean hasPackage(@NotNull String name, boolean cachedOnly) {
