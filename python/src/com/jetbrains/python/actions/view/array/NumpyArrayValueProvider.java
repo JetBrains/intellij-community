@@ -18,6 +18,7 @@ package com.jetbrains.python.actions.view.array;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
@@ -29,8 +30,12 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerEvaluator;
 import org.jetbrains.annotations.NotNull;
 
+import javax.management.InvalidAttributeValueException;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author amarch
@@ -40,7 +45,12 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   private JTable myTable;
   private Project myProject;
   private PyDebuggerEvaluator myEvaluator;
-  private NumpyArrayPresentation myLastPresentation;
+  private Numpy2DArraySlice myLastPresentation;
+  private String myDtypeKind;
+  private int[] myShape;
+
+  private final static int COLUMNS_IN_DEFAULT_SLICE = 100;
+  private final static int ROWS_IN_DEFAULT_SLICE = 100;
 
   public NumpyArrayValueProvider(@NotNull XValueNode node, @NotNull ArrayTableForm component, @NotNull Project project) {
     super(node);
@@ -48,70 +58,146 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     myProject = project;
     myTable = component.getTable();
     myEvaluator = new PyDebuggerEvaluator(project, ((PyDebugValue)((XValueNodeImpl)node).getValueContainer()).getFrameAccessor());
-    myLastPresentation = new NumpyArrayPresentation(((XValueNodeImpl)node).getName(), this);
   }
 
-  public ArrayTableForm getComponent(){
-    return myComponent;
+  public PyDebugValue getValueContainer() {
+    return (PyDebugValue)((XValueNodeImpl)myBaseNode).getValueContainer();
   }
 
-  public PyDebuggerEvaluator getEvaluator(){
+  public PyDebuggerEvaluator getEvaluator() {
     return myEvaluator;
   }
 
-  public String getNodeName(){
-    return ((XValueNodeImpl)myBaseNode).getName();
+  public void startFillTable() {
+    if (myDtypeKind == null) {
+      fillType();
+      return;
+    }
+
+    if (myShape == null) {
+      fillShape();
+      return;
+    }
+
+    List<Pair<Integer, Integer>> defaultSlice = getDefaultSlice();
+    startFillTable(new Numpy2DArraySlice(getNodeName(), defaultSlice, this, getShape(), getDtype()));
   }
 
-  public XDebuggerTree getTree(){
-    return ((XValueNodeImpl)myBaseNode).getTree();
+  private List<Pair<Integer, Integer>> getDefaultSlice() {
+    return getSlice(COLUMNS_IN_DEFAULT_SLICE, ROWS_IN_DEFAULT_SLICE);
+  }
+
+  private List<Pair<Integer, Integer>> getSlice(int columns, int rows) {
+    List<Pair<Integer, Integer>> slices = new ArrayList<Pair<Integer, Integer>>();
+    for (int i = 0; i < myShape.length; i++) {
+      Pair<Integer, Integer> slice = new Pair<Integer, Integer>(0, 0);
+      if (i == myShape.length - 1) {
+        slice = new Pair<Integer, Integer>(0, Math.min(myShape[i], columns));
+      }
+      else if (i == myShape.length - 2) {
+        slice = new Pair<Integer, Integer>(0, Math.min(myShape[i], rows));
+      }
+      slices.add(slice);
+    }
+    return slices;
+  }
+
+  private void fillType() {
+    XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
+      @Override
+      public void evaluated(@NotNull XValue result) {
+        setDtype(((PyDebugValue)result).getValue());
+        startFillTable();
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        showError(errorMessage);
+      }
+    };
+    String evalTypeCommand = getNodeName() + ".dtype.kind";
+    getEvaluator().evaluate(evalTypeCommand, callback, null);
+  }
+
+  private void fillShape() {
+    XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
+      @Override
+      public void evaluated(@NotNull XValue result) {
+        try {
+          setShape(parseShape(((PyDebugValue)result).getValue()));
+          startFillTable();
+        }
+        catch (InvalidAttributeValueException e) {
+          errorOccurred(e.getMessage());
+        }
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        showError(errorMessage);
+      }
+    };
+    String evalShapeCommand = getNodeName() + ".shape";
+    getEvaluator().evaluate(evalShapeCommand, callback, null);
+  }
+
+  private int[] parseShape(String shape) throws InvalidAttributeValueException {
+    String[] dimensions = shape.substring(1, shape.length() - 1).trim().split(",");
+    if (dimensions.length > 1) {
+      int[] result = new int[dimensions.length];
+      for (int i = 0; i < dimensions.length; i++) {
+        result[i] = Integer.parseInt(dimensions[i].trim());
+      }
+      return result;
+    }
+    else if (dimensions.length == 1) {
+      int[] result = new int[2];
+      result[0] = 1;
+      result[1] = Integer.parseInt(dimensions[0].trim());
+      return result;
+    }
+    else {
+      throw new InvalidAttributeValueException("Invalid shape string for " + getNodeName() + ".");
+    }
   }
 
   @Override
   public boolean isNumeric() {
-    if (myLastPresentation.getDtype() != null) {
-      return "biufc".contains(myLastPresentation.getDtype().substring(0, 1));
+    if (myDtypeKind != null) {
+      return "biufc".contains(myDtypeKind.substring(0, 1));
     }
     return false;
   }
 
-  public void startFillTable(NumpyArrayPresentation presentation) {
+  private void startFillTable(final Numpy2DArraySlice arraySlice) {
+    if (!arraySlice.dataFilled()) {
+      arraySlice.startFillData(new Runnable() {
+        @Override
+        public void run() {
+          Object[][] data = arraySlice.getData();
 
-    if (presentation == null) {
-      presentation = new NumpyArrayPresentation(((XValueNodeImpl)myBaseNode).getName(), this);
+          if (myLastPresentation == null || !arraySlice.getPresentation().equals(myLastPresentation.getPresentation())) {
+            myLastPresentation = arraySlice;
+          }
+
+          DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
+          myTable.setModel(model);
+          myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
+
+
+          //enableColor(data);
+          myComponent.getSliceTextField().setText(myLastPresentation.getPresentation());
+          myComponent.getFormatTextField().setText(getFormat());
+        }
+      });
     }
+  }
 
-    if (presentation.getShape() == null) {
-      presentation.fillShape(false);
-      return;
-    }
-
-    if (presentation.getDtype() == null) {
-      presentation.fillType(false);
-      return;
-    }
-
-    if (!presentation.dataFilled()) {
-      presentation.fillData(false);
-      return;
-    }
-
-    if (presentation.getSlice() == null) {
-      presentation.computeSlice();
-    }
-
-    Object[][] data = presentation.getData();
-
-    if (myLastPresentation == null || !presentation.getSlice().equals(myLastPresentation.getSlice())) {
-      myLastPresentation = presentation;
-    }
-
-    DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
-    myTable.setModel(model);
-    myTable.setDefaultEditor(myTable.getColumnClass(0), new ArrayTableCellEditor(myProject) {
+  private TableCellEditor getArrayTableCellEditor() {
+    return new ArrayTableCellEditor(myProject) {
 
       private String getCellSlice() {
-        String expression = myLastPresentation.getSlice();
+        String expression = myLastPresentation.getPresentation();
         if (myTable.getRowCount() == 1) {
           expression += "[" + myTable.getSelectedColumn() + "]";
         }
@@ -128,7 +214,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       @Override
       public void doOKAction() {
 
-        if (myEditor.getEditor() == null){
+        if (myEditor.getEditor() == null) {
           return;
         }
 
@@ -188,10 +274,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
         }, null);
         super.doOKAction();
       }
-    });
-    enableColor(data);
-    myComponent.getSliceTextField().setText(myLastPresentation.getSlice());
-    myComponent.getFormatTextField().setText(myLastPresentation.getFormat());
+    };
   }
 
   private static String[] range(int min, int max) {
@@ -200,6 +283,34 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       array[i] = Integer.toString(i);
     }
     return array;
+  }
+
+  public void setDtype(String dtype) {
+    this.myDtypeKind = dtype;
+  }
+
+
+  public String getDtype() {
+    return myDtypeKind;
+  }
+
+  public int[] getShape() {
+    return myShape;
+  }
+
+  public void setShape(int[] shape) {
+    this.myShape = shape;
+  }
+
+  private void showError(String message) {
+    myComponent.setErrorSpinnerText(message);
+  }
+
+  public String getFormat() {
+    if (isNumeric()) {
+      return "\'%.3f\'";
+    }
+    return "\'%s\'";
   }
 
   private void enableColor(Object[][] data) {
