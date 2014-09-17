@@ -20,7 +20,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
-import git4idea.push.GitPushSpec;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +32,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Kirill Likhodedov
- */
 public interface Git {
 
   /**
@@ -104,16 +102,20 @@ public interface Git {
   GitCommandResult tip(@NotNull GitRepository repository, @NotNull String branchName);
 
   @NotNull
-  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
+  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @Nullable String url, @NotNull String spec,
                         boolean updateTracking, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
+  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @Nullable String url, @NotNull String spec,
                         @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec spec, @NotNull String url,
-                        @NotNull GitLineHandlerListener... listeners);
+  GitCommandResult push(GitRepository repository,
+                        GitLocalBranch source,
+                        GitRemoteBranch target,
+                        boolean force,
+                        boolean updateTracking,
+                        GitLineHandlerListener... listeners);
 
   @NotNull
   GitCommandResult show(@NotNull GitRepository repository, @NotNull String... params);

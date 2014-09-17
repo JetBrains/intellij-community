@@ -18,6 +18,7 @@ package git4idea.checkin;
 import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -47,7 +48,6 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
@@ -56,7 +56,7 @@ import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
-import git4idea.push.GitPusher;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryFiles;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
@@ -213,10 +213,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
-      // push
+      GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
+      Collection<GitRepository> repositories = GitUtil.getRepositoriesFromRoots(manager, sortedChanges.keySet());
+      final List<GitRepository> preselectedRepositories = ContainerUtil.newArrayList(repositories);
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          GitPusher.showPushDialogAndPerformPush(myProject, ServiceManager.getService(myProject, GitPlatformFacade.class));
+          new VcsPushDialog(myProject, preselectedRepositories).show();
         }
       });
     }

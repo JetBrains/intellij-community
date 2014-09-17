@@ -141,6 +141,7 @@
     <checkinHandlerFactory implementation="git4idea.checkin.UnresolvedMergeCheckFactory"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
+    <pushSupport implementation="git4idea.push.GitPushSupport"/>
     
     <projectService
       serviceInterface="git4idea.history.wholeTree.LogFactoryService"
