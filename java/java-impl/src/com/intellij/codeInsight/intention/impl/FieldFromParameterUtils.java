@@ -187,14 +187,14 @@ public final class FieldFromParameterUtils {
     modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    final PsiAnnotation nullable = manager.getNullableAnnotation(parameter, false);
-    if (nullable != null && !manager.isContainerAnnotation(nullable)) {
-      modifierList.addAfter(factory.createAnnotationFromText("@" + nullable.getQualifiedName(), field), null);
+    final PsiAnnotation nullable = manager.copyNullableAnnotation(parameter);
+    if (nullable != null) {
+      modifierList.addAfter(nullable, null);
     }
     else if (isFinal) {
-      final PsiAnnotation notNull = manager.getNotNullAnnotation(parameter, false);
-      if (notNull != null && !manager.isContainerAnnotation(notNull)) {
-        modifierList.addAfter(factory.createAnnotationFromText("@" + notNull.getQualifiedName(), field), null);
+      final PsiAnnotation notNull = manager.copyNotNullAnnotation(parameter);
+      if (notNull != null) {
+        modifierList.addAfter(notNull, null);
       }
     }
 

@@ -95,11 +95,23 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   public String getDefaultNullable() {
     return myDefaultNullable;
   }
-  
+
   @Nullable
   public String getNullable(@NotNull PsiModifierListOwner owner) {
     PsiAnnotation annotation = getNullableAnnotation(owner, false);
     return annotation == null ? null : annotation.getQualifiedName();
+  }
+
+  private String checkContainer(PsiAnnotation annotation, boolean acceptContainer) {
+    if (annotation == null) {
+      return null;
+    }
+    else {
+      if (!acceptContainer && isContainerAnnotation(annotation)) {
+        return null;
+      }
+      return annotation.getQualifiedName();
+    }
   }
 
   @Nullable
@@ -125,6 +137,23 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   @Nullable
   public PsiAnnotation getNotNullAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     return findNullabilityAnnotation(owner, checkBases, false);
+  }
+
+  public PsiAnnotation copyNotNullAnnotation(PsiModifierListOwner owner) {
+    return copyAnnotation(owner, getNotNullAnnotation(owner, false));
+  }
+
+  public PsiAnnotation copyNullableAnnotation(PsiModifierListOwner owner) {
+    return copyAnnotation(owner, getNullableAnnotation(owner, false));
+  }
+
+  private PsiAnnotation copyAnnotation(PsiModifierListOwner owner,
+                                       PsiAnnotation annotation) {
+    final String notNull = checkContainer(annotation, false);
+    if (notNull != null) {
+      return JavaPsiFacade.getElementFactory(owner.getProject()).createAnnotationFromText("@" + notNull, owner);
+    }
+    return null;
   }
 
   @Nullable
