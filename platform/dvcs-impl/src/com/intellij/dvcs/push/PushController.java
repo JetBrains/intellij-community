@@ -79,6 +79,24 @@ public class PushController implements Disposable {
     selectFirstChecked();
   }
 
+  public boolean isForcePushEnabled() {
+    return ContainerUtil.exists(myView2Model.values(), new Condition<MyRepoModel>() {
+      @Override
+      public boolean value(MyRepoModel model) {
+        return model.getSupport().isForcePushEnabled();
+      }
+    });
+  }
+
+  public boolean isForcePushAllowed() {
+    return ContainerUtil.exists(myView2Model.values(), new Condition<MyRepoModel>() {
+      @Override
+      public boolean value(MyRepoModel model) {
+        return model.isSelected() && model.getSupport().isForcePushAllowed(model.getRepository(), model.getTarget());
+      }
+    });
+  }
+
   private void selectFirstChecked() {
     Map.Entry<RepositoryNode, MyRepoModel> selected =
       ContainerUtil.find(myView2Model.entrySet(), new Condition<Map.Entry<RepositoryNode, MyRepoModel>>() {

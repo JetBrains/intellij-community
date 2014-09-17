@@ -173,7 +173,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
                 @NotNull final GitHistoryProvider gitHistoryProvider,
                 @NotNull final GitRollbackEnvironment gitRollbackEnvironment,
                 @NotNull final GitVcsApplicationSettings gitSettings,
-                @NotNull final GitVcsSettings gitProjectSettings) {
+                @NotNull final GitVcsSettings gitProjectSettings,
+                @NotNull GitSharedSettings sharedSettings) {
     super(project, NAME);
     myGit = git;
     myVcsManager = gitVcsManager;
@@ -185,7 +186,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myHistoryProvider = gitHistoryProvider;
     myRollbackEnvironment = gitRollbackEnvironment;
     myRevSelector = new GitRevisionSelector();
-    myConfigurable = new GitVcsConfigurable(gitProjectSettings, myProject);
+    myConfigurable = new GitVcsConfigurable(myProject, gitProjectSettings, sharedSettings);
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, gitProjectSettings);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);

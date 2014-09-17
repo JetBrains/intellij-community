@@ -41,10 +41,10 @@ public class VcsPushDialog extends DialogWrapper {
   @NotNull private final Project myProject;
   private final PushLog myListPanel;
   private final PushController myController;
-  private final Action[] myExecutorActions = {new DvcsPushAction("&Force Push", true)};
   @NotNull private final JPanel myAdditionalOptionsFromVcsPanel;
 
-  private DvcsPushAction myPushAction;
+  private Action myPushAction;
+  @Nullable private ForcePushAction myForcePushAction;
 
   public VcsPushDialog(@NotNull Project project, @NotNull List<? extends Repository> selectedRepositories) {
     super(project);
@@ -60,7 +60,6 @@ public class VcsPushDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-
     JComponent rootPanel = new JPanel(new BorderLayout(0, 15));
     rootPanel.add(myListPanel, BorderLayout.CENTER);
     for (VcsPushOptionsPanel panel : myController.getAdditionalPanels()) {
@@ -79,10 +78,16 @@ public class VcsPushDialog extends DialogWrapper {
   @NotNull
   protected Action[] createActions() {
     final List<Action> actions = new ArrayList<Action>();
-    myPushAction = new DvcsPushAction("&Push", false);
+    if (myController.isForcePushEnabled()) {
+      myForcePushAction = new ForcePushAction();
+      myForcePushAction.setEnabled(myController.isForcePushAllowed());
+      myPushAction = new ComplexPushAction(myForcePushAction);
+    }
+    else {
+      myPushAction = new SimplePushAction();
+    }
     myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     actions.add(myPushAction);
-    myPushAction.setOptions(myExecutorActions);
     actions.add(getCancelAction());
     actions.add(getHelpAction());
     return actions.toArray(new Action[actions.size()]);
@@ -112,6 +117,9 @@ public class VcsPushDialog extends DialogWrapper {
   }
 
   public void updateButtons() {
+    if (myForcePushAction != null) {
+      myForcePushAction.setEnabled(myController.isForcePushAllowed());
+    }
     initValidation();
   }
 
@@ -120,13 +128,39 @@ public class VcsPushDialog extends DialogWrapper {
     return false;
   }
 
-  private class DvcsPushAction extends AbstractAction implements OptionAction {
-    private Action[] myOptions = new Action[0];
-    private final boolean myForce;
+  private class SimplePushAction extends AbstractAction {
+    SimplePushAction() {
+      super("&Push");
+    }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myController.push(false);
+      close(OK_EXIT_CODE);
+    }
+  }
 
-    private DvcsPushAction(String title, boolean force) {
-      super(title);
-      myForce = force;
+  private class ForcePushAction extends AbstractAction {
+    ForcePushAction() {
+      super("&Force Push");
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      int answer = Messages.showOkCancelDialog(myProject,
+                                  "You're going to force push. It will overwrite commits at the remote. Are you sure you want to proceed?",
+                                  "Force Push", "&Force Push", CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
+      if (answer == OK) {
+        myController.push(true);
+        close(OK_EXIT_CODE);
+      }
+    }
+  }
+
+  private class ComplexPushAction extends SimplePushAction implements OptionAction {
+    private final Action[] myOptions;
+
+    private ComplexPushAction(Action additionalAction) {
+      myOptions = new Action[] { additionalAction };
     }
 
     @Override
@@ -137,31 +171,11 @@ public class VcsPushDialog extends DialogWrapper {
       }
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      if (myForce) {
-        int answer = Messages.showOkCancelDialog(myProject, getConfirmationMessage(),
-                                                 "Force Push",
-                                                 "&Force Push", CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-        if (answer != OK) return;
-      }
-      myController.push(myForce);
-      close(OK_EXIT_CODE);
-    }
-
     @NotNull
     @Override
     public Action[] getOptions() {
       return myOptions;
     }
-
-    public void setOptions(Action[] actions) {
-      myOptions = actions;
-    }
   }
 
-  @NotNull
-  private static String getConfirmationMessage() {
-    return "You're going to force push. It will overwrite commits at the remote. Are you sure you want to proceed?";
-  }
 }

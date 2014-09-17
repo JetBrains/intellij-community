@@ -69,4 +69,20 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public boolean shouldRequestIncomingChangesForNotCheckedRepositories() {
     return true;
   }
+  
+  /**
+   * Returns true if force push is allowed now in the selected repository.
+   * <p/>
+   * Force push may be completely disabled for the project which is checked by {@link #isForcePushEnabled()},
+   * or it might depend e.g. on the branch user is pushing to.
+   */
+  public abstract boolean isForcePushAllowed(@NotNull Repo repo, Target target);
+
+  /**
+   * Checks if force push is allowed for this VCS at all.
+   * <p/>
+   * If it is not allowed for all PushSupports in the project, the "Force Push" button will be invisible.
+   */
+  public abstract boolean isForcePushEnabled();
+
 }

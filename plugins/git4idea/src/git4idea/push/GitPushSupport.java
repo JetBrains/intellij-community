@@ -20,12 +20,17 @@ import com.intellij.dvcs.push.PushSupport;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.Pusher;
 import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
+import git4idea.config.GitSharedSettings;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -43,6 +48,8 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @NotNull private final GitVcs myVcs;
   @NotNull private final Pusher<GitRepository, GitPushSource, GitPushTarget> myPusher;
   @NotNull private final OutgoingCommitsProvider<GitRepository, GitPushSource, GitPushTarget> myOutgoingCommitsProvider;
+  @NotNull private final GitVcsSettings mySettings;
+  private final GitSharedSettings mySharedSettings;
 
   // instantiated from plugin.xml
   @SuppressWarnings("UnusedDeclaration")
@@ -51,6 +58,8 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
     myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
     myPusher = new GitPusher(project);
     myOutgoingCommitsProvider = new GitOutgoingCommitsProvider(project);
+    mySettings = GitVcsSettings.getInstance(project);
+    mySharedSettings = ServiceManager.getService(project, GitSharedSettings.class);
   }
 
   @NotNull
@@ -129,6 +138,22 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Override
   public PushTargetPanel<GitPushTarget> createTargetPanel(@NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
     return new GitPushTargetPanel(repository, defaultTarget);
+  }
+
+  @Override
+  public boolean isForcePushAllowed(@NotNull GitRepository repo, @NotNull GitPushTarget target) {
+    final String targetBranch = target.getBranch().getNameForRemoteOperations();
+    return !ContainerUtil.exists(mySharedSettings.getForcePushProhibitedPatterns(), new Condition<String>() {
+      @Override
+      public boolean value(String pattern) {
+        return targetBranch.matches("^" + pattern + "$"); // let "master" match only "master" and not "any-master-here" by default
+      }
+    });
+  }
+
+  @Override
+  public boolean isForcePushEnabled() {
+    return mySettings.isForcePushAllowed();
   }
 
 }

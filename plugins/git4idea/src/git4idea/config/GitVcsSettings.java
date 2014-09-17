@@ -68,6 +68,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean WARN_ABOUT_CRLF = true;
     public boolean WARN_ABOUT_DETACHED_HEAD = true;
     public GitResetMode RESET_MODE = null;
+    public boolean FORCE_PUSH_ALLOWED = false;
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -199,6 +200,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setResetMode(@NotNull GitResetMode mode) {
     myState.RESET_MODE = mode;
+  }
+
+  public boolean isForcePushAllowed() {
+    return myState.FORCE_PUSH_ALLOWED;
+  }
+
+  public void setForcePushAllowed(boolean allowed) {
+    myState.FORCE_PUSH_ALLOWED = allowed;
   }
 
   /**

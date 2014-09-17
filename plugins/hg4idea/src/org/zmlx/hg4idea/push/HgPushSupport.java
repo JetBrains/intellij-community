@@ -16,6 +16,7 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -83,6 +84,16 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   @NotNull
   public PushTargetPanel<HgTarget> createTargetPanel(@NotNull HgRepository repository, @Nullable HgTarget defaultTarget) {
     return new HgPushTargetPanel(repository, defaultTarget);
+  }
+
+  @Override
+  public boolean isForcePushAllowed(@NotNull HgRepository repo, @NotNull HgTarget target) {
+    return true;
+  }
+
+  @Override
+  public boolean isForcePushEnabled() {
+    return true;
   }
 
   @Override
