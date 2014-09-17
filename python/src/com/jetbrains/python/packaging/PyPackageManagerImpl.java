@@ -60,12 +60,9 @@ import java.util.*;
  * @author vlan
  */
 public class PyPackageManagerImpl extends PyPackageManager {
-  // Bundled versions of package management tools
-  public static final String SETUPTOOLS_VERSION = "1.1.5";
-  public static final String PIP_VERSION = "1.4.1";
-
-  public static final String SETUPTOOLS = PACKAGE_SETUPTOOLS + "-" + SETUPTOOLS_VERSION;
-  public static final String PIP = PACKAGE_PIP + "-" + PIP_VERSION;
+  // Python 2.4-2.5 compatible versions
+  public static final String SETUPTOOLS_PRE_26_VERSION = "1.4.2";
+  public static final String PIP_PRE_26_VERSION = "1.1";
 
   public static final int OK = 0;
   public static final int ERROR_NO_PIP = 2;
@@ -118,18 +115,21 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void installManagement() throws PyExternalProcessException {
-    if (!hasPackage(PACKAGE_SETUPTOOLS, false) && !hasPackage(PACKAGE_DISTRIBUTE, false)) {
-      installManagement(SETUPTOOLS);
+    final boolean pre26 = PythonSdkType.getLanguageLevelForSdk(mySdk).isOlderThan(LanguageLevel.PYTHON26);
+    if (!hasPackage(SETUPTOOLS, false) && !hasPackage(DISTRIBUTE, false)) {
+      final String name = SETUPTOOLS + (pre26 ? "-" + SETUPTOOLS_PRE_26_VERSION : "") + ".tar.gz";
+      installManagement(name);
     }
-    if (!hasPackage(PACKAGE_PIP, false)) {
-      installManagement(PIP);
+    if (!hasPackage(PIP, false)) {
+      final String name = PIP + (pre26 ? "-" + PIP_PRE_26_VERSION : "") + ".tar.gz";
+      installManagement(name);
     }
   }
 
   @Override
   public boolean hasManagement(boolean cachedOnly) {
-    return (hasPackage(PACKAGE_SETUPTOOLS, cachedOnly) || hasPackage(PACKAGE_DISTRIBUTE, cachedOnly)) &&
-           hasPackage(PACKAGE_PIP, cachedOnly);
+    return (hasPackage(SETUPTOOLS, cachedOnly) || hasPackage(DISTRIBUTE, cachedOnly)) &&
+           hasPackage(PIP, cachedOnly);
   }
 
   protected void installManagement(@NotNull String name) throws PyExternalProcessException {
@@ -346,7 +346,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         args.add("--system-site-packages");
       }
       args.add(destinationDir);
-      runPythonHelper(VIRTUALENV, args);
+        runPythonHelper(VIRTUALENV, args);
     }
 
     final String binary = PythonSdkType.getPythonExecutable(destinationDir);

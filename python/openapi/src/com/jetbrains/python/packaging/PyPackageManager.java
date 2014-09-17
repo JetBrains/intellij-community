@@ -30,9 +30,9 @@ import java.util.Set;
 public abstract class PyPackageManager {
   public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 
-  public static final String PACKAGE_SETUPTOOLS = "setuptools";
-  public static final String PACKAGE_PIP = "pip";
-  public static final String PACKAGE_DISTRIBUTE = "distribute";
+  public static final String SETUPTOOLS = "setuptools";
+  public static final String PIP = "pip";
+  public static final String DISTRIBUTE = "distribute";
 
   public static final String USE_USER_SITE = "--user";
 
