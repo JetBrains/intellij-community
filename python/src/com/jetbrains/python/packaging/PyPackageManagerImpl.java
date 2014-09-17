@@ -136,19 +136,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final String dirName = extractHelper(name);
     try {
       final String fileName = dirName + name + File.separatorChar + "setup.py";
-      final ProcessOutput output = getProcessOutput(fileName, Collections.singletonList(INSTALL), true, dirName + name);
-      final int retcode = output.getExitCode();
-      if (output.isTimeout()) {
-        throw new PyExternalProcessException(ERROR_TIMEOUT, fileName, Lists.newArrayList(INSTALL), "Timed out");
-      }
-      else if (retcode != 0) {
-        final String stdout = output.getStdout();
-        String message = output.getStderr();
-        if (message.trim().isEmpty()) {
-          message = stdout;
-        }
-        throw new PyExternalProcessException(retcode, fileName, Lists.newArrayList(INSTALL), message);
-      }
+      getPythonProcessResult(fileName, Collections.singletonList(INSTALL), true, dirName + name);
     }
     finally {
       clearCaches();
@@ -160,11 +148,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private String extractHelper(@NotNull String name) throws PyExternalProcessException {
     final String helperPath = getHelperPath(name);
     final ArrayList<String> args = Lists.newArrayList(UNTAR, helperPath);
-    final ProcessOutput output = getHelperOutput(PACKAGING_TOOL, args, false, null);
-    if (output.getExitCode() != 0) {
-      throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL, args, output.getStderr());
-    }
-    String dirName = FileUtil.toSystemDependentName(output.getStdout().trim());
+    final String result = getHelperResult(PACKAGING_TOOL, args, false, null);
+    String dirName = FileUtil.toSystemDependentName(result.trim());
     if (!dirName.endsWith(File.separator)) {
       dirName += File.separator;
     }
@@ -228,7 +213,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       args.addAll(req.toOptions());
     }
     try {
-      runPythonHelper(PACKAGING_TOOL, args, !useUserSite);
+      getHelperResult(PACKAGING_TOOL, args, !useUserSite, null);
     }
     finally {
       clearCaches();
@@ -250,7 +235,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         }
         args.add(pkg.getName());
       }
-      runPythonHelper(PACKAGING_TOOL, args, !canModify);
+      getHelperResult(PACKAGING_TOOL, args, !canModify, null);
     }
     finally {
       clearCaches();
@@ -285,7 +270,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   public synchronized void loadPackages() throws PyExternalProcessException {
     try {
-      final String output = runPythonHelper(PACKAGING_TOOL, Arrays.asList("list"));
+      final String output = getHelperResult(PACKAGING_TOOL, Arrays.asList("list"), false, null);
       myPackagesCache = parsePackagingToolOutput(output);
       Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
         @Override
@@ -341,14 +326,14 @@ public class PyPackageManagerImpl extends PyPackageManager {
         args.add("--system-site-packages");
       }
       args.add(destinationDir);
-      runPythonHelper(PACKAGING_TOOL, args);
+      getHelperResult(PACKAGING_TOOL, args, false, null);
     }
     else {
       if (useGlobalSite) {
         args.add("--system-site-packages");
       }
       args.add(destinationDir);
-        runPythonHelper(VIRTUALENV, args);
+      getHelperResult(VIRTUALENV, args, false, null);
     }
 
     final String binary = PythonSdkType.getPythonExecutable(destinationDir);
@@ -417,38 +402,13 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @NotNull
-  private String runPythonHelper(@NotNull final String helper,
-                                 @NotNull final List<String> args, final boolean askForSudo) throws PyExternalProcessException {
-    ProcessOutput output = getHelperOutput(helper, args, askForSudo, null);
-    final int retcode = output.getExitCode();
-    if (output.isTimeout()) {
-      throw new PyExternalProcessException(ERROR_TIMEOUT, helper, args, "Timed out");
-    }
-    else if (retcode != 0) {
-      final String message = output.getStderr() + "\n" + output.getStdout();
-      throw new PyExternalProcessException(retcode, helper, args, message);
-    }
-    return output.getStdout();
-  }
-
-  @NotNull
-  private String runPythonHelper(@NotNull final String helper,
-                                 @NotNull final List<String> args) throws PyExternalProcessException {
-    return runPythonHelper(helper, args, false);
-  }
-
-
-  private ProcessOutput getHelperOutput(@NotNull String helper,
-                                        @NotNull List<String> args,
-                                        final boolean askForSudo,
-                                        @Nullable String parentDir)
-    throws PyExternalProcessException {
+  private String getHelperResult(@NotNull String helper, @NotNull List<String> args, boolean askForSudo,
+                                 @Nullable String parentDir) throws PyExternalProcessException {
     final String helperPath = getHelperPath(helper);
-
     if (helperPath == null) {
       throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, "Cannot find external tool");
     }
-    return getProcessOutput(helperPath, args, askForSudo, parentDir);
+    return getPythonProcessResult(helperPath, args, askForSudo, parentDir);
   }
 
   @Nullable
@@ -456,10 +416,24 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return PythonHelpersLocator.getHelperPath(helper);
   }
 
-  protected ProcessOutput getProcessOutput(@NotNull String helperPath,
-                                         @NotNull List<String> args,
-                                         boolean askForSudo,
-                                         @Nullable String workingDir) throws PyExternalProcessException {
+  @NotNull
+  private String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
+                                        @Nullable String workingDir) throws PyExternalProcessException {
+    final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, workingDir);
+    final int exitCode = output.getExitCode();
+    if (output.isTimeout()) {
+      throw new PyExternalProcessException(ERROR_TIMEOUT, path, args, "Timed out");
+    }
+    else if (exitCode != 0) {
+      final String message = output.getStderr() + "\n" + output.getStdout();
+      throw new PyExternalProcessException(exitCode, path, args, message);
+    }
+    return output.getStdout();
+  }
+
+  @NotNull
+  protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
+                                                 @Nullable String workingDir) throws PyExternalProcessException {
     final String homePath = mySdk.getHomePath();
     if (homePath == null) {
       throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");
