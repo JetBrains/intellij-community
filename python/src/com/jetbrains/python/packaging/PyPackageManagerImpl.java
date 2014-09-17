@@ -274,8 +274,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
       myPackagesCache = parsePackagingToolOutput(output);
       Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
         @Override
-        public int compare(PyPackage aPackage, PyPackage aPackage1) {
-          return aPackage.getName().compareTo(aPackage1.getName());
+        public int compare(@NotNull PyPackage pkg1, @NotNull PyPackage pkg2) {
+          return pkg1.getName().compareTo(pkg2.getName());
         }
       });
 
