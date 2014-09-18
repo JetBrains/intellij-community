@@ -44,7 +44,7 @@ import java.util.Map;
  */
 @State(
   name = "FileColors",
-  storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)})
+  storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class FileColorManagerImpl extends FileColorManager implements PersistentStateComponent<Element> {
   public static final String FC_ENABLED = "FileColorsEnabled";
   public static final String FC_TABS_ENABLED = "FileColorsForTabsEnabled";

@@ -32,7 +32,7 @@ public class Registry  {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
-  private static final String REGISTRY_BUNDLE = "misc.registry";
+  public static final String REGISTRY_BUNDLE = "misc.registry";
 
   private final Map<String, String> myUserProperties = new LinkedHashMap<String, String>();
   private final Map<String, String> myLoadedUserProperties = new HashMap<String, String>();

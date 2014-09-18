@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class UnresolvedMergeCheckFactory extends CheckinHandlerFactory {
   @NotNull
   @Override
-  public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new CheckinHandler() {
       @Override
       public ReturnResult beforeCheckin() {

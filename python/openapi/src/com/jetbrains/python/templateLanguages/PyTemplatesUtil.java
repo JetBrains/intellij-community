@@ -40,7 +40,7 @@ public class PyTemplatesUtil {
     if (templateBinding != null) {
       if (TemplatesService.ALL_TEMPLATE_BINDINGS.contains(templateBinding)) {
         try {
-          final PyPackage installedPackage = packageManager.findInstalledPackage(templateBinding);
+          final PyPackage installedPackage = packageManager.findPackage(templateBinding, false);
           if (installedPackage == null)
             return new ValidationResult(templateBinding + " will be installed on selected interpreter");
         }
@@ -50,7 +50,7 @@ public class PyTemplatesUtil {
     }
     if (language != null) {
       try {
-        final PyPackage installedPackage = packageManager.findInstalledPackage(language);
+        final PyPackage installedPackage = packageManager.findPackage(language, false);
         if (installedPackage == null) {
           return new ValidationResult(language + " will be installed on selected interpreter");
         }

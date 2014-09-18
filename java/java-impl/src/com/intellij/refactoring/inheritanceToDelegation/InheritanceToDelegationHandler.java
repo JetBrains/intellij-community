@@ -41,13 +41,10 @@ import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class InheritanceToDelegationHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler");
@@ -106,23 +103,26 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
-    final PsiClass[] bases = aClass.getSupers();
+    PsiClass[] bases = aClass.getSupers();
     @NonNls final String javaLangObject = CommonClassNames.JAVA_LANG_OBJECT;
+
     if (bases.length == 0 || bases.length == 1 && javaLangObject.equals(bases[0].getQualifiedName())) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.does.not.have.base.classes.or.interfaces", aClass.getQualifiedName()));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INHERITANCE_TO_DELEGATION);
       return;
     }
 
-    final HashMap<PsiClass, Collection<MemberInfo>> basesToMemberInfos = new HashMap<PsiClass, Collection<MemberInfo>>();
+    final HashMap<PsiClass, Collection<MemberInfo>> basesToMemberInfos = new LinkedHashMap<PsiClass, Collection<MemberInfo>>();
 
     for (PsiClass base : bases) {
+      if (javaLangObject.equals(base.getQualifiedName())) continue;
       basesToMemberInfos.put(base, createBaseClassMemberInfos(base));
     }
 
 
+    final Set<PsiClass> baseClasses = basesToMemberInfos.keySet();
     new InheritanceToDelegationDialog(project, aClass,
-                                      bases, basesToMemberInfos).show();
+                                      baseClasses.toArray(new PsiClass[baseClasses.size()]), basesToMemberInfos).show();
   }
 
   private static List<MemberInfo> createBaseClassMemberInfos(PsiClass baseClass) {

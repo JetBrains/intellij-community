@@ -27,9 +27,14 @@ import java.util.List;
  * @author Sergey.Malenkov
  */
 public abstract class ConfigurableVisitor {
-  protected boolean accept(Configurable configurable) {
-    return true;
-  }
+  public static final ConfigurableVisitor ALL = new ConfigurableVisitor() {
+    @Override
+    protected boolean accept(Configurable configurable) {
+      return true;
+    }
+  };
+
+  protected abstract boolean accept(Configurable configurable);
 
   public final Configurable find(@NotNull ConfigurableGroup... groups) {
     for (ConfigurableGroup group : groups) {

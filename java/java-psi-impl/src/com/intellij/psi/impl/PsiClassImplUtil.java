@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.OrFilter;
-import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -1010,7 +1009,7 @@ public class PsiClassImplUtil {
       return false;
     }
 
-    if (originalElement(aClass).equals(originalElement((PsiClass)another))) {
+    if (aClass.getOriginalElement().equals(another.getOriginalElement())) {
       return true;
     }
 
@@ -1054,13 +1053,6 @@ public class PsiClassImplUtil {
       }
     }
     return -1;
-  }
-
-  @NotNull
-  private static PsiElement originalElement(@NotNull PsiClass aClass) {
-    final PsiElement originalElement = aClass.getOriginalElement();
-    final PsiCompiledElement compiled = originalElement.getUserData(ClsElementImpl.COMPILED_ELEMENT);
-    return compiled != null ? compiled : originalElement;
   }
 
   public static boolean isFieldEquivalentTo(@NotNull PsiField field, PsiElement another) {

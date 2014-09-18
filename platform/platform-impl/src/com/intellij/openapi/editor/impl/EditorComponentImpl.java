@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -63,6 +64,14 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
       }
     });
     myApplication = (ApplicationImpl)ApplicationManager.getApplication();
+  }
+
+  @Override
+  public void paint(@NotNull Graphics g) {
+    if (!isEnabled()) {
+      g = new Grayer((Graphics2D)g, EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    }
+    super.paint(g);
   }
 
   @NotNull
@@ -155,6 +164,12 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     finally {
       myApplication.editorPaintFinish();
     }
+  }
+
+  @Override
+  public void revalidate() {
+    myEditor.resetPaintersWidth();
+    super.revalidate();
   }
 
   public void repaintEditorComponent() {

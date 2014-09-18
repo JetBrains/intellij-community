@@ -18,6 +18,7 @@ package com.intellij.lang.properties.editor;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -57,16 +58,23 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
   }
 
   @Override
+  protected ActionGroup createActionGroup() {
+    final DefaultActionGroup result = (DefaultActionGroup) super.createActionGroup();
+    result.add(new ContextHelpAction(getHelpID()), Constraints.LAST);
+    return result;
+  }
+
+  @Override
   protected void addGroupByActions(final DefaultActionGroup result) {
     super.addGroupByActions(result);
-    result.add(new NewPropertyAction(), Constraints.FIRST);
+    result.add(new NewPropertyAction(true), Constraints.FIRST);
   }
 
   private void tunePopupActionGroup() {
     final DefaultActionGroup propertiesPopupGroup = new DefaultActionGroup();
     propertiesPopupGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_STRUCTURE_VIEW_POPUP));
     propertiesPopupGroup.add(Separator.getInstance(), Constraints.FIRST);
-    propertiesPopupGroup.add(new NewPropertyAction(), Constraints.FIRST);
+    propertiesPopupGroup.add(new NewPropertyAction(true), Constraints.FIRST);
     PopupHandler.installPopupHandler(getTree(), propertiesPopupGroup, IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionManager.getInstance());
   }
 

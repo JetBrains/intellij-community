@@ -29,8 +29,11 @@ import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import java.util.List;
 
 /**
+ * TODO: Do not delete for now - probably some parts of logic could be reused.
+ *
  * @author Konstantin Kolosovsky.
  */
+@SuppressWarnings("UnusedDeclaration")
 class CredentialsAuthenticator extends AbstractAuthenticator {
   private String myKind;
   // sometimes realm string is different (with <>), so store credentials for both strings..

@@ -7,6 +7,7 @@ import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -42,7 +43,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
       @Override
       @NotNull
       public Module[] getModules() {
-        return Module.EMPTY_ARRAY;
+        return configuration.getModules();
       }
 
       @Override

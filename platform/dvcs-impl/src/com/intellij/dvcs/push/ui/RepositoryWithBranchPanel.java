@@ -153,10 +153,6 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
   public PushTargetPanel getTargetPanel() {
     return myDestPushTargetPanelComponent;
   }
-
-  public T getEditableValue() {
-    return myDestPushTargetPanelComponent.getValue();
-  }
 }
 
 

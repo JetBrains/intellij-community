@@ -56,17 +56,18 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
   private final ScheduledFuture<?> myCheckCancelledFuture;
 
   public ProgressManagerImpl() {
-    if (DISABLED) {
-      myCheckCancelledFuture = null;
-    }
-    else {
-      myCheckCancelledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-        @Override
-        public void run() {
-          ourNeedToCheckCancel = true;
-        }
-      }, 0, CHECK_CANCELED_DELAY_MILLIS, TimeUnit.MILLISECONDS);
-    }
+    myCheckCancelledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+      @Override
+      public void run() {
+        callCheckCancelForNonStandardIndicators();
+      }
+    }, 0, CHECK_CANCELED_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+
+  }
+
+  @Override
+  public void dispose() {
+    myCheckCancelledFuture.cancel(true);
   }
 
   @Override
@@ -84,7 +85,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
           ourLockedCheckCounter++;
           if (ourLockedCheckCounter > 10) {
             ourLockedCheckCounter = 0;
-            canceled();
           }
         }
         else {
@@ -95,39 +95,27 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
     }
   }
 
-  private static class NonCancelableIndicator extends EmptyProgressIndicator implements NonCancelableSection {
-    private final ProgressIndicator myOld;
-
-    private NonCancelableIndicator() {
-      myOld = myThreadIndicator.get();
-    }
-
-    @Override
-    public void done() {
-      ProgressIndicator currentIndicator = myThreadIndicator.get();
-      if (currentIndicator != this) {
-        throw new AssertionError("Trying do .done() NonCancelableSection, which is already done");
-      }
-
-      myThreadIndicator.set(myOld);
-    }
-
-    @Override
-    public void checkCanceled() {
-    }
-  }
-
   @NotNull
   @Override
   public final NonCancelableSection startNonCancelableSection() {
-    NonCancelableIndicator nonCancelor = new NonCancelableIndicator();
+    NonCancelableIndicator nonCancelor = createNonCancelableIndicator();
     myThreadIndicator.set(nonCancelor);
     return nonCancelor;
   }
 
   @Override
   public void executeNonCancelableSection(@NotNull Runnable runnable) {
-    executeProcessUnderProgress(runnable, new NonCancelableIndicator());
+    executeProcessUnderProgress(runnable, createNonCancelableIndicator());
+  }
+
+  @NotNull
+  private static NonCancelableIndicator createNonCancelableIndicator() {
+    return new NonCancelableIndicator(){
+      @Override
+      public void done() {
+        myThreadIndicator.set(myOld);
+      }
+    };
   }
 
   @Override
@@ -135,7 +123,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
     ProgressIndicator progressIndicator = getProgressIndicator();
     if (progressIndicator != null) {
       if (progressIndicator instanceof SmoothProgressAdapter && cancelButtonText != null) {
-        ProgressIndicator original = ((SmoothProgressAdapter)progressIndicator).getOriginal();
+        ProgressIndicator original = ((SmoothProgressAdapter)progressIndicator).getOriginalProgressIndicator();
         if (original instanceof ProgressWindow) {
           ((ProgressWindow)original).setCancelButtonText(cancelButtonText);
         }
@@ -344,7 +332,8 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
     });
   }
 
-  public static void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
+  @NotNull
+  public static Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
     final ProgressIndicator progressIndicator;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       progressIndicator = new EmptyProgressIndicator();
@@ -352,7 +341,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
     else {
       progressIndicator = new BackgroundableProcessIndicator(task);
     }
-    runProcessWithProgressAsynchronously(task, progressIndicator, null);
+    return runProcessWithProgressAsynchronously(task, progressIndicator, null);
   }
 
   @Override
@@ -490,11 +479,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
         }
       }
     }
-  }
-
-  @Override
-  public void dispose() {
-    if (myCheckCancelledFuture != null) myCheckCancelledFuture.cancel(false);
   }
 
   private static void maybeSleep() {

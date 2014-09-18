@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * @author Rustam Vishnyakov
  */
-@State(name = "ProjectPlainTextFileTypeManager", storages = {@Storage( file = StoragePathMacros.PROJECT_FILE)})
+@State(name = "ProjectPlainTextFileTypeManager", storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)})
 public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   private final ProjectFileIndex myIndex;
 

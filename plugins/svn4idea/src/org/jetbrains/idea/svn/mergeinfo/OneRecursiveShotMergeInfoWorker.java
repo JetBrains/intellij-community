@@ -23,7 +23,7 @@ import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.dialogs.MergeContext;
+import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;

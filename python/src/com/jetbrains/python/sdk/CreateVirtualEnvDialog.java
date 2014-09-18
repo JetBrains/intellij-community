@@ -48,9 +48,9 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.packaging.PyPackageService;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.ui.IdeaDialog;
@@ -416,7 +416,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
       String myPath;
 
       public void run(@NotNull final ProgressIndicator indicator) {
-        final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(basicSdk);
+        final PyPackageManager packageManager = PyPackageManager.getInstance(basicSdk);
         try {
           indicator.setText("Creating virtual environment for " + basicSdk.getName());
           myPath = packageManager.createVirtualEnv(getDestination(), useGlobalSitePackages());
@@ -425,7 +425,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              packageManager.showInstallationError(getOwner(), "Failed to Create Virtual Environment", e.toString());
+              PackagesNotificationPanel.showError(getOwner(), "Failed to Create Virtual Environment", e.toString());
             }
           }, ModalityState.any());
         }

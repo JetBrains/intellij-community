@@ -25,6 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ActionCallback;
@@ -278,6 +279,9 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
   }
 
   public Object getData(@NonNls String dataId) {
+    if (Settings.KEY.is(dataId)) {
+      return myEditor.mySettings;
+    }
     if (OptionsEditor.KEY.is(dataId)) {
       return myEditor;
     }

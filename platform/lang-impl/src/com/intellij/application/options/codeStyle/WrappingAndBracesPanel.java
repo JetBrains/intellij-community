@@ -126,12 +126,12 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("ASSERT_STATEMENT_WRAP", WRAPPING_ASSERT_STATEMENT, WRAP_OPTIONS, WRAP_VALUES);
     addOption("ASSERT_STATEMENT_COLON_ON_NEXT_LINE", ApplicationBundle.message("wrapping.colon.signs.on.next.line"), WRAPPING_ASSERT_STATEMENT);
 
+    addOption("ENUM_CONSTANTS_WRAP", ApplicationBundle.message("wrapping.enum.constants"), WRAP_OPTIONS, WRAP_VALUES);
     addOption("CLASS_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.classes.annotation"), WRAP_OPTIONS, WRAP_VALUES);
     addOption("METHOD_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.methods.annotation"), WRAP_OPTIONS, WRAP_VALUES);
     addOption("FIELD_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.fields.annotation"), WRAP_OPTIONS, WRAP_VALUES);
     addOption("PARAMETER_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.parameters.annotation"), WRAP_OPTIONS, WRAP_VALUES);
     addOption("VARIABLE_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.local.variables.annotation"), WRAP_OPTIONS, WRAP_VALUES);
-    addOption("ENUM_CONSTANTS_WRAP", ApplicationBundle.message("wrapping.enum.constants"), WRAP_OPTIONS, WRAP_VALUES);
   }
 
   @Override

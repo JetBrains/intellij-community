@@ -46,18 +46,18 @@ import java.util.Iterator;
 import java.util.List;
 
 public class MergeList implements UserDataHolder {
+  private static final Logger LOG = Logger.getInstance(MergeList.class);
 
   public static final FragmentSide BRANCH_SIDE = FragmentSide.SIDE2;
   public static final FragmentSide BASE_SIDE = FragmentSide.SIDE1;
 
   public static final DataKey<MergeList> DATA_KEY = DataKey.create("mergeList");
   public static final Condition<Change> NOT_CONFLICTS = new Condition<Change>() {
+    @Override
     public boolean value(Change change) {
       return !(change instanceof ConflictChange);
     }
   };
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeList");
 
   @NotNull private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
   @NotNull private final ChangeList myBaseToLeftChangeList;
@@ -236,12 +236,14 @@ public class MergeList implements UserDataHolder {
       final Change change = changeList.getChange(i);
       if (!change.canHasActions(originalSide)) continue;
       AnAction applyAction = new AnAction(DiffBundle.message("merge.dialog.apply.change.action.name"), null, AllIcons.Diff.Arrow) {
-        public void actionPerformed(AnActionEvent e) {
+        @Override
+        public void actionPerformed(@Nullable AnActionEvent e) {
           apply(change);
         }
       };
       AnAction ignoreAction = new AnAction(DiffBundle.message("merge.dialog.ignore.change.action.name"), null, AllIcons.Diff.Remove) {
-        public void actionPerformed(AnActionEvent e) {
+        @Override
+        public void actionPerformed(@Nullable AnActionEvent e) {
           change.removeFromList();
         }
       };
@@ -286,10 +288,12 @@ public class MergeList implements UserDataHolder {
     return mergePanel == null ? null : mergePanel.getMergeList();
   }
 
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     return myDataHolder.getUserData(key);
   }
 
+  @Override
   public <T> void putUserData(@NotNull Key<T> key, T value) {
     myDataHolder.putUserData(key, value);
   }

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -771,16 +772,12 @@ public class PythonSdkType extends SdkType {
   }
 
   @NotNull
-  public static List<String> getSysPathsFromScript(String bin_path) throws InvalidSdkException {
+  public static List<String> getSysPathsFromScript(@NotNull String binaryPath) throws InvalidSdkException {
     String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
-    String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
-    final ProcessOutput run_result = PySdkUtil.getProcessOutput(
-      new File(scriptFile).getParent(),
-      new String[]{bin_path, scriptFile},
-      add_environment, MINUTE
-    );
+    final ProcessOutput run_result = PySdkUtil.getProcessOutput(new File(scriptFile).getParent(), new String[]{binaryPath, scriptFile},
+                                                                getVirtualEnvExtraEnv(binaryPath), MINUTE);
     if (!run_result.checkSuccess(LOG)) {
       throw new InvalidSdkException(String.format("Failed to determine Python's sys.path value:\nSTDOUT: %s\nSTDERR: %s",
                                                   run_result.getStdout(),
@@ -789,15 +786,16 @@ public class PythonSdkType extends SdkType {
     return run_result.getStdoutLines();
   }
 
-  // Returns a piece of env good as additional env for getProcessOutput.
+  /**
+   * Returns a piece of env good as additional env for getProcessOutput.
+   */
   @Nullable
-  public static String[] getVirtualEnvAdditionalEnv(String bin_path) {
-    File virtualenv_root = getVirtualEnvRoot(bin_path);
-    String[] add_environment = null;
-    if (virtualenv_root != null) {
-      add_environment = new String[]{"PATH=" + virtualenv_root + File.pathSeparator};
+  public static Map<String, String> getVirtualEnvExtraEnv(@NotNull String binaryPath) {
+    final File root = getVirtualEnvRoot(binaryPath);
+    if (root != null) {
+      return ImmutableMap.of("PATH", root.toString());
     }
-    return add_environment;
+    return null;
   }
 
   @Nullable

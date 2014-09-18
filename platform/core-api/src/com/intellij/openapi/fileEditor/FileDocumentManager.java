@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class FileDocumentManager implements SavingRequestor {
+  @NotNull
   public static FileDocumentManager getInstance() {
     return ApplicationManager.getApplication().getComponent(FileDocumentManager.class);
   }

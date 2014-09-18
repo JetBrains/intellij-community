@@ -33,7 +33,7 @@ public class DecompilerTestFixture {
     testDataDir = new File("testData");
     if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
     if (!isTestDataDir(testDataDir)) testDataDir = new File("plugins/java-decompiler/engine/testData");
-    assertTrue(isTestDataDir(testDataDir));
+    assertTrue("current dir: " + new File("").getAbsolutePath(), isTestDataDir(testDataDir));
 
     //noinspection SSBasedInspection
     tempDir = File.createTempFile("decompiler_test_", "_dir");
@@ -51,7 +51,9 @@ public class DecompilerTestFixture {
   }
 
   public void tearDown() {
-    delete(tempDir);
+    if (tempDir != null) {
+      delete(tempDir);
+    }
   }
 
   public File getTestDataDir() {

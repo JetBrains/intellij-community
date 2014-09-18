@@ -601,9 +601,8 @@ public abstract class HgUtil {
 
   @Nullable
   public static HgRepository getRepositoryForFile(@NotNull Project project, @Nullable VirtualFile file) {
-    if (file == null) {
-      return null;
-    }
+    if (file == null || project.isDisposed()) return null;
+
     HgRepositoryManager repositoryManager = getRepositoryManager(project);
     VirtualFile root = getHgRootOrNull(project, file);
     return repositoryManager.getRepositoryForRoot(root);

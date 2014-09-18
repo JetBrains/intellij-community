@@ -20,8 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.newEditor.OptionsEditor;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
@@ -75,11 +74,10 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
-        if (optionsEditor != null) {
+        Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
+        if (settings != null) {
           try {
-            Configurable configurable = optionsEditor.findConfigurableById(ScopeChooserConfigurable.PROJECT_SCOPES);
-            if (configurable == null || optionsEditor.clearSearchAndSelect(configurable).isRejected()) {
+            if (settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES)).isRejected()) {
               EditScopesDialog.showDialog(project, null);
             }
           } catch (IllegalStateException ex) {

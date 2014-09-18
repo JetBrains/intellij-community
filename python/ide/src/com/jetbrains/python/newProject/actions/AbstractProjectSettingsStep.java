@@ -33,14 +33,9 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
-import com.jetbrains.python.packaging.PyExternalProcessException;
-import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageManagerImpl;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.PyPySdkFlavor;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -324,29 +319,13 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
       PyFrameworkProjectGenerator frameworkProjectGenerator = (PyFrameworkProjectGenerator)myProjectGenerator;
       String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
       if (sdk != null && !isFrameworkInstalled(sdk)) {
-        final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
-        final boolean onlyWithCache =
-          PythonSdkFlavor.getFlavor(sdk) instanceof JythonSdkFlavor || PythonSdkFlavor.getFlavor(sdk) instanceof PyPySdkFlavor;
         String warningText = frameworkName + " will be installed on selected interpreter";
-        try {
-          if (onlyWithCache && packageManager.cacheIsNotNull() || !onlyWithCache) {
-            final PyPackage pip = packageManager.findInstalledPackage("pip");
-            myInstallFramework = true;
-            if (pip == null) {
-              warningText = "pip and " + warningText;
-            }
-            setWarningText(warningText);
-          }
+        myInstallFramework = true;
+        final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+        if (!packageManager.hasManagement(PySdkUtil.isRemote(sdk))) {
+          warningText = "Python packaging tools and " + warningText;
         }
-        catch (PyExternalProcessException ignored) {
-          myInstallFramework = true;
-          warningText = "pip and " + warningText;
-          setWarningText(warningText);
-        }
-        if (!myInstallFramework) {
-          setErrorText("No " + frameworkName + " support installed in selected interpreter");
-          return false;
-        }
+        setWarningText(warningText);
       }
       if (isPy3k && !((PyFrameworkProjectGenerator)myProjectGenerator).supportsPython3()) {
         setErrorText(frameworkName + " is not supported for the selected interpreter");

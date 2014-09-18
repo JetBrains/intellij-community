@@ -16,6 +16,9 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
+import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -30,6 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -346,8 +350,16 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiFile findPyFileInDir(PsiDirectory dir, String referencedName) {
-    final PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
-    // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
+    PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
+    if (file == null) {
+      final List<FileNameMatcher> associations = FileTypeManager.getInstance().getAssociations(PythonFileType.INSTANCE);
+      for (FileNameMatcher association : associations) {
+        if (association instanceof ExtensionFileNameMatcher) {
+          file = dir.findFile(referencedName + "." + ((ExtensionFileNameMatcher)association).getExtension());
+          if (file != null) break;
+        }
+      }
+    }
     if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
       return file;
     }

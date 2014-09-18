@@ -28,11 +28,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
-  private static final String BANNER =
-    "//\n" +
-    "// Source code recreated from a .class file by IntelliJ IDEA\n" +
-    "// (powered by Fernflower decompiler)\n" +
-    "//\n\n";
+  private static final String BANNER = IdeaDecompiler.BANNER;
 
   public void testSimple() {
     String path = PlatformTestUtil.getRtJarPath() + "!/java/lang/String.class";

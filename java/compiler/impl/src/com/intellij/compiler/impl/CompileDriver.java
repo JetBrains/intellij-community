@@ -22,10 +22,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.ModuleCompilerUtil;
-import com.intellij.compiler.ProblemsView;
+import com.intellij.compiler.*;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
@@ -64,6 +61,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Chunk;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
@@ -510,7 +508,7 @@ public class CompileDriver {
               "", wrappedMessage,
               messageType.toNotificationType(),
               new MessagesActivationListener(compileContext)
-            );
+            ).setImportant(false);
             compileContext.getBuildSession().registerCloseAction(new Runnable() {
               @Override
               public void run() {
@@ -687,22 +685,23 @@ public class CompileDriver {
         return false;
       }
 
-      final List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(scopeModules));
-      for (final Chunk<Module> chunk : chunks) {
-        final Set<Module> chunkModules = chunk.getNodes();
-        if (chunkModules.size() <= 1) {
+      final List<Chunk<ModuleSourceSet>> chunks = ModuleCompilerUtil.getCyclicDependencies(myProject, Arrays.asList(scopeModules));
+      for (final Chunk<ModuleSourceSet> chunk : chunks) {
+        final Set<ModuleSourceSet> sourceSets = chunk.getNodes();
+        if (sourceSets.size() <= 1) {
           continue; // no need to check one-module chunks
         }
         Sdk jdk = null;
         LanguageLevel languageLevel = null;
-        for (final Module module : chunkModules) {
+        for (final ModuleSourceSet sourceSet : sourceSets) {
+          Module module = sourceSet.getModule();
           final Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
           if (jdk == null) {
             jdk = moduleJdk;
           }
           else {
             if (!jdk.equals(moduleJdk)) {
-              showCyclicModulesHaveDifferentJdksError(chunkModules.toArray(new Module[chunkModules.size()]));
+              showCyclicModulesHaveDifferentJdksError(ModuleSourceSet.getModules(sourceSets));
               return false;
             }
           }
@@ -713,7 +712,7 @@ public class CompileDriver {
           }
           else {
             if (!languageLevel.equals(moduleLanguageLevel)) {
-              showCyclicModulesHaveDifferentLanguageLevel(chunkModules.toArray(new Module[chunkModules.size()]));
+              showCyclicModulesHaveDifferentLanguageLevel(ModuleSourceSet.getModules(sourceSets));
               return false;
             }
           }
@@ -727,25 +726,27 @@ public class CompileDriver {
     }
   }
 
-  private void showCyclicModulesHaveDifferentLanguageLevel(Module[] modulesInChunk) {
-    LOG.assertTrue(modulesInChunk.length > 0);
-    String moduleNameToSelect = modulesInChunk[0].getName();
+  private void showCyclicModulesHaveDifferentLanguageLevel(Set<Module> modulesInChunk) {
+    Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
+    LOG.assertTrue(firstModule != null);
+    String moduleNameToSelect = firstModule.getName();
     final String moduleNames = getModulesString(modulesInChunk);
     Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.language.level", moduleNames),
                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }
 
-  private void showCyclicModulesHaveDifferentJdksError(Module[] modulesInChunk) {
-    LOG.assertTrue(modulesInChunk.length > 0);
-    String moduleNameToSelect = modulesInChunk[0].getName();
+  private void showCyclicModulesHaveDifferentJdksError(Set<Module> modulesInChunk) {
+    Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
+    LOG.assertTrue(firstModule != null);
+    String moduleNameToSelect = firstModule.getName();
     final String moduleNames = getModulesString(modulesInChunk);
     Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames),
                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }
 
-  private static String getModulesString(Module[] modulesInChunk) {
+  private static String getModulesString(Collection<Module> modulesInChunk) {
     final StringBuilder moduleNames = StringBuilderSpinAllocator.alloc();
     try {
       for (Module module : modulesInChunk) {

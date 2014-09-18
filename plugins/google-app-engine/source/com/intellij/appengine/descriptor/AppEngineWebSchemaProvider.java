@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlSchemaProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,8 @@ import java.util.Set;
  */
 public class AppEngineWebSchemaProvider extends XmlSchemaProvider {
   private static final Set<String> FILE_NAMES = new HashSet<String>(Arrays.asList(AppEngineUtil.APP_ENGINE_WEB_XML_NAME,
-                                                                                  AppEngineUtil.JDO_CONFIG_XML_NAME));
+                                                                             AppEngineUtil.APP_ENGINE_APPLICATION_XML_NAME,
+                                                                             AppEngineUtil.JDO_CONFIG_XML_NAME));
 
   @Override
   public boolean isAvailable(@NotNull XmlFile file) {
@@ -59,7 +61,13 @@ public class AppEngineWebSchemaProvider extends XmlSchemaProvider {
     if (url.startsWith("http://appengine.google.com/ns/")) {
       AppEngineFacet facet = AppEngineFacet.getAppEngineFacetByModule(module);
       if (facet != null) {
-        final File file = facet.getSdk().getWebSchemeFile();
+        final File file;
+        if (isApplicationXmlFile(baseFile)) {
+          file = facet.getSdk().getApplicationSchemeFile();
+        }
+        else {
+          file = facet.getSdk().getWebSchemeFile();
+        }
         final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
         if (virtualFile != null) {
           final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(virtualFile);
@@ -85,4 +93,10 @@ public class AppEngineWebSchemaProvider extends XmlSchemaProvider {
     return null;
   }
 
+  private static boolean isApplicationXmlFile(PsiFile baseFile) {
+    if (!(baseFile instanceof XmlFile)) return false;
+
+    XmlTag rootTag = ((XmlFile)baseFile).getRootTag();
+    return rootTag != null && rootTag.getName().equals("appengine-application");
+  }
 }

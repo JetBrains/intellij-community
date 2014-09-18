@@ -8,10 +8,15 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -27,6 +32,7 @@ import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -91,8 +97,20 @@ public class CompilerTestUtil {
     new WriteAction() {
       protected void run(final Result result) {
         ApplicationManagerEx.getApplicationEx().doNotSave(true);
+        Module[] modules = ModuleManager.getInstance(project).getModules();
         JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-        table.removeJdk(table.getInternalJdk());
+        Sdk internalJdk = table.getInternalJdk();
+        List<Module> modulesToRestore = new ArrayList<Module>();
+        for (Module module : modules) {
+          Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+          if (sdk != null && sdk.equals(internalJdk)) {
+            modulesToRestore.add(module);
+          }
+        }
+        table.removeJdk(internalJdk);
+        for (Module module : modulesToRestore) {
+          ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
+        }
         BuildManager.getInstance().clearState(project);
       }
     }.execute();

@@ -15,39 +15,15 @@
  */
 package com.intellij.codeInsight.template.impl.editorActions;
 
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class ExpandLiveTemplateByTabAction extends EditorAction {
   public ExpandLiveTemplateByTabAction() {
-    super(new EditorWriteActionHandler(true) {
-      @Override
-      public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-        Project project = editor.getProject();
-        assert project != null;
-        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-        TemplateManager.getInstance(project).startTemplate(editor, TemplateSettings.TAB_CHAR);
-      }
-
-      @Override
-      public boolean isEnabled(Editor editor, DataContext dataContext) {
-        Project project = editor.getProject();
-        return project != null &&
-               ((TemplateManagerImpl)TemplateManager.getInstance(project)).prepareTemplate(editor, TemplateSettings.TAB_CHAR, null) != null;
-      }
-    });
+    super(ExpandLiveTemplateCustomAction.createExpandTemplateHandler(TemplateSettings.TAB_CHAR));
     setInjectedContext(true);
   }
 }

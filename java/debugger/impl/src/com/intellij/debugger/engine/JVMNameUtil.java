@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -420,6 +421,13 @@ public class JVMNameUtil {
           int i = qName.lastIndexOf('.');
           return i > 0 ? qName.substring(0, i) : "";
         }
+      }
+    }
+
+    if (positionFile instanceof PsiClassOwner) {
+      String name = ((PsiClassOwner)positionFile).getPackageName();
+      if (!StringUtil.isEmpty(name)) {
+        return name;
       }
     }
 

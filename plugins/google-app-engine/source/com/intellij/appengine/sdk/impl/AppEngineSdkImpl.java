@@ -60,6 +60,11 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return new File(FileUtil.toSystemDependentName(myHomePath + "/docs/appengine-web.xsd"));
   }
 
+  @Override
+  public File getApplicationSchemeFile() {
+    return new File(FileUtil.toSystemDependentName(myHomePath + "/docs/appengine-application.xsd"));
+  }
+
   public File getToolsApiJarFile() {
     final String path = FileUtil.toSystemDependentName(myHomePath + JpsAppEngineModuleExtensionImpl.LIB_APPENGINE_TOOLS_API_JAR);
     return new File(path);

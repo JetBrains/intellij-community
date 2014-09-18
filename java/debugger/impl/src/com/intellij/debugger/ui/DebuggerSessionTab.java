@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -270,12 +270,10 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     if (executionResult instanceof DefaultExecutionResult) {
       final AnAction[] actions = ((DefaultExecutionResult)executionResult).getRestartActions();
-      if (actions != null) {
         leftToolbar.addAll(actions);
         if (actions.length > 0) {
           leftToolbar.addSeparator();
         }
-      }
     }
     final AnAction[] profileActions = executionResult.getActions();
     leftToolbar.addAll(profileActions);
@@ -319,7 +317,9 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     settings.add(new WatchLastMethodReturnValueAction());
     settings.add(new AutoVarsSwitchAction());
     settings.addSeparator();
+    addActionToGroup(settings, XDebuggerActions.INLINE_DEBUGGER);
     addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
+    addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP_ON_SELECTION);
 
     leftToolbar.add(settings);
 

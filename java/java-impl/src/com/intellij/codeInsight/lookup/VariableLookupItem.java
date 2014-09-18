@@ -47,7 +47,12 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     myColor = getInitializerColor(field);
   }
 
+  @Nullable
   private static Color getInitializerColor(@NotNull PsiVariable var) {
+    if (!JavaColorProvider.isColorType(var.getType())) {
+      return null;
+    }
+
     PsiElement navigationElement = var.getNavigationElement();
     if (navigationElement instanceof PsiVariable) {
       var = (PsiVariable)navigationElement;
@@ -55,6 +60,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return getExpressionColor(var.getInitializer());
   }
 
+  @Nullable
   private static Color getExpressionColor(@Nullable PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
       final PsiElement target = ((PsiReferenceExpression)expression).resolve();

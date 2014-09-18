@@ -281,12 +281,12 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       if (newSdk != null) {
         myProjectSdksModel.addSdk(newSdk);
         mySdkCombo.setSelectedItem(newSdk);
-        myProjectSdksModel.apply();
+        myProjectSdksModel.apply(null, true);
       }
       PySdkService.getInstance().solidifySdk(item);
     }
     else {
-      final Sdk sdk = myProjectSdksModel.findSdk(item);
+      final Sdk sdk = myProjectSdksModel.getProjectSdks().get(item);
       if (item != null && sdk == null) {
         myProjectSdksModel.addSdk(item);
         myProjectSdksModel.apply(null, true);

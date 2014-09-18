@@ -25,6 +25,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.StudyUtils;
@@ -113,6 +116,10 @@ public class StudyReloadCourseAction extends DumbAwareAction {
                   StudyRefreshTaskFileAction.resetTaskFile(document, project, course, taskFile, name, task);
                 }
               }
+            }
+            ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);
+            if (runToolWindow != null) {
+              runToolWindow.hide(null);
             }
             Lesson firstLesson = StudyUtils.getFirst(lessons);
             if (firstLesson == null) {

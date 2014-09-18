@@ -519,10 +519,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   mySettings.ALIGN_MULTILINE_RESOURCES);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.ANNOTATION_PARAMETER_LIST) {
-        Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
+        Wrap wrap = Wrap.createWrap(getWrapType(myJavaSettings.ANNOTATION_PARAMETER_WRAP), false);
         child = processParenthesisBlock(result, child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+                                  myJavaSettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARENTH_EXPRESSION) {
         child = processParenthesisBlock(result, child,

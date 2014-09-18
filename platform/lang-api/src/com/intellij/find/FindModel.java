@@ -107,9 +107,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
       if (!multiline) {
         initStringToFindNoMultiline(this, getStringToFind());
       }
-      else {
-        setRegularExpressions(false);
-      }
+
       isMultiline = multiline;
       notifyObservers();
     }

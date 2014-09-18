@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @State(
   name = "GitRememberedInputs",
-  storages = @Storage( file = StoragePathMacros.APP_CONFIG + "/vcs.xml")
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml")
 )
 public class GitRememberedInputs extends DvcsRememberedInputs implements PersistentStateComponent<DvcsRememberedInputs.State> {
 

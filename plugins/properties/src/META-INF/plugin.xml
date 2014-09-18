@@ -113,5 +113,10 @@
             class="com.intellij.lang.properties.editor.ChooseSubsequentPropertyValueEditorAction$Prev"
             text="Choose Previous Property Value Editor"
             use-shortcut-of="MethodUp"/>
+    <action id="NewPropertyAction" class="com.intellij.lang.properties.editor.NewPropertyAction"
+            text="Property"
+            description="Add Property to Resource Bundle">
+      <add-to-group group-id="NewGroup" anchor="first"/>
+    </action>
   </actions>
 </idea-plugin>

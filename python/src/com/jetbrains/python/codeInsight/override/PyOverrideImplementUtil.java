@@ -183,8 +183,11 @@ public class PyOverrideImplementUtil {
   private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass, PyFunction baseFunction, boolean implement) {
     PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(baseFunction.getName());
     final PyDecoratorList decorators = baseFunction.getDecoratorList();
-    if (decorators != null && decorators.findDecorator(PyNames.CLASSMETHOD) != null) {
-      pyFunctionBuilder.decorate(PyNames.CLASSMETHOD);
+    if (decorators != null) {
+      if (decorators.findDecorator(PyNames.CLASSMETHOD) != null)
+        pyFunctionBuilder.decorate(PyNames.CLASSMETHOD);
+      else if (decorators.findDecorator(PyNames.STATICMETHOD) != null)
+        pyFunctionBuilder.decorate(PyNames.STATICMETHOD);
     }
     PyAnnotation anno = baseFunction.getAnnotation();
     if (anno != null) {

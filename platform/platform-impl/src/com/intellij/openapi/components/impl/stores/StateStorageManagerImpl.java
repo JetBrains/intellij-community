@@ -245,6 +245,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       roamingType = RoamingType.DISABLED;
     }
 
+    beforeFileBasedStorageCreate();
     return new FileBasedStorage(expandedFile, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, this,
                                 myPicoContainer, getStreamProvider(), this) {
       @Override
@@ -253,6 +254,9 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
         return StateStorageManagerImpl.this.createStorageData(fileSpec);
       }
     };
+  }
+
+  protected void beforeFileBasedStorageCreate() {
   }
 
   @Override
@@ -348,6 +352,16 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       expanded = StringUtil.replace(expanded, macro, myMacros.get(macro));
     }
     return expanded;
+  }
+
+  @NotNull
+  @Override
+  public String collapseMacros(@NotNull String path) {
+    String result = path;
+    for (String macro : myMacros.keySet()) {
+      result = StringUtil.replace(result, myMacros.get(macro), macro);
+    }
+    return result;
   }
 
   @NotNull

@@ -1,0 +1,15 @@
+package pkg;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class TestClassCast {
+   public void test(List var1) {
+      Object var2 = var1;
+      if(var1 != null) {
+         ((List)(var2 = new ArrayList(var1))).add("23");
+      }
+
+      System.out.println(((List)var2).size());
+   }
+}

@@ -16,22 +16,22 @@
 package org.jetbrains.builtInWebServer;
 
 import com.intellij.openapi.project.Project;
-import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class WebServerPathHandlerAdapter extends WebServerPathHandler {
-  protected abstract boolean process(@NotNull String path, @NotNull Project project, @NotNull FullHttpRequest request, @NotNull Channel channel);
+  protected abstract boolean process(@NotNull String path, @NotNull Project project, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context);
 
   @Override
   public final boolean process(@NotNull String path,
                                @NotNull Project project,
                                @NotNull FullHttpRequest request,
-                               @NotNull Channel channel,
+                               @NotNull ChannelHandlerContext context,
                                @Nullable String projectName,
                                @NotNull String decodedRawPath,
                                boolean isCustomHost) {
-    return process(path, project, request, channel);
+    return process(path, project, request, context);
   }
 }

@@ -254,7 +254,12 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 }
 
 public def layoutCommunityPlugins(String home) {
-  layoutAndroid("$home/android")
+  if (!isDefined("maySkipAndroidPlugin") || new File("$home/android").exists()) {
+    layoutAndroid("$home/android")
+  }
+  else {
+    projectBuilder.warning("Android plugin sources aren't found at $home/android. Android plugin is excluded from layout.")
+  }
 
   dir("plugins") {
     def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]

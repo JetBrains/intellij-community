@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -729,7 +730,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public String extractDeprecationMessage() {
     if (canHaveDeprecationMessage(getText())) {
       return PyFunctionImpl.extractDeprecationMessage(getStatements());
-    } else {
+    }
+    else {
       return null;
     }
   }

@@ -300,6 +300,10 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyNonAsciiCharInspection.class);
   }
 
+  public void testPyNonAsciiCharReferenceInspection() {
+    doHighlightingTest(PyNonAsciiCharInspection.class);
+  }
+
   public void testPySetFunctionToLiteralInspection() {    //PY-3120
     setLanguageLevel(LanguageLevel.PYTHON27);
     doHighlightingTest(PySetFunctionToLiteralInspection.class);

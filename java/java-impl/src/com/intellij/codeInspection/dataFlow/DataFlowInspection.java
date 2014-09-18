@@ -68,6 +68,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     private final JCheckBox myReportConstantReferences;
     private final JCheckBox mySuggestNullables;
     private final JCheckBox myDontReportTrueAsserts;
+    private final JCheckBox myTreatUnknownMembersAsNullable;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -113,6 +114,15 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         @Override
         public void stateChanged(ChangeEvent e) {
           REPORT_CONSTANT_REFERENCE_VALUES = myReportConstantReferences.isSelected();
+        }
+      });
+
+      myTreatUnknownMembersAsNullable = new JCheckBox("Treat non-annotated members and parameters as @Nullable");
+      myTreatUnknownMembersAsNullable.setSelected(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE);
+      myTreatUnknownMembersAsNullable.getModel().addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = myTreatUnknownMembersAsNullable.isSelected();
         }
       });
 
@@ -167,6 +177,9 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       gc.gridy++;
       add(myReportConstantReferences, gc);
+
+      gc.gridy++;
+      add(myTreatUnknownMembersAsNullable, gc);
     }
   }
 

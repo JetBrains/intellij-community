@@ -24,7 +24,6 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
@@ -127,9 +126,7 @@ public class MethodCallInstruction extends Instruction {
 
   private boolean isPureCall() {
     if (myTargetMethod == null) return false;
-    PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(myTargetMethod);
-    if (anno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"))) return true;
-    return PropertyUtil.isSimplePropertyGetter(myTargetMethod);
+    return ControlFlowAnalyzer.isPure(myTargetMethod) || PropertyUtil.isSimplePropertyGetter(myTargetMethod);
   }
 
   @Nullable

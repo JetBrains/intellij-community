@@ -87,7 +87,7 @@ public abstract class XVariablesViewBase extends XDebugView {
       disposeTreeRestorer();
       myTreeRestorer = myTreeState.restoreState(tree);
     }
-    if (position != null && Registry.is("ide.debugger.inline")) {
+    if (position != null) {
       registerInlineEvaluator(stackFrame, tree, position, project);
     }
   }
@@ -103,6 +103,9 @@ public abstract class XVariablesViewBase extends XDebugView {
       final SelectionListener listener = new SelectionListener() {
         @Override
         public void selectionChanged(final SelectionEvent e) {
+          if (!Registry.is("debugger.valueTooltipAutoShowOnSelection")) {
+            return;
+          }
           final String text = editor.getDocument().getText(e.getNewRange());
           final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
           if (evaluator != null && !StringUtil.isEmpty(text)

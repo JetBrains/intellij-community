@@ -19,13 +19,16 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 
 public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
 
-  protected FilePath[] getRoots(final VcsContext context) {
+  @Override
+  @NotNull
+  protected FilePath[] getRoots(@NotNull final VcsContext context) {
     Project project = context.getProject();
     ArrayList<FilePath> virtualFiles = new ArrayList<FilePath>();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -47,6 +50,7 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
     return vcsManager.hasAnyMappings();
   }
 
+  @Override
   protected void update(VcsContext vcsContext, Presentation presentation) {
     Project project = vcsContext.getProject();
     if (project == null) {
@@ -68,7 +72,8 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
     presentation.setVisible(true);
   }
 
-  protected String getActionName(VcsContext dataContext) {
+  @Override
+  protected String getActionName(@NotNull VcsContext dataContext) {
     return VcsBundle.message("action.name.commit.project");
   }
 
@@ -77,6 +82,7 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
     return VcsBundle.message("vcs.command.name.checkin.no.mnemonics");
   }
 
+  @Override
   protected boolean filterRootsBeforeAction() {
     return false;
   }

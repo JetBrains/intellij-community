@@ -165,8 +165,6 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
-    <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactSortingUtil"
-                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactSortingUtilImpl"/>
     <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
 
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
@@ -254,14 +252,14 @@
     <projectConfigurable groupId="language" instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable" id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle" />
 
     <!-- Scopes -->
-    <projectConfigurable groupId="project" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
+    <projectConfigurable groupId="appearance" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
 
     <!-- Application Configurables -->
 
     <!-- Path Variables -->
     <!-- the implementation of this configurable is in platform-impl but it's not registered in platform because
          it's only required in full IDEA -->
-    <applicationConfigurable groupId="project" instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
+    <applicationConfigurable groupId="build" instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
                              key="title.path.variables" bundle="messages.ApplicationBundle"/>
 
     <applicationConfigurable parentId="editor" instance="com.intellij.execution.console.ConsoleFoldingConfigurable" id="Console Folding"
@@ -398,6 +396,7 @@
   </xi:include>
 
   <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/JsonPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/RegExpPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ImagesPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/SpellCheckerPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>

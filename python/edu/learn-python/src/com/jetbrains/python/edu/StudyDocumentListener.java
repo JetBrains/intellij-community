@@ -2,12 +2,15 @@ package com.jetbrains.python.edu;
 
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.project.Project;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
+import com.jetbrains.python.edu.editor.StudyEditor;
 
 /**
  * author: liana
@@ -17,12 +20,15 @@ import com.jetbrains.python.edu.course.TaskWindow;
  */
 public class StudyDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
-  private int oldLine;
-  private int oldLineStartOffset;
+  private final Project myProject;
+  private int myOldLine;
+  private int myOldLineStartOffset;
   private TaskWindow myTaskWindow;
+  private boolean myEmptyDocument;
 
-  public StudyDocumentListener(TaskFile taskFile) {
+  public StudyDocumentListener(TaskFile taskFile, Project project) {
     myTaskFile = taskFile;
+    myProject = project;
   }
 
 
@@ -33,8 +39,9 @@ public class StudyDocumentListener extends DocumentAdapter {
     int offset = e.getOffset();
     int oldEnd = offset + e.getOldLength();
     Document document = e.getDocument();
-    oldLine = document.getLineNumber(oldEnd);
-    oldLineStartOffset = document.getLineStartOffset(oldLine);
+    myOldLine = document.getLineNumber(oldEnd);
+    myEmptyDocument = document.getTextLength() == 0;
+    myOldLineStartOffset = document.getLineStartOffset(myOldLine);
     int line = document.getLineNumber(offset);
     int offsetInLine = offset - document.getLineStartOffset(line);
     LogicalPosition pos = new LogicalPosition(line, offsetInLine);
@@ -47,6 +54,13 @@ public class StudyDocumentListener extends DocumentAdapter {
     if (e instanceof DocumentEventImpl) {
       DocumentEventImpl event = (DocumentEventImpl)e;
       Document document = e.getDocument();
+      if (myEmptyDocument) {
+          Editor editor = StudyEditor.getSelectedEditor(myProject);
+          if (editor != null && editor.getDocument() == document) {
+          myTaskFile.drawAllWindows(editor);
+          return;
+        }
+      }
       int offset = e.getOffset();
       int change = event.getNewLength() - event.getOldLength();
       if (myTaskWindow != null) {
@@ -58,11 +72,11 @@ public class StudyDocumentListener extends DocumentAdapter {
       }
       int newEnd = offset + event.getNewLength();
       int newLine = document.getLineNumber(newEnd);
-      int lineChange = newLine - oldLine;
-      myTaskFile.incrementLines(oldLine + 1, lineChange);
+      int lineChange = newLine - myOldLine;
+      myTaskFile.incrementLines(myOldLine + 1, lineChange);
       int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
-      int oldEndOffsetInLine = offset + e.getOldLength() - oldLineStartOffset;
-      myTaskFile.updateLine(lineChange, oldLine, newEndOffsetInLine, oldEndOffsetInLine);
+      int oldEndOffsetInLine = offset + e.getOldLength() - myOldLineStartOffset;
+      myTaskFile.updateLine(lineChange, myOldLine, newEndOffsetInLine, oldEndOffsetInLine);
     }
   }
 }

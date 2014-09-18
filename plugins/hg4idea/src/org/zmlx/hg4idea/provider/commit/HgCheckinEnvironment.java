@@ -20,21 +20,21 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
@@ -43,17 +43,23 @@ import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.provider.HgCurrentBinaryContentRevision;
 import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
 
   private final Project myProject;
   private boolean myNextCommitIsPushed;
   private boolean myNextCommitAmend; // If true, the next commit is amended
+  private boolean myShouldCommitSubrepos;
 
   public HgCheckinEnvironment(Project project) {
     myProject = project;
@@ -83,21 +89,21 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
     List<VcsException> exceptions = new LinkedList<VcsException>();
-    Map<VirtualFile, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
-    for (Map.Entry<VirtualFile, Set<HgFile>> entry : repositoriesMap.entrySet()) {
+    Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
+    for (Map.Entry<HgRepository, Set<HgFile>> entry : repositoriesMap.entrySet()) {
 
-      VirtualFile repo = entry.getKey();
+      HgRepository repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
+      HgCommitCommand command =
+        new HgCommitCommand(myProject, repo.getRoot(), preparedComment, myNextCommitAmend);
 
-      HgCommitCommand command = new HgCommitCommand(myProject, repo, preparedComment, myNextCommitAmend);
-      
-      if (isMergeCommit(repo)) {
+      if (isMergeCommit(repo.getRoot())) {
         //partial commits are not allowed during merges
         //verifyResult that all changed files in the repo are selected
         //If so, commit the entire repository
         //If not, abort
 
-        Set<HgFile> changedFilesNotInCommit = getChangedFilesNotInCommit(repo, selectedFiles);
+        Set<HgFile> changedFilesNotInCommit = getChangedFilesNotInCommit(repo.getRoot(), selectedFiles);
         boolean partial = !changedFilesNotInCommit.isEmpty();
 
 
@@ -122,6 +128,9 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         // so no need to set the files on the command, because then mercurial will complain
       } else {
         command.setFiles(selectedFiles);
+        if (myShouldCommitSubrepos && repo.hasSubrepos()) {
+          command.setSubrepos(HgUtil.getNamesWithoutHashes(repo.getSubrepos()));
+        }
       }
       try {
         command.execute();
@@ -134,9 +143,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     // push if needed
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
-      final Set<VirtualFile> preselectedFiles = repositoriesMap.keySet();
-      HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(myProject);
-      final List<HgRepository> preselectedRepositories = HgActionUtil.collectRepositoriesFromFiles(repositoryManager, preselectedFiles);
+      final List<HgRepository> preselectedRepositories = ContainerUtil.newArrayList(repositoriesMap.keySet());
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
           new VcsPushDialog(myProject, preselectedRepositories).show();
@@ -154,7 +161,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   private Set<HgFile> getChangedFilesNotInCommit(VirtualFile repo, Set<HgFile> selectedFiles) {
     List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo);
 
-    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).unknown(false).ignored(false).baseRevision(parents.get(0)).build(myProject);
+    HgStatusCommand statusCommand =
+      new HgStatusCommand.Builder(true).unknown(false).ignored(false).baseRevision(parents.get(0)).build(myProject);
     Set<HgChange> allChangedFilesInRepo = statusCommand.execute(repo);
 
     Set<HgFile> filesNotIncluded = new HashSet<HgFile>();
@@ -229,29 +237,29 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   @NotNull
-  private Map<VirtualFile, Set<HgFile>> getFilesByRepository(List<Change> changes) {
-    Map<VirtualFile, Set<HgFile>> result = new HashMap<VirtualFile, Set<HgFile>>();
+  private Map<HgRepository, Set<HgFile>> getFilesByRepository(List<Change> changes) {
+    Map<HgRepository, Set<HgFile>> result = new HashMap<HgRepository, Set<HgFile>>();
     for (Change change : changes) {
       ContentRevision afterRevision = change.getAfterRevision();
       ContentRevision beforeRevision = change.getBeforeRevision();
 
       if (afterRevision != null) {
-        addFile(result, afterRevision.getFile());
+        addFile(result, afterRevision);
       }
       if (beforeRevision != null) {
-        addFile(result, beforeRevision.getFile());
+        addFile(result, beforeRevision);
       }
     }
     return result;
   }
 
-  private void addFile(Map<VirtualFile, Set<HgFile>> result, FilePath filePath) {
-    if (filePath == null) {
-      return;
-    }
-
-    VirtualFile repo = VcsUtil.getVcsRootFor(myProject, filePath);
-    if (repo == null || filePath.isDirectory()) {
+  private void addFile(Map<HgRepository, Set<HgFile>> result, ContentRevision contentRevision) {
+    FilePath filePath = contentRevision.getFile();
+    // try to find repository from hgFile from change
+    HgRepository repo = HgUtil.getRepositoryForFile(myProject, contentRevision instanceof HgCurrentBinaryContentRevision
+                                                               ? ((HgCurrentBinaryContentRevision)contentRevision).getRepositoryRoot()
+                                                               : ChangesUtil.findValidParentAccurately(filePath));
+    if (repo == null) {
       return;
     }
 
@@ -261,7 +269,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       result.put(repo, hgFiles);
     }
 
-    hgFiles.add(new HgFile(repo, filePath));
+    hgFiles.add(new HgFile(repo.getRoot(), filePath));
   }
 
   public void setNextCommitIsPushed() {
@@ -272,27 +280,55 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
    * Commit options for hg
    */
   private class HgCommitAdditionalComponent extends DvcsCommitAdditionalComponent {
+    @NotNull private final JCheckBox myCommitSubrepos;
 
     public HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       super(project, panel);
       HgVcs myVcs = HgVcs.getInstance(myProject);
       myAmend.setEnabled(myVcs != null && myVcs.getVersion().isAmendSupported());
+      final Insets insets = new Insets(2, 2, 2, 2);
+      // add commit subrepos checkbox
+      GridBagConstraints c = new GridBagConstraints();
+      c.anchor = GridBagConstraints.CENTER;
+      c.insets = insets;
+      c.gridx = 1;
+      c.gridy = 2;
+      c.weightx = 1;
+      c.fill = GridBagConstraints.HORIZONTAL;
+      myCommitSubrepos = new JCheckBox("Commit subrepositories", false);
+      myCommitSubrepos.setToolTipText(XmlStringUtil.wrapInHtml(
+        "Commit all subrepos for selected repositories.<br>" +
+        " <code>hg ci <i><b>files</b></i> -S <i><b>subrepos</b></i></code>"));
+      myCommitSubrepos.setMnemonic('s');
+      myPanel.add(myCommitSubrepos, c);
+      Collection<HgRepository> repos =
+        HgActionUtil.collectRepositoriesFromFiles(HgUtil.getRepositoryManager(myProject), myCheckinPanel.getRoots());
+      myCommitSubrepos.setVisible(ContainerUtil.exists(repos, new Condition<HgRepository>() {
+        @Override
+        public boolean value(HgRepository repository) {
+          return repository.hasSubrepos();
+        }
+      }));
+      myCommitSubrepos.addActionListener(new MySelectionListener(myAmend));
+      myAmend.addActionListener(new MySelectionListener(myCommitSubrepos));
     }
 
     @Override
     public void refresh() {
       super.refresh();
-      myNextCommitAmend = false;
+      restoreState();
     }
 
     @Override
     public void saveState() {
       myNextCommitAmend = myAmend.isSelected();
+      myShouldCommitSubrepos = myCommitSubrepos.isSelected();
     }
 
     @Override
     public void restoreState() {
       myNextCommitAmend = false;
+      myShouldCommitSubrepos = false;
     }
 
     @NotNull
@@ -312,6 +348,26 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       args.add("{desc}");
       HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "log", args);
       return result == null ? "" : result.getRawOutput();
+    }
+
+    private class MySelectionListener implements ActionListener {
+      JCheckBox myUnselectedComponent;
+
+      public MySelectionListener(JCheckBox unselectedComponent) {
+        myUnselectedComponent = unselectedComponent;
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        JCheckBox source = (JCheckBox)e.getSource();
+        if (source.isSelected()) {
+            myUnselectedComponent.setSelected(false);
+            myUnselectedComponent.setEnabled(false);
+        }
+        else{
+          myUnselectedComponent.setEnabled(true);
+        }
+      }
     }
   }
 }

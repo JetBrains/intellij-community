@@ -16,6 +16,7 @@
 package com.intellij.psi.autodetect;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.autodetect.*;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestCase;
@@ -33,6 +34,22 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
     PlatformTestCase.initPlatformLangPrefix();
   }
 
+  public void testBigFileWithIndent2() {
+    doTestIndentSize(2);
+  }
+
+  public void testBigFileWithIndent8() {
+    doTestIndentSize(8);
+  }
+
+  public void testBigFileWithIndent4() {
+    doTestIndentSize(4);
+  }
+
+  public void testFileWithTabs() {
+    doTestTabsUsed();
+  }
+
   public void testSimpleIndent() {
     doTestMaxUsedIndent(2, 6);
   }
@@ -43,6 +60,14 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
 
   public void testManyZeroRelativeIndent() {
     doTestMaxUsedIndent(2);
+  }
+
+  public void testSmallFileWithIndent8() {
+    doTestMaxUsedIndent(8);
+  }
+
+  public void testSmallFileWithTabs() {
+    doTestTabsUsed();
   }
 
   public void testSpacesToNumbers() throws Exception {
@@ -67,7 +92,7 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
       "    public void a() {\n" +
       "    }\n" +
       "}",
-      0, -1, 4, 6, 4, -1, 4, 4, 0
+      -1, -1, 4, 6, 4, -1, 4, 4, -1
     );
   }
 
@@ -91,7 +116,18 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
       "    };\n" +
       "  }\n" +
       "}",
-      0, 0, 2, 2, -1, 2, 4, 2, -1, 2, 4, 6, 6, 8, 6, 4, 2, 0
+      -1, -1, 2, 2, -1, 2, 4, 2, -1, 2, 4, 6, 6, 8, 6, 4, 2, -1
+    );
+  }
+
+  public void testNoZeroIndents() {
+    doTestLineToIndentMapping(
+      "class Test\n" +
+      "{\n" +
+      "int a;\n" +
+      "int b;\n" +
+      "}",
+      -1, -1, -1, -1, -1
     );
   }
 
@@ -105,6 +141,24 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
   public void doTestMaxUsedIndent(int indentExpected) {
     IndentUsageInfo indentInfo = getMaxUsedIndentInfo();
     Assert.assertEquals("Indent size mismatch", indentExpected, indentInfo.getIndentSize());
+  }
+
+  private void doTestTabsUsed() {
+    CommonCodeStyleSettings.IndentOptions options = getIndentOptions();
+    Assert.assertTrue("Tab usage not detected", options.USE_TAB_CHARACTER);
+  }
+
+  private void doTestIndentSize(int indent) {
+    CommonCodeStyleSettings.IndentOptions options = getIndentOptions();
+    Assert.assertFalse("Tab usage detected: ", options.USE_TAB_CHARACTER);
+    Assert.assertEquals("Indent mismatch", indent, options.INDENT_SIZE);
+  }
+
+  @NotNull
+  private CommonCodeStyleSettings.IndentOptions getIndentOptions() {
+    configureByFile(getTestName(true) + ".java");
+    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(myFile);
+    return detector.getIndentOptions();
   }
 
   @NotNull

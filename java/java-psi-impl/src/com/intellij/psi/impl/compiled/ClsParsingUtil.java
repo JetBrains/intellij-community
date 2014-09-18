@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 /**
  * @author ven
@@ -170,5 +171,32 @@ public class ClsParsingUtil {
 
   public static boolean isJavaIdentifier(@NotNull String identifier, @NotNull LanguageLevel level) {
     return StringUtil.isJavaIdentifier(identifier) && !JavaLexer.isKeyword(identifier, level);
+  }
+
+  public static LanguageLevel getLanguageLevelByVersion(final int version) {
+    switch (version) {
+      case Opcodes.V1_1:
+      case Opcodes.V1_2:
+      case Opcodes.V1_3:
+        return LanguageLevel.JDK_1_3;
+
+      case Opcodes.V1_4:
+        return LanguageLevel.JDK_1_4;
+
+      case Opcodes.V1_5:
+        return LanguageLevel.JDK_1_5;
+
+      case Opcodes.V1_6:
+        return LanguageLevel.JDK_1_6;
+
+      case Opcodes.V1_7:
+        return LanguageLevel.JDK_1_7;
+
+      case Opcodes.V1_8:
+        return LanguageLevel.JDK_1_8;
+
+      default:
+        return LanguageLevel.HIGHEST;
+    }
   }
 }

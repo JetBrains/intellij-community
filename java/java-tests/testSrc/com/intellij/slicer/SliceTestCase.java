@@ -17,26 +17,12 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 
 public abstract class SliceTestCase extends DaemonAnalyzerTestCase {
   @Override
   protected Sdk getTestProjectJdk() {
-    Sdk sdk = IdeaTestUtil.getMockJdk17();
-    // add JDK annotations
-    SdkModificator sdkModificator = sdk.getSdkModificator();
-    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(
-      FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations");
-    assertNotNull(root);
-    sdkModificator.addRoot(root, AnnotationOrderRootType.getInstance());
-    sdkModificator.commitChanges();
-
-    return sdk;
+    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
   }
 }

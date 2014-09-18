@@ -417,7 +417,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       @Override
       public void run() {
         Application application = ApplicationManager.getApplication();
-        if (!project.isDisposed() && !application.isDisposed()) {
+        if (!project.isDisposed() && !application.isDisposed() && !application.isUnitTestMode()) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {

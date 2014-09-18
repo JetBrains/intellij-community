@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate.quick;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleView;
@@ -24,6 +25,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -204,6 +206,20 @@ public class XValueHint extends AbstractValueHint {
 
       @Override
       public void errorOccurred(@NotNull final String errorMessage) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            int start = 0, end = 0;
+            if (getCurrentRange() != null) {
+              start = getCurrentRange().getStartOffset();
+              end = getCurrentRange().getEndOffset();
+            }
+            HintManager.getInstance().showErrorHint(getEditor(), errorMessage, start,
+                                                    end, HintManager.ABOVE,
+                                                    HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_TEXT_CHANGE,
+                                                    0);
+          }
+        });
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
       }
     }, myExpressionPosition);

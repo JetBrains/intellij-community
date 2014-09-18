@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReformatCheckinHandlerFactory extends CheckinHandlerFactory {
   @Override
   @NotNull
-  public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new ReformatBeforeCheckinHandler(panel.getProject(), panel);
   }
 }

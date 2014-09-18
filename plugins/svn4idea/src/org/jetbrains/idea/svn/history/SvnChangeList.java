@@ -413,7 +413,7 @@ public class SvnChangeList implements CommittedChangeList {
       return previousRevision == null ? null :
              SvnRepositoryContentRevision.create(myVcs, previousRevision.getFullPath(),
                                                  new FilePathImpl(previousRevision.getFile().getIOFile(), isDir),
-                                                 ((SvnRevisionNumber)previousRevision.getRevisionNumber()).getRevision().getNumber());
+                                                 previousRevision.getRevisionNumber().getRevision().getNumber());
     }
 
     private void uploadDeletedRenamedChildren() throws VcsException {

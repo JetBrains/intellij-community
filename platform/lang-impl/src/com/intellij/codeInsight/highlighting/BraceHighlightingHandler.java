@@ -121,8 +121,7 @@ public class BraceHighlightingHandler {
           public void run() {
             final PsiFile injected;
             try {
-              injected = psiFile == null ||
-                         psiFile instanceof PsiCompiledElement ||
+              injected = psiFile instanceof PsiCompiledElement ||
                          psiFile instanceof PsiBinaryFile ||
                          !isValidEditor(editor) ||
                          !isValidFile(psiFile)

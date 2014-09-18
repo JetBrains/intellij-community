@@ -31,7 +31,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
@@ -126,10 +129,6 @@ public class ExpectedTypesProvider {
                                                     final boolean voidable, boolean usedAfter) {
     if (expr == null) return ExpectedTypeInfo.EMPTY_ARRAY;
     PsiElement parent = expr.getParent();
-    while (parent instanceof PsiParenthesizedExpression) {
-      expr = (PsiExpression)parent;
-      parent = parent.getParent();
-    }
     MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider, voidable, usedAfter);
     if (parent != null) {
       parent.accept(visitor);
@@ -240,6 +239,25 @@ public class ExpectedTypesProvider {
     @NotNull
     public ExpectedTypeInfo[] getResult() {
       return myResult.toArray(new ExpectedTypeInfo[myResult.size()]);
+    }
+
+    @Override
+    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+      PsiElement parent = expression.getParent();
+      if (parent != null) {
+        final MyParentVisitor visitor = new MyParentVisitor(expression, myForCompletion, myClassProvider, myVoidable, myUsedAfter);
+        parent.accept(visitor);
+        for (final ExpectedTypeInfo info : visitor.myResult) {
+          myResult.add(createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), TailTypes.RPARENTH, info.getCalledMethod(),
+                                      new NullableComputable<String>() {
+                                        @Nullable
+                                        @Override
+                                        public String compute() {
+                                          return ((ExpectedTypeInfoImpl)info).getExpectedName();
+                                        }
+                                      }));
+        }
+      }
     }
 
     @Override

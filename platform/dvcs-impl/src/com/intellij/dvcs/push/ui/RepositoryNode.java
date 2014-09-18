@@ -15,9 +15,8 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.dvcs.push.OutgoingResult;
 import com.intellij.dvcs.push.PushTargetPanel;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -26,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode, Comparable<RepositoryNode> {
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
-  private ProgressIndicator myCurrentIndicator;
+  private Future<AtomicReference<OutgoingResult>> myFuture;
 
   public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
     super(repositoryPanel);
@@ -75,15 +76,14 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
 
   @Override
   public void stopLoading() {
-    if (myCurrentIndicator != null && myCurrentIndicator.isRunning()) {
-      myCurrentIndicator.cancel();
+    if (myFuture != null && !myFuture.isDone()) {
+      myFuture.cancel(true);
     }
   }
 
   @Override
-  @NotNull
-  public ProgressIndicator startLoading() {
-    return myCurrentIndicator = new EmptyProgressIndicator();
+  public void startLoading(@NotNull Future<AtomicReference<OutgoingResult>> future) {
+    myFuture = future;
   }
 
   public int compareTo(@NotNull RepositoryNode repositoryNode) {

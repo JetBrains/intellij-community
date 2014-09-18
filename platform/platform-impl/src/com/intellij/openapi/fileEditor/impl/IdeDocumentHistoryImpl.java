@@ -43,7 +43,7 @@ import java.util.*;
 
 @State(
     name = "IdeDocumentHistory",
-    storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)}
+    storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
 )
 public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements ProjectComponent, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl");

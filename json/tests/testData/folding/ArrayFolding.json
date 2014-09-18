@@ -1,0 +1,5 @@
+<fold text='[...]'>["foo",
+  ["inline"],
+  <fold text='[...]'>[1,
+   2]</fold>
+  "bar"]</fold>

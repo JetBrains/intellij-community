@@ -110,7 +110,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
     else {
       projectName = host;
     }
-    return doProcess(request, context.channel(), projectName);
+    return doProcess(request, context, projectName);
   }
 
   public static boolean isOwnHostName(@NotNull String host) {
@@ -135,7 +135,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
     }
   }
 
-  private static boolean doProcess(@NotNull FullHttpRequest request, @NotNull Channel channel, @Nullable String projectName) {
+  private static boolean doProcess(@NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context, @Nullable String projectName) {
     final String decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()));
     int offset;
     boolean emptyPath;
@@ -163,7 +163,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       }
 
       // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise browser will treat it as file instead of directory, so, relative path will not work
-      WebServerPathHandler.redirectToDirectory(request, channel, projectName);
+      WebServerPathHandler.redirectToDirectory(request, context.channel(), projectName);
       return true;
     }
 
@@ -172,7 +172,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
 
     for (WebServerPathHandler pathHandler : WebServerPathHandler.EP_NAME.getExtensions()) {
       try {
-        if (pathHandler.process(path, project, request, channel, projectName, decodedPath, isCustomHost)) {
+        if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
           return true;
         }
       }

@@ -42,12 +42,12 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
-import org.codehaus.groovy.util.ListHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,7 +55,7 @@ import java.util.Map;
  * @author cdr
  */
 public class MoveClassToModuleFix implements IntentionAction {
-  private final Map<PsiClass, Module> myModules = new ListHashMap<PsiClass, Module>();
+  private final Map<PsiClass, Module> myModules = new LinkedHashMap<PsiClass, Module>();
   private final String myReferenceName;
   private final Module myCurrentModule;
   private final PsiDirectory mySourceRoot;

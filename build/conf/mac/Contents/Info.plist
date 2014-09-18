@@ -84,7 +84,7 @@
       </dict>
 
       <key>VMOptions</key>
-      <string>@@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
+      <string>-XX:ErrorFile=$HOME/java_error_in_@@executable@@_%p.log -Djava.library.path=$APP_PACKAGE/Contents/bin:$DYLD_LIBRARY_PATH @@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
 
     </dict>
   </dict>

@@ -61,7 +61,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private final PauseActionHandler myPauseActionHandler = new PauseActionHandler();
   private final ShowExecutionPointActionHandler myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
   //private final EvaluateActionHandler myEvaluateActionHandler = new EvaluateActionHandler();
-  private final QuickEvaluateActionHandler myQuickEvaluateHandler = new QuickEvaluateActionHandler();
+  //private final QuickEvaluateActionHandler myQuickEvaluateHandler = new QuickEvaluateActionHandler();
   private final DebuggerActionHandler mySmartStepIntoHandler = new JvmSmartStepIntoActionHandler();
   private final DebuggerActionHandler myAddToWatchedActionHandler = new AddToWatchActionHandler();
   private final JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
@@ -154,12 +154,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getEvaluateHandler() {
     return DISABLED;
-  }
-
-  @Override
-  @NotNull
-  public QuickEvaluateHandler getQuickEvaluateHandler() {
-    return myQuickEvaluateHandler;
   }
 
   @NotNull

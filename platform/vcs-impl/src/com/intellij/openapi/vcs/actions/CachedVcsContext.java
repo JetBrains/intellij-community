@@ -63,60 +63,75 @@ public class CachedVcsContext implements VcsContext {
     myActionName = baseContext.getActionName();
   }
 
+  @Override
   public String getPlace() {
     return myPlace;
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public VirtualFile getSelectedFile() {
     return mySelectedFile;
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSelectedFiles() {
     return mySelectedFiles;
   }
 
+  @Override
   public Editor getEditor() {
     return myEditor;
   }
 
+  @Override
   public Collection<VirtualFile> getSelectedFilesCollection() {
     return mySelectedFilesCollection;
   }
 
+  @Override
   public File[] getSelectedIOFiles() {
     return mySelectedIOFiles;
   }
 
+  @Override
   public int getModifiers() {
     return myModifiers;
   }
 
+  @Override
   public Refreshable getRefreshableDialog() {
     return myRefreshablePanel;
   }
 
+  @Override
   public File getSelectedIOFile() {
     return mySelectedIOFile;
   }
 
+  @Override
+  @NotNull
   public FilePath[] getSelectedFilePaths() {
     return mySelectedFilePaths;
   }
 
+  @Override
   public FilePath getSelectedFilePath() {
     return mySelectedFilePath;
   }
 
+  @Override
   @Nullable
   public ChangeList[] getSelectedChangeLists() {
     return mySelectedChangeLists;
   }
 
+  @Override
   @Nullable
   public Change[] getSelectedChanges() {
     return mySelectedChanges;

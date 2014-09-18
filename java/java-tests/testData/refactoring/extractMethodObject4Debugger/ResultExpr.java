@@ -19,7 +19,7 @@ class Sample {
     System.out.println("<caret>");
   }
 
-  int foo() {
+  private int foo() {
     return 1;
   }
 }

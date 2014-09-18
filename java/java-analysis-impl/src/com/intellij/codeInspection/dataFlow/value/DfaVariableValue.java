@@ -30,6 +30,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -40,7 +41,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.patterns.PsiJavaPatterns.*;
+
 public class DfaVariableValue extends DfaValue {
+
+  private static final ElementPattern<? extends PsiModifierListOwner> MEMBER_OR_METHOD_PARAMETER =
+    or(psiMember(), psiParameter().withSuperParent(2, psiMember()));
 
   public static class Factory {
     private final MultiMap<Trinity<Boolean,String,DfaVariableValue>,DfaVariableValue> myExistingVars = new MultiMap<Trinity<Boolean, String, DfaVariableValue>, DfaVariableValue>();
@@ -165,6 +171,8 @@ public class DfaVariableValue extends DfaValue {
       return nullability;
     }
 
+    Nullness defaultNullability = myFactory.isUnknownMembersAreNullable() && MEMBER_OR_METHOD_PARAMETER.accepts(var) ? Nullness.NULLABLE : Nullness.UNKNOWN;
+
     if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
       PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
       if (iteratedValue != null) {
@@ -178,7 +186,7 @@ public class DfaVariableValue extends DfaValue {
     if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers((PsiField)var);
       if (initializers.isEmpty()) {
-        return Nullness.UNKNOWN;
+        return defaultNullability;
       }
 
       boolean hasUnknowns = false;
@@ -204,13 +212,13 @@ public class DfaVariableValue extends DfaValue {
         if (DfaPsiUtil.isInitializedNotNull((PsiField)var)) {
           return Nullness.NOT_NULL;
         }
-        return Nullness.UNKNOWN;
+        return defaultNullability;
       }
       
       return Nullness.NOT_NULL;
     }
 
-    return Nullness.UNKNOWN;
+    return defaultNullability;
   }
 
   public boolean isFlushableByCalls() {

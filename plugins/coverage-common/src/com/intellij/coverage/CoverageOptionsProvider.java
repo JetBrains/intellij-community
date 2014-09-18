@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 @State(
   name = "CoverageOptionsProvider",
   storages = {
-    @Storage( file = StoragePathMacros.WORKSPACE_FILE)
+    @Storage(file = StoragePathMacros.WORKSPACE_FILE)
   }
 )
 public class CoverageOptionsProvider implements PersistentStateComponent<CoverageOptionsProvider.State> {

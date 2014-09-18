@@ -255,19 +255,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
 
     @Override
     protected void detachProcessImpl() {
-      myTask.cancel(new ExternalSystemTaskNotificationListenerAdapter() {
-
-        private boolean myResetGreeting = true;
-
-        @Override
-        public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-          if (myResetGreeting) {
-            notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
-            myResetGreeting = false;
-          }
-          notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
-        }
-      });
+      myTask.cancel();
       notifyProcessDetached();
     }
 

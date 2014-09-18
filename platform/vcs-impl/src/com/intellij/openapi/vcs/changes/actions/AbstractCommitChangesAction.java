@@ -27,12 +27,15 @@ import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public abstract class AbstractCommitChangesAction extends AbstractCommonCheckinAction {
-  protected FilePath[] getRoots(VcsContext context) {
+  @Override
+  @NotNull
+  protected FilePath[] getRoots(@NotNull VcsContext context) {
     return getAllContentRoots(context);
   }
 
@@ -43,6 +46,7 @@ public abstract class AbstractCommitChangesAction extends AbstractCommonCheckinA
     return manager.hasAnyMappings();
   }
 
+  @Override
   protected boolean filterRootsBeforeAction() {
     return false;
   }

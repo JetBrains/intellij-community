@@ -585,6 +585,16 @@ class Test {
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
   }
 
+  public void "test don't inline array methods"() {
+    configure """class Foo {
+ int arrayMethod(int param)[] {
+   return new int[];
+ }
+
+}"""
+    assert myFixture.editor.foldingModel.allFoldRegions.size() == 1
+  }
+
   public void "test don't inline very long one-line methods"() {
     configure """class Foo {
  int someVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable;

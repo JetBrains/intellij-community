@@ -37,17 +37,16 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -66,17 +65,18 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   @Override
   public PsiClass getOriginalClass(PsiClass psiClass) {
-    PsiFile psiFile = psiClass.getContainingFile();
+    PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
+    if (cls != null) return (PsiClass)cls;
 
-    VirtualFile vFile = psiFile.getVirtualFile();
+    VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
     final Project project = psiClass.getProject();
     final ProjectFileIndex idx = ProjectRootManager.getInstance(project).getFileIndex();
-
     if (vFile == null || !idx.isInLibrarySource(vFile)) return psiClass;
-    final Set<OrderEntry> orderEntries = new THashSet<OrderEntry>(idx.getOrderEntriesForFile(vFile));
-    final String fqn = psiClass.getQualifiedName();
+
+    String fqn = psiClass.getQualifiedName();
     if (fqn == null) return psiClass;
 
+    final Set<OrderEntry> orderEntries = new THashSet<OrderEntry>(idx.getOrderEntriesForFile(vFile));
     PsiClass original = JavaPsiFacade.getInstance(project).findClass(fqn, new GlobalSearchScope(project) {
       @Override
       public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
@@ -112,26 +112,23 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public PsiElement getClsFileNavigationElement(PsiJavaFile clsFile) {
-    String packageName = clsFile.getPackageName();
     PsiClass[] classes = clsFile.getClasses();
     if (classes.length == 0) return clsFile;
-    String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
-    String relativeFilePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
 
-    final VirtualFile vFile = clsFile.getContainingFile().getVirtualFile();
-    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
-    final Set<VirtualFile> sourceRoots = ContainerUtil.newLinkedHashSet();
-    for (OrderEntry orderEntry : projectFileIndex.getOrderEntriesForFile(vFile)) {
-      if (orderEntry instanceof LibraryOrSdkOrderEntry) {
-        Collections.addAll(sourceRoots, orderEntry.getFiles(OrderRootType.SOURCES));
-      }
-    }
-    for (VirtualFile root : sourceRoots) {
-      VirtualFile source = root.findFileByRelativePath(relativeFilePath);
-      if (source != null) {
-        PsiFile psiSource = clsFile.getManager().findFile(source);
-        if (psiSource instanceof PsiClassOwner) {
-          return psiSource;
+    String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
+    String packageName = clsFile.getPackageName();
+    String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
+
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
+    for (OrderEntry orderEntry : index.getOrderEntriesForFile(clsFile.getContainingFile().getVirtualFile())) {
+      if (!(orderEntry instanceof LibraryOrSdkOrderEntry)) continue;
+      for (VirtualFile root : orderEntry.getFiles(OrderRootType.SOURCES)) {
+        VirtualFile source = root.findFileByRelativePath(relativePath);
+        if (source != null) {
+          PsiFile psiSource = clsFile.getManager().findFile(source);
+          if (psiSource instanceof PsiClassOwner) {
+            return psiSource;
+          }
         }
       }
     }

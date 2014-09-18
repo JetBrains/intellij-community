@@ -121,7 +121,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
       @Override
       public void actionPerformed(ActionEvent e) {
         List<String> macros = new SmartList<String>(PathMacros.getInstance().getUserMacroNames());
-        if (myModuleContext != null) {
+        if (myModuleContext != null || myHasModuleMacro) {
           macros.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
         }
 

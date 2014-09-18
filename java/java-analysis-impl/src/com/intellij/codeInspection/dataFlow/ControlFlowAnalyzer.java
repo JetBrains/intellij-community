@@ -1469,6 +1469,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return AnnotationUtil.findAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
   }
 
+  public static boolean isPure(PsiMethod method) {
+    PsiAnnotation anno = findContractAnnotation(method);
+    return anno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"));
+  }
+
   @Override public void visitNewExpression(PsiNewExpression expression) {
     startElement(expression);
 

@@ -679,7 +679,9 @@
       <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="AllIcons.Debugger.MuteBreakpoints"/>
+      <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
       <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
+      <action id="XDebugger.AutoTooltipOnSelection" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowOnSelectionAction"/>
       <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="AllIcons.ObjectBrowser.Sorted"/>
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
@@ -842,24 +844,22 @@
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
     </action>
 
-    <action id="Arrangement.Rule.Add" class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
-    <action id="Arrangement.Rule.Section.Add" class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
-    <action id="Arrangement.Rule.Remove" class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
+    <action id="Arrangement.Rule.Add"
+            class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
+    <action id="Arrangement.Rule.Section.Add"
+            class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
+    <action id="Arrangement.Rule.Remove"
+            class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
     <action id="Arrangement.Rule.Edit"
-            class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction"
-            icon="AllIcons.Actions.Edit"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction"/>
     <action id="Arrangement.Rule.Match.Condition.Move.Up"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction"
-            icon="AllIcons.ToolbarDecorator.MoveUp"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction"/>
     <action id="Arrangement.Rule.Match.Condition.Move.Down"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction"
-            icon="AllIcons.ToolbarDecorator.MoveDown"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction"/>
     <action id="Arrangement.Rule.Group.Condition.Move.Up"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleUpAction"
-            icon="AllIcons.ToolbarDecorator.MoveUp"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleUpAction"/>
     <action id="Arrangement.Rule.Group.Condition.Move.Down"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"
-            icon="AllIcons.ToolbarDecorator.MoveDown"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"/>
 
     <group id="Arrangement.Rule.Match.Control.Context.Menu">
       <reference ref="Arrangement.Rule.Add"/>

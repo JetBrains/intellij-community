@@ -1547,6 +1547,9 @@
                      key="inner.class.may.be.static.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.memory.issues" enabledByDefault="false" level="WARNING" runForWholeFile="true"
                      implementationClass="com.siyeh.ig.memory.InnerClassMayBeStaticInspection"/>
+    <localInspection language="JAVA" shortName="ReturnOfInnerClass" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="return.of.inner.class.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.memory.issues"
+                     implementationClass="com.siyeh.ig.memory.ReturnOfInnerClassInspection" enabledByDefault="false" level="WARNING"/>
     <localInspection language="JAVA" shortName="StaticCollection" bundle="com.siyeh.InspectionGadgetsBundle" key="static.collection.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.memory.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.memory.StaticCollectionInspection"/>

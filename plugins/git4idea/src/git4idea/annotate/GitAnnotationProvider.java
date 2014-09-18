@@ -101,7 +101,6 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       command.run();
     }
     if (exception[0] != null) {
-      LOG.warn(exception[0]);
       throw new VcsException("Failed to annotate: " + exception[0], exception[0]);
     }
     return annotation[0];

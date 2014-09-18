@@ -31,8 +31,21 @@ public abstract class AbstractCommand<T> {
   public static final int SMART_STEP_INTO = 128;
   public static final int EXIT = 129;
   public static final int CALL_SIGNATURE_TRACE = 130;
+
+  public static final int CMD_SET_PY_EXCEPTION = 131;
+  public static final int CMD_GET_FILE_CONTENTS = 132;
+  public static final int CMD_SET_PROPERTY_TRACE = 133;
+  public static final int CMD_EVALUATE_CONSOLE_EXPRESSION = 134;
   public static final int CMD_RUN_CUSTOM_OPERATION = 135;
+  public static final int CMD_GET_BREAKPOINT_EXCEPTION = 136;
+  public static final int CMD_STEP_CAUGHT_EXCEPTION = 137;
+  public static final int CMD_SEND_CURR_EXCEPTION_TRACE = 138;
+  public static final int CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED = 139;
+  public static final int CMD_IGNORE_THROWN_EXCEPTION_AT = 140;
+  public static final int CMD_ENABLE_DONT_TRACE = 141;
+
   public static final int SHOW_CONSOLE = 142;
+
   public static final int ERROR = 901;
 
   public static final int VERSION = 501;

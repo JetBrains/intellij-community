@@ -27,7 +27,7 @@ import java.awt.*;
 public class CheckRemoteStatusCheckinHandlerFactory extends CheckinHandlerFactory {
   @NotNull
   @Override
-  public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new MyCheckinHandler(panel);
   }
 
@@ -45,19 +45,23 @@ public class CheckRemoteStatusCheckinHandlerFactory extends CheckinHandlerFactor
       final JCheckBox checkUpToDate = new JCheckBox(VcsBundle.message("checkbox.checkin.options.check.files.up.to.date"));
 
       return new RefreshableOnComponent() {
+        @Override
         public JComponent getComponent() {
           final JPanel panel = new JPanel(new BorderLayout());
           panel.add(checkUpToDate, BorderLayout.WEST);
           return panel;
         }
 
+        @Override
         public void refresh() {
         }
 
+        @Override
         public void saveState() {
           myVcsConfiguration.CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT = checkUpToDate.isSelected();
         }
 
+        @Override
         public void restoreState() {
           checkUpToDate.setSelected(myVcsConfiguration.CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT);
         }

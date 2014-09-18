@@ -97,7 +97,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     final RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
     if (shouldAddDefaultActions) {
-      addDefaultActions(contentBuilder);
+      addDefaultActions(contentBuilder, executionResult);
     }
     return contentBuilder.showRunContent(env.getContentToReuse());
   }
@@ -110,8 +110,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     return AnAction.EMPTY_ARRAY;
   }
 
-  protected static void addDefaultActions(final RunContentBuilder contentBuilder) {
-    final ExecutionResult executionResult = contentBuilder.getExecutionResult();
+  private static void addDefaultActions(@NotNull RunContentBuilder contentBuilder, @NotNull ExecutionResult executionResult) {
     final ExecutionConsole executionConsole = executionResult.getExecutionConsole();
     final JComponent consoleComponent = executionConsole != null ? executionConsole.getComponent() : null;
     final ControlBreakAction controlBreakAction = new ControlBreakAction(executionResult.getProcessHandler());
@@ -130,7 +129,6 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     contentBuilder.addAction(controlBreakAction);
     contentBuilder.addAction(new SoftExitAction(executionResult.getProcessHandler()));
   }
-
 
   private abstract static class LauncherBasedAction extends AnAction {
     protected final ProcessHandler myProcessHandler;

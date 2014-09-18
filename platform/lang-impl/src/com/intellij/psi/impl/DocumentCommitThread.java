@@ -16,6 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
@@ -51,6 +52,7 @@ import java.util.List;
 
 public class DocumentCommitThread extends DocumentCommitProcessor implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
+  private static final String NAME = "Document commit thread";
 
   private final Queue<CommitTask> documentsToCommit = new Queue<CommitTask>(10);
   private final List<CommitTask> documentsToApplyInEDT = new ArrayList<CommitTask>(10);  // guarded by documentsToCommit
@@ -59,31 +61,48 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   private CommitTask currentTask; // guarded by documentsToCommit
   private volatile boolean threadFinished;
   private volatile boolean myEnabled; // true if we can do commits. set to false temporarily during the write action.
+  private int runningWriteActions; // accessed in EDT only
 
   public static DocumentCommitThread getInstance() {
     return ServiceManager.getService(DocumentCommitThread.class);
   }
-
   public DocumentCommitThread(final ApplicationEx application) {
     myApplication = application;
     // install listener in EDT to avoid missing events in case we are inside write action right now
     application.invokeLater(new Runnable() {
       @Override
       public void run() {
+        assert runningWriteActions == 0;
+        if (application.isDisposed()) return;
+        assert !application.isWriteAccessAllowed();
         application.addApplicationListener(new ApplicationAdapter() {
-          private int runningWriteActions;
-
           @Override
           public void beforeWriteActionStart(Object action) {
-            if (runningWriteActions++ == 0) {
+            int writeActionsBefore = runningWriteActions++;
+            if (writeActionsBefore == 0) {
               disable("Write action started: " + action);
+            }
+            else {
+              log("before write action: " + action + "; " + writeActionsBefore + " write actions already running", null, false);
             }
           }
 
           @Override
           public void writeActionFinished(Object action) {
-            if (--runningWriteActions == 0) {
+            // crazy things happen when running tests, like starting write action in one thread but firing its end in the other
+            int writeActionsAfter = runningWriteActions = Math.max(0,runningWriteActions-1);
+            if (writeActionsAfter == 0) {
               enable("Write action finished: " + action);
+            }
+            else {
+              log("after write action: " + action + "; " + writeActionsAfter + " write actions still running", null, false);
+              if (writeActionsAfter < 0) {
+                System.err.println("mismatched listeners: " + writeActionsAfter + ";\n==== log==="+log+"\n====end log==="+
+                                   ";\n=======threaddump====\n" +
+                                   ThreadDumper.dumpThreadsToString()+"\n=====END threaddump=======");
+                clearLog();
+                assert false;
+              }
             }
           }
         }, DocumentCommitThread.this);
@@ -92,7 +111,8 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
     });
     log("Starting thread", null, false);
-    new Thread(this, "Document commit thread").start();
+    Thread thread = new Thread(this, NAME);
+    thread.start();
   }
 
   @Override
@@ -169,18 +189,20 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     }
   }
 
-  private final StringBuilder log = new StringBuilder();
+  final StringBuilder log = new StringBuilder();
 
   @Override
   public void log(@NonNls String msg, @Nullable CommitTask task, boolean synchronously, @NonNls Object... args) {
     if (true) return;
 
-    String indent = new SimpleDateFormat("mm:ss:SSSS").format(new Date()) +
-      (SwingUtilities.isEventDispatchThread() ? "-    " : Thread.currentThread().getName().equals("Document commit thread") ? "-  >" : "-");
+    String indent = new SimpleDateFormat("hh:mm:ss:SSSS").format(new Date()) +
+      (SwingUtilities.isEventDispatchThread() ?        "-(EDT) " :
+       Thread.currentThread().getName().equals(NAME) ? "-(DCT) " :
+                                                       "-      ");
     @NonNls
     String s = indent +
                msg + (synchronously ? " (sync)" : "") +
-               (task == null ? "" : "; task: " + task+" ("+System.identityHashCode(task)+")");
+               (task == null ? " - " : "; task: " + task+" ("+System.identityHashCode(task)+")");
 
     for (Object arg : args) {
       if (!StringUtil.isEmpty(String.valueOf(arg))) {
@@ -195,11 +217,13 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
     }
 
-    System.err.println(s);
+//    System.err.println(s);
 
-    log.append(s).append("\n");
-    if (log.length() > 1000000) {
-      log.delete(0, 1000000);
+    synchronized (log) {
+      log.append(s).append("\n");
+      if (log.length() > 100000) {
+        log.delete(0, log.length()-50000);
+      }
     }
   }
 
@@ -219,8 +243,14 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   @TestOnly
   public void clearQueue() {
     cancelAll();
-    log.setLength(0);
+    clearLog();
     wakeUpQueue();
+  }
+
+  private void clearLog() {
+    synchronized (log) {
+      log.setLength(0);
+    }
   }
 
   private void markRemovedCurrentTask(@Nullable CommitTask newTask) {
@@ -285,7 +315,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       ProgressIndicator indicator;
       synchronized (documentsToCommit) {
         if (!myEnabled || documentsToCommit.isEmpty()) {
-          documentsToCommit.wait();
+          documentsToCommit.wait(1000);
           return;
         }
         task = documentsToCommit.pullFirst();
@@ -553,5 +583,10 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   @TestOnly
   boolean isEnabled() {
     return myEnabled;
+  }
+
+  @Override
+  public String toString() {
+    return "Document commit thread; application: "+myApplication+"; isDisposed: "+isDisposed+"; threadFinished: "+threadFinished+"; myEnabled: "+myEnabled+"; runningWriteActions: "+runningWriteActions;
   }
 }

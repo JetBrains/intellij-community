@@ -213,7 +213,10 @@ def getVariable(thread_id, frame_id, scope, attrs):
             var = frame.f_globals
             del attrList[0]  # globals are special, and they get a single dummy unused attribute
         else:
-            var = frame.f_locals
+            # for a frame access both locals and globals as Python does
+            var = {}
+            var.update(frame.f_globals)
+            var.update(frame.f_locals)
 
         for k in attrList:
             _type, _typeName, resolver = getType(var)

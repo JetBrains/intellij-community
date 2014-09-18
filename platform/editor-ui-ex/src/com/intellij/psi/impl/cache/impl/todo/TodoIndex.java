@@ -147,10 +147,6 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
       DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = TodoIndexers.INSTANCE.forFileType(fileType);
       if (indexer == null) continue;
 
-      if (!(indexer instanceof VersionedTodoIndexer)) {
-        int a = 1;
-      }
-
       int versionFromIndexer = indexer instanceof VersionedTodoIndexer ? (((VersionedTodoIndexer)indexer).getVersion()) : 0xFF;
       version = version * 31 + (versionFromIndexer ^ indexer.getClass().getName().hashCode());
     }

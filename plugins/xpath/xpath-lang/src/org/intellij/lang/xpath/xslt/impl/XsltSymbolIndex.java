@@ -49,32 +49,16 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
     @NonNls
     public static final ID<String, Kind> NAME = ID.create("XsltSymbolIndex");
 
-    enum Kind {
-        PARAM(XsltParameter.class), VARIABLE(XsltVariable.class), TEMPLATE(XsltTemplate.class), ANYTHING(null);
+    @SuppressWarnings({ "UnusedDeclaration" })
+    public static Collection<String> getSymbolNames(Project project) {
+        return FileBasedIndex.getInstance().getAllKeys(NAME, project);
+    }
 
-        final Class<? extends XsltElement> myClazz;
-
-        Kind(Class<? extends XsltElement> clazz) {
-            myClazz = clazz;
-        }
-
-        @Nullable
-        public XsltElement wrap(XmlTag tag) {
-            final Class<? extends XsltElement> clazz;
-            if (myClazz != null) {
-                if (!name().toLowerCase().equals(tag.getLocalName())) {
-                    return null;
-                }
-                clazz = myClazz;
-            } else {
-                try {
-                    clazz = valueOf(tag.getLocalName().toUpperCase()).myClazz;
-                } catch (IllegalArgumentException e) {
-                    return null;
-                }
-            }
-            return XsltElementFactory.getInstance().wrapElement(tag, clazz);
-        }
+    public static NavigationItem[] getSymbolsByName(final String name, Project project, boolean includeNonProjectItems) {
+        final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+        final SymbolCollector collector = new SymbolCollector(name, project, scope);
+        FileBasedIndex.getInstance().processValues(NAME, name, null, collector, scope);
+        return collector.getResult();
     }
 
     @Override
@@ -165,16 +149,32 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         return 0;
     }
 
-    @SuppressWarnings({ "UnusedDeclaration" })
-    public static Collection<String> getSymbolNames(Project project) {
-        return FileBasedIndex.getInstance().getAllKeys(NAME, project);
-    }
+    enum Kind {
+        PARAM(XsltParameter.class), VARIABLE(XsltVariable.class), TEMPLATE(XsltTemplate.class), ANYTHING(null);
 
-    public static NavigationItem[] getSymbolsByName(final String name, Project project, boolean includeNonProjectItems) {
-        final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-        final SymbolCollector collector = new SymbolCollector(name, project, scope);
-        FileBasedIndex.getInstance().processValues(NAME, name, null, collector, scope);
-        return collector.getResult();
+        final Class<? extends XsltElement> myClazz;
+
+        Kind(Class<? extends XsltElement> clazz) {
+            myClazz = clazz;
+        }
+
+        @Nullable
+        public XsltElement wrap(XmlTag tag) {
+            final Class<? extends XsltElement> clazz;
+            if (myClazz != null) {
+                if (!name().toLowerCase().equals(tag.getLocalName())) {
+                    return null;
+                }
+                clazz = myClazz;
+            } else {
+                try {
+                    clazz = valueOf(tag.getLocalName().toUpperCase()).myClazz;
+                } catch (IllegalArgumentException e) {
+                    return null;
+                }
+            }
+            return XsltElementFactory.getInstance().wrapElement(tag, clazz);
+        }
     }
 
     private static class MyAttributeHandler extends NanoXmlUtil.IXMLBuilderAdapter {
@@ -213,12 +213,13 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         public boolean process(VirtualFile file, Kind kind) {
             if (myScope.contains(file)) {
                 final PsiFile psiFile = myMgr.findFile(file);
-                if (XsltSupport.isXsltFile(psiFile)) {
+                if (psiFile != null && XsltSupport.isXsltFile(psiFile)) {
                     final XmlTag[] tags;
                     try {
-                        final XmlTag root = ((XmlFile)psiFile).getDocument().getRootTag();
+                        final XmlTag root = ((XmlFile)psiFile).getRootTag();
+                        assert root != null;
                         if (kind == Kind.ANYTHING) {
-                            final XmlTag[] v = root.findSubTags("variable", XsltSupport.XSLT_NS);
+                          final XmlTag[] v = root.findSubTags("variable", XsltSupport.XSLT_NS);
                             final XmlTag[] p = root.findSubTags("param", XsltSupport.XSLT_NS);
                             final XmlTag[] t = root.findSubTags("template", XsltSupport.XSLT_NS);
                             tags = ArrayUtil.mergeArrays(ArrayUtil.mergeArrays(v, p), t);

@@ -170,6 +170,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         throw new UnsupportedOperationException("Method expandMacros not implemented in " + getClass());
       }
 
+      @NotNull
+      @Override
+      public String collapseMacros(@NotNull String path) {
+        throw new UnsupportedOperationException("Method collapseMacros not implemented in " + getClass());
+      }
+
       @Override
       @Nullable
       public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation)

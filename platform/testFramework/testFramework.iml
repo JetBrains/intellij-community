@@ -20,7 +20,7 @@
     <orderEntry type="library" exported="" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="java-runtime" exported="" />
     <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="module" module-name="platform-resources" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="dom-impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="relaxng" exported="" scope="RUNTIME" />

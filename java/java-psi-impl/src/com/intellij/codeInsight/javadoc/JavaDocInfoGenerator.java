@@ -795,8 +795,7 @@ public class JavaDocInfoGenerator {
   private static void appendLinkOrText(StringBuilder buffer,
                                        PsiAnnotationMemberValue memberValue,
                                        boolean generateLink) {
-    boolean linkGenerated = !generateLink;
-    if (!linkGenerated && memberValue instanceof PsiQualifiedReferenceElement) {
+    if (generateLink && memberValue instanceof PsiQualifiedReferenceElement) {
       String text = ((PsiQualifiedReferenceElement)memberValue).getCanonicalText();
       PsiElement resolve = ((PsiQualifiedReferenceElement)memberValue).resolve();
 
@@ -812,13 +811,11 @@ public class JavaDocInfoGenerator {
           if (aClass != null) text = aClass.getQualifiedName() + '#' + field.getName();
         }
         generateLink(buffer, text, aClass != null? aClass.getName() + '.' + field.getName():null, memberValue, false);
-        linkGenerated = true;
+        return;
       }
     }
 
-    if (!linkGenerated) {
-      buffer.append(XmlStringUtil.escapeString(memberValue.getText()));
-    }
+    buffer.append(XmlStringUtil.escapeString(memberValue.getText()));
   }
 
   public static boolean isDocumentedAnnotationType(@Nullable PsiElement annotationType) {

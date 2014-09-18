@@ -413,7 +413,8 @@ public class PlatformTestUtil {
     for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
       total += time[i];
     }
-    return total/(n / part);
+    int middlePartLength = n / part;
+    return middlePartLength == 0 ? 0 : total / middlePartLength;
   }
 
   public static boolean canRunTest(@NotNull Class testCaseClass) {

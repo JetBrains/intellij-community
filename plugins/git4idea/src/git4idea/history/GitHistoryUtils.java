@@ -39,14 +39,13 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
-import git4idea.config.GitVersionSpecialty;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
@@ -873,7 +872,7 @@ public class GitHistoryUtils {
       h.addParameters("--decorate=full");
     }
     if (withChanges) {
-      h.addParameters("-M", "--name-status");
+      h.addParameters("-M", "--name-status", "-c");
     }
     h.endOptions();
 
@@ -1151,40 +1150,6 @@ public class GitHistoryUtils {
     for (GitLogRecord record : parser.parse(output)) {
       final GitHeavyCommit gitCommit = createCommit(project, refs, root, record);
       rc.add(gitCommit);
-    }
-    return rc;
-  }
-
-  @NotNull
-  public static List<GitCommit> commitsDetails(@NotNull Project project, @NotNull VirtualFile root,
-                                               @NotNull final Collection<String> hashes) throws VcsException {
-    List<String> params = new ArrayList<String>(hashes);
-    GitVcs vcs = GitVcs.getInstance(project);
-    String noWalk = vcs != null && GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
-    params.add(0, noWalk);
-    return getAllDetails(project, root, params);
-  }
-
-  @NotNull
-  public static List<GitCommit> getAllDetails(@NotNull Project project, @NotNull VirtualFile root,
-                                              @NotNull List<String> parameters) throws VcsException {
-    VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return Collections.emptyList();
-    }
-
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
-                                           HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-                                           COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setSilent(true);
-    h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(parameters);
-
-    String output = h.run();
-    final List<GitCommit> rc = new ArrayList<GitCommit>();
-    for (GitLogRecord record : parser.parse(output)) {
-      rc.add(createCommit(project, root, record, factory));
     }
     return rc;
   }

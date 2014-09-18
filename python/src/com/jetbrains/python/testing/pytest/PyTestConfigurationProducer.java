@@ -31,7 +31,6 @@ import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -97,9 +96,9 @@ public class PyTestConfigurationProducer extends PythonTestConfigurationProducer
     if (pyFunction != null) {
       keywords = pyFunction.getName();
       if (pyClass != null) {
-        final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
+        final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
         try {
-          final PyPackage pytestPackage = packageManager.findInstalledPackage("pytest");
+          final PyPackage pytestPackage = packageManager.findPackage("pytest", false);
           if (pytestPackage != null && PackageVersionComparator.VERSION_COMPARATOR.compare(pytestPackage.getVersion(), "2.3.3") >= 0) {
             keywords = pyClass.getName() + " and " + keywords;
           }

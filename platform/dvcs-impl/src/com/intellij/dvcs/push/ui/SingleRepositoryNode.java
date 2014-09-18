@@ -18,11 +18,8 @@ package com.intellij.dvcs.push.ui;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
 
 public class SingleRepositoryNode extends RepositoryNode {
 
@@ -44,7 +41,9 @@ public class SingleRepositoryNode extends RepositoryNode {
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
     pushTargetPanel.render(renderer);
-    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(pushTargetPanel);
-    renderer.setBorder(new EmptyBorder(insets));
+
+    // hack to fix vertical size of the editor
+    renderer.setIcon(EmptyIcon.ICON_18);
+    renderer.setIconOnTheRight(true);
   }
 }

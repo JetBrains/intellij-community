@@ -37,61 +37,19 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
   private static final int EMBEDDED_LEXER_ON = 0x1 << BASE_STATE_SHIFT;
   private static final int EMBEDDED_LEXER_STATE_SHIFT = BASE_STATE_SHIFT + 1;
-
-  private Lexer embeddedLexer;
-  private Lexer styleLexer;
-  private Map<String, Lexer> scriptLexers = new HashMap<String, Lexer>();
-  protected Lexer elLexer;
-  private boolean hasNoEmbeddments;
-  private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
   private static final FileType ourInlineScriptFileType;
-
-
   static {
     // At the moment only JS.
     HtmlInlineScriptTokenTypesProvider provider =
       LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(Language.findLanguageByID("JavaScript"));
     ourInlineScriptFileType = provider != null ? provider.getFileType() : null;
   }
-
-  public class XmlEmbeddmentHandler implements TokenHandler {
-    @Override
-    public void handleElement(Lexer lexer) {
-      if (!hasSeenStyle() && !hasSeenScript() || hasNoEmbeddments) return;
-      final IElementType tokenType = lexer.getTokenType();
-
-      if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && hasSeenAttribute() ||
-          tokenType == XmlTokenType.XML_DATA_CHARACTERS && hasSeenTag() ||
-          tokenType == XmlTokenType.XML_COMMENT_CHARACTERS && hasSeenTag()
-        ) {
-        setEmbeddedLexer();
-
-        if (embeddedLexer != null) {
-          embeddedLexer.start(
-            getBufferSequence(),
-            HtmlHighlightingLexer.super.getTokenStart(),
-            skipToTheEndOfTheEmbeddment(),
-            embeddedLexer instanceof EmbedmentLexer ? ((EmbedmentLexer)embeddedLexer).getEmbeddedInitialState(tokenType) : 0
-          );
-
-          if (embeddedLexer.getTokenType() == null) {
-            // no content for embeddment
-            embeddedLexer = null;
-          }
-        }
-      }
-    }
-  }
-
-  public class ElEmbeddmentHandler implements TokenHandler {
-    @Override
-    public void handleElement(Lexer lexer) {
-      setEmbeddedLexer();
-      if (embeddedLexer != null) {
-        embeddedLexer.start(getBufferSequence(), HtmlHighlightingLexer.super.getTokenStart(), HtmlHighlightingLexer.super.getTokenEnd());
-      }
-    }
-  }
+  private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
+  protected Lexer elLexer;
+  private Lexer embeddedLexer;
+  private Lexer styleLexer;
+  private Map<String, Lexer> scriptLexers = new HashMap<String, Lexer>();
+  private boolean hasNoEmbeddments;
 
   public HtmlHighlightingLexer() {
     this(null);
@@ -131,9 +89,14 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     Lexer newLexer = null;
     if (hasSeenStyle()) {
       if (styleLexer == null) {
-        styleLexer = ourStyleFileType == null
-                     ? null
-                     : SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null).getHighlightingLexer();
+        if (ourStyleFileType == null) {
+          styleLexer = null;
+        }
+        else {
+          SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null);
+          LOG.assertTrue(highlighter != null, ourStyleFileType);
+          styleLexer = highlighter.getHighlightingLexer();
+        }
       }
 
       newLexer = styleLexer;
@@ -264,5 +227,44 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
   public void setHasNoEmbeddments(boolean hasNoEmbeddments) {
     this.hasNoEmbeddments = hasNoEmbeddments;
+  }
+
+  public class XmlEmbeddmentHandler implements TokenHandler {
+    @Override
+    public void handleElement(Lexer lexer) {
+      if (!hasSeenStyle() && !hasSeenScript() || hasNoEmbeddments) return;
+      final IElementType tokenType = lexer.getTokenType();
+
+      if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && hasSeenAttribute() ||
+          tokenType == XmlTokenType.XML_DATA_CHARACTERS && hasSeenTag() ||
+          tokenType == XmlTokenType.XML_COMMENT_CHARACTERS && hasSeenTag()
+        ) {
+        setEmbeddedLexer();
+
+        if (embeddedLexer != null) {
+          embeddedLexer.start(
+            getBufferSequence(),
+            HtmlHighlightingLexer.super.getTokenStart(),
+            skipToTheEndOfTheEmbeddment(),
+            embeddedLexer instanceof EmbedmentLexer ? ((EmbedmentLexer)embeddedLexer).getEmbeddedInitialState(tokenType) : 0
+          );
+
+          if (embeddedLexer.getTokenType() == null) {
+            // no content for embeddment
+            embeddedLexer = null;
+          }
+        }
+      }
+    }
+  }
+
+  public class ElEmbeddmentHandler implements TokenHandler {
+    @Override
+    public void handleElement(Lexer lexer) {
+      setEmbeddedLexer();
+      if (embeddedLexer != null) {
+        embeddedLexer.start(getBufferSequence(), HtmlHighlightingLexer.super.getTokenStart(), HtmlHighlightingLexer.super.getTokenEnd());
+      }
+    }
   }
 }

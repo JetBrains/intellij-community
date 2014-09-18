@@ -89,7 +89,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean SHOW_NAVIGATION_BAR = true;
   public boolean ALWAYS_SHOW_WINDOW_BUTTONS = false;
   public boolean CYCLE_SCROLLING = true;
-  public boolean SCROLL_TAB_LAYOUT_IN_EDITOR = false;
+  public boolean SCROLL_TAB_LAYOUT_IN_EDITOR = true;
   public boolean SHOW_CLOSE_BUTTON = true;
   public int EDITOR_TAB_PLACEMENT = 1;
   public boolean HIDE_KNOWN_EXTENSION_IN_TABS = false;

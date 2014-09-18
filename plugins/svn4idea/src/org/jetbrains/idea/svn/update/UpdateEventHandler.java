@@ -31,6 +31,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -69,10 +70,32 @@ public class UpdateEventHandler implements ProgressTracker {
     myExternalsCount = 1;
     myUrlToCheckForSwitch = new HashMap<File, SVNURL>();
     myFilesWaitingForRevision = ContainerUtil.newStack();
-    // It is more suitable to make this push while handling UPDATE_NONE event - for command line like "svn update <folder>" this event will
-    // be fired when update of <folder> is started. But it's not clear if this event won't be fired in other cases by SVNKit. So currently
-    // first push is made here. If further we want to support commands like "svn update <folder1> <folder2>" this logic should be revised.
+  }
+
+  /**
+   * Same UpdateEventHandler instance could be used to update several roots - for instance, when updating whole project that contains
+   * multiple working copies => so this method explicitly indicates when update of new root is started (to correctly collect updated
+   * files).
+   * <p/>
+   * Still UPDATE_NONE (which is currently fired by command line and by SVNKit for 1.6 and below working copies - and is just skipped by
+   * UpdateEventHandler) or UPDATE_STARTED (which is currently fired by SVNKit for 1.7 working copies) events should be considered for
+   * such purposes, especially if further we want to support commands like "svn update <folder1> <folder2>".
+   * <p/>
+   * TODO: Check if UPDATE_NONE is fired in some other cases by SVNKit.
+   * <p/>
+   * TODO: Currently for command line UPDATE_NONE event could be fired several times for the same folder - as "svn update" output is
+   * TODO: processed line by line, "Updating '.'" line (which results in firing UPDATE_NONE) is printed before auth request and then
+   * TODO: the command could be repeated with new credentials. This case should also be handled if we want to rely on UPDATE_NONE or
+   * TODO: UPDATE_STARTED event in some code paths.
+   */
+  public void startUpdate() {
     myFilesWaitingForRevision.push(ContainerUtil.<Pair<String, String>>newArrayList());
+  }
+
+  public void finishUpdate() {
+    while (!myFilesWaitingForRevision.isEmpty()) {
+      setRevisionForWaitingFiles(CommitInfo.EMPTY.getRevision());
+    }
   }
 
   public void addToSwitch(final File file, final SVNURL url) {

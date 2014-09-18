@@ -19,7 +19,6 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StrongConnectivityHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
@@ -463,9 +462,7 @@ public class Statement {
     }
 
     if (res.size() != stats.size()) {
-      DecompilerContext.getLogger().writeMessage("computing post reverse post order failed!", IFernflowerLogger.Severity.ERROR);
-
-      throw new RuntimeException("parsing failure!");
+      throw new RuntimeException("computing post reverse post order failed!");
     }
 
     return res;

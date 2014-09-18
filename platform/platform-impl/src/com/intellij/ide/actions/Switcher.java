@@ -166,11 +166,21 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   public static SwitcherPanel createAndShowSwitcher(Project project, String title, boolean pinned) {
+    return createAndShowSwitcher(project, title, pinned, null);
+  }
+  
+  public static SwitcherPanel createAndShowSwitcher(Project project, String title, boolean pinned, @Nullable final VirtualFile[] vFiles) {
     synchronized (Switcher.class) {
       if (SWITCHER != null) {
         SWITCHER.cancel();
       }
-      SWITCHER = new SwitcherPanel(project, title, pinned);
+      SWITCHER = new SwitcherPanel(project, title, pinned) {
+        @NotNull
+        @Override
+        protected VirtualFile[] getFiles(@NotNull Project project) {
+          return vFiles != null ? vFiles : super.getFiles(project);
+        }
+      };
       return SWITCHER;
     }
   }
@@ -327,7 +337,7 @@ public class Switcher extends AnAction implements DumbAware {
         if (isPinnedMode() && editors.size() > 1) {
           filesData.addAll(editors);
         }
-        final VirtualFile[] recentFiles = ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles());
+        final VirtualFile[] recentFiles = ArrayUtil.reverseArray(getFiles(project));
         final int maxFiles = Math.max(editors.size(), recentFiles.length);
         final int len = isPinnedMode() ? recentFiles.length : Math.min(toolWindows.getModel().getSize(), maxFiles);
         boolean firstRecentMarked = false;
@@ -555,6 +565,10 @@ public class Switcher extends AnAction implements DumbAware {
       myPopup.showInCenterOf(window);
     }
 
+    @NotNull
+    protected VirtualFile[] getFiles(@NotNull Project project) {
+      return EditorHistoryManager.getInstance(project).getFiles();
+    }
 
     private static Map<String, ToolWindow> createShortcuts(List<ToolWindow> windows) {
       final Map<String, ToolWindow> keymap = new HashMap<String, ToolWindow>(windows.size());
@@ -594,8 +608,10 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     public void keyReleased(KeyEvent e) {
-      if (e.getKeyCode() == CTRL_KEY && isAutoHide() || e.getKeyCode() == VK_ENTER) {
-        navigate(e.isShiftDown());
+      boolean ctrl = e.getKeyCode() == CTRL_KEY;
+      boolean enter = e.getKeyCode() == VK_ENTER;
+      if (ctrl && isAutoHide() || enter) {
+        navigate(e.isShiftDown() && enter);
       } 
       else if (e.getKeyCode() == VK_LEFT) {
         goLeft();

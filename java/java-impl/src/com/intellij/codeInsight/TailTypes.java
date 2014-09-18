@@ -28,6 +28,12 @@ public class TailTypes {
       return styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && editor.getDocument().getCharsSequence().charAt(tailOffset - 1) != '(';
     }
   };
+  public static final TailType RPARENTH = new RParenthTailType(){
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_PARENTHESES;
+    }
+  };
   public static final TailType IF_RPARENTH = new RParenthTailType(){
     @Override
     protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,6 @@ public class ScopeEditorPanel {
 
   private JLabel myCaretPositionLabel;
   private int myCaretPosition = 0;
-  private boolean myTextChanged = false;
   private JPanel myMatchingCountPanel;
   private JPanel myPositionPanel;
   private JLabel myRecursivelyIncluded;
@@ -187,7 +186,7 @@ public class ScopeEditorPanel {
   private void onTextChange() {
     if (!myIsInUpdate) {
       myUpdateAlarm.cancelAllRequests();
-      myTextChanged = true;
+      cancelCurrentProgress();
       final String text = myPatternField.getText();
       myCurrentScope = new InvalidPackageSet(text);
       try {
@@ -602,12 +601,12 @@ public class ScopeEditorPanel {
     ProgressManager.getInstance().runProcess(updateModel, progress);
   }
 
-  protected PanelProgressIndicator createProgressIndicator(final boolean requestFocus) {
+  private PanelProgressIndicator createProgressIndicator(final boolean requestFocus) {
     return new MyPanelProgressIndicator(requestFocus);
   }
 
   public void cancelCurrentProgress(){
-    if (myCurrentProgress != null && myCurrentProgress.isRunning()){
+    if (myCurrentProgress != null){
       myCurrentProgress.cancel();
     }
   }
@@ -748,12 +747,6 @@ public class ScopeEditorPanel {
         }
       });
       myRequestFocus = requestFocus; 
-      myTextChanged = false;
-    }
-
-    @Override
-    public boolean isCanceled() {
-      return super.isCanceled() || myTextChanged;
     }
 
     @Override

@@ -64,5 +64,9 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   }
 
   @NotNull
-  public abstract PushTargetPanel<Target> createTargetPanel(@NotNull Repo repository, @NotNull String defaultTargetName);
+  public abstract PushTargetPanel<Target> createTargetPanel(@NotNull Repo repository, @Nullable Target defaultTarget);
+
+  public boolean shouldRequestIncomingChangesForNotCheckedRepositories() {
+    return true;
+  }
 }

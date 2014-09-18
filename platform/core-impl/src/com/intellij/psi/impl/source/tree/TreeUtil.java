@@ -124,12 +124,16 @@ public class TreeUtil {
 
   @Nullable
   public static LeafElement findFirstLeaf(ASTNode element) {
-    if (element instanceof LeafElement) {
-      return (LeafElement)element;
+    return (LeafElement)findFirstLeaf(element, true);
+  }
+
+  public static ASTNode findFirstLeaf(ASTNode element, boolean expandChameleons) {
+    if (element instanceof LeafElement || !expandChameleons && isCollapsedChameleon(element)) {
+      return element;
     }
     else {
       for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        LeafElement leaf = findFirstLeaf(child);
+        ASTNode leaf = findFirstLeaf(child, expandChameleons);
         if (leaf != null) return leaf;
       }
       return null;
@@ -162,7 +166,11 @@ public class TreeUtil {
 
   @Nullable
   public static ASTNode findLastLeaf(ASTNode element) {
-    if (element instanceof LeafElement) {
+    return findLastLeaf(element, true);
+  }
+
+  public static ASTNode findLastLeaf(ASTNode element, boolean expandChameleons) {
+    if (element instanceof LeafElement || !expandChameleons && isCollapsedChameleon(element)) {
       return element;
     }
     for (ASTNode child = element.getLastChildNode(); child != null; child = child.getTreePrev()) {
@@ -387,6 +395,30 @@ public class TreeUtil {
       }
       start = start.getTreeParent();
     }
+  }
+
+  @Nullable
+  public static ASTNode nextLeaf(@Nullable ASTNode start, boolean expandChameleons) {
+    while (start != null) {
+      for (ASTNode each = start.getTreeNext(); each != null; each = each.getTreeNext()) {
+        ASTNode leaf = findFirstLeaf(each, expandChameleons);
+        if (leaf != null) return leaf;
+      }
+      start = start.getTreeParent();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static ASTNode prevLeaf(@Nullable ASTNode start, boolean expandChameleons) {
+    while (start != null) {
+      for (ASTNode each = start.getTreePrev(); each != null; each = each.getTreePrev()) {
+        ASTNode leaf = findLastLeaf(each, expandChameleons);
+        if (leaf != null) return leaf;
+      }
+      start = start.getTreeParent();
+    }
+    return null;
   }
 
   @Nullable

@@ -82,7 +82,7 @@ public class CCShowPreview extends DumbAwareAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            CreateCourseArchive.createUserFile(project, taskFilesCopy, taskDir.getVirtualFile(), taskDir.getVirtualFile(), entry);
+            CCCreateCourseArchive.createUserFile(project, taskFilesCopy, taskDir.getVirtualFile(), taskDir.getVirtualFile(), entry);
           }
         });
       }
@@ -98,7 +98,7 @@ public class CCShowPreview extends DumbAwareAction {
       for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
         taskWindow.drawHighlighter(editor, true);
       }
-      CreateCourseArchive.resetTaskFiles(taskFilesCopy);
+      CCCreateCourseArchive.resetTaskFiles(taskFilesCopy);
     }
   }
 }

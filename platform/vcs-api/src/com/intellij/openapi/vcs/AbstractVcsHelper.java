@@ -50,6 +50,7 @@ public abstract class AbstractVcsHelper {
     myProject = project;
   }
 
+  @NotNull
   public static AbstractVcsHelper getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, AbstractVcsHelper.class);
   }

@@ -34,7 +34,7 @@ import com.intellij.ui.content.ContentManager;
  */
 @State(
     name = "DependenciesAnalyzeManager",
-    storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)}
+    storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
 )
 public class DependenciesAnalyzeManager implements PersistentStateComponent<DependenciesAnalyzeManager.State> {
   private final Project myProject;

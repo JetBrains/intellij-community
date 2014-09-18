@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="89e0d"/>
-          <text value="&amp;Web Artifact to upload:"/>
+          <text value="&amp;Web or EAR Artifact to upload:"/>
         </properties>
       </component>
       <vspacer id="b1ee3">

@@ -1,0 +1,26 @@
+package a.a.a.a.e.f;
+
+import a.a.a.a.a.k;
+import a.a.a.a.c.c;
+import a.a.a.a.c.j;
+import a.a.a.a.e.bg;
+import a.a.a.a.e.f.b;
+import java.io.File;
+
+class i implements bg {
+   private final j a;
+   private final b b;
+
+   i(b var1, j var2) {
+      this.b = var1;
+      this.a = var2;
+   }
+
+   public void a(c var1, k var2, boolean var3) {
+      File var4 = this.a.b().a(var1);
+      b.a(this.b).add(var4);
+   }
+
+   public void a(a.a.a.a.c.b var1) {
+   }
+}

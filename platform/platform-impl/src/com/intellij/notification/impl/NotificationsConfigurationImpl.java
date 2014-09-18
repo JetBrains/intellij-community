@@ -36,7 +36,7 @@ import java.util.*;
  * @author spleaner
  */
 @State(name = "NotificationConfiguration",
-       storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/notifications.xml")})
+       storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/notifications.xml")})
 public class NotificationsConfigurationImpl extends NotificationsConfiguration implements ExportableApplicationComponent,
                                                                                           PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");

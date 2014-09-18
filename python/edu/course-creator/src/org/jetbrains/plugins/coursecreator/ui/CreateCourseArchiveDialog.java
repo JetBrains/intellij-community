@@ -4,16 +4,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.coursecreator.actions.CreateCourseArchive;
+import org.jetbrains.plugins.coursecreator.actions.CCCreateCourseArchive;
 
 import javax.swing.*;
 
 public class CreateCourseArchiveDialog extends DialogWrapper {
 
   private CreateCourseArchivePanel myPanel;
-  private CreateCourseArchive myAction;
+  private CCCreateCourseArchive myAction;
 
-  public CreateCourseArchiveDialog(@NotNull final  Project project, CreateCourseArchive action) {
+  public CreateCourseArchiveDialog(@NotNull final  Project project, CCCreateCourseArchive action) {
     super(project);
     setTitle("Create Course Archive");
     myPanel = new CreateCourseArchivePanel(project, this);

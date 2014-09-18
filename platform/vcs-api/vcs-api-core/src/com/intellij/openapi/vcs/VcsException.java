@@ -18,6 +18,8 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -40,7 +42,7 @@ public class VcsException extends Exception {
   }
 
   public VcsException(Throwable throwable, final boolean isWarning) {
-    this(throwable.getMessage() != null ? throwable.getMessage() : throwable.getLocalizedMessage(), throwable);
+    this(getMessage(throwable), throwable);
     this.isWarning = isWarning;
   }
 
@@ -87,5 +89,10 @@ public class VcsException extends Exception {
   @Override
   public String getMessage() {
     return StringUtil.join(myMessages, ", ");
+  }
+
+  @Nullable
+  public static String getMessage(@Nullable Throwable throwable) {
+    return throwable != null ? ObjectUtils.chooseNotNull(throwable.getMessage(), throwable.getLocalizedMessage()) : null;
   }
 }

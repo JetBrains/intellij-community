@@ -50,7 +50,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   private THashMap<File,List<BuildRootDescriptor>> myRootToDescriptors;
   private ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
   
-  public BuildRootIndexImpl(BuildTargetIndex targetIndex, JpsModel model, ModuleExcludeIndex index,
+  public BuildRootIndexImpl(BuildTargetRegistry targetRegistry, JpsModel model, ModuleExcludeIndex index,
                             BuildDataPaths dataPaths, final IgnoredFileIndex ignoredFileIndex) {
     myIgnoredFileIndex = ignoredFileIndex;
     myRootsByTarget = new HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>>();
@@ -58,7 +58,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
     myFileFilters = new ConcurrentHashMap<BuildRootDescriptor, FileFilter>(16, 0.75f, 1);
     final Iterable<AdditionalRootsProviderService> rootsProviders = JpsServiceManager.getInstance().getExtensions(AdditionalRootsProviderService.class);
     for (BuildTargetType<?> targetType : TargetTypeRegistry.getInstance().getTargetTypes()) {
-      for (BuildTarget<?> target : targetIndex.getAllTargets(targetType)) {
+      for (BuildTarget<?> target : targetRegistry.getAllTargets(targetType)) {
         addRoots(dataPaths, rootsProviders, target, model, index, ignoredFileIndex);
       }
     }

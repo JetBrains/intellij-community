@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.util.TraceableDisposable;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * @author cdr
  */
-public class DaemonProgressIndicator extends AbstractProgressIndicatorBase {
+public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
   private static boolean debug;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug ? new Throwable() : null);
 
@@ -44,9 +45,19 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase {
   }
 
   @Override
-  public void cancel() {
+  public final void cancel() {
     myTraceableDisposable.kill("Daemon Progress Canceled");
     super.cancel();
+  }
+
+  @Override
+  public final boolean isCanceled() {
+    return super.isCanceled();
+  }
+
+  @Override
+  public final void checkCanceled() {
+    super.checkCanceled();
   }
 
   public void cancel(@NotNull Throwable cause) {
@@ -74,5 +85,10 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase {
   @Override
   public final int hashCode() {
     return super.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + (debug ? "; "+myTraceableDisposable.getStackTrace()+"\n;" : "");
   }
 }

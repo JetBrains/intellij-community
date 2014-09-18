@@ -156,6 +156,21 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
   }
 
 
+  public void testOffsetsAtCallSite() throws Exception {
+    doTest("map.entrySet().stream().filter((a) -> (a.getKey()>0));",
+           "java.util.stream.Stream<Map.Entry<Integer,Integer>> result = new Test(map).invoke();",
+           "public class Test {\n" +
+           "        private Map<Integer, Integer> map;\n" +
+           "\n" +
+           "        public Test(Map<Integer, Integer> map) {\n" +
+           "            this.map = map;\n" +
+           "        }\n" +
+           "\n" +
+           "        public Stream<Map.Entry<Integer, Integer>> invoke() {\n" +
+           "            return map.entrySet().stream().filter((a) -> (a.getKey() > 0));\n" +
+           "        }\n" +
+           "    }");
+  }
 
   @Override
   protected Sdk getProjectJDK() {

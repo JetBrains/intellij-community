@@ -16,11 +16,10 @@
 package org.jetbrains.java.decompiler;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,9 +35,6 @@ import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,16 +43,14 @@ import java.util.Map;
 import java.util.jar.Manifest;
 
 public class IdeaDecompiler extends ClassFileDecompilers.Light {
-  private static final Logger LOG = Logger.getInstance(IdeaDecompiler.class);
-
-  private static final String BANNER =
+  public static final String BANNER =
     "//\n" +
     "// Source code recreated from a .class file by IntelliJ IDEA\n" +
     "// (powered by Fernflower decompiler)\n" +
     "//\n\n";
 
   private final IFernflowerLogger myLogger = new IdeaLogger();
-  private final HashMap<String, Object> myOptions = new HashMap<String, Object>();
+  private final Map<String, Object> myOptions = new HashMap<String, Object>();
 
   public IdeaDecompiler() {
     myOptions.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");
@@ -79,8 +73,8 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
 
   @NotNull
   @Override
-  public CharSequence getText(@NotNull VirtualFile file) {
-    if (!canHandle(file)) {
+  public CharSequence getText(@NotNull VirtualFile file) throws CannotDecompileException {
+    if ("package-info.class".equals(file.getName())) {
       return ClsFileImpl.decompile(file);
     }
 
@@ -105,47 +99,15 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       return BANNER + saver.myResult;
     }
     catch (Exception e) {
-      LOG.error(file.getUrl(), e);
-      return ClsFileImpl.decompile(file);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        AssertionError error = new AssertionError(file.getUrl());
+        error.initCause(e);
+        throw error;
+      }
+      else {
+        throw new CannotDecompileException(e);
+      }
     }
-  }
-
-  private static boolean canHandle(VirtualFile file) {
-    if ("package-info.class".equals(file.getName())) {
-      LOG.info("skipped: " + file.getUrl());
-      return false;
-    }
-
-    final Ref<Boolean> isGroovy = Ref.create(false);
-    try {
-      new ClassReader(file.contentsToByteArray()).accept(new ClassVisitor(Opcodes.ASM5) {
-        @Override
-        public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-          for (String anInterface : interfaces) {
-            if ("groovy/lang/GroovyObject".equals(anInterface)) {
-              isGroovy.set(true);
-              break;
-            }
-          }
-        }
-
-        @Override
-        public void visitSource(String source, String debug) {
-          if (source != null && source.endsWith(".groovy")) {
-            isGroovy.set(true);
-          }
-        }
-      }, ClassReader.SKIP_CODE);
-    }
-    catch (Exception e) {
-      throw new RuntimeException("corrupted file: " + file.getUrl(), e);
-    }
-    if (isGroovy.get()) {
-      LOG.info("skipped Groovy class: " + file.getUrl());
-      return false;
-    }
-
-    return true;
   }
 
   private static class MyBytecodeProvider implements IBytecodeProvider {

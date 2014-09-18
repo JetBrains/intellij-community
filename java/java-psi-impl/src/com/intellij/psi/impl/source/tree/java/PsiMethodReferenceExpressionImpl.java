@@ -466,7 +466,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         }
 
         PsiClass qContainingClass = PsiMethodReferenceUtil.getQualifierResolveResult(this).getContainingClass();
-        if (qContainingClass != null && containingClass != null && InheritanceUtil.isInheritorOrSelf(qContainingClass, containingClass, true)) {
+        if (qContainingClass != null && containingClass != null &&
+            PsiMethodReferenceUtil.isReceiverType(left, containingClass, (PsiMethod)resolve)) {
           subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
           LOG.assertTrue(subst != null);
         }

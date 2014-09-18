@@ -73,23 +73,20 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA121315() { doTest(); }
   public void testIDEA118965comment() { doTest(); }
   public void testIDEA122074() { doTest(); }
-  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testIDEA122084() { doTest(); }
   public void testAdditionalConstraintDependsOnNonMentionedVars() { doTest(); }
   public void testIDEA122616() { doTest(); }
   public void testIDEA122700() { doTest(); }
   public void testIDEA122406() { doTest(); }
   public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
-  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testIDEA123731() { doTest(); }
   public void testIDEA123869() { doTest(); }
-  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testIDEA123848() { doTest(); }
   public void testOnlyLambdaAtTypeParameterPlace() { doTest(); }
   public void testLiftedIntersectionType() { doTest(); }
   public void testInferenceFromReturnStatements() { doTest(); }
   public void testDownUpThroughLambdaReturnStatements() { doTest(); }
-  @Bombed(day = 30, month = Calendar.SEPTEMBER)
+  @Bombed(day = 30, month = Calendar.OCTOBER)
   public void testIDEA124547() { doTest(); }
   public void testIDEA118362() { doTest(); }
   public void testIDEA126056() { doTest(); }
@@ -100,10 +97,13 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA124424() { doTest(); }
   public void testNestedLambdaExpressions1() { doTest(); }
   public void testNestedLambdaExpressionsNoFormalParams() { doTest(); }
-  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testNestedLambdaExpressionsNoFormalParams1() { doTest(); }
   public void testDeepNestedLambdaExpressionsNoFormalParams() { doTest(); }
   public void testNestedLambdaExpressionsNoFormalParamsStopAtStandalone() { doTest(); }
+
+  public void testNestedLambdaCheckedExceptionsConstraints() throws Exception {
+    doTest();
+  }
 
   public void testIDEA127596() throws Exception {
     doTest();
@@ -128,8 +128,16 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testIDEA126778() throws Exception {
+    doTest();
+  }
+
+  public void testEnsureGroundTypeToGetLambdaParameterType() throws Exception {
+    doTest();
+  }
+
+  @Bombed(month = Calendar.OCTOBER, day = 30)
+  public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
     doTest();
   }
 

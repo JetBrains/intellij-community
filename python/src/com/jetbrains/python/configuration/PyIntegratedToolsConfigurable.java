@@ -156,7 +156,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     return new FacetConfigurationQuickFix() {
       @Override
       public void run(JComponent place) {
-        final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, sdk, new PyPackageManagerImpl.UI.Listener() {
+        final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, sdk, new PyPackageManagerUI.Listener() {
           @Override
           public void started() {}
 

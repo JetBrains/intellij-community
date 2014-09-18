@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
@@ -162,7 +164,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public void updateRepositoryPlugins() {
     myPlugin2host.clear();
-    final JDOMExternalizableStringList pluginHosts = UpdateSettings.getInstance().myPluginHosts;
+    final List<String> pluginHosts = UpdateSettings.getInstance().getPluginHosts();
+    ContainerUtil.addIfNotNull(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl(), pluginHosts);
     for (String host : pluginHosts) {
       try {
         final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();

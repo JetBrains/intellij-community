@@ -626,12 +626,14 @@ public class ClassWriter {
         StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)mt.getAttributes().getWithKey("Signature");
         if (attr != null) {
           descriptor = GenericMain.parseMethodSignature(attr.getSignature());
-          int actualParams = md.params.length;
-          if (isEnum && init) actualParams -= 2;
-          if (actualParams != descriptor.params.size()) {
-            String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor();
-            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
-            descriptor = null;
+          if (descriptor != null) {
+            int actualParams = md.params.length;
+            if (isEnum && init) actualParams -= 2;
+            if (actualParams != descriptor.params.size()) {
+              String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor();
+              DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+              descriptor = null;
+            }
           }
         }
       }
