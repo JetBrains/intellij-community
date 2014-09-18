@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.testFramework.vcs.FileBasedTest;
 import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.svnkit.lowLevel.ApplicationLevelNumberConnectionsGuardImpl;
@@ -55,11 +56,7 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
     guard.setDelay(20);
     ((CachingSvnRepositoryPool) poolManager.getPool()).setConnectionTimeout(20);
     testBigFlow(poolManager, false);
-    try {
-      Thread.sleep(50);
-    } catch (InterruptedException e) {
-      //
-    }
+    TimeoutUtil.sleep(50);
     Assert.assertEquals(0, guard.getCurrentlyActiveConnections());
     final CachingSvnRepositoryPool pool = (CachingSvnRepositoryPool) poolManager.getPool();
     Map<String,CachingSvnRepositoryPool.RepoGroup> groups = pool.getGroups();
@@ -116,11 +113,7 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
     });
     thread.start();
 
-    try {
-      Thread.sleep(10);
-    } catch (InterruptedException e) {
-      //
-    }
+    TimeoutUtil.sleep(10);
     Assert.assertTrue(thread.isAlive());
     indicator.cancel();
     final Object obj = new Object();
@@ -184,12 +177,7 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
             return;
           }
           repository.fireConnectionOpened();
-          try {
-            Thread.sleep(random.nextInt(10));
-          }
-          catch (InterruptedException e) {
-            //
-          }
+          TimeoutUtil.sleep(random.nextInt(10));
           repository.fireConnectionClosed();
           synchronized (cnt) {
             -- cnt[0];

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -211,13 +212,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
             final String stdout = myListener.getOutput().getStdout();
             threadStates = ThreadDumpParser.parse(stdout);
             if (threadStates == null || threadStates.isEmpty()) {
-              try {
-                //noinspection BusyWait
-                Thread.sleep(50);
-              }
-              catch (InterruptedException ignored) {
-                //
-              }
+              TimeoutUtil.sleep(50);
               threadStates = null;
               continue;
             }

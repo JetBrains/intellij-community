@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -154,12 +155,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     //we need this to ensure that the file won't be treated as changed by user during compilation and therefore marked for recompilation
     long delta;
     while ((delta = time - System.currentTimeMillis()) > 0) {
-      try {
-        //noinspection BusyWait
-        Thread.sleep(delta);
-      }
-      catch (InterruptedException ignored) {
-      }
+      TimeoutUtil.sleep(delta);
     }
   }
 

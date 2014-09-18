@@ -41,6 +41,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
@@ -870,11 +871,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     @Override
     public void run() {
       if (myLoadingPanel.isLoading()) {
-        try {
-          Thread.sleep(mySleep);
-        }
-        catch (InterruptedException e) {//
-        }
+        TimeoutUtil.sleep(mySleep);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {

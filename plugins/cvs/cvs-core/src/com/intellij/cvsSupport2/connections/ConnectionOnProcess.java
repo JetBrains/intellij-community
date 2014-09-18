@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -68,23 +69,14 @@ public abstract class ConnectionOnProcess implements IConnection {
     try {
       if (myInputStream != null && !myContainsError) {
           myInputStream.close();
-          try {
-              Thread.sleep(10);
-          } catch (InterruptedException e) {
-              //ignore
-          }
+        TimeoutUtil.sleep(10);
       }
     }
     finally {
       try {
         if (myOutputStream != null && !myContainsError) {
             myOutputStream.close();
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                //ignore
-            }
-
+          TimeoutUtil.sleep(10);
         }
         try {
           if (myErrThread != null) {
@@ -214,11 +206,7 @@ public abstract class ConnectionOnProcess implements IConnection {
     public void run() {
       try {
         while (readAvailable()) {
-          try {
-            Thread.sleep(50L);
-          }
-          catch (InterruptedException ignore) {
-          }
+          TimeoutUtil.sleep(50L);
         }
       }
       catch (Exception e) {
