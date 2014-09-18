@@ -73,8 +73,8 @@ public class JsonLineMover extends LineMover {
 
   @NotNull
   private Pair<PsiElement, PsiElement> expandCommentsInRange(@NotNull Pair<PsiElement, PsiElement> range) {
-    final PsiElement upper = JsonPsiUtil.findOutermostLineComment(range.getFirst(), false);
-    final PsiElement lower = JsonPsiUtil.findOutermostLineComment(range.getSecond(), true);
+    final PsiElement upper = JsonPsiUtil.findFurthestSiblingOfSameType(range.getFirst(), false);
+    final PsiElement lower = JsonPsiUtil.findFurthestSiblingOfSameType(range.getSecond(), true);
     return Pair.create(upper, lower);
   }
 

@@ -2,11 +2,12 @@ package com.intellij.json.psi;
 
 import com.intellij.json.JsonElementTypes;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.json.JsonParserDefinition.JSON_COMMENTARIES;
 
 /**
  * Various helper methods for working with PSI of JSON language.
@@ -53,35 +54,36 @@ public class JsonPsiUtil {
   }
 
   /**
-   * Find largest region of successive line comments that includes given one.
-   * @param anchor anchor line comment from which range will be expanded
-   * @return specified range of comments or pair {@code (anchor, anchor)} if anchor is not line comment
+   * Find the furthest sibling element with the same type as given anchor.
+   * <p/>
+   * Ignore white spaces for any type of element except {@link com.intellij.json.JsonElementTypes#LINE_COMMENT}
+   * where non indentation white space (that has new line in the middle) will stop the search.
+   *
+   * @param anchor element to start from
+   * @param after  whether to scan through sibling elements forward or backward
+   * @return described element or anchor if search stops immediately
    */
   @NotNull
-  public static Couple<PsiElement> expandLineCommentsRange(@NotNull PsiElement anchor) {
-    return Couple.of(findOutermostLineComment(anchor, false), findOutermostLineComment(anchor, true));
-  }
-
-  /**
-   * Lowest or topmost successive line comment for given anchor element.
-   * @param anchor start element (most probably another line comment)
-   * @param below whether to scan through element forward or backward
-   * @return described {@link com.intellij.psi.PsiComment} element or {@code anchor} if it's not a line comment
-   */
-  @NotNull
-  public static PsiElement findOutermostLineComment(@NotNull PsiElement anchor, boolean below) {
+  public static PsiElement findFurthestSiblingOfSameType(@NotNull PsiElement anchor, boolean after) {
     ASTNode node = anchor.getNode();
-    ASTNode lastSeenComment = node;
+    // Compare by node type to distinguish between different types of comments
+    final IElementType expectedType = node.getElementType();
+    ASTNode lastSeen = node;
     while (node != null) {
       final IElementType elementType = node.getElementType();
-      if (elementType == JsonElementTypes.LINE_COMMENT) {
-        lastSeenComment = node;
+      if (elementType == expectedType) {
+        lastSeen = node;
       }
-      else if (elementType != TokenType.WHITE_SPACE || node.getText().indexOf('\n', 1) != -1) {
+      else if (elementType == TokenType.WHITE_SPACE) {
+        if (expectedType == JsonElementTypes.LINE_COMMENT && node.getText().indexOf('\n', 1) != -1) {
+          break;
+        }
+      }
+      else if (!JSON_COMMENTARIES.contains(elementType) || JSON_COMMENTARIES.contains(expectedType)) {
         break;
       }
-      node = below ? node.getTreeNext() : node.getTreePrev();
+      node = after ? node.getTreeNext() : node.getTreePrev();
     }
-    return lastSeenComment.getPsi();
+    return lastSeen.getPsi();
   }
 }
