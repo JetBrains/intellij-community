@@ -78,7 +78,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath,
                                                  @NotNull List<String> args,
                                                  boolean askForSudo,
-                                                 @Nullable String workingDir) throws PyExternalProcessException {
+                                                 boolean showProgress, @Nullable String workingDir) throws PyExternalProcessException {
     final String homePath = mySdk.getHomePath();
     if (homePath == null) {
       throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");

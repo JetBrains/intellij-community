@@ -140,7 +140,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final String dirName = extractHelper(name + ".tar.gz");
     try {
       final String fileName = dirName + name + File.separatorChar + "setup.py";
-      getPythonProcessResult(fileName, Collections.singletonList(INSTALL), true, dirName + name);
+      getPythonProcessResult(fileName, Collections.singletonList(INSTALL), true, true, dirName + name);
     }
     finally {
       clearCaches();
@@ -152,7 +152,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private String extractHelper(@NotNull String name) throws PyExternalProcessException {
     final String helperPath = getHelperPath(name);
     final ArrayList<String> args = Lists.newArrayList(UNTAR, helperPath);
-    final String result = getHelperResult(PACKAGING_TOOL, args, false, null);
+    final String result = getHelperResult(PACKAGING_TOOL, args, false, false, null);
     String dirName = FileUtil.toSystemDependentName(result.trim());
     if (!dirName.endsWith(File.separator)) {
       dirName += File.separator;
@@ -217,7 +217,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       args.addAll(req.toOptions());
     }
     try {
-      getHelperResult(PACKAGING_TOOL, args, !useUserSite, null);
+      getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, null);
     }
     finally {
       clearCaches();
@@ -239,7 +239,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         }
         args.add(pkg.getName());
       }
-      getHelperResult(PACKAGING_TOOL, args, !canModify, null);
+      getHelperResult(PACKAGING_TOOL, args, !canModify, true, null);
     }
     finally {
       clearCaches();
@@ -274,7 +274,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   public synchronized void loadPackages() throws PyExternalProcessException {
     try {
-      final String output = getHelperResult(PACKAGING_TOOL, Arrays.asList("list"), false, null);
+      final String output = getHelperResult(PACKAGING_TOOL, Arrays.asList("list"), false, false, null);
       myPackagesCache = parsePackagingToolOutput(output);
       Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
         @Override
@@ -331,7 +331,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         args.add("--system-site-packages");
       }
       args.add(destinationDir);
-      getHelperResult(PACKAGING_TOOL, args, false, null);
+      getHelperResult(PACKAGING_TOOL, args, false, true, null);
     }
     else {
       if (useGlobalSite) {
@@ -343,7 +343,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       final String dirName = extractHelper(name + ".tar.gz");
       try {
         final String fileName = dirName + name + File.separatorChar + "virtualenv.py";
-        getPythonProcessResult(fileName, Collections.singletonList(destinationDir), false, dirName + name);
+        getPythonProcessResult(fileName, Collections.singletonList(destinationDir), false, true, dirName + name);
       }
       finally {
         FileUtil.delete(new File(dirName));
@@ -417,12 +417,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @NotNull
   private String getHelperResult(@NotNull String helper, @NotNull List<String> args, boolean askForSudo,
-                                 @Nullable String parentDir) throws PyExternalProcessException {
+                                 boolean showProgress, @Nullable String parentDir) throws PyExternalProcessException {
     final String helperPath = getHelperPath(helper);
     if (helperPath == null) {
       throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, "Cannot find external tool");
     }
-    return getPythonProcessResult(helperPath, args, askForSudo, parentDir);
+    return getPythonProcessResult(helperPath, args, askForSudo, showProgress, parentDir);
   }
 
   @Nullable
@@ -432,8 +432,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @NotNull
   private String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
-                                        @Nullable String workingDir) throws PyExternalProcessException {
-    final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, workingDir);
+                                        boolean showProgress, @Nullable String workingDir) throws PyExternalProcessException {
+    final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, showProgress, workingDir);
     final int exitCode = output.getExitCode();
     if (output.isTimeout()) {
       throw new PyExternalProcessException(ERROR_TIMEOUT, path, args, "Timed out");
@@ -447,7 +447,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @NotNull
   protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
-                                                 @Nullable String workingDir) throws PyExternalProcessException {
+                                                 boolean showProgress, @Nullable String workingDir) throws PyExternalProcessException {
     final String homePath = mySdk.getHomePath();
     if (homePath == null) {
       throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");
@@ -476,7 +476,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       final CapturingProcessHandler handler = new CapturingProcessHandler(process);
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       final ProcessOutput result;
-      if (indicator != null) {
+      if (showProgress && indicator != null) {
         handler.addProcessListener(new ProcessAdapter() {
           @Override
           public void onTextAvailable(ProcessEvent event, Key outputType) {
