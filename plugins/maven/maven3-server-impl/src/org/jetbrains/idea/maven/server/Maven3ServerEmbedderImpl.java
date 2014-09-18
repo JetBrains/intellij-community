@@ -244,7 +244,10 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   private ArtifactRepository createLocalRepository() {
     try {
-      return getComponent(RepositorySystem.class).createLocalRepository(new File(myMavenSettings.getLocalRepository()));
+      final ArtifactRepository localRepository =
+        getComponent(RepositorySystem.class).createLocalRepository(new File(myMavenSettings.getLocalRepository()));
+      localRepository.setId("localIntelliJ");
+      return localRepository;
     }
     catch (InvalidRepositoryException e) {
       throw new RuntimeException(e);
