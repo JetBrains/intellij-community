@@ -167,6 +167,9 @@ public class JavaStackFrame extends XStackFrame {
       final StackFrameProxyImpl frame = getStackFrameProxy();
 
       final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
+      if (evaluationContext == null) {
+        return;
+      }
       if (!debuggerContext.isEvaluationPossible()) {
         node.setErrorMessage(MessageDescriptor.EVALUATION_NOT_POSSIBLE.getLabel());
         //myChildren.add(myNodeManager.createNode(MessageDescriptor.EVALUATION_NOT_POSSIBLE, evaluationContext));
