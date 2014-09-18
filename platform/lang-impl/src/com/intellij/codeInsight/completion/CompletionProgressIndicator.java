@@ -273,11 +273,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  @Override
-  public void cancel() {
-    super.cancel();
-  }
-
   private boolean isOutdated() {
     return CompletionServiceImpl.getCompletionPhase().indicator != this;
   }

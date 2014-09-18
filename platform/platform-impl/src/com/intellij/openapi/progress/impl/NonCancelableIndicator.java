@@ -13,91 +13,107 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.openapi.progress;
+package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.NonCancelableSection;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.StandardProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
-public class EmptyProgressIndicator implements StandardProgressIndicator {
-  private volatile boolean myIsRunning = false;
-  private volatile boolean myIsCanceled = false;
+class NonCancelableIndicator implements NonCancelableSection, StandardProgressIndicator {
+  protected final ProgressIndicator myOld;
 
-  @Override
-  public void start() {
-    myIsRunning = true;
-    myIsCanceled = false;
+  NonCancelableIndicator() {
+    myOld = ProgressManager.getInstance().getProgressIndicator();
   }
 
   @Override
-  public void stop() {
-    myIsRunning = false;
-  }
-
-  @Override
-  public boolean isRunning() {
-    return myIsRunning;
-  }
-
-  @Override
-  public final void cancel() {
-    myIsCanceled = true;
-    ProgressManager.canceled(this);
-  }
-
-  @Override
-  public final boolean isCanceled() {
-    return myIsCanceled;
-  }
-
-  @Override
-  public final void checkCanceled() {
-    if (myIsCanceled) {
-      throw new ProcessCanceledException();
+  public void done() {
+    ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
+    if (currentIndicator != this) {
+      throw new AssertionError("Trying do .done() NonCancelableSection, which is already done");
     }
   }
 
   @Override
+  public final void checkCanceled() {
+  }
+
+  @Override
+  public void start() {
+
+  }
+
+  @Override
+  public void stop() {
+
+  }
+
+  @Override
+  public boolean isRunning() {
+    return true;
+  }
+
+  @Override
+  public final void cancel() {
+
+  }
+
+  @Override
+  public final boolean isCanceled() {
+    return false;
+  }
+
+  @Override
   public void setText(String text) {
+
   }
 
   @Override
   public String getText() {
-    return "";
+    return null;
   }
 
   @Override
   public void setText2(String text) {
+
   }
 
   @Override
   public String getText2() {
-    return "";
+    return null;
   }
 
   @Override
   public double getFraction() {
-    return 1;
+    return 0;
   }
 
   @Override
   public void setFraction(double fraction) {
+
   }
 
   @Override
   public void pushState() {
+
   }
 
   @Override
   public void popState() {
+
   }
 
   @Override
   public void startNonCancelableSection() {
+
   }
 
   @Override
   public void finishNonCancelableSection() {
+
   }
 
   @Override
@@ -105,14 +121,15 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
     return false;
   }
 
-  @Override
   @NotNull
+  @Override
   public ModalityState getModalityState() {
     return ModalityState.NON_MODAL;
   }
 
   @Override
   public void setModalityProgress(ProgressIndicator modalityProgress) {
+
   }
 
   @Override
@@ -122,6 +139,7 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
 
   @Override
   public void setIndeterminate(boolean indeterminate) {
+
   }
 
   @Override

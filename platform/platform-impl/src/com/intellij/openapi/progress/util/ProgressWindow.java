@@ -46,7 +46,7 @@ import java.awt.event.*;
 import java.io.File;
 
 @SuppressWarnings({"NonStaticInitializer"})
-public class ProgressWindow extends BlockingProgressIndicator implements Disposable {
+public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWindow");
 
   /**
@@ -114,6 +114,15 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     Disposer.register(this, myDialog);
 
     myFocusTrackback.registerFocusComponent(myDialog.getPanel());
+    addStateDelegate(new AbstractProgressIndicatorExBase(){
+      @Override
+      public void cancel() {
+        super.cancel();
+        if (myDialog != null) {
+          myDialog.cancel();
+        }
+      }
+    });
   }
 
   @Override
@@ -287,14 +296,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
   private boolean isDialogShowing() {
     return myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing();
-  }
-
-  @Override
-  public void cancel() {
-    super.cancel();
-    if (myDialog != null) {
-      myDialog.cancel();
-    }
   }
 
   public void background() {

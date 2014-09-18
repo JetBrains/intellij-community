@@ -111,7 +111,12 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
     try {
       // invoke base evaluator on call code
-      final Project project = myPsiContext.getProject();
+      final Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+        @Override
+        public Project compute() {
+          return myPsiContext.getProject();
+        }
+      });
       ExpressionEvaluator evaluator =
         DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
           @Override
@@ -156,7 +161,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
                                          DebugProcess process,
                                          ThreadReference threadReference,
                                          ClassLoaderReference classLoader)
-    throws EvaluateException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException, InvocationException {
+    throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
 
     VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
     for (OutputFileObject cls : classes) {
@@ -259,11 +264,17 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
   ///////////////// Compiler stuff
 
+  @NotNull
   private Collection<OutputFileObject> compile() throws EvaluateException {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     MemoryFileManager manager = new MemoryFileManager(compiler);
     DiagnosticCollector<JavaFileObject> diagnostic = new DiagnosticCollector<JavaFileObject>();
-    Module module = ModuleUtilCore.findModuleForPsiElement(myPsiContext);
+    Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+      @Override
+      public Module compute() {
+        return ModuleUtilCore.findModuleForPsiElement(myPsiContext);
+      }
+    });
     PathsList cp = null;
     if (module != null) {
       cp = ModuleRootManager.getInstance(module).orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList();

@@ -2789,6 +2789,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               if (extensions != null && !extensions.isEmpty()) {
                 for (LineExtensionInfo info : extensions) {
                   final String text = info.getText();
+                  additionalText += text;
                   drawStringWithSoftWraps(g, text, 0, text.length(), position, clip,
                                           info.getEffectColor() == null ? effectColor : info.getEffectColor(),
                                           info.getEffectType() == null ? effectType : info.getEffectType(),
