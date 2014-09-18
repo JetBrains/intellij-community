@@ -340,7 +340,6 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
     final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
     invoke(delegate, "autorelease");
-    // Release in OPEN_PANEL_DID_END panel
     ourImplMap.put(delegate, impl);
 
     final ID select = toSelect == null ? null : Foundation.nsString(toSelect);
