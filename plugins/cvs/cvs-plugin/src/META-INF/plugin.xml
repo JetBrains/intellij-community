@@ -88,7 +88,7 @@
 
     <group id="CvsActions" class="com.intellij.cvsSupport2.actions.Cvs2Group">
       <reference id="CheckinFiles"/>
-      <reference id="ChangesView.Rollback"/>
+      <reference id="ChangesView.Revert"/>
       <reference id="UpdateFiles"/>
       <reference id="CheckStatusForFiles"/>
       <action id="Cvs.Checkout" class="com.intellij.cvsSupport2.actions.CheckoutFileAction"/>

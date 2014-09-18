@@ -273,7 +273,7 @@ public interface IdeActions {
   String ACTION_REDO = "$Redo";
   String GROUP_REFACTOR = "RefactoringMenu";
   String SELECTED_CHANGES_ROLLBACK = "Vcs.RollbackChangedLines";
-  String CHANGES_VIEW_ROLLBACK = "ChangesView.Rollback";
+  String CHANGES_VIEW_ROLLBACK = "ChangesView.Revert";
 
   String CONSOLE_CLEAR_ALL = "ConsoleView.ClearAll";
   String MOVE_TO_ANOTHER_CHANGE_LIST = "ChangesView.Move";
