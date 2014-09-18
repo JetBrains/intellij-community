@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
@@ -35,6 +36,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
 
@@ -60,12 +63,36 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
   }
 
   private static ChooseByNamePopup createPopup(Project project, GotoActionModel model, String initialText, int initialIndex) {
-    return ChooseByNamePopup.createPopup(project,
-                                         model,
-                                         new GotoActionItemProvider(model),
-                                         initialText,
-                                         false,
-                                         initialIndex);
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project,
+                                                                  model,
+                                                                  new GotoActionItemProvider(model),
+                                                                  initialText,
+                                                                  false,
+                                                                  initialIndex);
+    popup.addMouseClickListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        Object element = popup.getSelectionByPoint(e.getPoint());
+        if (element instanceof GotoActionModel.MatchedValue) {
+          if (processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup)) {
+            e.consume();
+          }
+        }
+      }
+    });
+    return popup;
+  }
+
+  private static boolean processOptionInplace(Object value, ChooseByNamePopup popup) {
+    if (value instanceof BooleanOptionDescription) {
+      final BooleanOptionDescription option = (BooleanOptionDescription)value;
+      option.setOptionState(!option.isOptionEnabled());
+      if (popup != null) {
+        popup.repaintList();
+      }
+      return true;
+    }
+    return false;
   }
 
   public static void openOptionOrPerformAction(Object element,
@@ -73,6 +100,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                                                final Project project,
                                                final Component component,
                                                @Nullable final AnActionEvent e) {
+    if (processOptionInplace(element, null)) {
+      return;
+    }
     if (element instanceof OptionDescription) {
       final String configurableId = ((OptionDescription)element).getConfigurableId();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
