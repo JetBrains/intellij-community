@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.util.NotNullFunction;
@@ -54,6 +55,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
 
   @Override
   public void disposeContent() {
+    Disposer.dispose(myLogManager);
   }
 
 
