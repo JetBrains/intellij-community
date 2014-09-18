@@ -156,9 +156,9 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       }
     }
     final String name = pkg.getName();
-    if (PyPackageManager.PACKAGE_PIP.equals(name) ||
-        PyPackageManager.PACKAGE_SETUPTOOLS.equals(name) ||
-        PyPackageManager.PACKAGE_DISTRIBUTE.equals(name)) {
+    if (PyPackageManager.PIP.equals(name) ||
+        PyPackageManager.SETUPTOOLS.equals(name) ||
+        PyPackageManager.DISTRIBUTE.equals(name)) {
       return false;
     }
     return true;

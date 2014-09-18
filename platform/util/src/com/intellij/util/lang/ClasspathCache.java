@@ -47,8 +47,7 @@ public class ClasspathCache {
 
   private Map<String, Set<Loader>> myResources2LoadersTempMap = new THashMap<String, Set<Loader>>();
   private static final double PROBABILITY = 0.005d;
-  private Name2LoaderFilter myNameFilter;
-  private boolean myTempMapMode = true;
+  private volatile Name2LoaderFilter myNameFilter;
 
   public ClasspathCache() {
     myDebugInfo = doDebug ? new DebugInfo() : new NullDebugInfo();
@@ -85,13 +84,13 @@ public class ClasspathCache {
     ParameterType parameter,
     ParameterType2 parameter2) {
     TIntObjectHashMap<Object> map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ?
-                                    myClassPackagesCache : myResourcePackagesCache;    
+                                    myClassPackagesCache : myResourcePackagesCache;
     String packageName = getPackageName(resourcePath);
-    
+
     int hash = packageName.hashCode();
     Object o = map.get(hash);
     myDebugInfo.checkLoadersCount(resourcePath, o);
-      
+
     if (o == null) return null;
     if (o instanceof Loader) return iterator.process((Loader)o, parameter, parameter2);
     Loader[] loaders = (Loader[])o;
@@ -113,17 +112,20 @@ public class ClasspathCache {
   public void addNameEntry(String name, Loader loader) {
     name = transformName(name);
     myDebugInfo.addNameEntry(name, loader);
-    if (myTempMapMode) {
-      Set<Loader> loaders = myResources2LoadersTempMap.get(name);
-      if (loaders == null) myResources2LoadersTempMap.put(name, loaders = new THashSet<Loader>());
+    Name2LoaderFilter nameFilter = myNameFilter;
+    Map<String, Set<Loader>> resources2LoadersTempMap = myResources2LoadersTempMap;
+
+    if (nameFilter == null) {
+      Set<Loader> loaders = resources2LoadersTempMap.get(name);
+      if (loaders == null) resources2LoadersTempMap.put(name, loaders = new THashSet<Loader>());
       boolean added = loaders.add(loader);
       if (doDebug && added) ++registeredBeforeClose;
     } else {
       if (doDebug) {
-        if (!myNameFilter.maybeContains(name, loader)) ++registeredAfterClose;
+        if (!nameFilter.maybeContains(name, loader)) ++registeredAfterClose;
       }
 
-      myNameFilter.add(name, loader);
+      nameFilter.add(name, loader);
     }
   }
 
@@ -131,9 +133,12 @@ public class ClasspathCache {
     if (StringUtil.isEmpty(name)) return true;
 
     boolean result;
-    if (myTempMapMode) {
+    Name2LoaderFilter nameFilter = myNameFilter;
+    Map<String, Set<Loader>> resources2LoadersTempMap = myResources2LoadersTempMap;
+
+    if (nameFilter == null) {
       ++requests;
-      Set<Loader> loaders = myResources2LoadersTempMap.get(shortName);
+      Set<Loader> loaders = resources2LoadersTempMap.get(shortName);
       result = loaders != null && loaders.contains(loader);
 
       if (!result) ++hits;
@@ -155,7 +160,7 @@ public class ClasspathCache {
     }
     else {
       ++requests2;
-      result = myNameFilter.maybeContains(shortName, loader);
+      result = nameFilter.maybeContains(shortName, loader);
       if (!result) ++hits2;
 
       if (doDebug) {
@@ -164,7 +169,7 @@ public class ClasspathCache {
           ++diffs2;
         }
 
-        Set<Loader> loaders = myResources2LoadersTempMap.get(shortName);
+        Set<Loader> loaders = resources2LoadersTempMap.get(shortName);
         if (result != (loaders != null && loaders.contains(loader))) {
           ++diffs;
         }
@@ -185,7 +190,7 @@ public class ClasspathCache {
 
     return result;
   }
-  
+
   static String transformName(String name) {
     if (name.endsWith("/")) {
       name = name.substring(0, name.length() - 1);
@@ -216,7 +221,10 @@ public class ClasspathCache {
   private static int diffs3;
 
   void nameSymbolsLoaded() {
-    if (!myTempMapMode) {
+    Name2LoaderFilter nameFilter = myNameFilter;
+    Map<String, Set<Loader>> resources2LoadersTempMap = myResources2LoadersTempMap;
+
+    if (nameFilter != null) {
       if (doDebug && registeredAfterClose > 0) {
         LOG.debug("Registered number of classes after close " + registeredAfterClose + " " + toString());
       }
@@ -227,11 +235,9 @@ public class ClasspathCache {
       LOG.debug("Registered number of classes before classes " + registeredBeforeClose + " " + toString());
     }
 
-    myTempMapMode = false;
-
     int nBits = 0;
     int uniques = 0;
-    for(Map.Entry<String, Set<Loader>> e:myResources2LoadersTempMap.entrySet()) {
+    for(Map.Entry<String, Set<Loader>> e:resources2LoadersTempMap.entrySet()) {
       int size = e.getValue().size();
       if (size == 1) {
         ++uniques;
@@ -242,15 +248,16 @@ public class ClasspathCache {
       nBits += (int)(nBits * 0.03d); // allow some growth for Idea main loader
     }
 
-    myNameFilter = new Name2LoaderFilter(nBits, PROBABILITY);
+    nameFilter = new Name2LoaderFilter(nBits, PROBABILITY);
 
-    for(Map.Entry<String, Set<Loader>> e:myResources2LoadersTempMap.entrySet()) {
+    for(Map.Entry<String, Set<Loader>> e:resources2LoadersTempMap.entrySet()) {
       final String name = e.getKey();
       for(Loader loader: e.getValue()) {
-        myNameFilter.add(name, loader);
+        nameFilter.add(name, loader);
       }
     }
 
+    myNameFilter = nameFilter;
     if (!doDebug) {
       myResources2LoadersTempMap = null;
     }

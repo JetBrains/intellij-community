@@ -160,7 +160,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               return;
             }
           }
-          if (PyPackageManager.PACKAGE_SETUPTOOLS.equals(packageName)) {
+          if (PyPackageManager.SETUPTOOLS.equals(packageName)) {
             return;
           }
           final Module module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression);
