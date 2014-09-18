@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class ClassRenderer extends NodeRendererImpl{
   public boolean SHOW_STATIC = false;
   public boolean SHOW_STATIC_FINAL = false;
 
-  public boolean SHOW_FQ_TYPE_NAMES = true;
+  public boolean SHOW_FQ_TYPE_NAMES = false;
   public boolean SHOW_DECLARED_TYPE = false;
   public boolean SHOW_OBJECT_ID = true;
   
