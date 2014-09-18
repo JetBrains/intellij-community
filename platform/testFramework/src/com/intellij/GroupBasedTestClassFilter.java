@@ -21,10 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -60,19 +57,18 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   private final List<Pattern> myTestGroupPatterns;
   private boolean myContainsAllExcludeDefinedGroup;
 
-  public GroupBasedTestClassFilter(Map<String, List<String>> filters, List<String> testGroupNames) {
+  public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> testGroupNames) {
     //empty group means all patterns from each defined group should be excluded
     myContainsAllExcludeDefinedGroup = containsAllExcludeDefinedGroup(testGroupNames);
 
     for (String groupName : filters.keySet()) {
-      List<String> filterList = filters.get(groupName);
-      addPatterns(groupName, filterList);
+      addPatterns(groupName, filters.get(groupName));
     }
 
     myTestGroupPatterns = collectPatternsFor(testGroupNames);
   }
 
-  private void addPatterns(String groupName, List<String> filterList) {
+  private void addPatterns(String groupName, Collection<String> filterList) {
     List<Pattern> patterns = compilePatterns(filterList);
     myPatterns.putValues(groupName, patterns);
     myAllPatterns.addAll(patterns);
@@ -127,8 +123,8 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
     return new GroupBasedTestClassFilter(readGroups(reader), testGroupNames);
   }
 
-  public static Map<String, List<String>> readGroups(Reader reader) throws IOException {
-    Map<String, List<String>> groupNameToPatternsMap = new HashMap<String, List<String>>();
+  public static MultiMap<String, String> readGroups(Reader reader) throws IOException {
+    MultiMap<String, String> groupNameToPatternsMap = MultiMap.createLinked();
     String currentGroupName = "";
 
     @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"}) BufferedReader bufferedReader = new BufferedReader(reader);
@@ -139,10 +135,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
         currentGroupName = line.substring(1, line.length() - 1);
       }
       else {
-        if (!groupNameToPatternsMap.containsKey(currentGroupName)) {
-          groupNameToPatternsMap.put(currentGroupName, new ArrayList<String>());
-        }
-        groupNameToPatternsMap.get(currentGroupName).add(line);
+        groupNameToPatternsMap.putValue(currentGroupName, line);
       }
     }
     return groupNameToPatternsMap;

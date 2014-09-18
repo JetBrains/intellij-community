@@ -62,8 +62,8 @@ public class AppEngineCommunityWebIntegration extends AppEngineWebIntegration {
 
   @NotNull
   @Override
-  public ArtifactType getAppEngineTargetArtifactType() {
-    return PlainArtifactType.getInstance();
+  public List<ArtifactType> getAppEngineTargetArtifactType() {
+    return Collections.<ArtifactType>singletonList(PlainArtifactType.getInstance());
   }
 
   @Override

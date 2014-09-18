@@ -156,9 +156,14 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ANNOTATION_PARAMETER_WRAP",
-                                "Annotation parameters",
+                                ApplicationBundle.message("wrapping.annotation.parameters"),
                                 null,
                                 CodeStyleSettingsCustomizable.WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ALIGN_MULTILINE_ANNOTATION_PARAMETERS",
+                                ApplicationBundle.message("wrapping.align.when.multiline"),
+                                ApplicationBundle.message("wrapping.annotation.parameters"));
 
       String groupName = ApplicationBundle.message("wrapping.fields.annotation");
       consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", "Do not wrap after single annotation", groupName);

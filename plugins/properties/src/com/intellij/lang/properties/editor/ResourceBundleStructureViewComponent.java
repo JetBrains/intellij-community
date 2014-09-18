@@ -67,14 +67,14 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
   @Override
   protected void addGroupByActions(final DefaultActionGroup result) {
     super.addGroupByActions(result);
-    result.add(new NewPropertyAction(), Constraints.FIRST);
+    result.add(new NewPropertyAction(true), Constraints.FIRST);
   }
 
   private void tunePopupActionGroup() {
     final DefaultActionGroup propertiesPopupGroup = new DefaultActionGroup();
     propertiesPopupGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_STRUCTURE_VIEW_POPUP));
     propertiesPopupGroup.add(Separator.getInstance(), Constraints.FIRST);
-    propertiesPopupGroup.add(new NewPropertyAction(), Constraints.FIRST);
+    propertiesPopupGroup.add(new NewPropertyAction(true), Constraints.FIRST);
     PopupHandler.installPopupHandler(getTree(), propertiesPopupGroup, IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionManager.getInstance());
   }
 

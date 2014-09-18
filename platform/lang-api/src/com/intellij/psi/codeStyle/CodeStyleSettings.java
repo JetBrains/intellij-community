@@ -129,28 +129,29 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   private void copyCustomSettingsFrom(@NotNull CodeStyleSettings from) {
     synchronized (myCustomSettings) {
       myCustomSettings.clear();
+
+      for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
+        addCustomSettings((CustomCodeStyleSettings)settings.clone());
+      }
+
+      FIELD_TYPE_TO_NAME.copyFrom(from.FIELD_TYPE_TO_NAME);
+      STATIC_FIELD_TYPE_TO_NAME.copyFrom(from.STATIC_FIELD_TYPE_TO_NAME);
+      PARAMETER_TYPE_TO_NAME.copyFrom(from.PARAMETER_TYPE_TO_NAME);
+      LOCAL_VARIABLE_TYPE_TO_NAME.copyFrom(from.LOCAL_VARIABLE_TYPE_TO_NAME);
+
+      PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+      IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
+
+      OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
+
+      myAdditionalIndentOptions.clear();
+      for (Map.Entry<FileType, IndentOptions> optionEntry : from.myAdditionalIndentOptions.entrySet()) {
+        IndentOptions options = optionEntry.getValue();
+        myAdditionalIndentOptions.put(optionEntry.getKey(), (IndentOptions)options.clone());
+      }
+
+      myCommonSettingsManager = from.myCommonSettingsManager.clone(this);
     }
-    for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
-      addCustomSettings((CustomCodeStyleSettings) settings.clone());
-    }
-
-    FIELD_TYPE_TO_NAME.copyFrom(from.FIELD_TYPE_TO_NAME);
-    STATIC_FIELD_TYPE_TO_NAME.copyFrom(from.STATIC_FIELD_TYPE_TO_NAME);
-    PARAMETER_TYPE_TO_NAME.copyFrom(from.PARAMETER_TYPE_TO_NAME);
-    LOCAL_VARIABLE_TYPE_TO_NAME.copyFrom(from.LOCAL_VARIABLE_TYPE_TO_NAME);
-
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
-    IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
-
-    OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
-
-    myAdditionalIndentOptions.clear();
-    for(Map.Entry<FileType, IndentOptions> optionEntry: from.myAdditionalIndentOptions.entrySet()) {
-      IndentOptions options = optionEntry.getValue();
-      myAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)options.clone());
-    }
-    
-    myCommonSettingsManager = from.myCommonSettingsManager.clone(this);
   }
 
   public void copyFrom(CodeStyleSettings from) {

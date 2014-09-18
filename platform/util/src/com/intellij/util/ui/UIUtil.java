@@ -167,7 +167,7 @@ public class UIUtil {
     drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
-  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 65);
+  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 50);
   private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 30);
 
   public static GrayFilter getGrayFilter() {

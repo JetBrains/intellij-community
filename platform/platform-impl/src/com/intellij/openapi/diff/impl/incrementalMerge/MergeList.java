@@ -237,13 +237,13 @@ public class MergeList implements UserDataHolder {
       if (!change.canHasActions(originalSide)) continue;
       AnAction applyAction = new AnAction(DiffBundle.message("merge.dialog.apply.change.action.name"), null, AllIcons.Diff.Arrow) {
         @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
+        public void actionPerformed(@Nullable AnActionEvent e) {
           apply(change);
         }
       };
       AnAction ignoreAction = new AnAction(DiffBundle.message("merge.dialog.ignore.change.action.name"), null, AllIcons.Diff.Remove) {
         @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
+        public void actionPerformed(@Nullable AnActionEvent e) {
           change.removeFromList();
         }
       };

@@ -1,7 +1,6 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -32,13 +31,12 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
   private static final String tabWidthKey = "tab_width";
   private static final String indentStyleKey = "indent_style";
 
-  private static final Logger LOG = Logger.getInstance("#org.editorconfig.configmanagement.CodeStyleManager");
   private final CodeStyleSettingsManager codeStyleSettingsManager;
-  private final Project project;
+  private final Project myProject;
 
   public CodeStyleManager(Project project) {
     codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(project);
-    this.project = project;
+    myProject = project;
   }
 
   @Override
@@ -54,7 +52,7 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
 
   @Override
   public void windowGainedFocus(WindowEvent e) {
-    final Editor currentEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    final Editor currentEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     if (currentEditor != null) {
       final Document currentDocument = currentEditor.getDocument();
       final VirtualFile currentFile = FileDocumentManager.getInstance().getFile(currentDocument);
@@ -74,6 +72,7 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
       // Prepare a new settings object, which will maintain the standard settings if no
       // editorconfig settings apply
       final CodeStyleSettings currentSettings = codeStyleSettingsManager.getCurrentSettings();
+      if (!Utils.isEnabled(currentSettings)) return;
       final CodeStyleSettings newSettings = new CodeStyleSettings();
       newSettings.copyFrom(currentSettings);
       // Get editorconfig settings
@@ -83,14 +82,14 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
       // Apply editorconfig settings for the current editor
       applyCodeStyleSettings(outPairs, newSettings, file);
       codeStyleSettingsManager.setTemporarySettings(newSettings);
-      final EditorEx currentEditor = (EditorEx)FileEditorManager.getInstance(project).getSelectedTextEditor();
+      final EditorEx currentEditor = (EditorEx)FileEditorManager.getInstance(myProject).getSelectedTextEditor();
       if (currentEditor != null) {
         currentEditor.reinitSettings();
       }
     }
   }
 
-  private static void applyCodeStyleSettings(final List<OutPair> outPairs, final CodeStyleSettings codeStyleSettings,
+  private void applyCodeStyleSettings(final List<OutPair> outPairs, final CodeStyleSettings codeStyleSettings,
                                              final VirtualFile file) {
     // Apply indent options
     final String indentSize = Utils.configValueForKey(outPairs, indentSizeKey);
@@ -104,32 +103,32 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
     applyIndentOptions(indentOptions, indentSize, tabWidth, indentStyle, file.getCanonicalPath());
   }
 
-  private static void applyIndentOptions(CommonCodeStyleSettings.IndentOptions indentOptions,
+  private void applyIndentOptions(CommonCodeStyleSettings.IndentOptions indentOptions,
                                          String indentSize, String tabWidth, String indentStyle, String filePath) {
     final String calculatedIndentSize = calculateIndentSize(tabWidth, indentSize);
     final String calculatedTabWidth = calculateTabWidth(tabWidth, indentSize);
     if (!calculatedIndentSize.isEmpty()) {
       if (applyIndentSize(indentOptions, calculatedIndentSize)) {
-        LOG.debug(Utils.appliedConfigMessage(calculatedIndentSize, indentSizeKey, filePath));
+        Utils.appliedConfigMessage(myProject, calculatedIndentSize, indentSizeKey, filePath);
       }
       else {
-        LOG.warn(Utils.invalidConfigMessage(calculatedIndentSize, indentSizeKey, filePath));
+        Utils.invalidConfigMessage(myProject, calculatedIndentSize, indentSizeKey, filePath);
       }
     }
     if (!calculatedTabWidth.isEmpty()) {
       if (applyTabWidth(indentOptions, calculatedTabWidth)) {
-        LOG.debug(Utils.appliedConfigMessage(calculatedTabWidth, tabWidthKey, filePath));
+        Utils.appliedConfigMessage(myProject, calculatedTabWidth, tabWidthKey, filePath);
       }
       else {
-        LOG.warn(Utils.invalidConfigMessage(calculatedTabWidth, tabWidthKey, filePath));
+        Utils.invalidConfigMessage(myProject, calculatedTabWidth, tabWidthKey, filePath);
       }
     }
     if (!indentStyle.isEmpty()) {
       if (applyIndentStyle(indentOptions, indentStyle)) {
-        LOG.debug(Utils.appliedConfigMessage(indentStyle, indentStyleKey, filePath));
+        Utils.appliedConfigMessage(myProject, indentStyle, indentStyleKey, filePath);
       }
       else {
-        LOG.warn(Utils.invalidConfigMessage(indentStyle, indentStyleKey, filePath));
+        Utils.invalidConfigMessage(myProject, indentStyle, indentStyleKey, filePath);
       }
     }
   }

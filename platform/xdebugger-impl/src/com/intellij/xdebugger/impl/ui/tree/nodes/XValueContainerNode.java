@@ -101,7 +101,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
         myBottomGroups = createGroupNodes(children.getBottomGroups(), myBottomGroups, newChildren);
         myCachedAllChildren = null;
         fireNodesInserted(newChildren);
-        if (last) {
+        if (last && myTemporaryMessageChildren != null) {
           final int[] ints = getNodesIndices(myTemporaryMessageChildren);
           final TreeNode[] removed = myTemporaryMessageChildren.toArray(new TreeNode[myTemporaryMessageChildren.size()]);
           myCachedAllChildren = null;

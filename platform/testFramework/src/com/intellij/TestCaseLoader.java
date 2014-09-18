@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -73,13 +74,13 @@ public class TestCaseLoader {
       }
 
       List<String> testGroupNames = StringUtil.split(System.getProperty(TARGET_TEST_GROUP, "").trim(), ";");
-      Map<String, List<String>> groups = new LinkedHashMap<String, List<String>>();
+      MultiMap<String, String> groups = MultiMap.createLinked();
 
       for (URL fileUrl : groupingFileUrls) {
         try {
           InputStreamReader reader = new InputStreamReader(fileUrl.openStream());
           try {
-            groups.putAll(GroupBasedTestClassFilter.readGroups(reader));
+            groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
           }
           finally {
             reader.close();

@@ -33,5 +33,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = false;
 
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+  public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS = false;
 
 }

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.builders.impl;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -26,8 +25,7 @@ import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.TargetTypeRegistry;
-import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
@@ -36,68 +34,15 @@ import java.util.*;
  * @author nik
  */
 public class BuildTargetIndexImpl implements BuildTargetIndex {
-  private Map<BuildTargetType<?>, List<? extends BuildTarget<?>>> myTargets;
-  private Map<JpsModule, List<ModuleBasedTarget>> myModuleBasedTargets;
+  private final BuildTargetRegistry myRegistry;
+  private final BuildRootIndexImpl myBuildRootIndex;
   private Map<BuildTarget<?>, Collection<BuildTarget<?>>> myDependencies;
   private List<BuildTargetChunk> myTargetChunks;
-  private final List<BuildTarget<?>> myAllTargets;
 
-  public BuildTargetIndexImpl(@NotNull JpsModel model) {
-    myTargets = new THashMap<BuildTargetType<?>, List<? extends BuildTarget<?>>>();
-    myModuleBasedTargets = new THashMap<JpsModule, List<ModuleBasedTarget>>();
-    List<List<? extends BuildTarget<?>>> targetsByType = new ArrayList<List<? extends BuildTarget<?>>>();
-    for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
-      List<? extends BuildTarget<?>> targets = type.computeAllTargets(model);
-      myTargets.put(type, targets);
-      targetsByType.add(targets);
-      for (BuildTarget<?> target : targets) {
-        if (target instanceof ModuleBasedTarget) {
-          final ModuleBasedTarget t = (ModuleBasedTarget)target;
-          final JpsModule module = t.getModule();
-          List<ModuleBasedTarget> list = myModuleBasedTargets.get(module);
-          if (list == null) {
-            list = new ArrayList<ModuleBasedTarget>();
-            myModuleBasedTargets.put(module, list);
-          }
-          list.add(t);
-        }
-      }
-    }
+  public BuildTargetIndexImpl(BuildTargetRegistry targetRegistry, BuildRootIndexImpl buildRootIndex) {
+    myRegistry = targetRegistry;
+    myBuildRootIndex = buildRootIndex;
     myDependencies = new THashMap<BuildTarget<?>, Collection<BuildTarget<?>>>();
-    myAllTargets = Collections.unmodifiableList(ContainerUtil.concat(targetsByType));
-  }
-
-  @Override
-  public Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull ModuleTargetSelector selector) {
-    final List<ModuleBasedTarget> targets = myModuleBasedTargets.get(module);
-    if (targets == null || targets.isEmpty()) {
-      return Collections.emptyList();
-    }
-    final List<ModuleBasedTarget<?>> result = new SmartList<ModuleBasedTarget<?>>();
-    for (ModuleBasedTarget target : targets) {
-      switch (selector) {
-        case ALL:
-          result.add(target);
-          break;
-        case PRODUCTION:
-          if (!target.isTests()) {
-            result.add(target);
-          }
-          break;
-        case TEST:
-          if (target.isTests()) {
-            result.add(target);
-          }
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public <T extends BuildTarget<?>> List<T> getAllTargets(@NotNull BuildTargetType<T> type) {
-    //noinspection unchecked
-    return (List<T>)myTargets.get(type);
   }
 
   @Override
@@ -112,17 +57,36 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
       return;
     }
 
-    final List<? extends BuildTarget<?>> allTargets = getAllTargets();
+    List<BuildTarget<?>> allTargets = getAllTargets();
     TargetOutputIndex outputIndex = new TargetOutputIndexImpl(allTargets, context);
+    Map<BuildTarget<?>, Collection<BuildTarget<?>>> dummyTargetDependencies = new HashMap<BuildTarget<?>, Collection<BuildTarget<?>>>();
+    final List<BuildTarget<?>> realTargets = new ArrayList<BuildTarget<?>>(allTargets.size());
     for (BuildTarget<?> target : allTargets) {
-      myDependencies.put(target, target.computeDependencies(this, outputIndex));
+      if (isDummy(target)) {
+        dummyTargetDependencies.put(target, target.computeDependencies(myRegistry, outputIndex));
+      }
+      else {
+        realTargets.add(target);
+      }
+    }
+
+    for (BuildTarget<?> target : realTargets) {
+      Collection<BuildTarget<?>> dependencies = target.computeDependencies(this, outputIndex);
+      Collection<BuildTarget<?>> realDependencies;
+      if (!ContainerUtil.intersects(dependencies, dummyTargetDependencies.keySet())) {
+        realDependencies = dependencies;
+      }
+      else {
+        realDependencies = includeTransitiveDependenciesOfDummyTargets(dependencies, dummyTargetDependencies);
+      }
+      myDependencies.put(target, realDependencies);
     }
 
     GraphGenerator<BuildTarget<?>>
       graph = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<BuildTarget<?>>() {
       @Override
       public Collection<BuildTarget<?>> getNodes() {
-        return myAllTargets;
+        return realTargets;
       }
 
       @Override
@@ -151,9 +115,32 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     });
   }
 
-  @Override
-  public List<? extends BuildTarget<?>> getAllTargets() {
-    return myAllTargets;
+  private static Collection<BuildTarget<?>> includeTransitiveDependenciesOfDummyTargets(Collection<BuildTarget<?>> dependencies,
+                                                                                        Map<BuildTarget<?>, Collection<BuildTarget<?>>> dummyTargetDependencies) {
+    ArrayList<BuildTarget<?>> realDependencies = new ArrayList<BuildTarget<?>>(dependencies.size());
+    Set<BuildTarget<?>> processed = new HashSet<BuildTarget<?>>(dependencies);
+    Queue<BuildTarget<?>> toProcess = new ArrayDeque<BuildTarget<?>>(dependencies);
+    while (!toProcess.isEmpty()) {
+      BuildTarget<?> dep = toProcess.poll();
+      Collection<BuildTarget<?>> toInclude = dummyTargetDependencies.get(dep);
+      if (toInclude != null) {
+        for (BuildTarget<?> target : toInclude) {
+          if (processed.add(target)) {
+            toProcess.add(target);
+          }
+        }
+      }
+      else {
+        realDependencies.add(dep);
+      }
+    }
+    realDependencies.trimToSize();
+    return realDependencies;
+  }
+
+  private boolean isDummy(@NotNull BuildTarget<?> target) {
+    return (target instanceof ModuleBuildTarget) //todo[nik] introduce method in BuildTarget instead
+         && myBuildRootIndex.getTargetRoots(target, null).isEmpty();
   }
 
   @Override
@@ -179,5 +166,20 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
   public Collection<BuildTarget<?>> getDependencies(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
     initializeChunks(context);
     return myDependencies.get(target);
+  }
+
+  @NotNull
+  public Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull ModuleTargetSelector selector) {
+    return myRegistry.getModuleBasedTargets(module, selector);
+  }
+
+  @NotNull
+  public <T extends BuildTarget<?>> List<T> getAllTargets(@NotNull BuildTargetType<T> type) {
+    return myRegistry.getAllTargets(type);
+  }
+
+  @NotNull
+  public List<BuildTarget<?>> getAllTargets() {
+    return myRegistry.getAllTargets();
   }
 }
