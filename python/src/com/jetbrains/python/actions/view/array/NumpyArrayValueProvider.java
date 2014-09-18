@@ -49,8 +49,8 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   private String myDtypeKind;
   private int[] myShape;
 
-  private final static int COLUMNS_IN_DEFAULT_SLICE = 100;
-  private final static int ROWS_IN_DEFAULT_SLICE = 100;
+  private final static int COLUMNS_IN_DEFAULT_SLICE = 50;
+  private final static int ROWS_IN_DEFAULT_SLICE = 50;
 
   public NumpyArrayValueProvider(@NotNull XValueNode node, @NotNull ArrayTableForm component, @NotNull Project project) {
     super(node);
@@ -269,7 +269,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
 
           @Override
           public void errorOccurred(@NotNull String errorMessage) {
-            myComponent.setErrorSpinnerText(errorMessage);
+            myComponent.setErrorText(errorMessage);
           }
         }, null);
         super.doOKAction();
@@ -303,7 +303,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   }
 
   private void showError(String message) {
-    myComponent.setErrorSpinnerText(message);
+    myComponent.setErrorText(message);
   }
 
   public String getFormat() {

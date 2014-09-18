@@ -18,9 +18,10 @@ package com.jetbrains.python.actions.view.array;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 
 /**
  * @author amarch
@@ -34,13 +35,15 @@ public class ArrayTableForm {
   private JPanel myFormatPanel;
   private JPanel myMainPanel;
   public JBTable myTable;
+  private PyViewArrayAction.MyDialog myParentDialog;
 
 
   private static final String DATA_LOADING_IN_PROCESS = "Please wait, load array data.";
 
   private static final String NOT_APPLICABLE = "View not applicable for ";
 
-  public ArrayTableForm(){
+  public ArrayTableForm(PyViewArrayAction.MyDialog dialog) {
+    myParentDialog = dialog;
   }
 
   private void createUIComponents() {
@@ -51,6 +54,18 @@ public class ArrayTableForm {
     };
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     myTable.setRowSelectionAllowed(false);
+
+    myScrollPane = new JBScrollPane();
+    JTable rowTable = new RowNumberTable(myTable) {
+      @Override
+      protected void paintComponent(@NotNull Graphics g) {
+        getEmptyText().setText("");
+        super.paintComponent(g);
+      }
+    };
+    myScrollPane.setRowHeaderView(rowTable);
+    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
+                           rowTable.getTableHeader());
   }
 
   public JTextField getSliceTextField() {
@@ -61,7 +76,7 @@ public class ArrayTableForm {
     return myFormatTextField;
   }
 
-  public JBTable getTable() {
+  public JTable getTable() {
     return myTable;
   }
 
@@ -69,32 +84,20 @@ public class ArrayTableForm {
     return myColoredCheckbox;
   }
 
-  private void setSpinnerText(String text) {
-    DefaultTableModel model = new DefaultTableModel(1, 1) {
-      @Override
-      public boolean isCellEditable(int row, int column) {
-        return false;
-      }
-    };
-    myTable.setModel(model);
-    myTable.setValueAt(text, 0, 0);
+  public void setDefaultStatus() {
+    myTable.getEmptyText().setText(DATA_LOADING_IN_PROCESS);
   }
 
-  public void setDefaultSpinnerText() {
-    setSpinnerText(DATA_LOADING_IN_PROCESS);
+  public void setErrorText(Exception e) {
+    setErrorText(e.getMessage());
   }
 
-  public void setErrorSpinnerText(Exception e) {
-    setSpinnerText(e.getMessage());
+  public void setErrorText(String message) {
+    myParentDialog.setError(message);
   }
 
-  public void setErrorSpinnerText(String message) {
-    setSpinnerText(message);
-  }
-
-
-  public void setNotApplicableSpinner(XValueNodeImpl node) {
-    setSpinnerText(NOT_APPLICABLE + node.getName());
+  public void setNotApplicableStatus(XValueNodeImpl node) {
+    myTable.getEmptyText().setText(NOT_APPLICABLE + node.getName());
   }
 
   public JComponent getMainPanel() {

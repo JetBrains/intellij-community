@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.actions.view.array;
 
+import com.intellij.ui.table.JBTable;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -32,7 +34,7 @@ import java.beans.PropertyChangeListener;
 *  This table must be added to the row header of the scrollpane that
 *  contains the main table.
 */
-public class RowNumberTable extends JTable
+public class RowNumberTable extends JBTable
   implements ChangeListener, PropertyChangeListener, TableModelListener {
   private JTable main;
 

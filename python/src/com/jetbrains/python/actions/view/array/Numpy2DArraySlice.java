@@ -41,6 +41,10 @@ class Numpy2DArraySlice {
   private String mySlicePresentation;
   private NumpyArrayValueProvider myValueProvider;
   private DataEvaluator myDataEvaluator;
+  private int myRows = 0;
+  private int myColumns = 0;
+  private int myRowsOffset = 0;
+  private int myColumnsOffset = 0;
 
   public Numpy2DArraySlice(@NotNull String valueName,
                            @NotNull List<Pair<Integer, Integer>> fullSlice,
@@ -77,6 +81,12 @@ class Numpy2DArraySlice {
     if (!consistent) {
       throw new IllegalStateException("Illegal slice shape.");
     }
+
+    int size = myFullSlice.size();
+    myRows = myFullSlice.get(size - 2).getSecond() - myFullSlice.get(size - 2).getFirst();
+    myColumns = myFullSlice.get(size - 1).getSecond() - myFullSlice.get(size - 1).getFirst();
+    myRowsOffset = myFullSlice.get(size - 2).getFirst();
+    myColumnsOffset = myFullSlice.get(size - 1).getFirst();
   }
 
   public String getPresentation() {
@@ -91,16 +101,8 @@ class Numpy2DArraySlice {
     for (int index = 0; index < myFullSlice.size() - 2; index++) {
       mySlicePresentation += "[" + myFullSlice.get(index).getFirst() + "]";
     }
-    int size = myFullSlice.size();
-    mySlicePresentation += "[" +
-                           myFullSlice.get(size - 2).getFirst() +
-                           ":" +
-                           myFullSlice.get(size - 2).getSecond() +
-                           ", " +
-                           myFullSlice.get(size - 1).getFirst() +
-                           ":" +
-                           myFullSlice.get(size - 1).getSecond() +
-                           "]";
+    mySlicePresentation +=
+      "[" + myRowsOffset + ":" + (myRowsOffset + myRows) + ", " + myColumnsOffset + ":" + (myColumnsOffset + myColumns) + "]";
   }
 
   public void startFillData(Runnable callback) {
@@ -113,7 +115,6 @@ class Numpy2DArraySlice {
 
   private class DataEvaluator {
     private Object[][] myData;
-    private int myRows = 0;
     private int myFilledRows = 0;
     private int nextRow = 0;
 
@@ -129,12 +130,12 @@ class Numpy2DArraySlice {
     public void evaluateData(final Runnable callback) {
       final XDebuggerEvaluator.XEvaluationCallback computeChildrenCallback = new XDebuggerEvaluator.XEvaluationCallback() {
         @Override
-        public void evaluated(@NotNull XValue result) {
-          String name = ((PyDebugValue)result).getName();
-          final XValueNodeImpl node = new XValueNodeImpl(myValueProvider.getTree(), null, name, result);
+        public void evaluated(@NotNull final XValue result) {
+          final String name = ((PyDebugValue)result).getName();
           DebuggerUIUtil.invokeLater(new Runnable() {
             @Override
             public void run() {
+              XValueNodeImpl node = new XValueNodeImpl(myValueProvider.getTree(), null, name, result);
               node.startComputingChildren();
             }
           });
@@ -169,7 +170,7 @@ class Numpy2DArraySlice {
             }
             myFilledRows += 1;
           }
-          if (myFilledRows == myRows + myFullSlice.get(myFullSlice.size() - 2).getFirst()) {
+          if (myFilledRows == myRows) {
             node.getTree().removeTreeListener(this);
             callback.run();
           }
@@ -180,13 +181,11 @@ class Numpy2DArraySlice {
         }
       };
 
-      int size = myFullSlice.size();
       myData =
-        new Object[myFullSlice.get(size - 2).getSecond() - myFullSlice.get(size - 2).getFirst()]
-          [myFullSlice.get(size - 1).getSecond() - myFullSlice.get(size - 1).getFirst()];
+        new Object[myRows][myColumns];
       myRows = myData.length;
       myValueProvider.getTree().addTreeListener(treeListener);
-      nextRow = myFullSlice.get(size - 2).getFirst();
+      nextRow = myRowsOffset;
       startEvalNextRow(computeChildrenCallback);
     }
 
@@ -196,7 +195,7 @@ class Numpy2DArraySlice {
         evalRowCommand += "[" + nextRow + "]";
       }
       evalRowCommand +=
-        "[" + myFullSlice.get(myFullSlice.size() - 1).getFirst() + ":" + myFullSlice.get(myFullSlice.size() - 1).getSecond() + "])";
+        "[" + myColumnsOffset + ":" + (myColumnsOffset + myColumns) + "])";
       myValueProvider.getEvaluator().evaluate(evalRowCommand, callback, null);
     }
 
