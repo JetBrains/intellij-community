@@ -12,8 +12,8 @@
   psiImplUtilClass = 'com.intellij.json.psi.impl.JsonPsiImplUtils'
   tokenTypeClass = 'com.intellij.json.JsonTokenType'
 
-  implements = "com.intellij.json.psi.JsonElement"
-  extends = "com.intellij.json.psi.impl.JsonElementImpl"
+  implements("value") = "com.intellij.json.psi.JsonElement"
+  extends("value") = "com.intellij.json.psi.impl.JsonElementImpl"
 
     tokens = [
         L_CURLY='{'
@@ -91,7 +91,10 @@ private array_element ::= value (','|&']') {
   pin=1
 }
 
-string_literal ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING
+string_literal ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING {
+  methods=[isQuotedString]
+  mixin="com.intellij.json.psi.impl.JsonStringLiteralMixin"
+}
 number_literal ::= NUMBER
 boolean_literal ::= TRUE | FALSE
 null_literal ::= NULL

@@ -13,4 +13,6 @@ public interface JsonStringLiteral extends JsonLiteral {
   @Nullable
   PsiElement getSingleQuotedString();
 
+  boolean isQuotedString();
+
 }

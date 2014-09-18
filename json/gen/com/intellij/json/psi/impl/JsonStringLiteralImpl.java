@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
 
-public class JsonStringLiteralImpl extends JsonLiteralImpl implements JsonStringLiteral {
+public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements JsonStringLiteral {
 
   public JsonStringLiteralImpl(ASTNode node) {
     super(node);
@@ -31,6 +31,10 @@ public class JsonStringLiteralImpl extends JsonLiteralImpl implements JsonString
   @Nullable
   public PsiElement getSingleQuotedString() {
     return findChildByType(SINGLE_QUOTED_STRING);
+  }
+
+  public boolean isQuotedString() {
+    return JsonPsiImplUtils.isQuotedString(this);
   }
 
 }
