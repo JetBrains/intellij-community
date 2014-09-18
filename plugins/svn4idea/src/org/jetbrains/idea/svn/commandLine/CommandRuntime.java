@@ -168,8 +168,6 @@ public class CommandRuntime {
     List<AuthCallbackCase> authCases = ContainerUtil.newArrayList();
 
     authCases.add(new CertificateCallbackCase(myAuthenticationService, url));
-    authCases.add(new CredentialsCallback(myAuthenticationService, url));
-    authCases.add(new PassphraseCallback(myAuthenticationService, url));
     authCases.add(new ProxyCallback(myAuthenticationService, url));
     authCases.add(new TwoWaySslCallback(myAuthenticationService, url));
     authCases.add(new UsernamePasswordCallback(myAuthenticationService, url));

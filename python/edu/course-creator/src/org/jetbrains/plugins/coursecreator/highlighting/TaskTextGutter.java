@@ -4,7 +4,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.util.IconLoader;
+import icons.CourseCreatorIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.coursecreator.actions.CCDeleteTaskWindow;
@@ -25,7 +25,7 @@ public class TaskTextGutter extends LineMarkerInfo.LineMarkerGutterIconRenderer 
   @NotNull
   @Override
   public Icon getIcon() {
-    return IconLoader.getIcon("/icons/gutter.png");
+    return CourseCreatorIcons.Gutter;
   }
 
   @Override

@@ -14,8 +14,6 @@
     <!-- Add your actions here -->
   </actions>
 
-  <resource-bundle>com.intellij.json.JsonBundle</resource-bundle>
-
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
@@ -40,6 +38,7 @@
     <lang.surroundDescriptor language="JSON" implementationClass="com.intellij.json.surroundWith.JsonSurroundDescriptor"/>
     <lang.findUsagesProvider language="JSON" implementationClass="com.intellij.json.findUsages.JsonFindUsagesProvider"/>
     <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
+    <liveTemplateContext implementation="com.intellij.json.JsonContextType"/>
 
     <!-- Annotators -->
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
@@ -47,6 +46,7 @@
     <!-- Inspections -->
     <localInspection language="JSON" groupPath="JSON" shortName="JsonStandardCompliance" key="name.standard.compliance.inspection"
                      groupKey="name.json.inspection.group" enabledByDefault="true" level="ERROR"
+                     bundle="com.intellij.json.JsonBundle"
                      implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
 
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"

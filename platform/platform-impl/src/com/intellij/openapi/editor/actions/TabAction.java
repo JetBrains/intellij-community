@@ -24,7 +24,6 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,11 +32,13 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,19 +81,19 @@ public class TabAction extends EditorAction {
       columnNumber = editor.getCaretModel().getLogicalPosition().column;
     }
 
-    CodeStyleFacade settings = CodeStyleFacade.getInstance(project);
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
 
     final Document doc = editor.getDocument();
-    VirtualFile vFile = FileDocumentManager.getInstance().getFile(doc);
-    final FileType fileType = vFile == null ? null : vFile.getFileType();
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(doc);
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(file);
 
-    int tabSize = settings.getIndentSize(fileType);
+    int tabSize = indentOptions.INDENT_SIZE;
     int spacesToAddCount = tabSize - columnNumber % Math.max(1,tabSize);
 
     boolean useTab = editor.getSettings().isUseTabCharacter(project);
 
     CharSequence chars = doc.getCharsSequence();
-    if (useTab && settings.isSmartTabs(fileType)) {
+    if (useTab && indentOptions.SMART_TABS) {
       int offset = editor.getCaretModel().getOffset();
       while (offset > 0) {
         offset--;

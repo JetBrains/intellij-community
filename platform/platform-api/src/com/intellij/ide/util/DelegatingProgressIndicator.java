@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  *         Date: Jul 12, 2007
  */
-public class DelegatingProgressIndicator implements WrappedProgressIndicator {
+public class DelegatingProgressIndicator implements WrappedProgressIndicator, StandardProgressIndicator {
   private final ProgressIndicator myIndicator;
 
   public DelegatingProgressIndicator(@NotNull ProgressIndicator indicator) {
@@ -51,12 +51,12 @@ public class DelegatingProgressIndicator implements WrappedProgressIndicator {
   }
 
   @Override
-  public void cancel() {
+  public final void cancel() {
     myIndicator.cancel();
   }
 
   @Override
-  public boolean isCanceled() {
+  public final boolean isCanceled() {
     return myIndicator.isCanceled();
   }
 
@@ -137,7 +137,7 @@ public class DelegatingProgressIndicator implements WrappedProgressIndicator {
   }
 
   @Override
-  public void checkCanceled() throws ProcessCanceledException {
+  public final void checkCanceled() throws ProcessCanceledException {
     myIndicator.checkCanceled();
   }
 

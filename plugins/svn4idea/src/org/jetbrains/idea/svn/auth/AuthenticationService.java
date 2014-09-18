@@ -81,13 +81,6 @@ public class AuthenticationService {
     return myIsActive;
   }
 
-  public boolean authenticateFor(@Nullable String realm, SVNURL repositoryUrl, boolean passwordRequest) {
-    if (repositoryUrl == null) {
-      return false;
-    }
-    return new CredentialsAuthenticator(this, repositoryUrl, realm).tryAuthenticate(passwordRequest);
-  }
-
   @Nullable
   public SVNAuthentication requestCredentials(final SVNURL repositoryUrl, final String type) {
     SVNAuthentication authentication = null;

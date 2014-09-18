@@ -25,7 +25,7 @@ public class ConfigProjectComponent implements ProjectComponent {
     // Register project-level config managers
     MessageBus bus = project.getMessageBus();
     codeStyleManager = new CodeStyleManager(project);
-    EditorSettingsManager editorSettingsManager = new EditorSettingsManager();
+    EditorSettingsManager editorSettingsManager = new EditorSettingsManager(project);
     EncodingManager encodingManager = new EncodingManager(project);
     LineEndingsManager lineEndingsManager = new LineEndingsManager(project);
     bus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, codeStyleManager);

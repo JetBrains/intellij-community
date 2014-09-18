@@ -44,9 +44,9 @@ public class UploadApplicationAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     if (project != null) {
-      final List<Artifact> artifacts = AppEngineUtil.collectWebArtifacts(project, true);
+      final List<Artifact> artifacts = AppEngineUtil.collectAppEngineArtifacts(project, true);
       if (artifacts.isEmpty()) {
-        Messages.showErrorDialog(project, "No Web artifacts with AppEngine found in the project", CommonBundle.getErrorTitle());
+        Messages.showErrorDialog(project, "No Web or EAR artifacts with AppEngine found in the project", CommonBundle.getErrorTitle());
         return;
       }
       Artifact artifact;

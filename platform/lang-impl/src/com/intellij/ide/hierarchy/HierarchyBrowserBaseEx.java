@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.PsiCopyPasteManager;
-import com.intellij.ide.dnd.DnDAction;
-import com.intellij.ide.dnd.DnDDragStartBean;
-import com.intellij.ide.dnd.DnDManager;
-import com.intellij.ide.dnd.DnDSource;
+import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
-import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
@@ -35,7 +31,6 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -82,7 +77,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   private boolean myCachedIsValidBase = false;
 
-  private final HashMap<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<String, OccurenceNavigator>();
+  private final Map<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<String, OccurenceNavigator>();
 
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
     @Override
@@ -743,13 +738,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           selectScope(SCOPE_ALL);
         }
       }
-    }
-  }
-
-  // will throw PCE during update when canceled
-  public void setProgressIndicator(@NotNull ProgressIndicator indicator) {
-    for (HierarchyTreeBuilder builder : myBuilders.values()) {
-      builder.setProgressIndicator(indicator);
     }
   }
 }

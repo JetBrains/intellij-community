@@ -19,6 +19,7 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.*;
@@ -37,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -209,7 +211,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
         Color groupFg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getLabelDisabledForeground();
 
-        Object value = ((MatchedValue) matchedValue).value;
+        final Object value = ((MatchedValue) matchedValue).value;
         String pattern = ((MatchedValue)matchedValue).pattern;
 
         SimpleColoredComponent nameComponent = new SimpleColoredComponent();
@@ -261,10 +263,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
           panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
 
-          final JLabel settingsLabel = new JLabel(getGroupName((OptionDescription)value));
-          settingsLabel.setForeground(groupFg);
-          settingsLabel.setBackground(bg);
-          panel.add(settingsLabel, BorderLayout.EAST);
+          if (value instanceof BooleanOptionDescription) {
+            final OnOffButton button = new OnOffButton();
+            button.setSelected(((BooleanOptionDescription)value).isOptionEnabled());
+            panel.add(button, BorderLayout.EAST);
+          } else {
+            final JLabel settingsLabel = new JLabel(getGroupName((OptionDescription)value));
+            settingsLabel.setForeground(groupFg);
+            settingsLabel.setBackground(bg);
+            panel.add(settingsLabel, BorderLayout.EAST);
+          }
         }
         return panel;
       }

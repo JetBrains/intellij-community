@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
@@ -42,7 +43,7 @@ import java.util.regex.PatternSyntaxException;
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
   
   private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettings.class.getName());
-  
+
   private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
 
   @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
@@ -129,28 +130,29 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   private void copyCustomSettingsFrom(@NotNull CodeStyleSettings from) {
     synchronized (myCustomSettings) {
       myCustomSettings.clear();
+
+      for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
+        addCustomSettings((CustomCodeStyleSettings)settings.clone());
+      }
+
+      FIELD_TYPE_TO_NAME.copyFrom(from.FIELD_TYPE_TO_NAME);
+      STATIC_FIELD_TYPE_TO_NAME.copyFrom(from.STATIC_FIELD_TYPE_TO_NAME);
+      PARAMETER_TYPE_TO_NAME.copyFrom(from.PARAMETER_TYPE_TO_NAME);
+      LOCAL_VARIABLE_TYPE_TO_NAME.copyFrom(from.LOCAL_VARIABLE_TYPE_TO_NAME);
+
+      PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+      IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
+
+      OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
+
+      myAdditionalIndentOptions.clear();
+      for (Map.Entry<FileType, IndentOptions> optionEntry : from.myAdditionalIndentOptions.entrySet()) {
+        IndentOptions options = optionEntry.getValue();
+        myAdditionalIndentOptions.put(optionEntry.getKey(), (IndentOptions)options.clone());
+      }
+
+      myCommonSettingsManager = from.myCommonSettingsManager.clone(this);
     }
-    for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
-      addCustomSettings((CustomCodeStyleSettings) settings.clone());
-    }
-
-    FIELD_TYPE_TO_NAME.copyFrom(from.FIELD_TYPE_TO_NAME);
-    STATIC_FIELD_TYPE_TO_NAME.copyFrom(from.STATIC_FIELD_TYPE_TO_NAME);
-    PARAMETER_TYPE_TO_NAME.copyFrom(from.PARAMETER_TYPE_TO_NAME);
-    LOCAL_VARIABLE_TYPE_TO_NAME.copyFrom(from.LOCAL_VARIABLE_TYPE_TO_NAME);
-
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
-    IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
-
-    OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
-
-    myAdditionalIndentOptions.clear();
-    for(Map.Entry<FileType, IndentOptions> optionEntry: from.myAdditionalIndentOptions.entrySet()) {
-      IndentOptions options = optionEntry.getValue();
-      myAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)options.clone());
-    }
-    
-    myCommonSettingsManager = from.myCommonSettingsManager.clone(this);
   }
 
   public void copyFrom(CodeStyleSettings from) {
@@ -657,6 +659,29 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     if (indentOptions != null) return indentOptions;
 
     return OTHER_INDENT_OPTIONS;
+  }
+
+  @NotNull
+  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file) {
+    return getIndentOptionsByFile(file, false);
+  }
+
+  @NotNull
+  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, boolean ignoreDocOptions) {
+    if (file != null && file.isValid()) {
+      if (!ignoreDocOptions) {
+        IndentOptions docOptions = IndentOptions.retrieveFromAssociatedDocument(file);
+        if (docOptions != null) return docOptions;
+      }
+      FileIndentOptionsProvider[] providers = Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME);
+      for (FileIndentOptionsProvider provider : providers) {
+        IndentOptions indentOptions = provider.getIndentOptions(file);
+        if (indentOptions != null) return indentOptions;
+      }
+      return getIndentOptions(file.getFileType());
+    }
+    else
+      return OTHER_INDENT_OPTIONS;
   }
   
   @Nullable

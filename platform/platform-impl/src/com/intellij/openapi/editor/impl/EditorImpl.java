@@ -70,6 +70,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
@@ -307,10 +309,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private CaretImpl myPrimaryCaret;
 
+  private final boolean myDisableRtl = Registry.is("editor.disable.rtl");
+
   private final TIntFunction myLineNumberAreaWidthFunction = new TIntFunction() {
     @Override
     public int execute(int lineNumber) {
-      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 2)) + 6;
+      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1)) + 6;
     }
   };
 
@@ -701,6 +705,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     clearTextWidthCache();
 
+    reinitDocumentIndentOptions();
+
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
 
     mySettings.reinitSettings();
@@ -750,6 +756,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // make sure carets won't appear at invalid positions (e.g. on Tab width change)
     for (Caret caret : getCaretModel().getAllCarets()) {
       caret.moveToOffset(caret.getOffset());
+    }
+  }
+
+  private void reinitDocumentIndentOptions() {
+    if (myProject != null && !myProject.isDisposed()) {
+      CodeStyleSettingsManager.updateDocumentIndentOptions(myProject, myDocument);
     }
   }
 
@@ -2787,6 +2799,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               if (extensions != null && !extensions.isEmpty()) {
                 for (LineExtensionInfo info : extensions) {
                   final String text = info.getText();
+                  additionalText += text;
                   drawStringWithSoftWraps(g, text, 0, text.length(), position, clip,
                                           info.getEffectColor() == null ? effectColor : info.getEffectColor(),
                                           info.getEffectType() == null ? effectType : info.getEffectType(),
@@ -2968,7 +2981,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final Color lastColor = color[lastCount];
         if (_data == myLastData && _start == ends[lastCount] && (_color == null || lastColor == null || _color.equals(lastColor))
             && _y == y[lastCount] /* there is a possible case that vertical position is adjusted because of soft wrap */
-            && (!myHasBreakSymbols || !myFontType.getSymbolsToBreakDrawingIteration().contains(_data.charAt(ends[lastCount] - 1)))) {
+            && (!myHasBreakSymbols || !myFontType.getSymbolsToBreakDrawingIteration().contains(_data.charAt(ends[lastCount] - 1)))
+            && (!myDisableRtl || _start < 1 || _start >= _data.length() || !isRtlCharacter(_data.charAt(_start)) && !isRtlCharacter(_data.charAt(_start - 1)))) {
           ends[lastCount] = _end;
           if (lastColor == null) color[lastCount] = _color;
           return;
@@ -2988,6 +3002,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         flushContent(g);
       }
     }
+  }
+
+  private static boolean isRtlCharacter(char c) {
+    byte directionality = Character.getDirectionality(c);
+    return directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT
+           || directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC
+           || directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT_EMBEDDING
+           || directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT_OVERRIDE;
   }
 
   private void flushCachedChars(@NotNull Graphics g) {
@@ -3342,6 +3364,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           return endX;
         }
 
+        final int charWidth = font.charWidth(c);
+
+        if (myDisableRtl && isRtlCharacter(c)) {
+          if (j > start && !(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
+            drawCharsCached(g, text, start, j, x, y, fontType, fontColor);
+          }
+          x = endX;
+          endX += charWidth;
+          if (!(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
+            drawCharsCached(g, text, j, j + 1, x, y, fontType, fontColor);
+          }
+          x = endX;
+          start = j + 1;
+          continue;
+        }
         // We experienced the following situation:
         //   * the editor was configured to use monospaced font;
         //   * the document contained either english or russian symbols;
@@ -3349,7 +3386,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         //   * the fonts mentioned above have different space width;
         // So, the problem was when white space followed russian word - the white space width was calculated using the english font
         // but drawn using the russian font, so, there was a visual inconsistency at the editor.
-        final int charWidth = font.charWidth(c);
         if (c == ' '
             && myCommonSpaceWidth > 0
             && myLastCache != null

@@ -45,7 +45,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -86,7 +85,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private final OptionsTree myTree;
   private final SettingsTreeView myTreeView;
-  private final SearchTextField mySearch;
+  private final SettingsSearch mySearch;
   private final Splitter myMainSplitter;
   //[back/forward] JComponent myToolbarComponent;
 
@@ -113,37 +112,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private final PropertiesComponent myProperties;
   private volatile boolean myDisposed;
 
-  private final KeyListener myTreeKeyListener = new KeyListener() {
-    @Override
-    public void keyPressed(KeyEvent event) {
-      keyTyped(event);
-    }
-
-    @Override
-    public void keyReleased(KeyEvent event) {
-      keyTyped(event);
-    }
-
-    @Override
-    public void keyTyped(KeyEvent event) {
-      Object source = event.getSource();
-      if (source instanceof JTree) {
-        JTree tree = (JTree)source;
-        if (tree.getInputMap().get(KeyStroke.getKeyStrokeForEvent(event)) == null) {
-          myFilter.myDocumentWasChanged = false;
-          try {
-            mySearch.keyEventToTextField(event);
-          }
-          finally {
-            if (myFilter.myDocumentWasChanged && !isFilterFieldVisible()) {
-              setFilterFieldVisible(true, false, false);
-            }
-          }
-        }
-      }
-    }
-  };
-
   final Settings mySettings;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
@@ -156,7 +124,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
     };
 
-    mySearch = new MySearchField() {
+    mySearch = new SettingsSearch() {
       @Override
       protected void onTextKeyEvent(final KeyEvent e) {
         if (myTreeView != null) {
@@ -166,7 +134,32 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           myTree.processTextEvent(e);
         }
       }
+
+      @Override
+      void delegateKeyEvent(KeyEvent event) {
+        myFilter.myDocumentWasChanged = false;
+        try {
+          super.delegateKeyEvent(event);
+        }
+        finally {
+          if (myFilter.myDocumentWasChanged && !isFilterFieldVisible()) {
+            setFilterFieldVisible(true, false, false);
+          }
+        }
+      }
     };
+    if (Registry.is("ide.new.settings.dialog")) {
+      final JTextField editor = mySearch.getTextEditor();
+      if (!SystemInfo.isMac) {
+        editor.putClientProperty("JTextField.variant", "search");
+        if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
+          editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
+          editor.setBorder(new DarculaTextBorder());
+        }
+      }
+      mySearch.setBackground(UIUtil.getSidePanelColor());
+      mySearch.setBorder(new EmptyBorder(5, 10, 2, 10));
+    }
 
     myFilter = new SettingsFilter(project, groups, mySearch) {
       @Override
@@ -204,13 +197,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     if (Registry.is("ide.new.settings.dialog")) {
       myTreeView = new SettingsTreeView(myFilter, groups);
-      myTreeView.myTree.addKeyListener(myTreeKeyListener);
+      myTreeView.myTree.addKeyListener(mySearch);
       myTree = null;
     }
     else {
       myTreeView = null;
       myTree = new OptionsTree(myFilter, groups);
-      myTree.addKeyListener(myTreeKeyListener);
+      myTree.addKeyListener(mySearch);
     }
 
     getContext().addColleague(myTreeView != null ? myTreeView : myTree);
@@ -1017,71 +1010,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private boolean isPopupOverEditor(Component c) {
     final Window wnd = SwingUtilities.getWindowAncestor(c);
     return (wnd instanceof JWindow || wnd instanceof JDialog && ((JDialog)wnd).getModalityType() == Dialog.ModalityType.MODELESS) && myWindow != null && wnd.getParent() == myWindow;
-  }
-
-  private static class MySearchField extends SearchTextField {
-
-    private boolean myDelegatingNow;
-
-    private MySearchField() {
-      super(false);
-      addKeyListener(new KeyAdapter() {});
-      if (Registry.is("ide.new.settings.dialog")) {
-        final JTextField editor = getTextEditor();
-        if (!SystemInfo.isMac) {
-          editor.putClientProperty("JTextField.variant", "search");
-          if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
-            editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
-            editor.setBorder(new DarculaTextBorder());
-          }
-        }
-        setBackground(UIUtil.getSidePanelColor());
-        setBorder(new EmptyBorder(5, 10, 2, 10));
-      }
-    }
-
-    @Override
-    protected boolean isSearchControlUISupported() {
-      return true;
-    }
-
-    @Override
-    protected boolean preprocessEventForTextField(final KeyEvent e) {
-      final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
-      if (!myDelegatingNow) {
-        if ("pressed ESCAPE".equals(stroke.toString()) && getText().length() > 0) {
-          setText(""); // reset filter on ESC
-          return true;
-        }
-
-        if (getTextEditor().isFocusOwner()) {
-          try {
-            myDelegatingNow = true;
-            boolean treeNavigation =
-              stroke.getModifiers() == 0 && (stroke.getKeyCode() == KeyEvent.VK_UP || stroke.getKeyCode() == KeyEvent.VK_DOWN);
-
-            if ("pressed ENTER".equals(stroke.toString())) {
-              return true; // avoid closing dialog on ENTER
-            }
-
-            final Object action = getTextEditor().getInputMap().get(stroke);
-            if (action == null || treeNavigation) {
-              onTextKeyEvent(e);
-              return true;
-            }
-          }
-          finally {
-            myDelegatingNow = false;
-          }
-        }
-      }
-      return false;
-    }
-
-
-    protected void onTextKeyEvent(final KeyEvent e) {
-
-    }
   }
 
   private class SpotlightPainter extends AbstractPainter {

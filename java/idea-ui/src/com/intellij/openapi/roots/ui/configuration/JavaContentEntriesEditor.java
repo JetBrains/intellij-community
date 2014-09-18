@@ -28,9 +28,10 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.SwingWorker;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
@@ -72,14 +73,14 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     return contentEntries;
   }
 
-  private static void addSourceRoots(final Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
+  private static void addSourceRoots(@NotNull Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
     final HashMap<ContentEntry, Collection<JavaModuleSourceRoot>> entryToRootMap = new HashMap<ContentEntry, Collection<JavaModuleSourceRoot>>();
     final Map<File, ContentEntry> fileToEntryMap = new HashMap<File, ContentEntry>();
     for (final ContentEntry contentEntry : contentEntries) {
       final VirtualFile file = contentEntry.getFile();
       if (file != null) {
         entryToRootMap.put(contentEntry, null);
-        fileToEntryMap.put(VfsUtil.virtualToIoFile(file), contentEntry);
+        fileToEntryMap.put(VfsUtilCore.virtualToIoFile(file), contentEntry);
       }
     }
 
@@ -113,7 +114,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
             for (final JavaModuleSourceRoot suggestedRoot : suggestedRoots) {
               final VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByIoFile(suggestedRoot.getDirectory());
               final VirtualFile fileContent = contentEntry.getFile();
-              if (sourceRoot != null && fileContent != null && VfsUtil.isAncestor(fileContent, sourceRoot, false)) {
+              if (sourceRoot != null && fileContent != null && VfsUtilCore.isAncestor(fileContent, sourceRoot, false)) {
                 contentEntry.addSourceFolder(sourceRoot, false, suggestedRoot.getPackagePrefix());
               }
             }

@@ -55,8 +55,9 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
+  private boolean myShouldRepaint = false;
 
-  public PushLog(Project project, CheckedTreeNode root) {
+  public PushLog(Project project, final CheckedTreeNode root) {
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     treeModel.nodeStructureChanged(root);
     myTreeCellRenderer = new MyTreeCellRenderer();
@@ -97,7 +98,19 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
           InputVerifier verifier = editedComponent.getInputVerifier();
           if (verifier != null && !verifier.verify(editedComponent)) return false;
         }
-        return super.stopEditing();
+        boolean result = super.stopEditing();
+        if (myShouldRepaint) {
+          refreshNode(root);
+        }
+        return result;
+      }
+
+      @Override
+      public void cancelEditing() {
+        super.cancelEditing();
+        if (myShouldRepaint) {
+          refreshNode(root);
+        }
       }
     };
     myTree.setEditable(true);
@@ -121,7 +134,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
     });
     myTree.setRootVisible(false);
-    TreeUtil.expandAll(myTree);
+    TreeUtil.collapseAll(myTree, 1);
     final VcsBranchEditorListener linkMouseListener = new VcsBranchEditorListener(myTreeCellRenderer);
     linkMouseListener.installOn(myTree);
 
@@ -292,26 +305,45 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  public void setChildren(DefaultMutableTreeNode parentNode, @NotNull Collection<? extends DefaultMutableTreeNode> childrenNodes) {
-    setChildren(parentNode, childrenNodes, true);
-  }
-
-  public void setChildren(DefaultMutableTreeNode parentNode,
-                          @NotNull Collection<? extends DefaultMutableTreeNode> childrenNodes,
-                          boolean shouldExpand) {
+  public void setChildren(@NotNull DefaultMutableTreeNode parentNode,
+                          @NotNull Collection<? extends DefaultMutableTreeNode> childrenNodes) {
     parentNode.removeAllChildren();
     for (DefaultMutableTreeNode child : childrenNodes) {
       parentNode.add(child);
     }
-    final DefaultTreeModel model = ((DefaultTreeModel)myTree.getModel());
-    model.nodeStructureChanged(parentNode);
-    TreePath path = TreeUtil.getPathFromRoot(parentNode);
-    if (shouldExpand) {
-      myTree.expandPath(path);
+    if (!myTree.isEditing()) {
+      refreshNode(parentNode);
     }
     else {
-      myTree.collapsePath(path);
+      myShouldRepaint = true;
     }
   }
 
+  private void refreshNode(@NotNull DefaultMutableTreeNode parentNode) {
+    //todo should be optimized in case of start loading just edited node
+    final DefaultTreeModel model = ((DefaultTreeModel)myTree.getModel());
+    model.nodeStructureChanged(parentNode);
+    expandSelected(parentNode);
+    myShouldRepaint = false;
+  }
+
+  private void expandSelected(@NotNull DefaultMutableTreeNode node) {
+    if (node.getChildCount() <= 0) return;
+    if (node instanceof RepositoryNode) {
+      TreePath path = TreeUtil.getPathFromRoot(node);
+      if (((RepositoryNode)node).isChecked()) {
+        myTree.expandPath(path);
+      }
+      return;
+    }
+    for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)node.getFirstChild();
+         childNode != null;
+         childNode = (DefaultMutableTreeNode)node.getChildAfter(childNode)) {
+      if (!(childNode instanceof RepositoryNode)) return;
+      TreePath path = TreeUtil.getPathFromRoot(childNode);
+      if (((RepositoryNode)childNode).isChecked()) {
+        myTree.expandPath(path);
+      }
+    }
+  }
 }

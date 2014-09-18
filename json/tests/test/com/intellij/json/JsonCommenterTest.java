@@ -18,6 +18,14 @@ public class JsonCommenterTest extends JsonTestCase {
     doTest(IdeActions.ACTION_COMMENT_LINE);
   }
 
+  public void testLineComment2() {
+    doTest(IdeActions.ACTION_COMMENT_LINE);
+  }
+
+  public void testLineComment3() {
+    doTest(IdeActions.ACTION_COMMENT_LINE);
+  }
+
   public void testBlockComment() {
     doTest(IdeActions.ACTION_COMMENT_BLOCK);
   }

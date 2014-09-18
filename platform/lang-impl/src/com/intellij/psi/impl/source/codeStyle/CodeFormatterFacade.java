@@ -129,7 +129,7 @@ public class CodeFormatterFacade {
       if (file.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(
-            model, mySettings,mySettings.getIndentOptions(fileToFormat.getFileType()), new FormatTextRanges(range, true)
+            model, mySettings,mySettings.getIndentOptionsByFile(fileToFormat), new FormatTextRanges(range, true)
           );
 
           wrapLongLinesIfNecessary(file, document, startOffset, endOffset);
@@ -242,7 +242,7 @@ public class CodeFormatterFacade {
             indentOptions = ((FormattingModelBuilderEx)builder).getIndentOptionsToUse(file, ranges, mySettings);
           }
           if (indentOptions == null) {
-            indentOptions  = mySettings.getIndentOptions(file.getFileType());
+            indentOptions  = mySettings.getIndentOptionsByFile(file);
           }
 
           formatter.format(model, mySettings, indentOptions, ranges);
