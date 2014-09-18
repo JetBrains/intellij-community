@@ -16,9 +16,12 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.util.ReflectionUtil;
@@ -905,6 +908,8 @@ public class CommonCodeStyleSettings {
     public boolean LABEL_INDENT_ABSOLUTE = false;
     public boolean USE_RELATIVE_INDENTS = false;
 
+    private final static Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS");
+
     @Override
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
@@ -975,6 +980,20 @@ public class CommonCodeStyleSettings {
 
     public void copyFrom(IndentOptions other) {
       copyPublicFields(other, this);
+    }
+
+    @Nullable
+    static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+      if (documentManager != null) {
+        Document document = documentManager.getDocument(file);
+        if (document != null) return document.getUserData(INDENT_OPTIONS_KEY);
+      }
+      return null;
+    }
+
+    void associateWithDocument(@NotNull Document document) {
+      document.putUserData(INDENT_OPTIONS_KEY, this);
     }
   }
 }
