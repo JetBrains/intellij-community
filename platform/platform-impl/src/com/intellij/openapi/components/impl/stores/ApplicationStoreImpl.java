@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.Set;
 
 class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ApplicationStoreImpl");
+  private static final Logger LOG = Logger.getInstance(ApplicationStoreImpl.class);
 
   private static final String XML_EXTENSION = ".xml";
   private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
@@ -126,7 +126,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   public String getConfigPath() {
     String configPath = myConfigPath;
     if (configPath == null) {
-      // unreal case, but we keep backward compatibility
+      // unrealistic case, but we keep backward compatibility
       configPath = PathManager.getConfigPath();
     }
     return configPath;
