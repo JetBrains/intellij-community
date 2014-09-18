@@ -250,7 +250,10 @@ public class CompilerTester {
           CompilerMessage[] messages = compileContext.getMessages(category);
           for (CompilerMessage message : messages) {
             final String text = message.getMessage();
-            if (category != CompilerMessageCategory.INFORMATION || !(text.contains("Compilation completed successfully") || text.startsWith("Using javac"))) {
+            if (category != CompilerMessageCategory.INFORMATION ||
+                !(text.contains("Compilation completed successfully") ||
+                  text.startsWith("Using javac") ||
+                  text.startsWith("Using Groovy-Eclipse"))) {
               myMessages.add(message);
             }
           }
