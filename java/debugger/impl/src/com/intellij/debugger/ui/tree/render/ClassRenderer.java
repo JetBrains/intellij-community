@@ -197,7 +197,7 @@ public class ClassRenderer extends NodeRendererImpl{
     return nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field);
   }
 
-  private boolean shouldDisplay(EvaluationContext context, @NotNull ObjectReference objInstance, @NotNull Field field) {
+  protected boolean shouldDisplay(EvaluationContext context, @NotNull ObjectReference objInstance, @NotNull Field field) {
     final boolean isSynthetic = DebuggerUtils.isSynthetic(field);
     if (!SHOW_SYNTHETICS && isSynthetic) {
       return false;
