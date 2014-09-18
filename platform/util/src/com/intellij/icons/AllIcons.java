@@ -27,6 +27,7 @@ public class AllIcons {
   
   public static class Actions {
     public static final Icon AddFacesSupport = IconLoader.getIcon("/actions/addFacesSupport.png"); // 16x16
+    public static final Icon AddMulticaret = IconLoader.getIcon("/actions/AddMulticaret.png"); // 16x16
     public static final Icon AllLeft = IconLoader.getIcon("/actions/allLeft.png"); // 16x16
     public static final Icon AllRight = IconLoader.getIcon("/actions/allRight.png"); // 16x16
     public static final Icon Annotate = IconLoader.getIcon("/actions/annotate.png"); // 16x16
@@ -37,6 +38,7 @@ public class AllIcons {
     public static final Icon Checked_selected = IconLoader.getIcon("/actions/checked_selected.png"); // 12x12
     public static final Icon Checked_small = IconLoader.getIcon("/actions/checked_small.png"); // 11x11
     public static final Icon Checked_small_selected = IconLoader.getIcon("/actions/checked_small_selected.png"); // 11x11
+    public static final Icon CheckMulticaret = IconLoader.getIcon("/actions/CheckMulticaret.png"); // 16x16
     public static final Icon CheckOut = IconLoader.getIcon("/actions/checkOut.png"); // 16x16
     public static final Icon Clean = IconLoader.getIcon("/actions/clean.png"); // 16x16
     public static final Icon CleanLight = IconLoader.getIcon("/actions/cleanLight.png"); // 16x16
@@ -122,6 +124,7 @@ public class AllIcons {
     public static final Icon Redo = IconLoader.getIcon("/actions/redo.png"); // 16x16
     public static final Icon RefactoringBulb = IconLoader.getIcon("/actions/refactoringBulb.png"); // 16x16
     public static final Icon Refresh = IconLoader.getIcon("/actions/refresh.png"); // 16x16
+    public static final Icon RemoveMulticaret = IconLoader.getIcon("/actions/RemoveMulticaret.png"); // 16x16
     public static final Icon Replace = IconLoader.getIcon("/actions/replace.png"); // 16x16
     public static final Icon Rerun = IconLoader.getIcon("/actions/rerun.png"); // 16x16
     public static final Icon Reset_to_default = IconLoader.getIcon("/actions/reset-to-default.png"); // 16x16

@@ -29,7 +29,7 @@ public class RemoveOccurrenceAction extends EditorHeaderAction implements DumbAw
     super(editorSearchComponent);
 
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE));
-    getTemplatePresentation().setIcon(AllIcons.General.Remove);
+    getTemplatePresentation().setIcon(AllIcons.Actions.RemoveMulticaret);
 
     registerShortcutsForComponent(Arrays.asList(getShortcutSet().getShortcuts()), editorSearchComponent.getSearchField());
   }
