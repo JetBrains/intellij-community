@@ -375,7 +375,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   }
   
   static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, PsiType type, Set<PsiClass> visited) {
-    PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(element, true, null);
+    PsiAnnotation[] annotations = getAllAnnotations(element);
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : annotations) {
       AllowedValues values;
@@ -396,6 +396,17 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     }
 
     return parseBeanInfo(element, manager);
+  }
+
+  private static PsiAnnotation[] getAllAnnotations(final PsiModifierListOwner element) {
+    return CachedValuesManager.getCachedValue(element, new CachedValueProvider<PsiAnnotation[]>() {
+      @Nullable
+      @Override
+      public Result<PsiAnnotation[]> compute() {
+        return Result.create(AnnotationUtil.getAllAnnotations(element, true, null),
+                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
   }
 
   private static AllowedValues parseBeanInfo(@NotNull PsiModifierListOwner owner, @NotNull PsiManager manager) {
