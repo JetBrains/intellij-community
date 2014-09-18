@@ -1,5 +1,6 @@
 package org.jetbrains.debugger.values;
 
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,5 +40,13 @@ public abstract class ValueManager {
 
   public final void markObsolete() {
     obsolete = true;
+  }
+
+  public final boolean rejectIfObsolete(@NotNull ActionCallback result) {
+    if (isObsolete()) {
+      result.reject("Obsolete context");
+      return true;
+    }
+    return false;
   }
 }
