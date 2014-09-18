@@ -18,7 +18,7 @@ public final class TextViewer extends EditorTextField {
   }
 
   public TextViewer(@NotNull String initialText, @NotNull Project project) {
-    this(createDocument(initialText), project, false, false);
+    this(createDocument(initialText), project, false, true);
   }
 
   public TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, boolean useSoftWraps) {
