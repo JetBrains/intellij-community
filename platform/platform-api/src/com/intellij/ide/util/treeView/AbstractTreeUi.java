@@ -18,6 +18,7 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -238,6 +239,14 @@ public class AbstractTreeUi {
     setUpdater(getBuilder().createUpdater());
     myProgress = getBuilder().createProgressIndicator();
     Disposer.register(getBuilder(), getUpdater());
+    if (myProgress != null) {
+      Disposer.register(getBuilder(), new Disposable() {
+        @Override
+        public void dispose() {
+          myProgress.cancel();
+        }
+      });
+    }
 
     final UiNotifyConnector uiNotify = new UiNotifyConnector(tree, new Activatable() {
       @Override
@@ -5111,5 +5120,4 @@ public class AbstractTreeUi {
       }
     });
   }
-
 }

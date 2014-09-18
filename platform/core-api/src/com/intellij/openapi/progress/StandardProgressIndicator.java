@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.concurrency;
-
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWrapper;
-import org.jetbrains.annotations.NotNull;
+package com.intellij.openapi.progress;
 
 /**
- * Progress indicator wrapper which reacts to its own cancellation in addition to the cancellation of its wrappee.
+ * Marker interface which means this indicator cancellation behaves in a standard way:
+ * - checkCanceled() checks for isCanceled() and throws PCE if returned true
+ * - cancel() sets the corresponding flag
+ * - isCanceled() is true after cancel() call
+ * - all methods above are final
  */
-public class SensitiveProgressWrapper extends ProgressWrapper {
-  public SensitiveProgressWrapper(@NotNull ProgressIndicator indicator) {
-    super(indicator, true);
-  }
-
+public interface StandardProgressIndicator extends ProgressIndicator {
 }

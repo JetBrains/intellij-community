@@ -76,39 +76,27 @@ public class ProgressManagerImpl extends ProgressManager {
     }
   }
 
-  private static class NonCancelableIndicator extends EmptyProgressIndicator implements NonCancelableSection {
-    private final ProgressIndicator myOld;
-
-    private NonCancelableIndicator() {
-      myOld = myThreadIndicator.get();
-    }
-
-    @Override
-    public void done() {
-      ProgressIndicator currentIndicator = myThreadIndicator.get();
-      if (currentIndicator != this) {
-        throw new AssertionError("Trying do .done() NonCancelableSection, which is already done");
-      }
-
-      myThreadIndicator.set(myOld);
-    }
-
-    @Override
-    public void checkCanceled() {
-    }
-  }
-
   @NotNull
   @Override
   public final NonCancelableSection startNonCancelableSection() {
-    NonCancelableIndicator nonCancelor = new NonCancelableIndicator();
+    NonCancelableIndicator nonCancelor = createNonCancelableIndicator();
     myThreadIndicator.set(nonCancelor);
     return nonCancelor;
   }
 
   @Override
   public void executeNonCancelableSection(@NotNull Runnable runnable) {
-    executeProcessUnderProgress(runnable, new NonCancelableIndicator());
+    executeProcessUnderProgress(runnable, createNonCancelableIndicator());
+  }
+
+  @NotNull
+  private static NonCancelableIndicator createNonCancelableIndicator() {
+    return new NonCancelableIndicator(){
+      @Override
+      public void done() {
+        myThreadIndicator.set(myOld);
+      }
+    };
   }
 
   @Override
@@ -116,7 +104,7 @@ public class ProgressManagerImpl extends ProgressManager {
     ProgressIndicator progressIndicator = getProgressIndicator();
     if (progressIndicator != null) {
       if (progressIndicator instanceof SmoothProgressAdapter && cancelButtonText != null) {
-        ProgressIndicator original = ((SmoothProgressAdapter)progressIndicator).getOriginal();
+        ProgressIndicator original = ((SmoothProgressAdapter)progressIndicator).getOriginalProgressIndicator();
         if (original instanceof ProgressWindow) {
           ((ProgressWindow)original).setCancelButtonText(cancelButtonText);
         }
