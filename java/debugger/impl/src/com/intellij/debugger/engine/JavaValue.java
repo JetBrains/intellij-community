@@ -84,7 +84,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   static JavaValue create(JavaValue parent,
                           @NotNull ValueDescriptorImpl valueDescriptor,
-                          EvaluationContextImpl evaluationContext,
+                          @NotNull EvaluationContextImpl evaluationContext,
                           NodeManagerImpl nodeManager,
                           boolean contextSet) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -92,7 +92,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   static JavaValue create(@NotNull ValueDescriptorImpl valueDescriptor,
-                          EvaluationContextImpl evaluationContext,
+                          @NotNull EvaluationContextImpl evaluationContext,
                           NodeManagerImpl nodeManager) {
     return create(null, valueDescriptor, evaluationContext, nodeManager, false);
   }
