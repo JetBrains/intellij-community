@@ -276,13 +276,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     try {
       final String output = getHelperResult(PACKAGING_TOOL, Arrays.asList("list"), false, false, null);
       myPackagesCache = parsePackagingToolOutput(output);
-      Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
-        @Override
-        public int compare(@NotNull PyPackage pkg1, @NotNull PyPackage pkg2) {
-          return pkg1.getName().compareTo(pkg2.getName());
-        }
-      });
-
       calculateDependents();
     }
     catch (PyExternalProcessException e) {
