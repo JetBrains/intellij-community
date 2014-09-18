@@ -31,6 +31,8 @@ import com.intellij.util.CommonProcessors;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
+
 /**
  * @author nik
  */
@@ -50,19 +52,22 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
     new WriteAction() {
       @Override
       protected void run(final Result result) {
-        addAppEngineSupport(myProjectFixture.getModule(), DEFAULT_VERSION);
+        addAppEngineSupport(myProjectFixture.getModule());
       }
     }.execute();
   }
 
   protected abstract String getBaseDirectoryPath();
 
-  private void addAppEngineSupport(Module module, String version) {
+  private void addAppEngineSupport(Module module) {
     final AppEngineFacet appEngine = FacetManager.getInstance(module).addFacet(AppEngineFacet.getFacetType(), "AppEngine", null);
-    final String sdkPath = FileUtil.toSystemIndependentName(getTestDataPath()) + "sdk/" + version;
-    appEngine.getConfiguration().setSdkHomePath(sdkPath);
+    appEngine.getConfiguration().setSdkHomePath(getSdkPath());
 
-    ModuleRootModificationUtil.addModuleLibrary(module, VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, sdkPath) + "/lib/user/orm/jdo.jar!/");
+    ModuleRootModificationUtil.addModuleLibrary(module, VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, getSdkPath()) + "/lib/user/orm/jdo.jar!/");
+  }
+
+  public static String getSdkPath() {
+    return FileUtil.toSystemIndependentName(new File(getTestDataPath(), "sdk/" + DEFAULT_VERSION).getAbsolutePath());
   }
 
   @Override
@@ -72,7 +77,7 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
   }
 
   protected CodeInsightTestFixture createCodeInsightFixture(final String relativeTestDataPath) throws Exception {
-    final String testDataPath = getTestDataPath() + relativeTestDataPath;
+    final String testDataPath = new File(getTestDataPath(), relativeTestDataPath).getAbsolutePath();
     final CodeInsightTestFixture codeInsightFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myProjectFixture);
     codeInsightFixture.setTestDataPath(testDataPath);
     final TempDirTestFixture tempDir = codeInsightFixture.getTempDirFixture();
@@ -91,7 +96,7 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
     return codeInsightFixture;
   }
 
-  private String getTestDataPath() {
-    return PathManagerEx.getHomePath(getClass()) + FileUtil.toSystemDependentName("/plugins/google-app-engine/testData/");
+  private static File getTestDataPath() {
+    return PathManagerEx.findFileUnderCommunityHome("plugins/google-app-engine/testData");
   }
 }

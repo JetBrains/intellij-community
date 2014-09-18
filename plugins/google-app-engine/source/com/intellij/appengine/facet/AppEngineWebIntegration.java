@@ -16,6 +16,7 @@
 package com.intellij.appengine.facet;
 
 import com.intellij.appengine.sdk.AppEngineSdk;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +43,15 @@ public abstract class AppEngineWebIntegration {
   public abstract VirtualFile suggestParentDirectoryForAppEngineWebXml(@NotNull Module module, @NotNull ModifiableRootModel rootModel);
 
   @NotNull
-  public abstract List<ArtifactType> getAppEngineTargetArtifactTypes();
+  public List<ArtifactType> getAppEngineTargetArtifactTypes() {
+    return ContainerUtil.packNullables(getAppEngineWebArtifactType(), getAppEngineApplicationArtifactType());
+  }
+
+  @NotNull
+  public abstract ArtifactType getAppEngineWebArtifactType();
+
+  @Nullable
+  public abstract ArtifactType getAppEngineApplicationArtifactType();
 
   public abstract void setupJpaSupport(@NotNull Module module, @NotNull VirtualFile persistenceXml);
 
@@ -56,5 +66,8 @@ public abstract class AppEngineWebIntegration {
   public abstract List<? extends AppEngineSdk> getSdkForConfiguredDevServers();
 
   public void addDescriptor(@NotNull Artifact artifact, @NotNull Project project, @NotNull VirtualFile descriptor) {
+  }
+
+  public void registerFrameworkInModel(FrameworkSupportModel model, AppEngineFacet appEngineFacet) {
   }
 }
