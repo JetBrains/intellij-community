@@ -39,8 +39,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
     dialog.show();
   }
 
-
-  private class MyDialog extends DialogWrapper {
+  protected class MyDialog extends DialogWrapper {
     public JTable myTable;
     private Project myProject;
     private ArrayTableForm myComponent;
@@ -53,32 +52,36 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
       myProject = project;
 
-      myComponent = new ArrayTableForm();
+      myComponent = new ArrayTableForm(this);
       myTable = myComponent.getTable();
 
       init();
     }
-
 
     public void setValue(XValueNodeImpl node) {
 
       if (node.getValueContainer() instanceof PyDebugValue) {
         PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
         if ("ndarray".equals(debugValue.getType())) {
-          myComponent.setDefaultSpinnerText();
+          myComponent.setDefaultStatus();
           final NumpyArrayValueProvider valueProvider = new NumpyArrayValueProvider(node, myComponent, myProject);
           try {
             valueProvider.startFillTable();
           }
           catch (Exception e) {
-            myComponent.setErrorSpinnerText(e);
+            myComponent.setErrorText(e);
           }
         }
         else {
-          myComponent.setNotApplicableSpinner(node);
+          myComponent.setNotApplicableStatus(node);
           //this.close(CLOSE_EXIT_CODE);
         }
       }
+    }
+
+    public void setError(String text){
+      //todo: think about this usage
+      setErrorText(text);
     }
 
     @Override
