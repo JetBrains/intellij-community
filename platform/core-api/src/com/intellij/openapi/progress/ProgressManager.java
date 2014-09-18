@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -199,6 +200,19 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     }
   }
 
+  private static final Collection<ProgressIndicator> nonStandardIndicators = new ConcurrentHashSet<ProgressIndicator>();
+  protected static void callCheckCancelForNonStandardIndicators() {
+    for (ProgressIndicator indicator : nonStandardIndicators) {
+      try {
+        indicator.checkCanceled();
+      }
+      catch (ProcessCanceledException e) {
+        indicator.cancel();
+      }
+    }
+  }
+
+
   public void executeProcessUnderProgress(@NotNull Runnable process,
                                           @Nullable("null means reuse current progress") ProgressIndicator progress)
     throws ProcessCanceledException {
@@ -221,6 +235,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   private static void registerIndicatorAndRun(@NotNull ProgressIndicator progress, @NotNull Thread currentThread, @NotNull Runnable process) {
     Set<Thread> underIndicator;
     boolean alreadyUnder;
+    boolean addedToPerverse;
     synchronized (threadsUnderIndicator) {
       underIndicator = threadsUnderIndicator.get(progress);
       if (underIndicator == null) {
@@ -228,6 +243,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
         threadsUnderIndicator.put(progress, underIndicator);
       }
       alreadyUnder = !underIndicator.add(currentThread);
+      addedToPerverse = !(progress instanceof StandardProgressIndicator) && nonStandardIndicators.add(progress);
     }
 
     try {
@@ -245,6 +261,9 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
           threadsUnderIndicator.remove(progress);
         }
         threadsUnderCanceledIndicator.remove(currentThread);
+        if (addedToPerverse) {
+          nonStandardIndicators.remove(progress);
+        }
       }
     }
   }

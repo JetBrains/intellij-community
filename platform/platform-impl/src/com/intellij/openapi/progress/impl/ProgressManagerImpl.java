@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -40,9 +41,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ProgressManagerImpl extends ProgressManager {
+public class ProgressManagerImpl extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.ProgressManagerImpl");
   public static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
@@ -50,6 +53,22 @@ public class ProgressManagerImpl extends ProgressManager {
 
   private static volatile int ourLockedCheckCounter = 0;
   private static final boolean DISABLED = "disabled".equals(System.getProperty("idea.ProcessCanceledException"));
+  private final ScheduledFuture<?> myCheckCancelledFuture;
+
+  public ProgressManagerImpl() {
+    myCheckCancelledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+      @Override
+      public void run() {
+        callCheckCancelForNonStandardIndicators();
+      }
+    }, 0, CHECK_CANCELED_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+
+  }
+
+  @Override
+  public void dispose() {
+    myCheckCancelledFuture.cancel(true);
+  }
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
