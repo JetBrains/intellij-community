@@ -19,7 +19,6 @@ import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
@@ -32,7 +31,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -41,7 +39,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
@@ -57,7 +54,6 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,8 +95,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private final MergingUpdateQueue myModificationChecker;
 
-  private final SpotlightPainter mySpotlightPainter = new SpotlightPainter();
-  private final MergingUpdateQueue mySpotlightUpdate;
+  private final SpotlightPainter mySpotlightPainter = new SpotlightPainter(myOwnDetails.getContentGutter(), this) {
+    void updateNow() {
+      Configurable configurable = getContext().getCurrentConfigurable();
+      update(myFilter, configurable, myConfigurable2Content.containsKey(configurable) ? myContentWrapper : null);
+    }
+  };
   private final LoadingDecorator myLoadingDecorator;
   private final SettingsFilter myFilter;
 
@@ -180,17 +180,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       @Override
       void updateSpotlight(boolean now) {
         if (!now) {
-          mySpotlightUpdate.queue(new Update(this) {
-            @Override
-            public void run() {
-              if (!mySpotlightPainter.updateForCurrentConfigurable()) {
-                updateSpotlight(false);
-              }
-            }
-          });
+          mySpotlightPainter.updateLater();
         }
-        else if (!mySpotlightPainter.updateForCurrentConfigurable()) {
-          updateSpotlight(false);
+        else {
+          mySpotlightPainter.updateNow();
         }
       }
     };
@@ -271,8 +264,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     MyColleague colleague = new MyColleague();
     getContext().addColleague(colleague);
 
-    mySpotlightUpdate = new MergingUpdateQueue("OptionsSpotlight", 200, false, this, this, this);
-
     if (preselectedConfigurable != null) {
       selectInTree(preselectedConfigurable);
     }
@@ -304,8 +295,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }, this);
 
     myModificationChecker = new MergingUpdateQueue("OptionsModificationChecker", 1000, false, this, this, this);
-
-    IdeGlassPaneUtil.installPainter(myOwnDetails.getContentGutter(), mySpotlightPainter, this);
 
     /*
     String visible = PropertiesComponent.getInstance(myProject).getValue(SEARCH_VISIBLE);
@@ -1010,133 +999,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private boolean isPopupOverEditor(Component c) {
     final Window wnd = SwingUtilities.getWindowAncestor(c);
     return (wnd instanceof JWindow || wnd instanceof JDialog && ((JDialog)wnd).getModalityType() == Dialog.ModalityType.MODELESS) && myWindow != null && wnd.getParent() == myWindow;
-  }
-
-  private class SpotlightPainter extends AbstractPainter {
-    Map<Configurable, String> myConfigurableToLastOption = new HashMap<Configurable, String>();
-
-    GlassPanel myGP = new GlassPanel(myOwnDetails.getContentGutter());
-    boolean myVisible;
-
-    @Override
-    public void executePaint(final Component component, final Graphics2D g) {
-      if (myVisible && myGP.isVisible()) {
-        myGP.paintSpotlight(g, myOwnDetails.getContentGutter());
-      }
-    }
-
-    public boolean updateForCurrentConfigurable() {
-      final Configurable current = getContext().getCurrentConfigurable();
-
-      if (current != null && !myConfigurable2Content.containsKey(current)) {
-        return ApplicationManager.getApplication().isUnitTestMode();
-      }
-
-      String text = myFilter.getFilterText();
-
-      try {
-        final boolean sameText =
-          myConfigurableToLastOption.containsKey(current) && text.equals(myConfigurableToLastOption.get(current));
-
-
-        if (current == null) {
-          myVisible = false;
-          myGP.clear();
-          return true;
-        }
-
-        SearchableConfigurable searchable;
-        if (current instanceof SearchableConfigurable) {
-          searchable = (SearchableConfigurable)current;
-        } else {
-          searchable = new SearachableWrappper(current);
-        }
-
-        myGP.clear();
-
-        final Runnable runnable = SearchUtil.lightOptions(searchable, myContentWrapper, text, myGP);
-        if (runnable != null) {
-          myVisible = true;//myContext.isHoldingFilter();
-          runnable.run();
-
-          boolean pushFilteringFurther = !sameText && !myFilter.contains(current);
-
-          final Runnable ownSearch = searchable.enableSearch(text);
-          if (pushFilteringFurther && ownSearch != null) {
-            ownSearch.run();
-          }
-          fireNeedsRepaint(myOwnDetails.getComponent());
-        } else {
-          myVisible = false;
-        }
-      }
-      finally {
-        myConfigurableToLastOption.put(current, text);
-      }
-
-      return true;
-    }
-
-
-    @Override
-    public boolean needsRepaint() {
-      return true;
-    }
-  }
-
-  private static class SearachableWrappper implements SearchableConfigurable {
-    private final Configurable myConfigurable;
-
-    private SearachableWrappper(final Configurable configurable) {
-      myConfigurable = configurable;
-    }
-
-    @Override
-    @NotNull
-    public String getId() {
-      return myConfigurable.getClass().getName();
-    }
-
-    @Override
-    public Runnable enableSearch(final String option) {
-      return null;
-    }
-
-    @Override
-    @Nls
-    public String getDisplayName() {
-      return myConfigurable.getDisplayName();
-    }
-
-    @Override
-    public String getHelpTopic() {
-      return myConfigurable.getHelpTopic();
-    }
-
-    @Override
-    public JComponent createComponent() {
-      return myConfigurable.createComponent();
-    }
-
-    @Override
-    public boolean isModified() {
-      return myConfigurable.isModified();
-    }
-
-    @Override
-    public void apply() throws ConfigurationException {
-      myConfigurable.apply();
-    }
-
-    @Override
-    public void reset() {
-      myConfigurable.reset();
-    }
-
-    @Override
-    public void disposeUIResources() {
-      myConfigurable.disposeUIResources();
-    }
   }
 
   private abstract static class ConfigurableContent {
