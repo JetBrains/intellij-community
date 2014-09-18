@@ -92,7 +92,10 @@ private array_element ::= value (','|&']') {
 }
 
 string_literal ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING {
-  methods=[isQuotedString]
+  methods=[
+    isQuotedString
+    getTextFragments
+  ]
   mixin="com.intellij.json.psi.impl.JsonStringLiteralMixin"
 }
 number_literal ::= NUMBER
@@ -100,7 +103,9 @@ boolean_literal ::= TRUE | FALSE
 null_literal ::= NULL
 
 literal ::= string_literal | number_literal | boolean_literal | null_literal {
-  methods=[isQuotedString]
+  methods=[
+    isQuotedString
+  ]
   mixin="com.intellij.json.psi.impl.JsonLiteralMixin"
 }
 

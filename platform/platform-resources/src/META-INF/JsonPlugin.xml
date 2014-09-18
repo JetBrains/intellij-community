@@ -53,4 +53,8 @@
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.spellchecker">
+    <support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
+  </extensions>
 </idea-plugin>
