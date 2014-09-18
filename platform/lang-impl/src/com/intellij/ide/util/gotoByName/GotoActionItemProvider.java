@@ -82,7 +82,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return true;
   }
 
-  private boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+  private static boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     final CollectConsumer<Object> collector = new CollectConsumer<Object>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
       provider.consumeTopHits(pattern, collector, CommonDataKeys.PROJECT.getData(dataContext));

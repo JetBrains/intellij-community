@@ -774,6 +774,7 @@ public abstract class ChooseByNameBase {
   protected void doClose(final boolean ok) {
     if (checkDisposed()) return;
 
+    if (closeForbidden(ok)) return;
     if (postponeCloseWhenListReady(ok)) return;
 
     cancelListUpdater();
@@ -781,6 +782,10 @@ public abstract class ChooseByNameBase {
 
     clearPostponedOkAction(ok);
     myListModel.clear();
+  }
+
+  protected boolean closeForbidden(boolean ok) {
+    return false;
   }
 
   protected void cancelListUpdater() {

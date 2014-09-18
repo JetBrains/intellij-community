@@ -33,11 +33,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Set;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
 
@@ -62,16 +64,33 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     showNavigationPopup(callback, null, createPopup(project, model, start.first, start.second), false);
   }
 
-  private static ChooseByNamePopup createPopup(Project project, GotoActionModel model, String initialText, int initialIndex) {
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project,
-                                                                  model,
-                                                                  new GotoActionItemProvider(model),
-                                                                  initialText,
-                                                                  false,
-                                                                  initialIndex);
+  private static ChooseByNamePopup createPopup(final Project project, final GotoActionModel model, final String initialText, final int initialIndex) {
+    final ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
+    if (oldPopup != null) {
+      oldPopup.close(false);
+    }
+    final ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
+      @NotNull
+      @Override
+      protected Set<Object> filter(@NotNull Set<Object> elements) {
+        return super.filter(model.sort(elements));
+      }
+
+      @Override
+      protected boolean closeForbidden(boolean ok) {
+        if (!ok) return false;
+        Object element = getChosenElement();
+        return element instanceof GotoActionModel.MatchedValue && processOptionInplace(((GotoActionModel.MatchedValue)element).value, this)
+               || super.closeForbidden(true);
+      }
+    };
+
+    if (project != null) {
+      project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, popup);
+    }
     popup.addMouseClickListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public void mouseClicked(@NotNull MouseEvent e) {
         Object element = popup.getSelectionByPoint(e.getPoint());
         if (element instanceof GotoActionModel.MatchedValue) {
           if (processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup)) {
