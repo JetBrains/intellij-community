@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.util.TimeoutUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -164,11 +165,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
   private static void ensureTimeChanged() {
     //ensure that compiler will threat the file as changed. On Linux system timestamp may be rounded to multiple of 1000
     if (SystemInfo.isLinux) {
-      try {
-        Thread.sleep(1100);
-      }
-      catch (InterruptedException ignored) {
-      }
+      TimeoutUtil.sleep(1100);
     }
   }
 }
