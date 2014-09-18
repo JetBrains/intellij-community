@@ -22,9 +22,11 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonHandler;
@@ -371,7 +373,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.PRESENTATION_MODE || !uiSettings.SHOW_STATUS_BAR && Registry.is("ide.show.progress.without.status.bar")) {
       final JRootPane pane = myInfoPanel.getRootPane();
-      final RelativePoint point = new RelativePoint(pane, new Point(pane.getWidth() - 250, 60));
+      assert pane != null;
       final PresentationModeProgressPanel panel = new PresentationModeProgressPanel(inline);
       final MyInlineProgressIndicator delegate = new MyInlineProgressIndicator(true, inline.getInfo(), inline) {
         @Override
@@ -382,6 +384,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       };
 
       Disposer.register(inline, delegate);
+
+      final Component anchor = getAnchor(pane);
 
       JBPopupFactory.getInstance().createBalloonBuilder(panel.getRootPanel())
         .setFadeoutTime(0)
@@ -397,17 +401,20 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         .setHideOnKeyOutside(false)
         .setBlockClicksThroughBalloon(true)
         .setHideOnAction(false)
-        .createBalloon().show(new PositionTracker<Balloon>(pane) {
+        .createBalloon().show(new PositionTracker<Balloon>(anchor) {
         @Override
         public RelativePoint recalculateLocation(Balloon object) {
-          final EditorComponentImpl editorComponent = UIUtil.findComponentOfType(pane, EditorComponentImpl.class);
-          if (editorComponent != null) {
-            return new RelativePoint(editorComponent.getParent().getParent(), new Point(editorComponent.getParent().getParent().getWidth() - 150, editorComponent.getParent().getParent().getHeight() - 70));
-          }
-          return point;
+          Component c = getAnchor(pane);
+          return new RelativePoint(c, new Point(c.getWidth() - 150, c.getHeight() - 50));
         }
       }, Balloon.Position.above);
     }
+  }
+
+  @NotNull
+  private static Component getAnchor(@NotNull JRootPane pane) {
+    Component splitters = UIUtil.findComponentOfType(pane, EditorsSplitters.class);
+    return splitters == null ? FileEditorManagerEx.getInstanceEx(ProjectUtil.guessCurrentProject(pane)).getSplitters() : splitters;
   }
 
   public Couple<String> setText(@Nullable final String text, @Nullable final String requestor) {
