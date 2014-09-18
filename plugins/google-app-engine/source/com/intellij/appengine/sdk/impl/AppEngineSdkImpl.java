@@ -51,37 +51,40 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     myHomePath = homePath;
   }
 
+  @NotNull
   public File getAppCfgFile() {
     final String extension = SystemInfo.isWindows ? "cmd" : "sh";
-    return new File(FileUtil.toSystemDependentName(myHomePath + "/bin/appcfg." + extension));
+    return new File(myHomePath, "bin/appcfg." + extension);
   }
 
+  @NotNull
   public File getWebSchemeFile() {
-    return new File(FileUtil.toSystemDependentName(myHomePath + "/docs/appengine-web.xsd"));
+    return new File(myHomePath, "docs/appengine-web.xsd");
   }
 
+  @NotNull
   @Override
   public File getApplicationSchemeFile() {
-    return new File(FileUtil.toSystemDependentName(myHomePath + "/docs/appengine-application.xsd"));
+    return new File(myHomePath, "docs/appengine-application.xsd");
   }
 
+  @NotNull
   public File getToolsApiJarFile() {
-    final String path = FileUtil.toSystemDependentName(myHomePath + JpsAppEngineModuleExtensionImpl.LIB_APPENGINE_TOOLS_API_JAR);
-    return new File(path);
+    return new File(myHomePath, JpsAppEngineModuleExtensionImpl.LIB_APPENGINE_TOOLS_API_JAR);
   }
 
+  @NotNull
   public File[] getLibraries() {
-    File sdkHome = new File(FileUtil.toSystemDependentName(myHomePath));
-    return getJarsFromDirectory(new File(sdkHome, "lib" + File.separator + "shared"));
+    return getJarsFromDirectory(new File(myHomePath, "lib/shared"));
   }
 
+  @NotNull
   @Override
   public File[] getJspLibraries() {
-    File sdkHome = new File(FileUtil.toSystemDependentName(myHomePath));
-    return getJarsFromDirectory(new File(sdkHome, "lib" + File.separator + "shared" + File.separator + "jsp"));
+    return getJarsFromDirectory(new File(myHomePath, "lib/shared/jsp"));
   }
 
-  public void patchJavaParametersForDevServer(ParametersList vmParameters) {
+  public void patchJavaParametersForDevServer(@NotNull ParametersList vmParameters) {
     final String agentPath = myHomePath + "/lib/agent/appengine-agent.jar";
     if (new File(FileUtil.toSystemDependentName(agentPath)).exists()) {
       vmParameters.add("-javaagent:" + agentPath);
@@ -171,10 +174,12 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return getToolsApiJarFile().exists() && getAppCfgFile().exists();
   }
 
+  @NotNull
   public String getOrmLibDirectoryPath() {
     return getLibUserDirectoryPath() + "/orm";
   }
 
+  @NotNull
   @Override
   public List<String> getUserLibraryPaths() {
     List<String> result = new ArrayList<String>();
@@ -194,8 +199,9 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return null;
   }
 
+  @NotNull
   public VirtualFile[] getOrmLibSources() {
-    final File libsDir = new File(FileUtil.toSystemDependentName(myHomePath + "/src/orm"));
+    final File libsDir = new File(myHomePath, "src/orm");
     final File[] files = libsDir.listFiles();
     List<VirtualFile> roots = new ArrayList<VirtualFile>();
     if (files != null) {
