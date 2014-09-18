@@ -41,7 +41,7 @@ public abstract class AppEngineWebIntegration {
   public abstract VirtualFile suggestParentDirectoryForAppEngineWebXml(@NotNull Module module, @NotNull ModifiableRootModel rootModel);
 
   @NotNull
-  public abstract List<ArtifactType> getAppEngineTargetArtifactType();
+  public abstract List<ArtifactType> getAppEngineTargetArtifactTypes();
 
   public abstract void setupJpaSupport(@NotNull Module module, @NotNull VirtualFile persistenceXml);
 

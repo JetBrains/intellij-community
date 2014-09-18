@@ -62,7 +62,7 @@ public class AppEngineCommunityWebIntegration extends AppEngineWebIntegration {
 
   @NotNull
   @Override
-  public List<ArtifactType> getAppEngineTargetArtifactType() {
+  public List<ArtifactType> getAppEngineTargetArtifactTypes() {
     return Collections.<ArtifactType>singletonList(PlainArtifactType.getInstance());
   }
 

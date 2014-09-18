@@ -164,7 +164,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
   @NotNull
   private static Artifact findOrCreateArtifact(AppEngineFacet appEngineFacet) {
     Module module = appEngineFacet.getModule();
-    List<ArtifactType> artifactTypes = AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType();
+    List<ArtifactType> artifactTypes = AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactTypes();
     final Collection<Artifact> artifacts = ArtifactUtil.getArtifactsContainingModuleOutput(module);
     for (ArtifactType type : artifactTypes) {
       for (Artifact artifact : artifacts) {
