@@ -63,9 +63,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
   // Python 2.4-2.5 compatible versions
   public static final String SETUPTOOLS_PRE_26_VERSION = "1.4.2";
   public static final String PIP_PRE_26_VERSION = "1.1";
+  public static final String VIRTUALENV_PRE_26_VERSION = "1.7.2";
 
   public static final String SETUPTOOLS_VERSION = "5.7";
   public static final String PIP_VERSION = "1.5.6";
+  public static final String VIRTUALENV_VERSION = "1.11.6";
 
   public static final int OK = 0;
   public static final int ERROR_NO_PIP = 2;
@@ -80,7 +82,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
   private static final String PACKAGING_TOOL = "packaging_tool.py";
-  private static final String VIRTUALENV = "virtualenv.py";
   private static final int TIMEOUT = 10 * 60 * 1000;
 
   private static final String BUILD_DIR_OPTION = "--build-dir";
@@ -322,7 +323,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @NotNull
   public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws PyExternalProcessException {
     final List<String> args = new ArrayList<String>();
-    final boolean usePyVenv = PythonSdkType.getLanguageLevelForSdk(mySdk).isAtLeast(LanguageLevel.PYTHON33);
+    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(mySdk);
+    final boolean usePyVenv = languageLevel.isAtLeast(LanguageLevel.PYTHON33);
     if (usePyVenv) {
       args.add("pyvenv");
       if (useGlobalSite) {
@@ -336,7 +338,16 @@ public class PyPackageManagerImpl extends PyPackageManager {
         args.add("--system-site-packages");
       }
       args.add(destinationDir);
-      getHelperResult(VIRTUALENV, args, false, null);
+      final boolean pre26 = languageLevel.isOlderThan(LanguageLevel.PYTHON26);
+      final String name = "virtualenv-" + (pre26 ? VIRTUALENV_PRE_26_VERSION : VIRTUALENV_VERSION);
+      final String dirName = extractHelper(name + ".tar.gz");
+      try {
+        final String fileName = dirName + name + File.separatorChar + "virtualenv.py";
+        getPythonProcessResult(fileName, Collections.singletonList(destinationDir), false, dirName + name);
+      }
+      finally {
+        FileUtil.delete(new File(dirName));
+      }
     }
 
     final String binary = PythonSdkType.getPythonExecutable(destinationDir);
@@ -463,7 +474,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
         process = ExecUtil.exec(cmdline, workingDir, environment);
       }
       final CapturingProcessHandler handler = new CapturingProcessHandler(process);
-      // Make the progress indicator an explicit parameter?
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       final ProcessOutput result;
       if (indicator != null) {
@@ -501,9 +511,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (StringUtil.isEmptyOrSpaces(message)) {
           message = "Failed to perform action. Permission denied.";
         }
-        throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
-      }
-      if (SystemInfo.isMac && !StringUtil.isEmptyOrSpaces(message)) {
         throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
       }
       return result;
