@@ -22,7 +22,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
@@ -124,14 +123,6 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
     if (browser instanceof HierarchyBrowserBaseEx) {
       HierarchyBrowserBaseEx browserEx = (HierarchyBrowserBaseEx)browser;
       browserEx.changeView(CallHierarchyBrowserBase.CALLER_TYPE);
-      final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
-      Disposer.register(browserEx, new Disposable() {
-        @Override
-        public void dispose() {
-          indicator.cancel();
-        }
-      });
-      browserEx.setProgressIndicator(indicator);
     }
     return browser;
   }

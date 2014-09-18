@@ -32,26 +32,24 @@ public class JsonHighlightingTest extends JsonTestCase {
 
   public void testComplianceProblems() {
     enableStandardComplianceInspection(true);
-    doTest();
+    doTestHighlighting(false, true, true);
   }
 
   // Moved from JavaScript
 
   public void testJSON_with_comment() throws Exception {
     enableStandardComplianceInspection(false);
-    doTest();
+    doTestHighlighting(false, true, true);
   }
 
   public void testJSON() throws Exception {
     enableStandardComplianceInspection(true);
-    doTest();
+    doTestHighlighting(false, true, true);
   }
 
-  // TODO: JSON semantic highlighting?
-  /*
   public void testSemanticHighlighting() throws Exception {
+    // WEB-11239
     doTest();
   }
-  */
 
 }

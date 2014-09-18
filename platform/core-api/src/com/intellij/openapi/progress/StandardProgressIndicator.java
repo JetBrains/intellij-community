@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration;
+package com.intellij.openapi.progress;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.UserDataHolder;
-import org.jetbrains.annotations.NotNull;
-
-public interface ModuleConfigurationState extends UserDataHolder {
-  ModulesProvider getModulesProvider();
-  FacetsProvider getFacetsProvider();
-  ModifiableRootModel getRootModel();
-  @NotNull
-  Project getProject();
+/**
+ * Marker interface which means this indicator cancellation behaves in a standard way:
+ * - checkCanceled() checks for isCanceled() and throws PCE if returned true
+ * - cancel() sets the corresponding flag
+ * - isCanceled() is true after cancel() call
+ * - all methods above are final
+ */
+public interface StandardProgressIndicator extends ProgressIndicator {
 }

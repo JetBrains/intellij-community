@@ -16,6 +16,7 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -189,26 +190,13 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   private volatile boolean checkCanceledCalled;
   private volatile boolean taskCanceled;
   private volatile boolean taskSucceeded;
-  private volatile boolean taskFinished;
   private volatile Throwable exception;
   public void testProgressManagerCheckCanceledDoesNotDelegateToProgressIndicatorIfThereAreNoCanceledIndicators() throws Throwable {
     final long warmupEnd = System.currentTimeMillis() + 1000;
-    final long end = warmupEnd + 1000;
+    final long end = warmupEnd + 10000;
     checkCanceledCalled = false;
-    final ProgressIndicator myIndicator = new ProgressIndicatorStub() {
-      @Override
-      public void checkCanceled() throws ProcessCanceledException {
-        checkCanceledCalled = true;
-        assertTrue(isCanceled());
-        super.checkCanceled();
-      }
-
-      @Override
-      public void processFinish() {
-        taskFinished = true;
-      }
-    };
-    taskCanceled = taskSucceeded = taskFinished = false;
+    final ProgressIndicatorBase myIndicator = new ProgressIndicatorBase();
+    taskCanceled = taskSucceeded = false;
     exception = null;
     Future<?> future = ProgressManagerImpl.runProcessWithProgressAsynchronously(new Task.Backgroundable(getProject(), "xxx") {
       @Override
@@ -219,6 +207,11 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
           while (System.currentTimeMillis() < end) {
             ProgressManager.checkCanceled();
           }
+        }
+        catch (ProcessCanceledException e) {
+          exception = e;
+          checkCanceledCalled = true;
+          throw e;
         }
         catch (RuntimeException e) {
           exception = e;
@@ -251,8 +244,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         myIndicator.cancel();
       }
     }
-    assertTrue(taskFinished);
-
     // invokeLater in runProcessWithProgressAsynchronously
     UIUtil.dispatchAllInvocationEvents();
 
@@ -262,7 +253,39 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     assertTrue(String.valueOf(exception), exception instanceof ProcessCanceledException);
   }
 
-  private static class ProgressIndicatorStub extends EmptyProgressIndicator implements ProgressIndicatorEx {
+  private volatile boolean myFlag;
+  public void testPerverseIndicator() {
+    checkCanceledCalled = false;
+    ProgressIndicator indicator = new ProgressIndicatorStub() {
+      @Override
+      public void checkCanceled() throws ProcessCanceledException {
+        checkCanceledCalled = true;
+        if (myFlag) throw new ProcessCanceledException();
+      }
+    };
+    myFlag = false;
+    Alarm alarm = new Alarm(myTestRootDisposable);
+    alarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        myFlag = true;
+      }
+    }, 100);
+    final long start = System.currentTimeMillis();
+    ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+      @Override
+      public void run() {
+        while (System.currentTimeMillis() - start < 10000) {
+          ProgressManager.checkCanceled();
+        }
+      }
+    }, indicator);
+    assertTrue(checkCanceledCalled);
+  }
+
+  private static class ProgressIndicatorStub implements ProgressIndicatorEx {
+    private volatile boolean myCanceled;
+
     @Override
     public void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
       throw new RuntimeException();
@@ -317,6 +340,123 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     @Override
     public int getNonCancelableCount() {
       throw new RuntimeException();
+    }
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void stop() {
+
+    }
+
+    @Override
+    public void setText(String text) {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public String getText() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public String getText2() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public void setText2(String text) {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public double getFraction() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public void setFraction(double fraction) {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public void pushState() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public void popState() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public void startNonCancelableSection() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public void finishNonCancelableSection() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public boolean isModal() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public ModalityState getModalityState() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public void setModalityProgress(ProgressIndicator modalityProgress) {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public boolean isIndeterminate() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public void setIndeterminate(boolean indeterminate) {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public boolean isPopupWasShown() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public boolean isShowing() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public boolean isRunning() {
+      return true;
+    }
+
+    @Override
+    public void cancel() {
+      myCanceled = true;
+      ProgressManager.canceled(this);
+    }
+
+    @Override
+    public boolean isCanceled() {
+      return myCanceled;
+    }
+
+    @Override
+    public void checkCanceled() throws ProcessCanceledException {
+       if (myCanceled) throw new ProcessCanceledException();
     }
   }
 }

@@ -23,20 +23,40 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ProgressWrapper extends AbstractProgressIndicatorBase implements WrappedProgressIndicator {
+public class ProgressWrapper extends AbstractProgressIndicatorBase implements WrappedProgressIndicator, StandardProgressIndicator {
   private final ProgressIndicator myOriginal;
+  private final boolean myCheckCanceledForMe;
 
   protected ProgressWrapper(@NotNull ProgressIndicator original) {
+    this(original, false);
+  }
+
+  protected ProgressWrapper(@NotNull ProgressIndicator original, boolean checkCanceledForMe) {
     myOriginal = original;
+    myCheckCanceledForMe = checkCanceledForMe;
+  }
+
+
+  @Override
+  public final void cancel() {
+    super.cancel();
+  }
+
+
+  @Override
+  public final boolean isCanceled() {
+    return myOriginal.isCanceled() || myCheckCanceledForMe && super.isCanceled();
   }
 
   @Override
-  public boolean isCanceled() {
-    return myOriginal.isCanceled();
+  public final void checkCanceled() {
+    super.checkCanceled();
   }
 
   @Override
@@ -45,11 +65,12 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     return myOriginal;
   }
 
-  @Nullable
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static ProgressWrapper wrap(@Nullable ProgressIndicator indicator) {
     return indicator == null || indicator instanceof ProgressWrapper ? (ProgressWrapper)indicator : new ProgressWrapper(indicator);
   }
 
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static ProgressIndicator unwrap(ProgressIndicator indicator) {
     return indicator instanceof ProgressWrapper ?
            ((ProgressWrapper)indicator).getOriginalProgressIndicator() : indicator;

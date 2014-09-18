@@ -1,9 +1,12 @@
 package com.intellij.json.codeinsight;
 
 import com.intellij.json.JsonBundle;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -13,10 +16,15 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 public class JsonStringLiteralAnnotator implements Annotator {
+  private static boolean debug = ApplicationManager.getApplication().isUnitTestMode();
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof JsonStringLiteral) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == element) {
+        holder.createInfoAnnotation(element, debug ? "instance field" : null).setTextAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+      }
       String text = element.getText();
       int offset = element.getTextOffset();
       int length = text.length();

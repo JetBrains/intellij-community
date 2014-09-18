@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
@@ -74,10 +75,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final FileEditorManager instance = FileEditorManager.getInstance(myProject);
 
     if (file.getFileType().isBinary()) return null;
-
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
     ((EditorImpl)editor).setCaretActive();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    DaemonCodeAnalyzer.getInstance(getProject()).restart();
 
     return editor;
   }

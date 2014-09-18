@@ -103,11 +103,11 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       } else if (myRepositoryFiles.isBranchFile(filePath)) {
         // it is also possible, that a local branch with complex name ("folder/branch") was created => the folder also to be watched.
           branchFileChanged = true;
-        RepositoryUtil.visitAllChildrenRecursively(myHeadsDir);
+        RepositoryUtil.ensureAllChildrenInVfs(myHeadsDir);
       } else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
         // it is possible, that a branch from a new remote was fetch => we need to add new remote folder to the VFS
         branchFileChanged = true;
-        RepositoryUtil.visitAllChildrenRecursively(myRemotesDir);
+        RepositoryUtil.ensureAllChildrenInVfs(myRemotesDir);
       } else if (myRepositoryFiles.isPackedRefs(filePath)) {
         packedRefsChanged = true;
       } else if (myRepositoryFiles.isRebaseFile(filePath)) {
@@ -115,7 +115,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       } else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
       } else if (myRepositoryFiles.isTagFile(filePath)) {
-        RepositoryUtil.visitAllChildrenRecursively(myTagsDir);
+        RepositoryUtil.ensureAllChildrenInVfs(myTagsDir);
         tagChanged = true;
       }
     }

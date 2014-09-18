@@ -96,11 +96,11 @@ public class RepositoryUtil {
     for (String subdir : subDirs) {
       VirtualFile dir = gitDir.findFileByRelativePath(subdir);
       // process recursively, because we need to visit all branches under refs/heads and refs/remotes
-      visitAllChildrenRecursively(dir);
+      ensureAllChildrenInVfs(dir);
     }
   }
 
-  public static void visitAllChildrenRecursively(@Nullable VirtualFile dir) {
+  public static void ensureAllChildrenInVfs(@Nullable VirtualFile dir) {
     if (dir != null) {
       //noinspection unchecked
       VfsUtilCore.processFilesRecursively(dir, Processor.TRUE);

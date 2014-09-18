@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,28 +84,10 @@ public class HierarchyTreeBuilder extends AbstractTreeBuilder {
   }
 
 
-  private MyStatusBarProgress myProgress;
   @Override
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
-    return myProgress = new MyStatusBarProgress();
-  }
-
-  public void setProgressIndicator(@NotNull ProgressIndicator indicator) {
-    myProgress.setSecondaryIndicator(indicator);
-  }
-
-  private static class MyStatusBarProgress extends StatusBarProgress {
-    private ProgressIndicator mySecondaryIndicator;
-
-    public void setSecondaryIndicator(ProgressIndicator indicator) {
-      mySecondaryIndicator = indicator;
-    }
-
-    @Override
-    public boolean isCanceled() {
-      return super.isCanceled() || mySecondaryIndicator != null && mySecondaryIndicator.isCanceled();
-    }
+    return new StatusBarProgress();
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
