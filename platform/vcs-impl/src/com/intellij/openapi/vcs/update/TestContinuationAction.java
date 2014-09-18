@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.continuation.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,12 +66,7 @@ public class TestContinuationAction extends AnAction {
             @Override
             public void run(final ContinuationContext context) {
               addMore(context);
-              try {
-                Thread.sleep(10000);
-              }
-              catch (InterruptedException e1) {
-                //
-              }
+              TimeoutUtil.sleep(10000);
             }
           },
           new LongTaskDescriptor("Second"), new ReportTask("Second complete"),
@@ -78,12 +74,7 @@ public class TestContinuationAction extends AnAction {
             @Override
             public void run(final ContinuationContext context) {
               addMoreSurviving(context);
-              try {
-                Thread.sleep(10000);
-              }
-              catch (InterruptedException e1) {
-                //
-              }
+              TimeoutUtil.sleep(10000);
               throw new IllegalStateException();
               /*context.suspend();
               ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -147,12 +138,7 @@ public class TestContinuationAction extends AnAction {
     public void run(ContinuationContext context) {
       final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
       pi.setText(getName());
-      try {
-        Thread.sleep(10000);
-      }
-      catch (InterruptedException e) {
-        //
-      }
+      TimeoutUtil.sleep(10000);
       pi.setText("");
     }
   }

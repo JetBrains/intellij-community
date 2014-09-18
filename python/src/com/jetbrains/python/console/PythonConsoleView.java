@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PythonLanguage;
@@ -174,11 +175,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
                 }
                 return;
               }
-              try {
-                Thread.sleep(300);
-              }
-              catch (InterruptedException ignored) {
-              }
+              TimeoutUtil.sleep(300);
             }
             if (!indicator.isCanceled()) {
               doExecute(code);

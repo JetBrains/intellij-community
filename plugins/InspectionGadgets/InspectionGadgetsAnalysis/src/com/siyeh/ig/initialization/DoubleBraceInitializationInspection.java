@@ -18,6 +18,7 @@ package com.siyeh.ig.initialization;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -165,7 +166,7 @@ public class DoubleBraceInitializationInspection extends BaseInspection {
           }
           final PsiMember member = (PsiMember)expressionTarget;
           final PsiClass containingClass = member.getContainingClass();
-          if (!target.equals(containingClass)) {
+          if (!InheritanceUtil.isInheritorOrSelf(target, containingClass, true)) {
             return;
           }
           final PsiExpression newExpression = factory.createExpressionFromText(qualifierText + '.' + expression.getText(), expression);

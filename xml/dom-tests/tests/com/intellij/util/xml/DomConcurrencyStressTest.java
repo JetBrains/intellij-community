@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemService;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.reflect.DomExtender;
@@ -167,12 +168,8 @@ public class DomConcurrencyStressTest extends DomTestCase {
           element.getFooElements();
         }
       if (myRandom.nextInt(20) < 2) {
-          try {
-            Thread.sleep(1);
-          }
-          catch (InterruptedException ignored) {
-          }
-        }
+        TimeoutUtil.sleep(1);
+      }
       registrar.registerFixedNumberChildExtension(new XmlName("custom-foo", null), MyElement.class);
       myElement.getSomeChild().getFooElements();
       myElement.getFooChild().getFooChild().getAttr();

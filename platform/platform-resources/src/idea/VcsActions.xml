@@ -70,15 +70,14 @@
     </group>
 
     <action id="ChangesView.Revert" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
-            icon="AllIcons.Actions.Rollback" text="_Revert..." description="Revert selected changes"/>
+            icon="AllIcons.Actions.Rollback"/>
 
     <group id="ChangesViewToolbar">
       <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
               icon="AllIcons.Actions.Refresh"/>
       <action id="ChangesView.Commit" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction"
               icon="AllIcons.Actions.Commit"/>
-      <action id="ChangesView.Rollback" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
-              icon="AllIcons.Actions.Rollback"/>
+      <reference ref="ChangesView.Revert"/>
       <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
               icon="AllIcons.General.Add"/>
       <action id="ChangesView.RemoveChangeList" class="com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction"
@@ -95,7 +94,7 @@
 
     <group id="ChangesViewPopupMenu">
       <reference ref="ChangesView.Commit"/>
-      <reference ref="ChangesView.Rollback"/>
+      <reference ref="ChangesView.Revert"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="ChangesView.Diff"/>
       <reference ref="EditSource"/>
@@ -246,7 +245,7 @@
       <reference ref="CheckinProject"/>
       <reference ref="Compare.SameVersion"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
-      <reference ref="ChangesView.Rollback"/>
+      <reference ref="ChangesView.Revert"/>
       <separator/>
       <add-to-group group-id="MainToolBarSettings" relative-to-action="ShowSettings" anchor="before"/>
     </group>
@@ -255,7 +254,7 @@
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
-      <reference ref="ChangesView.Rollback"/>
+      <reference ref="ChangesView.Revert"/>
       <separator/>
       <add-to-group group-id="NavBarVcsGroup" anchor="first"/>
     </group>

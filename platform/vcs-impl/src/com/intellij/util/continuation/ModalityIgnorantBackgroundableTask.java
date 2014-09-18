@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,12 +74,7 @@ public abstract class ModalityIgnorantBackgroundableTask extends Task.Background
       if (myRunner != null && myCnt > 0) {
         -- myCnt;
         // we are on some background thread and do not want to reschedule too often
-        try {
-          Thread.sleep(100);
-        }
-        catch (InterruptedException e) {
-          //
-        }
+        TimeoutUtil.sleep(100);
         myRunner.consume(this);
         return;
       }

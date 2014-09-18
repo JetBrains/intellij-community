@@ -281,7 +281,7 @@ public class XFramesView extends XDebugView {
       StackFramesListBuilder builder = getOrCreateBuilder(executionStack, session);
       myListenersEnabled = false;
       builder.initModel(myFramesList.getModel());
-      builder.start();
+      myListenersEnabled = !builder.start();
     }
   }
 
@@ -334,6 +334,7 @@ public class XFramesView extends XDebugView {
           myAllFramesLoaded = last;
           if (last) {
             myRunning = false;
+            myListenersEnabled = true;
           }
         }
       });
@@ -348,6 +349,7 @@ public class XFramesView extends XDebugView {
             myErrorMessage = errorMessage;
             addFrameListElements(Collections.singletonList(errorMessage), true);
             myRunning = false;
+            myListenersEnabled = true;
           }
         }
       });
@@ -381,12 +383,13 @@ public class XFramesView extends XDebugView {
       myExecutionStack = null;
     }
 
-    public void start() {
+    public boolean start() {
       if (myExecutionStack == null || myErrorMessage != null) {
-        return;
+        return false;
       }
       myRunning = true;
       myExecutionStack.computeStackFrames(myNextFrameIndex, this);
+      return true;
     }
 
     public void stop() {
@@ -400,7 +403,6 @@ public class XFramesView extends XDebugView {
           myFramesList.getModel().get(mySelectedFrameIndex) != null) {
         myFramesList.setSelectedIndex(mySelectedFrameIndex);
         processFrameSelection(mySession);
-        myListenersEnabled = true;
       }
     }
 

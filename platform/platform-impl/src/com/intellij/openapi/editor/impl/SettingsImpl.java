@@ -31,11 +31,10 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -241,8 +240,10 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isUseTabCharacter(Project project) {
-    FileType fileType = getFileType();
-    return myUseTabCharacter != null ? myUseTabCharacter.booleanValue() : CodeStyleFacade.getInstance(project).useTabCharacter(fileType);
+    PsiFile file = getPsiFile(project);
+    return myUseTabCharacter != null
+           ? myUseTabCharacter.booleanValue()
+           : CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).USE_TAB_CHARACTER;
   }
 
   @Override
@@ -265,17 +266,21 @@ public class SettingsImpl implements EditorSettings {
   public int getTabSize(Project project) {
     if (myTabSize != null) return myTabSize.intValue();
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
-
-    FileType fileType = getFileType();
-    int tabSize = project == null || project.isDisposed() ? 0 : CodeStyleFacade.getInstance(project).getTabSize(fileType);
+    int tabSize = 0;
+    if (project != null && !project.isDisposed()) {
+      PsiFile file = getPsiFile(project);
+      tabSize = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).TAB_SIZE;
+    }
     myCachedTabSize = Integer.valueOf(tabSize);
     return tabSize;
   }
 
   @Nullable
-  private FileType getFileType() {
-    VirtualFile file = myEditor == null ? null : myEditor.getVirtualFile();
-    return file == null ? null : file.getFileType();
+  private PsiFile getPsiFile(@NotNull Project project) {
+    if (myEditor != null) {
+      return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
+    }
+    return null;
   }
 
   @Override

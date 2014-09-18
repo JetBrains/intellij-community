@@ -18,6 +18,9 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +67,12 @@ abstract public class LiveTemplateLookupElement extends LookupElement {
         }
         if (shortcut != TemplateSettings.CUSTOM_CHAR) {
           presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcut) + "] ");
+        } else {
+          String shortcutText =
+            KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM));
+          if (StringUtil.isNotEmpty(shortcutText)) {
+            presentation.setTypeText("  [" + shortcutText + "] ");
+          }
         }
       }
       if (StringUtil.isNotEmpty(myDescription)) {

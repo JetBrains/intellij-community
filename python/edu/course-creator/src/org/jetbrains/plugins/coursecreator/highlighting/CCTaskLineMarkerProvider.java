@@ -7,12 +7,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import icons.CourseCreatorIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
@@ -59,7 +59,7 @@ public class CCTaskLineMarkerProvider implements LineMarkerProvider {
           final TextRange textRange = TextRange.create(offset, offset + taskWindow.getReplacementLength());
           @SuppressWarnings("unchecked")
           final LineMarkerInfo info = new LineMarkerInfo(element, textRange,
-              IconLoader.getIcon("/icons/gutter.png"), Pass.UPDATE_OVERRIDEN_MARKERS,
+                                                         CourseCreatorIcons.Gutter, Pass.UPDATE_OVERRIDEN_MARKERS,
               null, null, GutterIconRenderer.Alignment.CENTER) {
             @Nullable
             @Override

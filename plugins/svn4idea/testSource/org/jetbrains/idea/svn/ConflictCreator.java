@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.Convertor;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.info.Info;
@@ -84,12 +85,7 @@ public class ConflictCreator {
       Assert.assertEquals(0, applier.getRemainingPatches().size());
     }
 
-    try {
-      Thread.sleep(10);
-    }
-    catch (InterruptedException e) {
-      //
-    }
+    TimeoutUtil.sleep(10);
 
     SvnVcs vcs = SvnVcs.getInstance(myProject);
 

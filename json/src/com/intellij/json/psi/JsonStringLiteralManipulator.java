@@ -18,7 +18,7 @@ public class JsonStringLiteralManipulator extends AbstractElementManipulator<Jso
     final String replacement = originalContent.substring(withoutQuotes.getStartOffset(), range.getStartOffset()) +
                                newContent +
                                originalContent.substring(range.getEndOffset(), withoutQuotes.getEndOffset());
-    return generator.createStringLiteral(replacement);
+    return (JsonStringLiteral)element.replace(generator.createStringLiteral(replacement));
   }
 
   @NotNull

@@ -467,7 +467,7 @@ public abstract class ChooseByNameBase {
     actionMap.setParent(myTextField.getActionMap());
     actionMap.put(DefaultEditorKit.copyAction, new AbstractAction() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (myTextField.getSelectedText() != null) {
           actionMap.getParent().get(DefaultEditorKit.copyAction).actionPerformed(e);
           return;
@@ -491,7 +491,7 @@ public abstract class ChooseByNameBase {
       if (myCheckBox != null && myCheckBoxShortcut != null) {
         new AnAction("change goto check box", null, null) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             myCheckBox.setSelected(!myCheckBox.isSelected());
           }
         }.registerCustomShortcutSet(myCheckBoxShortcut, myTextField);
@@ -563,7 +563,7 @@ public abstract class ChooseByNameBase {
     if (myCheckBox != null) {
       myCheckBox.addItemListener(new ItemListener() {
         @Override
-        public void itemStateChanged(ItemEvent e) {
+        public void itemStateChanged(@NotNull ItemEvent e) {
           rebuildList(false);
         }
       });
@@ -641,7 +641,7 @@ public abstract class ChooseByNameBase {
 
     myTextField.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent actionEvent) {
+      public void actionPerformed(@NotNull ActionEvent actionEvent) {
         doClose(true);
       }
     });
@@ -683,7 +683,7 @@ public abstract class ChooseByNameBase {
       private int myPreviousSelectionIndex = 0;
 
       @Override
-      public void valueChanged(ListSelectionEvent e) {
+      public void valueChanged(@NotNull ListSelectionEvent e) {
         if (myList.getSelectedValue() != NON_PREFIX_SEPARATOR) {
           myPreviousSelectionIndex = myList.getSelectedIndex();
           chosenElementMightChange();
@@ -774,6 +774,7 @@ public abstract class ChooseByNameBase {
   protected void doClose(final boolean ok) {
     if (checkDisposed()) return;
 
+    if (closeForbidden(ok)) return;
     if (postponeCloseWhenListReady(ok)) return;
 
     cancelListUpdater();
@@ -781,6 +782,10 @@ public abstract class ChooseByNameBase {
 
     clearPostponedOkAction(ok);
     myListModel.clear();
+  }
+
+  protected boolean closeForbidden(boolean ok) {
+    return false;
   }
 
   protected void cancelListUpdater() {
@@ -1675,7 +1680,7 @@ public abstract class ChooseByNameBase {
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       cancelListUpdater();
 
       final UsageViewPresentation presentation = new UsageViewPresentation();

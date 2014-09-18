@@ -45,6 +45,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
@@ -1899,12 +1900,7 @@ public abstract class DialogWrapper {
         int w = (size.width - cur.width) / steps;
         while (step++ < steps) {
           setSize(cur.width + w * step, cur.height + h * step);
-          try {
-            //noinspection BusyWait
-            sleep(time / steps);
-          }
-          catch (InterruptedException ignore) {
-          }
+          TimeoutUtil.sleep(time / steps);
         }
         setSize(size.width, size.height);
         //repaint();

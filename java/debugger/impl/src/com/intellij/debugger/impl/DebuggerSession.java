@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
@@ -467,10 +468,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
             while (!currentThread.isSuspended()) {
               // wait until thread is considered suspended. Querying data from a thread immediately after VM.suspend()
               // may result in IncompatibleThreadStateException, most likely some time after suspend() VM erroneously thinks that thread is still running
-              try {
-                Thread.sleep(10);
-              }
-              catch (InterruptedException ignored) {}
+              TimeoutUtil.sleep(10);
             }
             proxy = (currentThread.frameCount() > 0) ? currentThread.frame(0) : null;
           }

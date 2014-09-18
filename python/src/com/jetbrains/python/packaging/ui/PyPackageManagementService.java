@@ -27,6 +27,7 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.apache.xmlrpc.AsyncCallback;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -132,6 +133,14 @@ public class PyPackageManagementService extends PackageManagementService {
     List<PyPackage> packages;
     try {
       packages = PyPackageManager.getInstance(mySdk).getPackages(false);
+      if (packages != null) {
+        Collections.sort(packages, new Comparator<PyPackage>() {
+          @Override
+          public int compare(@NotNull PyPackage pkg1, @NotNull PyPackage pkg2) {
+            return pkg1.getName().compareTo(pkg2.getName());
+          }
+        });
+      }
     }
     catch (PyExternalProcessException e) {
       throw new IOException(e);

@@ -18,11 +18,14 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,5 +124,18 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
 
   public boolean isLoaded() {
     return myIsLoaded;
+  }
+
+  public static void updateDocumentIndentOptions(@NotNull Project project, @NotNull Document document) {
+    if (!project.isDisposed()) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      if (documentManager != null) {
+        PsiFile file = documentManager.getPsiFile(document);
+        if (file != null) {
+          CommonCodeStyleSettings.IndentOptions indentOptions = getSettings(project).getIndentOptionsByFile(file, true);
+          indentOptions.associateWithDocument(document);
+        }
+      }
+    }
   }
 }

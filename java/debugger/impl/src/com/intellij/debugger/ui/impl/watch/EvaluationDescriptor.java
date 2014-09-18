@@ -104,7 +104,8 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
                                                 EvaluationDescriptor.this);
                 }
               }
-              catch (PrepareFailedException ignored) {
+              catch (PrepareFailedException e) {
+                LOG.info(e);
               }
               return null;
             }

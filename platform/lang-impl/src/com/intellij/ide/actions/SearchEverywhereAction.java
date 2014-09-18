@@ -687,11 +687,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         ((Graphics2D)g).setPaint(new GradientPaint(0, 0, gradient.getStartColor(), 0, getHeight(), gradient.getEndColor()));
         g.fillRect(0, 0, getWidth(), getHeight());
       }
-
-      @Override
-      public Dimension getPreferredSize() {
-        return new Dimension(410, super.getPreferredSize().height);
-      }
     };
     final JLabel title = new JLabel(" Search Everywhere:       ");
     final JPanel topPanel = new NonOpaquePanel(new BorderLayout());
@@ -1283,9 +1278,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
             myList.getEmptyText().setText("Searching...");
 
-            myAlarm.cancelAllRequests();
             if (myList.getModel() instanceof SearchListModel) {
               //noinspection unchecked
+              myAlarm.cancelAllRequests();
               myAlarm.addRequest(new Runnable() {
                 @Override
                 public void run() {

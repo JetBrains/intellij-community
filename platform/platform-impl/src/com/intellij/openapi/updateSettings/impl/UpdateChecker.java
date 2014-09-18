@@ -619,12 +619,12 @@ public final class UpdateChecker {
             urlToCheck = url;
           }
 
-          HttpURLConnection connection;
+          URLConnection connection;
           if (ApplicationManager.getApplication() != null) {
-            connection = HttpConfigurable.getInstance().openHttpConnection(urlToCheck);
+            connection = HttpConfigurable.getInstance().openConnection(urlToCheck);
           }
           else {
-            connection = (HttpURLConnection)new URL(urlToCheck).openConnection();
+            connection = new URL(urlToCheck).openConnection();
             connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
             connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
           }
