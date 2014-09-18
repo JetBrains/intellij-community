@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.navigation.History;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -33,14 +34,14 @@ import javax.swing.*;
  * Time: 7:24:37 PM
  */
 public abstract class ModuleElementsEditor implements ModuleConfigurationEditor {
-  protected final Project myProject;
+  @NotNull protected final Project myProject;
   protected JComponent myComponent;
   private final CompositeDisposable myDisposables = new CompositeDisposable();
 
   protected History myHistory;
   private final ModuleConfigurationState myState;
 
-  protected ModuleElementsEditor(ModuleConfigurationState state) {
+  protected ModuleElementsEditor(@NotNull ModuleConfigurationState state) {
     myProject = state.getProject();
     myState = state;
   }
@@ -58,6 +59,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
     return myState.getRootModel();
   }
 
+  @NotNull
   protected ModuleConfigurationState getState() {
     return myState;
   }

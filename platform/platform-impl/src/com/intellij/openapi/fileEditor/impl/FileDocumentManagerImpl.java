@@ -158,14 +158,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   public Document getDocument(@NotNull final VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null) {
-      if (file.isDirectory() || SingleRootFileViewProvider.isTooLargeForContentLoading(file)) {
+      if (!file.isValid() || file.isDirectory() ||
+          SingleRootFileViewProvider.isTooLargeForContentLoading(file) ||
+          isBinaryWithoutDecompiler(file)) {
         return null;
       }
-      if (isBinaryWithoutDecompiler(file)) {
-        return null;
-      }
-      final CharSequence text = LoadTextUtil.loadText(file);
 
+      final CharSequence text = LoadTextUtil.loadText(file);
       synchronized (lock) {
         document = (DocumentEx)getCachedDocument(file);
         if (document != null) return document; // Double checking

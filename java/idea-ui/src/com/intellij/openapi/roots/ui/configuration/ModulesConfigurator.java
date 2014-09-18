@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -55,7 +54,6 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -222,14 +220,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public void addAllModuleChangeListener(ModuleEditor.ChangeListener listener) {
     myAllModulesChangeListeners.add(listener);
-  }
-
-  public GraphGenerator<ModuleRootModel> createGraphGenerator() {
-    final Map<Module, ModuleRootModel> models = new HashMap<Module, ModuleRootModel>();
-    for (ModuleEditor moduleEditor : myModuleEditors) {
-      models.put(moduleEditor.getModule(), moduleEditor.getRootModel());
-    }
-    return ModuleCompilerUtil.createGraphGenerator(models);
   }
 
   public void apply() throws ConfigurationException {

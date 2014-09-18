@@ -243,13 +243,13 @@ public class PushController implements Disposable {
                   });
                   return new TextWithLinkNode(errorLinkText);
                 }
-              }), model.isSelected());
+              }));
             }
             else {
               model.setLoadedCommits(outgoing.getCommits());
               myPushLog.setChildren(node,
                                     getPresentationForCommits(PushController.this.myProject, model.getLoadedCommits(),
-                                                              model.getNumberOfShownCommits()), model.isSelected());
+                                                              model.getNumberOfShownCommits()));
             }
           }
         });

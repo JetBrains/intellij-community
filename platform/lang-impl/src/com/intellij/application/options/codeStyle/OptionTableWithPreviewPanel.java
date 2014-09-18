@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeTableSpeedSearch;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
@@ -285,7 +286,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     return result == null ? defaultName : result;
   }
 
-  private void expandTree(final JTree tree) {
+  private static void expandTree(final JTree tree) {
     int oldRowCount = 0;
     do {
       int rowCount = tree.getRowCount();
@@ -367,7 +368,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     @Nullable final String groupName;
     private boolean myEnabled = false;
 
-    public Option(Class<? extends CustomCodeStyleSettings> clazz,
+    public Option(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
                   @NotNull String fieldName,
                   @NotNull String title,
                   @Nullable String groupName,
@@ -475,7 +476,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
           }
         }
       }
-      catch (IllegalAccessException e) {
+      catch (IllegalAccessException ignore) {
       }
     }
   }
@@ -596,7 +597,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
     @Override
     public boolean isCellEditable(Object o) {
-      return (o instanceof MyTreeNode) && (((MyTreeNode)o).isEnabled());
+      return o instanceof MyTreeNode && ((MyTreeNode)o).isEnabled();
     }
 
     @Override
@@ -611,8 +612,9 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   private final TreeCellRenderer myTitleRenderer = new TreeCellRenderer() {
     private final JLabel myLabel = new JLabel();
 
+    @NotNull
     @Override
-    public Component getTreeCellRendererComponent(JTree tree,
+    public Component getTreeCellRendererComponent(@NotNull JTree tree,
                                                   Object value,
                                                   boolean selected,
                                                   boolean expanded,
@@ -685,12 +687,13 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   private class MyValueRenderer implements TableCellRenderer {
     private final JLabel myComboBox = new JLabel();
-    private final JCheckBox myCheckBox = new JCheckBox();
+    private final JCheckBox myCheckBox = new JBCheckBox();
     private final JPanel myEmptyLabel = new JPanel();
     private final JLabel myIntLabel = new JLabel();
 
+    @NotNull
     @Override
-    public Component getTableCellRendererComponent(JTable table,
+    public Component getTableCellRendererComponent(@NotNull JTable table,
                                                    Object value,
                                                    boolean isSelected,
                                                    boolean hasFocus,
@@ -701,6 +704,9 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         getPathForRow(row).getLastPathComponent();
       if (node instanceof MyTreeNode) {
         isEnabled = ((MyTreeNode)node).isEnabled();
+      }
+      if (!table.isEnabled()) {
+        isEnabled = false;
       }
 
       Color background = table.getBackground();
@@ -779,7 +785,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
    * @author Konstantin Bulenkov
    */
   private class MyValueEditor extends AbstractTableCellEditor {
-    private final JCheckBox myBooleanEditor = new JCheckBox();
+    private final JCheckBox myBooleanEditor = new JBCheckBox();
     private JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
     private MyIntOptionEditor myIntOptionsEditor = new MyIntOptionEditor();
     private Component myCurrentEditor = null;
@@ -788,7 +794,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     public MyValueEditor() {
       final ActionListener itemChoosen = new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           if (myCurrentNode != null) {
             myCurrentNode.setValue(getCellEditorValue());
             somethingChanged();

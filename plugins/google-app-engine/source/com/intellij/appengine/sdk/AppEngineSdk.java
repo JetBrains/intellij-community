@@ -33,6 +33,8 @@ public interface AppEngineSdk {
 
   File getAppCfgFile();
 
+  File getApplicationSchemeFile();
+
   File getToolsApiJarFile();
 
   File[] getLibraries();

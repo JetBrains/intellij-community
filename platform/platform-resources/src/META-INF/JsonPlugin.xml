@@ -14,8 +14,6 @@
     <!-- Add your actions here -->
   </actions>
 
-  <resource-bundle>com.intellij.json.JsonBundle</resource-bundle>
-
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
@@ -47,6 +45,7 @@
     <!-- Inspections -->
     <localInspection language="JSON" groupPath="JSON" shortName="JsonStandardCompliance" key="name.standard.compliance.inspection"
                      groupKey="name.json.inspection.group" enabledByDefault="true" level="ERROR"
+                     bundle="com.intellij.json.JsonBundle"
                      implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
 
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"

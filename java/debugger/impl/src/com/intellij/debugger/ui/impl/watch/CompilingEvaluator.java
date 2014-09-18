@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -31,10 +32,9 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiClass;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.util.PathsList;
 import com.sun.jdi.*;
@@ -111,7 +111,12 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
     try {
       // invoke base evaluator on call code
-      final Project project = myPsiContext.getProject();
+      final Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+        @Override
+        public Project compute() {
+          return myPsiContext.getProject();
+        }
+      });
       ExpressionEvaluator evaluator =
         DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
           @Override
@@ -156,11 +161,11 @@ public class CompilingEvaluator implements ExpressionEvaluator {
                                          DebugProcess process,
                                          ThreadReference threadReference,
                                          ClassLoaderReference classLoader)
-    throws EvaluateException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException, InvocationException {
+    throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
 
     VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
     for (OutputFileObject cls : classes) {
-      if (cls.getName().contains(getGenClassName())) {
+      if (cls.getName().contains(GEN_CLASS_NAME)) {
         Method defineMethod =
           ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
         byte[] bytes = changeSuperToMagicAccessor(cls.toByteArray());
@@ -174,7 +179,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
         process.invokeMethod(context, classLoader, defineMethod, args);
       }
     }
-    return (ClassType)process.findClass(context, getGenClassFullName(), classLoader);
+    return (ClassType)process.findClass(context, getGenClassQName(), classLoader);
   }
 
   private static byte[] changeSuperToMagicAccessor(byte[] bytes) {
@@ -213,40 +218,10 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   private static final String GEN_METHOD_NAME = "invoke";
 
   private String getClassCode() {
-    if (myData != null) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          //String text = myData.getGeneratedInnerClass().getText();
-          ////TODO: remove
-          //String prefix = "public static";
-          //if (text.startsWith(prefix)) {
-          //  text = "public" + text.substring(prefix.length());
-          //}
-          //PsiElement[] children = ((PsiJavaFile)myPsiContext.getContainingFile()).getImportList().getChildren();
-          //StringBuilder imports = new StringBuilder();
-          //for (PsiElement child : children) {
-          //  if (child instanceof PsiImportStatement) {
-          //    String name = ((PsiImportStatement)child).getImportReference().getQualifiedName();
-          //    imports.append("import ").append(name).append(";");
-          //  }
-          //}
-          //text = text.replace("class " + GEN_CLASS_NAME, "class " + getGenClassName());
-          //text = text.replace(GEN_CLASS_NAME + "(", getGenClassName() + "(");
-          //text = text.replace(((PsiClass)myData.getGeneratedInnerClass().getParent()).getName() + "." + GEN_CLASS_NAME, getGenClassName());
-          //return "package " + getGenPackageName() + "; " + imports.toString() + text;
-          return myData.getGeneratedInnerClass().getContainingFile().getText();
-        }
-      });
-    }
-    return null;
-  }
-
-  private String getGenPackageName() {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        return ((PsiJavaFile)myData.getGeneratedInnerClass().getContainingFile()).getPackageName();
+        return myData.getGeneratedInnerClass().getContainingFile().getText();
       }
     });
   }
@@ -255,54 +230,18 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        return ((PsiClass)myData.getGeneratedInnerClass().getParent()).getName();
+        return FileUtil.getNameWithoutExtension(myData.getGeneratedInnerClass().getContainingFile().getName());
       }
     });
   }
 
-  private String getGenClassName() {
-    return getMainClassName() + '$' + GEN_CLASS_NAME;
-  }
-
-  private String getGenClassFullName() {
-    String packageName = getGenPackageName();
-    if (packageName.isEmpty()) {
-      return getGenClassName();
-    }
-    return packageName + '.' + getGenClassName();
-  }
-
-  //private String createClassCode() {
-  //  return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-  //    @Override
-  //    public String compute() {
-  //      try {
-  //        myExtractedData =
-  //          ExtractLightMethodObjectHandler.extractLightMethodObject(myCodeFragment.getProject(), myFile , myCodeFragment, "test");
-  //      }
-  //      catch (PrepareFailedException e) {
-  //        e.printStackTrace();
-  //      }
-  //      return null;
-  //    }
-  //  });
-  //}
-
-  private static String createClassCode(TextWithImports body) {
-    StringBuilder text = new StringBuilder();
-    text.append("package " + GEN_CLASS_PACKAGE + ";");
-    String imports = body.getImports();
-    if (!imports.isEmpty()) {
-      for (String s : imports.split(",")) {
-        text.append("import " + s + ";");
+  private String getGenClassQName() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return JVMNameUtil.getNonAnonymousClassName(myData.getGeneratedInnerClass());
       }
-    }
-    String bodyText = body.getText();
-    if (!bodyText.endsWith(";")) {
-      bodyText += ';';
-    }
-    text.append("public class " + GEN_CLASS_NAME + " { public static Object " + GEN_METHOD_NAME + "() throws Exception {" + bodyText + "}}");
-    return text.toString();
+    });
   }
 
   private static ArrayReference createURLArray(EvaluationContext context)
@@ -325,11 +264,17 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
   ///////////////// Compiler stuff
 
+  @NotNull
   private Collection<OutputFileObject> compile() throws EvaluateException {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     MemoryFileManager manager = new MemoryFileManager(compiler);
     DiagnosticCollector<JavaFileObject> diagnostic = new DiagnosticCollector<JavaFileObject>();
-    Module module = ModuleUtilCore.findModuleForPsiElement(myPsiContext);
+    Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+      @Override
+      public Module compute() {
+        return ModuleUtilCore.findModuleForPsiElement(myPsiContext);
+      }
+    });
     PathsList cp = null;
     if (module != null) {
       cp = ModuleRootManager.getInstance(module).orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList();

@@ -604,9 +604,15 @@ public class PsiClassImplUtil {
                                          @NotNull PsiElementFactory factory,
                                          @NotNull PsiMethod candidateMethod,
                                          @NotNull PsiSubstitutor substitutor) {
-    if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
-      PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
-      substitutor = factory.createRawSubstitutor(substitutor, methodTypeParameters);
+    //4.8-2. Raw Types and Inheritance
+    //certain members of a raw type are not erased,
+    //namely static members whose types are parameterized, and members inherited from a non-generic supertype.
+    if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      final PsiClass containingClass = candidateMethod.getContainingClass();
+      if (containingClass != null && containingClass.hasTypeParameters()) {
+        PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
+        substitutor = factory.createRawSubstitutor(substitutor, methodTypeParameters);
+      }
     }
     return substitutor;
   }

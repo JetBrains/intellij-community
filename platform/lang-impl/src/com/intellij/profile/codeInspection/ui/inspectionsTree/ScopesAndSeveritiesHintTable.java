@@ -84,7 +84,7 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
         final Component component = prepareRenderer(column.getCellRenderer(), j, i);
         w = Math.max(component.getPreferredSize().width, w);
       }
-      column.setPreferredWidth(w);
+      column.setPreferredWidth(w + 1);
     }
   }
 

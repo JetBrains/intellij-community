@@ -79,11 +79,13 @@ public class JarVersionDetectionUtil {
     }
   }
 
-  public static String getBundleVersion(@NotNull File jar) throws IOException {
+  @Nullable
+  public static String getBundleVersion(@NotNull File jar) {
     return JarUtil.getJarAttribute(jar, new Attributes.Name("Bundle-Version"));
   }
 
-  public static String getImplementationVersion(@NotNull File jar) throws IOException {
+  @Nullable
+  public static String getImplementationVersion(@NotNull File jar) {
     return JarUtil.getJarAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
   }
 

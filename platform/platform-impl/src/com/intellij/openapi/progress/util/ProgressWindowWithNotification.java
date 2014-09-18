@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,11 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
-import java.util.LinkedList;
 
 /**
  * @author lex
  */
 public class ProgressWindowWithNotification extends ProgressWindow {
-  private final LinkedList<ProgressIndicatorListener> myListeners = new LinkedList<ProgressIndicatorListener>();
-
   public ProgressWindowWithNotification(boolean shouldShowCancel, Project project) {
     super(shouldShowCancel, project);
   }
@@ -42,25 +39,20 @@ public class ProgressWindowWithNotification extends ProgressWindow {
     super(shouldShowCancel, shouldShowBackground, project, parentComponent, cancelText);
   }
 
-  public void cancel() {
-    super.cancel();
-    for (final ProgressIndicatorListener progressIndicatorListener : myListeners) {
-      progressIndicatorListener.cancelled();
-    }
+  public void addListener(final ProgressIndicatorListener listener) {
+    addStateDelegate(new AbstractProgressIndicatorExBase(){
+      @Override
+      public void cancel() {
+        super.cancel();
+        listener.cancelled();
+      }
+
+      @Override
+      public void stop() {
+        super.stop();
+        listener.stopped();
+      }
+    });
   }
 
-  public synchronized void stop() {
-    for (final ProgressIndicatorListener progressIndicatorListener : myListeners) {
-      progressIndicatorListener.stopped();
-    }
-    super.stop();
-  }
-
-  public void addListener(ProgressIndicatorListener listener) {
-    myListeners.addFirst(listener);
-  }
-
-  public void removeListener(ProgressIndicatorListener listener) {
-    myListeners.remove(listener);
-  }
 }

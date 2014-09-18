@@ -164,18 +164,20 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
   @NotNull
   private static Artifact findOrCreateArtifact(AppEngineFacet appEngineFacet) {
     Module module = appEngineFacet.getModule();
-    ArtifactType artifactType = AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType();
+    List<ArtifactType> artifactTypes = AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType();
     final Collection<Artifact> artifacts = ArtifactUtil.getArtifactsContainingModuleOutput(module);
-    for (Artifact artifact : artifacts) {
-      if (artifactType.equals(artifact.getArtifactType())) {
-        return artifact;
+    for (ArtifactType type : artifactTypes) {
+      for (Artifact artifact : artifacts) {
+        if (type.equals(artifact.getArtifactType())) {
+          return artifact;
+        }
       }
     }
     ArtifactManager artifactManager = ArtifactManager.getInstance(module.getProject());
     PackagingElementFactory elementFactory = PackagingElementFactory.getInstance();
     ArtifactRootElement<?> root = elementFactory.createArtifactRootElement();
     elementFactory.getOrCreateDirectory(root, "WEB-INF/classes").addOrFindChild(elementFactory.createModuleOutput(module));
-    return artifactManager.addArtifact(module.getName(), artifactType, root);
+    return artifactManager.addArtifact(module.getName(), artifactTypes.get(0), root);
   }
 
   private static Library addProjectLibrary(final Module module, final String name, final List<String> jarDirectories, final VirtualFile[] sources) {

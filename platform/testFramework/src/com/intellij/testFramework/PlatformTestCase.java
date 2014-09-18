@@ -43,6 +43,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
@@ -339,6 +340,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
 
       ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().cleanupForNextTest();
+    }
+
+    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
+    if (projectManager.isDefaultProjectInitialized()) {
+      Project defaultProject = projectManager.getDefaultProject();
+      ((PsiManagerEx)PsiManager.getInstance(defaultProject)).getFileManager().cleanupForNextTest();
     }
 
     LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();

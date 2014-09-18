@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -509,13 +510,15 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       new Factory<ProgressIndicator>() {
         @Override
         public ProgressIndicator create() {
-          return new FindProgressIndicator(searchContext.getProject(), presentation.getScopeText()) {
+          FindProgressIndicator indicator = new FindProgressIndicator(searchContext.getProject(), presentation.getScopeText());
+          indicator.addStateDelegate(new AbstractProgressIndicatorExBase(){
             @Override
             public void cancel() {
-              context.getCommand().stopAsyncSearch();
               super.cancel();
+              context.getCommand().stopAsyncSearch();
             }
-          };
+          });
+          return indicator;
         }
       }
     );

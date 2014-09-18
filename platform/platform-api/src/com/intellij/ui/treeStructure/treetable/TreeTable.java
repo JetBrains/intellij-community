@@ -168,7 +168,7 @@ public class TreeTable extends JBTable {
   protected void processKeyEvent(KeyEvent e){
     int keyCode = e.getKeyCode();
     final int selColumn = columnModel.getSelectionModel().getAnchorSelectionIndex();
-    boolean treeHasFocus = selColumn >= 0 && isTreeColumn(selColumn);
+    boolean treeHasFocus = selColumn == -1 || selColumn >= 0 && isTreeColumn(selColumn);
     boolean oneRowSelected = getSelectedRowCount() == 1;
     if(treeHasFocus && oneRowSelected && ((keyCode == KeyEvent.VK_LEFT) || (keyCode == KeyEvent.VK_RIGHT))){
       TreePath selectionPath = myTree.getSelectionPath();

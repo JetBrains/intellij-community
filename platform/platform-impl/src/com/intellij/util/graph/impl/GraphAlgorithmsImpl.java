@@ -65,8 +65,9 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
     };
   }
 
+  @NotNull
   @Override
-  public <Node> Graph<Chunk<Node>> computeSCCGraph(final Graph<Node> graph) {
+  public <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull final Graph<Node> graph) {
     final DFSTBuilder<Node> builder = new DFSTBuilder<Node>(graph);
     final TIntArrayList sccs = builder.getSCCs();
 
@@ -108,6 +109,12 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
         return ins.iterator();
       }
     }));
+  }
+
+  @NotNull
+  @Override
+  public <Node> Collection<Chunk<Node>> computeStronglyConnectedComponents(@NotNull Graph<Node> graph) {
+    return computeSCCGraph(graph).getNodes();
   }
 
   @NotNull

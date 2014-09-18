@@ -118,6 +118,14 @@ class AliasedAnnotationHolder implements AnnotationHolder {
     throw new UnsupportedOperationException("unsupported");
   }
 
+  @Override
+  public Annotation createAnnotation(@NotNull HighlightSeverity severity,
+                                     @NotNull TextRange range,
+                                     @Nullable String message,
+                                     @Nullable String htmlTooltip) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
   @NotNull
   @Override
   public AnnotationSession getCurrentAnnotationSession() {

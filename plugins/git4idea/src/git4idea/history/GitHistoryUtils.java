@@ -872,7 +872,7 @@ public class GitHistoryUtils {
       h.addParameters("--decorate=full");
     }
     if (withChanges) {
-      h.addParameters("-M", "--name-status", "-m");
+      h.addParameters("-M", "--name-status", "-c");
     }
     h.endOptions();
 

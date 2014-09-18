@@ -138,6 +138,7 @@ class SearchForUsagesRunnable implements Runnable {
 
       resultLines.add(shortMessage);
       resultListener = addHrefHandling(resultListener, LARGE_FILES_HREF_TARGET, new Runnable() {
+        @Override
         public void run() {
           String detailedMessage = detailedLargeFilesMessage(largeFiles);
           List<String> strings = new ArrayList<String>(lines);
@@ -247,9 +248,15 @@ class SearchForUsagesRunnable implements Runnable {
     };
   }
 
-  private static PsiElement getPsiElement(UsageTarget[] searchFor) {
-    if (!(searchFor[0] instanceof PsiElementUsageTarget)) return null;
-    return ((PsiElementUsageTarget)searchFor[0]).getElement();
+  private static PsiElement getPsiElement(@NotNull UsageTarget[] searchFor) {
+    final UsageTarget target = searchFor[0];
+    if (!(target instanceof PsiElementUsageTarget)) return null;
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+      @Override
+      public PsiElement compute() {
+        return ((PsiElementUsageTarget)target).getElement();
+      }
+    });
   }
 
   private static void flashUsageScriptaculously(@NotNull final Usage usage) {
@@ -321,6 +328,7 @@ class SearchForUsagesRunnable implements Runnable {
 
   private void searchUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
     ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
+    assert indicator != null : "must run find usages under progress";
     TooManyUsagesStatus.createFor(indicator);
     Alarm findUsagesStartedBalloon = new Alarm();
     findUsagesStartedBalloon.addRequest(new Runnable() {
@@ -337,7 +345,8 @@ class SearchForUsagesRunnable implements Runnable {
       @Override
       public boolean process(final Usage usage) {
         ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
-        if (indicator != null && indicator.isCanceled()) return false;
+        assert indicator != null : "must run find usages under progress";
+        if (indicator.isCanceled()) return false;
 
         if (!UsageViewManagerImpl.isInScope(usage, mySearchScopeToWarnOfFallingOutOf)) {
           myOutOfScopeUsages.incrementAndGet();
@@ -368,7 +377,7 @@ class SearchForUsagesRunnable implements Runnable {
             });
           }
         }
-        return indicator == null || !indicator.isCanceled();
+        return !indicator.isCanceled();
       }
     });
     if (getUsageView(indicator) != null) {

@@ -30,6 +30,6 @@ public class OnlineDocAction extends AnAction implements DumbAware {
   }
 
   public void update(final AnActionEvent e) {
-    e.getPresentation().setVisible(ApplicationInfoImpl.getShadowInstance().getDocumentationUrl() != null);
+    e.getPresentation().setEnabledAndVisible(ApplicationInfoImpl.getShadowInstance().getDocumentationUrl() != null);
   }
 }

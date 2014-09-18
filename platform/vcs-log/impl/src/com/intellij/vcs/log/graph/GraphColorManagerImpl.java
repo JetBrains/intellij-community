@@ -58,9 +58,14 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     if (isEmptyRefs(refs, headCommit)) {
       return DEFAULT_COLOR;
     }
-    VcsRef firstRef = Collections.min(refs, getRefManager(refs).getComparator());
+    VcsRef firstRef = Collections.min(refs, myRefManagers.get(getFirstRoot(refs)).getComparator());
     // TODO dark variant
     return firstRef.getName().hashCode();
+  }
+
+  @NotNull
+  private VirtualFile getFirstRoot(@NotNull Collection<VcsRef> refs) {
+    return refs.iterator().next().getRoot();
   }
 
   private boolean isEmptyRefs(@NotNull Collection<VcsRef> refs, int head) {
@@ -99,10 +104,12 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
       return -1;
     }
 
-    VcsLogRefManager refManager1 = getRefManager(refs1);
-    VcsLogRefManager refManager2 = getRefManager(refs2);
-    if (!refManager1.equals(refManager2)) { // heads from different VCSs are not comparable => are considered equal for now
-      return 0;
+    VirtualFile root1 = getFirstRoot(refs1);
+    VirtualFile root2 = getFirstRoot(refs2);
+    VcsLogRefManager refManager1 = myRefManagers.get(root1);
+    VcsLogRefManager refManager2 = myRefManagers.get(root2);
+    if (!refManager1.equals(refManager2)) {
+      return root1.getPresentableUrl().compareTo(root2.getPresentableUrl());
     }
 
     Comparator<VcsRef> comparator = refManager1.getComparator();
@@ -123,11 +130,6 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
       return 1;
     }
     return 0;
-  }
-
-  @NotNull
-  private VcsLogRefManager getRefManager(@NotNull Collection<VcsRef> refs) {
-    return myRefManagers.get(refs.iterator().next().getRoot());
   }
 
 }
