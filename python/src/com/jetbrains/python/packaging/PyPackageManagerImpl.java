@@ -39,7 +39,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -90,8 +89,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final String UNINSTALL = "uninstall";
   public static final String UNTAR = "untar";
 
+  private final Object myCacheLock = new Object();
   private List<PyPackage> myPackagesCache = null;
-  private Map<String, Set<PyPackage>> myDependenciesCache = null;
   private PyExternalProcessException myExceptionCache = null;
 
   protected Sdk mySdk;
@@ -247,56 +246,50 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Nullable
-  public synchronized List<PyPackage> getPackages(boolean cachedOnly) throws PyExternalProcessException {
-    if (myPackagesCache == null) {
+  public List<PyPackage> getPackages(boolean cachedOnly) throws PyExternalProcessException {
+    synchronized (myCacheLock) {
+      if (myPackagesCache != null) {
+        return myPackagesCache;
+      }
       if (myExceptionCache != null) {
         throw myExceptionCache;
       }
       if (cachedOnly) {
         return null;
       }
-      loadPackages();
     }
-    return myPackagesCache;
-  }
-
-  @Nullable
-  public synchronized Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws PyExternalProcessException {
-    if (myDependenciesCache == null) {
-      if (myExceptionCache != null) {
-        throw myExceptionCache;
-      }
-
-      loadPackages();
-    }
-    return myDependenciesCache.get(pkg.getName());
-  }
-
-  public synchronized void loadPackages() throws PyExternalProcessException {
     try {
       final String output = getHelperResult(PACKAGING_TOOL, Arrays.asList("list"), false, false, null);
-      myPackagesCache = parsePackagingToolOutput(output);
-      calculateDependents();
+      final List<PyPackage> packages = parsePackagingToolOutput(output);
+      synchronized (myCacheLock) {
+        myPackagesCache = packages;
+      }
+      return packages;
     }
     catch (PyExternalProcessException e) {
-      myExceptionCache = e;
-      LOG.info("Error loading packages list: " + e.getMessage(), e);
+      synchronized (myCacheLock) {
+        myExceptionCache = e;
+      }
       throw e;
     }
   }
 
-  private synchronized void calculateDependents() {
-    myDependenciesCache = new HashMap<String, Set<PyPackage>>();
-    for (PyPackage p : myPackagesCache) {
-      final List<PyRequirement> requirements = p.getRequirements();
-      for (PyRequirement requirement : requirements) {
-        final String name = requirement.getName();
-        Set<PyPackage> value = myDependenciesCache.get(name);
-        if (value == null) value = new HashSet<PyPackage>();
-        value.add(p);
-        myDependenciesCache.put(name, value);
+  @Nullable
+  public Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws PyExternalProcessException {
+    final List<PyPackage> packages = getPackages(false);
+    if (packages != null) {
+      final Set<PyPackage> dependents = new HashSet<PyPackage>();
+      for (PyPackage p : packages) {
+        final List<PyRequirement> requirements = p.getRequirements();
+        for (PyRequirement requirement : requirements) {
+          if (requirement.getName().equals(pkg.getName())) {
+            dependents.add(p);
+          }
+        }
       }
+      return dependents;
     }
+    return null;
   }
 
   @Override
@@ -386,10 +379,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return null;
   }
 
-  protected synchronized void clearCaches() {
-    myPackagesCache = null;
-    myDependenciesCache = null;
-    myExceptionCache = null;
+  protected void clearCaches() {
+    synchronized (myCacheLock) {
+      myPackagesCache = null;
+      myExceptionCache = null;
+    }
   }
 
   @Nullable
