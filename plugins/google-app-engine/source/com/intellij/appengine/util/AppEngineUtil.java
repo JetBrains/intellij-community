@@ -15,8 +15,8 @@
  */
 package com.intellij.appengine.util;
 
-import com.intellij.appengine.facet.AppEngineWebIntegration;
 import com.intellij.appengine.facet.AppEngineFacet;
+import com.intellij.appengine.facet.AppEngineWebIntegration;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -60,17 +60,17 @@ public class AppEngineUtil {
     });
 
     comboBox.removeAllItems();
-    for (Artifact artifact : collectWebArtifacts(project, withAppEngineFacetOnly)) {
+    for (Artifact artifact : collectAppEngineArtifacts(project, withAppEngineFacetOnly)) {
       comboBox.addItem(artifact);
     }
   }
 
-  public static List<Artifact> collectWebArtifacts(@NotNull Project project, final boolean withAppEngineFacetOnly) {
+  public static List<Artifact> collectAppEngineArtifacts(@NotNull Project project, final boolean withAppEngineFacetOnly) {
     final List<Artifact> artifacts = new ArrayList<Artifact>();
     if (project.isDefault()) return artifacts;
-    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifactsByType(
-      AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType())) {
-      if (!withAppEngineFacetOnly || findAppEngineFacet(project, artifact) != null) {
+    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+      if (AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType().contains(artifact.getArtifactType()) &&
+          (!withAppEngineFacetOnly || findAppEngineFacet(project, artifact) != null)) {
         artifacts.add(artifact);
       }
     }
