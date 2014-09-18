@@ -36,8 +36,8 @@ import com.intellij.openapi.util.io.FileUtilRt
 import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.resetHard
-import org.jetbrains.settingsRepository.git.edit
-import org.jetbrains.settingsRepository.git.AddFile
+import org.jetbrains.jgit.dirCache.edit
+import org.jetbrains.jgit.dirCache.AddFile
 
 class GitTest {
   data class FileInfo (val name: String, val data: ByteArray)
