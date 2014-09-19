@@ -264,7 +264,7 @@ class StateMerger {
         }
         for (DfaVariableValue eqVar : vars) {
           if (var != eqVar) {
-            result.add(Fact.createEqualityFact(var, eqVar, true));
+            //result.add(Fact.createEqualityFact(var, eqVar, true));
           }
         }
       }
@@ -274,11 +274,21 @@ class StateMerger {
       List<DfaVariableValue> vars1 = classPair.first.getVariables(false);
       List<DfaVariableValue> vars2 = classPair.second.getVariables(false);
       
-      LinkedHashSet<DfaValue> firstSet = new LinkedHashSet<DfaValue>(vars1);
-      ContainerUtil.addIfNotNull(firstSet, classPair.first.findConstant(true));
+      LinkedHashSet<DfaValue> firstSet = ContainerUtil.newLinkedHashSet();
+      DfaValue firstConstant = classPair.first.findConstant(true);
+      if (firstConstant != null) {
+        firstSet.add(firstConstant);
+      } else {
+        //firstSet.addAll(vars1);
+      }
 
-      LinkedHashSet<DfaValue> secondSet = new LinkedHashSet<DfaValue>(vars2);
-      ContainerUtil.addIfNotNull(secondSet, classPair.second.findConstant(true));
+      LinkedHashSet<DfaValue> secondSet = ContainerUtil.newLinkedHashSet();
+      DfaValue secondConstant = classPair.second.findConstant(true);
+      if (secondConstant != null) {
+        secondSet.add(secondConstant);
+      } else {
+        //secondSet.addAll(vars2);
+      }
 
       for (DfaVariableValue var : vars1) {
         for (DfaValue value : secondSet) {
@@ -304,6 +314,10 @@ class StateMerger {
     }
 
     myFacts.put(state, result);
+
+    if (result.size() > 100) {
+      System.out.println(result.size() + " facts");
+    }
     return result;
   }
 

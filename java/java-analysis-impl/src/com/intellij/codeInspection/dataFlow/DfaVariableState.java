@@ -44,16 +44,18 @@ public class DfaVariableState {
   protected final Set<DfaPsiType> myInstanceofValues;
   protected final Set<DfaPsiType> myNotInstanceofValues;
   protected final Nullness myNullability;
+  private final int myHash;
 
   public DfaVariableState(@NotNull DfaVariableValue dfaVar) {
     this(Collections.<DfaPsiType>emptySet(), Collections.<DfaPsiType>emptySet(), dfaVar.getInherentNullability());
   }
 
   protected DfaVariableState(Set<DfaPsiType> instanceofValues,
-                          Set<DfaPsiType> notInstanceofValues, Nullness nullability) {
+                             Set<DfaPsiType> notInstanceofValues, Nullness nullability) {
     myInstanceofValues = instanceofValues;
     myNotInstanceofValues = notInstanceofValues;
     myNullability = nullability;
+    myHash = (myInstanceofValues.hashCode() * 31 + myNotInstanceofValues.hashCode()) * 31 + myNullability.hashCode();
   }
 
   public boolean isNullable() {
@@ -77,7 +79,7 @@ public class DfaVariableState {
   @Nullable
   public DfaVariableState withInstanceofValue(DfaTypeValue dfaType) {
     if (dfaType.getDfaType().getPsiType() instanceof PsiPrimitiveType) return this;
-    
+
     if (checkInstanceofValue(dfaType.getDfaType())) {
       DfaVariableState result = dfaType.isNullable() ? withNullability(Nullness.NULLABLE) : this;
       List<DfaPsiType> moreGeneric = ContainerUtil.newArrayList();
@@ -139,14 +141,15 @@ public class DfaVariableState {
   }
 
   public int hashCode() {
-    return (myInstanceofValues.hashCode() * 31 + myNotInstanceofValues.hashCode()) * 31 + myNullability.hashCode();
+    return myHash;
   }
 
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (!(obj instanceof DfaVariableState)) return false;
     DfaVariableState aState = (DfaVariableState) obj;
-    return myNullability == aState.myNullability &&
+    return myHash == aState.myHash &&
+           myNullability == aState.myNullability &&
            myInstanceofValues.equals(aState.myInstanceofValues) &&
            myNotInstanceofValues.equals(aState.myNotInstanceofValues);
   }
