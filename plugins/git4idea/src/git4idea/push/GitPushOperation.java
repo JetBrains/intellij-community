@@ -173,6 +173,9 @@ public class GitPushOperation {
       if (beforePushLabel != null) {
         afterPushLabel = LocalHistory.getInstance().putSystemLabel(myProject, "After push");
       }
+      for (GitRepository repository : myPushSpecs.keySet()) {
+        repository.update();
+      }
     }
     return prepareCombinedResult(results, updatedRoots, preUpdatePositions, beforePushLabel, afterPushLabel);
   }
