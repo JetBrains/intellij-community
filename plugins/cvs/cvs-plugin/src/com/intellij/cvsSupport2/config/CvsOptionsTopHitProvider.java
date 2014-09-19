@@ -22,6 +22,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,8 +39,8 @@ public final class CvsOptionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(Project project) {
-    if (ProjectLevelVcsManager.getInstance(project).getAllVcss().length == 0) {
+  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+    if (project == null || ProjectLevelVcsManager.getInstance(project).getAllVcss().length == 0) {
       return Collections.emptyList();
     }
     return Collections.unmodifiableCollection(Arrays.asList(

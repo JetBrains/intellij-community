@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -36,7 +37,7 @@ import java.util.List;
  */
 public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
   @NotNull
-  public abstract Collection<BooleanOptionDescription> getOptions(Project project);
+  public abstract Collection<BooleanOptionDescription> getOptions(@Nullable Project project);
 
   @Override
   public final void consumeTopHits(@NonNls String pattern, Consumer<Object> collector, Project project) {

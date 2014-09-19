@@ -19,6 +19,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,7 +49,7 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(Project project) {
+  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
     return ourOptions;
   }
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,8 +45,8 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(Project project) {
-    if (ProjectLevelVcsManager.getInstance(project).getAllVcss().length == 0) {
+  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+    if (project == null || ProjectLevelVcsManager.getInstance(project).getAllVcss().length == 0) {
       return Collections.emptyList();
     }
     VcsConfiguration vcs = VcsConfiguration.getInstance(project);
