@@ -119,7 +119,6 @@ class StateQueue {
       return group;
     }
 
-    int prevSize = group.size();
     StateMerger merger = new StateMerger();
     while (true) {
       List<DfaMemoryStateImpl> nextStates = merger.mergeByFacts(group);
@@ -127,10 +126,6 @@ class StateQueue {
       if (nextStates == null) nextStates = merger.mergeByUnknowns(group);
       if (nextStates == null) break;
       group = nextStates;
-    }
-    int afterSize = group.size();
-    if (prevSize > 100 && afterSize > 100) {
-      System.out.println(prevSize + " -> " + afterSize);
     }
     return group;
   }
