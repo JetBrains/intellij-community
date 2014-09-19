@@ -23,22 +23,22 @@ import java.awt.*;
 import java.awt.image.ImageObserver;
 
 class NodeImageObserver implements ImageObserver {
-  JTree tree;
-  DefaultTreeModel model;
-  TreeNode node;
+  private JTree myTree;
+  private DefaultTreeModel myModel;
+  private TreeNode myNode;
 
   NodeImageObserver(JTree tree, TreeNode node) {
-    this.tree = tree;
-    this.model = (DefaultTreeModel)tree.getModel();
-    this.node = node;
+    myTree = tree;
+    myModel = (DefaultTreeModel)tree.getModel();
+    myNode = node;
   }
 
   public boolean imageUpdate(Image img, int flags, int x, int y, int w, int h) {
     if ((flags & (FRAMEBITS | ALLBITS)) != 0) {
-      TreePath path = new TreePath(model.getPathToRoot(node));
-      Rectangle rect = tree.getPathBounds(path);
+      TreePath path = new TreePath(myModel.getPathToRoot(myNode));
+      Rectangle rect = myTree.getPathBounds(path);
       if (rect != null) {
-        tree.repaint(rect);
+        myTree.repaint(rect);
       }
     }
     return (flags & (ALLBITS | ABORT)) == 0;
