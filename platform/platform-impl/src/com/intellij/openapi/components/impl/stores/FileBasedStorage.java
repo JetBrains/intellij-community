@@ -213,7 +213,9 @@ public class FileBasedStorage extends XmlElementStorage {
     try {
       VirtualFile file = getVirtualFile();
       if (file == null || file.isDirectory() || !file.isValid()) {
-        LOG.info("Document was not loaded for " + myFileSpec + " file is " + (file == null ? "null" : "directory"));
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Document was not loaded for " + myFileSpec + " file is " + (file == null ? "null" : "directory"));
+        }
         return null;
       }
       if (file.getLength() == 0) {
