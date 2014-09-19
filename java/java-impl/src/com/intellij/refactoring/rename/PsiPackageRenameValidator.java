@@ -42,9 +42,6 @@ public class PsiPackageRenameValidator implements RenameInputValidatorEx {
       if (!PsiDirectoryFactory.getInstance(project).isValidPackageName(newName)) {
         return "Not a valid package name";
       }
-      if (!PsiNameHelper.getInstance(project).isIdentifier(newName)) {
-        return "Not a valid identifier name";
-      }
     }
     return null;
   }
