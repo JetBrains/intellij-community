@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class DfaVariableState {
@@ -79,11 +80,20 @@ public class DfaVariableState {
     
     if (checkInstanceofValue(dfaType.getDfaType())) {
       DfaVariableState result = dfaType.isNullable() ? withNullability(Nullness.NULLABLE) : this;
-      if (!myInstanceofValues.contains(dfaType.getDfaType())) {
-        HashSet<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
-        newInstanceof.add(dfaType.getDfaType());
-        result = createCopy(newInstanceof, myNotInstanceofValues, result.myNullability);
+      List<DfaPsiType> moreGeneric = ContainerUtil.newArrayList();
+      for (DfaPsiType alreadyInstanceof : myInstanceofValues) {
+        if (dfaType.getDfaType().isAssignableFrom(alreadyInstanceof)) {
+          return result;
+        }
+        if (alreadyInstanceof.isAssignableFrom(dfaType.getDfaType())) {
+          moreGeneric.add(alreadyInstanceof);
+        }
       }
+
+      HashSet<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
+      newInstanceof.removeAll(moreGeneric);
+      newInstanceof.add(dfaType.getDfaType());
+      result = createCopy(newInstanceof, myNotInstanceofValues, result.myNullability);
       return result;
     }
 
@@ -98,7 +108,18 @@ public class DfaVariableState {
       if (dfaType.getDfaType().isAssignableFrom(dfaTypeValue)) return null;
     }
 
+    List<DfaPsiType> moreSpecific = ContainerUtil.newArrayList();
+    for (DfaPsiType alreadyNotInstanceof : myNotInstanceofValues) {
+      if (alreadyNotInstanceof.isAssignableFrom(dfaType.getDfaType())) {
+        return this;
+      }
+      if (dfaType.getDfaType().isAssignableFrom(alreadyNotInstanceof)) {
+        moreSpecific.add(alreadyNotInstanceof);
+      }
+    }
+
     HashSet<DfaPsiType> newNotInstanceof = ContainerUtil.newHashSet(myNotInstanceofValues);
+    newNotInstanceof.removeAll(moreSpecific);
     newNotInstanceof.add(dfaType.getDfaType());
     return createCopy(myInstanceofValues, newNotInstanceof, myNullability);
   }
