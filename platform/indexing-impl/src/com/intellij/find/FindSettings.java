@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,11 +79,11 @@ public abstract class FindSettings{
 
   public abstract void setLocalRegularExpressions(boolean regularExpressions);
 
-  public abstract void addStringToFind(String s);
+  public abstract void addStringToFind(@NotNull String s);
 
-  public abstract void addStringToReplace(String s);
+  public abstract void addStringToReplace(@NotNull String s);
 
-  public abstract void addDirectory(String s);
+  public abstract void addDirectory(@NotNull String s);
 
   @NotNull
   public abstract String[] getRecentFindStrings();
@@ -106,7 +106,7 @@ public abstract class FindSettings{
 
   public abstract void setWithSubdirectories(boolean b);
 
-  public abstract void initModelBySetings(FindModel model);
+  public abstract void initModelBySetings(@NotNull FindModel model);
 
   public abstract String getFileMask();
 
