@@ -136,7 +136,7 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   }
 
   public List<String> getPluginHosts() {
-    ArrayList<String> hosts = new ArrayList<String>();
+    ArrayList<String> hosts = new ArrayList<String>(myPluginHosts);
     final String pluginHosts = System.getProperty("idea.plugin.hosts");
     if (pluginHosts != null) {
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
