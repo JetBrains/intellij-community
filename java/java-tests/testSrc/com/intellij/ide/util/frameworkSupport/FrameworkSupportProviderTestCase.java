@@ -38,7 +38,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
     super.setUp();
     final Project project = getProject();
     myFrameworkSupportModel = new FrameworkSupportModelImpl(project, "", LibrariesContainerFactory.createContainer(project));
-    myNodes = new HashMap<FrameworkType, FrameworkSupportNode>();
+    myNodes = new LinkedHashMap<FrameworkType, FrameworkSupportNode>();
     final List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getAllProviders();
     Collections.sort(providers, FrameworkSupportUtil.getFrameworkSupportProvidersComparator(providers));
     for (FrameworkSupportInModuleProvider provider : providers) {
