@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
@@ -71,22 +72,33 @@ public class UsageViewContext {
 
   public void configure(@NotNull UsageViewPresentation presentation) {
     final String pattern = myConfiguration.getMatchOptions().getSearchPattern();
-    final String usagesString = SSRBundle.message("occurrences.of", StringUtil.shortenTextWithEllipsis(pattern, 50, 0, true));
-    presentation.setUsagesString(SSRBundle.message("occurrences.of", pattern));
-    presentation.setTabText(usagesString);
+    presentation.setScopeText(myConfiguration.getMatchOptions().getScope().getDisplayName());
+    final String usagesString = SSRBundle.message("occurrences.of", pattern);
+    presentation.setUsagesString(usagesString);
+    presentation.setTabText(StringUtil.shortenTextWithEllipsis(usagesString, 60, 0, false));
     presentation.setUsagesWord(SSRBundle.message("occurrence"));
     presentation.setCodeUsagesString(SSRBundle.message("found.occurrences"));
+    presentation.setTargetsNodeText(SSRBundle.message("targets.node.text"));
   }
 
   protected void configureActions() {}
 
-  private class MyUsageTarget implements ConfigurableUsageTarget,ItemPresentation {
+  private class MyUsageTarget implements ConfigurableUsageTarget, ItemPresentation {
 
     @NotNull
     @Override
     public String getPresentableText() {
       final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-      return SSRBundle.message("occurrences.of.0.in.1", matchOptions.getSearchPattern(), matchOptions.getScope().getDisplayName());
+      final String pattern = matchOptions.getSearchPattern();
+      final String scope = matchOptions.getScope().getDisplayName();
+      if (myConfiguration instanceof ReplaceConfiguration) {
+        final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)myConfiguration;
+        final String replacement = replaceConfiguration.getOptions().getReplacement();
+        return SSRBundle.message("replace.occurrences.of.0.with.1.in.2", pattern, replacement, scope);
+      }
+      else {
+        return SSRBundle.message("occurrences.of.0.in.1", pattern, scope);
+      }
     }
 
     @Override
