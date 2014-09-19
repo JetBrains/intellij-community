@@ -57,10 +57,6 @@ public final class SystemOptionsTopHitProvider extends OptionsTopHitProvider {
       public Object getInstance() {
         return GeneralSettings.getInstance();
       }
-
-      @Override
-      protected void fireUpdated() {
-      }
     };
   }
 }

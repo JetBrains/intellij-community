@@ -99,10 +99,6 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
       public Object getInstance() {
         return instance;
       }
-
-      @Override
-      protected void fireUpdated() {
-      }
     };
   }
 
@@ -111,10 +107,6 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
       @Override
       public Object getInstance() {
         return instance;
-      }
-
-      @Override
-      protected void fireUpdated() {
       }
     };
   }
