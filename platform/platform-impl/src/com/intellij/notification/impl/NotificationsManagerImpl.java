@@ -107,8 +107,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
         }
       };
       if (project == null) {
-        runnable.run();
-      } else if (!project.isDisposed()) {
+        UIUtil.invokeLaterIfNeeded(runnable);
+      }
+      else if (!project.isDisposed()) {
         StartupManager.getInstance(project).runWhenProjectIsInitialized(runnable);
       }
     }
