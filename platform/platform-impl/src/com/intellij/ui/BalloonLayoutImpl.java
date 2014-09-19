@@ -93,7 +93,10 @@ public class BalloonLayoutImpl implements BalloonLayout {
     List<Integer> columnWidths = computeWidths(columns);
 
     ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
-    int toolbarsOffset = pane != null ? pane.getY() : 0;
+    int paneOnScreen = (pane != null ? pane : myParent).getLocationOnScreen().y;
+    int layerOnScreen = myLayeredPane.getLocationOnScreen().y;
+    int toolbarsOffset = paneOnScreen - layerOnScreen;
+    
     JComponent layeredPane = pane != null ? pane.getMyLayeredPane() : null;
     int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4; 
     
