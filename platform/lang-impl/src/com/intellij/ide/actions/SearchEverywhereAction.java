@@ -81,10 +81,7 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -1646,6 +1643,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 return false;
               }
               classes.add(o);
+              if (o instanceof PsiNamedElement) {
+                final String name = ((PsiNamedElement)o).getName();
+                final PsiFile file = ((PsiNamedElement)o).getContainingFile();
+                if (file != null) {
+                  final VirtualFile virtualFile = file.getVirtualFile();
+                  if (StringUtil.equals(name, virtualFile.getNameWithoutExtension())) {
+                    myAlreadyAddedFiles.add(virtualFile);
+                  }
+                }
+              }
             }
             return true;
           }
