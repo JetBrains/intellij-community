@@ -18,6 +18,7 @@
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <search.topHitProvider implementation="org.zmlx.hg4idea.HgOptionsTopHitProvider"/>
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
