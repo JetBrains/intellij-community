@@ -373,7 +373,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
                              @NotNull final Map<String, InspectionToolWrapper> availableInspectionTools) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
-
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
     }
@@ -461,6 +461,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
     }
+    UIUtil.dispatchAllInvocationEvents(); // startup activities
+
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 

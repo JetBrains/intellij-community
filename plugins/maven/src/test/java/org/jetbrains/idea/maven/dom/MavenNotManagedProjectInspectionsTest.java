@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ui.UIUtil;
 
 import java.io.File;
 
@@ -58,7 +59,8 @@ public class MavenNotManagedProjectInspectionsTest extends MavenDomTestCase {
     // relies on ProjectManager.isProjectOpen. In tests the project is never being opened.
     
     ProjectManagerEx.getInstanceEx().openProject(myProject);
-    
+    UIUtil.dispatchAllInvocationEvents(); // startup activities
+
     Module m = createModule("module");
     PsiTestUtil.addContentRoot(m, myProjectRoot);
 
