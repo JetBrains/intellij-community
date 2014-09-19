@@ -40,7 +40,7 @@ public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
     else if (type == JsonElementTypes.LINE_COMMENT) {
-      final Couple<PsiElement> commentRange = JsonPsiUtil.expandLineCommentsRange(node.getPsi());
+      final Couple<PsiElement> commentRange = expandLineCommentsRange(node.getPsi());
       final int startOffset = commentRange.getFirst().getTextRange().getStartOffset();
       final int endOffset = commentRange.getSecond().getTextRange().getEndOffset();
       if (document.getLineNumber(startOffset) != document.getLineNumber(endOffset)) {
@@ -95,6 +95,11 @@ public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
   @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return false;
+  }
+
+  @NotNull
+  public static Couple<PsiElement> expandLineCommentsRange(@NotNull PsiElement anchor) {
+    return Couple.of(JsonPsiUtil.findFurthestSiblingOfSameType(anchor, false), JsonPsiUtil.findFurthestSiblingOfSameType(anchor, true));
   }
 
   private static boolean spanMultipleLines(@NotNull ASTNode node, @NotNull Document document) {

@@ -1,7 +1,6 @@
 package com.intellij.json;
 
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 
 /**
  * @author Mikhail Golubev
@@ -51,12 +50,5 @@ public class JsonHighlightingTest extends JsonTestCase {
   public void testSemanticHighlighting() throws Exception {
     // WEB-11239
     doTest();
-  }
-
-  // End moved from JavaScript
-
-  public void testSpellchecker() throws Exception {
-    myFixture.enableInspections(new SpellCheckingInspection());
-    doTestHighlighting(false, true, true);
   }
 }

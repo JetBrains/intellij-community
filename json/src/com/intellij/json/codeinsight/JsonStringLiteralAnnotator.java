@@ -7,70 +7,50 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Mikhail Golubev
  */
 public class JsonStringLiteralAnnotator implements Annotator {
+  private static final Pattern VALID_ESCAPE = Pattern.compile("\\\\([\"\\\\/bfnrt]|u[0-9a-fA-F]{4})");
+
   private static boolean debug = ApplicationManager.getApplication().isUnitTestMode();
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof JsonStringLiteral) {
+      final JsonStringLiteral stringLiteral = (JsonStringLiteral)element;
+      final int elementOffset = element.getTextOffset();
       if (JsonPsiUtil.isPropertyKey(element)) {
-        holder.createInfoAnnotation(element, debug ? "instance field" : null).setTextAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+        holder.createInfoAnnotation(element, debug ? "instance field" : null).setTextAttributes(
+          DefaultLanguageHighlighterColors.INSTANCE_FIELD);
       }
-      String text = element.getText();
-      int offset = element.getTextOffset();
-      int length = text.length();
-      // Check that string literal closed properly
+      final String text = element.getText();
+      final int length = text.length();
+      // Check that string literal is closed properly
       if (length <= 1 || text.charAt(0) != text.charAt(length - 1) || quoteEscaped(text, length - 1)) {
         holder.createErrorAnnotation(element.getTextRange(), JsonBundle.message("msg.missing.closing.quote"));
       }
-      // Check escape sequences validity
-      int pos = 1;
-      while (pos < length) {
-        if (text.charAt(pos) == '\\') {
-          if (pos >= length - 1) {
-            TextRange range = new TextRange(offset + pos, offset + pos + 1);
-            holder.createErrorAnnotation(range, JsonBundle.message("msg.illegal.escape.sequence"));
-            break;
+
+      // Check escapes
+      final List<Pair<TextRange, String>> fragments = stringLiteral.getTextFragments();
+      for (Pair<TextRange, String> fragment : fragments) {
+        final String fragmentText = fragment.getSecond();
+        if (fragmentText.startsWith("\\") && fragmentText.length() > 1 && !VALID_ESCAPE.matcher(fragmentText).matches()) {
+          final TextRange fragmentRange = fragment.getFirst();
+          if (fragmentText.startsWith("\\u")) {
+            holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), JsonBundle.message("msg.illegal.unicode.escape.sequence"));
           }
-          char next = text.charAt(pos + 1);
-          switch (next) {
-            case '"':
-            case '\\':
-            case '/':
-            case 'b':
-            case 'f':
-            case 'n':
-            case 'r':
-            case 't':
-              pos += 2;
-              break;
-            case 'u':
-              int i = pos + 2;
-              for (; i < pos + 6; i++) {
-                if (i == length || !StringUtil.isHexDigit(text.charAt(i))) {
-                  TextRange range = new TextRange(offset + pos, offset + i);
-                  holder.createErrorAnnotation(range, JsonBundle.message("msg.illegal.unicode.escape.sequence"));
-                  break;
-                }
-              }
-              pos = i;
-              break;
-            default:
-              TextRange range = new TextRange(offset + pos, offset + pos + 2);
-              holder.createErrorAnnotation(range, JsonBundle.message("msg.illegal.escape.sequence"));
-              pos += 2;
+          else {
+            holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), JsonBundle.message("msg.illegal.escape.sequence"));
           }
-        }
-        else {
-          pos++;
         }
       }
     }

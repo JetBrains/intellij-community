@@ -39,7 +39,7 @@
     <lang.findUsagesProvider language="JSON" implementationClass="com.intellij.json.findUsages.JsonFindUsagesProvider"/>
     <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
     <liveTemplateContext implementation="com.intellij.json.JsonContextType"/>
-    <spellchecker.support language="JSON" implementationClass="com.intellij.json.highlighting.JsonSpellcheckingStrategy"/>
+    <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
 
     <!-- Annotators -->
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
@@ -53,4 +53,5 @@
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
   </extensions>
+
 </idea-plugin>

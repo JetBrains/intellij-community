@@ -281,7 +281,7 @@ public class AnnotationUtilEx {
       @Nullable
       @Override
       public Result<PsiAnnotation[]> compute() {
-        return Result.create(getHierarchyAnnotations(listOwner, modifierList), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return Result.create(getHierarchyAnnotations(listOwner, modifierList), PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }

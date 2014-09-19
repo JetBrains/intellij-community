@@ -37,22 +37,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class DfaVariableState {
   protected final Set<DfaPsiType> myInstanceofValues;
   protected final Set<DfaPsiType> myNotInstanceofValues;
   protected final Nullness myNullability;
+  private final int myHash;
 
   public DfaVariableState(@NotNull DfaVariableValue dfaVar) {
     this(Collections.<DfaPsiType>emptySet(), Collections.<DfaPsiType>emptySet(), dfaVar.getInherentNullability());
   }
 
   protected DfaVariableState(Set<DfaPsiType> instanceofValues,
-                          Set<DfaPsiType> notInstanceofValues, Nullness nullability) {
+                             Set<DfaPsiType> notInstanceofValues, Nullness nullability) {
     myInstanceofValues = instanceofValues;
     myNotInstanceofValues = notInstanceofValues;
     myNullability = nullability;
+    myHash = (myInstanceofValues.hashCode() * 31 + myNotInstanceofValues.hashCode()) * 31 + myNullability.hashCode();
   }
 
   public boolean isNullable() {
@@ -76,14 +79,23 @@ public class DfaVariableState {
   @Nullable
   public DfaVariableState withInstanceofValue(DfaTypeValue dfaType) {
     if (dfaType.getDfaType().getPsiType() instanceof PsiPrimitiveType) return this;
-    
+
     if (checkInstanceofValue(dfaType.getDfaType())) {
       DfaVariableState result = dfaType.isNullable() ? withNullability(Nullness.NULLABLE) : this;
-      if (!myInstanceofValues.contains(dfaType.getDfaType())) {
-        HashSet<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
-        newInstanceof.add(dfaType.getDfaType());
-        result = createCopy(newInstanceof, myNotInstanceofValues, result.myNullability);
+      List<DfaPsiType> moreGeneric = ContainerUtil.newArrayList();
+      for (DfaPsiType alreadyInstanceof : myInstanceofValues) {
+        if (dfaType.getDfaType().isAssignableFrom(alreadyInstanceof)) {
+          return result;
+        }
+        if (alreadyInstanceof.isAssignableFrom(dfaType.getDfaType())) {
+          moreGeneric.add(alreadyInstanceof);
+        }
       }
+
+      HashSet<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
+      newInstanceof.removeAll(moreGeneric);
+      newInstanceof.add(dfaType.getDfaType());
+      result = createCopy(newInstanceof, myNotInstanceofValues, result.myNullability);
       return result;
     }
 
@@ -98,7 +110,18 @@ public class DfaVariableState {
       if (dfaType.getDfaType().isAssignableFrom(dfaTypeValue)) return null;
     }
 
+    List<DfaPsiType> moreSpecific = ContainerUtil.newArrayList();
+    for (DfaPsiType alreadyNotInstanceof : myNotInstanceofValues) {
+      if (alreadyNotInstanceof.isAssignableFrom(dfaType.getDfaType())) {
+        return this;
+      }
+      if (dfaType.getDfaType().isAssignableFrom(alreadyNotInstanceof)) {
+        moreSpecific.add(alreadyNotInstanceof);
+      }
+    }
+
     HashSet<DfaPsiType> newNotInstanceof = ContainerUtil.newHashSet(myNotInstanceofValues);
+    newNotInstanceof.removeAll(moreSpecific);
     newNotInstanceof.add(dfaType.getDfaType());
     return createCopy(myInstanceofValues, newNotInstanceof, myNullability);
   }
@@ -118,14 +141,15 @@ public class DfaVariableState {
   }
 
   public int hashCode() {
-    return (myInstanceofValues.hashCode() * 31 + myNotInstanceofValues.hashCode()) * 31 + myNullability.hashCode();
+    return myHash;
   }
 
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (!(obj instanceof DfaVariableState)) return false;
     DfaVariableState aState = (DfaVariableState) obj;
-    return myNullability == aState.myNullability &&
+    return myHash == aState.myHash &&
+           myNullability == aState.myNullability &&
            myInstanceofValues.equals(aState.myInstanceofValues) &&
            myNotInstanceofValues.equals(aState.myNotInstanceofValues);
   }

@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -82,6 +83,13 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
     options.add(option(vcs, id, "Perform in background: Add/Remove", "PERFORM_ADD_REMOVE_IN_BACKGROUND"));
     options.add(option(vcs, id, "Perform in background: revert", "PERFORM_ROLLBACK_IN_BACKGROUND"));
 
+    if (!project.isDefault()) {
+      // process Version Control / Changelist Conflicts settings
+      options.add(tracker(project, "Changelists: Enable changelist conflict tracking", "TRACKING_ENABLED"));
+      options.add(tracker(project, "Changelists: Show conflict resolving dialog", "SHOW_DIALOG"));
+      options.add(tracker(project, "Changelists: Highlight files with conflicts", "HIGHLIGHT_CONFLICTS"));
+      options.add(tracker(project, "Changelists: Highlight files from non-active changelists", "HIGHLIGHT_NON_ACTIVE_CHANGELIST"));
+    }
     return Collections.unmodifiableCollection(options);
   }
 
@@ -107,6 +115,20 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
 
       @Override
       protected void fireUpdated() {
+      }
+    };
+  }
+
+  private static BooleanOptionDescription tracker(final Project project, String option, String field) {
+    return new PublicFieldBasedOptionDescription(option, "project.propVCSSupport.ChangelistConflict", field) {
+      @Override
+      public Object getInstance() {
+        return ChangeListManagerImpl.getInstanceImpl(project).getConflictTracker().getOptions();
+      }
+
+      @Override
+      protected void fireUpdated() {
+        ChangeListManagerImpl.getInstanceImpl(project).getConflictTracker().optionsChanged();
       }
     };
   }

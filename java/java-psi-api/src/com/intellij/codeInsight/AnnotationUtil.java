@@ -133,7 +133,7 @@ public class AnnotationUtil {
               return null;
             }
           };
-          return Result.create(value, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          return Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
         }
       });
     return map.get(annotationNames);
@@ -169,7 +169,7 @@ public class AnnotationUtil {
 
             }
           };
-          return Result.create(value, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          return Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
         }
       });
     return map.get(annotationNames);
@@ -224,7 +224,7 @@ public class AnnotationUtil {
               return null;
             }
           };
-          return Result.create(value, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          return Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
         }
       });
     return map.get(annotationNames);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -180,6 +181,8 @@ public class UpdateCacheTest extends PsiTestCase{
     setUpModule();
     setUpJdk();
     ProjectManagerEx.getInstanceEx().openTestProject(myProject);
+    UIUtil.dispatchAllInvocationEvents(); // startup activities
+
     runStartupActivities();
     PsiTestUtil.addSourceContentToRoots(getModule(), content);
 

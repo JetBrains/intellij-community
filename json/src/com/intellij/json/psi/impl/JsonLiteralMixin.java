@@ -15,6 +15,7 @@ abstract class JsonLiteralMixin extends JsonElementImpl implements JsonLiteral {
     super(node);
   }
 
+  // TODO AppCode legacy code, may worth to get rid of it in future
   @NotNull
   @Override
   public PsiReference[] getReferences() {
