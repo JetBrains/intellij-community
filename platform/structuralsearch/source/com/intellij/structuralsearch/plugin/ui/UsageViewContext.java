@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.Usage;
@@ -30,14 +30,15 @@ import java.util.Set;
  */
 public class UsageViewContext {
   protected final SearchContext mySearchContext;
+  private final SearchStarter mySearchStarter;
   private UsageView myUsageView;
   protected final Configuration myConfiguration;
   private Set<Usage> myExcludedSet;
-  private SearchCommand myCommand;
 
-  protected UsageViewContext(SearchContext _searchContext,Configuration _configuration) {
-    myConfiguration = _configuration;
-    mySearchContext = _searchContext;
+  protected UsageViewContext(Configuration configuration, SearchContext searchContext, SearchStarter searchStarter) {
+    myConfiguration = configuration;
+    mySearchContext = searchContext;
+    mySearchStarter = searchStarter;
   }
 
   public boolean isExcluded(Usage usage) {
@@ -51,19 +52,6 @@ public class UsageViewContext {
 
   public void setUsageView(final UsageView usageView) {
     myUsageView = usageView;
-  }
-
-  public Configuration getConfiguration() {
-    return myConfiguration;
-  }
-
-  public SearchCommand getCommand() {
-    if (myCommand == null) myCommand = createCommand();
-    return myCommand;
-  }
-
-  protected SearchCommand createCommand() {
-    return new SearchCommand(mySearchContext.getProject(), this);
   }
 
   public ConfigurableUsageTarget getTarget() {
@@ -114,7 +102,7 @@ public class UsageViewContext {
 
     @Override
     public void findUsages() {
-      throw new UnsupportedOperationException();
+      mySearchStarter.startSearch();
     }
 
     @Override
@@ -179,13 +167,15 @@ public class UsageViewContext {
 
     @Override
     public KeyboardShortcut getShortcut() {
-      return ActionManager.getInstance().getKeyboardShortcut(getCommand() instanceof ReplaceCommand ? "StructuralSearchPlugin.StructuralReplaceAction":"StructuralSearchPlugin.StructuralSearchAction");
+      return ActionManager.getInstance().getKeyboardShortcut(myConfiguration instanceof ReplaceConfiguration
+                                                             ? "StructuralSearchPlugin.StructuralReplaceAction"
+                                                             : "StructuralSearchPlugin.StructuralSearchAction");
     }
 
     @NotNull
     @Override
     public String getLongDescriptiveName() {
-      return getPresentableText();
+      return StringUtil.shortenTextWithEllipsis(getPresentableText(), 150, 0, true);
     }
   }
 }

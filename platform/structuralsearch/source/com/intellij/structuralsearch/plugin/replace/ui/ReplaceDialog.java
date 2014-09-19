@@ -73,10 +73,6 @@ public class ReplaceDialog extends SearchDialog {
       CodeInsightBundle.message("dialog.edit.template.checkbox.use.static.import"), true)));
   }
 
-  protected UsageViewContext createUsageViewContext(Configuration configuration) {
-    return new ReplaceUsageViewContext(searchContext, configuration);
-  }
-
   public ReplaceDialog(SearchContext searchContext) {
     super(searchContext);
   }
@@ -85,6 +81,9 @@ public class ReplaceDialog extends SearchDialog {
     super(searchContext, showScope, runFindActionOnClose);
   }
 
+  protected void startSearching() {
+    new ReplaceCommand(model.getConfig(), searchContext).startSearching();
+  }
 
   public Configuration createConfiguration() {
     ReplaceConfiguration configuration = new ReplaceConfiguration();
