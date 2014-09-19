@@ -206,7 +206,6 @@ public class PushController implements Disposable {
       @Override
       public void onSelectionChanged(boolean isSelected) {
         model.setSelected(isSelected);
-        repoNode.setChecked(isSelected);
         myDialog.updateButtons();
         if (isSelected && !model.hasCommitInfo() && !model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories()) {
           //download incoming if was not loaded before and marked as selected
