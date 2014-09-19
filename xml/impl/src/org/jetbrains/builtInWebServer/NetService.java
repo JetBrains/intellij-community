@@ -3,11 +3,9 @@ package org.jetbrains.builtInWebServer;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,10 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.AsyncValueLoader;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +28,7 @@ public abstract class NetService implements Disposable {
   protected static final Logger LOG = Logger.getInstance(NetService.class);
 
   protected final Project project;
+  private final ConsoleManager consoleManager;
 
   protected final AsyncValueLoader<OSProcessHandler> processHandler = new AsyncValueLoader<OSProcessHandler>() {
     @Override
@@ -112,10 +107,13 @@ public abstract class NetService implements Disposable {
     }
   };
 
-  private ConsoleView console;
-
   protected NetService(@NotNull Project project) {
+    this(project, new ConsoleManager());
+  }
+
+  protected NetService(@NotNull Project project, @NotNull ConsoleManager consoleManager) {
     this.project = project;
+    this.consoleManager = consoleManager;
   }
 
   @Nullable
@@ -142,31 +140,13 @@ public abstract class NetService implements Disposable {
   protected abstract Icon getConsoleToolWindowIcon();
 
   private final class MyProcessAdapter extends ProcessAdapter implements Consumer<String> {
-    private void createConsole() {
-      TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-      configureConsole(consoleBuilder);
-      console = consoleBuilder.getConsole();
-
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(getConsoleToolWindowId(), false, ToolWindowAnchor.BOTTOM, project, true);
-          toolWindow.setIcon(getConsoleToolWindowIcon());
-          toolWindow.getContentManager().addContent(ContentFactory.SERVICE.getInstance().createContent(console.getComponent(), "", false));
-        }
-      }, project.getDisposed());
-    }
-
     @Override
     public void onTextAvailable(ProcessEvent event, Key outputType) {
       print(event.getText(), ConsoleViewContentType.getConsoleViewType(outputType));
     }
 
     private void print(String text, ConsoleViewContentType contentType) {
-      if (console == null) {
-        createConsole();
-      }
-      console.print(text, contentType);
+      consoleManager.getConsole(NetService.this).print(text, contentType);
     }
 
     @Override
