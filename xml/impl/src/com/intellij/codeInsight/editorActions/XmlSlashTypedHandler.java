@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -71,6 +72,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public Result charTyped(final char c, final Project project, @NotNull final Editor editor, @NotNull final PsiFile editedFile) {
+    if (!WebEditorOptions.getInstance().isAutoCloseTag()) return Result.CONTINUE;
     if ((editedFile.getLanguage() instanceof XMLLanguage || editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage) && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
