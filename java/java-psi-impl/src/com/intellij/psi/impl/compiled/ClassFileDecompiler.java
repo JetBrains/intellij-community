@@ -17,6 +17,8 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,6 +59,11 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
 
   @NotNull
   public static CharSequence decompileText(@NotNull VirtualFile file) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document != null) {
+      return document.getImmutableCharSequence();
+    }
+
     ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
     if (decompiler instanceof ClassFileDecompilers.Light) {
       try {
