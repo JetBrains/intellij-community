@@ -40,6 +40,8 @@
     <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
     <liveTemplateContext implementation="com.intellij.json.JsonContextType"/>
     <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
+    <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>
+    <basicWordSelectionFilter implementation="com.intellij.json.editor.selection.JsonBasicWordSelectionFilter"/>
 
     <!-- Annotators -->
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
