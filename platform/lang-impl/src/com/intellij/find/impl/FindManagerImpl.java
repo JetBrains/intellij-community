@@ -203,12 +203,9 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
         if (findModel.isReplaceState()) {
           FindSettings.getInstance().addStringToReplace(findModel.getStringToReplace());
         }
-        if (findModel.isMultipleFiles() && !findModel.isProjectScope()) {
+        if (findModel.isMultipleFiles() && !findModel.isProjectScope() && findModel.getDirectoryName() != null) {
           FindSettings.getInstance().addDirectory(findModel.getDirectoryName());
-
-          if (findModel.getDirectoryName() != null) {
-            myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
-          }
+          myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
         }
         okHandler.run();
       }
