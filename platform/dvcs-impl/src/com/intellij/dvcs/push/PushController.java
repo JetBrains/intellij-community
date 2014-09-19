@@ -23,9 +23,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -38,7 +36,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -182,26 +179,16 @@ public class PushController implements Disposable {
                                                                                                  boolean isSelected) {
     T target = support.getDefaultTarget(repository);
     String repoName = DvcsUtil.getShortRepositoryName(repository);
+    S source = support.getSource(repository);
     final MyRepoModel<R, S, T> model = new MyRepoModel<R, S, T>(repository, support, mySingleRepoProject || isSelected,
-                                                                support.getSource(repository), target,
+                                                                source, target,
                                                                 DEFAULT_CHILDREN_PRESENTATION_NUMBER);
     if (target == null) {
       model.setError(VcsError.createEmptyTargetError(repoName));
     }
     final PushTargetPanel<T> pushTargetPanel = support.createTargetPanel(repository, target);
-    RepositoryWithBranchPanel<T> repoPanel =
-      new RepositoryWithBranchPanel<T>(repoName, support.getSource(repository).getPresentation(), pushTargetPanel);
-    repoPanel.setInputVerifier(new InputVerifier() {
-      @Override
-      public boolean verify(JComponent input) {
-        ValidationInfo error = pushTargetPanel.verify();
-        if (error != null) {
-          //noinspection ConstantConditions
-          PopupUtil.showBalloonForComponent(error.component, error.message, MessageType.WARNING, false, myProject);
-        }
-        return error == null;
-      }
-    });
+    RepositoryWithBranchPanel<T> repoPanel = new RepositoryWithBranchPanel<T>(myProject, repoName,
+                                                                              source.getPresentation(), pushTargetPanel);
     final RepositoryNode repoNode = mySingleRepoProject
                                     ? new SingleRepositoryNode(repoPanel)
                                     : new RepositoryNode(repoPanel);
