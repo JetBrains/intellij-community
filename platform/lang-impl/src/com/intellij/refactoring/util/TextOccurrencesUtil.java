@@ -24,15 +24,11 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
@@ -43,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class TextOccurrencesUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.TextOccurrencesUtil");
   private TextOccurrencesUtil() {
   }
 
@@ -52,48 +47,13 @@ public class TextOccurrencesUtil {
                                        @NotNull GlobalSearchScope searchScope,
                                        @NotNull final Collection<UsageInfo> results,
                                        @NotNull final UsageInfoFactory factory) {
-    processTextOccurences(element, stringToSearch, searchScope, new Processor<UsageInfo>() {
+    PsiSearchHelperImpl.processTextOccurrences(element, stringToSearch, searchScope, new Processor<UsageInfo>() {
       @Override
       public boolean process(UsageInfo t) {
         results.add(t);
         return true;
       }
     }, factory);
-  }
-
-  public static boolean processTextOccurences(@NotNull final PsiElement element,
-                                           @NotNull String stringToSearch,
-                                           @NotNull GlobalSearchScope searchScope,
-                                           @NotNull final Processor<UsageInfo> processor,
-                                           @NotNull final UsageInfoFactory factory) {
-    PsiSearchHelper helper = ApplicationManager.getApplication().runReadAction(new Computable<PsiSearchHelper>() {
-      @Override
-      public PsiSearchHelper compute() {
-        return PsiSearchHelper.SERVICE.getInstance(element.getProject());
-      }
-    });
-
-    return helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
-      @Override
-      public boolean process(final PsiFile psiFile, final int startOffset, final int endOffset) {
-        try {
-          UsageInfo usageInfo = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
-            @Override
-            public UsageInfo compute() {
-              return factory.createUsageInfo(psiFile, startOffset, endOffset);
-            }
-          });
-          return usageInfo == null || processor.process(usageInfo);
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          return true;
-        }
-      }
-    }, searchScope);
   }
 
   private static boolean processStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, PsiSearchHelper helper, final Processor<PsiElement> processor) {

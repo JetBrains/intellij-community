@@ -25,13 +25,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.refactoring.util.TextOccurrencesUtil;
-import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -156,48 +153,7 @@ public abstract class FindUsagesHandler {
       }
     });
     if (stringToSearch == null) return true;
-    return processUsagesInText(element, stringToSearch, searchScope, processor);
-  }
-
-  protected static boolean processUsagesInText(@NotNull final PsiElement element,
-                                               @NotNull Collection<String> stringToSearch,
-                                               @NotNull GlobalSearchScope searchScope,
-                                               @NotNull Processor<UsageInfo> processor) {
-    final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new NullableComputable<TextRange>() {
-      @Override
-      public TextRange compute() {
-        if (!element.isValid()) return null;
-        return element.getTextRange();
-      }
-    });
-    UsageInfoFactory factory = new UsageInfoFactory() {
-      @Override
-      public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-        if (elementTextRange != null
-            && usage.getContainingFile() == element.getContainingFile()
-            && elementTextRange.contains(startOffset)
-            && elementTextRange.contains(endOffset)) {
-          return null;
-        }
-
-        PsiReference someReference = usage.findReferenceAt(startOffset);
-        if (someReference != null) {
-          PsiElement refElement = someReference.getElement();
-          for (PsiReference ref : PsiReferenceService.getService().getReferences(refElement, new PsiReferenceService.Hints(element, null))) {
-            if (element.getManager().areElementsEquivalent(ref.resolve(), element)) {
-              TextRange range = ref.getRangeInElement().shiftRight(refElement.getTextRange().getStartOffset() - usage.getTextRange().getStartOffset());
-              return new UsageInfo(usage, range.getStartOffset(), range.getEndOffset(), true);
-            }
-          }
-        }
-
-        return new UsageInfo(usage, startOffset, endOffset, true);
-      }
-    };
-    for (String s : stringToSearch) {
-      if (!TextOccurrencesUtil.processTextOccurences(element, s, searchScope, processor, factory)) return false;
-    }
-    return true;
+    return FindUsagesHelper.processUsagesInText(element, stringToSearch, searchScope, processor);
   }
 
   @Nullable

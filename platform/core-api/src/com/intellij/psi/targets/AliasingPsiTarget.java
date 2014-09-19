@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.psi.DelegatePsiTarget;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.RenameRefactoring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,15 +51,5 @@ public class AliasingPsiTarget extends DelegatePsiTarget implements PomRenameabl
   @Nullable
   public String getNameAlias(@Nullable String delegatePsiTargetName) {
     return delegatePsiTargetName;
-  }
-
-  protected void renameTargets(@NotNull String newDelegateName) {
-    final PsiNamedElement namedElement = (PsiNamedElement)getNavigationElement();
-    if (!newDelegateName.equals(namedElement.getName())) {
-      final RenameRefactoring refactoring =
-        RefactoringFactory.getInstance(namedElement.getProject()).createRename(namedElement, newDelegateName);
-      refactoring.run();
-
-    }
   }
 }
