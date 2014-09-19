@@ -4,7 +4,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
-import com.intellij.framework.*;
+import com.intellij.framework.FrameworkType;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
@@ -23,7 +23,6 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -50,7 +49,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
     myConfigurables = new HashMap<FrameworkType, FrameworkSupportInModuleConfigurable>();
   }
 
-  protected void addSupport() throws IOException {
+  protected void addSupport() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
