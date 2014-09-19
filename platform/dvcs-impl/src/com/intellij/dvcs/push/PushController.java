@@ -18,7 +18,6 @@ package com.intellij.dvcs.push;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -49,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PushController implements Disposable {
 
   @NotNull private final Project myProject;
-  @NotNull private final List<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> myPushSupports;
+  @NotNull private final List<PushSupport<?,?,?>> myPushSupports;
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
   private boolean mySingleRepoProject;
@@ -63,9 +62,10 @@ public class PushController implements Disposable {
                         @NotNull VcsPushDialog dialog,
                         @NotNull List<? extends Repository> preselectedRepositories) {
     myProject = project;
-    myPushSupports = getAffectedSupports();
+    myPushSupports = getAffectedSupports(myProject);
+    mySingleRepoProject = isSingleRepoProject(myPushSupports);
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
-    mySingleRepoProject = createTreeModel(rootNode, preselectedRepositories);
+    createTreeModel(rootNode, preselectedRepositories);
     myPushLog = new PushLog(myProject, rootNode);
     myDialog = dialog;
     myDialog.updateButtons();
@@ -74,9 +74,17 @@ public class PushController implements Disposable {
     selectFirstChecked();
   }
 
+  private static boolean isSingleRepoProject(@NotNull List<PushSupport<?,?,?>> pushSupports) {
+    int repos = 0;
+    for (PushSupport support : pushSupports) {
+      repos += support.getRepositoryManager().getRepositories().size();
+    }
+    return repos == 1;
+  }
+
   @NotNull
-  private List<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> getAffectedSupports() {
-    return ContainerUtil.filter(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, myProject), new Condition<PushSupport>() {
+  private static List<PushSupport<?,?,?>> getAffectedSupports(@NotNull Project project) {
+    return ContainerUtil.filter(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, project), new Condition<PushSupport>() {
       @Override
       public boolean value(PushSupport support) {
         return !support.getRepositoryManager().getRepositories().isEmpty();
@@ -152,36 +160,29 @@ public class PushController implements Disposable {
     }
   }
 
-  //return is single repository project or not
-  private boolean createTreeModel(@NotNull CheckedTreeNode rootNode, @NotNull List<? extends Repository> preselectedRepositories) {
-    if (myPushSupports.isEmpty()) return true;
-    int repoCount = 0;
+  private void createTreeModel(@NotNull CheckedTreeNode rootNode, @NotNull List<? extends Repository> preselectedRepositories) {
     for (PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget> support : myPushSupports) {
-      repoCount += createNodesForVcs(support, rootNode, preselectedRepositories);
+      createNodesForVcs(support, rootNode, preselectedRepositories);
     }
-    return repoCount == 1;
   }
 
-  private <R extends Repository, S extends PushSource, T extends PushTarget> int createNodesForVcs(
+  private <R extends Repository, S extends PushSource, T extends PushTarget> void createNodesForVcs(
     @NotNull PushSupport<R, S, T> pushSupport,
     @NotNull CheckedTreeNode rootNode,
-    @NotNull List<? extends Repository> preselectedRepositories) {
-    RepositoryManager<R> repositoryManager = pushSupport.getRepositoryManager();
-    List<R> repositories = repositoryManager.getRepositories();
-    for (R repository : repositories) {
-      createRepoNode(pushSupport, repository, rootNode, preselectedRepositories.contains(repository), repositories.size() == 1);
+    @NotNull List<? extends Repository> preselectedRepositories)
+  {
+    for (R repository : pushSupport.getRepositoryManager().getRepositories()) {
+      createRepoNode(pushSupport, repository, rootNode, preselectedRepositories.contains(repository));
     }
-    return repositories.size();
   }
 
   private <R extends Repository, S extends PushSource, T extends PushTarget> void createRepoNode(@NotNull final PushSupport<R, S, T> support,
                                                                                                  @NotNull final R repository,
                                                                                                  @NotNull CheckedTreeNode rootNode,
-                                                                                                 boolean isSelected,
-                                                                                                 boolean isSingleRepositoryProject) {
+                                                                                                 boolean isSelected) {
     T target = support.getDefaultTarget(repository);
     String repoName = DvcsUtil.getShortRepositoryName(repository);
-    final MyRepoModel<R, S, T> model = new MyRepoModel<R, S, T>(repository, support, isSingleRepositoryProject || isSelected,
+    final MyRepoModel<R, S, T> model = new MyRepoModel<R, S, T>(repository, support, mySingleRepoProject || isSelected,
                                                                 support.getSource(repository), target,
                                                                 DEFAULT_CHILDREN_PRESENTATION_NUMBER);
     if (target == null) {
@@ -201,7 +202,7 @@ public class PushController implements Disposable {
         return error == null;
       }
     });
-    final RepositoryNode repoNode = isSingleRepositoryProject
+    final RepositoryNode repoNode = mySingleRepoProject
                                     ? new SingleRepositoryNode(repoPanel)
                                     : new RepositoryNode(repoPanel);
     myView2Model.put(repoNode, model);
