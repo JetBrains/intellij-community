@@ -16,4 +16,8 @@ public class JsonSpellcheckerTest extends JsonTestCase {
   public void testEscapeAwareness() {
     doTest();
   }
+
+  public void testSimple() {
+    doTest();
+  }
 }
