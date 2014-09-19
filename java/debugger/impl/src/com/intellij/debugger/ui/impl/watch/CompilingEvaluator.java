@@ -36,7 +36,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.util.PathsList;
@@ -59,22 +58,12 @@ import java.util.List;
 * @author egor
 */
 public class CompilingEvaluator implements ExpressionEvaluator {
-  private final TextWithImports myText;
-  private final PsiCodeFragment myCodeFragment;
-  private final PsiElement myPsiContext;
+  @NotNull private final PsiElement myPsiContext;
   @NotNull private final ExtractLightMethodObjectHandler.ExtractedData myData;
-  private final EvaluationDescriptor myDescriptor;
 
-  public CompilingEvaluator(TextWithImports text,
-                            PsiCodeFragment codeFragment,
-                            PsiElement context,
-                            @NotNull ExtractLightMethodObjectHandler.ExtractedData data,
-                            EvaluationDescriptor descriptor) {
-    myText = text;
-    myCodeFragment = codeFragment;
+  public CompilingEvaluator(@NotNull PsiElement context, @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
     myPsiContext = context;
     myData = data;
-    myDescriptor = descriptor;
   }
 
   @Override
@@ -94,7 +83,6 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   @Override
   public Value evaluate(final EvaluationContext evaluationContext) throws EvaluateException {
     DebugProcess process = evaluationContext.getDebugProcess();
-    ThreadReference threadReference = evaluationContext.getSuspendContext().getThread().getThreadReference();
 
     ClassLoaderReference classLoader;
     try {
@@ -109,7 +97,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     Collection<OutputFileObject> classes = compile(sdkVersion != null ? sdkVersion.getDescription() : null);
 
     try {
-      defineClasses(classes, evaluationContext, process, threadReference, classLoader);
+      defineClasses(classes, evaluationContext, process, classLoader);
     }
     catch (Exception e) {
       throw new EvaluateException("Error during classes definition " + e, e);
@@ -163,10 +151,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   }
 
   private ClassType defineClasses(Collection<OutputFileObject> classes,
-                                         EvaluationContext context,
-                                         DebugProcess process,
-                                         ThreadReference threadReference,
-                                         ClassLoaderReference classLoader)
+                                  EvaluationContext context,
+                                  DebugProcess process,
+                                  ClassLoaderReference classLoader)
     throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
 
     VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
@@ -219,9 +206,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   }
 
   private static final String GEN_CLASS_NAME = "GeneratedEvaluationClass";
-  private static final String GEN_CLASS_PACKAGE = "dummy";
-  private static final String GEN_CLASS_FULL_NAME = GEN_CLASS_PACKAGE + '.' + GEN_CLASS_NAME;
-  private static final String GEN_METHOD_NAME = "invoke";
+  //private static final String GEN_CLASS_PACKAGE = "dummy";
+  //private static final String GEN_CLASS_FULL_NAME = GEN_CLASS_PACKAGE + '.' + GEN_CLASS_NAME;
+  //private static final String GEN_METHOD_NAME = "invoke";
 
   private String getClassCode() {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -349,7 +336,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     }
   }
 
-  private static class MemoryFileManager extends ForwardingJavaFileManager {
+  private static class MemoryFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
     private final Collection<OutputFileObject> classes = new ArrayList<OutputFileObject>();
 
     MemoryFileManager(JavaCompiler compiler) {

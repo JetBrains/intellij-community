@@ -100,8 +100,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
                 ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(myProject,
                                                                      psiFile, fragment, CompilingEvaluator.getGeneratedClassName());
                 if (data != null) {
-                  return new CompilingEvaluator(getEvaluationText(), getEvaluationCode(thisEvaluationContext), psiContext, data,
-                                                EvaluationDescriptor.this);
+                  return new CompilingEvaluator(psiContext, data);
                 }
               }
               catch (PrepareFailedException e) {
