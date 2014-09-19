@@ -244,7 +244,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           }
         }
         else if (value instanceof OptionDescription) {
-          if (!isSelected) {
+          if (!isSelected && !(value instanceof BooleanOptionDescription)) {
             Color descriptorBg = UIUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY;
             panel.setBackground(descriptorBg);
             nameComponent.setBackground(descriptorBg);
