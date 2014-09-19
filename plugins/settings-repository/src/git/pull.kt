@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.util.ArrayList
 import git.JGitMergeProvider
 import org.jetbrains.settingsRepository.RepositoryVirtualFile
-import org.jetbrains.jgit.dirCache.AddLoadedFile
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
   val message = e.getMessage()!!
@@ -47,7 +46,7 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
   }
 }
 
-private fun conflictsToVirtualFiles(map: Map<String, Array<IntArray?>?>): List<VirtualFile> {
+private fun conflictsToVirtualFiles(map: Map<String, Array<IntArray?>?>): MutableList<VirtualFile> {
   val result = ArrayList<VirtualFile>(map.size)
   for (path in map.keySet()) {
     result.add(RepositoryVirtualFile(path))
@@ -61,6 +60,8 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   // we must use the same StoredConfig instance during the operation
   val config = repository.getConfig()
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
+
+  var dirCacheCheckout: DirCacheCheckout? = null
 
   fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null): MergeResult? {
     indicator.checkCanceled()
@@ -87,8 +88,23 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     if (mergeStatus == MergeStatus.CONFLICTING) {
       val mergedCommits = mergeResult.getMergedCommits()
       assert(mergedCommits.size == 2)
-      val unresolvedFiles = conflictsToVirtualFiles(mergeResult.getConflicts()!!)
-      val resolvedFiles = resolveConflicts(unresolvedFiles, JGitMergeProvider(repository, mergedCommits[0], mergedCommits[1]))
+      var unresolvedFiles = conflictsToVirtualFiles(mergeResult.getConflicts()!!)
+      val mergeProvider = JGitMergeProvider(repository, mergedCommits[0], mergedCommits[1])
+      val resolvedFiles: List<VirtualFile>
+      while (true) {
+        resolvedFiles = resolveConflicts(unresolvedFiles, mergeProvider)
+        if (resolvedFiles.size == unresolvedFiles.size) {
+          break
+        }
+        else {
+          unresolvedFiles.removeAll(resolvedFiles)
+        }
+      }
+
+      repository.writeMergeCommitMsg(null)
+      repository.writeMergeHeads(null)
+
+      manager.git.commit().setReflogComment("merge " + repository.peel(refToMerge).getName()).call()
     }
     else if (!mergeStatus.isSuccessful()) {
       throw IllegalStateException(mergeResult.toString())
@@ -186,7 +202,6 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
 
     // Check for FAST_FORWARD, ALREADY_UP_TO_DATE
     val revWalk = RevWalk(repository)
-    var dirCacheCheckout: DirCacheCheckout? = null
     try {
       // handle annotated tags
       val ref = repository.peel(unpeeledRef)
@@ -249,6 +264,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         if (fastForwardMode == FastForwardMode.FF_ONLY) {
           return MergeResult(headCommit, srcCommit, array(headCommit, srcCommit), MergeStatus.ABORTED, mergeStrategy, null)
         }
+
         val mergeMessage: String
         if (squash) {
           mergeMessage = ""

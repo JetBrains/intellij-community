@@ -24,6 +24,7 @@ import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.remove
+import org.jetbrains.settingsRepository.UpdateResult
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {
@@ -161,8 +162,14 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     }
   }
 
-  override fun pull(indicator: ProgressIndicator) {
-    Pull(this, indicator).pull()
+  override fun pull(indicator: ProgressIndicator): UpdateResult? {
+    val pull = Pull(this, indicator)
+    pull.pull()
+    val dirCacheCheckout = pull.dirCacheCheckout
+    if (dirCacheCheckout == null) {
+      return null
+    }
+    return UpdateResult(dirCacheCheckout.getUpdated().keySet(), dirCacheCheckout.getRemoved())
   }
 
   override fun resetToTheirs(indicator: ProgressIndicator) {

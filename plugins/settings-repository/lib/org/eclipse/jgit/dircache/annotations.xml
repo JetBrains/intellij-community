@@ -14,6 +14,18 @@
   <item name='org.eclipse.jgit.dircache.DirCache org.eclipse.jgit.dircache.DirCacheEntry getEntry(int)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.dircache.DirCacheCheckout java.util.List&lt;java.lang.String&gt; getConflicts()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.dircache.DirCacheCheckout java.util.List&lt;java.lang.String&gt; getRemoved()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.dircache.DirCacheCheckout java.util.List&lt;java.lang.String&gt; getToBeDeleted()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.dircache.DirCacheCheckout java.util.Map&lt;java.lang.String,org.eclipse.jgit.lib.ObjectId&gt; getUpdated()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.dircache.DirCacheEditor.PathEdit void apply(org.eclipse.jgit.dircache.DirCacheEntry) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

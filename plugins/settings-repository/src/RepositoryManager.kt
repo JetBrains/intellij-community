@@ -49,7 +49,7 @@ public trait RepositoryManager {
   public fun push(indicator: ProgressIndicator)
 
   throws(javaClass<Exception>())
-  public fun pull(indicator: ProgressIndicator)
+  public fun pull(indicator: ProgressIndicator): UpdateResult?
 
   public fun has(path: String): Boolean
 
@@ -59,3 +59,5 @@ public trait RepositoryManager {
 
   public fun canCommit(): Boolean
 }
+
+data class UpdateResult(val changed:Collection<String>, val deleted:Collection<String>, val unmerged:Collection<String> = listOf())
