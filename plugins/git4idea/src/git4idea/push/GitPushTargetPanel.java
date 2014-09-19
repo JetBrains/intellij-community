@@ -52,6 +52,7 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   private static final Comparator<GitRemoteBranch> REMOTE_BRANCH_COMPARATOR = new MyRemoteBranchComparator();
   public static final String SEPARATOR = " \u25BE  ";
+  public static final String NO_REMOTES = "No remotes" + SEPARATOR;
 
   private final GitRepository myRepository;
   private final PushTargetTextField myTargetTextField;
@@ -69,7 +70,7 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     if (defaultTarget == null) {
       // TODO
       initialBranch = "";
-      initialRemote = "No remotes";
+      initialRemote = NO_REMOTES;
     }
     else {
       initialBranch = getTextFieldText(defaultTarget);
@@ -150,7 +151,7 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @Override
   public void fireOnChange() {
-    String remoteName = myRemoteLabel.getText().replace(SEPARATOR, "");
+    String remoteName = getEnteredRemote();
     String branchName = myTargetTextField.getText();
     try {
       myCurrentTarget = GitPushTarget.parse(myRepository, remoteName, branchName);
@@ -164,13 +165,19 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @Override
   public ValidationInfo verify() {
     try {
-      String remoteLabel = myRemoteLabel.getText().replace(SEPARATOR, "");
+      String remoteLabel = getEnteredRemote();
       GitPushTarget.parse(myRepository, remoteLabel, myTargetTextField.getText());
       return null;
     }
     catch (ParseException e) {
       return new ValidationInfo(e.getMessage(), myTargetTextField);
     }
+  }
+
+  @Nullable
+  private String getEnteredRemote() {
+    String text = myRemoteLabel.getText();
+    return text.equals(NO_REMOTES) ? null : text.replace(SEPARATOR, "");
   }
 
   @NotNull

@@ -242,13 +242,12 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     return super.processKeyBinding(ks, e, condition, pressed);
   }
 
-  public void startLoading(DefaultMutableTreeNode parentNode) {
-    LoadingTreeNode loading = new LoadingTreeNode();
-    loading.getIcon().setImageObserver(new NodeImageObserver(myTree, loading));
-    setChildren(parentNode, Collections.singleton(loading));
+  public JComponent getPreferredFocusedComponent() {
+    return myTree;
   }
 
-  public JComponent getPreferredFocusedComponent() {
+  @NotNull
+  public JTree getTree() {
     return myTree;
   }
 
@@ -341,9 +340,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     if (node.getChildCount() <= 0) return;
     if (node instanceof RepositoryNode) {
       TreePath path = TreeUtil.getPathFromRoot(node);
-      if (((RepositoryNode)node).isChecked()) {
-        myTree.expandPath(path);
-      }
+      myTree.expandPath(path);
       return;
     }
     for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)node.getFirstChild();

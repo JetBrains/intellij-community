@@ -20,27 +20,29 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBImageIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.net.URL;
+import java.awt.image.BufferedImage;
 
 public class LoadingTreeNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode {
-  @NotNull protected ImageIcon myLoadingIcon;
-  private static final String LOADING_ICON = "/icons/loading.gif";
 
-  @NotNull
-  public ImageIcon getIcon() {
-    return myLoadingIcon;
-  }
+  private static final String LOADING_ICON = "/icons/loading.gif";
+  private static final JBImageIcon EMPTY_ICON = new JBImageIcon(UIUtil.createImage(18, 18, BufferedImage.TYPE_3BYTE_BGR));
+  @NotNull private ImageIcon myLoadingIcon;
 
   public LoadingTreeNode() {
     super(null, false);
-    URL loadingIconUrl = getClass().getResource(LOADING_ICON);
-    Image image = ImageLoader.loadFromUrl(loadingIconUrl);
-    myLoadingIcon = new JBImageIcon(image);
+    myLoadingIcon = getLoadingIcon();
+  }
+
+  @NotNull
+  public static JBImageIcon getLoadingIcon() {
+    Image image = ImageLoader.loadFromResource(LOADING_ICON);
+    return image == null ? EMPTY_ICON : new JBImageIcon(image);
   }
 
   @Override
@@ -49,5 +51,10 @@ public class LoadingTreeNode extends DefaultMutableTreeNode implements CustomRen
     // loading icon should be on the left and do not inherit parent config
     renderer.setIconOnTheRight(false);
     renderer.append("Loading Commits...", new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, JBColor.GRAY));
+  }
+
+  @NotNull
+  public ImageIcon getIcon() {
+    return myLoadingIcon;
   }
 }

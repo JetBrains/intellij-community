@@ -15,17 +15,16 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
+import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
@@ -41,5 +40,11 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
   protected GitRepository createRepository(@NotNull VirtualFile root) {
     return GitRepositoryImpl.getFullInstance(root, myProject, myPlatformFacade, this);
   }
-  
+
+  @Override
+  public boolean isSyncEnabled() {
+    return myPlatformFacade.getSettings(myProject).getSyncSetting() == DvcsSyncSettings.Value.SYNC &&
+           !new GitMultiRootBranchConfig(getRepositories()).diverged();
+  }
+
 }

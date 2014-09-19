@@ -16,13 +16,15 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.push.PushController;
+import com.intellij.dvcs.push.PushSupport;
+import com.intellij.dvcs.push.VcsPushOptionValue;
+import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
-import com.intellij.openapi.ui.ValidationInfo;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +56,7 @@ public class VcsPushDialog extends DialogWrapper {
     myListPanel = myController.getPushPanelLog();
 
     init();
+    updateButtons();
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
     setTitle("Push Dialog");
@@ -107,27 +110,17 @@ public class VcsPushDialog extends DialogWrapper {
     return myPushAction;
   }
 
-  @Nullable
-  @Override
-  protected ValidationInfo doValidate() {
-    return myController.validate();
-  }
-
   @Override
   protected String getHelpId() {
     return "reference.mercurial.push.dialog";
   }
 
   public void updateButtons() {
+    boolean pushAllowed = myController.isPushAllowed();
+    myPushAction.setEnabled(pushAllowed);
     if (myForcePushAction != null) {
-      myForcePushAction.setEnabled(myController.isForcePushAllowed());
+      myForcePushAction.setEnabled(pushAllowed && myController.isForcePushAllowed());
     }
-    initValidation();
-  }
-
-  @Override
-  protected boolean postponeValidation() {
-    return false;
   }
 
   @Nullable

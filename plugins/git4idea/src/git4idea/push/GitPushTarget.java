@@ -49,13 +49,22 @@ class GitPushTarget implements PushTarget {
     return myRemoteBranch;
   }
 
+  @Override
+  public boolean hasSomethingToPush() {
+    return isNewBranchCreated();
+  }
+
   boolean isNewBranchCreated() {
     return myIsNewBranchCreated;
   }
 
   @NotNull
-  static GitPushTarget parse(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String branchName) throws
+  static GitPushTarget parse(@NotNull GitRepository repository, @Nullable String remoteName, @NotNull String branchName) throws
                                                                                                                         ParseException {
+    if (remoteName == null) {
+      throw new ParseException("No remotes defined", -1);
+    }
+
     if (!GitRefNameValidator.getInstance().checkInput(branchName)) {
       throw new ParseException("Invalid destination branch name: " + branchName, -1);
     }
