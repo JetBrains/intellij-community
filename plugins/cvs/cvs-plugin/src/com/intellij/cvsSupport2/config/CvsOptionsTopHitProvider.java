@@ -21,6 +21,7 @@ import com.intellij.ide.ui.PublicFieldBasedOptionDescription;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,12 +41,16 @@ public final class CvsOptionsTopHitProvider extends OptionsTopHitProvider {
   @NotNull
   @Override
   public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
-    if (project == null || ProjectLevelVcsManager.getInstance(project).getAllVcss().length == 0) {
-      return Collections.emptyList();
+    if (project != null) {
+      for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(project).getAllVcss()) {
+        if ("CVS".equals(descriptor.getDisplayName())) {
+          return Collections.unmodifiableCollection(Arrays.asList(
+            option(project, "checkbox.use.read.only.flag.for.not.edited.files", "MAKE_NEW_FILES_READONLY"),
+            option(project, "checkbox.show.cvs.server.output", "SHOW_OUTPUT")));
+        }
+      }
     }
-    return Collections.unmodifiableCollection(Arrays.asList(
-      option(project, "checkbox.use.read.only.flag.for.not.edited.files", "MAKE_NEW_FILES_READONLY"),
-      option(project, "checkbox.show.cvs.server.output", "SHOW_OUTPUT")));
+    return Collections.emptyList();
   }
 
   private static BooleanOptionDescription option(final Project project, String option, String field) {

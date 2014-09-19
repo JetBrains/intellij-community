@@ -21,7 +21,9 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,13 +40,17 @@ public final class HgOptionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(Project project) {
-    if (ProjectLevelVcsManager.getInstance(project).getAllVcss().length == 0) {
-      return Collections.emptyList();
+  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+    if (project != null) {
+      for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(project).getAllVcss()) {
+        if ("Mercurial".equals(descriptor.getDisplayName())) {
+          return Collections.unmodifiableCollection(Arrays.asList(
+            option(project, "Mercurial: Check for incoming and outgoing changesets", "isCheckIncomingOutgoing", "setCheckIncomingOutgoing"),
+            option(project, "Mercurial: Ignore whitespace differences in annotations", "isWhitespacesIgnoredInAnnotations", "setIgnoreWhitespacesInAnnotations")));
+        }
+      }
     }
-    return Collections.unmodifiableCollection(Arrays.asList(
-      option(project, "Mercurial: Check for incoming and outgoing changesets", "isCheckIncomingOutgoing", "setCheckIncomingOutgoing"),
-      option(project, "Mercurial: Ignore whitespace differences in annotations", "isWhitespacesIgnoredInAnnotations", "setIgnoreWhitespacesInAnnotations")));
+    return Collections.emptyList();
   }
 
   private static BooleanOptionDescription option(final Project project, String option, String getter, String setter) {
