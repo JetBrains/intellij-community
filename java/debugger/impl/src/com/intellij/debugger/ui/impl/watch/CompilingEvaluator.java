@@ -30,9 +30,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
@@ -50,6 +53,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
 * @author egor
@@ -100,7 +104,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
       throw new EvaluateException("Error creating evaluation class loader: " + e, e);
     }
 
-    Collection<OutputFileObject> classes = compile();
+    String version = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version();
+    JavaSdkVersion sdkVersion = JdkVersionUtil.getVersion(version);
+    Collection<OutputFileObject> classes = compile(sdkVersion != null ? sdkVersion.getDescription() : null);
 
     try {
       defineClasses(classes, evaluationContext, process, threadReference, classLoader);
@@ -265,7 +271,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   ///////////////// Compiler stuff
 
   @NotNull
-  private Collection<OutputFileObject> compile() throws EvaluateException {
+  private Collection<OutputFileObject> compile(String target) throws EvaluateException {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     MemoryFileManager manager = new MemoryFileManager(compiler);
     DiagnosticCollector<JavaFileObject> diagnostic = new DiagnosticCollector<JavaFileObject>();
@@ -275,22 +281,33 @@ public class CompilingEvaluator implements ExpressionEvaluator {
         return ModuleUtilCore.findModuleForPsiElement(myPsiContext);
       }
     });
-    PathsList cp = null;
+    List<String> options = new ArrayList<String>();
     if (module != null) {
-      cp = ModuleRootManager.getInstance(module).orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList();
+      options.add("-cp");
+      PathsList cp = ModuleRootManager.getInstance(module).orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList();
+      options.add(cp.getPathsString());
     }
-    if (!compiler.getTask(null,
-                          manager,
-                          diagnostic,
-                          cp != null ? Arrays.asList("-cp", cp.getPathsString()) : null,
-                          null,
-                          Arrays.asList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))
-    ).call()) {
-      StringBuilder res = new StringBuilder("Compilation failed:\n");
-      for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {
-        res.append(d);
+    if (!StringUtil.isEmpty(target)) {
+      options.add("-target");
+      options.add(target);
+    }
+    try {
+      if (!compiler.getTask(null,
+                            manager,
+                            diagnostic,
+                            options,
+                            null,
+                            Arrays.asList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))
+      ).call()) {
+        StringBuilder res = new StringBuilder("Compilation failed:\n");
+        for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {
+          res.append(d);
+        }
+        throw new EvaluateException(res.toString());
       }
-      throw new EvaluateException(res.toString());
+    }
+    catch (Exception e) {
+      throw new EvaluateException(e.getMessage());
     }
     return manager.classes;
   }
