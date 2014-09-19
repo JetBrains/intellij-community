@@ -2,7 +2,10 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +14,7 @@ import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
+import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.cells.*;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
@@ -19,6 +23,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +31,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
 
   public static final int INSET_Y = 10;
   public static final int INSET_X = 5;
-  private final IpnbFile myIpnbFile;
+  private IpnbFile myIpnbFile;
 
   private Project myProject;
   @Nullable private Disposable myParent;
@@ -38,25 +43,35 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
   private IpnbEditablePanel myBufferPanel;
   private int myIncrement = 10;
 
-  public IpnbFilePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final IpnbFile file,
+  public IpnbFilePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final VirtualFile vFile,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
     super(new GridBagLayout());
     myProject = project;
     myParent = parent;
     myListener = listener;
     setBackground(IpnbEditorUtil.getBackground());
-    myIpnbFile = file;
 
-    layoutFile();
-
-    addMouseListener(new MouseAdapter() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        updateCellSelection(e);
+      public void run() {
+        try {
+          myIpnbFile = IpnbParser.parseIpnbFile(vFile);
+          layoutFile();
+          addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+              updateCellSelection(e);
+            }
+          });
+          setFocusable(true);
+
+        }
+        catch (IOException e) {
+          Messages.showErrorDialog(project, e.getMessage(), "Can't open " + vFile.getPath());
+        }
       }
     });
 
-    setFocusable(true);
     UIUtil.requestFocus(this);
   }
 
@@ -80,7 +95,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
     panel.setOpaque(false);
     add(panel, c);
 
-    for (IpnbCell cell : myIpnbFile.getCells()) {
+    final List<IpnbCell> cells = myIpnbFile.getCells();
+    for (IpnbCell cell : cells) {
       c.gridy = addCellToPanel(cell, c);
     }
 

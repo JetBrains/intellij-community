@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.actions.*;
 import org.jetbrains.plugins.ipnb.editor.panels.*;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
-import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbHeadingCell;
@@ -37,7 +35,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -271,20 +268,14 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
   @NotNull
   private IpnbFilePanel createIpnbEditorPanel(Project project, VirtualFile vFile, Disposable parent) {
-    try {
-      return new IpnbFilePanel(project, parent, IpnbParser.parseIpnbFile(vFile),
-                               new CellSelectionListener() {
-                                 @Override
-                                 public void selectionChanged(@NotNull IpnbPanel ipnbPanel) {
-                                   if (myCellTypeCombo == null) return;
-                                   updateCellTypeCombo(ipnbPanel);
-                                 }
-                               });
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(project, e.getMessage(), "Can't open " + vFile.getPath());
-      throw new IllegalStateException(e);
-    }
+    return new IpnbFilePanel(project, parent, vFile,
+                             new CellSelectionListener() {
+                               @Override
+                               public void selectionChanged(@NotNull IpnbPanel ipnbPanel) {
+                                 if (myCellTypeCombo == null) return;
+                                 updateCellTypeCombo(ipnbPanel);
+                               }
+                             });
   }
 
   private void updateCellTypeCombo(IpnbPanel ipnbPanel) {
