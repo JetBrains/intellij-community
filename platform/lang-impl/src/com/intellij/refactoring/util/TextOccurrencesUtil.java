@@ -35,10 +35,10 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -218,10 +218,5 @@ public class TextOccurrencesUtil {
                                        newQName);
       }
     };
-  }
-
-  public interface UsageInfoFactory {
-    @Nullable
-    UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset);
   }
 }
