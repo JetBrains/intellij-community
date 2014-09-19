@@ -78,8 +78,13 @@ public class ScopesAndSeveritiesTable extends JBTable {
     scopeEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
-    severityColumn.setCellRenderer(SeverityRenderer.create(tableSettings.getInspectionProfile()));
-    severityColumn.setCellEditor(SeverityRenderer.create(tableSettings.getInspectionProfile()));
+    severityColumn.setCellRenderer(SeverityRenderer.create(tableSettings.getInspectionProfile(), null));
+    severityColumn.setCellEditor(SeverityRenderer.create(tableSettings.getInspectionProfile(), new Runnable() {
+      @Override
+      public void run() {
+        tableSettings.onSettingsChanged();
+      }
+    }));
 
     setColumnSelectionAllowed(false);
     setRowSelectionAllowed(true);
