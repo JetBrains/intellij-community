@@ -404,7 +404,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       @Override
       public Result<PsiAnnotation[]> compute() {
         return Result.create(AnnotationUtil.getAllAnnotations(element, true, null),
-                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+                             PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }
