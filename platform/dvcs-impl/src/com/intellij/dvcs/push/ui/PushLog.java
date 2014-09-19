@@ -142,24 +142,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        TreePath[] nodes = myTree.getSelectionPaths();
-        if (nodes != null) {
-          ArrayList<Change> changes = new ArrayList<Change>();
-          for (TreePath path : nodes) {
-            if (path.getLastPathComponent() instanceof VcsFullCommitDetailsNode) {
-              VcsFullCommitDetailsNode commitDetailsNode = (VcsFullCommitDetailsNode)path.getLastPathComponent();
-              changes.addAll(commitDetailsNode.getUserObject().getChanges());
-            }
-            else if (path.getLastPathComponent() instanceof RepositoryNode) {
-              changes.addAll(collectAllChanges((RepositoryNode)path.getLastPathComponent()));
-            }
-          }
-          myChangesBrowser.getViewer().setEmptyText("No differences");
-          myChangesBrowser.setChangesToDisplay(CommittedChangesTreeBrowser.zipChanges(changes));
-          return;
-        }
-        setDefaultEmptyText();
-        myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+        updateChangesView();
       }
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
@@ -181,6 +164,27 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
     setLayout(new BorderLayout());
     add(splitter);
+  }
+
+  private void updateChangesView() {
+    TreePath[] nodes = myTree.getSelectionPaths();
+    if (nodes != null) {
+      ArrayList<Change> changes = new ArrayList<Change>();
+      for (TreePath path : nodes) {
+        if (path.getLastPathComponent() instanceof VcsFullCommitDetailsNode) {
+          VcsFullCommitDetailsNode commitDetailsNode = (VcsFullCommitDetailsNode)path.getLastPathComponent();
+          changes.addAll(commitDetailsNode.getUserObject().getChanges());
+        }
+        else if (path.getLastPathComponent() instanceof RepositoryNode) {
+          changes.addAll(collectAllChanges((RepositoryNode)path.getLastPathComponent()));
+        }
+      }
+      myChangesBrowser.getViewer().setEmptyText("No differences");
+      myChangesBrowser.setChangesToDisplay(CommittedChangesTreeBrowser.zipChanges(changes));
+      return;
+    }
+    setDefaultEmptyText();
+    myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
   }
 
   @NotNull
@@ -313,6 +317,10 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     }
     if (!myTree.isEditing()) {
       refreshNode(parentNode);
+      TreePath path = TreeUtil.getPathFromRoot(parentNode);
+      if (myTree.getSelectionModel().isPathSelected(path)) {
+        updateChangesView();
+      }
     }
     else {
       myShouldRepaint = true;
