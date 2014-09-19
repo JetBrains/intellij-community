@@ -15,6 +15,8 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -23,11 +25,11 @@ import java.awt.*;
 import java.awt.image.ImageObserver;
 
 class NodeImageObserver implements ImageObserver {
-  private JTree myTree;
-  private DefaultTreeModel myModel;
-  private TreeNode myNode;
+  @NotNull private final JTree myTree;
+  @NotNull private final DefaultTreeModel myModel;
+  @NotNull private final TreeNode myNode;
 
-  NodeImageObserver(JTree tree, TreeNode node) {
+  NodeImageObserver(@NotNull JTree tree, @NotNull TreeNode node) {
     myTree = tree;
     myModel = (DefaultTreeModel)tree.getModel();
     myNode = node;
@@ -35,10 +37,13 @@ class NodeImageObserver implements ImageObserver {
 
   public boolean imageUpdate(Image img, int flags, int x, int y, int w, int h) {
     if ((flags & (FRAMEBITS | ALLBITS)) != 0) {
-      TreePath path = new TreePath(myModel.getPathToRoot(myNode));
-      Rectangle rect = myTree.getPathBounds(path);
-      if (rect != null) {
-        myTree.repaint(rect);
+      TreeNode[] pathToRoot = myModel.getPathToRoot(myNode);
+      if (pathToRoot != null) {
+        TreePath path = new TreePath(pathToRoot);
+        Rectangle rect = myTree.getPathBounds(path);
+        if (rect != null) {
+          myTree.repaint(rect);
+        }
       }
     }
     return (flags & (ALLBITS | ABORT)) == 0;
