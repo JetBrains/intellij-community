@@ -22,7 +22,7 @@ public class LombokConfigFile extends PsiFileBase {
 
   @Override
   public String toString() {
-    return "Simple File";
+    return "LombokConfigFile";
   }
 
   @Override

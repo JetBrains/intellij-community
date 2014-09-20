@@ -18,17 +18,20 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 
 CRLF= \n|\r|\r\n
 WHITE_SPACE=[\ \t\f]
-FIRST_VALUE_CHARACTER=[^ \n\r\f\\] | "\\"{CRLF} | "\\".
-VALUE_CHARACTER=[^\n\r\f\\] | "\\"{CRLF} | "\\".
-END_OF_LINE_COMMENT=("#"|"!")[^\r\n]*
-SEPARATOR=[:=]
-KEY_CHARACTER=[^:=\ \n\r\t\f\\] | "\\"{CRLF} | "\\".
+END_OF_LINE_COMMENT=("#")[^\r\n]*
+
+CLEAN="clean"
+KEY_CHARACTER=[a-zA-Z0-9\.]
+SEPARATOR="="|"-="|"+="
+VALUE_CHARACTER=[a-zA-Z0-9\.@_]
 
 %state WAITING_VALUE
 
 %%
 
 <YYINITIAL> {END_OF_LINE_COMMENT}                           { yybegin(YYINITIAL); return LombokConfigTypes.COMMENT; }
+
+<YYINITIAL> {CLEAN}                                       { yybegin(YYINITIAL); return LombokConfigTypes.CLEAN; }
 
 <YYINITIAL> {KEY_CHARACTER}+                                { yybegin(YYINITIAL); return LombokConfigTypes.KEY; }
 
@@ -38,7 +41,7 @@ KEY_CHARACTER=[^:=\ \n\r\t\f\\] | "\\"{CRLF} | "\\".
 
 <WAITING_VALUE> {WHITE_SPACE}+                              { yybegin(WAITING_VALUE); return TokenType.WHITE_SPACE; }
 
-<WAITING_VALUE> {FIRST_VALUE_CHARACTER}{VALUE_CHARACTER}*   { yybegin(YYINITIAL); return LombokConfigTypes.VALUE; }
+<WAITING_VALUE> {VALUE_CHARACTER}+                          { yybegin(YYINITIAL); return LombokConfigTypes.VALUE; }
 
 {CRLF}                                                     { yybegin(YYINITIAL); return LombokConfigTypes.CRLF; }
 

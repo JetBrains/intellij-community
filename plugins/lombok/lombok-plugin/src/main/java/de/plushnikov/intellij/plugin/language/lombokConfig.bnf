@@ -11,10 +11,13 @@
   elementTypeHolderClass="de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes"
   elementTypeClass="de.plushnikov.intellij.plugin.language.psi.LombokConfigElementType"
   tokenTypeClass="de.plushnikov.intellij.plugin.language.psi.LombokConfigTokenType"
+
+  psiImplUtilClass="de.plushnikov.intellij.plugin.language.psi.LombokConfigPsiUtil"
 }
 
 simpleFile ::= item_*
 
-private item_ ::= (property|COMMENT|CRLF)
+private item_ ::= (property|cleaner|COMMENT|CRLF)
 
-property ::= (KEY? SEPARATOR VALUE?) | KEY
+property ::= (KEY SEPARATOR VALUE) {methods=[getKey getValue]}
+cleaner ::= (CLEAN KEY)
