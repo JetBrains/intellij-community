@@ -19,6 +19,7 @@ package com.intellij.vcs.log.graph.parser;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
+import com.intellij.vcs.log.graph.api.RefactoringLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
@@ -59,7 +60,7 @@ public class LinearGraphWithElementsInfoParser {
     int separatorIndex = nextSeparatorIndex(line, 0);
     Pair<Integer, Character> pair = parseNumberWithChar(line.substring(0, separatorIndex));
 
-    GraphNode graphNode = new GraphNode(pair.first, parseGraphNodeType(pair.second));
+    GraphNode graphNode = new GraphNode(pair.first, parseGraphNodeType(pair.second), pair.first);
     List<GraphEdge> edges = new ArrayList<GraphEdge>();
 
     for (String edge : line.substring(separatorIndex + 2).split("\\s")) {
@@ -91,7 +92,7 @@ public class LinearGraphWithElementsInfoParser {
     return new Pair<Integer, Character>(Integer.decode(in.substring(0, in.length() - 2)), in.charAt(in.length() - 1));
   }
 
-  private static class TestLinearGraphWithElementsInfo implements LinearGraphWithElementInfo {
+  private static class TestLinearGraphWithElementsInfo extends RefactoringLinearGraph implements LinearGraphWithElementInfo {
 
     private final List<GraphNode> myGraphNodes;
     private final MultiMap<Integer, GraphEdge> myUpEdges;

@@ -18,6 +18,8 @@ package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.RefactoringLinearGraph;
+import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
@@ -26,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class PermanentLinearGraphImpl implements LinearGraph {
+public class PermanentLinearGraphImpl extends RefactoringLinearGraph implements LinearGraph {
   private final Flags mySimpleNodes;
 
   // myNodeToEdgeIndex.length = nodesCount() + 1.
@@ -61,7 +63,6 @@ public class PermanentLinearGraphImpl implements LinearGraph {
     return result;
   }
 
-
   @NotNull
   @Override
   public List<Integer> getDownNodes(int nodeIndex) {
@@ -77,5 +78,19 @@ public class PermanentLinearGraphImpl implements LinearGraph {
     }
 
     return result;
+  }
+
+  @NotNull
+  @Override
+  public GraphNode getGraphNode(int nodeIndex) {
+    return new GraphNode(nodeIndex);
+  }
+
+  @Override
+  public int getNodeIndexById(int nodeId) {
+    if (nodeId >= 0 && nodeId < nodesCount())
+      return nodeId;
+    else
+      return -1;
   }
 }
