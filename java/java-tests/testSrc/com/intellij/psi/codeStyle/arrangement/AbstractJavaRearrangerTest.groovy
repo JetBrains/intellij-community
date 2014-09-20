@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,30 +18,21 @@ package com.intellij.psi.codeStyle.arrangement
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.INTERFACE
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC
 
 /**
  * @author Denis Zhdanov
- * @since 8/30/12 12:15 PM
  */
 abstract class AbstractJavaRearrangerTest extends AbstractRearrangerTest {
-
-  def classic = [rule(INTERFACE),
-                 rule(CLASS),
-                 rule(FIELD, STATIC),
-                 rule(FIELD, PUBLIC),
-                 rule(FIELD),
-                 rule(METHOD, PUBLIC),
-                 rule(METHOD)]
+  protected def classic = [rule(INTERFACE),
+                           rule(CLASS),
+                           rule(FIELD, STATIC),
+                           rule(FIELD, PUBLIC),
+                           rule(FIELD),
+                           rule(METHOD, PUBLIC),
+                           rule(METHOD)]
 
   AbstractJavaRearrangerTest() {
     fileType = JavaFileType.INSTANCE
