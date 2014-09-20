@@ -22,6 +22,7 @@ import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.RefactoringLinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +84,7 @@ public class DelegatedPermanentGraphInfo<CommitId> implements PermanentGraphInfo
   @Override
   public LinearGraph getPermanentLinearGraph() {
     final LinearGraph linearGraph = myDelegateInfo.getPermanentLinearGraph();
-    return new LinearGraph() {
+    return new RefactoringLinearGraph() {
       @Override
       public int nodesCount() {
         return linearGraph.nodesCount();

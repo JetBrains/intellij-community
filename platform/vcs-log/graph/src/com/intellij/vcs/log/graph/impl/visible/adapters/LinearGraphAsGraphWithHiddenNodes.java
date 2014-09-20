@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.impl.visible.adapters;
 
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
+import com.intellij.vcs.log.graph.api.RefactoringLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.utils.Flags;
@@ -33,7 +34,7 @@ import java.util.List;
  * It is done for performance,
  */
 
-public class LinearGraphAsGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
+public class LinearGraphAsGraphWithHiddenNodes extends RefactoringLinearGraph implements LinearGraphWithHiddenNodes {
 
   @NotNull
   private final LinearGraph myDelegateGraph;

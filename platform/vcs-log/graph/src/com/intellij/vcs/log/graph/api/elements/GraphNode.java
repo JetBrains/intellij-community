@@ -20,20 +20,26 @@ import org.jetbrains.annotations.NotNull;
 
 public final class GraphNode implements GraphElement {
   private final int myNodeIndex;
+  private final int myNodeId;
   @NotNull
   private final GraphNodeType myType;
 
   public GraphNode(int nodeIndex) {
-    this(nodeIndex, GraphNodeType.USUAL);
+    this(nodeIndex, GraphNodeType.USUAL, nodeIndex);
   }
 
-  public GraphNode(int nodeIndex, @NotNull GraphNodeType type) {
+  public GraphNode(int nodeIndex, @NotNull GraphNodeType type, int nodeId) {
     myNodeIndex = nodeIndex;
     myType = type;
+    myNodeId = nodeId;
   }
 
   public int getNodeIndex() {
     return myNodeIndex;
+  }
+
+  public int getNodeId() {
+    return myNodeId;
   }
 
   @NotNull
