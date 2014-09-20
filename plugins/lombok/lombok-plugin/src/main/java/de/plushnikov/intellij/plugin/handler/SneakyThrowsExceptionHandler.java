@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class SneakyTrowsExceptionHandler {
+public class SneakyThrowsExceptionHandler {
 
   private static final String ANNOTATION_FQN = SneakyThrows.class.getName();
   private static final String JAVA_LANG_THROWABLE = "java.lang.Throwable";
