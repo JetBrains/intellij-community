@@ -6,14 +6,18 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import lombok.experimental.Tolerate;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -96,5 +100,15 @@ public abstract class AbstractProcessor implements Processor {
       return LombokUtils.decapitalize(fieldNameWithoutPrefix);
     }
     return LombokUtils.toGetterName(fieldNameWithoutPrefix, PsiType.BOOLEAN.equals(psiField.getType()));
+  }
+
+  protected void filterToleratedElements(@NotNull Collection<? extends PsiModifierListOwner> definedConstructors) {
+    final Iterator<? extends PsiModifierListOwner> methodIterator = definedConstructors.iterator();
+    while (methodIterator.hasNext()) {
+      PsiModifierListOwner definedConstructor = methodIterator.next();
+      if(PsiAnnotationUtil.isAnnotatedWith(definedConstructor, Tolerate.class)) {
+        methodIterator.remove();
+      }
+    }
   }
 }

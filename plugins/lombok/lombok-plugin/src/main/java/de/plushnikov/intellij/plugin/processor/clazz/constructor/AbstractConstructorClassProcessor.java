@@ -47,7 +47,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
-    if (!validateAnnotationOnRigthType(psiClass, builder)) {
+    if (!validateAnnotationOnRightType(psiClass, builder)) {
       result = false;
     }
     if (!validateVisibility(psiAnnotation)) {
@@ -61,7 +61,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return null != visibility;
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       builder.addError("Annotation is only supported on a class or enum type");

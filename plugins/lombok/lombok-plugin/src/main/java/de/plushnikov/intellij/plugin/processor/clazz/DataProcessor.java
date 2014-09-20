@@ -77,6 +77,8 @@ public class DataProcessor extends AbstractClassProcessor {
     // create required constructor only if there are no other constructor annotations
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class)) {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
+      filterToleratedElements(definedConstructors);
+
       // and only if there are no any other constructors!
       if (definedConstructors.isEmpty()) {
         final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
