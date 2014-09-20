@@ -21,6 +21,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
+import com.intellij.vcs.log.graph.api.RefactoringLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.utils.Flags;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
+public class FilterGraphWithHiddenNodes extends RefactoringLinearGraph implements LinearGraphWithHiddenNodes {
   @NotNull
   private final LinearGraphWithHiddenNodes myDelegateGraph;
 

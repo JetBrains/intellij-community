@@ -17,10 +17,7 @@
 package com.intellij.vcs.log.graph.impl.visible.adapters;
 
 import com.intellij.util.BooleanFunction;
-import com.intellij.vcs.log.graph.api.GraphLayout;
-import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
-import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
+import com.intellij.vcs.log.graph.api.*;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.utils.IntToIntMap;
@@ -31,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.AbstractList;
 import java.util.List;
 
-public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
+public class GraphWithHiddenNodesAsPrintedGraph extends RefactoringLinearGraph implements PrintedLinearGraph {
 
   @NotNull
   protected final GraphLayout myPermanentGraphLayout;
