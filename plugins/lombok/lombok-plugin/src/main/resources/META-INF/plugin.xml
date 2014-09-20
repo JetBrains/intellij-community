@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.9.0</version>
+  <version>0.8.8</version>
 
   <idea-version since-build="138.00"/>
 
@@ -172,10 +172,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
-			<li>0.9.0
+			<li>0.8.8
 				<ol>
-				    <li>Fixed #62 : Problem of Lazy Getter</li>
 				    <li>Fixed #52 : Invalid stub element type in index</li>
+				    <li>Fixed #54 : @Wither copies @Nullable annotation to generated method</li>
+				    <li>Fixed #62 : Intellij shows error on Lazy Getter</li>
 				    <li>Fixed issue 109(on GoogleCode): Intellij freezes regularly when the lombok plugin is enabled</li>
 				    <li>Fixed issue 106(on GoogleCode): Static methods annotated with @Builder are not recognized</li>
 				</ol>
