@@ -177,7 +177,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final String blockText = String.format("return other instanceof %s;", psiClass.getName());
 
     return new LombokLightMethodBuilder(psiManager, CAN_EQUAL_METHOD_NAME)
-        .withModifier(PsiModifier.PUBLIC)
+        .withModifier(PsiModifier.PROTECTED)
         .withMethodReturnType(PsiType.BOOLEAN)
         .withContainingClass(psiClass)
         .withNavigationElement(psiNavTargetElement)
