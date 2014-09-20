@@ -29,11 +29,12 @@ public class LazyGetterHandler {
     }
     Collection<PsiAnnotation> psiAnnotations = PsiTreeUtil.findChildrenOfType(field, PsiAnnotation.class);
     for (PsiAnnotation psiAnnotation : psiAnnotations) {
-      if (LAZY_GETTER_FQN.equals(psiAnnotation.getQualifiedName())) {
-        return true;
-      } else if (GETTERN_FQN.equals(psiAnnotation.getQualifiedName())) {
+      final String qualifiedName = psiAnnotation.getQualifiedName();
+      if (GETTERN_FQN.equals(qualifiedName)) {
         Boolean lazyObj = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy", Boolean.class);
         return null != lazyObj && lazyObj;
+      } else if (LAZY_GETTER_FQN.equals(qualifiedName)) {
+        return true;
       }
     }
     return false;
