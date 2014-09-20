@@ -41,6 +41,7 @@
     <daemon.highlightInfoFilter implementation="de.plushnikov.intellij.plugin.extension.LombokHighlightErrorFilter"/>
 
     <fileTypeFactory implementation="de.plushnikov.intellij.plugin.language.LombokConfigFileTypeFactory"/>
+    <lang.parserDefinition language="Lombok.Config" implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigParserDefinition"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
