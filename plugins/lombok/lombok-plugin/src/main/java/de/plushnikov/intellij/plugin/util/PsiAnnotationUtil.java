@@ -239,4 +239,30 @@ public class PsiAnnotationUtil {
     }
     return annotationsToCopy;
   }
+
+  public static String extractAnnotationSimpleName(@NotNull PsiAnnotation psiAnnotation) {
+    final String psiAnnotationText = psiAnnotation.getText();
+    int from = 0;
+    int to = psiAnnotationText.length();
+    if (psiAnnotationText.indexOf('@') == 0) {
+      from++;
+    }
+    int indexOf = psiAnnotationText.indexOf('(');
+    if (indexOf > 0) {
+      to = indexOf;
+    }
+    return psiAnnotationText.substring(from, to).trim();
+  }
+
+  public static boolean checkAnnotationsSimpleNameExistsIn(@NotNull PsiModifierListOwner modifierListOwner, @NotNull Collection<String> annotationNames) {
+    final PsiModifierList modifierList = modifierListOwner.getModifierList();
+    if (null != modifierList) {
+      for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
+        if (annotationNames.contains(extractAnnotationSimpleName(psiAnnotation))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }

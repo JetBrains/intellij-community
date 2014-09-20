@@ -175,6 +175,7 @@
 			<li>0.9.0
 				<ol>
 				    <li>Fixed #62 : Problem of Lazy Getter</li>
+				    <li>Fixed #52 : Invalid stub element type in index</li>
 				    <li>Fixed issue 109(on GoogleCode): Intellij freezes regularly when the lombok plugin is enabled</li>
 				    <li>Fixed issue 106(on GoogleCode): Static methods annotated with @Builder are not recognized</li>
 				</ol>

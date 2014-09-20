@@ -3,18 +3,16 @@ package de.plushnikov.intellij.plugin.provider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -137,18 +135,18 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   }
 
   private boolean verifyLombokPresent(@NotNull PsiClass psiClass) {
-    if (checkAnnotations(psiClass)) {
+    if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiClass, registeredAnnotationNames)) {
       return true;
     }
     Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
     for (PsiField psiField : psiFields) {
-      if (checkAnnotations(psiField)) {
+      if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiField, registeredAnnotationNames)) {
         return true;
       }
     }
     Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     for (PsiMethod psiMethod : psiMethods) {
-      if (checkAnnotations(psiMethod)) {
+      if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiMethod, registeredAnnotationNames)) {
         return true;
       }
     }
@@ -156,26 +154,4 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     return false;
   }
 
-  private boolean checkAnnotations(@NotNull PsiModifierListOwner modifierListOwner) {
-    PsiModifierList modifierList = modifierListOwner.getModifierList();
-    if (null != modifierList) {
-      for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
-        final String psiAnnotationText = psiAnnotation.getText();
-        int from = 0;
-        int to = psiAnnotationText.length();
-        if (psiAnnotationText.indexOf('@') == 0) {
-          from++;
-        }
-        int indexOf = psiAnnotationText.indexOf('(');
-        if (indexOf > 0) {
-          to = indexOf;
-        }
-        String annotationSimpleName = psiAnnotationText.substring(from, to);
-        if (registeredAnnotationNames.contains(annotationSimpleName.trim())) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
 }
