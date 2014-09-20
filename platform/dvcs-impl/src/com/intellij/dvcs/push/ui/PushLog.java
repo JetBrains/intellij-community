@@ -233,7 +233,9 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
       else {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        myTree.startEditingAtPath(TreeUtil.getPathFromRoot(node));
+        if (node != null) {
+          myTree.startEditingAtPath(TreeUtil.getPathFromRoot(node));
+        }
       }
       return true;
     }
