@@ -10,7 +10,8 @@ class X  {
       else if (c == ' ') { }
       else if (c == ':' || prevIsUppercase) { }
     }
-
+    System.out.println(forCompletion);
+    System.out.println(exactPrefixLen);
   }
 
 }
