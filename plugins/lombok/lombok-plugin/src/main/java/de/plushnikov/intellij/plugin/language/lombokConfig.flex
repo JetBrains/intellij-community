@@ -21,7 +21,8 @@ WHITE_SPACE_CHAR=[\ \n\r\t\f]
 END_OF_LINE_COMMENT=("#")[^\r\n]*
 CLEAN="clean"
 KEY_CHARACTER=[^:=\ \n\r\t\f\\] | "\\"{CRLF} | "\\".
-KEY_SEPARATOR=[\ \t]*(=|\-=|\+=)[\ \t]*
+SEPARATOR=[\ \t]* [=] [\ \t]*
+SIGN=[\ \t]* [\-\+]
 VALUE_CHARACTER=[^:=\ \n\r\f\\] | "\\"{CRLF} | "\\".
 
 %state IN_VALUE
@@ -34,7 +35,8 @@ VALUE_CHARACTER=[^:=\ \n\r\f\\] | "\\"{CRLF} | "\\".
 <YYINITIAL> {CLEAN}                      { yybegin(YYINITIAL); return LombokConfigTypes.CLEAN; }
 
 <YYINITIAL> {KEY_CHARACTER}+             { yybegin(IN_KEY_VALUE_SEPARATOR); return LombokConfigTypes.KEY; }
-<IN_KEY_VALUE_SEPARATOR> {KEY_SEPARATOR} { yybegin(IN_VALUE); return LombokConfigTypes.SEPARATOR; }
+<IN_KEY_VALUE_SEPARATOR> {SIGN}          { yybegin(IN_KEY_VALUE_SEPARATOR); return LombokConfigTypes.SIGN; }
+<IN_KEY_VALUE_SEPARATOR> {SEPARATOR}     { yybegin(IN_VALUE); return LombokConfigTypes.SEPARATOR; }
 <IN_VALUE> {VALUE_CHARACTER}+            { yybegin(YYINITIAL); return LombokConfigTypes.VALUE; }
 
 <IN_KEY_VALUE_SEPARATOR> {CRLF}{WHITE_SPACE_CHAR}*  { yybegin(YYINITIAL); return TokenType.WHITE_SPACE; }

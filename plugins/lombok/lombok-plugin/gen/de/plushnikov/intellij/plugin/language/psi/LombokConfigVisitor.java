@@ -11,6 +11,10 @@ public class LombokConfigVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitOperation(@NotNull LombokConfigOperation o) {
+    visitPsiElement(o);
+  }
+
   public void visitProperty(@NotNull LombokConfigProperty o) {
     visitPsiElement(o);
   }

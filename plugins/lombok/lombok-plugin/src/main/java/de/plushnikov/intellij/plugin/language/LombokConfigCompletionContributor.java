@@ -6,7 +6,10 @@ import com.intellij.codeInsight.completion.CompletionProvider;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,23 +48,20 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     allOptions.addAll(otherOptions);
 
     extend(CompletionType.BASIC,
-        psiElement(LombokConfigTypes.VALUE).withLanguage(LombokConfigLanguage.INSTANCE)
-            .afterSiblingSkipping(psiElement(LombokConfigTypes.SEPARATOR), psiElement(LombokConfigTypes.KEY).withText(string().oneOf(booleanOptions))),
+        psiElement(LombokConfigTypes.VALUE).withLanguage(LombokConfigLanguage.INSTANCE),
         new CompletionProvider<CompletionParameters>() {
           public void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet resultSet) {
-            resultSet.addElement(LookupElementBuilder.create("true"));
-            resultSet.addElement(LookupElementBuilder.create("false"));
-          }
-        }
-    );
-
-    extend(CompletionType.BASIC,
-        psiElement(LombokConfigTypes.VALUE).withLanguage(LombokConfigLanguage.INSTANCE)
-            .afterSiblingSkipping(psiElement(LombokConfigTypes.SEPARATOR), psiElement(LombokConfigTypes.KEY).withText(string().oneOf(flagUsageOptions))),
-        new CompletionProvider<CompletionParameters>() {
-          public void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet resultSet) {
-            resultSet.addElement(LookupElementBuilder.create("WARNING"));
-            resultSet.addElement(LookupElementBuilder.create("ERROR"));
+            PsiElement psiElement = parameters.getPosition().getParent();
+            if (psiElement instanceof LombokConfigProperty) {
+              final String configPropertyKey = StringUtil.notNullize(((LombokConfigProperty) psiElement).getKey());
+              if (booleanOptions.contains(configPropertyKey)) {
+                resultSet.addElement(LookupElementBuilder.create("true"));
+                resultSet.addElement(LookupElementBuilder.create("false"));
+              } else if (flagUsageOptions.contains(configPropertyKey)) {
+                resultSet.addElement(LookupElementBuilder.create("WARNING"));
+                resultSet.addElement(LookupElementBuilder.create("ERROR"));
+              }
+            }
           }
         }
     );

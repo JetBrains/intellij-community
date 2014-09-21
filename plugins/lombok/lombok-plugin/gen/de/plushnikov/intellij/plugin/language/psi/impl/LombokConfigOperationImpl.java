@@ -11,29 +11,15 @@ import static de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import de.plushnikov.intellij.plugin.language.psi.*;
 
-public class LombokConfigPropertyImpl extends ASTWrapperPsiElement implements LombokConfigProperty {
+public class LombokConfigOperationImpl extends ASTWrapperPsiElement implements LombokConfigOperation {
 
-  public LombokConfigPropertyImpl(ASTNode node) {
+  public LombokConfigOperationImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof LombokConfigVisitor) ((LombokConfigVisitor)visitor).visitProperty(this);
+    if (visitor instanceof LombokConfigVisitor) ((LombokConfigVisitor)visitor).visitOperation(this);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public LombokConfigOperation getOperation() {
-    return findNotNullChildByClass(LombokConfigOperation.class);
-  }
-
-  public String getKey() {
-    return LombokConfigPsiUtil.getKey(this);
-  }
-
-  public String getValue() {
-    return LombokConfigPsiUtil.getValue(this);
   }
 
 }

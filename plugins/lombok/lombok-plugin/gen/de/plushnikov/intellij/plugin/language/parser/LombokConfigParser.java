@@ -23,6 +23,9 @@ public class LombokConfigParser implements PsiParser {
     if (root_ == CLEANER) {
       result_ = cleaner(builder_, 0);
     }
+    else if (root_ == OPERATION) {
+      result_ = operation(builder_, 0);
+    }
     else if (root_ == PROPERTY) {
       result_ = property(builder_, 0);
     }
@@ -64,13 +67,35 @@ public class LombokConfigParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // KEY SEPARATOR VALUE
+  // SIGN? SEPARATOR
+  public static boolean operation(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "operation")) return false;
+    if (!nextTokenIs(builder_, "<operation>", SEPARATOR, SIGN)) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_, level_, _NONE_, "<operation>");
+    result_ = operation_0(builder_, level_ + 1);
+    result_ = result_ && consumeToken(builder_, SEPARATOR);
+    exit_section_(builder_, level_, marker_, OPERATION, result_, false, null);
+    return result_;
+  }
+
+  // SIGN?
+  private static boolean operation_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "operation_0")) return false;
+    consumeToken(builder_, SIGN);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // KEY operation VALUE
   public static boolean property(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "property")) return false;
     if (!nextTokenIs(builder_, KEY)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
-    result_ = consumeTokens(builder_, 0, KEY, SEPARATOR, VALUE);
+    result_ = consumeToken(builder_, KEY);
+    result_ = result_ && operation(builder_, level_ + 1);
+    result_ = result_ && consumeToken(builder_, VALUE);
     exit_section_(builder_, marker_, PROPERTY, result_);
     return result_;
   }

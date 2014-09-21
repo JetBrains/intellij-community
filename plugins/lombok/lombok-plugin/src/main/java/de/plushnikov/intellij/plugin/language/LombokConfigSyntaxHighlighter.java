@@ -42,7 +42,7 @@ public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
   @NotNull
   @Override
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-    if (tokenType.equals(LombokConfigTypes.SEPARATOR)) {
+    if (tokenType.equals(LombokConfigTypes.SEPARATOR) || tokenType.equals(LombokConfigTypes.SIGN)) {
       return SEPARATOR_KEYS;
     }  else if (tokenType.equals(LombokConfigTypes.CLEAN)) {
       return CLEAN_KEYS;
