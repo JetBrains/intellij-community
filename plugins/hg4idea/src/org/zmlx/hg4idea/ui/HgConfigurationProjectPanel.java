@@ -42,7 +42,6 @@ public class HgConfigurationProjectPanel {
   private TextFieldWithBrowseButton myPathSelector;
   private JButton myTestButton;
   private JBCheckBox mySyncControl;
-  private JPanel myRepositorySettingsPanel;
   private final HgVcs myVcs;
 
   public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings, @NotNull Project project) {
@@ -66,7 +65,7 @@ public class HgConfigurationProjectPanel {
       }
     });
     final HgRepositoryManager repositoryManager = ServiceManager.getService(project, HgRepositoryManager.class);
-    myRepositorySettingsPanel.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
+    mySyncControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Mercurial"));
   }
 
