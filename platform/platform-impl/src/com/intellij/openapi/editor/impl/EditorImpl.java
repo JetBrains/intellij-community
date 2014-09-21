@@ -1809,7 +1809,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             updatingSize = false;
           }
         }
-      });
+      }, ApplicationManager.getApplication().getDisposed());
     }
   }
 
