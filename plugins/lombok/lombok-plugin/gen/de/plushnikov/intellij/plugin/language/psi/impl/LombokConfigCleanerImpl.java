@@ -22,4 +22,8 @@ public class LombokConfigCleanerImpl extends ASTWrapperPsiElement implements Lom
     else super.accept(visitor);
   }
 
+  public String getKey() {
+    return LombokConfigPsiUtil.getKey(this);
+  }
+
 }

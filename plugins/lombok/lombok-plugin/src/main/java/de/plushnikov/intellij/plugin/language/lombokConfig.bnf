@@ -20,4 +20,4 @@ simpleFile ::= item_*
 private item_ ::= (property|cleaner|COMMENT|CRLF)
 
 property ::= (KEY SEPARATOR VALUE) {methods=[getKey getValue]}
-cleaner ::= (CLEAN KEY)
+cleaner ::= (CLEAN KEY) {methods=[getKey]}
