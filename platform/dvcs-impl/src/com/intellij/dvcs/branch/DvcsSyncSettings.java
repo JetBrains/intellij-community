@@ -17,9 +17,17 @@ package com.intellij.dvcs.branch;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface DvcsSyncBranchSettings {
-  @NotNull
-  DvcsBranchSync getSyncSetting();
+public interface DvcsSyncSettings {
 
-  void setSyncSetting(@NotNull DvcsBranchSync syncSetting);
+  enum Value {
+    SYNC,
+    DONT_SYNC,
+    NOT_DECIDED
+  }
+
+  @NotNull
+  Value getSyncSetting();
+
+  void setSyncSetting(@NotNull Value syncSetting);
+
 }

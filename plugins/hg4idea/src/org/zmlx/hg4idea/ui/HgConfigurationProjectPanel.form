@@ -55,13 +55,13 @@
         </clientProperties>
         <border type="etched" title="Repository Settings"/>
         <children>
-          <component id="fadf2" class="com.intellij.ui.components.JBCheckBox" binding="mySyncBranchControl">
+          <component id="fadf2" class="com.intellij.ui.components.JBCheckBox" binding="mySyncControl">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Control &amp;branches from different roots synchronously"/>
-              <toolTipText value="If selected, you would be able to checkout, compare, delete and create new branches in all Git roots with a single action"/>
+              <text resource-bundle="com/intellij/dvcs/ui/DvcsBundle" key="sync.setting"/>
+              <toolTipText value=""/>
             </properties>
           </component>
         </children>

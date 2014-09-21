@@ -12,7 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.dvcs.branch.DvcsBranchSync;
+import com.intellij.dvcs.branch.DvcsSyncSettings;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -40,7 +41,7 @@ public class HgConfigurationProjectPanel {
   private JCheckBox myIgnoredWhitespacesInAnnotationsCbx;
   private TextFieldWithBrowseButton myPathSelector;
   private JButton myTestButton;
-  private JBCheckBox mySyncBranchControl;
+  private JBCheckBox mySyncControl;
   private JPanel myRepositorySettingsPanel;
   private final HgVcs myVcs;
 
@@ -66,13 +67,14 @@ public class HgConfigurationProjectPanel {
     });
     final HgRepositoryManager repositoryManager = ServiceManager.getService(project, HgRepositoryManager.class);
     myRepositorySettingsPanel.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
+    mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Mercurial"));
   }
 
   public boolean isModified() {
     boolean executableModified = !getCurrentPath().equals(myProjectSettings.getHgExecutable());
     return executableModified ||
            myCheckIncomingOutgoingCbx.isSelected() != myProjectSettings.isCheckIncomingOutgoing() ||
-           ((myProjectSettings.getSyncSetting() == DvcsBranchSync.SYNC) != mySyncBranchControl.isSelected()) ||
+           ((myProjectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected()) ||
            myIgnoredWhitespacesInAnnotationsCbx.isSelected() != myProjectSettings.isWhitespacesIgnoredInAnnotations();
   }
 
@@ -80,7 +82,7 @@ public class HgConfigurationProjectPanel {
     myProjectSettings.setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
     myProjectSettings.setIgnoreWhitespacesInAnnotations(myIgnoredWhitespacesInAnnotationsCbx.isSelected());
     myProjectSettings.setHgExecutable(getCurrentPath());
-    myProjectSettings.setSyncSetting(mySyncBranchControl.isSelected() ? DvcsBranchSync.SYNC : DvcsBranchSync.DONT);
+    myProjectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
     myVcs.checkVersion();
   }
 
@@ -92,7 +94,7 @@ public class HgConfigurationProjectPanel {
     myCheckIncomingOutgoingCbx.setSelected(myProjectSettings.isCheckIncomingOutgoing());
     myIgnoredWhitespacesInAnnotationsCbx.setSelected(myProjectSettings.isWhitespacesIgnoredInAnnotations());
     myPathSelector.setText(myProjectSettings.getGlobalSettings().getHgExecutable());
-    mySyncBranchControl.setSelected(myProjectSettings.getSyncSetting() == DvcsBranchSync.SYNC);
+    mySyncControl.setSelected(myProjectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
   }
 
   public JPanel getPanel() {

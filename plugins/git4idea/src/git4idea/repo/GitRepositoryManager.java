@@ -41,4 +41,5 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
   protected GitRepository createRepository(@NotNull VirtualFile root) {
     return GitRepositoryImpl.getFullInstance(root, myProject, myPlatformFacade, this);
   }
+  
 }

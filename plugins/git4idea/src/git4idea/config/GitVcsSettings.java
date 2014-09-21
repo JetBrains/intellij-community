@@ -15,8 +15,7 @@
  */
 package git4idea.config;
 
-import com.intellij.dvcs.branch.DvcsBranchSync;
-import com.intellij.dvcs.branch.DvcsSyncBranchSettings;
+import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -37,7 +36,7 @@ import java.util.Map;
  * Git VCS settings
  */
 @State(name = "Git.Settings", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
-public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State>, DvcsSyncBranchSettings {
+public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State>, DvcsSyncSettings {
 
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
@@ -60,7 +59,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
     public boolean PUSH_AUTO_UPDATE = false;
-    public DvcsBranchSync SYNC_SETTING = DvcsBranchSync.NOT_DECIDED;
+    public Value ROOT_SYNC = Value.NOT_DECIDED;
     public String RECENT_GIT_ROOT_PATH = null;
     public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<String, String>();
     public String RECENT_COMMON_BRANCH = null;
@@ -134,12 +133,12 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   @NotNull
-  public DvcsBranchSync getSyncSetting() {
-    return myState.SYNC_SETTING;
+  public Value getSyncSetting() {
+    return myState.ROOT_SYNC;
   }
 
-  public void setSyncSetting(@NotNull DvcsBranchSync syncSetting) {
-    myState.SYNC_SETTING = syncSetting;
+  public void setSyncSetting(@NotNull Value syncSetting) {
+    myState.ROOT_SYNC = syncSetting;
   }
 
   @Nullable

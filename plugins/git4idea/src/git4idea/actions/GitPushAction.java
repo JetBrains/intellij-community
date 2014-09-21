@@ -15,7 +15,7 @@
  */
 package git4idea.actions;
 
-import com.intellij.dvcs.branch.DvcsBranchSync;
+import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -51,7 +51,7 @@ public class GitPushAction extends DumbAwareAction {
   private static Collection<GitRepository> collectRepositories(@NotNull Project project, @Nullable VirtualFile[] files) {
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     Collection<GitRepository> repositories;
-    if (GitVcsSettings.getInstance(project).getSyncSetting() == DvcsBranchSync.SYNC && !diverged(manager.getRepositories())) {
+    if (GitVcsSettings.getInstance(project).getSyncSetting() == DvcsSyncSettings.Value.SYNC && !diverged(manager.getRepositories())) {
       repositories = manager.getRepositories();
     }
     else if (files == null) {
