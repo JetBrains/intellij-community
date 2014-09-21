@@ -21,4 +21,4 @@ private item_ ::= (property|cleaner|COMMENT|CRLF)
 
 property ::= (KEY operation VALUE) {methods=[getKey getValue]}
 operation ::= SIGN? SEPARATOR
-cleaner ::= (CLEAN KEY) {methods=[getKey]}
+cleaner ::= (CLEAR KEY) {methods=[getKey]}

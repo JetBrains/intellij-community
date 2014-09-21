@@ -41,13 +41,13 @@ public class LombokConfigParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // CLEAN KEY
+  // CLEAR KEY
   public static boolean cleaner(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "cleaner")) return false;
-    if (!nextTokenIs(builder_, CLEAN)) return false;
+    if (!nextTokenIs(builder_, CLEAR)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
-    result_ = consumeTokens(builder_, 0, CLEAN, KEY);
+    result_ = consumeTokens(builder_, 0, CLEAR, KEY);
     exit_section_(builder_, marker_, CLEANER, result_);
     return result_;
   }

@@ -19,7 +19,7 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 CRLF= \n | \r | \r\n
 WHITE_SPACE_CHAR=[\ \n\r\t\f]
 END_OF_LINE_COMMENT=("#")[^\r\n]*
-CLEAN="clean"
+CLEAR="clear"
 KEY_CHARACTER=[^:=\ \n\r\t\f\\] | "\\"{CRLF} | "\\".
 SEPARATOR=[\ \t]* [=] [\ \t]*
 SIGN=[\ \t]* [\-\+]
@@ -32,7 +32,7 @@ VALUE_CHARACTER=[^:=\ \n\r\f\\] | "\\"{CRLF} | "\\".
 
 <YYINITIAL> {END_OF_LINE_COMMENT}        { yybegin(YYINITIAL); return LombokConfigTypes.COMMENT; }
 
-<YYINITIAL> {CLEAN}                      { yybegin(YYINITIAL); return LombokConfigTypes.CLEAN; }
+<YYINITIAL> {CLEAR}                      { yybegin(YYINITIAL); return LombokConfigTypes.CLEAR; }
 
 <YYINITIAL> {KEY_CHARACTER}+             { yybegin(IN_KEY_VALUE_SEPARATOR); return LombokConfigTypes.KEY; }
 <IN_KEY_VALUE_SEPARATOR> {SIGN}          { yybegin(IN_KEY_VALUE_SEPARATOR); return LombokConfigTypes.SIGN; }

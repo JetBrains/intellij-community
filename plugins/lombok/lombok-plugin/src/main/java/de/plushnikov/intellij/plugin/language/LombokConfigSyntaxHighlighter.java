@@ -16,7 +16,7 @@ import java.awt.*;
 import java.io.Reader;
 
 public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
-  public static final TextAttributesKey CLEAN = TextAttributesKey.createTextAttributesKey("SIMPLE_CLEAN", DefaultLanguageHighlighterColors.CONSTANT);
+  public static final TextAttributesKey CLEAR = TextAttributesKey.createTextAttributesKey("SIMPLE_CLEAN", DefaultLanguageHighlighterColors.CONSTANT);
   public static final TextAttributesKey SEPARATOR = TextAttributesKey.createTextAttributesKey("SIMPLE_SEPARATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN);
   public static final TextAttributesKey KEY = TextAttributesKey.createTextAttributesKey("SIMPLE_KEY", DefaultLanguageHighlighterColors.KEYWORD);
   public static final TextAttributesKey VALUE = TextAttributesKey.createTextAttributesKey("SIMPLE_VALUE", DefaultLanguageHighlighterColors.STRING);
@@ -30,7 +30,7 @@ public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
   private static final TextAttributesKey[] KEY_KEYS = new TextAttributesKey[]{KEY};
   private static final TextAttributesKey[] VALUE_KEYS = new TextAttributesKey[]{VALUE};
   private static final TextAttributesKey[] COMMENT_KEYS = new TextAttributesKey[]{COMMENT};
-  private static final TextAttributesKey[] CLEAN_KEYS = new TextAttributesKey[]{CLEAN};
+  private static final TextAttributesKey[] CLEAR_KEYS = new TextAttributesKey[]{CLEAR};
   private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
 
   @NotNull
@@ -44,8 +44,8 @@ public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     if (tokenType.equals(LombokConfigTypes.SEPARATOR) || tokenType.equals(LombokConfigTypes.SIGN)) {
       return SEPARATOR_KEYS;
-    }  else if (tokenType.equals(LombokConfigTypes.CLEAN)) {
-      return CLEAN_KEYS;
+    }  else if (tokenType.equals(LombokConfigTypes.CLEAR)) {
+      return CLEAR_KEYS;
     } else if (tokenType.equals(LombokConfigTypes.KEY)) {
       return KEY_KEYS;
     } else if (tokenType.equals(LombokConfigTypes.VALUE)) {

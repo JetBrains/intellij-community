@@ -12,7 +12,7 @@ public interface LombokConfigTypes {
   IElementType OPERATION = new LombokConfigElementType("OPERATION");
   IElementType PROPERTY = new LombokConfigElementType("PROPERTY");
 
-  IElementType CLEAN = new LombokConfigTokenType("CLEAN");
+  IElementType CLEAR = new LombokConfigTokenType("CLEAR");
   IElementType COMMENT = new LombokConfigTokenType("COMMENT");
   IElementType CRLF = new LombokConfigTokenType("CRLF");
   IElementType KEY = new LombokConfigTokenType("KEY");
