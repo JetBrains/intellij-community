@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ public class InspectionApplication {
 
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
       final ConversionService conversionService = ConversionService.getInstance();
-      if (conversionService != null && conversionService.convertSilently(myProjectPath, createConversionListener()).openingIsCanceled()) {
+      if (conversionService.convertSilently(myProjectPath, createConversionListener()).openingIsCanceled()) {
         if (myErrorCodeRequired) System.exit(1);
         return;
       }
