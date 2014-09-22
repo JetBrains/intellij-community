@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -62,8 +63,10 @@ public class EncodingManager extends FileDocumentManagerAdapter {
       final EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(myProject);
       final String charset = Utils.configValueForKey(outPairs, charsetKey);
       if (!charset.isEmpty()) {
-        if (encodingMap.containsKey(charset)) {
-          encodingProjectManager.setEncoding(file, encodingMap.get(charset));
+        final Charset newCharset = encodingMap.get(charset);
+        if (newCharset != null) {
+          if (Comparing.equal(newCharset, file.getCharset())) return;
+          encodingProjectManager.setEncoding(file, newCharset);
           Utils.appliedConfigMessage(myProject, charset, charsetKey, filePath);
         } else {
           Utils.invalidConfigMessage(myProject, charset, charsetKey, filePath);
