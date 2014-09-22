@@ -45,14 +45,6 @@ public class PyExternalProcessException extends ExecutionException {
     myMessage = stripLinesWithoutLineFeeds(message);
   }
 
-  public PyExternalProcessException(int retcode, @NotNull String name, @NotNull List<String> args, @NotNull String message, Throwable cause) {
-    super(String.format("External process error '%s %s':\n%s", name, StringUtil.join(args, " "), message), cause);
-    myRetcode = retcode;
-    myName = name;
-    myArgs = args;
-    myMessage = stripLinesWithoutLineFeeds(message);
-  }
-
   @Override
   public String toString() {
     final StringBuilder b = new StringBuilder();

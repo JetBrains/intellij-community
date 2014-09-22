@@ -148,7 +148,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
           return processOutput;
         }
         catch (ExecutionException e) {
-          throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK: " + e.getMessage(), e);
+          throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK: " + e.getMessage());
         }
       }
       else {
