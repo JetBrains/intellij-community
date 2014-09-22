@@ -58,7 +58,8 @@ public class CollapsedGraph {
       @Override
       public Integer fun(Integer nodeId) {
         assert myVisibleNodesId.get(nodeId);
-        int delegateIndex = myDelegateGraph.getNodeIndexById(nodeId);
+        Integer delegateIndex = myDelegateGraph.getNodeIndexById(nodeId);
+        assert delegateIndex != null;
         return myNodesMap.getShortIndex(delegateIndex);
       }
     }, new Function<Integer, Integer>() {
@@ -178,12 +179,15 @@ public class CollapsedGraph {
     }
 
     @Override
-    public int getNodeIndexById(int nodeId) {
-      int delegateIndex = myDelegateGraph.getNodeIndexById(nodeId);
+    @Nullable
+    public Integer getNodeIndexById(int nodeId) {
+      Integer delegateIndex = myDelegateGraph.getNodeIndexById(nodeId);
+      if (delegateIndex == null)
+        return null;
       if (myDelegateNodesVisibility.get(delegateIndex))
         return myNodesMap.getShortIndex(delegateIndex);
       else
-        return -1;
+        return null;
     }
   }
 }

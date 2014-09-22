@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.api;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -47,6 +48,7 @@ public interface LinearGraph {
   @NotNull
   GraphNode getGraphNode(int nodeIndex);
 
-  // return -1, if node doesn't exist
-  int getNodeIndexById(int nodeId);
+  // return null, if node doesn't exist
+  @Nullable
+  Integer getNodeIndexById(int nodeId);
 }

@@ -87,10 +87,10 @@ public class PermanentLinearGraphImpl extends RefactoringLinearGraph implements 
   }
 
   @Override
-  public int getNodeIndexById(int nodeId) {
+  public Integer getNodeIndexById(int nodeId) {
     if (nodeId >= 0 && nodeId < nodesCount())
       return nodeId;
     else
-      return -1;
+      return null;
   }
 }
