@@ -25,10 +25,10 @@ public enum GraphEdgeType {
   DOTTED_ARROW_DOWN(3, false);
 
   private final byte myType;
-  private final boolean myIsEdge;
+  private final boolean myIsNormalEdge;
 
-  GraphEdgeType(int type, boolean isEdge) {
-    this.myIsEdge = isEdge;
+  GraphEdgeType(int type, boolean isNormalEdge) {
+    this.myIsNormalEdge = isNormalEdge;
     this.myType = (byte) type;
   }
 
@@ -36,8 +36,8 @@ public enum GraphEdgeType {
     return myType;
   }
 
-  public boolean isEdge() {
-    return myIsEdge;
+  public boolean isNormalEdge() {
+    return myIsNormalEdge;
   }
 
   @NotNull
