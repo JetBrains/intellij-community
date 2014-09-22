@@ -268,7 +268,7 @@ public class TaskFile implements Stateful {
     return myValid;
   }
 
-  private void setValid(boolean isValid) {
+  public void setValid(boolean isValid) {
     myValid = isValid;
   }
 
