@@ -29,6 +29,7 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -53,7 +54,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
 
   private final int myLongSize;
   private final int myShowingPartSize;
-  private final boolean myAddNearArrow;
+  private final int myAddNearArrowSize;
 
   public PrintElementGeneratorImpl(@NotNull LinearGraph graph,
                                    @NotNull PrintElementsManager printElementsManager,
@@ -65,15 +66,33 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     if (showLongEdges) {
       myLongSize = VERY_LONG_EDGE_SIZE;
       myShowingPartSize = VERY_LONG_EDGE_PART_SIZE;
-      myAddNearArrow = SHOW_ARROW_WHEN_SHOW_LONG_EDGES;
+      if (SHOW_ARROW_WHEN_SHOW_LONG_EDGES)
+        myAddNearArrowSize = LONG_EDGE_SIZE;
+      else
+        myAddNearArrowSize = Integer.MAX_VALUE;
     } else {
       myLongSize = LONG_EDGE_SIZE;
       myShowingPartSize = LONG_EDGE_PART_SIZE;
-      myAddNearArrow = false;
+      myAddNearArrowSize = Integer.MAX_VALUE;
     }
   }
 
-  @NotNull
+  @TestOnly
+  public PrintElementGeneratorImpl(@NotNull LinearGraph graph,
+                                   @NotNull PrintElementsManager printElementsManager,
+                                   @NotNull Comparator<GraphElement> graphElementComparator,
+                                   int longSize,
+                                   int showingPartSize,
+                                   int addNearArrowSize) {
+    super(graph, printElementsManager);
+    myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
+    myGraphElementComparator = graphElementComparator;
+    myLongSize = longSize;
+    myShowingPartSize = showingPartSize;
+    myAddNearArrowSize = addNearArrowSize;
+  }
+
+    @NotNull
   @Override
   protected List<ShortEdge> getDownShortEdges(int rowIndex) {
     NullableFunction<GraphEdge, Integer> endPosition = createEndPositionFunction(rowIndex);
@@ -148,7 +167,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
           if (edgeSize >= myLongSize)
             addArrowIfNeeded(result, edge, position, upOffset, downOffset, myShowingPartSize);
 
-          if (myAddNearArrow && edgeSize >= LONG_EDGE_SIZE)
+          if (edgeSize >= myAddNearArrowSize)
             addArrowIfNeeded(result, edge, position, upOffset, downOffset, 1);
 
         } else { // special edges
