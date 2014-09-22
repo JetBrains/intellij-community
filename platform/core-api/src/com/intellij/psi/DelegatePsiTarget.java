@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package com.intellij.psi;
 
-import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PsiDeclaredTarget;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,20 +46,20 @@ public class DelegatePsiTarget implements PsiTarget {
   @Override
   public void navigate(boolean requestFocus) {
     final int offset = getTextOffset();
-    final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(myElement);
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myElement);
     if (virtualFile != null && virtualFile.isValid()) {
-      new OpenFileDescriptor(myElement.getProject(), virtualFile, offset).navigate(requestFocus);
+      PsiNavigationSupport.getInstance().createNavigatable(myElement.getProject(), virtualFile, offset).navigate(requestFocus);
     }
   }
 
   @Override
   public boolean canNavigate() {
-    return EditSourceUtil.canNavigate(myElement);
+    return PsiNavigationSupport.getInstance().canNavigate(myElement);
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return EditSourceUtil.canNavigate(myElement);
+    return PsiNavigationSupport.getInstance().canNavigate(myElement);
   }
 
   @Override

@@ -71,7 +71,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
@@ -1035,11 +1034,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
     FileDocumentManager manager = FileDocumentManager.getInstance();
-    if (manager != null) {
-      final VirtualFile file = manager.getFile(myDocument);
-      if (file != null && !file.isValid()) {
-        return false;
-      }
+    final VirtualFile file = manager.getFile(myDocument);
+    if (file != null && !file.isValid()) {
+      return false;
     }
 
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
@@ -2788,7 +2785,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (hEnd >= lEnd) {
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
-          int i = drawStringWithSoftWraps(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
+          drawStringWithSoftWraps(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
                                                 effectType, fontType, currentColor, logicalPosition);
           final VirtualFile file = getVirtualFile();
           if (myProject != null && file != null && !isOneLineMode()) {
@@ -6830,8 +6827,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public boolean toolWindowIsNotEmpty() {
       if (myProject == null) return false;
       ToolWindowManagerEx m = ToolWindowManagerEx.getInstanceEx(myProject);
-      if (m == null) return false;
-      return !m.getIdsOn(ToolWindowAnchor.TOP).isEmpty();
+      return m != null && !m.getIdsOn(ToolWindowAnchor.TOP).isEmpty();
     }
 
     @Override

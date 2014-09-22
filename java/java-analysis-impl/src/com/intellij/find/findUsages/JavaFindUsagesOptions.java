@@ -29,7 +29,7 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
   public boolean isSkipImportStatements = false;
 
   public JavaFindUsagesOptions(@NotNull Project project) {
-    super(project, null);
+    super(project);
 
     isUsages = true;
   }

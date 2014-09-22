@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
@@ -173,16 +172,16 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       state.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
       finalStates.add(state);
     }
-    
-    return ContainerUtil.map2Array(finalStates, DfaInstructionState.class, new Function<DfaMemoryState, DfaInstructionState>() {
-      @Override
-      public DfaInstructionState fun(DfaMemoryState state) {
-        if (instruction.shouldFlushFields()) {
-          state.flushFields();
-        }
-        return new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
+
+    DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
+    int i = 0;
+    for (DfaMemoryState state : finalStates) {
+      if (instruction.shouldFlushFields()) {
+        state.flushFields();
       }
-    });
+      result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
+    }
+    return result;
   }
 
   @Nullable 

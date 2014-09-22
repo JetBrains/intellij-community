@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,7 +273,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   }
 
   @Override
-  public void initModelBySetings(FindModel model){
+  public void initModelBySetings(@NotNull FindModel model){
     model.setCaseSensitive(isCaseSensitive());
     model.setForward(isForward());
     model.setFromCursor(isFromCursor());
@@ -309,24 +309,24 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   }
 
   @Override
-  public void addStringToFind(String s){
-    if (s == null || s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0){
+  public void addStringToFind(@NotNull String s){
+    if (s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0){
       return;
     }
     addStringToList(s, RECENT_FIND_STRINGS, MAX_RECENT_SIZE);
   }
 
   @Override
-  public void addStringToReplace(String s) {
-    if (s == null || s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0){
+  public void addStringToReplace(@NotNull String s) {
+    if (s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0){
       return;
     }
     addStringToList(s, RECENT_REPLACE_STRINGS, MAX_RECENT_SIZE);
   }
 
   @Override
-  public void addDirectory(String s) {
-    if (s == null || s.isEmpty()){
+  public void addDirectory(@NotNull String s) {
+    if (s.isEmpty()){
       return;
     }
     addStringToList(s, RECENT_DIR_STRINGS, MAX_RECENT_SIZE);

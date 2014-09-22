@@ -93,7 +93,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   @Override
-  public NamedScope getPredefinedScope(String name) {
+  public NamedScope getPredefinedScope(@NotNull String name) {
     final CustomScopesProvider[] scopesProviders = CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject);
     for (CustomScopesProvider scopesProvider : scopesProviders) {
       final NamedScope scope = scopesProvider instanceof CustomScopesProviderEx
