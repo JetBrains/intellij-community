@@ -145,7 +145,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   @Override
-  public void draw(@NotNull Graphics2D g2, @NotNull Collection<PrintElement> printElements) {
+  public void draw(@NotNull Graphics2D g2, @NotNull Collection<? extends PrintElement> printElements) {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -205,7 +205,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   @Nullable
   @Override
-  public PrintElement mouseOver(@NotNull Collection<PrintElement> printElements, int x, int y) {
+  public PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
     for (PrintElement printElement : printElements) {
       if (printElement instanceof SimplePrintElement) {
         if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, ((SimplePrintElement)printElement).getType())) {
