@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -29,6 +30,7 @@ import com.intellij.ui.HideableTitledPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.edu.InvalidTaskFileFix;
 import com.jetbrains.python.edu.StudyDocumentListener;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.actions.*;
@@ -47,8 +49,8 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * Implementation of StudyEditor which has panel with special buttons and task text
@@ -56,6 +58,7 @@ import java.util.Map;
  */
 public class StudyEditor implements TextEditor {
   private static final String TASK_TEXT_HEADER = "Task Text";
+  private static Map<TaskFile, InvalidTaskFileFix> myFixes = new HashMap<TaskFile, InvalidTaskFileFix>();
   private final FileEditor myDefaultEditor;
   private final JComponent myComponent;
   private final TaskFile myTaskFile;
@@ -115,6 +118,19 @@ public class StudyEditor implements TextEditor {
       studyPanel.add(studyButtonPanel);
       myComponent.add(studyPanel, BorderLayout.NORTH);
     }
+  }
+
+  public static void addFix(@NotNull final TaskFile file, @NotNull final InvalidTaskFileFix fix) {
+    myFixes.put(file, fix);
+  }
+
+  @Nullable
+  public static InvalidTaskFileFix getFix(TaskFile file) {
+    return myFixes.get(file);
+  }
+
+  public static void deleteFix(TaskFile file) {
+    myFixes.remove(file);
   }
 
   class CopyListener extends MouseAdapter {
@@ -406,6 +422,26 @@ public class StudyEditor implements TextEditor {
   public void navigateTo(@NotNull Navigatable navigatable) {
     if (myDefaultEditor instanceof TextEditor) {
       ((TextEditor)myDefaultEditor).navigateTo(navigatable);
+    }
+  }
+
+  public static void deleteGuardedBlocks(@NotNull final Document document) {
+    if (document instanceof DocumentImpl) {
+      DocumentImpl documentImpl = (DocumentImpl)document;
+      List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
+      for (final RangeMarker block : blocks) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                document.removeGuardedBlock(block);
+              }
+            });
+          }
+        });
+      }
     }
   }
 }
