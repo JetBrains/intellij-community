@@ -125,13 +125,10 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       public void dispose() {
         synchronized (myLock) {
           for (final LineStatusTracker tracker : myLineStatusTrackers.values()) {
-            final Document document = tracker.getDocument();
-            myPartner.remove(document);
             tracker.release();
           }
 
           myLineStatusTrackers.clear();
-          assert myPartner.isEmpty();
           myPartner.clear();
         }
       }
