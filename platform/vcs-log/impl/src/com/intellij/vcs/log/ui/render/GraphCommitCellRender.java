@@ -105,7 +105,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
 
   @Nullable
   private PaintInfo getGraphImage(int row) {
-    Collection<PrintElement> printElements = myVisibleGraph.getRowInfo(row).getPrintElements();
+    Collection<? extends PrintElement> printElements = myVisibleGraph.getRowInfo(row).getPrintElements();
     int maxIndex = 0;
     for (PrintElement printElement : printElements) {
       maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());

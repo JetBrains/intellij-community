@@ -27,10 +27,10 @@ import java.util.Collection;
  */
 public interface GraphCellPainter {
 
-  void draw(@NotNull Graphics2D g2, @NotNull Collection<PrintElement> printElements);
+  void draw(@NotNull Graphics2D g2, @NotNull Collection<? extends PrintElement> printElements);
 
   @Nullable
-  PrintElement mouseOver(@NotNull Collection<PrintElement> printElements, int x, int y);
+  PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y);
 
 }
 

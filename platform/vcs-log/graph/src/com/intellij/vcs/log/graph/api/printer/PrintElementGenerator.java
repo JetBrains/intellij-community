@@ -17,7 +17,6 @@
 package com.intellij.vcs.log.graph.api.printer;
 
 import com.intellij.vcs.log.graph.PrintElement;
-import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -25,7 +24,7 @@ import java.util.Collection;
 public interface PrintElementGenerator {
 
   @NotNull
-  Collection<PrintElement> getPrintElements(int visibleRow);
+  Collection<PrintElementWithGraphElement> getPrintElements(int visibleRow);
 
   @NotNull
   PrintElementWithGraphElement toPrintElementWithGraphElement(@NotNull PrintElement printElement);

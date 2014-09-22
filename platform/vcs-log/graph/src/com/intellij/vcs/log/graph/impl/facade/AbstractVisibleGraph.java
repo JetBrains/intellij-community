@@ -114,7 +114,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
 
       @NotNull
       @Override
-      public Collection<PrintElement> getPrintElements() {
+      public Collection<? extends PrintElement> getPrintElements() {
         return myPrintElementGenerator.getPrintElements(visibleRow);
       }
 

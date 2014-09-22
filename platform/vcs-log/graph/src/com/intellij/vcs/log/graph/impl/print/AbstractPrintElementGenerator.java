@@ -34,20 +34,20 @@ import java.util.Collection;
 public abstract class AbstractPrintElementGenerator implements PrintElementGenerator {
 
   @NotNull
-  protected final LinearGraph myPrintedLinearGraph;
+  protected final LinearGraph myLinearGraph;
   @NotNull
   protected final PrintElementsManager myPrintElementsManager;
 
-  protected AbstractPrintElementGenerator(@NotNull LinearGraph printedLinearGraph, @NotNull PrintElementsManager printElementsManager) {
-    myPrintedLinearGraph = printedLinearGraph;
+  protected AbstractPrintElementGenerator(@NotNull LinearGraph linearGraph, @NotNull PrintElementsManager printElementsManager) {
+    myLinearGraph = linearGraph;
     myPrintElementsManager = printElementsManager;
   }
 
   @NotNull
-  public Collection<PrintElement> getPrintElements(int rowIndex) {
-    Collection<PrintElement> result = new ArrayList<PrintElement>();
+  public Collection<PrintElementWithGraphElement> getPrintElements(int rowIndex) {
+    Collection<PrintElementWithGraphElement> result = new ArrayList<PrintElementWithGraphElement>();
 
-    if (rowIndex < myPrintedLinearGraph.nodesCount() - 1) {
+    if (rowIndex < myLinearGraph.nodesCount() - 1) {
       for (ShortEdge shortEdge : getDownShortEdges(rowIndex)) {
         result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN));
       }
@@ -90,32 +90,9 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
     }
 
     int rowIndex = printElement.getRowIndex();
-    if (printElement instanceof SimplePrintElement) {
-      for (SimpleRowElement rowElement : getSimpleRowElements(rowIndex)) {
-        if (rowElement.myPosition == printElement.getPositionInCurrentRow())
-          return createSimplePrintElement(rowIndex, rowElement);
-      }
-    }
-
-    if (printElement instanceof EdgePrintElement) {
-      EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
-      if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-        for (ShortEdge shortEdge : getDownShortEdges(rowIndex)) {
-          if (shortEdge.myUpPosition == edgePrintElement.getPositionInCurrentRow() &&
-            shortEdge.myDownPosition == edgePrintElement.getPositionInOtherRow()) {
-            return createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN);
-          }
-        }
-      }
-
-      if (edgePrintElement.getType() == EdgePrintElement.Type.UP) {
-        for (ShortEdge shortEdge : getDownShortEdges(rowIndex - 1)) {
-          if (shortEdge.myDownPosition == edgePrintElement.getPositionInCurrentRow() &&
-              shortEdge.myUpPosition == edgePrintElement.getPositionInOtherRow()) {
-            return createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.UP);
-          }
-        }
-      }
+    for (PrintElementWithGraphElement printElementWithGE : getPrintElements(rowIndex)) {
+      if (printElementWithGE.equals(printElement))
+        return printElementWithGE;
     }
     throw new IllegalStateException("Not found graphElement for this printElement: " + printElement);
   }
