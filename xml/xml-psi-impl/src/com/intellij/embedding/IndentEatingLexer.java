@@ -23,12 +23,32 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IndentEatingLexer extends ForeignTokenClassifierLexer {
+public class IndentEatingLexer extends MasqueradingLexer {
   public IndentEatingLexer(@NotNull Lexer delegate, int baseIndent) {
     super(new MyLexer(delegate, baseIndent));
   }
 
+
+  @Nullable
   @Override
+  public IElementType getMasqueTokenType() {
+    if (isForeignToken()) {
+      return null;
+    }
+
+    return getTokenType();
+  }
+
+  @Nullable
+  @Override
+  public String getMasqueTokenText() {
+    if (getMasqueTokenType() == null) {
+      return null;
+    }
+
+    return getTokenText();
+  }
+
   public boolean isForeignToken() {
     return myDelegate.getTokenType() == TokenType.DUMMY_HOLDER;
   }

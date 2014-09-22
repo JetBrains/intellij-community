@@ -17,19 +17,25 @@ package com.intellij.embedding;
 
 import com.intellij.lexer.DelegateLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A lexer which additionally providers information concerning whether a token
  * should be used in parsing (and be exposed to a parser) or be hidden to parser
  * @see com.intellij.embedding.MasqueradingPsiBuilderAdapter
  */
-public abstract class ForeignTokenClassifierLexer extends DelegateLexer {
+public abstract class MasqueradingLexer extends DelegateLexer {
 
-  public ForeignTokenClassifierLexer(@NotNull Lexer delegate) {
+  public MasqueradingLexer(@NotNull Lexer delegate) {
     super(delegate);
   }
 
-  public abstract boolean isForeignToken();
+  @Nullable
+  public abstract IElementType getMasqueTokenType();
+
+  @Nullable
+  public abstract String getMasqueTokenText();
 
 }

@@ -62,9 +62,9 @@ public class EmbeddedLazyParseableElementType extends ILazyParseableElementType 
 
   public PsiBuilder getBuilder(ASTNode chameleon, Project project, ParserDefinition parserDefinition, Lexer lexer) {
     final PsiBuilder builder;
-    if (lexer instanceof ForeignTokenClassifierLexer) {
+    if (lexer instanceof MasqueradingLexer) {
       builder =
-        new MasqueradingPsiBuilderAdapter(project, parserDefinition, ((ForeignTokenClassifierLexer)lexer), chameleon, chameleon.getChars());
+        new MasqueradingPsiBuilderAdapter(project, parserDefinition, ((MasqueradingLexer)lexer), chameleon, chameleon.getChars());
     }
     else {
       builder = new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, chameleon.getChars());

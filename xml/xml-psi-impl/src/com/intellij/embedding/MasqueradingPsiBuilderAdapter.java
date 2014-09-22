@@ -28,9 +28,9 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * A delegate PsiBuilder that hides some tokens (namely, the ones provided by {@link com.intellij.embedding.ForeignTokenClassifierLexer})
- * from a parser, however, _still inserting_ them into a production tree.
- * @see com.intellij.embedding.ForeignTokenClassifierLexer
+ * A delegate PsiBuilder that hides or substitutes some tokens (namely, the ones provided by {@link MasqueradingLexer})
+ * from a parser, however, _still inserting_ them into a production tree in their initial appearance.
+ * @see MasqueradingLexer
  */
 public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
@@ -42,7 +42,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   public MasqueradingPsiBuilderAdapter(@NotNull final Project project,
                         @NotNull final ParserDefinition parserDefinition,
-                        @NotNull final ForeignTokenClassifierLexer lexer,
+                        @NotNull final MasqueradingLexer lexer,
                         @NotNull final ASTNode chameleon,
                         @NotNull final CharSequence text) {
     super(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
@@ -52,7 +52,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   public MasqueradingPsiBuilderAdapter(@NotNull final Project project,
                         @NotNull final ParserDefinition parserDefinition,
-                        @NotNull final ForeignTokenClassifierLexer lexer,
+                        @NotNull final MasqueradingLexer lexer,
                         @NotNull final LighterLazyParseableNode chameleon,
                         @NotNull final CharSequence text) {
     super(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
@@ -152,43 +152,43 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   protected void initShrunkSequence() {
     final PsiBuilderImpl delegate = (PsiBuilderImpl)getDelegate();
-    final ForeignTokenClassifierLexer lexer = (ForeignTokenClassifierLexer)delegate.getLexer();
+    final MasqueradingLexer lexer = (MasqueradingLexer)delegate.getLexer();
 
-    initTokenList(lexer);
-    initCharSequence();
+    initTokenListAndCharSequence(lexer);
     myLexPosition = 0;
     synchronizePositions();
   }
 
-  private void initTokenList(ForeignTokenClassifierLexer lexer) {
+  private void initTokenListAndCharSequence(MasqueradingLexer lexer) {
     lexer.start(getDelegate().getOriginalText());
     myShrunkSequence = new ArrayList<MyShiftedToken>();
+    StringBuilder charSequenceBuilder = new StringBuilder();
 
     int realPos = 0;
     int shrunkPos = 0;
-    IElementType currentTokenType;
-    while ((currentTokenType = lexer.getTokenType()) != null) {
-      final boolean isForeign = lexer.isForeignToken();
+    IElementType realTokenType;
+    while ((realTokenType = lexer.getTokenType()) != null) {
+      final IElementType masqueTokenType = lexer.getMasqueTokenType();
+      final String masqueTokenText = lexer.getMasqueTokenText();
 
-      final int tokenLength = lexer.getTokenEnd() - lexer.getTokenStart();
-      if (!isForeign) {
-        myShrunkSequence.add(new MyShiftedToken(currentTokenType,
-                                                realPos, realPos + tokenLength,
-                                                shrunkPos, shrunkPos + tokenLength));
-        shrunkPos += tokenLength;
+      final int realLength = lexer.getTokenEnd() - lexer.getTokenStart();
+      if (masqueTokenType != null) {
+        assert masqueTokenText != null;
+
+        final int masqueLength = masqueTokenText.length();
+        myShrunkSequence.add(new MyShiftedToken(realTokenType,
+                                                realPos, realPos + realLength,
+                                                shrunkPos, shrunkPos + masqueLength));
+        charSequenceBuilder.append(masqueTokenText);
+
+        shrunkPos += masqueLength;
       }
-      realPos += tokenLength;
+      realPos += realLength;
 
       lexer.advance();
     }
-  }
 
-  private void initCharSequence() {
-    StringBuilder sb = new StringBuilder();
-    for (MyShiftedToken token : myShrunkSequence) {
-      sb.append(getDelegate().getOriginalText().subSequence(token.realStart, token.realEnd));
-    }
-    myShrunkCharSequence = sb.toString();
+    myShrunkCharSequence = charSequenceBuilder.toString();
   }
 
   @SuppressWarnings({"StringConcatenationInsideStringBufferAppend", "UnusedDeclaration"})
