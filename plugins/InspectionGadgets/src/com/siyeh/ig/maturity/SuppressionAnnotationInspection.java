@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
@@ -32,6 +31,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collection;
 
 /**
@@ -42,7 +42,9 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
   @Override
   public JComponent createOptionsPanel() {
     final ListEditForm form = new ListEditForm("Ignore suppressions", myAllowedSuppressions);
-    return form.getContentPanel();
+    final JComponent panel = form.getContentPanel();
+    panel.setPreferredSize(new Dimension(150, 100));
+    return panel;
   }
 
   @NotNull
