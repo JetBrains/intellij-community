@@ -21,7 +21,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.graph.SimplePrintElement;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
@@ -45,14 +44,18 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   @NotNull
   private final EdgesInRowGenerator myEdgesInRowGenerator;
   @NotNull
-  private final GraphElementComparator myGraphElementComparator;
+  private final Comparator<GraphElement> myGraphElementComparator;
 
-  private boolean showLongEdges = false;
+  private final boolean myShowLongEdges;
 
-  public PrintElementGeneratorImpl(@NotNull PrintedLinearGraph graph, @NotNull PrintElementsManager printElementsManager) {
+  public PrintElementGeneratorImpl(@NotNull LinearGraph graph,
+                                   @NotNull PrintElementsManager printElementsManager,
+                                   @NotNull Comparator<GraphElement> graphElementComparator,
+                                   boolean showLongEdges) {
     super(graph, printElementsManager);
+    myShowLongEdges = showLongEdges;
     myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
-    myGraphElementComparator = new GraphElementComparator();
+    myGraphElementComparator = graphElementComparator;
   }
 
   @NotNull
@@ -128,7 +131,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
         int downOffset = edge.getDownNodeIndex() - visibleRowIndex;
 
         if (edgeSize >= LONG_EDGE_SIZE) {
-          if (!showLongEdges) {
+          if (!myShowLongEdges) {
             addArrowIfNeeded(result, position, edge, upOffset, downOffset, LONG_EDGE_PART_SIZE);
           } else {
             if (SHOW_ARROW_WHEN_SHOW_LONG_EDGES)
@@ -159,31 +162,20 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   }
 
   @Override
-  public boolean areLongEdgesHidden() {
-    return !showLongEdges;
-  }
-
-  @Override
-  public void setLongEdgesHidden(boolean longEdgesHidden) {
-    showLongEdges = !longEdgesHidden;
-    invalidate();
-  }
-
-  @Override
   public void invalidate() {
     myEdgesInRowGenerator.invalidate();
     cache.clear();
   }
 
   private int getLongEdgeSize() {
-    if (showLongEdges)
+    if (myShowLongEdges)
       return VERY_LONG_EDGE_SIZE;
     else
       return LONG_EDGE_SIZE;
   }
 
   private int getEdgeShowPartSize() {
-    if (showLongEdges)
+    if (myShowLongEdges)
       return VERY_LONG_EDGE_PART_SIZE;
     else
       return LONG_EDGE_PART_SIZE;
@@ -219,58 +211,4 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     return result;
   }
 
-  private class GraphElementComparator implements Comparator<GraphElement> {
-    @Override
-    public int compare(@NotNull GraphElement o1, @NotNull GraphElement o2) {
-      if (o1 instanceof GraphEdge && o2 instanceof GraphEdge) {
-        int upNodeIndex1 = ((GraphEdge)o1).getUpNodeIndex();
-        int upNodeIndex2 = ((GraphEdge)o2).getUpNodeIndex();
-
-        if (upNodeIndex1 == upNodeIndex2) {
-          int downNodeIndex1 = ((GraphEdge)o1).getDownNodeIndex();
-          int downNodeIndex2 = ((GraphEdge)o2).getDownNodeIndex();
-          if (downNodeIndex1 == LinearGraph.NOT_LOAD_COMMIT)
-            return 1;
-          if (downNodeIndex2 == LinearGraph.NOT_LOAD_COMMIT)
-            return -1;
-
-          if (getLayoutIndex(downNodeIndex1) != getLayoutIndex(downNodeIndex2))
-            return getLayoutIndex(downNodeIndex1) - getLayoutIndex(downNodeIndex2);
-          else
-            return downNodeIndex1 - downNodeIndex2;
-        }
-
-        if (upNodeIndex1 < upNodeIndex2)
-          return compare(o1, new GraphNode(upNodeIndex2));
-        else
-          return compare(new GraphNode(upNodeIndex1), o2);
-      }
-
-      if (o1 instanceof GraphEdge && o2 instanceof GraphNode)
-        return compare2((GraphEdge) o1, (GraphNode) o2);
-
-      if (o1 instanceof GraphNode && o2 instanceof GraphEdge)
-        return - compare2((GraphEdge) o2, (GraphNode) o1);
-
-      assert false;
-      return 0;
-    }
-
-    private int compare2(@NotNull GraphEdge edge, @NotNull GraphNode node) {
-      int upEdgeLI = getLayoutIndex(edge.getUpNodeIndex());
-      int downEdgeLI = upEdgeLI;
-      if (edge.getDownNodeIndex() != LinearGraph.NOT_LOAD_COMMIT)
-        downEdgeLI = getLayoutIndex(edge.getDownNodeIndex());
-
-      int nodeLI = getLayoutIndex(node.getNodeIndex());
-      if (Math.max(upEdgeLI, downEdgeLI) != nodeLI)
-        return Math.max(upEdgeLI, downEdgeLI) - nodeLI;
-      else
-        return edge.getUpNodeIndex() - node.getNodeIndex();
-    }
-
-    private int getLayoutIndex(int nodeIndex) {
-      return myPrintedLinearGraph.getLayoutIndex(nodeIndex);
-    }
-  }
 }

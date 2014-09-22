@@ -30,8 +30,5 @@ public interface PrintElementGenerator {
   @NotNull
   PrintElementWithGraphElement toPrintElementWithGraphElement(@NotNull PrintElement printElement);
 
-  boolean areLongEdgesHidden();
-  void setLongEdgesHidden(boolean longEdgesHidden);
-
   void invalidate();
 }

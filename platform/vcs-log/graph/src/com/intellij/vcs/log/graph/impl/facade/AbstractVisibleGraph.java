@@ -16,19 +16,21 @@
 
 package com.intellij.vcs.log.graph.impl.facade;
 
+import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphMouseAction;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
 import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
 import com.intellij.vcs.log.graph.impl.visible.CurrentBranches;
 import com.intellij.vcs.log.graph.impl.visible.adapters.LinearGraphAsGraphWithHiddenNodes;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,19 +65,28 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   @NotNull
   protected final LinearGraphWithCommitInfo<CommitId> myLinearGraphWithCommitInfo;
   @NotNull
-  protected final PrintElementGenerator myPrintElementGenerator;
+  private final Comparator<GraphElement> myGraphElementComparator;
+  @NotNull
+  protected PrintElementGenerator myPrintElementGenerator;
   @NotNull
   protected final PrintElementsManager myPrintElementsManager;
   @NotNull
   protected final Map<CommitId, GraphCommit<CommitId>> myCommitsWithNotLoadParent;
 
-  protected AbstractVisibleGraph(@NotNull LinearGraphWithCommitInfo<CommitId> linearGraphWithCommitInfo,
+  protected AbstractVisibleGraph(@NotNull final LinearGraphWithCommitInfo<CommitId> linearGraphWithCommitInfo,
                                  @NotNull Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent,
                                  @NotNull PrintElementsManager printElementsManager) {
     myLinearGraphWithCommitInfo = linearGraphWithCommitInfo;
     myCommitsWithNotLoadParent = commitsWithNotLoadParent;
     myPrintElementsManager = printElementsManager;
-    myPrintElementGenerator = new PrintElementGeneratorImpl(linearGraphWithCommitInfo, printElementsManager);
+    myGraphElementComparator = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(Integer nodeIndex) {
+        return linearGraphWithCommitInfo.getLayoutIndex(nodeIndex);
+      }
+    });
+    myPrintElementGenerator = new PrintElementGeneratorImpl(linearGraphWithCommitInfo, printElementsManager, myGraphElementComparator, false);
   }
 
   @Override
@@ -212,6 +224,8 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   }
 
   protected class ActionControllerImpl implements ActionController<CommitId> {
+    private boolean myAreLongEdgesHidden = false;
+
     @NotNull
     @Override
     public GraphAnswer<CommitId> performMouseAction(@NotNull GraphMouseAction graphMouseAction) {
@@ -242,12 +256,14 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
 
     @Override
     public boolean areLongEdgesHidden() {
-      return myPrintElementGenerator.areLongEdgesHidden();
+      return myAreLongEdgesHidden;
     }
 
     @Override
     public void setLongEdgesHidden(boolean longEdgesHidden) {
-      myPrintElementGenerator.setLongEdgesHidden(longEdgesHidden);
+      myAreLongEdgesHidden = longEdgesHidden;
+      myPrintElementGenerator =
+        new PrintElementGeneratorImpl(myLinearGraphWithCommitInfo, myPrintElementsManager, myGraphElementComparator, longEdgesHidden);
     }
 
     @Override
