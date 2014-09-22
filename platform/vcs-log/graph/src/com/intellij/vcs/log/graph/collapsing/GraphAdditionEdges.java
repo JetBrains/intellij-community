@@ -48,7 +48,7 @@ public class GraphAdditionEdges {
   }
 
   public void createEdge(int mainNodeId, int additionId, GraphEdgeType edgeType) {
-    if (edgeType.isEdge()) {
+    if (edgeType.isNormalEdge()) {
       myAdditionEdges.putValue(mainNodeId, compactEdge(additionId, edgeType));
       myAdditionEdges.putValue(additionId, compactEdge(mainNodeId, edgeType));
     } else {
@@ -62,7 +62,7 @@ public class GraphAdditionEdges {
   }
 
   public void removeEdge(int mainNodeId, int additionId, GraphEdgeType edgeType) {
-    if (edgeType.isEdge()) {
+    if (edgeType.isNormalEdge()) {
       myAdditionEdges.remove(mainNodeId, compactEdge(additionId, edgeType));
       myAdditionEdges.remove(additionId, compactEdge(mainNodeId, edgeType));
     } else {
