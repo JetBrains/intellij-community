@@ -17,9 +17,7 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -445,7 +443,7 @@ public class ConcurrentBitSet {
   }
 
   public void writeTo(@NotNull File file) throws IOException {
-    RandomAccessFile bitSetStorage = new RandomAccessFile(file,"rw");
+    DataOutputStream bitSetStorage = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
     try {
       long[] words = toLongArray();
       for (long word : words) {
@@ -462,7 +460,7 @@ public class ConcurrentBitSet {
     if (!file.exists()) {
       return new ConcurrentBitSet();
     }
-    RandomAccessFile bitSetStorage = new RandomAccessFile(file,"r");
+    DataInputStream bitSetStorage = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
     try {
       long length = file.length();
       long[] words = new long[(int)(length/8)];
