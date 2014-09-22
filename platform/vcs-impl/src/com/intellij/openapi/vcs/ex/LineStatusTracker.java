@@ -71,7 +71,6 @@ public class LineStatusTracker {
   private boolean myBulkUpdate;
   private final Application myApplication;
   @Nullable private RevisionPack myBaseRevisionNumber;
-  private String myPreviousBaseRevision;
   private boolean myAnathemaThrown;
   private FileEditorManager myFileEditorManager;
   private final VcsDirtyScopeManager myVcsDirtyScopeManager;
@@ -104,7 +103,6 @@ public class LineStatusTracker {
         if (myBaseRevisionNumber != null && myBaseRevisionNumber.after(baseRevisionNumber)) return;
 
         myBaseRevisionNumber = baseRevisionNumber;
-        myPreviousBaseRevision = null;
 
         myVcsDocument.setReadOnly(false);
         myVcsDocument.replaceString(0, myVcsDocument.getTextLength(), vcsContent);
@@ -119,20 +117,6 @@ public class LineStatusTracker {
       finally {
         myBaseLoaded = BaseLoadState.LOADED;
       }
-    }
-  }
-
-  public void useCachedBaseRevision(final RevisionPack number) {
-    synchronized (myLock) {
-      assert myBaseRevisionNumber != null;
-      if (myPreviousBaseRevision == null || myBaseRevisionNumber.after(number)) return;
-      initialize(myPreviousBaseRevision, number);
-    }
-  }
-
-  public boolean canUseBaseRevision(final RevisionPack number) {
-    synchronized (myLock) {
-      return myBaseRevisionNumber != null && myBaseRevisionNumber.equals(number) && myPreviousBaseRevision != null;
     }
   }
 
@@ -270,28 +254,6 @@ public class LineStatusTracker {
 
       myBulkUpdate = false;
       reinstallRanges();
-    }
-  }
-
-  /**
-   * @return true if was cleared and base revision contents load should be started
-   * false -> load was already started; after contents is loaded,
-   */
-  public void resetForBaseRevisionLoad() {
-    myApplication.assertReadAccessAllowed();
-
-    synchronized (myLock) {
-      // there can be multiple resets before init -> take from document only firts time -> when right after install(),
-      // where myPreviousBaseRevision become null
-      if (BaseLoadState.LOADED.equals(myBaseLoaded) && myPreviousBaseRevision == null) {
-        myPreviousBaseRevision = myVcsDocument.getText();
-      }
-      myVcsDocument.setReadOnly(false);
-      myVcsDocument.setText("");
-      myVcsDocument.setReadOnly(true);
-      removeAnathema();
-      removeHighlightersFromMarkupModel();
-      myBaseLoaded = BaseLoadState.LOADING;
     }
   }
 

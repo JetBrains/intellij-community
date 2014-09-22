@@ -311,20 +311,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       final LineStatusTracker.RevisionPack revisionPack = new LineStatusTracker.RevisionPack(myLoadCounter, baseRevision);
         ++ myLoadCounter;
 
-      synchronized (myLock) {
-        final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
-        if (tracker != null && tracker.canUseBaseRevision(revisionPack)) {
-          nonModalAliveInvokeLater(new Runnable() {
-            @Override
-            public void run() {
-              log("installTracker() for file " + myVirtualFile.getPath() + " base revision number already in tracker");
-              tracker.useCachedBaseRevision(revisionPack);
-            }
-          });
-          // already ok revision
-          return;
-        }
-      }
       final String lastUpToDateContent = myStatusProvider.getBaseVersionContent(myVirtualFile);
       if (lastUpToDateContent == null) {
         log("installTracker() for file " + myVirtualFile.getPath() + " failed: no up to date content");
