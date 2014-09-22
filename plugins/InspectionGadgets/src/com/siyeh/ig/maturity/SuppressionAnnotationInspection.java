@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 
 /**
  * User: anna
@@ -49,18 +47,17 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
 
   @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) { 
-    if (infos.length == 1) {
-      if (infos[0] instanceof PsiAnnotation) {
-        final PsiAnnotation annotation = (PsiAnnotation)infos[0];
-        PsiElement parent = annotation.getParent();
-        final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)parent);
-        if (!ids.isEmpty()) {
-          return new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null)), new AllowSuppressionsFix()};
-        }
-      } else if (infos[0] instanceof PsiComment) {
-        return new InspectionGadgetsFix[]{new RemoveSuppressCommentFix(), new AllowSuppressionsFix()};
-      }
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final boolean suppressionIdPresent = ((Boolean)infos[1]).booleanValue();
+    if (infos[0] instanceof PsiAnnotation) {
+      final PsiAnnotation annotation = (PsiAnnotation)infos[0];
+      return suppressionIdPresent
+             ? new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null)), new AllowSuppressionsFix()}
+             : new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null))};
+    } else if (infos[0] instanceof PsiComment) {
+      return suppressionIdPresent
+             ? new InspectionGadgetsFix[]{new RemoveSuppressCommentFix(), new AllowSuppressionsFix()}
+             : new InspectionGadgetsFix[]{new RemoveSuppressCommentFix()};
     }
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
@@ -70,7 +67,6 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement != null) {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
         psiElement.delete();
       }
     }
