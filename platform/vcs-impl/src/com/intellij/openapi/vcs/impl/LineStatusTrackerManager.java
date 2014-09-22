@@ -91,8 +91,11 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   private final Disposable myDisposable;
   private long myLoadCounter;
 
-  public LineStatusTrackerManager(final Project project, final ProjectLevelVcsManager vcsManager, final VcsBaseContentProvider statusProvider,
-                                  final Application application, final FileEditorManager fileEditorManager,
+  public LineStatusTrackerManager(final Project project,
+                                  final ProjectLevelVcsManager vcsManager,
+                                  final VcsBaseContentProvider statusProvider,
+                                  final Application application,
+                                  final FileEditorManager fileEditorManager,
                                   @SuppressWarnings("UnusedParameters") DirectoryIndex makeSureIndexIsInitializedFirst) {
     myLoadCounter = 0;
     myProject = project;
@@ -100,6 +103,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     myStatusProvider = statusProvider;
     myApplication = application;
     myFileEditorManager = fileEditorManager;
+
     myLineStatusTrackers = new HashMap<Document, LineStatusTracker>();
     myPartner = new QueueProcessorRemovePartner<Document,BaseRevisionLoader>(myProject, new Consumer<BaseRevisionLoader>() {
       @Override
