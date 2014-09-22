@@ -17,8 +17,8 @@
 package com.intellij.vcs.log.graph.impl.print;
 
 import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
-import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
-import com.intellij.vcs.log.graph.parser.LinearGraphWithElementsInfoParser;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.parser.LinearGraphParser;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class EdgesInRowTest extends AbstractTestWithTextFile {
 
   @Override
   protected void runTest(String in, String out) {
-    LinearGraphWithElementInfo graph = LinearGraphWithElementsInfoParser.parse(in);
+    LinearGraph graph = LinearGraphParser.parse(in);
     EdgesInRowGenerator edgesInRowGenerator = new EdgesInRowGenerator(graph);
     assertEquals(out, edgesInRowToStr(edgesInRowGenerator, graph.nodesCount()));
   }
@@ -77,6 +77,11 @@ public class EdgesInRowTest extends AbstractTestWithTextFile {
   @Test
   public void longGraph() throws IOException {
     doTest("longGraph");
+  }
+
+  @Test
+  public void notLoadNode() throws IOException {
+    doTest("notLoadNode");
   }
 
 }

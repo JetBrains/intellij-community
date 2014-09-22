@@ -17,14 +17,15 @@ package com.intellij.vcs.log.graph.impl.print;
 
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SLRUMap;
-import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.*;
 
 public class EdgesInRowGenerator {
   private static final int CACHE_SIZE = 10;
@@ -33,17 +34,17 @@ public class EdgesInRowGenerator {
   private final int WALK_SIZE;
 
   @NotNull
-  private final LinearGraphWithElementInfo myGraph;
+  private final LinearGraph myGraph;
 
   @NotNull
   private final SLRUMap<Integer, GraphEdges> cacheNU = new SLRUMap<Integer, GraphEdges>(CACHE_SIZE, CACHE_SIZE * 2);
   private final SLRUMap<Integer, GraphEdges> cacheND = new SLRUMap<Integer, GraphEdges>(CACHE_SIZE, CACHE_SIZE * 2);
 
-  public EdgesInRowGenerator(@NotNull LinearGraphWithElementInfo graph) {
+  public EdgesInRowGenerator(@NotNull LinearGraph graph) {
     this(graph, 1000);
   }
 
-  public EdgesInRowGenerator(@NotNull LinearGraphWithElementInfo graph, int walk_size) {
+  public EdgesInRowGenerator(@NotNull LinearGraph graph, int walk_size) {
     myGraph = graph;
     WALK_SIZE = walk_size;
   }
@@ -78,7 +79,7 @@ public class EdgesInRowGenerator {
       graphEdges = getUCorrectEdges(upNeighborIndex);
       cacheNU.put(upNeighborIndex, graphEdges);
     }
-    return graphEdges.newInstance();
+    return graphEdges.copyInstance();
   }
 
   @NotNull
@@ -94,7 +95,7 @@ public class EdgesInRowGenerator {
       graphEdges = getDCorrectEdges(downNeighborIndex);
       cacheND.put(downNeighborIndex, graphEdges);
     }
-    return graphEdges.newInstance();
+    return graphEdges.copyInstance();
   }
 
   private static int getUpNeighborIndex(int rowIndex) {
@@ -146,18 +147,20 @@ public class EdgesInRowGenerator {
 
   public List<GraphEdge> createUpEdges(int nodeIndex) {
     List<GraphEdge> result = new SmartList<GraphEdge>();
-    for (int upNode : myGraph.getUpNodes(nodeIndex)) {
-      GraphEdgeType type =  myGraph.getEdgeType(upNode, nodeIndex);
-      result.add(new GraphEdge(upNode, nodeIndex, type));
+    for (GraphEdge edge : myGraph.getAdjacentEdges(nodeIndex)) {
+      if (isNormalEdge(edge) && isEdgeToUp(edge, nodeIndex)) {
+        result.add(edge);
+      }
     }
     return result;
   }
 
   public List<GraphEdge> createDownEdges(int nodeIndex) {
     List<GraphEdge> result = new SmartList<GraphEdge>();
-    for (int downNode : myGraph.getDownNodes(nodeIndex)) {
-      GraphEdgeType type =  myGraph.getEdgeType(nodeIndex, downNode);
-      result.add(new GraphEdge(nodeIndex, downNode, type));
+    for (GraphEdge edge : myGraph.getAdjacentEdges(nodeIndex)) {
+      if (isNormalEdge(edge) && isEdgeToDown(edge, nodeIndex)) {
+        result.add(edge);
+      }
     }
     return result;
   }
@@ -178,7 +181,7 @@ public class EdgesInRowGenerator {
     }
 
     @NotNull
-    GraphEdges newInstance() {
+    GraphEdges copyInstance() {
       return new GraphEdges(new HashSet<GraphEdge>(myEdges), myRow);
     }
   }
