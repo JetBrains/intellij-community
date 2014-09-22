@@ -144,18 +144,17 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     StorageData result = createStorageData();
 
     if (useProvidersData && myStreamProvider != null && myStreamProvider.isEnabled()) {
-      boolean wasLoaded = false;
       try {
-        wasLoaded = loadDataFromStreamProvider(result);
+        loadDataFromStreamProvider(result);
+
+        //noinspection deprecation
+        if (!myStreamProvider.isVersioningRequired() && !(myStreamProvider instanceof OldStreamProviderAdapter || myStreamProvider instanceof CurrentUserHolder)) {
+          // we don't use local data if has stream provider (we don't use this logic for old stream providers)
+          return result;
+        }
       }
       catch (Exception e) {
         LOG.warn(e);
-      }
-
-      //noinspection deprecation
-      if (wasLoaded && !myStreamProvider.isVersioningRequired() && !(myStreamProvider instanceof OldStreamProviderAdapter || myStreamProvider instanceof CurrentUserHolder)) {
-        // we don't use local data if stream provider has one (to preserve backward compatibility, we don't use this logic for old stream providers)
-        return result;
       }
     }
 
@@ -167,17 +166,16 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return result;
   }
 
-  private boolean loadDataFromStreamProvider(@NotNull StorageData result) throws IOException, JDOMException {
+  private void loadDataFromStreamProvider(@NotNull StorageData result) throws IOException, JDOMException {
     assert myStreamProvider != null;
     InputStream inputStream = myStreamProvider.loadContent(myFileSpec, myRoamingType);
     if (inputStream == null) {
-      return false;
+      return;
     }
 
     Element element = JDOMUtil.loadDocument(inputStream).getRootElement();
     filterOutOfDate(element);
     loadState(result, element);
-    return true;
   }
 
   private void loadState(@NotNull StorageData result, @NotNull Element element) {
