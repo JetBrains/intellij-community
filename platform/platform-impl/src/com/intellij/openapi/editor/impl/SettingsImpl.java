@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,9 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsSmartHome                           = null;
   private Boolean myIsBlockCursor                         = null;
   private Boolean myIsWhitespacesShown                    = null;
+  private Boolean myIsLeadingWhitespacesShown             = null;
+  private Boolean myIsInnerWhitespacesShown               = null;
+  private Boolean myIsTrailingWhitespacesShown            = null;
   private Boolean myIndentGuidesShown                     = null;
   private Boolean myIsAnimatedScrolling                   = null;
   private Boolean myIsAdditionalPageAtBottom              = null;
@@ -118,6 +121,42 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setWhitespacesShown(boolean val) {
     myIsWhitespacesShown = Boolean.valueOf(val);
+  }
+
+  @Override
+  public boolean isLeadingWhitespacesShown() {
+    return myIsLeadingWhitespacesShown != null
+           ? myIsLeadingWhitespacesShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isLeadingWhitespacesShown();
+  }
+
+  @Override
+  public void setLeadingWhitespacesShown(boolean val) {
+    myIsLeadingWhitespacesShown = Boolean.valueOf(val);
+  }
+
+  @Override
+  public boolean isInnerWhitespacesShown() {
+    return myIsInnerWhitespacesShown != null
+           ? myIsInnerWhitespacesShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isInnerWhitespacesShown();
+  }
+
+  @Override
+  public void setInnerWhitespacesShown(boolean val) {
+    myIsInnerWhitespacesShown = Boolean.valueOf(val);
+  }
+
+  @Override
+  public boolean isTrailingWhitespacesShown() {
+    return myIsTrailingWhitespacesShown != null
+           ? myIsTrailingWhitespacesShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isTrailingWhitespacesShown();
+  }
+
+  @Override
+  public void setTrailingWhitespacesShown(boolean val) {
+    myIsTrailingWhitespacesShown = Boolean.valueOf(val);
   }
 
   @Override

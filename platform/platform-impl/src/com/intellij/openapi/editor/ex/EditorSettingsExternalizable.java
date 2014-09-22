@@ -61,6 +61,9 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_WHITESPACES_SHOWN = false;
+    public boolean IS_LEADING_WHITESPACES_SHOWN = true;
+    public boolean IS_INNER_WHITESPACES_SHOWN = true;
+    public boolean IS_TRAILING_WHITESPACES_SHOWN = true;
     public boolean IS_ALL_SOFTWRAPS_SHOWN = false;
     public boolean IS_INDENT_GUIDES_SHOWN = true;
     public boolean IS_ANIMATED_SCROLLING = true;
@@ -443,6 +446,30 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
   public void setWhitespacesShown(boolean val) {
     myOptions.IS_WHITESPACES_SHOWN = val;
+  }
+
+  public boolean isLeadingWhitespacesShown() {
+    return myOptions.IS_LEADING_WHITESPACES_SHOWN;
+  }
+
+  public void setLeadingWhitespacesShown(boolean val) {
+    myOptions.IS_LEADING_WHITESPACES_SHOWN = val;
+  }
+
+  public boolean isInnerWhitespacesShown() {
+    return myOptions.IS_INNER_WHITESPACES_SHOWN;
+  }
+
+  public void setInnerWhitespacesShown(boolean val) {
+    myOptions.IS_INNER_WHITESPACES_SHOWN = val;
+  }
+
+  public boolean isTrailingWhitespacesShown() {
+    return myOptions.IS_TRAILING_WHITESPACES_SHOWN;
+  }
+
+  public void setTrailingWhitespacesShown(boolean val) {
+    myOptions.IS_TRAILING_WHITESPACES_SHOWN = val;
   }
 
   public boolean isAllSoftWrapsShown() {

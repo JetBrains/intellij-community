@@ -464,8 +464,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean isNull(DfaValue dfaValue) {
-    if (dfaValue instanceof DfaTypeValue && ((DfaTypeValue)dfaValue).isNotNull()) return false;
-    
     if (dfaValue instanceof DfaConstValue) return ((DfaConstValue)dfaValue).getValue() == null;
 
     if (dfaValue instanceof DfaVariableValue) {
@@ -478,14 +476,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean isNotNull(DfaValue dfaVar) {
-    if (dfaVar instanceof DfaVariableValue && getVariableState((DfaVariableValue)dfaVar).isNotNull()) {
-      return true;
-    }
-    if (dfaVar instanceof DfaConstValue && ((DfaConstValue)dfaVar).getValue() != null) {
-      return true;
-    }
-    if (dfaVar instanceof DfaTypeValue && ((DfaTypeValue)dfaVar).isNotNull()) {
-      return true;
+    if (dfaVar instanceof DfaConstValue) return ((DfaConstValue)dfaVar).getValue() != null;
+    if (dfaVar instanceof DfaTypeValue) return ((DfaTypeValue)dfaVar).isNotNull();
+    if (dfaVar instanceof DfaVariableValue) {
+      if (getVariableState((DfaVariableValue)dfaVar).isNotNull()) return true;
+
+      DfaConstValue constantValue = getConstantValue((DfaVariableValue)dfaVar);
+      if (constantValue != null && constantValue.getValue() != null) return true;
     }
 
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();

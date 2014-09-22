@@ -550,6 +550,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
 
     private boolean shouldSetAsActiveContext(final SuspendContextImpl suspendContext) {
+      // always switch context if it is not a breakpoint stop
+      if (DebuggerUtilsEx.getEventDescriptors(suspendContext).isEmpty()) {
+        return true;
+      }
       final ThreadReferenceProxyImpl newThread = suspendContext.getThread();
       if (newThread == null || suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL || isSteppingThrough(newThread)) {
         return true;

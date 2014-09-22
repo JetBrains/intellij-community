@@ -225,6 +225,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final     ArrayList<CachedFontContent> myFontCache       = new ArrayList<CachedFontContent>();
   @Nullable private FontInfo                     myCurrentFontType = null;
 
+  // Offsets on current line where leading whitespace ends and trailing whitespace starts correspondingly.
+  // Transient fields used during painting.
+  private int myCurrentLeadingEdge;
+  private int myCurrentTrailingEdge;
+  // If this flag is set, whitespace is shown/not shown regardless of edge values above.
+  // Transient field used during painting.
+  private Boolean myShowWhitespace;
+
   private final EditorSizeContainer mySizeContainer = new EditorSizeContainer();
 
   private boolean myUpdateCursor;
@@ -254,18 +262,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable private CachedFontContent myLastCache;
   private int myDragOnGutterSelectionStartLine = -1;
 
-  /**
-   * Positive value is assumed to indicate that space width for all interested font styles (bold, italic etc) is equal.
-   * That value is stored at the current field.
-   */
-  private int myCommonSpaceWidth;
-
-  /**
-   * There is a possible case that specific font is used for particular text drawing operation (e.g. for 'before' and 'after'
-   * soft wraps drawings). Hence, even if mySpacesHaveSameWidth is <code>true</code>, space size for that specific
-   * font may be different. So, we define additional flag that should indicate that {@link #myLastCache} should be reset.
-   */
-  private boolean myForceRefreshFont;
   private boolean mySoftWrapsChanged;
 
   private Color myLastBackgroundColor    = null;
@@ -1813,7 +1809,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             updatingSize = false;
           }
         }
-      });
+      }, ApplicationManager.getApplication().getDisposed());
     }
   }
 
@@ -1987,6 +1983,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintCaretCursor(g);
 
     paintComposedTextDecoration(g);
+  }
+
+  private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
+  private static final String WHITESPACE_CHARS = " \t" + IDEOGRAPHIC_SPACE;
+
+  private void setWhitespaceEdgeValues(CharSequence chars, LineIterator iterator) {
+    if (mySettings.isWhitespacesShown()
+        && (mySettings.isLeadingWhitespacesShown() || mySettings.isInnerWhitespacesShown() || mySettings.isTrailingWhitespacesShown())
+        && !(mySettings.isLeadingWhitespacesShown() && mySettings.isInnerWhitespacesShown() && mySettings.isTrailingWhitespacesShown())) {
+      int lineStart = iterator.getStart();
+      int lineEnd = iterator.getEnd() - iterator.getSeparatorLength();
+      myCurrentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
+      myCurrentLeadingEdge = CharArrayUtil.shiftForward(chars, lineStart, myCurrentTrailingEdge, WHITESPACE_CHARS);
+    }
+  }
+
+  private boolean showWhitespaceAtOffset(int offset) {
+    return mySettings.isWhitespacesShown()
+           && (myShowWhitespace != null ? myShowWhitespace :
+               offset < myCurrentLeadingEdge ? mySettings.isLeadingWhitespacesShown() :
+               offset >= myCurrentTrailingEdge ? mySettings.isTrailingWhitespacesShown() :
+               mySettings.isInnerWhitespacesShown());
   }
 
   private void paintCustomRenderers(@NotNull final Graphics2D g, final int clipStartOffset, final int clipEndOffset) {
@@ -2727,14 +2745,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                          int clipEndOffset) {
     myCurrentFontType = null;
     myLastCache = null;
-    final int plainSpaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);
-    final int boldSpaceWidth = EditorUtil.getSpaceWidth(Font.BOLD, this);
-    final int italicSpaceWidth = EditorUtil.getSpaceWidth(Font.ITALIC, this);
-    final int boldItalicSpaceWidth = EditorUtil.getSpaceWidth(Font.BOLD | Font.ITALIC, this);
-
-    boolean spacesHaveSameWidth =
-      plainSpaceWidth == boldSpaceWidth && plainSpaceWidth == italicSpaceWidth && plainSpaceWidth == boldItalicSpaceWidth;
-    myCommonSpaceWidth = spacesHaveSameWidth ? boldSpaceWidth : -1;
 
     int lineHeight = getLineHeight();
 
@@ -2778,6 +2788,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     g.setColor(currentColor);
 
     CharSequence chars = myDocument.getImmutableCharSequence();
+    setWhitespaceEdgeValues(chars, lIterator);
 
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
       int hEnd = iterationState.getEndOffset();
@@ -2822,6 +2833,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         //        myBorderEffect.eolReached(g, this);
         lIterator.advance();
+        if (!lIterator.atEnd()) {
+          setWhitespaceEdgeValues(chars, lIterator);
+        }
       }
       else {
         FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
@@ -2834,9 +2848,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             );
           }
           int foldingXStart = position.x;
+          myShowWhitespace = Boolean.FALSE;
           position.x = drawString(
-            g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor
-          );
+            g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor);
+          myShowWhitespace = null;
           //drawStringWithSoftWraps(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType,
           //                        fontType, currentColor, logicalPosition);
           BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, position.x, getLineHeight(), effectColor, effectType);
@@ -2865,9 +2880,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
     if (collapsedFolderAt != null) {
       int foldingXStart = position.x;
-      int foldingXEnd =
-        drawStringWithSoftWraps(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType,
-                                fontType, currentColor, logicalPosition);
+      myShowWhitespace = Boolean.FALSE;
+      int foldingXEnd = drawStringWithSoftWraps(
+        g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor, logicalPosition);
+      myShowWhitespace = null;
       BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, foldingXEnd, getLineHeight(), effectColor, effectType);
       //      myBorderEffect.collapsedFolderReached(g, this);
     }
@@ -2896,11 +2912,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
     else {
+      myShowWhitespace = Boolean.FALSE;
       myLastPaintedPlaceholderWidth = drawString(
         g, hintText, 0, hintText.length(), new Point(0, 0), clip, null, null, Font.PLAIN,
         myFoldingModel.getPlaceholderAttributes().getForegroundColor()
       );
       flushCachedChars(g);
+      myShowWhitespace = null;
       return true;
     }
   }
@@ -2934,6 +2952,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final int[] x = new int[CACHED_CHARS_BUFFER_SIZE];
     final int[] y = new int[CACHED_CHARS_BUFFER_SIZE];
     final Color[] color = new Color[CACHED_CHARS_BUFFER_SIZE];
+    final boolean[] whitespaceShown = new boolean[CACHED_CHARS_BUFFER_SIZE];
 
     int myCount = 0;
     @NotNull final FontInfo myFontType;
@@ -2961,7 +2980,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             g.setColor(currentColor != null ? currentColor : JBColor.black);
           }
 
-          drawChars(g, data[i], starts[i], ends[i], x[i], y[i]);
+          drawChars(g, data[i], starts[i], ends[i], x[i], y[i], whitespaceShown[i]);
           color[i] = null;
           data[i] = null;
         }
@@ -2971,7 +2990,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    private void addContent(@NotNull Graphics g, CharSequence _data, int _start, int _end, int _x, int _y, @Nullable Color _color) {
+    private void addContent(@NotNull Graphics g, CharSequence _data, int _start, int _end, int _x, int _y, @Nullable Color _color, boolean drawWhitespace) {
       final int count = myCount;
       if (count > 0) {
         final int lastCount = count - 1;
@@ -2979,7 +2998,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (_data == myLastData && _start == ends[lastCount] && (_color == null || lastColor == null || _color.equals(lastColor))
             && _y == y[lastCount] /* there is a possible case that vertical position is adjusted because of soft wrap */
             && (!myHasBreakSymbols || !myFontType.getSymbolsToBreakDrawingIteration().contains(_data.charAt(ends[lastCount] - 1)))
-            && (!myDisableRtl || _start < 1 || _start >= _data.length() || !isRtlCharacter(_data.charAt(_start)) && !isRtlCharacter(_data.charAt(_start - 1)))) {
+            && (!myDisableRtl || _start < 1 || _start >= _data.length() || !isRtlCharacter(_data.charAt(_start)) && !isRtlCharacter(_data.charAt(_start - 1)))
+            && drawWhitespace == whitespaceShown[lastCount]) {
           ends[lastCount] = _end;
           if (lastColor == null) color[lastCount] = _color;
           return;
@@ -2993,6 +3013,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       starts[count] = _start;
       ends[count] = _end;
       color[count] = _color;
+      whitespaceShown[count] = drawWhitespace;
 
       myCount++;
       if (count >= CACHED_CHARS_BUFFER_SIZE - 1) {
@@ -3158,7 +3179,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           );
         }
         position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
-        myForceRefreshFont = true;
         continue;
       }
 
@@ -3187,7 +3207,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           );
         }
         mySoftWrapModel.paint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, position.x, position.y, getLineHeight());
-        myForceRefreshFont = true;
 
         // Reset 'x' coordinate because of new line start.
         position.x = 0;
@@ -3207,7 +3226,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         );
       }
       position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
-      myForceRefreshFont = true;
     }
     return position.x = drawString(g, text, startToUse, end, position, clip, effectColor, effectType, fontType, fontColor);
   }
@@ -3274,7 +3292,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       x = drawTablessString(text, start, i, g, x, y, fontType, fontColor, clip);
 
       int x1 = EditorUtil.nextTabStop(x, this);
-      drawTabPlacer(g, y, x, x1);
+      drawTabPlacer(g, y, x, x1, i);
       x = x1;
       start = i + 1;
     }
@@ -3340,74 +3358,48 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                 @NotNull final Rectangle clip) {
     int endX = x;
     if (start < end) {
-      FontInfo font = EditorUtil.fontForChar(text.charAt(start), fontType, this);
+      FontInfo font = null;
+      boolean drawWhitespace = false;
       for (int j = start; j < end; j++) {
-        final char c = text.charAt(j);
-        FontInfo newFont = EditorUtil.fontForChar(c, fontType, this);
-        if (font != newFont || endX > clip.x + clip.width) {
-          if (!(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
-            drawCharsCached(g, text, start, j, x, y, fontType, fontColor);
-          }
-          start = j;
-          x = endX;
-          font = newFont;
-        }
-        if (x < clip.x && endX < clip.x) {
-          start = j;
-          x = endX;
-          font = newFont;
-        }
-        else if (x > clip.x + clip.width) {
+        if (x > clip.x + clip.width) {
           return endX;
         }
-
-        final int charWidth = font.charWidth(c);
-
-        if (myDisableRtl && isRtlCharacter(c)) {
-          if (j > start && !(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
-            drawCharsCached(g, text, start, j, x, y, fontType, fontColor);
+        final char c = text.charAt(j);
+        FontInfo newFont = EditorUtil.fontForChar(c, fontType, this);
+        boolean newDrawWhitespace = showWhitespaceAtOffset(j);
+        boolean isRtlChar = myDisableRtl && isRtlCharacter(c);
+        if (j > start && (endX < clip.x || endX > clip.x + clip.width || newFont != font || newDrawWhitespace != drawWhitespace || isRtlChar)) {
+          if (isOverlappingRange(clip, x, endX)) {
+            drawCharsCached(g, text, start, j, x, y, fontType, fontColor, drawWhitespace);
           }
+          start = j;
           x = endX;
-          endX += charWidth;
-          if (!(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
-            drawCharsCached(g, text, j, j + 1, x, y, fontType, fontColor);
-          }
-          x = endX;
-          start = j + 1;
-          continue;
         }
-        // We experienced the following situation:
-        //   * the editor was configured to use monospaced font;
-        //   * the document contained either english or russian symbols;
-        //   * different fonts were used to display english and russian symbols;
-        //   * the fonts mentioned above have different space width;
-        // So, the problem was when white space followed russian word - the white space width was calculated using the english font
-        // but drawn using the russian font, so, there was a visual inconsistency at the editor.
-        if (c == ' '
-            && myCommonSpaceWidth > 0
-            && myLastCache != null
-            && (charWidth != myCommonSpaceWidth || charWidth != myLastCache.spaceWidth)) {
-          myForceRefreshFont = true;
-        }
-        endX += charWidth;
+        font = newFont;
+        drawWhitespace = newDrawWhitespace;
+        endX += font.charWidth(c);
 
-        if (newFont.hasGlyphsToBreakDrawingIteration() && newFont.getSymbolsToBreakDrawingIteration().contains(c)) {
-          drawCharsCached(g, text, start, j + 1, x, y, fontType, fontColor);
-          x = endX;
+        if (font.hasGlyphsToBreakDrawingIteration() && font.getSymbolsToBreakDrawingIteration().contains(c) || isRtlChar) {
+          drawCharsCached(g, text, start, j + 1, x, y, fontType, fontColor, drawWhitespace);
           start = j + 1;
+          x = endX;
         }
       }
 
-      if (!(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
-        drawCharsCached(g, text, start, end, x, y, fontType, fontColor);
+      if (isOverlappingRange(clip, x, endX)) {
+        drawCharsCached(g, text, start, end, x, y, fontType, fontColor, drawWhitespace);
       }
     }
 
     return endX;
   }
 
-  private void drawTabPlacer(Graphics g, int y, int start, int stop) {
-    if (mySettings.isWhitespacesShown()) {
+  private static boolean isOverlappingRange(Rectangle clip, int xStart, int xEnd) {
+    return !(xStart < clip.x && xEnd < clip.x || xStart > clip.x + clip.width && xEnd > clip.x + clip.width);
+  }
+
+  private void drawTabPlacer(Graphics g, int y, int start, int stop, int offset) {
+    if (showWhitespaceAtOffset(offset)) {
       myTabPainter.paint(g, y, start, stop);
     }
   }
@@ -3419,14 +3411,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                int x,
                                int y,
                                @JdkConstants.FontStyle int fontType,
-                               Color color) {
-    if (!myForceRefreshFont && myCommonSpaceWidth > 0 && myLastCache != null && spacesOnly(data, start, end)) {
-      myLastCache.addContent(g, data, start, end, x, y, null);
+                               Color color,
+                               boolean drawWhitespace) {
+    FontInfo fnt = EditorUtil.fontForChar(data.charAt(start), fontType, this);
+    if (myLastCache != null && spacesOnly(data, start, end) && fnt.charWidth(' ') == myLastCache.spaceWidth) {
+      // we don't care about font if we only need to paint spaces and space width matches
+      myLastCache.addContent(g, data, start, end, x, y, null, drawWhitespace);
     }
     else {
-      myForceRefreshFont = false;
-      FontInfo fnt = EditorUtil.fontForChar(data.charAt(start), fontType, this);
-      drawCharsCached(g, data, start, end, x, y, fnt, color);
+      drawCharsCached(g, data, start, end, x, y, fnt, color, drawWhitespace);
     }
   }
 
@@ -3437,7 +3430,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                int x,
                                int y,
                                @NotNull FontInfo fnt,
-                               Color color) {
+                               Color color,
+                               boolean drawWhitespace) {
     CachedFontContent cache = null;
     for (CachedFontContent fontCache : myFontCache) {
       if (fontCache.myFontType == fnt) {
@@ -3451,7 +3445,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myLastCache = cache;
-    cache.addContent(g, data, start, end, x, y, color);
+    cache.addContent(g, data, start, end, x, y, color, drawWhitespace);
   }
 
   private static boolean spacesOnly(CharSequence chars, int start, int end) {
@@ -3461,12 +3455,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
-  private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
-
-  private void drawChars(@NotNull Graphics g, CharSequence data, int start, int end, int x, int y) {
+  private void drawChars(@NotNull Graphics g, CharSequence data, int start, int end, int x, int y, boolean drawWhitespace) {
     g.drawString(data.subSequence(start, end).toString(), x, y);
 
-    if (mySettings.isWhitespacesShown()) {
+    if (drawWhitespace) {
       Color oldColor = g.getColor();
       g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
       final FontMetrics metrics = g.getFontMetrics();
@@ -6873,7 +6865,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                           Color color,
                           @NotNull FontInfo fontInfo)
     {
-      drawCharsCached(g, new CharArrayCharSequence(data), start, end, x, y, fontInfo, color);
+      drawCharsCached(g, new CharArrayCharSequence(data), start, end, x, y, fontInfo, color, false);
     }
   }
 }

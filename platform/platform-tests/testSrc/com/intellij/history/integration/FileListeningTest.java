@@ -99,7 +99,7 @@ public class FileListeningTest extends IntegrationTestCase {
     );
   }
 
-  private StringBuilder buildDBFileStructure(@NotNull VirtualFile from, int level, @NotNull StringBuilder builder) {
+  private static StringBuilder buildDBFileStructure(@NotNull VirtualFile from, int level, @NotNull StringBuilder builder) {
     for (VirtualFile eachChild : ((NewVirtualFile)from).getCachedChildren()) {
       builder.append(StringUtil.repeat(" ", level)).append(eachChild.getName()).append("\n");
       buildDBFileStructure(eachChild, level + 1, builder);
@@ -314,7 +314,7 @@ public class FileListeningTest extends IntegrationTestCase {
   private static void sortEntries(final List<Entry> entries) {
     Collections.sort(entries, new Comparator<Entry>() {
       @Override
-      public int compare(Entry o1, Entry o2) {
+      public int compare(@NotNull Entry o1, @NotNull Entry o2) {
         return o1.getName().compareTo(o2.getName());
       }
     });
