@@ -440,8 +440,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   public ActionCallback selectProjectGeneralSettings(final boolean requestFocus) {
-    Place place = createPlaceFor(myProjectConfig);
-    return navigateTo(place, requestFocus);
+    return navigateTo(createProjectConfigurablePlace(), requestFocus);
+  }
+
+  public Place createProjectConfigurablePlace() {
+    return createPlaceFor(myProjectConfig);
   }
 
   public ActionCallback select(@Nullable final String moduleToSelect, @Nullable String editorNameToSelect, final boolean requestFocus) {

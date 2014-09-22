@@ -509,6 +509,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       option.setOptionState(!option.isOptionEnabled());
       myList.revalidate();
       myList.repaint();
+      getField().requestFocus();
       return;
     }
 
@@ -720,6 +721,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setCancelOnClickOutside(true)
       .setModalContext(false)
       .setRequestFocus(true)
+      .setCancelCallback(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return !mySkipFocusGain;
+        }
+      })
       .createPopup();
     myBalloon.getContent().setBorder(new EmptyBorder(0,0,0,0));
     final Window window = WindowManager.getInstance().suggestParentWindow(e.getProject());
@@ -1327,16 +1334,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               buildFiles(pattern);
             }
           }, false);
-
-          buildActionsAndSettings(pattern);
-
-          updatePopup();
-
           runReadAction(new Runnable() {
             public void run() {
               buildSymbols(pattern);
             }
           }, true);
+
+          buildActionsAndSettings(pattern);
+
+          updatePopup();
+
         }
         updatePopup();
       }
@@ -1918,7 +1925,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setCancelCallback(new Computable<Boolean>() {
                 @Override
                 public Boolean compute() {
-                  return myBalloon == null || myBalloon.isDisposed() || !getField().getTextEditor().hasFocus();
+                  return myBalloon == null || myBalloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
                 }
               })
               .createPopup();
