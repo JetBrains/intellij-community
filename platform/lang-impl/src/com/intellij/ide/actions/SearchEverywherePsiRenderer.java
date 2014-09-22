@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.LinkedList;
 
 /**
 * @author Konstantin Bulenkov
@@ -71,7 +72,38 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
       String path = FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getOptimalTextForComponent(name, new File(relativePath), this, width - myRightComponentWidth - 16 - 10);
       return "(" + path + ")";
     }
-    return SymbolPresentationUtil.getSymbolContainerText(element);
+    return getSymbolContainerText(name, element);
+  }
+
+  private String getSymbolContainerText(String name, PsiElement element) {
+    String text = SymbolPresentationUtil.getSymbolContainerText(element);
+
+    if (myList.getWidth() == 0) return text;
+    if (text == null) return null;
+
+    if (text.startsWith("(") && text.endsWith(")")) {
+      text = text.substring(1, text.length()-1);
+    }
+    boolean in = text.startsWith("in ");
+    if (in) text = text.substring(3);
+    final FontMetrics fm = myList.getFontMetrics(myList.getFont());
+    final int maxWidth = myList.getWidth() - fm.stringWidth(name) - 16 - myRightComponentWidth - 20;
+    String left = "(" + (in ? "in " : " ");
+    String right = ")";
+
+    if (fm.stringWidth(left + text + right) < maxWidth) return left + text + right;
+    final LinkedList<String> parts = new LinkedList<String>(StringUtil.split(text, "."));
+    int index;
+    while (parts.size() > 1) {
+      index = parts.size() / 2 - 1;
+      parts.remove(index);
+      if (fm.stringWidth(StringUtil.join(parts, ".") + "...") < maxWidth) {
+        parts.add(index, index == 0 ? "..." : ".");
+        return left + StringUtil.join(parts, ".") + right;
+      }
+    }
+    //todo
+    return left + "..." + right;
   }
 
 
