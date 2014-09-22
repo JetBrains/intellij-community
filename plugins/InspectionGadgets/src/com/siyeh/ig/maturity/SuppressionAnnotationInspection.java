@@ -92,16 +92,23 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
-      final String suppressedIds = JavaSuppressionUtil.getSuppressedInspectionIdsIn(psiElement);
-      final Iterable<String> ids = suppressedIds != null ? StringUtil.tokenize(suppressedIds, "[, ]") : null;
-      if (ids != null) {
-        for (String id : ids) {
-          if (!myAllowedSuppressions.contains(id)) {
-            myAllowedSuppressions.add(id);
-          }
-        }
-        saveProfile(project);
+      final Iterable<String> ids;
+      if (psiElement instanceof PsiAnnotation) {
+        ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)psiElement.getParent());
       }
+      else {
+        final String suppressedIds = JavaSuppressionUtil.getSuppressedInspectionIdsIn(psiElement);
+        if (suppressedIds == null) {
+          return;
+        }
+        ids = StringUtil.tokenize(suppressedIds, ",");
+      }
+      for (String id : ids) {
+        if (!myAllowedSuppressions.contains(id)) {
+          myAllowedSuppressions.add(id);
+        }
+      }
+      saveProfile(project);
     }
 
     private void saveProfile(Project project) {
