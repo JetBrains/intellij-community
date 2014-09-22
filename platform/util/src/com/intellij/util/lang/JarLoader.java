@@ -85,15 +85,15 @@ class JarLoader extends Loader {
   }
 
   @Override
-  void buildCache(ClasspathCache cache) throws IOException {
+  void buildCache(ClasspathCache.LoaderData loaderData) throws IOException {
     ZipFile zipFile = acquireZipFile();
     try {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
         ZipEntry zipEntry = entries.nextElement();
         String name = zipEntry.getName();
-        cache.addResourceEntry(name, this);
-        cache.addNameEntry(name, this);
+        loaderData.addResourceEntry(name);
+        loaderData.addNameEntry(name);
       }
     }
     finally {
