@@ -36,9 +36,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
-import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
@@ -55,9 +53,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
@@ -74,14 +69,12 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
@@ -106,7 +99,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.FilePathSplittingPolicy;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -118,7 +110,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -1021,7 +1012,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         setIcon(myLocationIcon);
       }
     };
-    SearchEverywherePsiRenderer myFileRenderer = new SearchEverywherePsiRenderer();
+    SearchEverywherePsiRenderer myFileRenderer = new SearchEverywherePsiRenderer(myList);
 
     private String myLocationString;
     private DefaultPsiElementCellRenderer myPsiRenderer = new DefaultPsiElementCellRenderer() {
@@ -2423,132 +2414,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     @Override
     public int hashCode() {
       return pattern.hashCode();
-    }
-  }
-
-  private class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement> {
-
-    public SearchEverywherePsiRenderer() {
-    }
-
-    @Override
-    public String getElementText(PsiElement element) {
-      return element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (value == ChooseByNameBase.NON_PREFIX_SEPARATOR) {
-        Object previousElement = index > 0 ? list.getModel().getElementAt(index - 1) : null;
-        return ChooseByNameBase.renderNonPrefixSeparatorComponent(getBackgroundColor(previousElement));
-      }
-      else {
-        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-        Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
-        setFont(editorFont);
-        return component;
-      }
-    }
-
-    @Override
-    protected String getContainerText(PsiElement element, String name) {
-      PsiFileSystemItem parent;
-      VirtualFile virtualFile = null;
-
-      for (QualifiedNameProvider provider : QualifiedNameProvider.EP_NAME.getExtensions()) {
-        String fqn = provider.getQualifiedName(element);
-        if (fqn != null) return "(" + fqn + ")";
-      }
-      if (element instanceof PsiFileSystemItem) {
-        parent = ((PsiFileSystemItem)element).getParent();
-        final PsiDirectory psiDirectory = parent instanceof PsiDirectory ? (PsiDirectory)parent : null;
-        virtualFile = psiDirectory == null ? null : psiDirectory.getVirtualFile();
-      }
-      else if (element instanceof NavigationItem) {
-        PsiFile file = element.getContainingFile();
-        virtualFile = file == null ? null : file.getVirtualFile();
-        if (virtualFile != null && element.getParent() == file) {
-          virtualFile = virtualFile.getParent();
-        }
-      }
-      if (virtualFile == null) return null;
-      final String relativePath = getRelativePath(virtualFile, element.getProject());
-      if (relativePath == null) return "( " + File.separator + " )";
-      String path =
-        FilePathSplittingPolicy.SPLIT_BY_SEPARATOR
-          .getOptimalTextForComponent(name + "          ", new File(relativePath), this, myList.getWidth() - 20);
-      return "(" + path + ")";
-    }
-
-
-    @Nullable
-    String getRelativePath(final VirtualFile virtualFile, final Project project) {
-      String url = virtualFile.getPresentableUrl();
-      if (project == null) {
-        return url;
-      }
-      VirtualFile root = ProjectFileIndex.SERVICE.getInstance(project).getContentRootForFile(virtualFile);
-      if (root != null) {
-        return root.getName() + File.separatorChar + VfsUtilCore.getRelativePath(virtualFile, root, File.separatorChar);
-      }
-
-      final VirtualFile baseDir = project.getBaseDir();
-      if (baseDir != null) {
-        //noinspection ConstantConditions
-        final String projectHomeUrl = baseDir.getPresentableUrl();
-        if (url.startsWith(projectHomeUrl)) {
-          final String cont = url.substring(projectHomeUrl.length());
-          if (cont.isEmpty()) return null;
-          url = "..." + cont;
-        }
-      }
-      return url;
-    }
-
-    @Override
-    protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
-                                                         JList list,
-                                                         Object value,
-                                                         int index,
-                                                         boolean selected,
-                                                         boolean hasFocus) {
-      if (!(value instanceof NavigationItem)) return false;
-
-      NavigationItem item = (NavigationItem)value;
-
-      TextAttributes attributes = getNavigationItemAttributes(item);
-
-      SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
-
-      Color color = list.getForeground();
-      if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
-
-      renderer.append(item + " ", nameAttributes);
-      ItemPresentation itemPresentation = item.getPresentation();
-      assert itemPresentation != null;
-      renderer.setIcon(itemPresentation.getIcon(true));
-
-      String locationString = itemPresentation.getLocationString();
-      if (!StringUtil.isEmpty(locationString)) {
-        renderer.append(locationString, new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
-      }
-      return true;
-    }
-
-    @Override
-    protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-      final DefaultListCellRenderer rightRenderer = super.getRightCellRenderer(value);
-      if (rightRenderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
-        // that renderer will display file path, but we're showing it ourselves - no need to show twice
-        return null;
-      }
-      return rightRenderer;
-    }
-
-    @Override
-    protected int getIconFlags() {
-      return Iconable.ICON_FLAG_READ_STATUS;
     }
   }
 }
