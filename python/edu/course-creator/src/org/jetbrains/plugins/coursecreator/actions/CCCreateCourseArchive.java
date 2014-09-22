@@ -190,7 +190,8 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         ZipUtil.addFileOrDirRecursively(zos, null, new File(lessonDir.getPath()), lessonDir.getName(), new FileFilter() {
           @Override
           public boolean accept(File pathname) {
-            return !pathname.getName().contains(".answer");
+            String name = pathname.getName();
+            return !name.contains(".answer") && !name.contains("__pycache__");
           }
         }, null);
       }
