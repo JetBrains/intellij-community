@@ -2455,6 +2455,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     protected String getContainerText(PsiElement element, String name) {
       PsiFileSystemItem parent;
       VirtualFile virtualFile = null;
+
+      for (QualifiedNameProvider provider : QualifiedNameProvider.EP_NAME.getExtensions()) {
+        String fqn = provider.getQualifiedName(element);
+        if (fqn != null) return "(" + fqn + ")";
+      }
       if (element instanceof PsiFileSystemItem) {
         parent = ((PsiFileSystemItem)element).getParent();
         final PsiDirectory psiDirectory = parent instanceof PsiDirectory ? (PsiDirectory)parent : null;
