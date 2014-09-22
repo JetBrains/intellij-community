@@ -101,10 +101,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         }
       }
 
-      repository.writeMergeCommitMsg(null)
-      repository.writeMergeHeads(null)
-
-      manager.git.commit().setReflogComment("merge " + repository.peel(refToMerge).getName()).call()
+      manager.commit()
     }
     else if (!mergeStatus.isSuccessful()) {
       throw IllegalStateException(mergeResult.toString())
@@ -315,7 +312,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
             mergeStatus = MergeResult.MergeStatus.MERGED_NOT_COMMITTED
           }
           if (commit && !squash) {
-            newHeadId = manager.git.commit().setMessage(commitMessage).setReflogComment(refLogMessage.toString()).call().getId()
+            newHeadId = manager.commit(commitMessage, refLogMessage.toString()).getId()
             mergeStatus = MergeResult.MergeStatus.MERGED
           }
           if (commit && squash) {

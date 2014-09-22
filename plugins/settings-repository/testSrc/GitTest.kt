@@ -204,10 +204,9 @@ class GitTest {
   }
 
   private fun doPullToRepositoryWithoutCommits(remoteBranchName: String?) {
-    val remoteRepository = createFileRemote(remoteBranchName)
-    repositoryManager.setUpstream(remoteRepository.getAbsolutePath(), remoteBranchName)
+    createLocalRepository(remoteBranchName)
     repositoryManager.pull(EmptyProgressIndicator())
-    compareFiles(repository.getWorkTree(), remoteRepository)
+    compareFiles(repository.getWorkTree(), remoteRepository!!)
   }
 
   public Test fun pullToRepositoryWithCommits() {
@@ -228,10 +227,13 @@ class GitTest {
     compareFiles(repository.getWorkTree(), remoteRepository!!, PathUtilRt.getFileName(file.name))
   }
   
-  private fun createLocalRepositoryAndCommit(remoteBranchName: String?): FileInfo {
+  private fun createLocalRepository(remoteBranchName: String?) {
     remoteRepository = createFileRemote(remoteBranchName)
     repositoryManager.setUpstream(remoteRepository!!.getAbsolutePath(), remoteBranchName)
+  }
 
+  private fun createLocalRepositoryAndCommit(remoteBranchName: String?): FileInfo {
+    createLocalRepository(remoteBranchName)
     return addAndCommit("\$APP_CONFIG$/local.xml")
   }
 
@@ -281,7 +283,7 @@ class GitTest {
     compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
   }
 
-  public Test fun resetToMyISecondMergeIsNull() {
+  public Test fun resetToMyIfSecondMergeIsNull() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.MERGE)
 
@@ -305,6 +307,20 @@ class GitTest {
 
     restoreRemoteAfterPush()
 
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+  }
+
+  public Test fun `merge, resolve conflicts to my`() {
+    createLocalRepository(null)
+
+    val data = "reset to my".toByteArray()
+    getProvider().saveContent("\$APP_CONFIG$/remote.xml", data, data.size, RoamingType.PER_USER, false)
+
+    sync(SyncType.MERGE)
+
+    val fs = MockVirtualFileSystem()
+    fs.findFileByPath("\$APP_CONFIG$/remote.xml")
+    restoreRemoteAfterPush();
     compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
   }
 

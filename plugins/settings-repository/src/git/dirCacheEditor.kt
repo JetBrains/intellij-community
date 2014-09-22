@@ -79,17 +79,26 @@ public class DirCacheEditor(edits: List<PathEdit>, private val repository: Repos
         }
         fastAdd(entry)
       }
+      else if (edit is AddFile || edit is AddLoadedFile) {
+        // apply to first entry and remove others
+        var firstEntry = cache.getEntry(entryIndex)
+        val entry: DirCacheEntry
+        if (firstEntry.isMerged()) {
+          entry = firstEntry
+        }
+        else {
+          entry = DirCacheEntry(edit.path)
+          entry.setCreationTime(firstEntry.getCreationTime())
+        }
+        edit.apply(entry, repository)
+        fastAdd(entry)
+      }
       else {
         // apply to all entries of the current path (different stages)
         for (i in entryIndex..lastIndex - 1) {
           val entry = cache.getEntry(i)
           edit.apply(entry, repository)
           fastAdd(entry)
-
-          if (edit is AddFile || edit is AddLoadedFile) {
-            // apply to first entry and remove others
-            break
-          }
         }
       }
     }

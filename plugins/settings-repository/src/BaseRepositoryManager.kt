@@ -16,6 +16,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.vfs.CharsetToolkit
 import java.io.OutputStream
+import com.intellij.openapi.application.ApplicationManager
 
 public abstract class BaseRepositoryManager protected() : RepositoryManager {
   protected var dir: File = File(getPluginSystemDir(), "repository")
@@ -111,12 +112,28 @@ fun removeFileAndParentDirectoryIfEmpty(file: File, isFile: Boolean, root: File)
 }
 
 fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider): List<VirtualFile> {
+  if (ApplicationManager.getApplication()!!.isUnitTestMode()) {
+    for (file in files) {
+      val mergeData = mergeProvider.loadRevisions(file)
+      if (String(mergeData.CURRENT!!, CharsetToolkit.UTF8_CHARSET) == "reset to my") {
+        file.setBinaryContent(mergeData.CURRENT!!)
+      }
+      else if (String(mergeData.LAST!!, CharsetToolkit.UTF8_CHARSET) == "reset to my") {
+        file.setBinaryContent(mergeData.LAST!!)
+      }
+      mergeProvider.conflictResolvedForFile(file)
+    }
+
+    return files
+  }
+
   var processedFiles: List<VirtualFile>? = null
-  SwingUtilities.invokeAndWait {
+  val resolver = {
     val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, MergeDialogCustomizer())
     fileMergeDialog.show()
     processedFiles = fileMergeDialog.getProcessedFiles()
   }
+  if (SwingUtilities.isEventDispatchThread()) resolver() else SwingUtilities.invokeAndWait(resolver)
   return processedFiles!!
 }
 

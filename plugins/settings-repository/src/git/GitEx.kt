@@ -8,14 +8,9 @@ import org.eclipse.jgit.treewalk.FileTreeIterator
 
 import java.io.File
 import java.io.IOException
-import java.io.FileInputStream
-import java.util.Collections
-import org.jetbrains.jgit.dirCache.PathEdit
-import org.jetbrains.jgit.dirCache.DirCacheEditor
-import org.jetbrains.jgit.dirCache.DeleteFile
-import org.jetbrains.jgit.dirCache.DeleteDirectory
 import org.eclipse.jgit.api.ResetCommand
 import org.jetbrains.settingsRepository.LOG
+import org.eclipse.jgit.api.CommitCommand
 
 fun Repository.disableAutoCrLf() {
   val config = getConfig()
@@ -25,6 +20,10 @@ fun Repository.disableAutoCrLf() {
 
 fun createBareRepository(dir: File) {
   FileRepositoryBuilder().setBare().setGitDir(dir).build().create(true)
+}
+
+fun Repository.commit() {
+  CommitCommand(this).call()
 }
 
 fun Repository.resetHard() {

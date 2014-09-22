@@ -13,7 +13,6 @@ import org.eclipse.jgit.transport.*
 
 import java.io.File
 import java.io.IOException
-import org.eclipse.jgit.api.Git
 import org.jetbrains.annotations.TestOnly
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.application.ApplicationManager
@@ -25,6 +24,7 @@ import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.remove
 import org.jetbrains.settingsRepository.UpdateResult
+import org.eclipse.jgit.revwalk.RevCommit
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {
@@ -45,9 +45,6 @@ class GitRepositoryService : RepositoryService {
 }
 
 class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : BaseRepositoryManager() {
-  var git: Git
-    private set
-
   var repository: Repository
     private set
 
@@ -63,7 +60,6 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
   {
     $repository = FileRepositoryBuilder().setWorkTree(dir).build()
-    $git = Git(repository)
 
     if (ApplicationManager.getApplication()?.isUnitTestMode() != true) {
       ShutDownTracker.getInstance().registerShutdownTask(object: Runnable {
@@ -87,10 +83,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   TestOnly fun recreateRepository() {
-    if (dir.exists()) {
-      $repository = FileRepositoryBuilder().setWorkTree(dir).build()
-      $git = Git(repository)
-    }
+    $repository = FileRepositoryBuilder().setWorkTree(dir).build()
     createRepositoryIfNeed()
   }
 
@@ -102,10 +95,17 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     repository.setUpstream(url, branch ?: Constants.MASTER)
   }
 
-  fun createCommitCommand(): CommitCommand {
+  fun commit(message: String? = null, reflogComment: String? = null): RevCommit {
     val author = PersonIdent(repository)
     val committer = PersonIdent(ApplicationInfoEx.getInstanceEx()!!.getFullApplicationName(), author.getEmailAddress())
-    return git.commit().setAuthor(author).setCommitter(committer)
+    val commitCommand = CommitCommand(repository).setAuthor(author).setCommitter(committer)
+    if (message != null) {
+      commitCommand.setMessage(message)
+    }
+    if (reflogComment != null) {
+      commitCommand.setReflogComment(reflogComment)
+    }
+    return commitCommand.call()
   }
 
   override fun isRepositoryExists() = dir.exists()

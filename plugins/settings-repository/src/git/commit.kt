@@ -44,7 +44,7 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
 
   indicator.checkCanceled()
 
-  manager.createCommitCommand().setMessage("").call()
+  manager.commit("")
 }
 
 private fun indexDiffToString(diff: IndexDiff): String {
