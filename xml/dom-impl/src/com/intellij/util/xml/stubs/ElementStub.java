@@ -36,17 +36,20 @@ public class ElementStub extends DomStub {
 
   @Nullable
   private final StringRef myElementClass;
+  private final String myValue;
 
   public ElementStub(@Nullable ElementStub parent,
                      @NotNull StringRef name,
                      @Nullable StringRef namespace,
                      int index,
                      boolean custom,
-                     @Nullable StringRef elementClass) {
+                     @Nullable StringRef elementClass,
+                     @NotNull String value) {
     super(parent, name, namespace);
     myIndex = index;
     myCustom = custom;
     myElementClass = elementClass;
+    myValue = value;
   }
 
   void addChild(DomStub child) {
@@ -82,5 +85,10 @@ public class ElementStub extends DomStub {
   @Nullable
   String getElementClass() {
     return myElementClass == null ? null : myElementClass.getString();
+  }
+
+  @NotNull
+  public String getValue() {
+    return myValue;
   }
 }
