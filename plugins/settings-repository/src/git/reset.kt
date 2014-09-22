@@ -12,6 +12,9 @@ import org.jetbrains.jgit.dirCache.DeleteFile
 import java.io.File
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.removeFileAndParentDirectoryIfEmpty
+import org.jetbrains.jgit.dirCache.deleteAllFiles
+import com.intellij.openapi.util.io.FileUtil
+import org.eclipse.jgit.lib.Constants
 
 class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset(toTheirs: Boolean) {
@@ -31,7 +34,27 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
       val fetchRefSpecs = remoteConfig.getFetchRefSpecs()
       assert(fetchRefSpecs.size == 1)
 
-      val mergeResult = merge(repository.getRef(fetchRefSpecs[0].getDestination()!!)!!, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
+      val latestUpstreamCommit = repository.getRef(fetchRefSpecs[0].getDestination()!!)
+      if (latestUpstreamCommit == null) {
+        if (mergeStrategy == MergeStrategy.OURS) {
+          LOG.debug("uninitialized remote (empty) - we don't need to merge")
+        }
+        else {
+          repository.deleteAllFiles()
+
+          val files = repository.getWorkTree().listFiles { it.getName() != Constants.DOT_GIT }
+          if (files != null) {
+            for (file in files) {
+              FileUtil.delete(file)
+            }
+          }
+
+          manager.commit(commitMessage)
+        }
+        return
+      }
+
+      val mergeResult = merge(latestUpstreamCommit, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
       if (!mergeResult.getMergeStatus().isSuccessful()) {
         throw IllegalStateException(mergeResult.toString())
       }

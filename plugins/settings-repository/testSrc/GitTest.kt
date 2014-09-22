@@ -325,7 +325,20 @@ class GitTest {
     compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
   }
 
-  public Test fun `merge, remote is uninitialized (empty - initial commit is not done)`() {
+  // remote is uninitialized (empty - initial commit is not done)
+  public Test fun `merge with uninitialized upstream`() {
+    doSyncWithUninitializedUpstream(SyncType.MERGE)
+  }
+
+  public Test fun `reset to my, uninitialized upstream`() {
+    doSyncWithUninitializedUpstream(SyncType.RESET_TO_MY)
+  }
+
+  public Test fun `reset to theirs, uninitialized upstream`() {
+    doSyncWithUninitializedUpstream(SyncType.RESET_TO_THEIRS)
+  }
+
+  private fun doSyncWithUninitializedUpstream(syncType: SyncType) {
     remoteRepository = createFileRemote(null, false)
     repositoryManager.setUpstream(remoteRepository!!.getAbsolutePath(), null)
 
@@ -333,10 +346,12 @@ class GitTest {
     val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
     getProvider().saveContent(path, data, data.size, RoamingType.PER_USER, false)
 
-    sync(SyncType.MERGE)
+    sync(syncType)
 
     val fs = MockVirtualFileSystem()
-    fs.findFileByPath(path)
+    if (syncType != SyncType.RESET_TO_THEIRS) {
+      fs.findFileByPath(path)
+    }
     restoreRemoteAfterPush();
     compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
   }
@@ -405,7 +420,6 @@ private fun compareFiles(local: File, remote: File, expected: VirtualFile?, vara
     expectedFiles = null
   }
   else {
-    assertThat(expected.isDirectory(), equalTo(true))
     //noinspection UnsafeVfsRecursion
     expectedFiles = expected.getChildren()
     Arrays.sort(expectedFiles!!, object : Comparator<VirtualFile> {

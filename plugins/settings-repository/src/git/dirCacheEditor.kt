@@ -180,6 +180,22 @@ public fun Repository.edit(edits: List<PathEdit>) {
   }
 }
 
+private class DirCacheTerminator(dirCache: DirCache) : BaseDirCacheEditor(dirCache, 0) {
+  override fun finish() {
+    replace()
+  }
+}
+
+public fun Repository.deleteAllFiles() {
+  val dirCache = lockDirCache()
+  try {
+    DirCacheTerminator(dirCache).commit()
+  }
+  finally {
+    dirCache.unlock()
+  }
+}
+
 public fun Repository.remove(path: String, isFile: Boolean) {
   edit((if (isFile) DeleteFile(path) else DeleteDirectory(path)))
 }
