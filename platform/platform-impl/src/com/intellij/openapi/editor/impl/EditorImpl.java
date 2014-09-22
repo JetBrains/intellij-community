@@ -5627,7 +5627,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    private boolean processMousePressed(@NotNull MouseEvent e) {
+    private boolean processMousePressed(@NotNull final MouseEvent e) {
       myInitialMouseEvent = e;
 
       if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE &&
@@ -5656,6 +5656,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             public void run() {
               myFoldingModel.flushCaretShift();
               range.setExpanded(expansion);
+              if (e.isShiftDown()) {
+                for (FoldRegion region : myFoldingModel.getAllFoldRegions()) {
+                  if (region.getStartOffset() >= range.getStartOffset() && region.getEndOffset() <= range.getEndOffset()) {
+                    region.setExpanded(expansion);
+                  }
+                }
+              }
             }
           };
           getFoldingModel().runBatchFoldingOperation(processor);
