@@ -558,4 +558,25 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testClassObjectAccessExpression_BeforeDot() {
+    String before = "Test       \n         .class";
+
+    getSettings().KEEP_LINE_BREAKS = true;
+    doMethodTest(before, "Test\n        .class");
+
+    getSettings().KEEP_LINE_BREAKS = false;
+    doMethodTest(before, "Test.class");
+  }
+
+  public void testClassObjectAccessExpression_AfterDot() {
+    String before = "Test.      \n     class";
+
+    getSettings().KEEP_LINE_BREAKS = true;
+    doMethodTest(before, "Test.\n        class");
+
+    getSettings().KEEP_LINE_BREAKS = false;
+    doMethodTest(before, "Test.class");
+  }
+
 }
