@@ -105,7 +105,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     myFileEditorManager = fileEditorManager;
 
     myLineStatusTrackers = new HashMap<Document, LineStatusTracker>();
-    myPartner = new QueueProcessorRemovePartner<Document,BaseRevisionLoader>(myProject, new Consumer<BaseRevisionLoader>() {
+    myPartner = new QueueProcessorRemovePartner<Document, BaseRevisionLoader>(myProject, new Consumer<BaseRevisionLoader>() {
       @Override
       public void consume(BaseRevisionLoader baseRevisionLoader) {
         baseRevisionLoader.run();
@@ -167,7 +167,8 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   public void projectClosed() {
   }
 
-  @NonNls @NotNull
+  @NonNls
+  @NotNull
   public String getComponentName() {
     return "LineStatusTrackerManager";
   }
@@ -181,7 +182,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   @Override
   public LineStatusTracker getLineStatusTracker(final Document document) {
     myApplication.assertReadAccessAllowed();
-    if ((! myProject.isOpen()) || myProject.isDisposed()) return null;
+    if ((!myProject.isOpen()) || myProject.isDisposed()) return null;
 
     synchronized (myLock) {
       return myLineStatusTrackers.get(document);
@@ -190,7 +191,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
   private void resetTracker(@NotNull final VirtualFile virtualFile) {
     myApplication.assertReadAccessAllowed();
-    if ((! myProject.isOpen()) || myProject.isDisposed()) return;
+    if ((!myProject.isOpen()) || myProject.isDisposed()) return;
 
     final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document == null) {
@@ -206,7 +207,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     synchronized (myLock) {
       final LineStatusTracker tracker = myLineStatusTrackers.get(document);
 
-      if (tracker == null && (! shouldBeInstalled)) return;
+      if (tracker == null && (!shouldBeInstalled)) return;
 
       if (tracker != null) {
         releaseTracker(document);
@@ -218,7 +219,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   private void releaseTracker(final Document document) {
-    if ((! myProject.isOpen()) || myProject.isDisposed()) return;
+    if ((!myProject.isOpen()) || myProject.isDisposed()) return;
 
     synchronized (myLock) {
       myPartner.remove(document);
@@ -233,8 +234,8 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (virtualFile == null || virtualFile instanceof LightVirtualFile) return false;
-    if (! virtualFile.isInLocalFileSystem()) return false;
-    if ((! myProject.isOpen()) || myProject.isDisposed()) return false;
+    if (!virtualFile.isInLocalFileSystem()) return false;
+    if ((!myProject.isOpen()) || myProject.isDisposed()) return false;
     final FileStatusManager statusManager = FileStatusManager.getInstance(myProject);
     if (statusManager == null) return false;
     final AbstractVcs activeVcs = myVcsManager.getVcsFor(virtualFile);
@@ -253,7 +254,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   private void installTracker(final VirtualFile virtualFile, final Document document) {
     synchronized (myLock) {
       if (myLineStatusTrackers.containsKey(document)) return;
-      assert ! myPartner.containsKey(document);
+      assert !myPartner.containsKey(document);
 
       final LineStatusTracker tracker = LineStatusTracker.createOn(virtualFile, document, myProject);
       myLineStatusTrackers.put(document, tracker);
@@ -281,9 +282,9 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
     @Override
     public void run() {
-      if ((! myProject.isOpen()) || myProject.isDisposed()) return;
+      if ((!myProject.isOpen()) || myProject.isDisposed()) return;
 
-      if (! myVirtualFile.isValid()) {
+      if (!myVirtualFile.isValid()) {
         log("installTracker() for file " + myVirtualFile.getPath() + " failed: virtual file not valid");
         reportTrackerBaseLoadFailed();
         return;
@@ -298,7 +299,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       // loads are sequential (in single threaded QueueProcessor);
       // so myLoadCounter can't take less value for greater base revision -> the only thing we want from it
       final LineStatusTracker.RevisionPack revisionPack = new LineStatusTracker.RevisionPack(myLoadCounter, baseRevision);
-        ++ myLoadCounter;
+      ++myLoadCounter;
 
       final String lastUpToDateContent = myStatusProvider.getBaseVersionContent(myVirtualFile);
       if (lastUpToDateContent == null) {
@@ -326,7 +327,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       myApplication.invokeLater(runnable, ModalityState.NON_MODAL, new Condition() {
         @Override
         public boolean value(final Object ignore) {
-          return (! myProject.isOpen()) || myProject.isDisposed();
+          return (!myProject.isOpen()) || myProject.isDisposed();
         }
       });
     }
@@ -344,10 +345,10 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
   private void resetTrackersForOpenFiles() {
     myApplication.assertReadAccessAllowed();
-    if ((! myProject.isOpen()) || myProject.isDisposed()) return;
+    if ((!myProject.isOpen()) || myProject.isDisposed()) return;
 
     final VirtualFile[] openFiles = myFileEditorManager.getOpenFiles();
-    for(final VirtualFile openFile: openFiles) {
+    for (final VirtualFile openFile : openFiles) {
       resetTracker(openFile);
     }
   }
@@ -411,7 +412,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     public void globalSchemeChange(EditorColorsScheme scheme) {
       resetTrackersForOpenFiles();
     }
-  };
+  }
 
   private static void log(final String s) {
     if (LOG.isDebugEnabled()) {
