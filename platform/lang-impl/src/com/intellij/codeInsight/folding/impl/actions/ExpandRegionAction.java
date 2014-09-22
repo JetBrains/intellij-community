@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,22 @@ package com.intellij.codeInsight.folding.impl.actions;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExpandRegionAction extends EditorAction {
   public ExpandRegionAction() {
-    super(new EditorActionHandler() {
+    super(new BaseFoldingHandler() {
       @Override
-      public void execute(Editor editor, DataContext dataContext) {
+      public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
         expandRegionAtCaret(editor.getProject(), editor);
       }
-      
-      @Override
-      public boolean isEnabled(Editor editor, DataContext dataContext) {
-        return super.isEnabled(editor, dataContext) && CommonDataKeys.PROJECT.getData(dataContext) != null;
-      }
-      
     });
   }
 
