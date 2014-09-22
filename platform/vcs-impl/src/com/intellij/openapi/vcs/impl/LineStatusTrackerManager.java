@@ -150,24 +150,16 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
         final EditorColorsListener editorColorsListener = new MyEditorColorsListener();
 
         final FileStatusManager fsManager = FileStatusManager.getInstance(myProject);
-        fsManager.addFileStatusListener(fileStatusListener, myProject);
+        fsManager.addFileStatusListener(fileStatusListener, myDisposable);
 
         final EditorFactory editorFactory = EditorFactory.getInstance();
-        editorFactory.addEditorFactoryListener(editorFactoryListener,myProject);
+        editorFactory.addEditorFactoryListener(editorFactoryListener, myDisposable);
 
         final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-        virtualFileManager.addVirtualFileListener(virtualFileListener,myProject);
+        virtualFileManager.addVirtualFileListener(virtualFileListener, myDisposable);
 
         final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
-        editorColorsManager.addEditorColorsListener(editorColorsListener);
-
-        Disposer.register(myDisposable, new Disposable() {
-          public void dispose() {
-            fsManager.removeFileStatusListener(fileStatusListener);
-            virtualFileManager.removeVirtualFileListener(virtualFileListener);
-            editorColorsManager.removeEditorColorsListener(editorColorsListener);
-          }
-        });
+        editorColorsManager.addEditorColorsListener(editorColorsListener, myDisposable);
       }
     });
   }
