@@ -18,9 +18,9 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -147,12 +147,12 @@ public class ProjectDataManager {
     }
   }
 
-  public void updateExternalProjectData(@NotNull Project project, @NotNull DataNode<ProjectData> projectDataNode) {
-    ExternalProjectsDataStorage.getInstance(project).add(projectDataNode);
+  public void updateExternalProjectData(@NotNull Project project, @NotNull ExternalProjectInfo externalProjectInfo) {
+    ExternalProjectsDataStorage.getInstance(project).add(externalProjectInfo);
   }
 
   @Nullable
-  public DataNode<ProjectData> getExternalProjectData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
+  public ExternalProjectInfo getExternalProjectData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
     return ExternalProjectsDataStorage.getInstance(project).get(projectSystemId, externalProjectPath);
   }
 }

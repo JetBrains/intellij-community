@@ -88,8 +88,6 @@ abstract class SpotlightPainter extends AbstractPainter {
           if (search != null && !filter.contains(configurable) && !text.equals(myConfigurableOption.get(configurable))) {
             search.run();
           }
-          Component parent = myTarget.getParent();
-          fireNeedsRepaint(parent instanceof JComponent ? (JComponent)parent : myTarget);
         }
         finally {
           myConfigurableOption.put(configurable, text);
@@ -98,6 +96,8 @@ abstract class SpotlightPainter extends AbstractPainter {
     }
     else if (!ApplicationManager.getApplication().isUnitTestMode()) {
       updateLater();
+      return;
     }
+    fireNeedsRepaint(myGlassPanel);
   }
 }

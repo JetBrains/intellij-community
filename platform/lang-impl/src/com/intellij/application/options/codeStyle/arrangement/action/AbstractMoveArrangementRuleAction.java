@@ -33,7 +33,7 @@ public abstract class AbstractMoveArrangementRuleAction extends AbstractArrangem
 
   @Override
   public void update(AnActionEvent e) {
-    ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
+    ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
       e.getPresentation().setEnabled(false);
       return;
@@ -52,7 +52,7 @@ public abstract class AbstractMoveArrangementRuleAction extends AbstractArrangem
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
+    final ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
       return;
     }

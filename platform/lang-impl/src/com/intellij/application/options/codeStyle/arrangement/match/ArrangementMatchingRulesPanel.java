@@ -16,14 +16,14 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.lang.Language;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
 import com.intellij.ide.ui.customization.CustomizationUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class ArrangementMatchingRulesPanel extends JPanel implements DataProvider {
 
-  @NotNull protected final ArrangementMatchingRulesControl myControl;
+  @NotNull protected final ArrangementSectionRulesControl myControl;
 
   public ArrangementMatchingRulesPanel(@NotNull Language language,
                                        @NotNull ArrangementStandardSettingsManager settingsManager,
@@ -50,7 +50,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     
     JBScrollPane scrollPane = new JBScrollPane();
     final JViewport viewport = scrollPane.getViewport();
-    ArrangementMatchingRulesControl.RepresentationCallback callback = new ArrangementMatchingRulesControl.RepresentationCallback() {
+    ArrangementSectionRulesControl.RepresentationCallback callback = new ArrangementSectionRulesControl.RepresentationCallback() {
       @Override
       public void ensureVisible(@NotNull Rectangle r) {
         Rectangle visibleRect = viewport.getViewRect();
@@ -85,11 +85,11 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
-  protected ArrangementMatchingRulesControl createRulesControl(@NotNull Language language,
+  protected ArrangementSectionRulesControl createRulesControl(@NotNull Language language,
                                                                @NotNull ArrangementStandardSettingsManager settingsManager,
                                                                @NotNull ArrangementColorsProvider colorsProvider,
-                                                               @NotNull ArrangementMatchingRulesControl.RepresentationCallback callback) {
-    return new ArrangementMatchingRulesControl(language, settingsManager, colorsProvider, callback);
+                                                               @NotNull ArrangementSectionRulesControl.RepresentationCallback callback) {
+    return new ArrangementSectionRulesControl(language, settingsManager, colorsProvider, callback);
   }
 
   @NotNull
@@ -104,7 +104,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (ArrangementMatchingRulesControl.KEY.is(dataId)) {
+    if (ArrangementSectionRulesControl.KEY.is(dataId)) {
       return myControl;
     }
     return null;

@@ -317,7 +317,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                   @NotNull final Processor<? super PsiFile> localProcessor,
                                   @NotNull final AtomicBoolean canceled,
                                   @NotNull AtomicInteger counter,
-                                  int totalSize) {
+                                  int totalSize) throws ApplicationUtil.CannotRunReadActionException {
     final PsiFile file = ApplicationUtil.tryRunReadAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
@@ -704,19 +704,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processPsiFileRoots(files, totalSize, alreadyProcessedFiles, progress, new Processor<PsiFile>() {
       @Override
       public boolean process(final PsiFile psiRoot) {
-        return ApplicationUtil.tryRunReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            final VirtualFile vfile = psiRoot.getVirtualFile();
-            for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
-              Processor<PsiElement> localProcessor = localProcessors.get(singleRequest);
-              if (!localProcessor.process(psiRoot)) {
-                return false;
-              }
-            }
-            return true;
+        final VirtualFile vfile = psiRoot.getVirtualFile();
+        for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
+          Processor<PsiElement> localProcessor = localProcessors.get(singleRequest);
+          if (!localProcessor.process(psiRoot)) {
+            return false;
           }
-        });
+        }
+        return true;
       }
     });
   }

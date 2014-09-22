@@ -19,7 +19,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -39,8 +41,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
   @NotNull
   private final Project myProject;
   @NotNull
-  private final Map<Pair<ProjectSystemId, String>, DataNode<ProjectData>> myExternalRootProjects =
-    new ConcurrentHashMap<Pair<ProjectSystemId, String>, DataNode<ProjectData>>();
+  private final Map<Pair<ProjectSystemId, String>, InternalExternalProjectInfo> myExternalRootProjects =
+    new ConcurrentHashMap<Pair<ProjectSystemId, String>, InternalExternalProjectInfo>();
 
   public static ExternalProjectsDataStorage getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ExternalProjectsDataStorage.class);
@@ -59,14 +61,37 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
     // TODO [Vlad] save data if changed
   }
 
-  void add(@NotNull DataNode<ProjectData> projectDataNode) {
-    final String projectPath = projectDataNode.getData().getLinkedExternalProjectPath();
-    final ProjectSystemId projectSystemId = projectDataNode.getData().getOwner();
-    myExternalRootProjects.put(Pair.create(projectSystemId, projectPath), projectDataNode);
+  void add(@NotNull ExternalProjectInfo externalProjectInfo) {
+    final ProjectSystemId projectSystemId = externalProjectInfo.getProjectSystemId();
+    final String projectPath = externalProjectInfo.getExternalProjectPath();
+    DataNode<ProjectData> externalProjectStructure = externalProjectInfo.getExternalProjectStructure();
+    long lastSuccessfulImportTimestamp = externalProjectInfo.getLastSuccessfulImportTimestamp();
+    long lastImportTimestamp = externalProjectInfo.getLastImportTimestamp();
+
+    final Pair<ProjectSystemId, String> key = Pair.create(projectSystemId, projectPath);
+    final InternalExternalProjectInfo old = myExternalRootProjects.get(key);
+    if (old != null) {
+      lastImportTimestamp = externalProjectInfo.getLastImportTimestamp();
+      if (lastSuccessfulImportTimestamp == -1) {
+        lastSuccessfulImportTimestamp = old.getLastSuccessfulImportTimestamp();
+      }
+      if (externalProjectInfo.getExternalProjectStructure() == null) {
+        externalProjectStructure = old.getExternalProjectStructure();
+      }
+    }
+
+    InternalExternalProjectInfo merged = new InternalExternalProjectInfo(
+      projectSystemId,
+      projectPath,
+      externalProjectStructure
+    );
+    merged.setLastImportTimestamp(lastImportTimestamp);
+    merged.setLastSuccessfulImportTimestamp(lastSuccessfulImportTimestamp);
+    myExternalRootProjects.put(key, merged);
   }
 
   @Nullable
-  DataNode<ProjectData> get(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
+  ExternalProjectInfo get(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
     return myExternalRootProjects.get(Pair.create(projectSystemId, externalProjectPath));
   }
 }
