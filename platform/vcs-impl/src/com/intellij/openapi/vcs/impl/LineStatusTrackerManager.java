@@ -143,11 +143,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
         final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
         final EditorFactoryListener editorFactoryListener = new MyEditorFactoryListener();
         final MyVirtualFileListener virtualFileListener = new MyVirtualFileListener();
-        final EditorColorsListener editorColorsListener = new EditorColorsListener() {
-          public void globalSchemeChange(EditorColorsScheme scheme) {
-            resetTrackersForOpenFiles();
-          }
-        };
+        final EditorColorsListener editorColorsListener = new MyEditorColorsListener();
 
         final FileStatusManager fsManager = FileStatusManager.getInstance(myProject);
         fsManager.addFileStatusListener(fileStatusListener, myProject);
@@ -414,6 +410,12 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       }
     }
   }
+
+  private class MyEditorColorsListener implements EditorColorsListener {
+    public void globalSchemeChange(EditorColorsScheme scheme) {
+      resetTrackersForOpenFiles();
+    }
+  };
 
   private static void log(final String s) {
     if (LOG.isDebugEnabled()) {
