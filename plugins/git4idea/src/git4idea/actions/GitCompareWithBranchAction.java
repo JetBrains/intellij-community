@@ -199,8 +199,11 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
         fileDoesntExistInBranchError(project, file, branchToCompare);
         return;
       }
-      LOG.assertTrue(currentRevisionNumber != null,
-                     String.format("Current revision number is null for file [%s] and branch [%s]", filePath, head));
+
+      if (currentRevisionNumber == null) {
+        LOG.error(String.format("Current revision number is null for file [%s] and branch [%s]", filePath, head));
+        return;
+      }
 
       // constructing the revision with human readable name (will work for files comparison however).
       final VcsFileRevision compareRevision =
