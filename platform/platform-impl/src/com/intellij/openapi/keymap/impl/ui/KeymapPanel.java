@@ -50,6 +50,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
@@ -830,11 +831,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     Keymap[] keymaps = keymapManager.getAllKeymaps();
     for (Keymap keymap1 : keymaps) {
+
+      if (SystemInfo.isMac && KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap1.getName())) continue;
+
       KeymapImpl keymap = (KeymapImpl)keymap1;
       if (keymap.canModify()) {
         keymap = keymap.copy(true);
       }
-
       myKeymapListModel.addElement(keymap);
       if (Comparing.equal(keymapManager.getActiveKeymap(), keymap1)) {
         mySelectedKeymap = keymap;

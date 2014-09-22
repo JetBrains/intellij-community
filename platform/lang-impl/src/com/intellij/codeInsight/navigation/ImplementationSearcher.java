@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -110,8 +111,14 @@ public class ImplementationSearcher {
     return result[0];
   }
 
-  public static void dumbModeNotification(PsiElement element) {
-    DumbService.getInstance(element.getProject()).showDumbModeNotification("Implementation information isn't available while indices are built");
+  public static void dumbModeNotification(final PsiElement element) {
+    Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+      @Override
+      public Project compute() {
+        return element.getProject();
+      }
+    });
+    DumbService.getInstance(project).showDumbModeNotification("Implementation information isn't available while indices are built");
   }
 
   protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {

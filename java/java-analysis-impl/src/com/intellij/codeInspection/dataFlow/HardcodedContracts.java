@@ -60,7 +60,9 @@ public class HardcodedContracts {
         return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
       }
     }
-    else if ("org.apache.commons.lang.Validate".equals(className) || "org.apache.commons.lang3.Validate".equals(className)) {
+    else if ("org.apache.commons.lang.Validate".equals(className) || 
+             "org.apache.commons.lang3.Validate".equals(className) || 
+             "org.springframework.util.Assert".equals(className)) {
       if ("notNull".equals(methodName) && paramCount > 0) {
         MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
         constraints[0] = NULL_VALUE;

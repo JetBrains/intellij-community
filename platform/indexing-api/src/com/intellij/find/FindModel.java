@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package com.intellij.find;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +32,6 @@ import java.util.regex.PatternSyntaxException;
  * operations.
  */
 public class FindModel extends UserDataHolderBase implements Cloneable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.find.FindModel");
-
   public static void initStringToFindNoMultiline(FindModel findModel, String s) {
     if (!StringUtil.isEmpty(s)) {
       if (!s.contains("\r") && !s.contains("\n")) {
@@ -516,7 +512,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param replaceAll the value of the Replace All flag.
    */
   public void setReplaceAll(boolean replaceAll) {
-    boolean changed = isReplaceAll != replaceAll;
     isReplaceAll = replaceAll;
     notifyObservers();
   }
@@ -662,33 +657,32 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
 
+  @Override
   public String toString() {
-    @NonNls StringBuilder buffer = new StringBuilder();
-    buffer.append("--- FIND MODEL ---\n");
-    buffer.append("myStringToFind =").append(myStringToFind).append("\n");
-    buffer.append("myStringToReplace =").append(myStringToReplace).append("\n");
-    buffer.append("isReplaceState =").append(isReplaceState).append("\n");
-    buffer.append("isWholeWordsOnly =").append(isWholeWordsOnly).append("\n");
-    buffer.append("searchContext =").append(searchContext).append("\n");
-    buffer.append("isFromCursor =").append(isFromCursor).append("\n");
-    buffer.append("isForward =").append(isForward).append("\n");
-    buffer.append("isGlobal =").append(isGlobal).append("\n");
-    buffer.append("isRegularExpressions =").append(isRegularExpressions).append("\n");
-    buffer.append("isCaseSensitive =").append(isCaseSensitive).append("\n");
-    buffer.append("isMultipleFiles =").append(isMultipleFiles).append("\n");
-    buffer.append("isPromptOnReplace =").append(isPromptOnReplace).append("\n");
-    buffer.append("isReplaceAll =").append(isReplaceAll).append("\n");
-    buffer.append("isOpenNewTab =").append(isOpenNewTab).append("\n");
-    buffer.append("isOpenInNewTabEnabled =").append(isOpenInNewTabEnabled).append("\n");
-    buffer.append("isOpenNewTabVisible =").append(isOpenNewTabVisible).append("\n");
-    buffer.append("isProjectScope =").append(isProjectScope).append("\n");
-    buffer.append("directoryName =").append(directoryName).append("\n");
-    buffer.append("isWithSubdirectories =").append(isWithSubdirectories).append("\n");
-    buffer.append("fileFilter =").append(fileFilter).append("\n");
-    buffer.append("moduleName =").append(moduleName).append("\n");
-    buffer.append("customScopeName =").append(customScopeName).append("\n");
-    buffer.append("searchInProjectFiles =").append(mySearchInProjectFiles).append("\n");
-    return buffer.toString();
+    return "--- FIND MODEL ---\n" +
+           "myStringToFind =" + myStringToFind + "\n" +
+           "myStringToReplace =" + myStringToReplace + "\n" +
+           "isReplaceState =" + isReplaceState + "\n" +
+           "isWholeWordsOnly =" + isWholeWordsOnly + "\n" +
+           "searchContext =" + searchContext + "\n" +
+           "isFromCursor =" + isFromCursor + "\n" +
+           "isForward =" + isForward + "\n" +
+           "isGlobal =" + isGlobal + "\n" +
+           "isRegularExpressions =" + isRegularExpressions + "\n" +
+           "isCaseSensitive =" + isCaseSensitive + "\n" +
+           "isMultipleFiles =" + isMultipleFiles + "\n" +
+           "isPromptOnReplace =" + isPromptOnReplace + "\n" +
+           "isReplaceAll =" + isReplaceAll + "\n" +
+           "isOpenNewTab =" + isOpenNewTab + "\n" +
+           "isOpenInNewTabEnabled =" + isOpenInNewTabEnabled + "\n" +
+           "isOpenNewTabVisible =" + isOpenNewTabVisible + "\n" +
+           "isProjectScope =" + isProjectScope + "\n" +
+           "directoryName =" + directoryName + "\n" +
+           "isWithSubdirectories =" + isWithSubdirectories + "\n" +
+           "fileFilter =" + fileFilter + "\n" +
+           "moduleName =" + moduleName + "\n" +
+           "customScopeName =" + customScopeName + "\n" +
+           "searchInProjectFiles =" + mySearchInProjectFiles + "\n";
   }
 
   /**
@@ -897,7 +891,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  public @NotNull SearchContext getSearchContext() {
+  @NotNull
+  public SearchContext getSearchContext() {
     return searchContext;
   }
 

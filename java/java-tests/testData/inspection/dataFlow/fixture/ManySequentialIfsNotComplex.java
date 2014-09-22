@@ -16,6 +16,21 @@ class Some {
     if (i11 == 0) System.out.println(foo.getBar11().length());
     if (i12 == 0) System.out.println(foo.getBar12().length());
     if (i13 == 0) System.out.println(foo.getBar13().length());
+
+    System.out.println(i1);
+    System.out.println(i2);
+    System.out.println(i3);
+    System.out.println(i4);
+    System.out.println(i5);
+    System.out.println(i6);
+    System.out.println(i7);
+    System.out.println(i8);
+    System.out.println(i9);
+    System.out.println(i10);
+    System.out.println(i11);
+    System.out.println(i12);
+    System.out.println(i13);
+
   }
 
 }

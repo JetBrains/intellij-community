@@ -509,6 +509,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       option.setOptionState(!option.isOptionEnabled());
       myList.revalidate();
       myList.repaint();
+      getField().requestFocus();
       return;
     }
 
@@ -720,6 +721,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setCancelOnClickOutside(true)
       .setModalContext(false)
       .setRequestFocus(true)
+      .setCancelCallback(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return !mySkipFocusGain;
+        }
+      })
       .createPopup();
     myBalloon.getContent().setBorder(new EmptyBorder(0,0,0,0));
     final Window window = WindowManager.getInstance().suggestParentWindow(e.getProject());
@@ -1012,7 +1019,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         setIcon(myLocationIcon);
       }
     };
-    GotoFileCellRenderer myFileRenderer = new GotoFileCellRenderer(400);
+    SearchEverywherePsiRenderer myFileRenderer = new SearchEverywherePsiRenderer(myList);
 
     private String myLocationString;
     private DefaultPsiElementCellRenderer myPsiRenderer = new DefaultPsiElementCellRenderer() {
@@ -1038,7 +1045,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       Component cmp;
-      PsiElement file = null;
+      PsiElement file;
       myLocationString = null;
       String pattern = "*" + myPopupField.getText();
       Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
@@ -1051,8 +1058,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myFileRenderer.setPatternMatcher(matcher);
         cmp = myFileRenderer.getListCellRendererComponent(list, file, index, isSelected, cellHasFocus);
       } else if (value instanceof PsiElement) {
-        myPsiRenderer.setPatternMatcher(matcher);
-        cmp = myPsiRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
+        myFileRenderer.setPatternMatcher(matcher);
+        cmp = myFileRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
       } else {
         cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
         final JPanel p = new JPanel(new BorderLayout());
@@ -1327,16 +1334,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               buildFiles(pattern);
             }
           }, false);
-
-          buildActionsAndSettings(pattern);
-
-          updatePopup();
-
           runReadAction(new Runnable() {
             public void run() {
               buildSymbols(pattern);
             }
           }, true);
+
+          buildActionsAndSettings(pattern);
+
+          updatePopup();
+
         }
         updatePopup();
       }
@@ -1612,7 +1619,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                               myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            if (o instanceof PsiElement) {
+            if (o instanceof PsiElement && !(((PsiElement)o).getParent() instanceof PsiFile)) {
               final PsiElement element = (PsiElement)o;
               final PsiFile file = element.getContainingFile();
               if (!myListModel.contains(o) &&
@@ -1918,7 +1925,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setCancelCallback(new Computable<Boolean>() {
                 @Override
                 public Boolean compute() {
-                  return myBalloon == null || myBalloon.isDisposed() || !getField().getTextEditor().hasFocus();
+                  return myBalloon == null || myBalloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
                 }
               })
               .createPopup();

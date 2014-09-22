@@ -16,9 +16,12 @@
 
 package com.intellij.psi.impl.search;
 
-import com.intellij.concurrency.*;
+import com.intellij.concurrency.AsyncFuture;
+import com.intellij.concurrency.AsyncUtil;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,6 +42,8 @@ import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -59,6 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiSearchHelperImpl implements PsiSearchHelper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
   private final PsiManagerEx myManager;
 
   @Override
@@ -311,7 +317,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                   @NotNull final Processor<? super PsiFile> localProcessor,
                                   @NotNull final AtomicBoolean canceled,
                                   @NotNull AtomicInteger counter,
-                                  int totalSize) {
+                                  int totalSize) throws ApplicationUtil.CannotRunReadActionException {
     final PsiFile file = ApplicationUtil.tryRunReadAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
@@ -698,19 +704,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processPsiFileRoots(files, totalSize, alreadyProcessedFiles, progress, new Processor<PsiFile>() {
       @Override
       public boolean process(final PsiFile psiRoot) {
-        return ApplicationUtil.tryRunReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            final VirtualFile vfile = psiRoot.getVirtualFile();
-            for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
-              Processor<PsiElement> localProcessor = localProcessors.get(singleRequest);
-              if (!localProcessor.process(psiRoot)) {
-                return false;
-              }
-            }
-            return true;
+        final VirtualFile vfile = psiRoot.getVirtualFile();
+        for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
+          Processor<PsiElement> localProcessor = localProcessors.get(singleRequest);
+          if (!localProcessor.process(psiRoot)) {
+            return false;
           }
-        });
+        }
+        return true;
       }
     });
   }
@@ -978,5 +979,40 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       keys.add(new IdIndexEntry(word, caseSensitively));
     }
     return keys;
+  }
+
+  public static boolean processTextOccurrences(@NotNull final PsiElement element,
+                                               @NotNull String stringToSearch,
+                                               @NotNull GlobalSearchScope searchScope,
+                                               @NotNull final Processor<UsageInfo> processor,
+                                               @NotNull final UsageInfoFactory factory) {
+    PsiSearchHelper helper = ApplicationManager.getApplication().runReadAction(new Computable<PsiSearchHelper>() {
+      @Override
+      public PsiSearchHelper compute() {
+        return SERVICE.getInstance(element.getProject());
+      }
+    });
+
+    return helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
+      @Override
+      public boolean process(final PsiFile psiFile, final int startOffset, final int endOffset) {
+        try {
+          UsageInfo usageInfo = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
+            @Override
+            public UsageInfo compute() {
+              return factory.createUsageInfo(psiFile, startOffset, endOffset);
+            }
+          });
+          return usageInfo == null || processor.process(usageInfo);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          return true;
+        }
+      }
+    }, searchScope);
   }
 }

@@ -1187,6 +1187,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+    if (myRole1 == ChildRole.TYPE && myRole2 == ChildRole.DOT
+        || myRole1 == ChildRole.DOT && myRole2 == ChildRole.CLASS_KEYWORD)
+    {
+      createSpaceInCode(false);
+    }
+  }
+
+  @Override
   public void visitExpressionList(PsiExpressionList list) {
     if (myRole1 == ChildRole.LPARENTH && myRole2 == ChildRole.RPARENTH) {
       createParenthSpace(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);

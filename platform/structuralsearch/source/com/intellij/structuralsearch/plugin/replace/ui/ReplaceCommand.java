@@ -1,9 +1,8 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
-import com.intellij.structuralsearch.plugin.ui.SearchCommand;
+import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.usages.Usage;
 
 /**
@@ -15,18 +14,31 @@ import com.intellij.usages.Usage;
  */
 public class ReplaceCommand extends SearchCommand {
 
-  public ReplaceCommand(Project project, ReplaceUsageViewContext context) {
-    super( project, context );
+  private ReplaceUsageViewContext myReplaceUsageViewContext;
+
+  public ReplaceCommand(Configuration configuration, SearchContext searchContext) {
+    super(configuration, searchContext);
+  }
+
+  protected UsageViewContext createUsageViewContext() {
+    final SearchStarter searchStarter = new SearchStarter() {
+      @Override
+      public void startSearch() {
+        new ReplaceCommand(myConfiguration, mySearchContext).startSearching();
+      }
+    };
+    myReplaceUsageViewContext = new ReplaceUsageViewContext(mySearchContext, myConfiguration, searchStarter);
+    return myReplaceUsageViewContext;
   }
 
   protected void findStarted() {
     super.findStarted();
 
-    StructuralSearchPlugin.getInstance(project).setReplaceInProgress(true);
+    StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setReplaceInProgress(true);
   }
 
   protected void findEnded() {
-    StructuralSearchPlugin.getInstance(project).setReplaceInProgress( false );
+    StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setReplaceInProgress( false );
 
     super.findEnded();
   }
@@ -34,7 +46,6 @@ public class ReplaceCommand extends SearchCommand {
   protected void foundUsage(MatchResult result, Usage usage) {
     super.foundUsage(result, usage);
 
-    final ReplaceUsageViewContext replaceUsageViewContext = ((ReplaceUsageViewContext)context);
-    replaceUsageViewContext.addReplaceUsage(usage,replaceUsageViewContext.getReplacer().buildReplacement(result));
+    myReplaceUsageViewContext.addReplaceUsage(usage, result);
   }
 }

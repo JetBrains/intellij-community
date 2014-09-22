@@ -16,11 +16,10 @@
 
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
-import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.PredefinedSearchScopeProvider;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
@@ -45,7 +44,8 @@ public class FindUsagesOptions implements Cloneable {
 
   public FindUsagesOptions(@NotNull Project project, @Nullable final DataContext dataContext) {
     String defaultScopeName = FindSettings.getInstance().getDefaultScopeName();
-    List<SearchScope> predefined = ScopeChooserCombo.getPredefinedScopes(project, dataContext, true, false, false, false);
+    List<SearchScope> predefined = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(project, dataContext, true, false, false,
+                                                                                                   false);
     SearchScope resultScope = null;
     for (SearchScope scope : predefined) {
       if (scope.getDisplayName().equals(defaultScopeName)) {
@@ -105,6 +105,6 @@ public class FindUsagesOptions implements Cloneable {
 
   @NotNull
   public String generateUsagesString() {
-    return FindBundle.message("find.usages.panel.title.usages");
+    return "Usages";
   }
 }
