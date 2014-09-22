@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -17,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.actions.*;
@@ -58,6 +56,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private final static String[] ourCellTypes = new String[]{codeCellType, markdownCellType, /*rawNBCellType, */headingCellType + "1",
     headingCellType + "2", headingCellType + "3", headingCellType + "4", headingCellType + "5", headingCellType + "6"};
   private JButton myRunCellButton;
+  private final JScrollPane myScrollPane;
 
 
   public IpnbFileEditor(Project project, VirtualFile vFile) {
@@ -72,14 +71,18 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     myEditorPanel = new JPanel(new BorderLayout());
     myEditorPanel.setBackground(IpnbEditorUtil.getBackground());
 
-    myIpnbFilePanel = createIpnbEditorPanel(myProject, vFile, this);
+    myIpnbFilePanel = createIpnbEditorPanel(myProject, vFile);
 
     final JPanel controlPanel = createControlPanel();
     myEditorPanel.add(controlPanel, BorderLayout.NORTH);
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myIpnbFilePanel);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myScrollPane = ScrollPaneFactory.createScrollPane(myIpnbFilePanel);
+    myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-    myEditorPanel.add(scrollPane, BorderLayout.CENTER);
+    myEditorPanel.add(myScrollPane, BorderLayout.CENTER);
+  }
+
+  public JScrollPane getScrollPane() {
+    return myScrollPane;
   }
 
   private JPanel createControlPanel() {
@@ -267,8 +270,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   }
 
   @NotNull
-  private IpnbFilePanel createIpnbEditorPanel(Project project, VirtualFile vFile, Disposable parent) {
-    return new IpnbFilePanel(project, parent, vFile,
+  private IpnbFilePanel createIpnbEditorPanel(Project project, VirtualFile vFile) {
+    return new IpnbFilePanel(project, this, vFile,
                              new CellSelectionListener() {
                                @Override
                                public void selectionChanged(@NotNull IpnbPanel ipnbPanel) {
@@ -316,11 +319,17 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   @NotNull
   @Override
   public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    return new IpnbEditorState(-1, ArrayUtil.EMPTY_STRING_ARRAY);
+    final int index = getIpnbFilePanel().getSelectedIndex();
+    final IpnbEditablePanel cell = getIpnbFilePanel().getSelectedCell();
+    final int top = cell != null ? cell.getTop() : 0;
+    return new IpnbEditorState(-1, index, top);
   }
 
   @Override
   public void setState(@NotNull FileEditorState state) {
+    final int index = ((IpnbEditorState)state).getSelectedIndex();
+    final int position = ((IpnbEditorState)state).getSelectedTop();
+    myIpnbFilePanel.setInitialPosition(index, position);
   }
 
   @Override

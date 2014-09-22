@@ -17,33 +17,42 @@ package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 final class IpnbEditorState implements FileEditorState{
   private final transient long myDocumentModificationStamp; // should not be serialized
-  private final String[] mySelectedComponentIds;
+  private int mySelectedIndex;
+  private int mySelectedTop;
 
-  public IpnbEditorState(final long modificationStamp, @NotNull final String[] selectedComponents){
+  public IpnbEditorState(final long modificationStamp, int selectedComponentIndex, int top) {
     myDocumentModificationStamp = modificationStamp;
-    mySelectedComponentIds = selectedComponents;
+    mySelectedIndex = selectedComponentIndex;
+    mySelectedTop = top;
   }
 
-  public String[] getSelectedComponentIds(){
-    return mySelectedComponentIds;
-  }
-
-  public boolean equals(final Object o){
+  public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof IpnbEditorState)) return false;
 
     final IpnbEditorState state = (IpnbEditorState)o;
 
-    if (myDocumentModificationStamp != state.myDocumentModificationStamp) return false;
-    if (!Arrays.equals(mySelectedComponentIds, state.mySelectedComponentIds)) return false;
+    return myDocumentModificationStamp == state.myDocumentModificationStamp && mySelectedIndex == state.mySelectedIndex &&
+      mySelectedTop == state.mySelectedTop;
+  }
 
-    return true;
+  public int getSelectedTop() {
+    return mySelectedTop;
+  }
+
+  public void setSelectedTop(int selectedTop) {
+    mySelectedTop = selectedTop;
+  }
+
+  public void setSelectedIndex(int selectedIndex) {
+    mySelectedIndex = selectedIndex;
+  }
+
+  public int getSelectedIndex() {
+    return mySelectedIndex;
   }
 
   public int hashCode(){

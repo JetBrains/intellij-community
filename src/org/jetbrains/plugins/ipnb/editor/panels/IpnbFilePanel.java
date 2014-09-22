@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -34,7 +33,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
   private IpnbFile myIpnbFile;
 
   private Project myProject;
-  @Nullable private Disposable myParent;
+  @NotNull private IpnbFileEditor myParent;
   @NotNull private final IpnbFileEditor.CellSelectionListener myListener;
 
   private final List<IpnbEditablePanel> myIpnbPanels = Lists.newArrayList();
@@ -42,8 +41,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
   private IpnbEditablePanel mySelectedCell;
   private IpnbEditablePanel myBufferPanel;
   private int myIncrement = 10;
+  private int myInitialSelection = 0;
+  private int myInitialPosition = 0;
 
-  public IpnbFilePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final VirtualFile vFile,
+  public IpnbFilePanel(@NotNull final Project project, @NotNull final IpnbFileEditor parent, @NotNull final VirtualFile vFile,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
     super(new GridBagLayout());
     myProject = project;
@@ -100,6 +101,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
       c.gridy = addCellToPanel(cell, c);
     }
 
+    if (myIpnbPanels.size() > myInitialSelection) {
+      final IpnbEditablePanel toSelect = myIpnbPanels.get(myInitialSelection);
+      setSelectedCell(toSelect);
+      myParent.getScrollPane().getViewport().setViewPosition(new Point(0, myInitialPosition));
+    }
     c.weighty = 1;
     add(createEmptyPanel(), c);
   }
@@ -123,9 +129,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
     }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
-    }
-    if (c.gridy == 0) {
-      setSelectedCell(panel);
     }
     return c.gridy + 1;
   }
@@ -279,7 +282,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
             getParent().dispatchEvent(e);
           }
         }
-
+      }
+      else {
+        getParent().dispatchEvent(e);
       }
     }
   }
@@ -333,6 +338,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
     }
   }
 
+  public void setInitialPosition(int index, int position) {
+    myInitialSelection = index;
+    myInitialPosition = position;
+  }
+
   public void setSelectedCell(@NotNull final IpnbEditablePanel ipnbPanel) {
     if (ipnbPanel.equals(mySelectedCell)) return;
     if (mySelectedCell != null)
@@ -346,6 +356,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
 
   public IpnbEditablePanel getSelectedCell() {
     return mySelectedCell;
+  }
+
+  public int getSelectedIndex() {
+    final IpnbEditablePanel selectedCell = getSelectedCell();
+    return myIpnbPanels.indexOf(selectedCell);
   }
 
   @Nullable
