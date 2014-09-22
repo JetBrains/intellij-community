@@ -16,7 +16,6 @@
 
 package com.intellij.vcs.log.graph.utils;
 
-import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;

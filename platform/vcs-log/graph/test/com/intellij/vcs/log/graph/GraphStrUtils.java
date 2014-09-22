@@ -18,23 +18,34 @@ package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
 import com.intellij.vcs.log.graph.impl.print.EdgesInRowGenerator;
+import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
 import com.intellij.vcs.log.graph.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.toChar;
 import static org.junit.Assert.assertEquals;
 
 public class GraphStrUtils {
+
+  public static final Comparator<GraphElement> GRAPH_ELEMENT_COMPARATOR = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
+    @NotNull
+    @Override
+    public Integer fun(Integer nodeIndex) {
+      return 0;
+    }
+  });
 
   public static <T extends Comparable<? super T>> void appendSortList(List<T> list, StringBuilder s) {
     ArrayList<T> sorted = new ArrayList<T>(list);
@@ -151,45 +162,6 @@ public class GraphStrUtils {
     }
     return s.toString();
   }
-  
-  private static char toChar(GraphNodeType type) {
-    switch (type) {
-      case USUAL:
-        return 'U';
-      default:
-        throw new IllegalStateException("Unexpected graph node type: " + type);
-    }
-  }
-  
-  private static char toChar(GraphEdgeType type) {
-    switch (type) {
-      case USUAL:
-        return 'U';
-      case DOTTED:
-        return 'H';
-      default:
-        throw new IllegalStateException("Unexpected graph edge type: " + type);
-    }
-  }
-  
-  public static String linearGraphWithElementInfoToStr(@NotNull LinearGraphWithElementInfo graph) {
-    StringBuilder s = new StringBuilder();
-    for (int i = 0; i < graph.nodesCount(); i++) {
-      if (i > 0)
-        s.append("\n");
-      s.append(i).append('_').append(toChar(graph.getNodeType(i)));
-      s.append(CommitParser.SEPARATOR);
-      boolean first = true;
-      for (int downNode : graph.getDownNodes(i)) {
-        if (first)
-          first = false;
-        else
-          s.append(" ");
-        s.append(downNode).append('_').append(toChar(graph.getEdgeType(i, downNode)));
-      }
-    }
-    return s.toString();
-  }
 
   public static String edgesInRowToStr(@NotNull EdgesInRowGenerator edgesInRowGenerator, int nodesCount) {
     StringBuilder s = new StringBuilder();
@@ -207,15 +179,7 @@ public class GraphStrUtils {
       return "none";
 
     List<GraphEdge> sortedEdges = new ArrayList<GraphEdge>(edges);
-    Collections.sort(sortedEdges, new Comparator<GraphEdge>() {
-      @Override
-      public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
-        if (o1.getUpNodeIndex() == o2.getUpNodeIndex())
-          return o1.getDownNodeIndex() - o2.getDownNodeIndex();
-        else
-          return o1.getUpNodeIndex() - o2.getUpNodeIndex();
-      }
-    });
+    Collections.sort(sortedEdges, GRAPH_ELEMENT_COMPARATOR);
 
     return StringUtil.join(sortedEdges, new Function<GraphEdge, String>() {
       @Override

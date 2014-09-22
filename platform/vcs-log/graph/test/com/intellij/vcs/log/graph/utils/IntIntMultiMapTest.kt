@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.utils
 
-import com.intellij.util.containers.IntIntHashMap
 import com.intellij.util.containers.MultiMap
 import org.junit.Assert.*
 import org.junit.Test

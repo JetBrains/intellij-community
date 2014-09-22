@@ -21,9 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +31,8 @@ import java.util.List;
 
 import static com.intellij.vcs.log.graph.parser.CommitParser.nextSeparatorIndex;
 import static com.intellij.vcs.log.graph.parser.CommitParser.toLines;
+import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.parseGraphEdgeType;
+import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.parseGraphNodeType;
 
 public class LinearGraphParser {
 
@@ -56,7 +56,7 @@ public class LinearGraphParser {
 
   /**
    * Example input line:
-   * 0_U|-1_U 2_H
+   * 0_U|-1_U 2_D
    */
   public static Pair<GraphNode, List<GraphEdge>> parseLine(@NotNull String line) {
     int separatorIndex = nextSeparatorIndex(line, 0);
@@ -72,29 +72,6 @@ public class LinearGraphParser {
       }
     }
     return Pair.create(graphNode, edges);
-  }
-
-  public static GraphNodeType parseGraphNodeType(char c) {
-    switch (c) {
-      case 'U': return GraphNodeType.USUAL;
-      case 'G': return GraphNodeType.GRAY;
-      case 'N': return GraphNodeType.NOT_LOAD_COMMIT;
-      default: throw new IllegalStateException("Illegal char for graph node type: " + c);
-    }
-  }
-
-  public static GraphEdgeType parseGraphEdgeType(char c) {
-    switch (c) {
-      case 'U':
-        return GraphEdgeType.USUAL;
-      case 'H':
-      case 'D':
-        return GraphEdgeType.DOTTED;
-      case 'N':
-        return GraphEdgeType.NOT_LOAD_COMMIT;
-      default:
-        throw new IllegalStateException("Illegal char for graph edge type: " + c);
-    }
   }
 
   private static Pair<Integer, Character> parseNumberWithChar(@NotNull String in) {
