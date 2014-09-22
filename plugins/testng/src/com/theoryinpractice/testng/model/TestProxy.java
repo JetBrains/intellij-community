@@ -53,7 +53,7 @@ public class TestProxy extends AbstractTestProxy {
   @NonNls public static final Pattern EXPECTED_BUT_FOUND_PATTERN =
     Pattern.compile("(.*)expected \\[(.*)\\] but found \\[(.*)\\].*", Pattern.DOTALL);
   @NonNls public static final Pattern EXPECTED_BUT_WAS_HAMCREST_PATTERN =
-    Pattern.compile("(.*)Expected: \"(.*)\".*but: was \"(.*)\".*", Pattern.DOTALL);
+    Pattern.compile("(.*)Expected: .*\"(.*)\".*but: was \"(.*)\".*", Pattern.DOTALL);
   private final List<TestProxy> results = new ArrayList<TestProxy>();
   private TestResultMessage resultMessage;
   private String name;
