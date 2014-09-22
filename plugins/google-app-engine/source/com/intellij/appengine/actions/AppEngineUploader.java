@@ -16,6 +16,7 @@
 package com.intellij.appengine.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.appengine.cloud.AppEngineAuthData;
 import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.appengine.descriptor.dom.AppEngineWebApp;
 import com.intellij.appengine.facet.AppEngineAccountDialog;
@@ -37,7 +38,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -91,19 +91,17 @@ public class AppEngineUploader {
   private final Artifact myArtifact;
   private final AppEngineFacet myAppEngineFacet;
   private final AppEngineSdk mySdk;
-  private final String myEmail;
-  private final String myPassword;
+  private final AppEngineAuthData myAuthData;
   private final ServerRuntimeInstance.DeploymentOperationCallback myCallback;
   private final LoggingHandler myLoggingHandler;
 
-  private AppEngineUploader(Project project, Artifact artifact, AppEngineFacet appEngineFacet, AppEngineSdk sdk, String email,
-                            String password, ServerRuntimeInstance.DeploymentOperationCallback callback, @Nullable LoggingHandler loggingHandler) {
+  private AppEngineUploader(Project project, Artifact artifact, AppEngineFacet appEngineFacet, AppEngineSdk sdk, AppEngineAuthData authData,
+                            ServerRuntimeInstance.DeploymentOperationCallback callback, @Nullable LoggingHandler loggingHandler) {
     myProject = project;
     myArtifact = artifact;
     myAppEngineFacet = appEngineFacet;
     mySdk = sdk;
-    myEmail = email;
-    myPassword = password;
+    myAuthData = authData;
     myCallback = callback;
     myLoggingHandler = loggingHandler;
   }
@@ -154,26 +152,10 @@ public class AppEngineUploader {
       }
     }
 
-    String password = null;
-    String email = null;
-    try {
-      email = AppEngineAccountDialog.getStoredEmail(configuration, project);
-      password = AppEngineAccountDialog.getStoredPassword(project, email);
-    }
-    catch (PasswordSafeException e) {
-      LOG.info("Cannot load stored password: " + e.getMessage());
-      LOG.info(e);
-    }
-    if (StringUtil.isEmpty(email) || StringUtil.isEmpty(password)) {
-      final AppEngineAccountDialog dialog = new AppEngineAccountDialog(project, configuration);
-      dialog.show();
-      if (!dialog.isOK()) return null;
+    AppEngineAuthData authData = AppEngineAccountDialog.createAuthData(project, configuration);
+    if (authData == null) return null;
 
-      email = dialog.getEmail();
-      password = dialog.getPassword();
-    }
-
-    return new AppEngineUploader(project, artifact, appEngineFacet, sdk, email, password, callback, loggingHandler);
+    return new AppEngineUploader(project, artifact, appEngineFacet, sdk, authData, callback, loggingHandler);
   }
 
   public void startUploading() {
@@ -231,7 +213,14 @@ public class AppEngineUploader {
       }
 
       final ParametersList programParameters = parameters.getProgramParametersList();
-      programParameters.add("--email=" + myEmail);
+      if (myAuthData.isOAuth2()) {
+        programParameters.add("--oauth2");
+      }
+      else {
+        programParameters.add("--email=" + myAuthData.getEmail());
+        programParameters.add("--passin");
+      }
+      programParameters.add("--no_cookies");
       programParameters.add("update");
       programParameters.add(FileUtil.toSystemDependentName(myArtifact.getOutputPath()));
 
@@ -281,15 +270,15 @@ public class AppEngineUploader {
 
     @Override
     public void onTextAvailable(ProcessEvent event, Key outputType) {
-      if (!myPasswordEntered && !outputType.equals(ProcessOutputTypes.SYSTEM) && event.getText().contains(myEmail)) {
+      if (!myAuthData.isOAuth2() && !myPasswordEntered && !outputType.equals(ProcessOutputTypes.SYSTEM) && event.getText().contains(myAuthData.getEmail())) {
         myPasswordEntered = true;
         final OutputStream processInput = myProcessHandler.getProcessInput();
         if (processInput != null) {
           //noinspection IOResourceOpenedButNotSafelyClosed
           final PrintWriter input = new PrintWriter(processInput);
-          input.println(myPassword);
+          input.println(myAuthData.getPassword());
           input.flush();
-          String message = StringUtil.repeatSymbol('*', myPassword.length()) + "\n";
+          String message = StringUtil.repeatSymbol('*', myAuthData.getPassword().length()) + "\n";
           if (myConsole != null) {
             myConsole.print(message, ConsoleViewContentType.USER_INPUT);
           }
