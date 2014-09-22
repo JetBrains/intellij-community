@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging.ui;
 
 import com.google.common.collect.Sets;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -127,7 +128,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       }
 
       @Override
-      public void finished(List<PyExternalProcessException> exceptions) {
+      public void finished(List<ExecutionException> exceptions) {
         myPackagesTable.setPaintBusy(false);
         PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
         if (!exceptions.isEmpty()) {

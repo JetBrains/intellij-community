@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -40,20 +41,20 @@ public abstract class PyPackageManager {
     return PyPackageManagers.getInstance().forSdk(sdk);
   }
 
-  public abstract void installManagement() throws PyExternalProcessException;
+  public abstract void installManagement() throws ExecutionException;
   public abstract boolean hasManagement(boolean cachedOnly);
-  public abstract void install(@NotNull String requirementString) throws PyExternalProcessException;
-  public abstract void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws PyExternalProcessException;
-  public abstract void uninstall(@NotNull List<PyPackage> packages) throws PyExternalProcessException;
+  public abstract void install(@NotNull String requirementString) throws ExecutionException;
+  public abstract void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException;
+  public abstract void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException;
   public abstract void refresh();
   @NotNull
-  public abstract String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws PyExternalProcessException;
+  public abstract String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException;
   @Nullable
-  public abstract List<PyPackage> getPackages(boolean cachedOnly) throws PyExternalProcessException;
+  public abstract List<PyPackage> getPackages(boolean cachedOnly) throws ExecutionException;
   @Nullable
-  public abstract PyPackage findPackage(@NotNull String name, boolean cachedOnly) throws PyExternalProcessException;
+  public abstract PyPackage findPackage(@NotNull String name, boolean cachedOnly) throws ExecutionException;
   @Nullable
   public abstract List<PyRequirement> getRequirements(@NotNull Module module);
   @Nullable
-  public abstract Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws PyExternalProcessException;
+  public abstract Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException;
 }

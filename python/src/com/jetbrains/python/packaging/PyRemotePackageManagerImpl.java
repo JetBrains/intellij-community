@@ -78,10 +78,10 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath,
                                                  @NotNull List<String> args,
                                                  boolean askForSudo,
-                                                 boolean showProgress, @Nullable String workingDir) throws PyExternalProcessException {
+                                                 boolean showProgress, @Nullable String workingDir) throws ExecutionException {
     final String homePath = mySdk.getHomePath();
     if (homePath == null) {
-      throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");
+      throw new ExecutionException("Cannot find Python interpreter for SDK " + mySdk.getName());
     }
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) { //remote interpreter
@@ -167,7 +167,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   }
 
   @Override
-  protected void installManagement(@NotNull String name) throws PyExternalProcessException {
+  protected void installManagement(@NotNull String name) throws ExecutionException {
     super.installManagement(name);
     // TODO: remove temp directory for remote interpreter
   }

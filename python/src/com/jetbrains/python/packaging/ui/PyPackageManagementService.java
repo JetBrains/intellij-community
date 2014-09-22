@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.packaging.ui;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -142,7 +143,7 @@ public class PyPackageManagementService extends PackageManagementService {
         });
       }
     }
-    catch (PyExternalProcessException e) {
+    catch (ExecutionException e) {
       throw new IOException(e);
     }
     return packages != null ? new ArrayList<InstalledPackage>(packages) : new ArrayList<InstalledPackage>();
@@ -183,14 +184,14 @@ public class PyPackageManagementService extends PackageManagementService {
       }
 
       @Override
-      public void finished(@Nullable List<PyExternalProcessException> exceptions) {
+      public void finished(@Nullable List<ExecutionException> exceptions) {
         listener.operationFinished(packageName, toErrorDescription(exceptions));
       }
     });
     ui.install(Collections.singletonList(req), extraArgs);
   }
 
-  private String toErrorDescription(List<PyExternalProcessException> exceptions) {
+  private String toErrorDescription(List<ExecutionException> exceptions) {
     String errorDescription = null;
     if (exceptions != null && exceptions.size() > 0) {
       errorDescription = PyPackageManagerUI.createDescription(exceptions, "");
@@ -208,7 +209,7 @@ public class PyPackageManagementService extends PackageManagementService {
       }
 
       @Override
-      public void finished(final List<PyExternalProcessException> exceptions) {
+      public void finished(final List<ExecutionException> exceptions) {
         listener.operationFinished(packageName, toErrorDescription(exceptions));
       }
     });
