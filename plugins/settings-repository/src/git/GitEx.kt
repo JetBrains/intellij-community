@@ -12,14 +12,21 @@ import org.eclipse.jgit.api.ResetCommand
 import org.jetbrains.settingsRepository.LOG
 import org.eclipse.jgit.api.CommitCommand
 
-fun Repository.disableAutoCrLf() {
+fun Repository.disableAutoCrLf(): Repository {
   val config = getConfig()
   config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, ConfigConstants.CONFIG_KEY_FALSE)
   config.save()
+  return this
 }
 
 fun createBareRepository(dir: File) {
   FileRepositoryBuilder().setBare().setGitDir(dir).build().create(true)
+}
+
+fun createRepository(dir: File): Repository {
+  val repository = FileRepositoryBuilder().setWorkTree(dir).build()
+  repository.create()
+  return repository
 }
 
 fun Repository.commit() {

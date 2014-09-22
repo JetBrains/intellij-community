@@ -13,7 +13,6 @@ import org.eclipse.jgit.transport.*
 
 import java.io.File
 import java.io.IOException
-import org.jetbrains.annotations.TestOnly
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.settingsRepository.RepositoryService
@@ -77,14 +76,9 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       return false
     }
 
-    repository.create()
+    $repository = createRepository(dir)
     repository.disableAutoCrLf()
     return true
-  }
-
-  TestOnly fun recreateRepository() {
-    $repository = FileRepositoryBuilder().setWorkTree(dir).build()
-    createRepositoryIfNeed()
   }
 
   override fun getUpstream(): String? {

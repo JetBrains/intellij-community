@@ -124,7 +124,7 @@ class GitTest {
     })
 
     val icsManager = IcsManager.getInstance()
-    (icsManager.repositoryManager as GitRepositoryManager).recreateRepository()
+    (icsManager.repositoryManager as GitRepositoryManager).createRepositoryIfNeed()
     icsManager.repositoryActive = true
   }
 

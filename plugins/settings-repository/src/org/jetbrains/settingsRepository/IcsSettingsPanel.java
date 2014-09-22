@@ -45,7 +45,12 @@ public class IcsSettingsPanel extends DialogWrapper {
         "action." + (syncType == SyncType.MERGE ? "Merge" : (syncType == SyncType.RESET_TO_THEIRS ? "ResetToTheirs" : "ResetToMy")) + "Settings.text")) {
         @Override
         protected void doAction(ActionEvent event) {
+          boolean repositoryWillBeCreated = icsManager.getRepositoryManager().isRepositoryExists();
           if (!saveRemoteRepositoryUrl(syncType)) {
+            if (repositoryWillBeCreated) {
+              // remove created repository
+              icsManager.getRepositoryManager().deleteRepository();
+            }
             return;
           }
 
@@ -53,6 +58,11 @@ public class IcsSettingsPanel extends DialogWrapper {
             icsManager.sync(syncType, project);
           }
           catch (Exception e) {
+            if (repositoryWillBeCreated) {
+              // remove created repository
+              icsManager.getRepositoryManager().deleteRepository();
+            }
+
             Messages.showErrorDialog(getContentPane(), StringUtil.notNullize(e.getMessage(), "Internal error"), IcsBundle.OBJECT$.message("sync.rejected.title"));
             return;
           }
@@ -131,8 +141,7 @@ public class IcsSettingsPanel extends DialogWrapper {
           SettingsRepositoryPackage.copyLocalConfig();
         }
         catch (Throwable e) {
-          // remove created repository
-          repositoryManager.deleteRepository();
+
           throw e;
         }
       }
