@@ -164,6 +164,9 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
                        boolean shouldLog,
                        boolean shouldReadAloud) {
     if (!isRegistered(groupDisplayName)) {
+      // register a new group and remember these settings as default
+      new NotificationGroup(groupDisplayName, displayType, shouldLog);
+      // and decide whether to save them explicitly (in case of non-default shouldReadAloud)
       changeSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud);
     } else if (displayType == NotificationDisplayType.TOOL_WINDOW && !hasToolWindowCapability(groupDisplayName)) {
       // the first time with tool window capability
