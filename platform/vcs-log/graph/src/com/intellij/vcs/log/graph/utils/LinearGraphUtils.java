@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph.utils;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -44,6 +45,22 @@ public class LinearGraphUtils {
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  public static Pair<Integer, Integer> asNormalEdge(@NotNull GraphEdge edge) {
+    if (isNormalEdge(edge)) {
+      assert edge.getUpNodeIndex() != null && edge.getDownNodeIndex() != null;
+      return Pair.create(edge.getUpNodeIndex(), edge.getDownNodeIndex());
+    }
+    return null;
+  }
+
+  public static int getNotNullNodeIndex(@NotNull GraphEdge edge) {
+    if (edge.getUpNodeIndex() != null)
+      return edge.getUpNodeIndex();
+    assert edge.getDownNodeIndex() != null;
+    return edge.getDownNodeIndex();
   }
 
   @NotNull

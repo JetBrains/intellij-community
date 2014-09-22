@@ -18,7 +18,7 @@ package com.intellij.vcs.log.graph.impl.print;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.SimplePrintElement;
-import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
@@ -34,12 +34,11 @@ import java.util.Collection;
 public abstract class AbstractPrintElementGenerator implements PrintElementGenerator {
 
   @NotNull
-  protected final PrintedLinearGraph myPrintedLinearGraph;
+  protected final LinearGraph myPrintedLinearGraph;
   @NotNull
   protected final PrintElementsManager myPrintElementsManager;
 
-  protected AbstractPrintElementGenerator(@NotNull PrintedLinearGraph printedLinearGraph,
-                                          @NotNull PrintElementsManager printElementsManager) {
+  protected AbstractPrintElementGenerator(@NotNull LinearGraph printedLinearGraph, @NotNull PrintElementsManager printElementsManager) {
     myPrintedLinearGraph = printedLinearGraph;
     myPrintElementsManager = printElementsManager;
   }
