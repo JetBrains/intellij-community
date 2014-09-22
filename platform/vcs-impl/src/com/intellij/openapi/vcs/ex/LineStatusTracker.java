@@ -105,7 +105,7 @@ public class LineStatusTracker {
         myBaseRevisionNumber = baseRevisionNumber;
 
         myVcsDocument.setReadOnly(false);
-        myVcsDocument.replaceString(0, myVcsDocument.getTextLength(), vcsContent);
+        myVcsDocument.setText(vcsContent);
         myVcsDocument.setReadOnly(true);
         reinstallRanges();
 
