@@ -17,7 +17,6 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
-import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
 import org.junit.*
@@ -38,6 +37,8 @@ import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.resetHard
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.AddFile
+import org.jetbrains.settingsRepository.git.commit
+import org.eclipse.jgit.api.Git
 
 class GitTest {
   data class FileInfo (val name: String, val data: ByteArray)
@@ -324,6 +325,22 @@ class GitTest {
     compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
   }
 
+  public Test fun `merge, remote is uninitialized (empty - initial commit is not done)`() {
+    remoteRepository = createFileRemote(null, false)
+    repositoryManager.setUpstream(remoteRepository!!.getAbsolutePath(), null)
+
+    val path = "\$APP_CONFIG$/local.xml"
+    val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
+    getProvider().saveContent(path, data, data.size, RoamingType.PER_USER, false)
+
+    sync(SyncType.MERGE)
+
+    val fs = MockVirtualFileSystem()
+    fs.findFileByPath(path)
+    restoreRemoteAfterPush();
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+  }
+
   private fun restoreRemoteAfterPush() {
     /** we must not push to non-bare repository - but we do it in test (our sync merge equals to "pull&push"),
     "
@@ -342,22 +359,21 @@ class GitTest {
     }
   }
 
-  private fun createFileRemote(branchName: String?): File {
+  private fun createFileRemote(branchName: String? = null, initialCommit: Boolean = true): File {
     val repository = testWatcher.getRepository(ICS_DIR!!)
-    val remoteRepositoryApi = Git(repository)
-
     if (branchName != null) {
       // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
-      remoteRepositoryApi.commit().setMessage("").call()
-
-      remoteRepositoryApi.checkout().setCreateBranch(true).setName(branchName).call()
+      repository.commit("")
+      Git(repository).checkout().setCreateBranch(true).setName(branchName).call()
     }
 
-    val addedFile = "\$APP_CONFIG$/remote.xml"
-    val workTree = repository.getWorkTree()
-    FileUtil.copy(File(testDataPath, "remote.xml"), File(workTree, addedFile))
-    repository.edit(AddFile(addedFile))
-    remoteRepositoryApi.commit().setMessage("").call()
+    val workTree: File = repository.getWorkTree()
+    if (initialCommit) {
+      val addedFile = "\$APP_CONFIG$/remote.xml"
+      FileUtil.copy(File(testDataPath, "remote.xml"), File(workTree, addedFile))
+      repository.edit(AddFile(addedFile))
+      repository.commit("")
+    }
     return workTree
   }
 }

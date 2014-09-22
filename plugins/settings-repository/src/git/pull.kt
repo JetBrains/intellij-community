@@ -122,6 +122,13 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       fetchResult = transport.fetch(JGitProgressMonitor(indicator), null)
     }
     catch (e: TransportException) {
+      val message = e.getMessage()!!
+      if (message.startsWith("Remote does not have ")) {
+        LOG.info(message)
+        // "Remote does not have refs/heads/master available for fetch." - remote repository is not initialized
+        return null
+      }
+
       wrapIfNeedAndReThrow(e)
       return null
     }

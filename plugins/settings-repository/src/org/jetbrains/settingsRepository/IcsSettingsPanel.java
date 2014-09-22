@@ -45,7 +45,7 @@ public class IcsSettingsPanel extends DialogWrapper {
         "action." + (syncType == SyncType.MERGE ? "Merge" : (syncType == SyncType.RESET_TO_THEIRS ? "ResetToTheirs" : "ResetToMy")) + "Settings.text")) {
         @Override
         protected void doAction(ActionEvent event) {
-          boolean repositoryWillBeCreated = icsManager.getRepositoryManager().isRepositoryExists();
+          boolean repositoryWillBeCreated = !icsManager.getRepositoryManager().isRepositoryExists();
           if (!saveRemoteRepositoryUrl(syncType)) {
             if (repositoryWillBeCreated) {
               // remove created repository

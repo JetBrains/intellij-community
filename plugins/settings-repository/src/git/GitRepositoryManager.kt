@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
-import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -92,14 +91,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   fun commit(message: String? = null, reflogComment: String? = null): RevCommit {
     val author = PersonIdent(repository)
     val committer = PersonIdent(ApplicationInfoEx.getInstanceEx()!!.getFullApplicationName(), author.getEmailAddress())
-    val commitCommand = CommitCommand(repository).setAuthor(author).setCommitter(committer)
-    if (message != null) {
-      commitCommand.setMessage(message)
-    }
-    if (reflogComment != null) {
-      commitCommand.setReflogComment(reflogComment)
-    }
-    return commitCommand.call()
+    return repository.commit(message, reflogComment, author, committer)
   }
 
   override fun isRepositoryExists() = dir.exists()

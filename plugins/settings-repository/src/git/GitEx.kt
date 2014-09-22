@@ -11,6 +11,7 @@ import java.io.IOException
 import org.eclipse.jgit.api.ResetCommand
 import org.jetbrains.settingsRepository.LOG
 import org.eclipse.jgit.api.CommitCommand
+import org.eclipse.jgit.revwalk.RevCommit
 
 fun Repository.disableAutoCrLf(): Repository {
   val config = getConfig()
@@ -29,8 +30,15 @@ fun createRepository(dir: File): Repository {
   return repository
 }
 
-fun Repository.commit() {
-  CommitCommand(this).call()
+fun Repository.commit(message: String? = null, reflogComment: String? = null, author: PersonIdent? = null, committer: PersonIdent? = null): RevCommit {
+  val commitCommand = CommitCommand(this).setAuthor(author).setCommitter(committer)
+  if (message != null) {
+    commitCommand.setMessage(message)
+  }
+  if (reflogComment != null) {
+    commitCommand.setReflogComment(reflogComment)
+  }
+  return commitCommand.call()
 }
 
 fun Repository.resetHard() {
