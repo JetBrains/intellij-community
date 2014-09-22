@@ -17,14 +17,16 @@
 package com.intellij.vcs.log.graph.parser;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
-import com.intellij.vcs.log.graph.api.RefactoringLinearGraph;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +34,9 @@ import java.util.List;
 import static com.intellij.vcs.log.graph.parser.CommitParser.nextSeparatorIndex;
 import static com.intellij.vcs.log.graph.parser.CommitParser.toLines;
 
-public class LinearGraphWithElementsInfoParser {
+public class LinearGraphParser {
 
-  public static LinearGraphWithElementInfo parse(@NotNull String in) {
+  public static LinearGraph parse(@NotNull String in) {
     List<GraphNode> graphNodes = new ArrayList<GraphNode>();
     MultiMap<Integer, GraphEdge> upEdges = MultiMap.create();
     MultiMap<Integer, GraphEdge> downEdges = MultiMap.create();
@@ -73,26 +75,33 @@ public class LinearGraphWithElementsInfoParser {
   }
 
   public static GraphNodeType parseGraphNodeType(char c) {
-    if (c == 'U')
-      return GraphNodeType.USUAL;
-
-    throw new IllegalStateException("Illegal char for graph node type: " + c);
+    switch (c) {
+      case 'U': return GraphNodeType.USUAL;
+      case 'G': return GraphNodeType.GRAY;
+      case 'N': return GraphNodeType.NOT_LOAD_COMMIT;
+      default: throw new IllegalStateException("Illegal char for graph node type: " + c);
+    }
   }
 
   public static GraphEdgeType parseGraphEdgeType(char c) {
-    if (c == 'U')
-      return GraphEdgeType.USUAL;
-    if (c == 'H')
-      return GraphEdgeType.DOTTED;
-
-    throw new IllegalStateException("Illegal char for graph edge type: " + c);
+    switch (c) {
+      case 'U':
+        return GraphEdgeType.USUAL;
+      case 'H':
+      case 'D':
+        return GraphEdgeType.DOTTED;
+      case 'N':
+        return GraphEdgeType.NOT_LOAD_COMMIT;
+      default:
+        throw new IllegalStateException("Illegal char for graph edge type: " + c);
+    }
   }
 
   private static Pair<Integer, Character> parseNumberWithChar(@NotNull String in) {
     return new Pair<Integer, Character>(Integer.decode(in.substring(0, in.length() - 2)), in.charAt(in.length() - 1));
   }
 
-  private static class TestLinearGraphWithElementsInfo extends RefactoringLinearGraph implements LinearGraphWithElementInfo {
+  private static class TestLinearGraphWithElementsInfo implements LinearGraph {
 
     private final List<GraphNode> myGraphNodes;
     private final MultiMap<Integer, GraphEdge> myUpEdges;
@@ -106,22 +115,6 @@ public class LinearGraphWithElementsInfoParser {
       myDownEdges = downEdges;
     }
 
-    @NotNull
-    @Override
-    public GraphNodeType getNodeType(int nodeIndex) {
-      return myGraphNodes.get(nodeIndex).getType();
-    }
-
-    @NotNull
-    @Override
-    public GraphEdgeType getEdgeType(int upNodeIndex, int downNodeIndex) {
-      for (GraphEdge downEdge : myDownEdges.get(upNodeIndex)) {
-        if (downEdge.getDownNodeIndex() == downNodeIndex)
-          return downEdge.getType();
-      }
-      throw new IllegalStateException("Not found edge: " + upNodeIndex + ", " + downNodeIndex);
-    }
-
     @Override
     public int nodesCount() {
       return myGraphNodes.size();
@@ -130,22 +123,33 @@ public class LinearGraphWithElementsInfoParser {
     @NotNull
     @Override
     public List<Integer> getUpNodes(int nodeIndex) {
-      List<Integer> result = new ArrayList<Integer>();
-      for (GraphEdge upEdge : myUpEdges.get(nodeIndex)) {
-        result.add(upEdge.getUpNodeIndex());
-      }
-      return result;
+      return LinearGraphUtils.getUpNodes(this, nodeIndex);
     }
 
     @NotNull
     @Override
     public List<Integer> getDownNodes(int nodeIndex) {
-      List<Integer> result = new ArrayList<Integer>();
-      for (GraphEdge downEdge : myDownEdges.get(nodeIndex)) {
-        result.add(downEdge.getDownNodeIndex());
-      }
-      return result;
+      return LinearGraphUtils.getDownNodes(this, nodeIndex);
+    }
+
+    @NotNull
+    @Override
+    public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
+      return ContainerUtil.newArrayList(ContainerUtil.concat(myUpEdges.get(nodeIndex), myDownEdges.get(nodeIndex)));
+    }
+
+    @NotNull
+    @Override
+    public GraphNode getGraphNode(int nodeIndex) {
+      return myGraphNodes.get(nodeIndex);
+    }
+
+    @Override
+    @Nullable
+    public Integer getNodeIndexById(int nodeId) {
+      if (nodeId >= 0 && nodeId < nodesCount())
+        return nodeId;
+      return null;
     }
   }
-
 }
