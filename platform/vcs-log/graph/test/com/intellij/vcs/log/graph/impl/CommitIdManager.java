@@ -18,7 +18,7 @@ package com.intellij.vcs.log.graph.impl;
 
 import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.graph.parser.SimpleCommitListParser;
+import com.intellij.vcs.log.graph.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public abstract class CommitIdManager<CommitId> {
     @NotNull
     @Override
     public List<GraphCommit<String>> parseCommitList(@NotNull String in) {
-      return SimpleCommitListParser.parseStringCommitList(in);
+      return CommitParser.parseStringCommitList(in);
     }
 
     @NotNull
@@ -42,7 +42,7 @@ public abstract class CommitIdManager<CommitId> {
     @NotNull
     @Override
     public List<GraphCommit<Integer>> parseCommitList(@NotNull String in) {
-      return SimpleCommitListParser.parseIntegerCommitList(in);
+      return CommitParser.parseIntegerCommitList(in);
     }
 
     @NotNull
