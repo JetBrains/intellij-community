@@ -113,4 +113,12 @@ public class PyInlineLocalTest extends PyTestCase {
       settings.setRightMargin(PythonLanguage.getInstance(), oldRightMargin);
     }
   }
+
+  public void testParenthesisInsertedForSubtraction() {
+    doTest();
+  }
+
+  public void testParenthesisInsertedForPower() {
+    doTest();
+  }
 }
