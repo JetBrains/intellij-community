@@ -20,6 +20,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -50,7 +51,8 @@ public abstract class RefactoringLinearGraph implements LinearGraph {
   }
 
   @Override
-  public int getNodeIndexById(int nodeId) {
-    return -1;
+  @Nullable
+  public Integer getNodeIndexById(int nodeId) {
+    return null;
   }
 }
