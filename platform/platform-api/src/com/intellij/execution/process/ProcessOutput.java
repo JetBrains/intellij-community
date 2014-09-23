@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,28 +47,12 @@ public class ProcessOutput {
     myStderrBuilder.append(text);
   }
 
-  public void setExitCode(int exitCode) {
-    myExitCode = exitCode;
-  }
-
   public String getStdout() {
     return myStdoutBuilder.toString();
   }
 
   public String getStderr() {
     return myStderrBuilder.toString();
-  }
-
-  public int getExitCode() {
-    return myExitCode;
-  }
-
-  public void setTimeout() {
-    myTimeout = true;
-  }
-
-  public boolean isTimeout() {
-    return myTimeout;
   }
 
   public List<String> getStdoutLines() {
@@ -87,6 +71,7 @@ public class ProcessOutput {
   /**
    * If exit code is nonzero or the process timed out, logs stderr and exit code and returns false,
    * else just returns true.
+   *
    * @param logger where to put error information
    * @return true iff exit code is zero
    */
@@ -98,11 +83,27 @@ public class ProcessOutput {
     return true;
   }
 
-  public boolean isCancelled() {
-    return myCancelled;
+  public void setExitCode(int exitCode) {
+    myExitCode = exitCode;
+  }
+
+  public int getExitCode() {
+    return myExitCode;
+  }
+
+  public void setTimeout() {
+    myTimeout = true;
+  }
+
+  public boolean isTimeout() {
+    return myTimeout;
   }
 
   public void setCancelled() {
     myCancelled = true;
+  }
+
+  public boolean isCancelled() {
+    return myCancelled;
   }
 }
