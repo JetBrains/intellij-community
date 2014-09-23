@@ -132,25 +132,30 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       rExpression.accept(this);
       Evaluator rEvaluator = myResult;
 
-      if(expression.getOperationTokenType() != JavaTokenType.EQ) {
-        throwEvaluateException(DebuggerBundle.message("evaluation.error.operation.not.supported", expression.getOperationSign().getText()));
-      }
-
       final PsiExpression lExpression = expression.getLExpression();
-
       final PsiType lType = lExpression.getType();
       if(lType == null) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", lExpression.getText()));
       }
 
-      if(!TypeConversionUtil.areTypesAssignmentCompatible(lType, rExpression) && rExpression.getType() != null) {
+      IElementType assignmentType = expression.getOperationTokenType();
+      PsiType rType = rExpression.getType();
+      if(!TypeConversionUtil.areTypesAssignmentCompatible(lType, rExpression) && rType != null) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", expression.getOperationSign().getText()));
       }
       lExpression.accept(this);
       Evaluator lEvaluator = myResult;
 
-      rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(lType, rExpression.getType(), rEvaluator);
+      rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(lType, rType, rEvaluator);
 
+      if (assignmentType != JavaTokenType.EQ) {
+        IElementType opType = TypeConversionUtil.convertEQtoOperation(assignmentType);
+        final PsiType typeForBinOp = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opType, true);
+        if (typeForBinOp == null || rType == null) {
+          throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
+        }
+        rEvaluator = createBinaryEvaluator(lEvaluator, lType, rEvaluator, rType, opType, typeForBinOp);
+      }
       myResult = new AssignmentEvaluator(lEvaluator, rEvaluator);
     }
 
