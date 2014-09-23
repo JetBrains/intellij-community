@@ -99,6 +99,7 @@ public class CCRunTests extends AnAction {
         if (task == null) {
           return;
         }
+        clearTestEnvironment(taskDir, project);
         for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
           final String name = entry.getKey();
           createTestEnvironment(taskDir, name, entry.getValue(), project);
@@ -107,7 +108,6 @@ public class CCRunTests extends AnAction {
             return;
           }
           executeTests(project, virtualFile, taskDir, testFile);
-          clearTestEnvironment(taskDir, project);
         }
       }
     });
