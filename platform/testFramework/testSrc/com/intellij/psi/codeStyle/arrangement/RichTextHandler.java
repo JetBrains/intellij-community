@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement
+package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 12/19/12 5:46 PM
+ * @since 19.12.2012
  */
-class RangeHandler implements RichTextHandler {
-  
-  @Override String getMarker() { "range" }
-
-  @Override
-  void handle(Info info, Map<String, String> attributes, int start, int end) {
-    info.ranges << TextRange.create(start, end)
-  }
+public interface RichTextHandler {
+  String getMarker();
+  void handle(@NotNull Info info, @NotNull Map<String, String> attributes, int start, int end);
 }

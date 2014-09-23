@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement
+package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.openapi.util.TextRange
-import org.jetbrains.annotations.Nullable
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 12/19/12 5:31 PM
+ * @since 19.12.2012
  */
-class Info {
+public class FoldingHandler implements RichTextHandler {
+  @Override
+  public String getMarker() {
+    return "fold";
+  }
 
-  String text
-  @Nullable List<TextRange> ranges = []
-  List<FoldingInfo> foldings = []
+  @Override
+  public void handle(@NotNull Info info, @NotNull Map<String, String> attributes, int start, int end) {
+    String placeholder = ObjectUtils.notNull(attributes.get("text"), "...");
+    info.foldings.add(new FoldingInfo(placeholder, start, end));
+  }
 }
