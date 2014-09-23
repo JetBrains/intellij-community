@@ -20,7 +20,6 @@ import com.intellij.appengine.cloud.AppEngineCloudConfigurable;
 import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -34,16 +33,14 @@ import org.jetbrains.annotations.Nullable;
 public class AppEngineAccountDialog {
   private static final Logger LOG = Logger.getInstance(AppEngineAccountDialog.class);
   private static final String PASSWORD_KEY = "GOOGLE_APP_ENGINE_PASSWORD";
-  private static final String EMAIL_KEY = "GOOGLE_APP_ENGINE_ACCOUNT_EMAIL";
 
   @Nullable
-  public static AppEngineAuthData createAuthData(@NotNull Project project, @Nullable AppEngineServerConfiguration stored) {
-    AppEngineServerConfiguration configuration = stored != null ? stored : new AppEngineServerConfiguration();
+  public static AppEngineAuthData createAuthData(@NotNull Project project, @NotNull AppEngineServerConfiguration configuration) {
     if (configuration.isOAuth2()) {
       return AppEngineAuthData.oauth2();
     }
 
-    String email = getStoredEmail(stored, project);
+    String email = configuration.getEmail();
     if (!StringUtil.isEmpty(email)) {
       String password = getStoredPassword(project, email);
       if (!StringUtil.isEmpty(password)) {
@@ -60,14 +57,6 @@ public class AppEngineAccountDialog {
       return AppEngineAuthData.oauth2();
     }
     return AppEngineAuthData.login(configurable.getEmail(), configurable.getPassword());
-  }
-
-  @Nullable
-  private static String getStoredEmail(@Nullable AppEngineServerConfiguration configuration, @NotNull Project project) {
-    if (configuration != null) {
-      return configuration.getEmail();
-    }
-    return PropertiesComponent.getInstance(project).getValue(EMAIL_KEY);//todo[nik] remove this
   }
 
   public static void storePassword(@NotNull String email, @NotNull String password, @Nullable Project project) {

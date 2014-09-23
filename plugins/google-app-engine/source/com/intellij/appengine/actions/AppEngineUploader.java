@@ -24,24 +24,13 @@ import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -96,7 +85,7 @@ public class AppEngineUploader {
   private final LoggingHandler myLoggingHandler;
 
   private AppEngineUploader(Project project, Artifact artifact, AppEngineFacet appEngineFacet, AppEngineSdk sdk, AppEngineAuthData authData,
-                            ServerRuntimeInstance.DeploymentOperationCallback callback, @Nullable LoggingHandler loggingHandler) {
+                            ServerRuntimeInstance.DeploymentOperationCallback callback, @NotNull LoggingHandler loggingHandler) {
     myProject = project;
     myArtifact = artifact;
     myAppEngineFacet = appEngineFacet;
@@ -109,8 +98,8 @@ public class AppEngineUploader {
   @Nullable
   public static AppEngineUploader createUploader(@NotNull Project project,
                                                  @NotNull Artifact artifact,
-                                                 @Nullable AppEngineServerConfiguration configuration,
-                                                 @NotNull ServerRuntimeInstance.DeploymentOperationCallback callback, @Nullable LoggingHandler loggingHandler) {
+                                                 @NotNull AppEngineServerConfiguration configuration,
+                                                 @NotNull ServerRuntimeInstance.DeploymentOperationCallback callback, @NotNull LoggingHandler loggingHandler) {
     final String explodedPath = artifact.getOutputPath();
     if (explodedPath == null) {
       callback.errorOccurred("Output path isn't specified for '" + artifact.getName() + "' artifact");
@@ -233,26 +222,8 @@ public class AppEngineUploader {
     }
 
     final ProcessHandler processHandler = new OSProcessHandler(process, commandLine.getCommandLineString());
-    if (myLoggingHandler == null) {
-      final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      final ConsoleView console = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
-      final RunnerLayoutUi ui = RunnerLayoutUi.Factory.getInstance(myProject).create("Upload", "Upload Application", "Upload Application", myProject);
-      final DefaultActionGroup group = new DefaultActionGroup();
-      ui.getOptions().setLeftToolbar(group, ActionPlaces.UNKNOWN);
-      ui.addContent(ui.createContent("upload", console.getComponent(), "Upload Application", null, console.getPreferredFocusableComponent()));
-
-      processHandler.addProcessListener(new MyProcessListener(processHandler, console, null));
-      console.attachToProcess(processHandler);
-      final RunContentDescriptor contentDescriptor = new RunContentDescriptor(console, processHandler, ui.getComponent(), "Upload Application");
-      group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));
-      group.add(new CloseAction(executor, contentDescriptor, myProject));
-
-      ExecutionManager.getInstance(myProject).getContentManager().showRunContent(executor, contentDescriptor);
-    }
-    else {
-      processHandler.addProcessListener(new MyProcessListener(processHandler, null, myLoggingHandler));
-      myLoggingHandler.attachToProcess(processHandler);
-    }
+    processHandler.addProcessListener(new MyProcessListener(processHandler, null, myLoggingHandler));
+    myLoggingHandler.attachToProcess(processHandler);
     processHandler.startNotify();
   }
 

@@ -1,7 +1,8 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
-import com.intellij.execution.*;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -17,16 +18,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager;
 import com.intellij.remoteServer.impl.configuration.RemoteServerConfigurable;
-import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationType;
-import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar;
-import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.impl.runtime.log.DeploymentLogManagerImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
@@ -176,8 +174,8 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     public void deploy(AnActionEvent e) {
       final ServerType<? extends ServerConfiguration> serverType = getValue().getType();
-      final DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
-      List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(RunManager.getInstance(doGetProject()).getConfigurationSettingsList(configurationType));
+      final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(doGetProject());
+      List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(configurationManager.getDeploymentConfigurations(serverType));
       list.add(null);
       ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<RunnerAndConfigurationSettings>("Deploy Configuration", list) {
         @Override
@@ -200,7 +198,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
                 ProgramRunnerUtil.executeConfiguration(doGetProject(), selectedValue, DefaultRunExecutor.getRunExecutorInstance());
               }
               else {
-                createNewConfiguration(configurationType);
+                configurationManager.createAndRunConfiguration(serverType, RemoteServerNode.this.getValue());
               }
             }
           });
@@ -211,20 +209,6 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       }
       else {
         popup.showInBestPositionFor(e.getDataContext());
-      }
-    }
-
-    private void createNewConfiguration(DeployToServerConfigurationType configurationType) {
-      RunManagerEx runManager = RunManagerEx.getInstanceEx(doGetProject());
-      ConfigurationFactoryEx factory = configurationType.getFactory();
-      RunnerAndConfigurationSettings settings = runManager.createRunConfiguration(configurationType.getDisplayName(), factory);
-      DeployToServerRunConfiguration<?, ?> runConfiguration = (DeployToServerRunConfiguration<?, ?>)settings.getConfiguration();
-      runConfiguration.setServerName(getValue().getName());
-      if (RunDialog.editConfiguration(doGetProject(), settings, "Create Deployment Configuration",
-                                      DefaultRunExecutor.getRunExecutorInstance())) {
-        runManager.addConfiguration(settings, runManager.isConfigurationShared(settings), runManager.getBeforeRunTasks(runConfiguration), false);
-        runManager.setSelectedConfiguration(settings);
-        ProgramRunnerUtil.executeConfiguration(doGetProject(), settings, DefaultRunExecutor.getRunExecutorInstance());
       }
     }
 

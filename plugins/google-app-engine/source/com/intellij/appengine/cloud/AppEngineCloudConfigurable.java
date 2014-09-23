@@ -16,8 +16,10 @@
 package com.intellij.appengine.cloud;
 
 import com.intellij.appengine.facet.AppEngineAccountDialog;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -35,6 +37,7 @@ import java.awt.event.ActionListener;
 * @author nik
 */
 public class AppEngineCloudConfigurable implements Configurable {
+  public static final String EMAIL_KEY = "GOOGLE_APP_ENGINE_ACCOUNT_EMAIL";
   private final AppEngineServerConfiguration myConfiguration;
   @Nullable private final Project myProject;
   private JTextField myEmailField;
@@ -95,6 +98,9 @@ public class AppEngineCloudConfigurable implements Configurable {
 
   public void reset() {
     String email = myConfiguration.getEmail();
+    if (email == null) {
+      email = getOldEmail();
+    }
     myEmailField.setText(StringUtil.notNullize(email));
     if (myConfiguration.isOAuth2()) {
       myOAuthLoginButton.setSelected(true);
@@ -105,8 +111,31 @@ public class AppEngineCloudConfigurable implements Configurable {
     updateControls();
   }
 
+  @Nullable
+  private static String getOldEmail() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      String value = PropertiesComponent.getInstance(project).getValue(EMAIL_KEY);
+      if (value != null) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  private static void removeOldEmail(@NotNull String email) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      String value = PropertiesComponent.getInstance(project).getValue(EMAIL_KEY);
+      if (email.equals(value)) {
+        PropertiesComponent.getInstance(project).unsetValue(EMAIL_KEY);
+      }
+    }
+  }
+
   public void apply() {
     String email = getEmail();
+    if (email != null) {
+      removeOldEmail(email);
+    }
     myConfiguration.setEmail(email);
     myConfiguration.setOAuth2(isOAuth2());
     String password = getPassword();
