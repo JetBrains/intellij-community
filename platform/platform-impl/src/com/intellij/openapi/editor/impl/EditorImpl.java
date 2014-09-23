@@ -5656,7 +5656,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             public void run() {
               myFoldingModel.flushCaretShift();
               range.setExpanded(expansion);
-              if (e.isShiftDown()) {
+              if (e.isAltDown()) {
                 for (FoldRegion region : myFoldingModel.getAllFoldRegions()) {
                   if (region.getStartOffset() >= range.getStartOffset() && region.getEndOffset() <= range.getEndOffset()) {
                     region.setExpanded(expansion);

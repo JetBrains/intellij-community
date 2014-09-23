@@ -221,8 +221,26 @@
         <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
         <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
         <separator/>
+        <action id="ExpandRegionRecursively" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionRecursivelyAction"/>
+        <action id="CollapseRegionRecursively" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionRecursivelyAction"/>
+        <separator/>
         <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
         <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
+        <separator/>
+        <group id="ExpandToLevel" popup="true">
+          <action id="ExpandToLevel1" class="com.intellij.codeInsight.folding.impl.actions.ExpandToLevel1Action"/>
+          <action id="ExpandToLevel2" class="com.intellij.codeInsight.folding.impl.actions.ExpandToLevel2Action"/>
+          <action id="ExpandToLevel3" class="com.intellij.codeInsight.folding.impl.actions.ExpandToLevel3Action"/>
+          <action id="ExpandToLevel4" class="com.intellij.codeInsight.folding.impl.actions.ExpandToLevel4Action"/>
+          <action id="ExpandToLevel5" class="com.intellij.codeInsight.folding.impl.actions.ExpandToLevel5Action"/>
+        </group>
+        <group id="ExpandAllToLevel" popup="true">
+          <action id="ExpandAllToLevel1" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllToLevel1Action"/>
+          <action id="ExpandAllToLevel2" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllToLevel2Action"/>
+          <action id="ExpandAllToLevel3" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllToLevel3Action"/>
+          <action id="ExpandAllToLevel4" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllToLevel4Action"/>
+          <action id="ExpandAllToLevel5" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllToLevel5Action"/>
+        </group>
         <separator/>
         <group id="LanguageSpecificFoldingGroup">
           <action id="ExpandDocComments" class="com.intellij.codeInsight.folding.impl.actions.ExpandDocCommentsAction"/>

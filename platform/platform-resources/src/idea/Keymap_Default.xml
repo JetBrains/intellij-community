@@ -325,6 +325,50 @@
     <keyboard-shortcut first-keystroke="control ADD"/>
     <keyboard-shortcut first-keystroke="control EQUALS"/>
   </action>
+  <action id="ExpandRegionRecursively">
+    <keyboard-shortcut first-keystroke="control alt ADD"/>
+    <keyboard-shortcut first-keystroke="control alt EQUALS"/>
+  </action>
+  <action id="ExpandToLevel1">
+    <keyboard-shortcut first-keystroke="control MULTIPLY" second-keystroke="1"/>
+    <keyboard-shortcut first-keystroke="control MULTIPLY" second-keystroke="NUMPAD1"/>
+  </action>
+  <action id="ExpandToLevel2">
+    <keyboard-shortcut first-keystroke="control MULTIPLY" second-keystroke="2"/>
+    <keyboard-shortcut first-keystroke="control MULTIPLY" second-keystroke="NUMPAD2"/>
+  </action>
+  <action id="ExpandToLevel3">
+    <keyboard-shortcut first-keystroke="control MULTIPLY" second-keystroke="3"/>
+    <keyboard-shortcut first-keystroke="control MULTIPLY" second-keystroke="NUMPAD3"/>
+  </action>
+  <action id="ExpandToLevel4">
+    <keyboard-shortcut first-keystroke="control MULTIPLY" second-keystroke="4"/>
+    <keyboard-shortcut first-keystroke="control MULTIPLY" second-keystroke="NUMPAD4"/>
+  </action>
+  <action id="ExpandToLevel5">
+    <keyboard-shortcut first-keystroke="control MULTIPLY" second-keystroke="5"/>
+    <keyboard-shortcut first-keystroke="control MULTIPLY" second-keystroke="NUMPAD5"/>
+  </action>
+  <action id="ExpandAllToLevel1">
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY" second-keystroke="1"/>
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY" second-keystroke="NUMPAD1"/>
+  </action>
+  <action id="ExpandAllToLevel2">
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY" second-keystroke="2"/>
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY" second-keystroke="NUMPAD2"/>
+  </action>
+  <action id="ExpandAllToLevel3">
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY" second-keystroke="3"/>
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY" second-keystroke="NUMPAD3"/>
+  </action>
+  <action id="ExpandAllToLevel4">
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY" second-keystroke="4"/>
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY" second-keystroke="NUMPAD4"/>
+  </action>
+  <action id="ExpandAllToLevel5">
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY" second-keystroke="5"/>
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY" second-keystroke="NUMPAD5"/>
+  </action>
   <action id="EditorLeftWithSelection">
     <keyboard-shortcut first-keystroke="shift LEFT"/>
   </action>
@@ -390,6 +434,10 @@
   <action id="CollapseRegion">
     <keyboard-shortcut first-keystroke="control SUBTRACT"/>
     <keyboard-shortcut first-keystroke="control MINUS"/>
+  </action>
+  <action id="CollapseRegionRecursively">
+    <keyboard-shortcut first-keystroke="control alt SUBTRACT"/>
+    <keyboard-shortcut first-keystroke="control alt MINUS"/>
   </action>
   <action id="PreviousOccurence">
     <keyboard-shortcut first-keystroke="control alt UP"/>

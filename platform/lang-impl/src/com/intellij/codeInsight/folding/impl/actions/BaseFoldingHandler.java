@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.folding.impl.actions;
 
+import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -33,13 +34,16 @@ public abstract class BaseFoldingHandler extends EditorActionHandler {
     return editor.getProject() != null;
   }
 
+  /**
+   * Returns fold regions inside selection, or all regions in editor, if selection doesn't exist or doesn't contain fold regions.
+   */
   protected List<FoldRegion> getFoldRegionsForSelection(@NotNull Editor editor, @Nullable Caret caret) {
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     if (caret == null) {
       caret = editor.getCaretModel().getPrimaryCaret();
     }
     if (caret.hasSelection()) {
-      List<FoldRegion> result = new ArrayList<FoldRegion>(allRegions.length);
+      List<FoldRegion> result = new ArrayList<FoldRegion>();
       for (FoldRegion region : allRegions) {
         if (region.getStartOffset() >= caret.getSelectionStart() && region.getEndOffset() <= caret.getSelectionEnd()) {
           result.add(region);
@@ -50,5 +54,36 @@ public abstract class BaseFoldingHandler extends EditorActionHandler {
       }
     }
     return Arrays.asList(allRegions);
+  }
+
+  /**
+   * Returns a region corresponding to current caret position, and all regions contained in it.
+   */
+  protected List<FoldRegion> getFoldRegionsForCaret(@NotNull Editor editor, @Nullable Caret caret, boolean toCollapse) {
+    if (caret == null) {
+      caret = editor.getCaretModel().getPrimaryCaret();
+    }
+    int offset = caret.getOffset();
+    FoldRegion rootRegion = FoldingUtil.findFoldRegionStartingAtLine(editor, editor.getDocument().getLineNumber(offset));
+    if (rootRegion == null || rootRegion.isExpanded() != toCollapse) {
+      rootRegion = null;
+      FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, offset);
+      for (FoldRegion region : regions) {
+        if (region.isExpanded() == toCollapse) {
+          rootRegion = region;
+          break;
+        }
+      }
+    }
+    List<FoldRegion> result = new ArrayList<FoldRegion>();
+    if (rootRegion != null) {
+      FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+      for (FoldRegion region : allRegions) {
+        if (region.getStartOffset() >= rootRegion.getStartOffset() && region.getEndOffset() <= rootRegion.getEndOffset()) {
+          result.add(region);
+        }
+      }
+    }
+    return result;
   }
 }
