@@ -17,10 +17,12 @@
 package com.intellij.vcs.log.graph.parser;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.vcs.log.graph.parser.CommitParser.nextSeparatorIndex;
 import static com.intellij.vcs.log.graph.parser.CommitParser.toLines;
@@ -38,19 +41,54 @@ public class LinearGraphParser {
 
   public static LinearGraph parse(@NotNull String in) {
     List<GraphNode> graphNodes = new ArrayList<GraphNode>();
+
+    Map<GraphNode, List<String>> edges = ContainerUtil.newHashMap();
+    Map<Integer, Integer> nodeIdToNodeIndex = ContainerUtil.newHashMap();
+
+    for (String line : toLines(in)) { // parse input and create nodes
+      Pair<GraphNode, List<String>> graphNodePair = parseLine(line, graphNodes.size());
+      GraphNode graphNode = graphNodePair.first;
+
+      edges.put(graphNode, graphNodePair.second);
+      nodeIdToNodeIndex.put(graphNode.getNodeId(), graphNodes.size());
+      graphNodes.add(graphNode);
+    }
+
     MultiMap<Integer, GraphEdge> upEdges = MultiMap.create();
     MultiMap<Integer, GraphEdge> downEdges = MultiMap.create();
+    for (GraphNode graphNode : graphNodes) { // create edges
+      for (String strEdge : edges.get(graphNode)) {
+        Pair<Integer, Character> pairEdge = parseNumberWithChar(strEdge);
+        GraphEdgeType type = parseGraphEdgeType(pairEdge.second);
 
-    for (String line : toLines(in)) {
-      Pair<GraphNode, List<GraphEdge>> pair = parseLine(line);
-      assert pair.first.getNodeIndex() == graphNodes.size();
-      graphNodes.add(pair.first);
+        GraphEdge edge;
+        switch (type) {
+          case USUAL:
+          case DOTTED:
+            Integer downNodeIndex = nodeIdToNodeIndex.get(pairEdge.first);
+            assert downNodeIndex != null;
+            edge = new GraphEdge(graphNode.getNodeIndex(), downNodeIndex, type);
+            downEdges.putValue(edge.getUpNodeIndex(), edge);
+            upEdges.putValue(edge.getDownNodeIndex(), edge);
+            break;
 
-      for (GraphEdge graphEdge : pair.second) {
-        upEdges.putValue(graphEdge.getDownNodeIndex(), graphEdge);
-        downEdges.putValue(graphEdge.getUpNodeIndex(), graphEdge);
+          case NOT_LOAD_COMMIT:
+          case DOTTED_ARROW_DOWN:
+            edge = new GraphEdge(graphNode.getNodeIndex(), null, pairEdge.first, type);
+            downEdges.putValue(edge.getUpNodeIndex(), edge);
+            break;
+
+          case DOTTED_ARROW_UP:
+            edge = new GraphEdge(null, graphNode.getNodeIndex(), pairEdge.first, type);
+            upEdges.putValue(edge.getDownNodeIndex(), edge);
+            break;
+
+          default:
+            throw new IllegalStateException("Unknown type: " + type);
+        }
       }
     }
+
     return new TestLinearGraphWithElementsInfo(graphNodes, upEdges, downEdges);
   }
 
@@ -58,20 +96,22 @@ public class LinearGraphParser {
    * Example input line:
    * 0_U|-1_U 2_D
    */
-  public static Pair<GraphNode, List<GraphEdge>> parseLine(@NotNull String line) {
+  public static Pair<GraphNode, List<String>> parseLine(@NotNull String line, int lineNumber) {
     int separatorIndex = nextSeparatorIndex(line, 0);
     Pair<Integer, Character> pair = parseNumberWithChar(line.substring(0, separatorIndex));
 
-    GraphNode graphNode = new GraphNode(pair.first,pair.first, parseGraphNodeType(pair.second));
-    List<GraphEdge> edges = new ArrayList<GraphEdge>();
+    GraphNode graphNode = new GraphNode(pair.first, lineNumber, parseGraphNodeType(pair.second));
 
-    for (String edge : line.substring(separatorIndex + 2).split("\\s")) {
-      if (!edge.isEmpty()) {
-        pair = parseNumberWithChar(edge);
-        edges.add(new GraphEdge(graphNode.getNodeIndex(), pair.first, parseGraphEdgeType(pair.second)));
+    String[] edges = line.substring(separatorIndex + 2).split("\\s");
+    List<String> normalEdges = ContainerUtil.mapNotNull(edges, new Function<String, String>() {
+      @Nullable
+      @Override
+      public String fun(String s) {
+        if (s.isEmpty()) return null;
+        return s;
       }
-    }
-    return Pair.create(graphNode, edges);
+    });
+    return Pair.create(graphNode, normalEdges);
   }
 
   private static Pair<Integer, Character> parseNumberWithChar(@NotNull String in) {
