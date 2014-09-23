@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -148,7 +149,7 @@ public class PushController implements Disposable {
                                                                                                  @NotNull final R repository,
                                                                                                  @NotNull CheckedTreeNode rootNode) {
     T target = support.getDefaultTarget(repository);
-    String repoName = DvcsUtil.getShortRepositoryName(repository);
+    String repoName = getDisplayedRepoName(repository);
     S source = support.getSource(repository);
     final MyRepoModel<R, S, T> model = new MyRepoModel<R, S, T>(repository, support, mySingleRepoProject,
                                                                 source, target,
@@ -185,6 +186,34 @@ public class PushController implements Disposable {
       }
     });
     rootNode.add(repoNode);
+  }
+
+  // TODO This logic shall be moved to some common place and used instead of DvcsUtil.getShortRepositoryName
+  @NotNull
+  private String getDisplayedRepoName(@NotNull Repository repository) {
+    String name = DvcsUtil.getShortRepositoryName(repository);
+    int slash = name.lastIndexOf(File.separatorChar);
+    if (slash < 0) {
+      return name;
+    }
+    String candidate = name.substring(slash + 1);
+    if (!getOtherReposLastNames(repository).contains(candidate)) {
+      return candidate;
+    }
+    return name;
+  }
+
+  @NotNull
+  private Set<String> getOtherReposLastNames(@NotNull Repository except) {
+    Set<String> repos = ContainerUtil.newHashSet();
+    for (PushSupport<?, ?, ?> support : myPushSupports) {
+      for (Repository repo : support.getRepositoryManager().getRepositories()) {
+        if (!repo.equals(except)) {
+          repos.add(repo.getRoot().getName());
+        }
+      }
+    }
+    return repos;
   }
 
   public boolean isPushAllowed() {
@@ -224,7 +253,7 @@ public class PushController implements Disposable {
 
   @NotNull
   private Collection<RepositoryNode> getNodesForSupport(final PushSupport<?, ?, ?> support) {
-    return ContainerUtil.mapNotNull(myView2Model.entrySet(), new Function<Map.Entry<RepositoryNode,MyRepoModel>, RepositoryNode>() {
+    return ContainerUtil.mapNotNull(myView2Model.entrySet(), new Function<Map.Entry<RepositoryNode, MyRepoModel>, RepositoryNode>() {
       @Override
       public RepositoryNode fun(Map.Entry<RepositoryNode, MyRepoModel> entry) {
         return entry.getValue().getSupport().equals(support) ? entry.getKey() : null;

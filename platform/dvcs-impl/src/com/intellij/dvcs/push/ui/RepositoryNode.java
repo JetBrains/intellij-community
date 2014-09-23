@@ -20,6 +20,8 @@ import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +63,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
       renderer.setIconTextGap(CHECKBOX_WIDTH - myLoadingIcon.getIconWidth());
       repoFixedWidth += CHECKBOX_WIDTH;
     }
-    renderer.append(myRepositoryPanel.getRepositoryName(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    renderer.append(getRepoName(renderer, repoFixedWidth), SimpleTextAttributes.GRAY_ATTRIBUTES);
     renderer.appendFixedTextFragmentWidth(repoFixedWidth);
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -69,6 +71,12 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     pushTargetPanel.render(renderer);
     Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(pushTargetPanel);
     renderer.setBorder(new EmptyBorder(insets));
+  }
+
+  @NotNull
+  private String getRepoName(@NotNull ColoredTreeCellRenderer renderer, int maxWidth) {
+    String name = myRepositoryPanel.getRepositoryName();
+    return GraphicsUtil.stringWidth(name, renderer.getFont()) > maxWidth - UIUtil.DEFAULT_VGAP ? name + "  " : name;
   }
 
   @Override
