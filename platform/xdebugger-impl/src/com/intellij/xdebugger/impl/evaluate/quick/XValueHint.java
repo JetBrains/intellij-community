@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -115,6 +116,7 @@ public class XValueHint extends AbstractValueHint {
     boolean result = super.showHint(component);
     if (result && getType() == ValueHintType.MOUSE_OVER_HINT) {
       myDisposable = Disposer.newDisposable();
+      Disposer.register(((EditorImpl)getEditor()).getDisposable(), myDisposable);
       ShortcutSet shortcut = ActionManager.getInstance().getAction("ShowErrorDescription").getShortcutSet();
       new DumbAwareAction() {
         @Override
@@ -133,7 +135,6 @@ public class XValueHint extends AbstractValueHint {
     super.hideHint();
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
-
     }
   }
 
