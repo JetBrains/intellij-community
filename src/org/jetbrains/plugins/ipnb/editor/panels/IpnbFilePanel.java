@@ -101,7 +101,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
       c.gridy = addCellToPanel(cell, c);
     }
 
-    if (myIpnbPanels.size() > myInitialSelection) {
+    if (myInitialSelection >= 0 && myIpnbPanels.size() > myInitialSelection) {
       final IpnbEditablePanel toSelect = myIpnbPanels.get(myInitialSelection);
       setSelectedCell(toSelect);
       myParent.getScrollPane().getViewport().setViewPosition(new Point(0, myInitialPosition));
