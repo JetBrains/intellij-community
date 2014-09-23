@@ -43,6 +43,11 @@ import com.intellij.util.xmlb.annotations.Transient;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectObjectProcedure;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +57,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 @State(
   name = "HttpConfigurable",
@@ -424,6 +432,24 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     else {
       throw new IOException("Expected " + HttpURLConnection.class + ", but got " + urlConnection.getClass());
     }
+  }
+
+  @NotNull
+  public RequestConfig.Builder setProxy(@NotNull RequestConfig.Builder builder, boolean useProxy) {
+    if (useProxy) {
+      builder.setProxy(new HttpHost(PROXY_HOST, PROXY_PORT));
+    }
+
+    return builder;
+  }
+
+  @NotNull
+  public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider, boolean useProxy) {
+    if (useProxy && PROXY_AUTHENTICATION) {
+      provider.setCredentials(new AuthScope(PROXY_HOST, PROXY_PORT), new UsernamePasswordCredentials(PROXY_LOGIN, getPlainProxyPassword()));
+    }
+
+    return provider;
   }
 
   public static List<KeyValue<String, String>> getJvmPropertiesList(final boolean withAutodetection, @Nullable final URI uri) {
