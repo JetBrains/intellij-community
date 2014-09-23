@@ -65,7 +65,12 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
         return aClass.getUseScope();
       }
     });
-    final SearchScope useScope = searchScope.intersectWith(classScope);
+    final SearchScope useScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return searchScope.intersectWith(classScope);
+      }
+    });
     final Project project = PsiUtilCore.getProjectInReadAction(aClass);
     final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project);
     final Collection<PsiMethod> lambdaCandidates = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiMethod>>() {

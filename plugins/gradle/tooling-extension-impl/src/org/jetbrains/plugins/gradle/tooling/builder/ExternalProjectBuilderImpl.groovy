@@ -26,6 +26,7 @@ import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.util.PatternFilterable
+import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
@@ -109,6 +110,9 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
   }
 
   static Map<String, ExternalSourceSet> getSourceSets(Project project) {
+    final IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
+    boolean inheritOutputDirs = ideaPlugin?.model?.module?.inheritOutputDirs ?: false
+
     def result = [:] as Map<String, ExternalSourceSet>
     if (!project.hasProperty("sourceSets") || !(project.sourceSets instanceof SourceSetContainer)) {
       return result
@@ -128,11 +132,13 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
       resourcesDirectorySet.outputDir = sourceSet.output.resourcesDir
+      resourcesDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
       javaDirectorySet.outputDir = sourceSet.output.classesDir
+      javaDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
 

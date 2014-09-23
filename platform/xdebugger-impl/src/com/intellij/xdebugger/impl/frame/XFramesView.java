@@ -61,6 +61,7 @@ public class XFramesView extends XDebugView {
   private final ComboBox myThreadComboBox;
   private final Set<XExecutionStack> myExecutionStacks = ContainerUtil.newHashSet();
   private XExecutionStack mySelectedStack;
+  private int mySelectedFrameIndex;
   private boolean myListenersEnabled;
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<XExecutionStack, StackFramesListBuilder>();
   private final ActionToolbarImpl myToolbar;
@@ -76,7 +77,7 @@ public class XFramesView extends XDebugView {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         if (myListenersEnabled && !e.getValueIsAdjusting()) {
-          processFrameSelection(e);
+          processFrameSelection(getSession(e));
         }
       }
     });
@@ -86,7 +87,7 @@ public class XFramesView extends XDebugView {
         if (myListenersEnabled) {
           int i = myFramesList.locationToIndex(e.getPoint());
           if (i != -1 && myFramesList.isSelectedIndex(i)) {
-            processFrameSelection(e);
+            processFrameSelection(getSession(e));
           }
         }
       }
@@ -115,9 +116,10 @@ public class XFramesView extends XDebugView {
 
         if (e.getStateChange() == ItemEvent.SELECTED) {
           Object item = e.getItem();
-          if (item instanceof XExecutionStack) {
+          if (item != mySelectedStack && item instanceof XExecutionStack) {
             XDebugSession session = getSession(e);
             if (session != null) {
+              mySelectedFrameIndex = 0;
               updateFrames((XExecutionStack)item, session);
             }
           }
@@ -188,10 +190,10 @@ public class XFramesView extends XDebugView {
     return toolbar;
   }
 
-  private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack) {
+  private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack, XDebugSession session) {
     StackFramesListBuilder builder = myBuilders.get(executionStack);
     if (builder == null) {
-      builder = new StackFramesListBuilder(executionStack);
+      builder = new StackFramesListBuilder(executionStack, session);
       myBuilders.put(executionStack, builder);
     }
     return builder;
@@ -209,8 +211,14 @@ public class XFramesView extends XDebugView {
       XStackFrame currentStackFrame = session == null ? null : session.getCurrentStackFrame();
       if (currentStackFrame != null) {
         myFramesList.setSelectedValue(currentStackFrame, true);
+        mySelectedFrameIndex = myFramesList.getSelectedIndex();
       }
       return;
+    }
+
+    if (event != SessionEvent.SETTINGS_CHANGED) {
+      mySelectedFrameIndex = 0;
+      mySelectedStack = null;
     }
 
     myListenersEnabled = false;
@@ -218,7 +226,6 @@ public class XFramesView extends XDebugView {
       builder.dispose();
     }
     myBuilders.clear();
-    mySelectedStack = null;
     XSuspendContext suspendContext = session == null ? null : session.getSuspendContext();
     if (suspendContext == null) {
       requestClear();
@@ -234,7 +241,7 @@ public class XFramesView extends XDebugView {
     XExecutionStack[] executionStacks = suspendContext.getExecutionStacks();
     addExecutionStacks(Arrays.asList(executionStacks));
 
-    XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
+    XExecutionStack activeExecutionStack = mySelectedStack != null ? mySelectedStack : suspendContext.getActiveExecutionStack();
     myThreadComboBox.setSelectedItem(activeExecutionStack);
     myThreadsPanel.removeAll();
     myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
@@ -244,7 +251,6 @@ public class XFramesView extends XDebugView {
     }
     myToolbar.setAddSeparatorFirst(!invisible);
     updateFrames(activeExecutionStack, session);
-    myListenersEnabled = true;
   }
 
   @Override
@@ -266,23 +272,16 @@ public class XFramesView extends XDebugView {
   }
 
   private void updateFrames(final XExecutionStack executionStack, @NotNull XDebugSession session) {
-    if (mySelectedStack == executionStack) {
-      return;
-    }
     if (mySelectedStack != null) {
-      getOrCreateBuilder(mySelectedStack).stop();
+      getOrCreateBuilder(mySelectedStack, session).stop();
     }
 
     mySelectedStack = executionStack;
     if (executionStack != null) {
-      StackFramesListBuilder builder = getOrCreateBuilder(executionStack);
+      StackFramesListBuilder builder = getOrCreateBuilder(executionStack, session);
+      myListenersEnabled = false;
       builder.initModel(myFramesList.getModel());
-      builder.start();
-      XStackFrame topFrame = executionStack.getTopFrame();
-      if (topFrame != null) {
-        myFramesList.setSelectedValue(topFrame, true);
-        session.setCurrentStackFrame(executionStack, topFrame);
-      }
+      myListenersEnabled = !builder.start();
     }
   }
 
@@ -298,12 +297,12 @@ public class XFramesView extends XDebugView {
     return myMainPanel;
   }
 
-  private void processFrameSelection(@NotNull EventObject e) {
+  private void processFrameSelection(XDebugSession session) {
+    mySelectedFrameIndex = myFramesList.getSelectedIndex();
     Object selected = myFramesList.getSelectedValue();
     if (selected instanceof XStackFrame) {
-      XDebugSession session = getSession(e);
       if (session != null) {
-        session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected);
+        session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, mySelectedFrameIndex == 0);
       }
     }
   }
@@ -312,21 +311,15 @@ public class XFramesView extends XDebugView {
     private XExecutionStack myExecutionStack;
     private final List<XStackFrame> myStackFrames;
     private String myErrorMessage;
-    private int myNextFrameIndex;
+    private int myNextFrameIndex = 0;
     private boolean myRunning;
     private boolean myAllFramesLoaded;
+    private final XDebugSession mySession;
 
-    private StackFramesListBuilder(final XExecutionStack executionStack) {
+    private StackFramesListBuilder(final XExecutionStack executionStack, XDebugSession session) {
       myExecutionStack = executionStack;
+      mySession = session;
       myStackFrames = new ArrayList<XStackFrame>();
-      XStackFrame topFrame = executionStack.getTopFrame();
-      if (topFrame != null) {
-        myStackFrames.add(topFrame);
-        myNextFrameIndex = 1;
-      }
-      else {
-        myNextFrameIndex = 0;
-      }
     }
 
     @Override
@@ -336,10 +329,12 @@ public class XFramesView extends XDebugView {
         public void run() {
           myStackFrames.addAll(stackFrames);
           addFrameListElements(stackFrames, last);
+          selectCurrentFrame();
           myNextFrameIndex += stackFrames.size();
           myAllFramesLoaded = last;
           if (last) {
             myRunning = false;
+            myListenersEnabled = true;
           }
         }
       });
@@ -354,6 +349,7 @@ public class XFramesView extends XDebugView {
             myErrorMessage = errorMessage;
             addFrameListElements(Collections.singletonList(errorMessage), true);
             myRunning = false;
+            myListenersEnabled = true;
           }
         }
       });
@@ -387,16 +383,27 @@ public class XFramesView extends XDebugView {
       myExecutionStack = null;
     }
 
-    public void start() {
+    public boolean start() {
       if (myExecutionStack == null || myErrorMessage != null) {
-        return;
+        return false;
       }
       myRunning = true;
       myExecutionStack.computeStackFrames(myNextFrameIndex, this);
+      return true;
     }
 
     public void stop() {
       myRunning = false;
+    }
+
+    private void selectCurrentFrame() {
+      if (mySelectedStack != null &&
+          myFramesList.getSelectedIndex() != mySelectedFrameIndex &&
+          myFramesList.getElementCount() > mySelectedFrameIndex &&
+          myFramesList.getModel().get(mySelectedFrameIndex) != null) {
+        myFramesList.setSelectedIndex(mySelectedFrameIndex);
+        processFrameSelection(mySession);
+      }
     }
 
     @SuppressWarnings("unchecked")
@@ -411,6 +418,7 @@ public class XFramesView extends XDebugView {
       else if (!myAllFramesLoaded) {
         model.addElement(null);
       }
+      selectCurrentFrame();
     }
   }
 }

@@ -40,6 +40,9 @@ public interface VcsLogFilterCollection {
   VcsLogTextFilter getTextFilter();
 
   @Nullable
+  VcsLogHashFilter getHashFilter();
+
+  @Nullable
   VcsLogStructureFilter getStructureFilter();
 
   /**

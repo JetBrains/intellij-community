@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,10 +106,8 @@ public class ConvertProjectDialog extends DialogWrapper {
     final List<File> nonexistentFiles = myContext.getNonExistingModuleFiles();
     if (!nonexistentFiles.isEmpty() && !myNonExistingFilesMessageShown) {
       final String filesString = getFilesString(nonexistentFiles);
-      final int res = Messages.showYesNoDialog(getContentPane(), IdeBundle.message("message.files.doesn.t.exists.0.so.the.corresponding.modules.won.t.be.converted.do.you.want.to.continue",
-                                                                                   filesString),
-                                                                 IdeBundle.message("dialog.title.convert.project"),
-                                                                 Messages.getQuestionIcon());
+      final String message = IdeBundle.message("message.text.files.do.not.exist", filesString);
+      final int res = Messages.showYesNoDialog(getContentPane(), message, IdeBundle.message("dialog.title.convert.project"), Messages.getQuestionIcon());
       if (res != Messages.YES) {
         super.doOKAction();
         return;

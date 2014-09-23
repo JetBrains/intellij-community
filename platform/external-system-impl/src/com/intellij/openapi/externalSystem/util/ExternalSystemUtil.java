@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
@@ -81,6 +82,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.CheckBoxList;
@@ -430,10 +432,29 @@ public class ExternalSystemUtil {
       projectName = projectFile.getName();
     }
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
+      private final ExternalSystemResolveProjectTask myTask
+        = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, isPreviewMode);
+
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         if(project.isDisposed()) return;
+
+        if (indicator instanceof ProgressIndicatorEx) {
+          ((ProgressIndicatorEx)indicator).addStateDelegate(new AbstractProgressIndicatorExBase() {
+            @Override
+            public void cancel() {
+              super.cancel();
+
+              ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                @Override
+                public void run() {
+                  myTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
+                }
+              });
+            }
+          });
+        }
 
         ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
         if (processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, externalSystemId, externalProjectPath) != null) {
@@ -446,17 +467,14 @@ public class ExternalSystemUtil {
             .clearNotifications(null, NotificationSource.PROJECT_SYNC, externalSystemId);
         }
 
-        ExternalSystemResolveProjectTask task
-          = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, isPreviewMode);
-
-        task.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
+        myTask.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
         if(project.isDisposed()) return;
 
-        final Throwable error = task.getError();
+        final Throwable error = myTask.getError();
         if (error == null) {
           ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
           assert manager != null;
-          DataNode<ProjectData> externalProject = task.getExternalProject();
+          DataNode<ProjectData> externalProject = myTask.getExternalProject();
 
           if(externalProject != null) {
             Set<String> externalModulePaths = ContainerUtil.newHashSet();

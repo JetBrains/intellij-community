@@ -56,12 +56,12 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
       if (modulePattern.startsWith("group:")) {
         int idx = modulePattern.indexOf(':', 6);
         if (idx == -1) idx = modulePattern.length();
-        myModuleGroupPattern = Pattern.compile(StringUtil.replace(modulePattern.substring(6, idx), "*", ".*"));
+        myModuleGroupPattern = Pattern.compile(StringUtil.escapeToRegexp(modulePattern.substring(6, idx)));
         if (idx < modulePattern.length() - 1) {
-          myModulePattern = Pattern.compile(StringUtil.replace(modulePattern.substring(idx + 1), "*", ".*"));
+          myModulePattern = Pattern.compile(StringUtil.escapeToRegexp(modulePattern.substring(idx + 1)));
         }
       } else {
-        myModulePattern = Pattern.compile(StringUtil.replace(modulePattern, "*", ".*"));
+        myModulePattern = Pattern.compile(StringUtil.escapeToRegexp(modulePattern));
       }
     }
     myFilePattern = filePattern != null ? Pattern.compile(convertToRegexp(filePattern, '/')) : null;

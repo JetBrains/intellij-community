@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ui.ShowUIDefaultsAction;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.TimeoutUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -81,19 +82,11 @@ public class DarculaTest {
           @Override
           public void run() {
             while (myProgressBar2.getValue() < 100) {
-              try {
-                sleep(20);
-              }
-              catch (InterruptedException e1) {
-              }
+              TimeoutUtil.sleep(20);
               myProgressBar2.setValue(myProgressBar2.getValue() + 1);
             }
 
-            try {
-              sleep(1000);
-            }
-            catch (InterruptedException e1) {
-            }
+            TimeoutUtil.sleep(1000);
 
             myProgressBar2.setValue(0);
             myStartButton.setEnabled(true);

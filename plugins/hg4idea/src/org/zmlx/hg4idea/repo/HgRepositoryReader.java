@@ -48,10 +48,10 @@ public class HgRepositoryReader {
 
   private static Pattern HASH_NAME = Pattern.compile("\\s*([0-9a-fA-F]+)\\s+(.+)");
   private static Pattern HASH_STATUS_NAME = Pattern.compile("\\s*([0-9a-fA-F]+)\\s+\\w\\s+(.+)");
-    //hash + name_or_revision_num; hash + status_character +  name_or_revision_num
+  //hash + name_or_revision_num; hash + status_character +  name_or_revision_num
 
   @NotNull private final File myHgDir;            // .hg
-  @NotNull private  File myBranchHeadsFile;  // .hg/cache/branch* + part depends on version
+  @NotNull private File myBranchHeadsFile;  // .hg/cache/branch* + part depends on version
   @NotNull private final File myCacheDir; // .hg/cache (does not exist before first commit)
   @NotNull private final File myCurrentBranch;    // .hg/branch
   @NotNull private final File myBookmarksFile; //.hg/bookmarks
@@ -59,6 +59,8 @@ public class HgRepositoryReader {
   @NotNull private final File myTagsFile; //.hgtags  - not in .hg directory!!!
   @NotNull private final File myLocalTagsFile;  // .hg/localtags
   @NotNull private final File myDirStateFile;  // .hg/dirstate
+  @NotNull private final File mySubrepoFile;  // .hgsubstate
+
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
   private final boolean myStatusInBranchFile;
   @NotNull final HgVcs myVcs;
@@ -76,6 +78,7 @@ public class HgRepositoryReader {
     myCurrentBookmark = new File(myHgDir, "bookmarks.current");
     myLocalTagsFile = new File(myHgDir, "localtags");
     myTagsFile = new File(myHgDir.getParentFile(), ".hgtags");
+    mySubrepoFile = new File(myHgDir.getParentFile(), ".hgsubstate");
     myDirStateFile = new File(myHgDir, "dirstate");
     myVcsObjectsFactory = ServiceManager.getService(vcs.getProject(), VcsLogObjectsFactory.class);
   }
@@ -192,6 +195,10 @@ public class HgRepositoryReader {
     return new File(myHgDir, "merge").exists();
   }
 
+  public boolean hasSubrepos() {
+    return mySubrepoFile.exists();
+  }
+
   public boolean isRebaseInProgress() {
     return new File(myHgDir, "rebasestate").exists();
   }
@@ -248,4 +255,11 @@ public class HgRepositoryReader {
   public String readCurrentBookmark() {
     return myCurrentBookmark.exists() ? RepositoryUtil.tryLoadFile(myCurrentBookmark) : null;
   }
+
+  @NotNull
+  public Collection<HgNameWithHashInfo> readSubrepos() {
+    if (!hasSubrepos()) return Collections.emptySet();
+    return readReference(mySubrepoFile);
+  }
+
 }

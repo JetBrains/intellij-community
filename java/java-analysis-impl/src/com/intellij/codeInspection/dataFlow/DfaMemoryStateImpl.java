@@ -78,6 +78,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     
     myCachedDistinctClassPairs = toCopy.myCachedDistinctClassPairs;
     myCachedNonTrivialEqClasses = toCopy.myCachedNonTrivialEqClasses;
+    myCachedHash = toCopy.myCachedHash;
   }
 
   public DfaValueFactory getFactory() {
@@ -93,6 +94,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (obj == this) return true;
     if (!(obj instanceof DfaMemoryStateImpl)) return false;
     DfaMemoryStateImpl that = (DfaMemoryStateImpl)obj;
+    if (myCachedHash != null && that.myCachedHash != null && !myCachedHash.equals(that.myCachedHash)) return false;
     return equalsSuperficially(that) && equalsByUnknownVariables(that) && equalsByRelations(that) && equalsByVariableStates(that);
   }
 
@@ -140,8 +142,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myCachedNonTrivialEqClasses = result;
   }
 
+  private Integer myCachedHash;
   public int hashCode() {
-    return getPartialHashCode(true, true);
+    if (myCachedHash != null) return myCachedHash;
+
+    int hash = getPartialHashCode(true, true);
+    myCachedHash = hash;
+    return hash;
   }
 
   int getPartialHashCode(boolean unknowns, boolean varStates) {
@@ -151,7 +158,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (varStates) {
       hash = hash * 31 + myVariableStates.hashCode();
     }
-    if (unknowns) {
+    if (unknowns && !myUnknownVariables.isEmpty()) {
       hash = hash * 31 + myUnknownVariables.hashCode();
     }
     return hash;
@@ -197,6 +204,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public DfaValue pop() {
+    myCachedHash = null;
     return myStack.pop();
   }
 
@@ -207,11 +215,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void push(@NotNull DfaValue value) {
+    myCachedHash = null;
     myStack.push(value);
   }
 
   @Override
   public void emptyStack() {
+    myCachedHash = null;
     myStack.clear();
   }
 
@@ -454,8 +464,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean isNull(DfaValue dfaValue) {
-    if (dfaValue instanceof DfaTypeValue && ((DfaTypeValue)dfaValue).isNotNull()) return false;
-    
     if (dfaValue instanceof DfaConstValue) return ((DfaConstValue)dfaValue).getValue() == null;
 
     if (dfaValue instanceof DfaVariableValue) {
@@ -468,14 +476,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean isNotNull(DfaValue dfaVar) {
-    if (dfaVar instanceof DfaVariableValue && getVariableState((DfaVariableValue)dfaVar).isNotNull()) {
-      return true;
-    }
-    if (dfaVar instanceof DfaConstValue && ((DfaConstValue)dfaVar).getValue() != null) {
-      return true;
-    }
-    if (dfaVar instanceof DfaTypeValue && ((DfaTypeValue)dfaVar).isNotNull()) {
-      return true;
+    if (dfaVar instanceof DfaConstValue) return ((DfaConstValue)dfaVar).getValue() != null;
+    if (dfaVar instanceof DfaTypeValue) return ((DfaTypeValue)dfaVar).isNotNull();
+    if (dfaVar instanceof DfaVariableValue) {
+      if (getVariableState((DfaVariableValue)dfaVar).isNotNull()) return true;
+
+      DfaConstValue constantValue = getConstantValue((DfaVariableValue)dfaVar);
+      if (constantValue != null && constantValue.getValue() != null) return true;
     }
 
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
@@ -751,11 +758,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       myCachedDistinctClassPairs = null;
       myCachedNonTrivialEqClasses = null;
+      myCachedHash = null;
     }
     else { // Not Equals
       if (c1Index.equals(c2Index)) return false;
       makeClassesDistinct(c1Index, c2Index);
       myCachedDistinctClassPairs = null;
+      myCachedHash = null;
     }
 
     return true;
@@ -798,6 +807,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     } else {
       myVariableStates.put(dfaVar, state);
     }
+    myCachedHash = null;
   }
   
   public DfaVariableState getVariableState(DfaVariableValue dfaVar) {
@@ -873,6 +883,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     flushDependencies(variable);
     myUnknownVariables.remove(variable);
     myUnknownVariables.removeAll(myFactory.getVarFactory().getAllQualifiedBy(variable));
+    myCachedHash = null;
   }
 
   public void flushDependencies(DfaVariableValue variable) {
@@ -938,6 +949,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     myCachedNonTrivialEqClasses = null;
     myCachedDistinctClassPairs = null;
+    myCachedHash = null;
   }
 
   private static boolean mine(int id, DfaValue value) {

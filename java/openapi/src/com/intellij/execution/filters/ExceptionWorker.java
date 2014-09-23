@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,18 +47,6 @@ public class ExceptionWorker {
   @NonNls private static final String AT = "at";
   private static final String AT_PREFIX = AT + " ";
   private static final String STANDALONE_AT = " " + AT + " ";
-
-  private static final TextAttributes HYPERLINK_ATTRIBUTES;
-  private static final TextAttributes LIBRARY_HYPERLINK_ATTRIBUTES;
-  
-  static {
-    HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
-    
-    LIBRARY_HYPERLINK_ATTRIBUTES = HYPERLINK_ATTRIBUTES.clone();
-    Color libTextColor = UIUtil.getInactiveTextColor();
-    LIBRARY_HYPERLINK_ATTRIBUTES.setForegroundColor(libTextColor);
-    LIBRARY_HYPERLINK_ATTRIBUTES.setEffectColor(libTextColor);
-  }
 
   private final Project myProject;
   private Filter.Result myResult;
@@ -129,13 +117,16 @@ public class ExceptionWorker {
     }
 
     List<VirtualFile> virtualFiles;
-    TextAttributes attributes;
+    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
     if (virtualFilesInContent.isEmpty()) {
-      attributes = LIBRARY_HYPERLINK_ATTRIBUTES;
+      Color libTextColor = UIUtil.getInactiveTextColor();
+      attributes = attributes.clone();
+      attributes.setForegroundColor(libTextColor);
+      attributes.setEffectColor(libTextColor);
+
       virtualFiles = virtualFilesInLibraries;
     }
     else {
-      attributes = HYPERLINK_ATTRIBUTES;
       virtualFiles = virtualFilesInContent;
     }
     HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, lineNumber - 1, myProject);

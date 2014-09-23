@@ -1,0 +1,27 @@
+package pkg;
+
+public class TestDeprecations {
+   /** @deprecated */
+   public int byComment;
+   /** @deprecated */
+   @Deprecated
+   public int byAnno;
+
+   /** @deprecated */
+   public void byComment() {
+   }
+
+   /** @deprecated */
+   @Deprecated
+   public void byAnno() {
+   }
+
+   /** @deprecated */
+   @Deprecated
+   public static class ByAnno {
+   }
+
+   /** @deprecated */
+   public static class ByComment {
+   }
+}

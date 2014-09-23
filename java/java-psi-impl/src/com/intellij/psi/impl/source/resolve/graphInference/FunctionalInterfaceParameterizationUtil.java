@@ -36,7 +36,7 @@ public class FunctionalInterfaceParameterizationUtil {
     }
     if (classType instanceof PsiClassType) {
       for (PsiType type : ((PsiClassType)classType).getParameters()) {
-        if (type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType) {
+        if (type instanceof PsiWildcardType) {
           return true;
         }
       }

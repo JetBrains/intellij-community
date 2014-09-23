@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
@@ -56,6 +57,8 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
     myProject = ProjectManagerEx.getInstanceEx().loadProject(projectFile.getPath());
     ProjectManagerEx.getInstanceEx().openTestProject(myProject);
+    UIUtil.dispatchAllInvocationEvents(); // startup activities
+
     ModuleManagerImpl mm = (ModuleManagerImpl)ModuleManager.getInstance(myProject);
     mm.projectOpened();
     setUpJdk();

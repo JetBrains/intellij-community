@@ -16,9 +16,9 @@
 package org.jetbrains.java.decompiler;
 
 import com.intellij.openapi.diagnostic.Logger;
-import de.fernflower.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 
-public class IdeaLogger implements IFernflowerLogger {
+public class IdeaLogger extends IFernflowerLogger {
   private final static Logger LOG = Logger.getInstance(IdeaDecompiler.class);
 
   public static class InternalException extends RuntimeException {
@@ -28,10 +28,10 @@ public class IdeaLogger implements IFernflowerLogger {
   }
 
   @Override
-  public void writeMessage(String message, int severity) {
-    if (severity >= ERROR) LOG.error(message);
-    else if (severity == WARNING) LOG.warn(message);
-    else if (severity == INFO) LOG.info(message);
+  public void writeMessage(String message, Severity severity) {
+    if (severity == Severity.ERROR) LOG.error(message);
+    else if (severity == Severity.WARN) LOG.warn(message);
+    else if (severity == Severity.INFO) LOG.info(message);
     else LOG.debug(message);
   }
 
@@ -62,20 +62,12 @@ public class IdeaLogger implements IFernflowerLogger {
   }
 
   @Override
-  public void startMethod(String method) {
-    LOG.debug("processing method " + method);
+  public void startMethod(String methodName) {
+    LOG.debug("processing method " + methodName);
   }
 
   @Override
   public void endMethod() {
     LOG.debug("... method processed");
   }
-
-  @Override
-  public int getSeverity() {
-    return WARNING;
-  }
-
-  @Override
-  public void setSeverity(int ignore) { }
 }

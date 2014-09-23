@@ -41,8 +41,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.*;
@@ -314,18 +312,6 @@ public class SearchUtil {
     }
   }
 
-  public static Runnable lightOptions(final SearchableConfigurable configurable,
-                                      final JComponent component,
-                                      final String option,
-                                      final GlassPanel glassPanel,
-                                      final boolean forceSelect) {
-    return new Runnable() {
-      public void run() {
-        traverseComponentsTree(configurable, glassPanel, component, option, forceSelect);
-      }
-    };
-  }
-
   public static String markup(@NonNls @NotNull String textToMarkup, @Nullable String filter) {
     if (filter == null || filter.length() == 0) {
       return textToMarkup;
@@ -573,80 +559,6 @@ public class SearchUtil {
       return popup;
     }
     return null;
-  }
-
-  public static void showHintPopup(final ConfigurableSearchTextField searchField,
-                                   final JBPopup[] activePopup,
-                                   final Alarm showHintAlarm,
-                                   final Consumer<String> selectConfigurable,
-                                   final Project project) {
-    for (JBPopup aPopup : activePopup) {
-      if (aPopup != null) {
-        aPopup.cancel();
-      }
-    }
-
-    final JBPopup popup = createPopup(searchField, activePopup, showHintAlarm, selectConfigurable, project, 0); //no selection
-    if (popup != null) {
-      popup.showUnderneathOf(searchField);
-      searchField.requestFocusInWindow();
-    }
-
-    activePopup[0] = popup;
-    activePopup[1] = null;
-  }
-
-
-  public static void registerKeyboardNavigation(final ConfigurableSearchTextField searchField,
-                                                final JBPopup[] activePopup,
-                                                final Alarm showHintAlarm,
-                                                final Consumer<String> selectConfigurable,
-                                                final Project project) {
-    final Consumer<Integer> shower = new Consumer<Integer>() {
-      public void consume(final Integer direction) {
-        if (activePopup[0] != null) {
-          activePopup[0].cancel();
-        }
-
-        if (activePopup[1] != null && activePopup[1].isVisible()) {
-          return;
-        }
-
-        final JBPopup popup = createPopup(searchField, activePopup, showHintAlarm, selectConfigurable, project, direction.intValue());
-        if (popup != null) {
-          popup.showUnderneathOf(searchField);
-        }
-        activePopup[0] = null;
-        activePopup[1] = popup;
-      }
-    };
-    searchField.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        shower.consume(1);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-    searchField.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        shower.consume(-1);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-    searchField.addKeyboardListener(new KeyAdapter() {
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE && searchField.getText().length() > 0) {
-          e.consume();
-          if (cancelPopups(activePopup)) return;
-          searchField.setText("");
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          searchField.addCurrentTextToHistory();
-          cancelPopups(activePopup);
-          if (e.getModifiers() == 0) {
-            e.consume();
-          }
-        }
-      }
-    });
   }
 
   private static boolean cancelPopups(final JBPopup[] activePopup) {

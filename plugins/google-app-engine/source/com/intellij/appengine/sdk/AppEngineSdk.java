@@ -31,10 +31,13 @@ public interface AppEngineSdk {
   @NotNull
   String getSdkHomePath();
 
+  @NotNull
   File getAppCfgFile();
 
+  @NotNull
   File getToolsApiJarFile();
 
+  @NotNull
   File[] getLibraries();
 
   boolean isClassInWhiteList(@NotNull String className);
@@ -46,15 +49,23 @@ public interface AppEngineSdk {
 
   boolean isValid();
 
+  @NotNull
   String getOrmLibDirectoryPath();
 
+  @NotNull
   List<String> getUserLibraryPaths();
 
+  @NotNull
   VirtualFile[] getOrmLibSources();
 
+  @NotNull
+  File getApplicationSchemeFile();
+
+  @NotNull
   File getWebSchemeFile();
 
+  @NotNull
   File[] getJspLibraries();
 
-  void patchJavaParametersForDevServer(ParametersList vmParameters);
+  void patchJavaParametersForDevServer(@NotNull ParametersList vmParameters);
 }

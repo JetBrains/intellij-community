@@ -1,6 +1,8 @@
 package com.intellij.execution.console;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
@@ -30,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,8 @@ public final class LanguageConsoleBuilder {
 
   private boolean oneLineInput;
 
+  private String processInputStateKey;
+
   // todo to be removed
   public LanguageConsoleBuilder(@SuppressWarnings("NullableProblems") @NotNull LanguageConsoleView consoleView) {
     this.consoleView = consoleView;
@@ -87,6 +90,7 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
+  @NotNull
   public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
     if (consoleView == null) {
       this.executeActionHandler = executeActionHandler;
@@ -150,6 +154,13 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
+  @NotNull
+  public LanguageConsoleBuilder processInputStateKey(@Nullable String value) {
+    processInputStateKey = value;
+    return this;
+  }
+
+  @NotNull
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
     GutteredLanguageConsole console = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
     if (oneLineInput) {
@@ -160,6 +171,17 @@ public final class LanguageConsoleBuilder {
       assert historyType != null;
       doInitAction(consoleView, executeActionHandler, historyType);
     }
+
+    if (processInputStateKey != null) {
+      assert executeActionHandler != null;
+      if (PropertiesComponent.getInstance().getBoolean(processInputStateKey, false)) {
+        executeActionHandler.myUseProcessStdIn = true;
+        DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(consoleView.getProject());
+        daemonCodeAnalyzer.setHighlightingEnabled(consoleView.getConsole().getFile(), false);
+      }
+      consoleView.addCustomConsoleAction(new UseConsoleInputAction(processInputStateKey));
+    }
+
     console.initComponents();
     return consoleView;
   }
@@ -243,7 +265,7 @@ public final class LanguageConsoleBuilder {
       });
       editor.setHorizontalScrollbarVisible(true);
 
-      JLayeredPane layeredPane = new JBLayeredPane() {
+      JLayeredPane layeredPane = new JLayeredPane() {
         @Override
         public Dimension getPreferredSize() {
           Dimension editorSize = getEditorComponent().getPreferredSize();

@@ -1,2 +1,2 @@
-def f(my, <caret>*, param, **args):
+def f<caret>oo(my, *, param, **args):
   pass

@@ -20,8 +20,10 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
@@ -39,7 +41,9 @@ import java.beans.PropertyChangeListener;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 
 /**
@@ -49,7 +53,10 @@ import java.util.Map;
 public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> {
   @NonNls public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
 
-  public TodoIndex(MessageBus messageBus) {
+  private final FileTypeRegistry myFileTypeManager;
+
+  public TodoIndex(MessageBus messageBus, FileTypeRegistry manager) {
+    myFileTypeManager = manager;
     messageBus.connect().subscribe(IndexPatternProvider.INDEX_PATTERNS_CHANGED, new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
@@ -127,7 +134,23 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
 
   @Override
   public int getVersion() {
-    return 8;
+    int version = 8;
+    FileType[] types = myFileTypeManager.getRegisteredFileTypes();
+    Arrays.sort(types, new Comparator<FileType>() {
+      @Override
+      public int compare(FileType o1, FileType o2) {
+        return Comparing.compare(o1.getName(), o2.getName());
+      }
+    });
+
+    for(FileType fileType:types) {
+      DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = TodoIndexers.INSTANCE.forFileType(fileType);
+      if (indexer == null) continue;
+
+      int versionFromIndexer = indexer instanceof VersionedTodoIndexer ? (((VersionedTodoIndexer)indexer).getVersion()) : 0xFF;
+      version = version * 31 + (versionFromIndexer ^ indexer.getClass().getName().hashCode());
+    }
+    return version;
   }
 
   @Override

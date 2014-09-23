@@ -60,7 +60,8 @@ public abstract class SplitAction extends AnAction implements DumbAware {
     final int minimum = myCloseSource ? 2 : 1;
     final boolean enabled = project != null
                             && window != null
-                            && window.getTabCount() >= minimum;
+                            && window.getTabCount() >= minimum
+                            && !window.getOwner().isPreview();
     event.getPresentation().setEnabled(enabled);
   }
 }

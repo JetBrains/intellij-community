@@ -16,7 +16,6 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.*;
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,6 +26,7 @@ import org.zmlx.hg4idea.command.HgOutgoingCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgVersion;
@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider {
+public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgRepository, HgPushSource, HgTarget> {
 
 
   private static final Logger LOG = Logger.getInstance(HgOutgoingCommitsProvider.class);
@@ -43,8 +43,8 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider {
 
   @NotNull
   @Override
-  public OutgoingResult getOutgoingCommits(@NotNull final Repository repository,
-                                           @NotNull final PushSpec pushSpec,
+  public OutgoingResult getOutgoingCommits(@NotNull final HgRepository repository,
+                                           @NotNull final PushSpec<HgPushSource, HgTarget> pushSpec,
                                            boolean initial) {
     final Project project = repository.getProject();
     HgVcs hgvcs = HgVcs.getInstance(project);
@@ -52,9 +52,9 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider {
     final HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
     HgOutgoingCommand hgOutgoingCommand = new HgOutgoingCommand(project);
-    HgTarget hgTarget = (HgTarget)pushSpec.getTarget();
+    HgTarget hgTarget = pushSpec.getTarget();
     List<VcsError> errors = new ArrayList<VcsError>();
-    if (hgTarget == null || StringUtil.isEmptyOrSpaces(hgTarget.myTarget)) {
+    if (StringUtil.isEmptyOrSpaces(hgTarget.myTarget)) {
       errors.add(new VcsError("Hg push path could not be empty."));
       return new OutgoingResult(Collections.<VcsFullCommitDetails>emptyList(), errors);
     }

@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.template
+
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.codeInsight.template.impl.*
-import com.intellij.codeInsight.template.macro.ClassNameCompleteMacro
-import com.intellij.codeInsight.template.macro.CompleteMacro
-import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro
-import com.intellij.codeInsight.template.macro.SnakeCaseMacro
+import com.intellij.codeInsight.template.macro.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -39,6 +37,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
+
 /**
  * @author spleaner
  */
@@ -462,7 +461,8 @@ class Foo {
 
   @Override
   protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
-    if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar", "test escape string characters in soutv"]) {
+    if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar", 
+                 "test escape string characters in soutv", "test do not replace macro value with empty result"]) {
       runnable.run();
       return;
     }
@@ -819,6 +819,40 @@ import static java.lang.Math.abs;
 class Foo {
   {
     abs(PI);<caret>
+  }
+}
+"""
+  }
+
+  public void "test do not replace macro value with empty result"() {
+    myFixture.configureByText "a.java", """\
+class Foo {
+  {
+    <caret>
+  }
+}
+"""
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", '$VAR1$ $VAR2$ $VAR1$');
+    template.addVariable("VAR1", "", "", true)
+    template.addVariable("VAR2", new MacroCallNode(new FileNameMacro()), new ConstantNode("default"), true)
+    ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
+    addTemplate(template, testRootDisposable)
+    
+    startTemplate(template);
+    myFixture.checkResult """\
+class Foo {
+  {
+    <caret> a.java 
+  }
+}
+"""
+    myFixture.type 'test'
+    
+    myFixture.checkResult """\
+class Foo {
+  {
+    test<caret> a.java test
   }
 }
 """

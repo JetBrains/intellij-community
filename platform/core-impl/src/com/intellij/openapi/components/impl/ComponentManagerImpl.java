@@ -21,10 +21,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -203,7 +200,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Nullable
   protected static ProgressIndicator getProgressIndicator() {
-    return ProgressIndicatorProvider.getGlobalProgressIndicator();
+    boolean isProgressManagerInitialized = ApplicationManager.getApplication().getPicoContainer().getComponentAdapterOfType(ProgressManager.class) != null;
+    return isProgressManagerInitialized ? ProgressIndicatorProvider.getGlobalProgressIndicator() : null;
   }
 
   protected float getPercentageOfComponentsLoaded() {
@@ -493,7 +491,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     @SuppressWarnings({"unchecked"})
     public <T> T[] getComponentsByType(final Class<T> baseClass) {
-      ArrayList<T> array = new ArrayList<T>();
+      List<T> array = new ArrayList<T>();
 
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < myComponentInterfaces.size(); i++) {

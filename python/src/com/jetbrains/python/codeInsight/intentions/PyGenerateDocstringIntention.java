@@ -69,6 +69,7 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
     if (function == null || statementList != null) {
       return false;
     }
+    if (!elementAt.equals(function.getNameNode())) return false;
     return isAvailableForFunction(project, function);
   }
 

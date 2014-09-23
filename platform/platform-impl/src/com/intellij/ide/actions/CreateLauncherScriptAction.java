@@ -134,12 +134,12 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {
     String runPath = PathManager.getHomePath();
+    final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
     if (!SystemInfo.isMac) {
       // for Macs just use "*.app"
-      final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
       runPath += "/bin/" + productName + ".sh";
     } else if (runPath.endsWith(CONTENTS)) {
-      runPath = runPath.substring(0, runPath.length() - CONTENTS.length());
+      runPath += "/MacOS/" + productName;
     }
     String launcherContents = ExecUtil.loadTemplate(CreateLauncherScriptAction.class.getClassLoader(), "launcher.py",
                                                           newHashMap(asList("$CONFIG_PATH$", "$RUN_PATH$"),

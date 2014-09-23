@@ -281,7 +281,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   @Override
   protected void canRun() throws ConfigurationException {
     String name = getParameterName();
-    if (name == null || !JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name)) {
+    if (name == null || !PsiNameHelper.getInstance(myProject).isIdentifier(name)) {
       throw new ConfigurationException("\'" + (name != null ? name : "") + "\' is invalid parameter name");
     }
   }

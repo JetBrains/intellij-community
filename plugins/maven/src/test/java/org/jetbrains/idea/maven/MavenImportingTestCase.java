@@ -34,6 +34,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -43,10 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -60,6 +58,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectsTree myProjectsTree;
   protected MavenProjectsManager myProjectsManager;
+  private File myGlobalSettingsFile;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myGlobalSettingsFile =
+      MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.getEffectiveGlobalSettingsIoFile();
+    if (myGlobalSettingsFile != null) {
+      VfsRootAccess.allowRootAccess(myGlobalSettingsFile.getAbsolutePath());
+    }
+  }
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -71,6 +80,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      if (myGlobalSettingsFile != null) {
+        VfsRootAccess.disallowRootAccess(myGlobalSettingsFile.getAbsolutePath());
+      }
       Messages.setTestDialog(TestDialog.DEFAULT);
       myProjectsManager.projectClosed();
       removeFromLocalRepository("test");
@@ -521,7 +533,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected Sdk setupJdkForModule(final String moduleName) {
-    final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk("Java 1.5");
+    final Sdk sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);
     return sdk;
   }

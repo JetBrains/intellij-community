@@ -19,6 +19,7 @@ import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.JavaIndentOptionsEditor;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -57,8 +58,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
-    consumer.showAllStandardOptions();
     if (settingsType == SettingsType.SPACING_SETTINGS) {
+      consumer.showAllStandardOptions();
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_WITHIN_ANGLE_BRACKETS", "Angle brackets",CodeStyleSettingsCustomizable.SPACES_WITHIN);
 
       String groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_ARGUMENTS;
@@ -68,6 +69,107 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_PARAMETERS;
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER", "Before opening angle bracket", groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS", "Around type bounds", groupName);
+    }
+    else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
+      consumer.showStandardOptions("RIGHT_MARGIN",
+                                   "KEEP_CONTROL_STATEMENT_IN_ONE_LINE",
+                                   "LINE_COMMENT_AT_FIRST_COLUMN",
+                                   "BLOCK_COMMENT_AT_FIRST_COLUMN",
+                                   "KEEP_LINE_BREAKS",
+                                   "KEEP_FIRST_COLUMN_COMMENT",
+                                   "CALL_PARAMETERS_WRAP",
+                                   "PREFER_PARAMETERS_WRAP",
+                                   "CALL_PARAMETERS_LPAREN_ON_NEXT_LINE",
+                                   "CALL_PARAMETERS_RPAREN_ON_NEXT_LINE",
+                                   "METHOD_PARAMETERS_WRAP",
+                                   "METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE",
+                                   "METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE",
+                                   "RESOURCE_LIST_WRAP",
+                                   "RESOURCE_LIST_LPAREN_ON_NEXT_LINE",
+                                   "RESOURCE_LIST_RPAREN_ON_NEXT_LINE",
+                                   "EXTENDS_LIST_WRAP",
+                                   "THROWS_LIST_WRAP",
+                                   "EXTENDS_KEYWORD_WRAP",
+                                   "THROWS_KEYWORD_WRAP",
+                                   "METHOD_CALL_CHAIN_WRAP",
+                                   "PARENTHESES_EXPRESSION_LPAREN_WRAP",
+                                   "PARENTHESES_EXPRESSION_RPAREN_WRAP",
+                                   "BINARY_OPERATION_WRAP",
+                                   "BINARY_OPERATION_SIGN_ON_NEXT_LINE",
+                                   "TERNARY_OPERATION_WRAP",
+                                   "TERNARY_OPERATION_SIGNS_ON_NEXT_LINE",
+                                   "MODIFIER_LIST_WRAP",
+                                   "KEEP_SIMPLE_BLOCKS_IN_ONE_LINE",
+                                   "KEEP_SIMPLE_METHODS_IN_ONE_LINE",
+                                   "KEEP_SIMPLE_CLASSES_IN_ONE_LINE",
+                                   "KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE",
+                                   "FOR_STATEMENT_WRAP",
+                                   "FOR_STATEMENT_LPAREN_ON_NEXT_LINE",
+                                   "FOR_STATEMENT_RPAREN_ON_NEXT_LINE",
+                                   "ARRAY_INITIALIZER_WRAP",
+                                   "ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE",
+                                   "ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE",
+                                   "ASSIGNMENT_WRAP",
+                                   "PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE",
+                                   "LABELED_STATEMENT_WRAP",
+                                   "ASSERT_STATEMENT_WRAP",
+                                   "ASSERT_STATEMENT_COLON_ON_NEXT_LINE",
+                                   "IF_BRACE_FORCE",
+                                   "DOWHILE_BRACE_FORCE",
+                                   "WHILE_BRACE_FORCE",
+                                   "FOR_BRACE_FORCE",
+                                   "WRAP_LONG_LINES",
+                                   "METHOD_ANNOTATION_WRAP",
+                                   "CLASS_ANNOTATION_WRAP",
+                                   "FIELD_ANNOTATION_WRAP",
+                                   "PARAMETER_ANNOTATION_WRAP",
+                                   "VARIABLE_ANNOTATION_WRAP",
+                                   "ALIGN_MULTILINE_CHAINED_METHODS",
+                                   "ALIGN_MULTILINE_PARAMETERS",
+                                   "ALIGN_MULTILINE_PARAMETERS_IN_CALLS",
+                                   "ALIGN_MULTILINE_RESOURCES",
+                                   "ALIGN_MULTILINE_FOR",
+                                   "INDENT_WHEN_CASES",
+                                   "ALIGN_MULTILINE_BINARY_OPERATION",
+                                   "ALIGN_MULTILINE_ASSIGNMENT",
+                                   "ALIGN_MULTILINE_TERNARY_OPERATION",
+                                   "ALIGN_MULTILINE_THROWS_LIST",
+                                   "ALIGN_THROWS_KEYWORD",
+                                   "ALIGN_MULTILINE_EXTENDS_LIST",
+                                   "ALIGN_MULTILINE_METHOD_BRACKETS",
+                                   "ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION",
+                                   "ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION",
+                                   "ALIGN_GROUP_FIELD_DECLARATIONS",
+                                   "BRACE_STYLE",
+                                   "CLASS_BRACE_STYLE",
+                                   "METHOD_BRACE_STYLE",
+                                   "USE_FLYING_GEESE_BRACES",
+                                   "FLYING_GEESE_BRACES_GAP",
+                                   "DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS",
+                                   "ELSE_ON_NEW_LINE",
+                                   "WHILE_ON_NEW_LINE",
+                                   "CATCH_ON_NEW_LINE",
+                                   "FINALLY_ON_NEW_LINE",
+                                   "INDENT_CASE_FROM_SWITCH",
+                                   "SPECIAL_ELSE_IF_TREATMENT",
+                                   "ENUM_CONSTANTS_WRAP");
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ANNOTATION_PARAMETER_WRAP",
+                                ApplicationBundle.message("wrapping.annotation.parameters"),
+                                null,
+                                CodeStyleSettingsCustomizable.WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ALIGN_MULTILINE_ANNOTATION_PARAMETERS",
+                                ApplicationBundle.message("wrapping.align.when.multiline"),
+                                ApplicationBundle.message("wrapping.annotation.parameters"));
+
+      String groupName = ApplicationBundle.message("wrapping.fields.annotation");
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", "Do not wrap after single annotation", groupName);
+    }
+    else {
+      consumer.showAllStandardOptions();
     }
   }
 

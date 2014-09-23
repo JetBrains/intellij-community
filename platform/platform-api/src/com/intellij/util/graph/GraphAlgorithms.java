@@ -21,6 +21,7 @@ import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -48,5 +49,9 @@ public abstract class GraphAlgorithms {
   @NotNull
   public abstract <Node> Graph<Node> invertEdgeDirections(@NotNull Graph<Node> graph);
 
-  public abstract <Node> Graph<Chunk<Node>> computeSCCGraph(final Graph<Node> graph);
+  @NotNull
+  public abstract <Node> Collection<Chunk<Node>> computeStronglyConnectedComponents(@NotNull Graph<Node> graph);
+
+  @NotNull
+  public abstract <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull Graph<Node> graph);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -300,7 +300,7 @@ class BeforeRunStepsPanel extends JPanel {
       final ListPopup popup =
         popupFactory.createActionGroupPopup(ExecutionBundle.message("add.new.run.configuration.acrtion.name"), actionGroup,
                                             SimpleDataContext.getProjectContext(myRunConfiguration.getProject()), false, false, false, null,
-                                            -1, Condition.TRUE);
+                                            -1, Conditions.<AnAction>alwaysTrue());
       popup.show(button.getPreferredPopupPoint());
   }
 

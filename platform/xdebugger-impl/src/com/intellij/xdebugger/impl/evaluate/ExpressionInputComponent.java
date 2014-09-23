@@ -63,6 +63,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     contentPanel.add(hint, BorderLayout.SOUTH);
   }
 
+  @NotNull
   protected XDebuggerEditorBase getInputEditor() {
     return myExpressionComboBox;
   }

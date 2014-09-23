@@ -1,8 +1,11 @@
 package com.jetbrains.env.ut;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.*;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -29,20 +32,37 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 /**
+ * Tasks to run unit test configurations.
+ * You should extend it either implementing {@link #after()} and {@link #before()} or implement {@link #runTestOn(String)}
+ * yourself and use {@link #runConfiguration(com.intellij.execution.configurations.ConfigurationFactory, String, com.intellij.openapi.project.Project)}
+ * or {@link #runConfiguration(com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.execution.configurations.RunConfiguration)} .
+ * Use {@link #myDescriptor} and {@link #myConsoleView} to check output
+ *
  * @author traff
  */
 public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   protected ProcessHandler myProcessHandler;
   private boolean shouldPrintOutput = false;
-  private SMTestProxy.SMRootTestProxy myTestProxy;
-  private boolean mySetUp = false;
-  private SMTRunnerConsoleView myConsoleView;
-  private RunContentDescriptor myDescriptor;
+  /**
+   * Test root node
+   */
+  protected SMTestProxy.SMRootTestProxy myTestProxy;
+  /**
+   * Output test console
+   */
+  protected SMTRunnerConsoleView myConsoleView;
+  /**
+   * Test run descriptor
+   */
+  protected RunContentDescriptor myDescriptor;
+
   private StringBuilder myOutput;
+  private boolean mySetUp = false;
 
   public PyUnitTestTask() {
   }
@@ -83,30 +103,30 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   @Override
   public void tearDown() throws Exception {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (mySetUp) {
-            if (myConsoleView != null) {
-              Disposer.dispose(myConsoleView);
-              myConsoleView = null;
-            }
-            if (myDescriptor != null) {
-              Disposer.dispose(myDescriptor);
-              myDescriptor = null;
-            }
+                                   @Override
+                                   public void run() {
+                                     try {
+                                       if (mySetUp) {
+                                         if (myConsoleView != null) {
+                                           Disposer.dispose(myConsoleView);
+                                           myConsoleView = null;
+                                         }
+                                         if (myDescriptor != null) {
+                                           Disposer.dispose(myDescriptor);
+                                           myDescriptor = null;
+                                         }
 
 
-            PyUnitTestTask.super.tearDown();
+                                         PyUnitTestTask.super.tearDown();
 
-            mySetUp = false;
-          }
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
+                                         mySetUp = false;
+                                       }
+                                     }
+                                     catch (Exception e) {
+                                       throw new RuntimeException(e);
+                                     }
+                                   }
+                                 }
 
     );
   }
@@ -151,9 +171,29 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
       }
     }.execute();
 
-    final ExecutionEnvironment environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), settings).build();
+    runConfiguration(settings, config);
+  }
+
+  /**
+   * Run configuration.
+   *
+   * @param settings settings (if have any, null otherwise)
+   * @param config configuration to run
+   * @throws Exception
+   */
+  protected void runConfiguration(@Nullable final RunnerAndConfigurationSettings settings,
+                                  @NotNull final RunConfiguration config) throws Exception {
+    final ExecutionEnvironment environment;
+    if (settings == null) {
+      environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), config).build();
+    }
+    else {
+      environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), settings).build();
+    }
     //noinspection ConstantConditions
+
     Assert.assertTrue(environment.getRunner().canRun(DefaultRunExecutor.EXECUTOR_ID, config));
+
 
     before();
 
@@ -177,7 +217,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
                   myOutput.append(event.getText());
                 }
               });
-              myConsoleView = (com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView)descriptor.getExecutionConsole();
+              myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
               myTestProxy = myConsoleView.getResultsViewer().getTestsRootNode();
               myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
                 @Override
@@ -194,7 +234,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
       }
     });
 
-    Assert.assertTrue(s.waitFor(60000));
+    Assert.assertTrue(s.waitFor(getTestTimeout()));
 
     XDebuggerTestUtil.waitForSwing();
 
@@ -205,6 +245,10 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     after();
 
     disposeProcess(myProcessHandler);
+  }
+
+  protected int getTestTimeout() {
+    return 60000;
   }
 
   protected void configure(AbstractPythonTestRunConfiguration config) {

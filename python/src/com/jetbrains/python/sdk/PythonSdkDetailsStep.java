@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Set;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
-  private DialogWrapper myMore;
+  @Nullable private DialogWrapper myMore;
   private final Project myProject;
   private final Component myOwnerComponent;
   private final Sdk[] myExistingSdks;
@@ -120,6 +120,8 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   private void optionSelected(final String selectedValue) {
+    if (!MORE.equals(selectedValue) && myMore != null)
+      Disposer.dispose(myMore.getDisposable());
     if (LOCAL.equals(selectedValue)) {
       createLocalSdk();
     }
@@ -129,7 +131,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     else if (VIRTUALENV.equals(selectedValue)) {
       createVirtualEnvSdk();
     }
-    else {
+    else if (myMore != null) {
       myMore.show();
     }
   }

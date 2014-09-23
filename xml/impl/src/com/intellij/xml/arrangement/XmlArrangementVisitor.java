@@ -74,7 +74,7 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
                                                     @Nullable String name,
                                                     @Nullable String namespace,
                                                     boolean canBeMatched) {
-    if (!isWithinBounds(range)) {
+    if (range.getStartOffset() == 0 && range.getEndOffset() == 0 || !isWithinBounds(range)) {
       return null;
     }
     final DefaultArrangementEntry current = getCurrent();

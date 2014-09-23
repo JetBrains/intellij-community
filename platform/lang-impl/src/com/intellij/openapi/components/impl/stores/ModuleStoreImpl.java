@@ -29,25 +29,26 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtilRt;
 import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ModuleStoreImpl");
-  @NonNls private static final String MODULE_FILE_MACRO = "MODULE_FILE";
 
   private final ModuleImpl myModule;
 
-  public static final String DEFAULT_STATE_STORAGE = "$" + MODULE_FILE_MACRO + "$";
-
+  public static final String DEFAULT_STATE_STORAGE = "$MODULE_FILE$";
 
   @SuppressWarnings({"UnusedDeclaration"})
   public ModuleStoreImpl(final ComponentManagerImpl componentManager, final ModuleImpl module) {
@@ -56,8 +57,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  protected XmlElementStorage getMainStorage() {
-    final XmlElementStorage storage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
+  protected FileBasedStorage getMainStorage() {
+    FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE, RoamingType.PER_USER);
     assert storage != null;
     return storage;
   }
@@ -116,8 +117,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
 
     @Override
-    public void load(@NotNull final Element rootElement) throws IOException {
-      super.load(rootElement);
+    public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
+      super.load(rootElement, pathMacroSubstitutor, intern);
 
       for (Attribute attribute : rootElement.getAttributes()) {
         myOptions.put(attribute.getName(), attribute.getValue());
@@ -132,8 +133,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     @Override
     @NotNull
     protected Element save() {
-      final Element root = super.save();
-
+      Element root = super.save();
       myOptions.put(VERSION_OPTION, Integer.toString(myVersion));
       String[] options = ArrayUtil.toStringArray(myOptions.keySet());
       Arrays.sort(options);
@@ -187,31 +187,25 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     final StateStorageManager storageManager = getStateStorageManager();
     storageManager.clearStateStorage(DEFAULT_STATE_STORAGE);
-    storageManager.addMacro(MODULE_FILE_MACRO, path);
+    storageManager.addMacro(DEFAULT_STATE_STORAGE, path);
   }
 
   @Override
   @Nullable
   public VirtualFile getModuleFile() {
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-    assert storage != null;
-    return storage.getVirtualFile();
+    return getMainStorage().getVirtualFile();
   }
 
   @Override
   @NotNull
   public String getModuleFilePath() {
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-    assert storage != null;
-    return storage.getFilePath();
+    return getMainStorage().getFilePath();
   }
 
   @Override
   @NotNull
   public String getModuleFileName() {
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-    assert storage != null;
-    return storage.getFileName();
+    return PathUtilRt.getFileName(getMainStorage().getFilePath());
   }
 
   @Override

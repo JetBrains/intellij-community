@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -759,20 +760,32 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                           Color color,
                           boolean drawTopDecoration,
                           boolean drawBottomDecoration) {
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       int x = isMirrored() ? 3 : 5;
       int paintWidth = width;
       boolean flatStyle = Registry.is("ide.new.markup.markers");
       if (thinErrorStripeMark) {
         paintWidth /= 2;
-        paintWidth += flatStyle ? 0 : 1;
+        paintWidth += flatStyle ? -2 : 1;
         x = isMirrored() ? width + 2 : 0;
+        if (yEnd - yStart < 6) {
+          yStart -= 1;
+          yEnd += yEnd-yStart - 1;
+        }
       }
       if (color == null) return;
-      Color darker = UIUtil.isUnderDarcula()? color : ColorUtil.shift(color, 0.75);
+      Color darker = color;
+      if (!UIUtil.isUnderDarcula()) {
+        float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+        hsb[2] = Math.min(1f, hsb[2] * 0.85f);
+        //noinspection UseJBColor
+        darker = new Color(Color.HSBtoRGB(hsb[0], hsb[1], hsb[2]));
+      }
 
       if (flatStyle) {
         g.setColor(darker);
-        g.fillRect(x, yStart, paintWidth, yEnd - yStart + 1);
+        g.fillRoundRect(x, yStart, paintWidth, yEnd - yStart, 3,3);
+        config.restore();
         return;
       }
 
@@ -795,6 +808,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       //right decoration
       UIUtil.drawLine(g, x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd/* - 1*/);
+      config.restore();
     }
 
     // mouse events

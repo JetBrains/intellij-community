@@ -30,7 +30,7 @@ jgoodies-looks-2.4.2.jar
 jh.jar
 jna-utils.jar
 jna.jar
-jsch-0.1.50.jar
+jsch-0.1.51.jar
 jsch.agentproxy.connector-factory.jar
 jsch.agentproxy.core.jar
 jsch.agentproxy.pageant.jar
@@ -63,7 +63,7 @@ snappy-in-java-0.3.jar
 swingx-core-1.6.2.jar
 trove4j.jar
 velocity.jar
-winp-1.17-patched.jar
+winp-1.21-patched.jar
 xbean.jar
 xerces.jar
 xmlrpc-2.0.jar

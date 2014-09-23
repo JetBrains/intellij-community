@@ -419,7 +419,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         else {
           myFilteredOut.add(repoPackage);
         }
-        if (StringUtil.equals(packageName, filter)) toSelect = repoPackage;
+        if (StringUtil.equalsIgnoreCase(packageName, filter)) toSelect = repoPackage;
       }
       filter(filtered, toSelect);
     }

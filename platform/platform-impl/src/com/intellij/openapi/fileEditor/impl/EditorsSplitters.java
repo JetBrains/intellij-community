@@ -51,6 +51,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
 
-  private final static EditorEmptyTextPainter ourPainter = ServiceManager.getService(EditorEmptyTextPainter.class);
+  private static final EditorEmptyTextPainter ourPainter = ServiceManager.getService(EditorEmptyTextPainter.class);
 
   private EditorWindow myCurrentWindow;
   final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<EditorWindow>();
@@ -148,7 +149,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
 
-  private boolean showEmptyText() {
+  protected boolean showEmptyText() {
     return myCurrentWindow == null || myCurrentWindow.getFiles().length == 0;
   }
 
@@ -346,22 +347,18 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return virtualFiles;
   }
 
-  @NotNull public FileEditor[] getSelectedEditors() {
-    final List<FileEditor> editors = new ArrayList<FileEditor>();
+  @NotNull
+  public FileEditor[] getSelectedEditors() {
+    List<FileEditor> editors = new ArrayList<FileEditor>();
+    Set<EditorWindow> windows = new THashSet<EditorWindow>(myWindows);
     final EditorWindow currentWindow = getCurrentWindow();
     if (currentWindow != null) {
-      final EditorWithProviderComposite composite = currentWindow.getSelectedEditor();
-      if (composite != null) {
-        editors.add (composite.getSelectedEditor());
-      }
+      windows.add(currentWindow);
     }
-
-    for (final EditorWindow window : myWindows) {
-      if (!window.equals(currentWindow)) {
-        final EditorWithProviderComposite composite = window.getSelectedEditor();
-        if (composite != null) {
-          editors.add(composite.getSelectedEditor());
-        }
+    for (final EditorWindow window : windows) {
+      final EditorWithProviderComposite composite = window.getSelectedEditor();
+      if (composite != null) {
+        editors.add(composite.getSelectedEditor());
       }
     }
     return editors.toArray(new FileEditor[editors.size()]);
@@ -463,7 +460,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     myCurrentWindow = currentWindow;
   }
 
-  public void updateFileBackgroundColor(final VirtualFile file) {
+  public void updateFileBackgroundColor(@NotNull VirtualFile file) {
     final EditorWindow[] windows = getWindows();
     for (int i = 0; i != windows.length; ++ i) {
       windows [i].updateFileBackgroundColor(file);
@@ -614,8 +611,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   public void createCurrentWindow() {
     LOG.assertTrue(myCurrentWindow == null);
-    setCurrentWindow(new EditorWindow(this));
+    setCurrentWindow(createEditorWindow());
     add(myCurrentWindow.myPanel, BorderLayout.CENTER);
+  }
+
+  protected EditorWindow createEditorWindow() {
+    return new EditorWindow(this);
   }
 
   /**
@@ -625,7 +626,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @param requestFocus whether to request focus to the editor currently selected in this window
    */
   public void setCurrentWindow(@Nullable final EditorWindow window, final boolean requestFocus) {
-    final EditorWithProviderComposite newEditor = window != null? window.getSelectedEditor() : null;
+    final EditorWithProviderComposite newEditor = window == null ? null : window.getSelectedEditor();
 
     Runnable fireRunnable = new Runnable() {
       @Override
@@ -655,7 +656,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   //---------------------------------------------------------
 
   public EditorWithProviderComposite[] getEditorsComposites() {
-    final ArrayList<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
+    List<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
 
     for (final EditorWindow myWindow : myWindows) {
       final EditorWithProviderComposite[] editors = myWindow.getEditors();
@@ -667,8 +668,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   //---------------------------------------------------------
 
   @NotNull
-  public List<EditorWithProviderComposite> findEditorComposites(final VirtualFile file) {
-    final ArrayList<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
+  public List<EditorWithProviderComposite> findEditorComposites(@NotNull VirtualFile file) {
+    List<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
     for (final EditorWindow window : myWindows) {
       final EditorWithProviderComposite fileComposite = window.findFileComposite(file);
       if (fileComposite != null) {
@@ -680,7 +681,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @NotNull
   public List<EditorWindow> findWindows(final VirtualFile file) {
-    final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
+    List<EditorWindow> res = new ArrayList<EditorWindow>();
     for (final EditorWindow window : myWindows) {
       if (window.findFileComposite(file) != null) {
         res.add(window);
@@ -694,7 +695,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @NotNull public EditorWindow[] getOrderedWindows() {
-    final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
+    final List<EditorWindow> res = new ArrayList<EditorWindow>();
 
     // Collector for windows in tree ordering:
     class Inner{
@@ -741,6 +742,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   public boolean isFloating() {
+    return false;
+  }
+
+  public boolean isPreview() {
     return false;
   }
 
@@ -816,8 +821,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return processFiles(children, context);
     }
 
-    protected abstract @Nullable T processFiles(@NotNull List<Element> fileElements, @Nullable T context);
-    protected abstract @Nullable T processSplitter(@NotNull Element element, @Nullable Element firstChild, @Nullable Element secondChild, @Nullable T context);
+    @Nullable
+    protected abstract T processFiles(@NotNull List<Element> fileElements, @Nullable T context);
+    @Nullable
+    protected abstract T processSplitter(@NotNull Element element, @Nullable Element firstChild, @Nullable Element secondChild, @Nullable T context);
   }
 
   private class UIBuilder extends ConfigTreeReader<JPanel> {
@@ -828,7 +835,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
-          windowRef.set(context == null ? new EditorWindow(EditorsSplitters.this) : findWindowWith(context));
+          windowRef.set(context == null ? createEditorWindow() : findWindowWith(context));
         }
       });
       final EditorWindow window = windowRef.get();

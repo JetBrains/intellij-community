@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -588,7 +588,7 @@ class RunConfigurable extends BaseConfigurable {
 
   @Override
   public JComponent createComponent() {
-    for (RunConfigurationsSettings each : Extensions.getExtensions(RunConfigurationsSettings.EXTENSION_POINT)) {
+    for (RunConfigurationsSettings each : Extensions.getExtensions(RunConfigurationsSettings.EXTENSION_POINT, myProject)) {
       UnnamedConfigurable configurable = each.createConfigurable();
       myAdditionalSettings.add(Pair.create(configurable, configurable.createComponent()));
     }
@@ -1633,7 +1633,7 @@ class RunConfigurable extends BaseConfigurable {
   private class MySortFolderAction extends AnAction implements Comparator<DefaultMutableTreeNode>{
     private MySortFolderAction() {
       super(ExecutionBundle.message("run.configuration.sort.folder.text"),
-            ExecutionBundle.message("run.configuration.sort.folder.description"), AllIcons.Icons.Inspector.SortByName);
+            ExecutionBundle.message("run.configuration.sort.folder.description"), AllIcons.ObjectBrowser.Sorted);
     }
 
     @Override

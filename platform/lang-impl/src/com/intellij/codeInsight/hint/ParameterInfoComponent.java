@@ -328,7 +328,7 @@ public class ParameterInfoComponent extends JPanel {
                                                                  GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
           index += 1;
           flagsMap.clear();
-          curOffset = 1;
+          curOffset = 0;
           line = "";
           components.add(component);
         }

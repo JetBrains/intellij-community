@@ -139,37 +139,28 @@ public class LineStatusTrackerDrawing {
   }
 
   public static void showActiveHint(final Range range, final Editor editor, final Point point, final LineStatusTracker tracker) {
-
     final DefaultActionGroup group = new DefaultActionGroup();
-
-    final AnAction globalShowNextAction = ActionManager.getInstance().getAction("VcsShowNextChangeMarker");
-    final AnAction globalShowPrevAction = ActionManager.getInstance().getAction("VcsShowPrevChangeMarker");
 
     final ShowPrevChangeMarkerAction localShowPrevAction = new ShowPrevChangeMarkerAction(tracker.getPrevRange(range), tracker, editor);
     final ShowNextChangeMarkerAction localShowNextAction = new ShowNextChangeMarkerAction(tracker.getNextRange(range), tracker, editor);
-
-    final JComponent editorComponent = editor.getComponent();
-
-    localShowNextAction.registerCustomShortcutSet(localShowNextAction.getShortcutSet(), editorComponent);
-    localShowPrevAction.registerCustomShortcutSet(localShowPrevAction.getShortcutSet(), editorComponent);
-
-    group.add(localShowPrevAction);
-    group.add(localShowNextAction);
-
-    localShowNextAction.copyFrom(globalShowNextAction);
-    localShowPrevAction.copyFrom(globalShowPrevAction);
-
     final RollbackLineStatusRangeAction rollback = new RollbackLineStatusRangeAction(tracker, range, editor);
     final ShowLineStatusRangeDiffAction showDiff = new ShowLineStatusRangeDiffAction(tracker, range, editor);
     final CopyLineStatusRangeAction copyRange = new CopyLineStatusRangeAction(tracker, range);
 
+    group.add(localShowPrevAction);
+    group.add(localShowNextAction);
     group.add(rollback);
     group.add(showDiff);
     group.add(copyRange);
 
+
+    final JComponent editorComponent = editor.getComponent();
+    EmptyAction.setupAction(localShowPrevAction, "VcsShowPrevChangeMarker", editorComponent);
+    EmptyAction.setupAction(localShowNextAction, "VcsShowNextChangeMarker", editorComponent);
     EmptyAction.setupAction(rollback, IdeActions.SELECTED_CHANGES_ROLLBACK, editorComponent);
     EmptyAction.setupAction(showDiff, "ChangesView.Diff", editorComponent);
     EmptyAction.setupAction(copyRange, IdeActions.ACTION_COPY, editorComponent);
+
 
     final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true).getComponent();
 
@@ -207,6 +198,7 @@ public class LineStatusTrackerDrawing {
 
     component.add(toolbarPanel, BorderLayout.NORTH);
 
+
     if (range.getType() != Range.INSERTED) {
       final DocumentEx doc = (DocumentEx) tracker.getVcsDocument();
       final EditorEx uEditor = (EditorEx)EditorFactory.getInstance().createViewer(doc, tracker.getProject());
@@ -221,6 +213,7 @@ public class LineStatusTrackerDrawing {
       EditorFactory.getInstance().releaseEditor(uEditor);
     }
 
+
     final List<AnAction> actionList = ActionUtil.getActions(editorComponent);
     final LightweightHint lightweightHint = new LightweightHint(component);
     HintListener closeListener = new HintListener() {
@@ -234,9 +227,10 @@ public class LineStatusTrackerDrawing {
     };
     lightweightHint.addHintListener(closeListener);
 
-    HintManagerImpl.getInstanceImpl().showEditorHint(lightweightHint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE |
-                                                                             HintManagerImpl.HIDE_BY_SCROLLING,
-                                                                             -1, false, new HintHint(editor, point));
+    HintManagerImpl.getInstanceImpl()
+      .showEditorHint(lightweightHint, editor, point,
+                      HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING,
+                      -1, false, new HintHint(editor, point));
 
     if (!lightweightHint.isVisible()) {
       closeListener.hintHidden(null);

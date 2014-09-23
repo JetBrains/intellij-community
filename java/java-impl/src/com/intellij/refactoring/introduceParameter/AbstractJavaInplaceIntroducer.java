@@ -121,7 +121,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   public static String[] appendUnresolvedExprName(String[] names, final PsiExpression expr) {
     if (expr instanceof PsiReferenceExpression && ((PsiReferenceExpression)expr).resolve() == null) {
       final String name = expr.getText();
-      if (JavaPsiFacade.getInstance(expr.getProject()).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
+      if (PsiNameHelper.getInstance(expr.getProject()).isIdentifier(name, LanguageLevel.HIGHEST)) {
         names = ArrayUtil.mergeArrays(new String[]{name}, names);
       }
     }

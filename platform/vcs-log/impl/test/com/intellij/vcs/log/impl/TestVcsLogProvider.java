@@ -26,10 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import static org.junit.Assert.assertEquals;
@@ -59,13 +57,14 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @NotNull private final ReducibleSemaphore myRefreshSemaphore;
   private int myReadFirstBlockCounter;
 
-  private final Function<TimedVcsCommit, VcsCommitMetadata> myCommitToMetadataConvertor = new Function<TimedVcsCommit, VcsCommitMetadata>(){
-    @Override
-    public VcsCommitMetadata fun(TimedVcsCommit commit) {
-      return new VcsCommitMetadataImpl(commit.getId(), commit.getParents(), commit.getTimestamp(), myRoot, SAMPLE_SUBJECT, STUB_USER,
-                                       SAMPLE_SUBJECT, STUB_USER, commit.getTimestamp());
-    }
-  };
+  private final Function<TimedVcsCommit, VcsCommitMetadata> myCommitToMetadataConvertor =
+    new Function<TimedVcsCommit, VcsCommitMetadata>() {
+      @Override
+      public VcsCommitMetadata fun(TimedVcsCommit commit) {
+        return new VcsCommitMetadataImpl(commit.getId(), commit.getParents(), commit.getTimestamp(), myRoot,
+                                                               SAMPLE_SUBJECT, STUB_USER, SAMPLE_SUBJECT, STUB_USER, commit.getTimestamp());
+      }
+    };
 
   public TestVcsLogProvider(@NotNull VirtualFile root) {
     myRoot = root;
@@ -78,7 +77,8 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull final VirtualFile root, @NotNull Requirements requirements)
+  public DetailedLogData readFirstBlock(@NotNull final VirtualFile root,
+                                                   @NotNull Requirements requirements)
     throws VcsException {
     if (requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh()) {
       try {
@@ -90,12 +90,14 @@ public class TestVcsLogProvider implements VcsLogProvider {
     }
     myReadFirstBlockCounter++;
     assertRoot(root);
-    return ContainerUtil.map(myCommits.subList(0, requirements.getCommitCount()), myCommitToMetadataConvertor);
+    List<VcsCommitMetadata> metadatas = ContainerUtil.map(myCommits.subList(0, requirements.getCommitCount()),
+                                                          myCommitToMetadataConvertor);
+    return new LogDataImpl(Collections.<VcsRef>emptySet(), metadatas);
   }
 
+  @NotNull
   @Override
-  public void readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry,
-                            @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
+  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
     try {
       myFullLogSemaphore.acquire();
     }
@@ -106,6 +108,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
     for (TimedVcsCommit commit : myCommits) {
       commitConsumer.consume(commit);
     }
+    return new LogDataImpl(myRefs, Collections.<VcsUser>emptySet());
   }
 
   private void assertRoot(@NotNull VirtualFile root) {
@@ -123,12 +126,6 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
     throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
-    return myRefs;
   }
 
   @NotNull

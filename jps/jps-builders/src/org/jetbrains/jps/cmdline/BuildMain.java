@@ -41,6 +41,7 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
@@ -214,7 +215,7 @@ public class BuildMain {
           public void run() {
             //noinspection finally
             try {
-              ourEventLoopGroup.shutdownGracefully();
+              ourEventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS);
             }
             finally {
               System.exit(0);

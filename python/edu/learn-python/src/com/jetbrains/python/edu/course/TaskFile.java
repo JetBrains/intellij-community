@@ -3,8 +3,10 @@ package com.jetbrains.python.edu.course;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.edu.StudyUtils;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,8 @@ public class TaskFile implements Stateful {
   private TaskWindow mySelectedTaskWindow = null;
   public int myIndex = -1;
   private boolean myUserCreated = false;
+  private boolean myValid = true;
+  private boolean myTrackChanges = true;
 
   /**
    * @return if all the windows in task file are marked as resolved
@@ -93,10 +97,12 @@ public class TaskFile implements Stateful {
 
   public void drawAllWindows(Editor editor) {
     for (TaskWindow taskWindow : taskWindows) {
+      if (!taskWindow.isValid(editor.getDocument())) {
+        setValid(false);
+      }
       taskWindow.draw(editor, false, false);
     }
   }
-
 
   /**
    * @param pos position in editor
@@ -173,7 +179,18 @@ public class TaskFile implements Stateful {
     for (TaskWindow w : taskWindows) {
       if ((w.getLine() == line) && (w.getStart() >= oldEndOffsetInLine)) {
         int distance = w.getStart() - oldEndOffsetInLine;
-        if (lineChange != 0 || newEndOffsetInLine <= w.getStart()) {
+        boolean coveredByPrevTW = false;
+        int prevIndex = w.getIndex() - 1;
+        if (StudyUtils.indexIsValid(prevIndex, taskWindows)) {
+          TaskWindow prevTW = taskWindows.get(prevIndex);
+          if (prevTW.getLine() == line) {
+            int endOffset = prevTW.getStart() + prevTW.getLength();
+            if (endOffset >= newEndOffsetInLine) {
+              coveredByPrevTW = true;
+            }
+          }
+        }
+        if (lineChange != 0 || newEndOffsetInLine <= w.getStart() || coveredByPrevTW) {
           w.setStart(distance + newEndOffsetInLine);
           w.setLine(line + lineChange);
         }
@@ -245,5 +262,26 @@ public class TaskFile implements Stateful {
 
   public boolean hasFailedTaskWindows() {
     return taskWindows.size() > 0 && getStatus() == StudyStatus.Failed;
+  }
+
+  public boolean isValid() {
+    return myValid;
+  }
+
+  public void setValid(boolean isValid) {
+    myValid = isValid;
+  }
+
+  public void setValidAndUpdate(boolean isValid, VirtualFile file, Project project) {
+    myValid = isValid;
+    EditorNotifications.getInstance(project).updateNotifications(file);
+  }
+
+  public boolean isTrackChanges() {
+    return myTrackChanges;
+  }
+
+  public void setTrackChanges(boolean trackChanges) {
+    myTrackChanges = trackChanges;
   }
 }

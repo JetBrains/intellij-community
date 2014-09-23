@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -25,8 +27,7 @@ import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.ScopeInfo;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -38,7 +39,8 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
     super(ActionInfo.UPDATE, CHANGELIST, false);
   }
 
-  protected void actionPerformed(final VcsContext context) {
+  @Override
+  protected void actionPerformed(@NotNull final VcsContext context) {
     Collection<FilePath> filePaths = getFilePaths(context);
     final List<ChangeList> selectedChangeLists = new ArrayList<ChangeList>();
     final ChangeList[] selectionFromContext = context.getSelectedChangeLists();
@@ -68,10 +70,12 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
     super.actionPerformed(context);
   }
 
+  @Override
   protected boolean filterRootsBeforeAction() {
     return false;
   }
 
+  @Override
   protected void update(final VcsContext vcsContext, final Presentation presentation) {
     super.update(vcsContext, presentation);
     final ChangeList[] changeLists = vcsContext.getSelectedChangeLists();
@@ -81,15 +85,18 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
   }
 
   private static final ScopeInfo CHANGELIST = new ScopeInfo() {
+    @Override
     public FilePath[] getRoots(final VcsContext context, final ActionInfo actionInfo) {
       final Collection<FilePath> filePaths = getFilePaths(context);
       return filePaths.toArray(new FilePath[filePaths.size()]);
     }
 
+    @Override
     public String getScopeName(final VcsContext dataContext, final ActionInfo actionInfo) {
       return "Changelist";
     }
 
+    @Override
     public boolean filterExistsInVcs() {
       return false;
     }

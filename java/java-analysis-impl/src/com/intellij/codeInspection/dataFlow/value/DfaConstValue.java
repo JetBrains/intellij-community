@@ -70,6 +70,10 @@ public class DfaConstValue extends DfaValue {
           DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
           return myFactory.getBoxedFactory().createBoxed(unboxed);
         }
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
+          return dfaNull;
+        }
         return null;
       }
       return createFromValue(value, type, variable);

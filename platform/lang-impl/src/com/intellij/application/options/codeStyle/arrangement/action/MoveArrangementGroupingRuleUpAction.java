@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.util.IconUtil;
 
 import javax.swing.table.DefaultTableModel;
 
@@ -32,6 +33,7 @@ public class MoveArrangementGroupingRuleUpAction extends AnAction implements Dum
   public MoveArrangementGroupingRuleUpAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.move.up.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.move.up.description"));
+    getTemplatePresentation().setIcon(IconUtil.getMoveUpIcon());
   }
 
   @Override

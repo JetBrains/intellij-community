@@ -149,8 +149,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         return;
       }
       
-      PsiAnnotation contractAnnotation = ControlFlowAnalyzer.findContractAnnotation(method);
-      if (contractAnnotation != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(contractAnnotation, "pure"))) {
+      if (ControlFlowAnalyzer.isPure(method)) {
         registerMethodCallError(call, aClass);
         return;
       }

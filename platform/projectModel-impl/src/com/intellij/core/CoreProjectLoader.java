@@ -27,14 +27,11 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 /**
@@ -56,7 +53,9 @@ public class CoreProjectLoader {
   private static void loadDirectoryProject(MockProject project, VirtualFile projectDir) throws IOException, JDOMException,
                                                                                            InvalidDataException {
     VirtualFile dotIdea = projectDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+    assert dotIdea != null;
     VirtualFile modulesXml = dotIdea.findChild("modules.xml");
+    assert modulesXml != null;
     StorageData storageData = loadStorageFile(project, modulesXml);
     final Element moduleManagerState = storageData.getState("ProjectModuleManager");
     if (moduleManagerState == null) {
@@ -66,6 +65,7 @@ public class CoreProjectLoader {
     moduleManager.loadState(moduleManagerState);
 
     VirtualFile miscXml = dotIdea.findChild("misc.xml");
+    assert miscXml != null;
     storageData = loadStorageFile(project, miscXml);
     final Element projectRootManagerState = storageData.getState("ProjectRootManager");
     if (projectRootManagerState == null) {
@@ -85,12 +85,10 @@ public class CoreProjectLoader {
     project.projectOpened();
   }
 
-  public static StorageData loadStorageFile(ComponentManager componentManager, VirtualFile modulesXml) throws JDOMException, IOException {
-    final Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(modulesXml.contentsToByteArray()));
+  @NotNull
+  public static StorageData loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
     StorageData storageData = new StorageData("project");
-    final Element element = document.getRootElement();
-    PathMacroManager.getInstance(componentManager).expandPaths(element);
-    storageData.load(element);
+    storageData.load(StorageData.load(modulesXml), PathMacroManager.getInstance(componentManager), false);
     return storageData;
   }
 }

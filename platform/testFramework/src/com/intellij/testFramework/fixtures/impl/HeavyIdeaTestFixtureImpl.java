@@ -45,10 +45,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.EditorListenerTracker;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -245,6 +242,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       protected void run() throws Throwable {
         virtualFile[0] = dir.createChildData(this, StringUtil.getShortName(relativePath, '/'));
         VfsUtil.saveText(virtualFile[0], fileText);
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       }
     }.execute();
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {

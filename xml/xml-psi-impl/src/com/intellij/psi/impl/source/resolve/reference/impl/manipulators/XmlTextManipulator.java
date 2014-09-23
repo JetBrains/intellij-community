@@ -51,6 +51,9 @@ public class XmlTextManipulator extends AbstractElementManipulator<XmlText> {
     else {
       text.deleteChildRange(text.getFirstChild(), text.getLastChild());
     }
+    //String oldText = text.getText();
+    //((PsiLanguageInjectionHost)text).updateText(
+    //  oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset()));
     return text;
   }
 

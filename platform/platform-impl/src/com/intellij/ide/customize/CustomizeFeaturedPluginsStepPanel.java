@@ -18,10 +18,13 @@ package com.intellij.ide.customize;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
@@ -78,7 +81,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       final String pluginId = s.substring(j + 1);
       IdeaPluginDescriptor foundDescriptor = null;
       for (IdeaPluginDescriptor descriptor : pluginsFromRepository) {
-        if (descriptor.getPluginId().getIdString().equals(pluginId)) {
+        if (descriptor.getPluginId().getIdString().equals(pluginId) && !PluginManagerCore.isBrokenPlugin(descriptor)) {
           foundDescriptor = descriptor;
           isEmptyOrOffline = false;
           break;
@@ -119,7 +122,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
       wrapperLayout.show(buttonWrapper, "button");
 
-      final ProgressIndicatorBase indicator = new ProgressIndicatorBase(true) {
+      final ProgressIndicatorEx indicator = new AbstractProgressIndicatorExBase(true) {
 
         @Override
         public void start() {
@@ -260,7 +263,10 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
   @Override
   public String getHTMLFooter() {
-    return "New plugins can also be downloaded in " + CommonBundle.settingsTitle() + " | Plugins";
+    return "New plugins can also be downloaded in "
+           + CommonBundle.settingsTitle()
+           + " | " + OptionsBundle.message("configurable.group.appearance.settings.display.name")
+           + " | " + "Plugins";
   }
 
   public static class OfflineException extends Exception {};

@@ -65,6 +65,8 @@ public class ArrayRenderer extends NodeRendererImpl{
   public int ENTRIES_LIMIT = 101;
   private final static String MORE_ELEMENTS = "...";
 
+  private boolean myForced = false;
+
   public ArrayRenderer() {
     myProperties.setEnabled(true);
   }
@@ -97,13 +99,19 @@ public class ArrayRenderer extends NodeRendererImpl{
     return ClassRenderer.calcLabel(descriptor);
   }
 
+  public void setForced(boolean forced) {
+    myForced = forced;
+  }
+
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     List<DebuggerTreeNode> children = new ArrayList<DebuggerTreeNode>();
     NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
-    builder.initChildrenArrayRenderer(this);
+    if (!myForced) {
+      builder.initChildrenArrayRenderer(this);
+    }
 
     ArrayReference array = (ArrayReference)value;
     if (array.length() > 0) {
@@ -182,7 +190,7 @@ public class ArrayRenderer extends NodeRendererImpl{
         //  children.add(0, nodeManager.createMessageNode(new MessageDescriptor(MORE_ELEMENTS, MessageDescriptor.SPECIAL)));
         //}
 
-        if(END_INDEX < array.length() - 1) {
+        if(!myForced && END_INDEX < array.length() - 1) {
           //children.add(nodeManager.createMessageNode(new MessageDescriptor(MORE_ELEMENTS, MessageDescriptor.SPECIAL)));
           builder.setRemaining(array.length()-END_INDEX);
         }

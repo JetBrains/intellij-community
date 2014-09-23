@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * @since 5/23/2014
  */
 public class ManifestGenerationTest extends MavenCompilingTestCase {
-
   public void testBasic() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

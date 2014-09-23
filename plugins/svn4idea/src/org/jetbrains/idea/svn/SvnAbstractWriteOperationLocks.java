@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
@@ -51,12 +52,7 @@ public abstract class SvnAbstractWriteOperationLocks {
             @Override
             public boolean call(int i) {
               if (myDisposed) return false;
-              try {
-                Thread.sleep(myTimeout);
-              }
-              catch (InterruptedException e) {
-                //
-              }
+              TimeoutUtil.sleep(myTimeout);
               return true;
             }
           };

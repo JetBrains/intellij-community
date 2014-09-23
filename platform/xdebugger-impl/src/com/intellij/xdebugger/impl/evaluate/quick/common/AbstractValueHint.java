@@ -39,6 +39,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IconUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,7 +66,7 @@ public abstract class AbstractValueHint {
   private final Project myProject;
   private final Editor myEditor;
   private final ValueHintType myType;
-  private final Point myPoint;
+  protected final Point myPoint;
   private LightweightHint myCurrentHint;
   private boolean myHintHidden;
   private TextRange myCurrentRange;
@@ -132,6 +133,10 @@ public abstract class AbstractValueHint {
     }
   }
 
+  public void invokeHint() {
+    invokeHint(null);
+  }
+
   public void invokeHint(Runnable hideRunnable) {
     myHideRunnable = hideRunnable;
 
@@ -169,6 +174,7 @@ public abstract class AbstractValueHint {
     return myProject;
   }
 
+  @NotNull
   protected Editor getEditor() {
     return myEditor;
   }
@@ -234,6 +240,7 @@ public abstract class AbstractValueHint {
     }
   }
 
+  @Nullable
   protected TextRange getCurrentRange() {
     return myCurrentRange;
   }

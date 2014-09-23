@@ -32,7 +32,8 @@ public abstract class PublicFieldBasedOptionDescription extends BooleanOptionDes
 
   public abstract Object getInstance();
 
-  protected abstract void fireUpdated();
+  protected void fireUpdated() {
+  }
 
   @Override
   public boolean isOptionEnabled() {

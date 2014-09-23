@@ -48,6 +48,8 @@ if not settings_file:
 
 import django
 if django.VERSION[0:2] >= (1, 7):
+    if not settings.configured:
+        settings.configure()
     django.setup()
 
 class PycharmTestCommand(Command):

@@ -11,6 +11,12 @@
   <item name="java.io.BufferedReader int read(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.BufferedReader java.lang.String readLine()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.BufferedReader java.lang.String readLine(boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.BufferedWriter BufferedWriter(java.io.Writer) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -49,6 +55,9 @@
   </item>
   <item name="java.io.DataInputStream int read(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.DataInputStream java.lang.String readLine()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.DataInputStream java.lang.String readUTF()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -133,14 +142,29 @@
   <item name="java.io.File java.io.File getCanonicalFile()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.File java.io.File getParentFile()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.io.File[] listFiles()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.File java.io.File[] listFiles(java.io.FileFilter) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.io.File[] listFiles(java.io.FileFilter)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.File java.io.File[] listFiles(java.io.FilenameFilter) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.io.File java.io.File[] listFiles(java.io.FilenameFilter)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.File java.lang.String getName()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.File java.lang.String getParent()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.File java.lang.String slashify(java.lang.String, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -270,8 +294,32 @@
   <item name="java.io.ObjectInputStream java.lang.Class resolveProxyClass(java.lang.String[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.ObjectInputStream java.lang.Enum readEnum(boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.ObjectInputStream java.lang.Object access$300(java.io.ObjectInputStream, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object access$300(java.io.ObjectInputStream, boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readArray(boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readNull()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readObject()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readObject0(boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readObjectOverride()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readUnshared()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.ObjectInputStream java.lang.Object resolveObject(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -465,6 +513,9 @@
   </item>
   <item name="java.io.RandomAccessFile int read(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.RandomAccessFile java.lang.String readLine()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.RandomAccessFile java.lang.String readUTF()">
     <annotation name="org.jetbrains.annotations.NotNull"/>

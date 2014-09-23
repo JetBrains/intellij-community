@@ -41,6 +41,14 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightInspect
     doTest("class X {}");
   }
 
+  public void testEnum() {
+    doTest("enum Currencies {\n" +
+           "    EURO, DOLLAR;\n" +
+           "    private Currencies() {\n" +
+           "    }\n" +
+           "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

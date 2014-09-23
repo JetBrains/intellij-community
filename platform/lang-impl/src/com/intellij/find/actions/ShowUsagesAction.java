@@ -45,6 +45,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -859,7 +860,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
     data.addAll(visibleNodes);
     if (data.isEmpty()) {
-      String progressText = UsageViewManagerImpl.getProgressTitle(presentation);
+      String progressText = StringUtil.escapeXml(UsageViewManagerImpl.getProgressTitle(presentation));
       data.add(createStringNode(progressText));
     }
     Collections.sort(data, USAGE_NODE_COMPARATOR);

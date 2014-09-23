@@ -44,7 +44,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
                                          final DomParentStrategy strategy,
                                          final DomManagerImpl manager,
                                          @Nullable ElementStub stub) {
-    super(description.getType(), strategy, tagName, description, manager, strategy.getXmlElement() != null, stub);
+    super(description.getType(), strategy, tagName, description, manager, strategy.isPhysical(), stub);
     myIndex = index;
   }
 
@@ -55,6 +55,12 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
 
   public int hashCode() {
     return super.hashCode() * 239 + myIndex;
+  }
+
+  @Nullable
+  @Override
+  protected String getValue() {
+    return myStub == null ? super.getValue() : myStub.getValue();
   }
 
   @Override

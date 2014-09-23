@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   public Collection<V> notNullValues() {
     if (myMap == null) return Collections.emptyList();
-    final Collection<V> values = new ArrayList<V>(myMap.values());
+    final Collection<V> values = ContainerUtil.newArrayList(myMap.values());
     for (Iterator<V> iterator = values.iterator(); iterator.hasNext();) {
       if (iterator.next() == NULL) {
         iterator.remove();
@@ -100,6 +101,13 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     }
     return values;
   }
+
+  public boolean removeValue(Object value) {
+    if (myMap == null) return false;
+    Object t = ObjectUtils.notNull(value, NULL);
+    return myMap.values().remove(t);
+  }
+
 
   @Override
   public void clear() {

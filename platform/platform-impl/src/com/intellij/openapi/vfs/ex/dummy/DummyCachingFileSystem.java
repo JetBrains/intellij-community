@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.vfs.ex.dummy;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.BidirectionalMap;
@@ -32,7 +34,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -75,11 +76,6 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
       @Override
       public void projectOpened(final Project project) {
         onProjectOpened(project);
-      }
-
-      @Override
-      public void projectClosed(final Project project) {
-        onProjectClosed(project);
       }
     });
     initProjectMap();
@@ -135,7 +131,16 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     clearCache();
   }
 
-  public void onProjectOpened(Project project) {
+  public void onProjectOpened(final Project project) {
+    // use Disposer instead of ProjectManagerListener#projectClosed() because Disposer.dispose(project)
+    // is called later and some cached files should stay valid till the last moment
+    Disposer.register(project, new Disposable() {
+      @Override
+      public void dispose() {
+        onProjectClosed(project);
+      }
+    });
+
     clearCache();
     String projectId = project.getLocationHash();
     myProject2Id.put(project, projectId);
@@ -157,13 +162,11 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   protected void clearInvalidFiles() {
-    for (Iterator<String> it = myCachedFiles.keySet().iterator(); it.hasNext(); ) {
-      String path = it.next();
-      T t = myCachedFiles.get(path);
-      if (t == null || !t.isValid()) {
-        it.remove();
-      }
+    for (T t : myCachedFiles.notNullValues()) {
+      if (!t.isValid()) myCachedFiles.removeValue(t);
     }
+    //noinspection StatementWithEmptyBody
+    while (myCachedFiles.removeValue(null)) ;
   }
 
   @TestOnly

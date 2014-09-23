@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.text;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,11 +28,13 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class StringUtilRt {
+  @Contract(pure = true)
   public static boolean charsEqualIgnoreCase(char a, char b) {
     return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
   }
 
   @NotNull
+  @Contract(pure = true)
   public static String toUpperCase(@NotNull String s) {
     StringBuilder answer = null;
 
@@ -51,6 +54,7 @@ public class StringUtilRt {
     return answer == null ? s : answer.toString();
   }
 
+  @Contract(pure = true)
   public static char toUpperCase(char a) {
     if (a < 'a') {
       return a;
@@ -61,6 +65,7 @@ public class StringUtilRt {
     return Character.toUpperCase(a);
   }
 
+  @Contract(pure = true)
   public static char toLowerCase(char a) {
     if (a < 'A' || a >= 'a' && a <= 'z') {
       return a;
@@ -77,21 +82,25 @@ public class StringUtilRt {
    * Converts line separators to <code>"\n"</code>
    */
   @NotNull
+  @Contract(pure = true)
   public static String convertLineSeparators(@NotNull String text) {
     return convertLineSeparators(text, false);
   }
 
   @NotNull
+  @Contract(pure = true)
   public static String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
     return convertLineSeparators(text, "\n", null, keepCarriageReturn);
   }
 
   @NotNull
+  @Contract(pure = true)
   public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator) {
     return convertLineSeparators(text, newSeparator, null);
   }
 
   @NotNull
+  @Contract(pure = true)
   public static CharSequence convertLineSeparators(@NotNull CharSequence text, @NotNull String newSeparator) {
     return unifyLineSeparators(text, newSeparator, null, false);
   }
@@ -110,6 +119,7 @@ public class StringUtilRt {
   }
 
   @NotNull
+  @Contract(pure = true)
   public static CharSequence unifyLineSeparators(@NotNull CharSequence text) {
     return unifyLineSeparators(text, "\n", null, false);
   }
@@ -189,6 +199,7 @@ public class StringUtilRt {
     }
   }
 
+  @Contract(pure = true)
   public static int parseInt(final String string, final int defaultValue) {
     try {
       return Integer.parseInt(string);
@@ -198,6 +209,7 @@ public class StringUtilRt {
     }
   }
 
+  @Contract(pure = true)
   public static double parseDouble(final String string, final double defaultValue) {
     try {
       return Double.parseDouble(string);
@@ -207,6 +219,7 @@ public class StringUtilRt {
     }
   }
 
+  @Contract(pure = true)
   public static boolean parseBoolean(final String string, final boolean defaultValue) {
     try {
       return Boolean.parseBoolean(string);
@@ -217,16 +230,19 @@ public class StringUtilRt {
   }
 
   @NotNull
+  @Contract(pure = true)
   public static String getShortName(@NotNull Class aClass) {
     return getShortName(aClass.getName());
   }
 
   @NotNull
+  @Contract(pure = true)
   public static String getShortName(@NotNull String fqName) {
     return getShortName(fqName, '.');
   }
 
   @NotNull
+  @Contract(pure = true)
   public static String getShortName(@NotNull String fqName, char separator) {
     int lastPointIdx = fqName.lastIndexOf(separator);
     if (lastPointIdx >= 0) {
@@ -235,16 +251,19 @@ public class StringUtilRt {
     return fqName;
   }
 
+  @Contract(pure = true)
   public static boolean endsWithChar(@Nullable CharSequence s, char suffix) {
     return s != null && s.length() != 0 && s.charAt(s.length() - 1) == suffix;
   }
 
+  @Contract(pure = true)
   public static boolean startsWithIgnoreCase(@NonNls @NotNull String str, @NonNls @NotNull String prefix) {
     final int stringLength = str.length();
     final int prefixLength = prefix.length();
     return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
   }
 
+  @Contract(pure = true)
   public static boolean endsWithIgnoreCase(@NonNls @NotNull CharSequence text, @NonNls @NotNull CharSequence suffix) {
     int l1 = text.length();
     int l2 = suffix.length();
@@ -269,6 +288,7 @@ public class StringUtilRt {
    * @return index of the last occurrence of the given symbol at the target sub-sequence of the given text if any;
    * <code>-1</code> otherwise
    */
+  @Contract(pure = true)
   public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {
     for (int i = end - 1; i >= start; i--) {
       if (s.charAt(i) == c) return i;

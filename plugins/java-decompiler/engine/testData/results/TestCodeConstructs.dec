@@ -1,0 +1,13 @@
+package pkg;
+
+class TestCodeConstructs {
+   private int count = 0;
+
+   void expressions() {
+      (new String()).hashCode();
+   }
+
+   Integer fieldIncrement() {
+      return new Integer(this.count++);
+   }
+}

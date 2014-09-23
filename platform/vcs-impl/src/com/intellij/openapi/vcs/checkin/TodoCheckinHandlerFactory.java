@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class TodoCheckinHandlerFactory extends CheckinHandlerFactory {
   @NotNull
   @Override
-  public CheckinHandler createHandler(CheckinProjectPanel panel, CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new TodoCheckinHandler(panel);
   }
 }

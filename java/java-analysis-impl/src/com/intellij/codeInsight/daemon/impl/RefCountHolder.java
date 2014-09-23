@@ -35,7 +35,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RefCountHolder {
@@ -328,9 +331,10 @@ public class RefCountHolder {
     return true;
   }
 
-  private static void log(@NonNls Object... s) {
-    //System.err.println("RFC: "+ Arrays.asList(s));
+  private static void log(@NonNls @NotNull Object... info) {
+    FileStatusMap.log(info);
   }
+
 
   public boolean retrieveUnusedReferencesInfo(@NotNull ProgressIndicator indicator, @NotNull Runnable analyze) {
     ProgressIndicator old = myState.get();
@@ -340,7 +344,9 @@ public class RefCountHolder {
     }
     log("r: changed ", old, "->", indicator);
     try {
-      if (analyzedUnder != indicator) {
+      ProgressIndicator under = analyzedUnder;
+      if (under != indicator) {
+        log("r: analyzed under ", under, "->", indicator);
         return false;
       }
       analyze.run();
@@ -350,6 +356,6 @@ public class RefCountHolder {
       assert set : myState.get();
       log("r: changed back ", indicator, "->", READY);
     }
-    return  true;
+    return true;
   }
 }

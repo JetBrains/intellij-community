@@ -30,4 +30,9 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = false;
   public boolean SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = true;
 
+  public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = false;
+
+  public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+  public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS = false;
+
 }

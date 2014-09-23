@@ -4,7 +4,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
-import com.intellij.framework.*;
+import com.intellij.framework.FrameworkType;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
@@ -23,7 +23,6 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -39,7 +38,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
     super.setUp();
     final Project project = getProject();
     myFrameworkSupportModel = new FrameworkSupportModelImpl(project, "", LibrariesContainerFactory.createContainer(project));
-    myNodes = new HashMap<FrameworkType, FrameworkSupportNode>();
+    myNodes = new LinkedHashMap<FrameworkType, FrameworkSupportNode>();
     final List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getAllProviders();
     Collections.sort(providers, FrameworkSupportUtil.getFrameworkSupportProvidersComparator(providers));
     for (FrameworkSupportInModuleProvider provider : providers) {
@@ -50,7 +49,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
     myConfigurables = new HashMap<FrameworkType, FrameworkSupportInModuleConfigurable>();
   }
 
-  protected void addSupport() throws IOException {
+  protected void addSupport() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {

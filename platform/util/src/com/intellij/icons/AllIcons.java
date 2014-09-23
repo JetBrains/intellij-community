@@ -27,6 +27,7 @@ public class AllIcons {
   
   public static class Actions {
     public static final Icon AddFacesSupport = IconLoader.getIcon("/actions/addFacesSupport.png"); // 16x16
+    public static final Icon AddMulticaret = IconLoader.getIcon("/actions/AddMulticaret.png"); // 16x16
     public static final Icon AllLeft = IconLoader.getIcon("/actions/allLeft.png"); // 16x16
     public static final Icon AllRight = IconLoader.getIcon("/actions/allRight.png"); // 16x16
     public static final Icon Annotate = IconLoader.getIcon("/actions/annotate.png"); // 16x16
@@ -37,6 +38,7 @@ public class AllIcons {
     public static final Icon Checked_selected = IconLoader.getIcon("/actions/checked_selected.png"); // 12x12
     public static final Icon Checked_small = IconLoader.getIcon("/actions/checked_small.png"); // 11x11
     public static final Icon Checked_small_selected = IconLoader.getIcon("/actions/checked_small_selected.png"); // 11x11
+    public static final Icon CheckMulticaret = IconLoader.getIcon("/actions/CheckMulticaret.png"); // 16x16
     public static final Icon CheckOut = IconLoader.getIcon("/actions/checkOut.png"); // 16x16
     public static final Icon Clean = IconLoader.getIcon("/actions/clean.png"); // 16x16
     public static final Icon CleanLight = IconLoader.getIcon("/actions/cleanLight.png"); // 16x16
@@ -122,6 +124,7 @@ public class AllIcons {
     public static final Icon Redo = IconLoader.getIcon("/actions/redo.png"); // 16x16
     public static final Icon RefactoringBulb = IconLoader.getIcon("/actions/refactoringBulb.png"); // 16x16
     public static final Icon Refresh = IconLoader.getIcon("/actions/refresh.png"); // 16x16
+    public static final Icon RemoveMulticaret = IconLoader.getIcon("/actions/RemoveMulticaret.png"); // 16x16
     public static final Icon Replace = IconLoader.getIcon("/actions/replace.png"); // 16x16
     public static final Icon Rerun = IconLoader.getIcon("/actions/rerun.png"); // 16x16
     public static final Icon Reset_to_default = IconLoader.getIcon("/actions/reset-to-default.png"); // 16x16
@@ -204,6 +207,7 @@ public class AllIcons {
     public static final Icon AutoVariablesMode = IconLoader.getIcon("/debugger/autoVariablesMode.png"); // 16x16
     public static final Icon BreakpointAlert = IconLoader.getIcon("/debugger/breakpointAlert.png"); // 16x16
     public static final Icon Class_filter = IconLoader.getIcon("/debugger/class_filter.png"); // 16x16
+    public static final Icon CommandLine = IconLoader.getIcon("/debugger/commandLine.png"); // 16x16
     public static final Icon Console = IconLoader.getIcon("/debugger/console.png"); // 16x16
     public static final Icon Db_array = IconLoader.getIcon("/debugger/db_array.png"); // 16x16
     public static final Icon Db_db_object = IconLoader.getIcon("/debugger/db_db_object.png"); // 16x16
@@ -508,6 +512,7 @@ public class AllIcons {
     public static final Icon WarningDecorator = IconLoader.getIcon("/general/warningDecorator.png"); // 16x16
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.png"); // 32x32
     public static final Icon Web = IconLoader.getIcon("/general/web.png"); // 13x13
+    public static final Icon WebSettings = IconLoader.getIcon("/general/webSettings.png"); // 16x16
 
   }
   

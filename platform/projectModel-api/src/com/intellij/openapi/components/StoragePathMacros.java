@@ -31,7 +31,14 @@ import org.jetbrains.annotations.NotNull;
  * @since 5/2/12 12:57 PM
  */
 public class StoragePathMacros {
-  /** Points to the application-level settings root directory. */
+  /**
+   * Points to the application-level settings root directory.
+   */
+  @NonNls @NotNull public static final String ROOT_CONFIG = "$ROOT_CONFIG$";
+
+  /**
+   * Points to {@link #ROOT_CONFIG}/options by default. Should be used to store single files and {@link #ROOT_CONFIG} to store subdirectories with many files.
+   */
   @NonNls @NotNull public static final String APP_CONFIG = "$APP_CONFIG$";
 
   /** <code>'.ipr'</code> file path key. */
@@ -61,6 +68,7 @@ public class StoragePathMacros {
    * @throws IllegalArgumentException   if given macro definition has unexpected format
    */
   @NotNull
+  @Deprecated
   public static String getMacroName(@NotNull String macro) throws IllegalArgumentException {
     if (macro.length() < 3 || macro.charAt(0) != '$' || macro.charAt(macro.length() - 1) != '$') {
       throw new IllegalArgumentException("Malformed macro definition (" + macro + ")");

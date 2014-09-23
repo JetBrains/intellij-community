@@ -329,13 +329,8 @@ public final class UpdateChecker {
   }
 
   private static List<String> getPluginHosts() {
-    ArrayList<String> hosts = new ArrayList<String>();
-    hosts.addAll(UpdateSettings.getInstance().myPluginHosts);
+    final List<String> hosts = UpdateSettings.getInstance().getPluginHosts();
     ContainerUtil.addIfNotNull(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl(), hosts);
-    final String pluginHosts = System.getProperty("idea.plugin.hosts");
-    if (pluginHosts != null) {
-      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
-    }
     return hosts;
   }
 
@@ -624,12 +619,12 @@ public final class UpdateChecker {
             urlToCheck = url;
           }
 
-          HttpURLConnection connection;
+          URLConnection connection;
           if (ApplicationManager.getApplication() != null) {
-            connection = HttpConfigurable.getInstance().openHttpConnection(urlToCheck);
+            connection = HttpConfigurable.getInstance().openConnection(urlToCheck);
           }
           else {
-            connection = (HttpURLConnection)new URL(urlToCheck).openConnection();
+            connection = new URL(urlToCheck).openConnection();
             connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
             connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
           }

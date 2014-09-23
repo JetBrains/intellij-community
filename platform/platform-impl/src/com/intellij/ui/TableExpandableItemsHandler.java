@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -105,8 +106,11 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     return myComponent.getCellRect(tableCellKey.row, tableCellKey.column, false);
   }
 
+  @Nullable
   public Pair<Component, Rectangle> getCellRendererAndBounds(TableCell key) {
-    if (key.row < 0 || key.row >= myComponent.getRowCount() || key.column < 0 || key.column >= myComponent.getColumnCount()) {
+    if (key.row < 0 || key.row >= myComponent.getRowCount() ||
+        key.column < 0 || key.column >= myComponent.getColumnCount() ||
+        key.row == myComponent.getEditingRow() && key.column == myComponent.getEditingColumn()) {
       return null;
     }
 

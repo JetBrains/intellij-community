@@ -21,7 +21,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 
 @State(
   name = "NullableNotNullManager",
-  storages = {@Storage( file = StoragePathMacros.PROJECT_FILE)}
+  storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)}
 )
 public class NullableNotNullManagerImpl extends NullableNotNullManager {
 }

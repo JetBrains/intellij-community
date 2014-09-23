@@ -34,7 +34,10 @@ import java.util.Set;
 /**
  * User: ksafonov
  */
-@State(name = "UsageTrigger", roamingType = RoamingType.DISABLED, storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/statistics.application.usages.xml")})
+@State(
+  name = "UsageTrigger",
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/statistics.application.usages.xml", roamingType = RoamingType.DISABLED)}
+)
 public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State> {
 
   public static class State {
@@ -72,7 +75,7 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
     myState = state;
   }
 
-  
+
   public static class MyCollector extends UsagesCollector {
 
     private static final GroupDescriptor GROUP = GroupDescriptor.create("features counts", GroupDescriptor.HIGHER_PRIORITY);
@@ -92,5 +95,5 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
       return GROUP;
     }
   }
-  
+
 }

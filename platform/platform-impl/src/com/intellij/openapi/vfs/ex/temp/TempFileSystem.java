@@ -136,7 +136,8 @@ public class TempFileSystem extends LocalFileSystemBase {
     }
 
     fsItem.getParent().removeChild(fsItem);
-    ((FSDir)newParentItem).addChild(fsItem);
+    newDir.addChild(fsItem);
+    fsItem.myParent = newDir;
   }
 
   @Override
@@ -263,7 +264,7 @@ public class TempFileSystem extends LocalFileSystemBase {
   }
 
   private abstract static class FSItem {
-    private final FSDir myParent;
+    private FSDir myParent;
     private String myName;
     private long myTimestamp;
     private boolean myWritable;

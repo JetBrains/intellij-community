@@ -17,6 +17,7 @@ package com.intellij.designer.palette;
 
 import com.intellij.designer.AbstractToolWindowManager;
 import com.intellij.designer.DesignerCustomizations;
+import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightToolWindow;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.icons.AllIcons;
@@ -85,10 +86,10 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   }
 
   @Override
-  protected void updateToolWindow(@Nullable DesignerEditorPanel designer) {
-    myToolWindowPanel.loadPalette(designer);
+  protected void updateToolWindow(@Nullable DesignerEditorPanelFacade designer) {
+    myToolWindowPanel.loadPalette((DesignerEditorPanel)designer);
 
-    if (myToolWindowPanel.isEmpty()) {
+    if (designer == null) {
       myToolWindow.setAvailable(false, null);
     }
     else {
@@ -115,9 +116,9 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  protected LightToolWindow createContent(DesignerEditorPanel designer) {
+  protected LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer) {
     PalettePanel palettePanel = new PalettePanel();
-    palettePanel.loadPalette(designer);
+    palettePanel.loadPalette((DesignerEditorPanel)designer);
 
     return createContent(designer,
                          palettePanel,

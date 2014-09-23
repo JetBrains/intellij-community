@@ -5,10 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.Comment;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskType;
+import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.Function;
@@ -19,12 +16,10 @@ import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubIssue;
 import org.jetbrains.plugins.github.api.GithubIssueComment;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
-import org.jetbrains.plugins.github.exceptions.GithubJsonException;
-import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
-import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
+import org.jetbrains.plugins.github.exceptions.*;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
@@ -67,14 +62,20 @@ public class GithubRepository extends BaseRepositoryImpl {
   @Override
   public CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
+      private final GithubConnection myConnection = new GithubConnection(getAuthData(), false);
+
       @Override
       protected void doTest() throws Exception {
-        getIssues("", 10, false);
+        try {
+          GithubApiUtil.getIssuesQueried(myConnection, getRepoAuthor(), getRepoName(), "", false);
+        }
+        catch (GithubOperationCanceledException ignore) {
+        }
       }
 
       @Override
       public void cancel() {
-        // TODO
+        myConnection.abort();
       }
     };
   }
@@ -122,23 +123,30 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   @NotNull
   private Task[] getIssues(@Nullable String query, int max, boolean withClosed) throws Exception {
-    List<GithubIssue> issues;
-    if (StringUtil.isEmptyOrSpaces(query)) {
-      if (StringUtil.isEmptyOrSpaces(myUser)) {
-        myUser = GithubApiUtil.getCurrentUser(getAuthData()).getLogin();
-      }
-      issues = GithubApiUtil.getIssuesAssigned(getAuthData(), getRepoAuthor(), getRepoName(), myUser, max, withClosed);
-    }
-    else {
-      issues = GithubApiUtil.getIssuesQueried(getAuthData(), getRepoAuthor(), getRepoName(), query, withClosed);
-    }
+    GithubConnection connection = getConnection();
 
-    return ContainerUtil.map2Array(issues, Task.class, new Function<GithubIssue, Task>() {
-      @Override
-      public Task fun(GithubIssue issue) {
-        return createTask(issue);
+    try {
+      List<GithubIssue> issues;
+      if (StringUtil.isEmptyOrSpaces(query)) {
+        if (StringUtil.isEmptyOrSpaces(myUser)) {
+          myUser = GithubApiUtil.getCurrentUser(connection).getLogin();
+        }
+        issues = GithubApiUtil.getIssuesAssigned(connection, getRepoAuthor(), getRepoName(), myUser, max, withClosed);
       }
-    });
+      else {
+        issues = GithubApiUtil.getIssuesQueried(connection, getRepoAuthor(), getRepoName(), query, withClosed);
+      }
+
+      return ContainerUtil.map2Array(issues, Task.class, new Function<GithubIssue, Task>() {
+        @Override
+        public Task fun(GithubIssue issue) {
+          return createTask(issue);
+        }
+      });
+    }
+    finally {
+      connection.close();
+    }
   }
 
   @NotNull
@@ -224,16 +232,22 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   private Comment[] fetchComments(final long id) throws Exception {
-    List<GithubIssueComment> result = GithubApiUtil.getIssueComments(getAuthData(), getRepoAuthor(), getRepoName(), id);
+    GithubConnection connection = getConnection();
+    try {
+      List<GithubIssueComment> result = GithubApiUtil.getIssueComments(connection, getRepoAuthor(), getRepoName(), id);
 
-    return ContainerUtil.map2Array(result, Comment.class, new Function<GithubIssueComment, Comment>() {
-      @Override
-      public Comment fun(GithubIssueComment comment) {
-        return new GithubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBodyHtml(),
-                                 comment.getUser().getGravatarId(),
-                                 comment.getUser().getHtmlUrl());
-      }
-    });
+      return ContainerUtil.map2Array(result, Comment.class, new Function<GithubIssueComment, Comment>() {
+        @Override
+        public Comment fun(GithubIssueComment comment) {
+          return new GithubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBodyHtml(),
+                                   comment.getUser().getAvatarUrl(),
+                                   comment.getUser().getHtmlUrl());
+        }
+      });
+    }
+    finally {
+      connection.close();
+    }
   }
 
   @Nullable
@@ -245,7 +259,35 @@ public class GithubRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(@NotNull String id) throws Exception {
-    return createTask(GithubApiUtil.getIssue(getAuthData(), getRepoAuthor(), getRepoName(), id));
+    GithubConnection connection = getConnection();
+    try {
+      return createTask(GithubApiUtil.getIssue(connection, getRepoAuthor(), getRepoName(), id));
+    }
+    finally {
+      connection.close();
+    }
+  }
+
+  @Override
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
+    GithubConnection connection = getConnection();
+    try {
+      boolean isOpen;
+      switch (state) {
+        case OPEN:
+          isOpen = true;
+          break;
+        case RESOLVED:
+          isOpen = false;
+          break;
+        default:
+          throw new IllegalStateException("Unknown state: " + state);
+      }
+      GithubApiUtil.setIssueState(connection, getRepoAuthor(), getRepoName(), task.getNumber(), isOpen);
+    }
+    finally {
+      connection.close();
+    }
   }
 
   @NotNull
@@ -311,6 +353,10 @@ public class GithubRepository extends BaseRepositoryImpl {
     return GithubAuthData.createTokenAuth(getUrl(), getToken(), isUseProxy());
   }
 
+  private GithubConnection getConnection() {
+    return new GithubConnection(getAuthData(), true);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
@@ -326,6 +372,6 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | BASIC_HTTP_AUTHORIZATION;
+    return super.getFeatures() | STATE_UPDATING;
   }
 }

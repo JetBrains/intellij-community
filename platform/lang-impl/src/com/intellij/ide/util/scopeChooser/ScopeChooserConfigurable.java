@@ -81,7 +81,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   @Override
   protected Dimension getPanelPreferredSize() {
-    return new Dimension(-1, -1);
+    return new Dimension(400, 200);
   }
 
   @Override

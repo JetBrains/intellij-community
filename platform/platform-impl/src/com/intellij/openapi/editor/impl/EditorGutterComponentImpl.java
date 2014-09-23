@@ -1236,7 +1236,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     GutterIconRenderer renderer = getGutterRenderer(e);
     AnAction clickAction = null;
-    if (renderer != null) {
+    if (renderer != null && e.getButton() < 4) {
       clickAction = (InputEvent.BUTTON2_MASK & e.getModifiers()) > 0
                     ? renderer.getMiddleButtonClickAction()
                     : renderer.getClickAction();
@@ -1447,8 +1447,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       public void process(int x, int y, GutterMark renderer) {
         final int ex = convertX((int)p.getX());
         Icon icon = renderer.getIcon();
-        if (x <= ex && ex <= x + icon.getIconWidth() &&
-            y <= p.getY() && p.getY() <= y + icon.getIconHeight()) {
+        // Do not check y to extend the area where users could click
+        if (x <= ex && ex <= x + icon.getIconWidth()) {
           result[0] = renderer;
         }
       }

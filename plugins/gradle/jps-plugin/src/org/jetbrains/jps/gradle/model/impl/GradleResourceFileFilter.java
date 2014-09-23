@@ -45,7 +45,6 @@ public class GradleResourceFileFilter implements FileFilter {
     myFileFilterSpec = getAsSpec();
   }
 
-  @Override
   public boolean accept(@NotNull File file) {
     final String relPath = FileUtil.getRelativePath(myRoot, file);
     return relPath != null && isIncluded(relPath);

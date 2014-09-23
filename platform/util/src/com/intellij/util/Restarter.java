@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,11 +125,7 @@ public class Restarter {
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
     // process which happened to have the same process ID.
-    try {
-      Thread.sleep(500);
-    }
-    catch (InterruptedException ignore) {
-    }
+    TimeoutUtil.sleep(500);
   }
 
   private static void restartOnMac(@NotNull final String... beforeRestart) throws IOException {
@@ -153,11 +149,16 @@ public class Restarter {
   }
 
   public static File createTempExecutable(File executable) throws IOException {
-    File copy = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart/" + executable.getName());
-    if (FileUtilRt.ensureCanCreateFile(copy)) {
-      FileUtilRt.copy(executable, copy);
-      if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
+    File executableDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
+    File copy = new File(executableDir.getPath() + "/" + executable.getName());
+    if (!FileUtilRt.ensureCanCreateFile(copy) || (copy.exists() && !copy.delete())) {
+       String ext = FileUtilRt.getExtension(executable.getName());
+       copy = FileUtilRt.createTempFile(executableDir, FileUtilRt.getNameWithoutExtension(copy.getName()),
+                                        StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
+                                        true, false);
     }
+    FileUtilRt.copy(executable, copy);
+    if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
     return copy;
   }
 

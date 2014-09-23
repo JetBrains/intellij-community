@@ -2,6 +2,7 @@
 from pydevconsole import *
 
 import pydev_imports
+from pydevd_utils import save_main_module
 
 
 def run_file(file, globals=None, locals=None):
@@ -11,22 +12,8 @@ def run_file(file, globals=None, locals=None):
             file = new_target
 
     if globals is None:
-        # patch provided by: Scott Schlesier - when script is run, it does not
-        # use globals from pydevd:
-        # This will prevent the pydevd script from contaminating the namespace for the script to be debugged
+        m = save_main_module(file, 'pydev_run_in_console')
 
-        # pretend pydevd is not the main module, and
-        # convince the file to be debugged that it was loaded as main
-        sys.modules['pydevd'] = sys.modules['__main__']
-        sys.modules['pydevd'].__name__ = 'pydevd'
-
-        from imp import new_module
-        m = new_module('__main__')
-        sys.modules['__main__'] = m
-        if hasattr(sys.modules['pydevd'], '__loader__'):
-            setattr(m, '__loader__', getattr(sys.modules['pydevd'], '__loader__'))
-
-        m.__file__ = file
         globals = m.__dict__
         try:
             globals['__builtins__'] = __builtins__

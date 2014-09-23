@@ -20,6 +20,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -47,6 +48,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
   }
 
+  @Nullable
   @Override
   protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) throws
                                                                                                                           StateStorageException {
@@ -54,17 +56,12 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     assert config != null : "Couldn't find old storage for " + component.getClass().getName();
 
     final boolean workspace = isWorkspace(config.options);
-    String macro = StoragePathMacros.getMacroName(workspace ? StoragePathMacros.WORKSPACE_FILE : StoragePathMacros.PROJECT_FILE);
-
-    String name = "$" + macro + "$";
-
-    StateStorage storage = getFileStateStorage(name);
-
+    String fileSpec = workspace ? StoragePathMacros.WORKSPACE_FILE : StoragePathMacros.PROJECT_FILE;
+    StateStorage storage = getStateStorage(fileSpec, workspace ? RoamingType.DISABLED :  RoamingType.PER_USER);
     if (operation == StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, Element.class, false)) {
-      name = StoragePathMacros.PROJECT_FILE;
+      fileSpec = StoragePathMacros.PROJECT_FILE;
     }
-
-    return name;
+    return fileSpec;
   }
 
   @Override

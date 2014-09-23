@@ -157,6 +157,11 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertEquals(testOutput, getAbsolutePath(e.getCompilerOutputUrlForTests()));
   }
 
+  protected void assertModuleInheritedOutput(String moduleName) {
+    CompilerModuleExtension e = getCompilerExtension(moduleName);
+    assertTrue(e.isCompilerOutputPathInherited());
+  }
+
   private static String getAbsolutePath(String path) {
     path = VfsUtil.urlToPath(path);
     path = PathUtil.getCanonicalPath(path);
@@ -168,8 +173,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected CompilerModuleExtension getCompilerExtension(String module) {
-    ModuleRootManager m = getRootManager(module);
-    return CompilerModuleExtension.getInstance(m.getModule());
+    return CompilerModuleExtension.getInstance(getModule(module));
   }
 
   protected void assertModuleLibDep(String moduleName, String depName) {

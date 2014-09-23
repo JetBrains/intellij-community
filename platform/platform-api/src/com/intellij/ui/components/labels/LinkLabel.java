@@ -204,6 +204,8 @@ public class LinkLabel<T> extends JLabel {
   }
 
   private boolean isInClickableArea(Point pt) {
+    Insets insets = getInsets(); // border is set
+    pt.translate(-insets.left, -insets.top);
     if (getIcon() != null) {
       if (pt.getX() < getIcon().getIconWidth() && pt.getY() < getIcon().getIconHeight()) {
         return true;

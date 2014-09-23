@@ -68,8 +68,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     public void run() {
       final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
       if (editor != null) {
-        editor.getComponent().revalidate();
-        editor.getComponent().repaint();
+        editor.getContentComponent().revalidate();
+        editor.getContentComponent().repaint();
       }
     }
   }, 100, this);

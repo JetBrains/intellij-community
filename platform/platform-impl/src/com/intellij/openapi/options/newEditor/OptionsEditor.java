@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.options.newEditor;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.AbstractBundle;
+import com.intellij.CommonBundle;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
@@ -31,7 +31,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.ex.GlassPanel;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
@@ -39,11 +39,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -56,7 +54,6 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +81,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private final OptionsTree myTree;
   private final SettingsTreeView myTreeView;
-  private final SearchTextField mySearch;
+  private final SettingsSearch mySearch;
   private final Splitter myMainSplitter;
   //[back/forward] JComponent myToolbarComponent;
 
@@ -98,8 +95,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private final MergingUpdateQueue myModificationChecker;
 
-  private final SpotlightPainter mySpotlightPainter = new SpotlightPainter();
-  private final MergingUpdateQueue mySpotlightUpdate;
+  private final SpotlightPainter mySpotlightPainter = new SpotlightPainter(myOwnDetails.getContentGutter(), this) {
+    void updateNow() {
+      Configurable configurable = getContext().getCurrentConfigurable();
+      update(myFilter, configurable, myConfigurable2Content.containsKey(configurable) ? myContentWrapper : null);
+    }
+  };
   private final LoadingDecorator myLoadingDecorator;
   private final SettingsFilter myFilter;
 
@@ -111,41 +112,19 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private final PropertiesComponent myProperties;
   private volatile boolean myDisposed;
 
-  private final KeyListener myTreeKeyListener = new KeyListener() {
-    @Override
-    public void keyPressed(KeyEvent event) {
-      keyTyped(event);
-    }
-
-    @Override
-    public void keyReleased(KeyEvent event) {
-      keyTyped(event);
-    }
-
-    @Override
-    public void keyTyped(KeyEvent event) {
-      Object source = event.getSource();
-      if (source instanceof JTree) {
-        JTree tree = (JTree)source;
-        if (tree.getInputMap().get(KeyStroke.getKeyStrokeForEvent(event)) == null) {
-          myFilter.myDocumentWasChanged = false;
-          try {
-            mySearch.keyEventToTextField(event);
-          }
-          finally {
-            if (myFilter.myDocumentWasChanged && !isFilterFieldVisible()) {
-              setFilterFieldVisible(true, false, false);
-            }
-          }
-        }
-      }
-    }
-  };
+  final Settings mySettings;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProperties = PropertiesComponent.getInstance(project);
 
-    mySearch = new MySearchField() {
+    mySettings = new Settings(groups) {
+      @Override
+      protected ActionCallback selectImpl(Configurable configurable) {
+        return OptionsEditor.this.select(configurable, "");
+      }
+    };
+
+    mySearch = new SettingsSearch() {
       @Override
       protected void onTextKeyEvent(final KeyEvent e) {
         if (myTreeView != null) {
@@ -155,7 +134,32 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           myTree.processTextEvent(e);
         }
       }
+
+      @Override
+      void delegateKeyEvent(KeyEvent event) {
+        myFilter.myDocumentWasChanged = false;
+        try {
+          super.delegateKeyEvent(event);
+        }
+        finally {
+          if (myFilter.myDocumentWasChanged && !isFilterFieldVisible()) {
+            setFilterFieldVisible(true, false, false);
+          }
+        }
+      }
     };
+    if (Registry.is("ide.new.settings.dialog")) {
+      final JTextField editor = mySearch.getTextEditor();
+      if (!SystemInfo.isMac) {
+        editor.putClientProperty("JTextField.variant", "search");
+        if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
+          editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
+          editor.setBorder(new DarculaTextBorder());
+        }
+      }
+      mySearch.setBackground(UIUtil.getSidePanelColor());
+      mySearch.setBorder(new EmptyBorder(5, 10, 2, 10));
+    }
 
     myFilter = new SettingsFilter(project, groups, mySearch) {
       @Override
@@ -176,30 +180,23 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       @Override
       void updateSpotlight(boolean now) {
         if (!now) {
-          mySpotlightUpdate.queue(new Update(this) {
-            @Override
-            public void run() {
-              if (!mySpotlightPainter.updateForCurrentConfigurable()) {
-                updateSpotlight(false);
-              }
-            }
-          });
+          mySpotlightPainter.updateLater();
         }
-        else if (!mySpotlightPainter.updateForCurrentConfigurable()) {
-          updateSpotlight(false);
+        else {
+          mySpotlightPainter.updateNow();
         }
       }
     };
 
     if (Registry.is("ide.new.settings.dialog")) {
       myTreeView = new SettingsTreeView(myFilter, groups);
-      myTreeView.myTree.addKeyListener(myTreeKeyListener);
+      myTreeView.myTree.addKeyListener(mySearch);
       myTree = null;
     }
     else {
       myTreeView = null;
       myTree = new OptionsTree(myFilter, groups);
-      myTree.addKeyListener(myTreeKeyListener);
+      myTree.addKeyListener(mySearch);
     }
 
     getContext().addColleague(myTreeView != null ? myTreeView : myTree);
@@ -267,8 +264,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     MyColleague colleague = new MyColleague();
     getContext().addColleague(colleague);
 
-    mySpotlightUpdate = new MergingUpdateQueue("OptionsSpotlight", 200, false, this, this, this);
-
     if (preselectedConfigurable != null) {
       selectInTree(preselectedConfigurable);
     }
@@ -300,8 +295,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }, this);
 
     myModificationChecker = new MergingUpdateQueue("OptionsModificationChecker", 1000, false, this, this, this);
-
-    IdeGlassPaneUtil.installPainter(myOwnDetails.getContentGutter(), mySpotlightPainter, this);
 
     /*
     String visible = PropertiesComponent.getInstance(myProject).getValue(SEARCH_VISIBLE);
@@ -843,6 +836,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   @Override
   public Object getData(@NonNls final String dataId) {
+    if (Settings.KEY.is(dataId)) {
+      return mySettings;
+    }
     if (KEY.is(dataId)) {
       return this;
     }
@@ -1005,198 +1001,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return (wnd instanceof JWindow || wnd instanceof JDialog && ((JDialog)wnd).getModalityType() == Dialog.ModalityType.MODELESS) && myWindow != null && wnd.getParent() == myWindow;
   }
 
-  private static class MySearchField extends SearchTextField {
-
-    private boolean myDelegatingNow;
-
-    private MySearchField() {
-      super(false);
-      addKeyListener(new KeyAdapter() {});
-      if (Registry.is("ide.new.settings.dialog")) {
-        final JTextField editor = getTextEditor();
-        if (!SystemInfo.isMac) {
-          editor.putClientProperty("JTextField.variant", "search");
-          if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
-            editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
-            editor.setBorder(new DarculaTextBorder());
-          }
-        }
-        setBackground(UIUtil.getSidePanelColor());
-        setBorder(new EmptyBorder(5, 10, 2, 10));
-      }
-    }
-
-    @Override
-    protected boolean isSearchControlUISupported() {
-      return true;
-    }
-
-    @Override
-    protected boolean preprocessEventForTextField(final KeyEvent e) {
-      final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
-      if (!myDelegatingNow) {
-        if ("pressed ESCAPE".equals(stroke.toString()) && getText().length() > 0) {
-          setText(""); // reset filter on ESC
-          return true;
-        }
-
-        if (getTextEditor().isFocusOwner()) {
-          try {
-            myDelegatingNow = true;
-            boolean treeNavigation =
-              stroke.getModifiers() == 0 && (stroke.getKeyCode() == KeyEvent.VK_UP || stroke.getKeyCode() == KeyEvent.VK_DOWN);
-
-            if ("pressed ENTER".equals(stroke.toString())) {
-              return true; // avoid closing dialog on ENTER
-            }
-
-            final Object action = getTextEditor().getInputMap().get(stroke);
-            if (action == null || treeNavigation) {
-              onTextKeyEvent(e);
-              return true;
-            }
-          }
-          finally {
-            myDelegatingNow = false;
-          }
-        }
-      }
-      return false;
-    }
-
-
-    protected void onTextKeyEvent(final KeyEvent e) {
-
-    }
-  }
-
-  private class SpotlightPainter extends AbstractPainter {
-    Map<Configurable, String> myConfigurableToLastOption = new HashMap<Configurable, String>();
-
-    GlassPanel myGP = new GlassPanel(myOwnDetails.getContentGutter());
-    boolean myVisible;
-
-    @Override
-    public void executePaint(final Component component, final Graphics2D g) {
-      if (myVisible && myGP.isVisible()) {
-        myGP.paintSpotlight(g, myOwnDetails.getContentGutter());
-      }
-    }
-
-    public boolean updateForCurrentConfigurable() {
-      final Configurable current = getContext().getCurrentConfigurable();
-
-      if (current != null && !myConfigurable2Content.containsKey(current)) {
-        return ApplicationManager.getApplication().isUnitTestMode();
-      }
-
-      String text = myFilter.getFilterText();
-
-      try {
-        final boolean sameText =
-          myConfigurableToLastOption.containsKey(current) && text.equals(myConfigurableToLastOption.get(current));
-
-
-        if (current == null) {
-          myVisible = false;
-          myGP.clear();
-          return true;
-        }
-
-        SearchableConfigurable searchable;
-        if (current instanceof SearchableConfigurable) {
-          searchable = (SearchableConfigurable)current;
-        } else {
-          searchable = new SearachableWrappper(current);
-        }
-
-        myGP.clear();
-
-        final Runnable runnable = SearchUtil.lightOptions(searchable, myContentWrapper, text, myGP);
-        if (runnable != null) {
-          myVisible = true;//myContext.isHoldingFilter();
-          runnable.run();
-
-          boolean pushFilteringFurther = !sameText && !myFilter.contains(current);
-
-          final Runnable ownSearch = searchable.enableSearch(text);
-          if (pushFilteringFurther && ownSearch != null) {
-            ownSearch.run();
-          }
-          fireNeedsRepaint(myOwnDetails.getComponent());
-        } else {
-          myVisible = false;
-        }
-      }
-      finally {
-        myConfigurableToLastOption.put(current, text);
-      }
-
-      return true;
-    }
-
-
-    @Override
-    public boolean needsRepaint() {
-      return true;
-    }
-  }
-
-  private static class SearachableWrappper implements SearchableConfigurable {
-    private final Configurable myConfigurable;
-
-    private SearachableWrappper(final Configurable configurable) {
-      myConfigurable = configurable;
-    }
-
-    @Override
-    @NotNull
-    public String getId() {
-      return myConfigurable.getClass().getName();
-    }
-
-    @Override
-    public Runnable enableSearch(final String option) {
-      return null;
-    }
-
-    @Override
-    @Nls
-    public String getDisplayName() {
-      return myConfigurable.getDisplayName();
-    }
-
-    @Override
-    public String getHelpTopic() {
-      return myConfigurable.getHelpTopic();
-    }
-
-    @Override
-    public JComponent createComponent() {
-      return myConfigurable.createComponent();
-    }
-
-    @Override
-    public boolean isModified() {
-      return myConfigurable.isModified();
-    }
-
-    @Override
-    public void apply() throws ConfigurationException {
-      myConfigurable.apply();
-    }
-
-    @Override
-    public void reset() {
-      myConfigurable.reset();
-    }
-
-    @Override
-    public void disposeUIResources() {
-      myConfigurable.disposeUIResources();
-    }
-  }
-
   private abstract static class ConfigurableContent {
     abstract void set(ContentWrapper wrapper);
 
@@ -1217,27 +1021,43 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
    * @return default view for the specified configurable
    */
   private JComponent createDefaultComponent(SearchableConfigurable searchable) {
-    JPanel box = new JPanel();
-    box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
+    JPanel panel = new JPanel(new BorderLayout(0, 9));
     try {
-      box.add(new JLabel(OptionsBundle.message(searchable.getId() + ".settings.description")));
+      panel.add(BorderLayout.NORTH, new JLabel(getDefaultDescription(searchable)));
     }
     catch (AssertionError error) {
       return null; // description is not set
     }
     if (searchable instanceof Configurable.Composite) {
-      box.add(Box.createVerticalStrut(10));
+      JPanel box = new JPanel();
+      box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
+      panel.add(BorderLayout.CENTER, box);
+
       Configurable.Composite composite = (Configurable.Composite)searchable;
       for (final Configurable configurable : composite.getConfigurables()) {
-        box.add(new LinkLabel(configurable.getDisplayName(), AllIcons.Ide.Link) {
+        LinkLabel label = new LinkLabel(configurable.getDisplayName(), null) {
           @Override
           public void doClick() {
             select(configurable, null);
           }
-        });
+        };
+        label.setBorder(BorderFactory.createEmptyBorder(1, 17, 1, 1));
+        box.add(label);
       }
     }
-    return box;
+    return panel;
+  }
+
+  @NotNull
+  private static String getDefaultDescription(SearchableConfigurable configurable) {
+    String key = configurable.getId() + ".settings.description";
+    if (configurable instanceof ConfigurableWrapper) {
+      ConfigurableWrapper wrapper = (ConfigurableWrapper) configurable;
+      ConfigurableEP ep = wrapper.getExtensionPoint();
+      ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(ep.bundle, ep.getPluginDescriptor().getPluginClassLoader());
+      return CommonBundle.message(resourceBundle, key);
+    }
+    return OptionsBundle.message(key);
   }
 
   private class Simple extends ConfigurableContent {

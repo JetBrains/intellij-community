@@ -33,7 +33,9 @@ public class SwitchToReplace extends EditorHeaderAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final FindModel findModel = getEditorSearchComponent().getFindModel();
+    EditorSearchComponent component = getEditorSearchComponent();
+    final FindModel findModel = component.getFindModel();
     FindUtil.configureFindModel(true, null, findModel, false);
+    component.selectAllText();
   }
 }

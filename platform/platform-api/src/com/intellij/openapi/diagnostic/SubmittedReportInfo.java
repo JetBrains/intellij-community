@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package com.intellij.openapi.diagnostic;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Simple bean representing error submission status.
@@ -31,29 +34,27 @@ public class SubmittedReportInfo {
     DUPLICATE,
 
     /**
-     * Submission failed. (For network connection reasons for example)
+     * Submission failed (e.g. because of network problem)
      */
     FAILED
   }
 
-  private final String myURL;
+  private final String myUrl;
   private final String myLinkText;
   private final SubmissionStatus myStatus;
 
-  /**
-   * Create new submission status bean
-   * @param URL url that points to newly created issue. Optional. Pass <code>null</code> value if N/A or failed
-   * @param linkText short text that UI interface pointing to the issue should have.
-   * @param status submission success/failure
-   */
-  public SubmittedReportInfo(final String URL, final String linkText, final SubmissionStatus status) {
-    myURL = URL;
+  public SubmittedReportInfo(SubmissionStatus status) {
+    this(null, null, status);
+  }
+
+  public SubmittedReportInfo(@Nullable String url, @Nullable String linkText, @NotNull SubmissionStatus status) {
+    myUrl = url;
     myLinkText = linkText;
     myStatus = status;
   }
 
   public String getURL() {
-    return myURL;
+    return myUrl;
   }
 
   public String getLinkText() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
@@ -107,11 +108,11 @@ class EditVariableDialog extends DialogWrapper {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
 
-    JComboBox comboField = new JComboBox();
+    ComboBox comboField = new ComboBox();
     Macro[] macros = MacroFactory.getMacros();
     Arrays.sort(macros, new Comparator<Macro> () {
       @Override
-      public int compare(Macro m1, Macro m2) {
+      public int compare(@NotNull Macro m1, @NotNull Macro m2) {
         return m1.getPresentableName().compareTo(m2.getPresentableName());
       }
     });
@@ -231,11 +232,13 @@ class EditVariableDialog extends DialogWrapper {
       }
     }
 
+    @NotNull
     @Override
     public String getColumnName(int column) {
       return myNames[column];
     }
 
+    @NotNull
     @Override
     public Class getColumnClass(int c) {
       if (c <= 2) {

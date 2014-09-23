@@ -73,7 +73,10 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.IntArrayList;
@@ -897,9 +900,6 @@ public class BuildManager implements ApplicationComponent{
     if (!Registry.is("compiler.process.use.memory.temp.cache")) {
       cmdLine.addParameter("-D"+ GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION + "=false");
     }
-    if (Registry.is("compiler.process.use.external.javac")) {
-      cmdLine.addParameter("-D"+ GlobalOptions.USE_EXTERNAL_JAVAC_OPTION);
-    }
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     if (mySystemCharset != null) {
@@ -907,13 +907,15 @@ public class BuildManager implements ApplicationComponent{
       cmdLine.addParameter("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + mySystemCharset.name());
     }
     cmdLine.addParameter("-D" + JpsGlobalLoader.FILE_TYPES_COMPONENT_NAME_KEY + "=" + FileTypeManagerImpl.getFileTypeComponentName());
-    for (String name : new String[]{"user.language", "user.country", "user.region", PathManager.PROPERTY_HOME_PATH,
-                                    PathManager.PROPERTY_CONFIG_PATH, PathManager.PROPERTY_PLUGINS_PATH, PathManager.PROPERTY_PATHS_SELECTOR}) {
+    for (String name : new String[]{"user.language", "user.country", "user.region", PathManager.PROPERTY_PATHS_SELECTOR}) {
       final String value = System.getProperty(name);
       if (value != null) {
         cmdLine.addParameter("-D" + name + "=" + value);
       }
     }
+    cmdLine.addParameter("-D" + PathManager.PROPERTY_HOME_PATH + "=" + PathManager.getHomePath());
+    cmdLine.addParameter("-D" + PathManager.PROPERTY_CONFIG_PATH + "=" + PathManager.getConfigPath());
+    cmdLine.addParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + "=" + PathManager.getPluginsPath());
 
     cmdLine.addParameter("-D" + GlobalOptions.LOG_DIR_OPTION + "=" + FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
 
@@ -941,7 +943,6 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter(launcherClass.getName());
 
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath(true);
-    cp.add(getJpsPluginSystemClassesPath());
     cp.addAll(myClasspathManager.getBuildProcessPluginsClasspath(project));
     if (isProfilingMode) {
       cp.add(new File(workDirectory, "yjp-controller-api-redist.jar").getPath());
@@ -965,17 +966,6 @@ public class BuildManager implements ApplicationComponent{
         return true;
       }
     };
-  }
-
-  private static String getJpsPluginSystemClassesPath() {
-    File classesRoot = new File(PathUtil.getJarPathForClass(BuildManager.class));
-    if (classesRoot.isDirectory()) {
-      //running from sources: load classes from .../out/production/jps-plugin-system
-      return new File(classesRoot.getParentFile(), "jps-plugin-system").getAbsolutePath();
-    }
-    else {
-      return new File(classesRoot.getParentFile(), "rt/jps-plugin-system.jar").getAbsolutePath();
-    }
   }
 
   public File getBuildSystemDirectory() {

@@ -153,6 +153,8 @@
 
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
+    <applicationService serviceInterface="com.intellij.psi.search.PredefinedSearchScopeProvider"
+                        serviceImplementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl"/>
 
     <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
                         serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>

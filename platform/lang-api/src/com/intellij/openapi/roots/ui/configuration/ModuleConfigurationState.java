@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.NotNull;
 
 public interface ModuleConfigurationState extends UserDataHolder {
   ModulesProvider getModulesProvider();
   FacetsProvider getFacetsProvider();
   ModifiableRootModel getRootModel();
+  @NotNull
   Project getProject();
 }

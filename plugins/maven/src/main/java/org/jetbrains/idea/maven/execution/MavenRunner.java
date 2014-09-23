@@ -36,7 +36,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.List;
 
-@State(name = "MavenRunner", storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "MavenRunner", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
 
   private static final Logger LOG = Logger.getInstance(MavenRunner.class);

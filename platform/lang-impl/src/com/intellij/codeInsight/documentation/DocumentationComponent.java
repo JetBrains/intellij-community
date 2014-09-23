@@ -106,7 +106,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public Image get(Object key) {
       PsiElement element = getElement();
-      return element == null ? null : myManager.getElementImage(element, ((URL)key).toExternalForm());
+      if (element == null) return null;
+      URL url = (URL)key;
+      Image inMemory = myManager.getElementImage(element, url.toExternalForm());
+      return inMemory != null ? inMemory : Toolkit.getDefaultToolkit().createImage(url);
     }
   };
 

@@ -50,6 +50,11 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     setLvalue(true);
   }
 
+  @Override
+  public boolean canSetValue() {
+    return false;
+  }
+
   public boolean isPrimitive() {
     return myValue instanceof PrimitiveValue;
   }

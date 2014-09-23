@@ -12,6 +12,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.*;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -111,15 +112,15 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     new WriteAction<ExecutionResult>() {
       @Override
       protected void run(@NotNull Result<ExecutionResult> result) throws Throwable {
-        final ExecutionResult res =
+        myExecutionResult =
           pyState.execute(executor, PyDebugRunner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort));
 
         mySession = XDebuggerManager.getInstance(getProject()).
-          startSession(runner, env, env.getContentToReuse(), new XDebugProcessStarter() {
+          startSession(env, new XDebugProcessStarter() {
             @NotNull
             public XDebugProcess start(@NotNull final XDebugSession session) {
               myDebugProcess =
-                new PyDebugProcess(session, serverSocket, res.getExecutionConsole(), res.getProcessHandler(), isMultiprocessDebug());
+                new PyDebugProcess(session, serverSocket, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(), isMultiprocessDebug());
 
               myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
 
@@ -142,7 +143,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
               return myDebugProcess;
             }
           });
-        result.setResult(res);
+        result.setResult(myExecutionResult);
       }
     }.execute().getResultObject();
 

@@ -15,7 +15,6 @@
  */
 package git4idea;
 
-import com.intellij.dvcs.test.MockVcsHelper;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -46,6 +45,7 @@ import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitHttpAuthTestService;
 import git4idea.test.GitTestUtil;
+import git4idea.test.MockVcsHelper;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;

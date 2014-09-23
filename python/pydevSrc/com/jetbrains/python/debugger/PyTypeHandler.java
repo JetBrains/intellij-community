@@ -37,6 +37,9 @@ public class PyTypeHandler {
     FORMATTERS = new HashMap<String, Formatter>();
     FORMATTERS.put("str", STR_FORMATTER);
     FORMATTERS.put("unicode", UNI_FORMATTER);
+    //numpy types
+    FORMATTERS.put("string_", STR_FORMATTER);
+    FORMATTERS.put("unicode_", UNI_FORMATTER);
   }
 
   private PyTypeHandler() { }

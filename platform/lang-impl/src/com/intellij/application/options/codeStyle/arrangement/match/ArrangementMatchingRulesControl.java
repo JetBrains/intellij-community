@@ -527,35 +527,52 @@ public class ArrangementMatchingRulesControl extends JBTable {
   private class MyValidator {
     @Nullable
     private String validate(int index) {
-      if (mySectionRuleManager == null || getModel().getSize() < index) {
+      if (getModel().getSize() < index) {
         return null;
       }
 
+      if (mySectionRuleManager != null) {
+        final ArrangementSectionRuleData data = extractSectionText(index);
+        if (data != null) {
+          return validateSectionRule(data, index);
+        }
+      }
+
+      final Object target = getModel().getElementAt(index);
+      if (target instanceof StdArrangementMatchRule) {
+        for (int i = 0; i < index; i++) {
+          final Object element = getModel().getElementAt(i);
+          if (element instanceof StdArrangementMatchRule && target.equals(element)) {
+            return ApplicationBundle.message("arrangement.settings.validation.duplicate.matching.rule");
+          }
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private String validateSectionRule(@NotNull ArrangementSectionRuleData data, int index) {
       int startSectionIndex = -1;
-      final Set<String> rules = ContainerUtil.newHashSet();
+      final Set<String> sectionRules = ContainerUtil.newHashSet();
       for (int i = 0; i < index; i++) {
         final ArrangementSectionRuleData section = extractSectionText(i);
         if (section != null) {
           startSectionIndex = section.isSectionStart() ? i : -1;
           if (StringUtil.isNotEmpty(section.getText())) {
-            rules.add(section.getText());
+            sectionRules.add(section.getText());
           }
         }
       }
+      if (StringUtil.isNotEmpty(data.getText()) && sectionRules.contains(data.getText())) {
+        return ApplicationBundle.message("arrangement.settings.validation.duplicate.section.text");
+      }
 
-      final ArrangementSectionRuleData data = extractSectionText(index);
-      if (data != null) {
-        if (StringUtil.isNotEmpty(data.getText()) && rules.contains(data.getText())) {
-          return ApplicationBundle.message("arrangement.settings.validation.duplicate.section.text");
+      if (!data.isSectionStart()) {
+        if (startSectionIndex == -1) {
+          return ApplicationBundle.message("arrangement.settings.validation.end.section.rule.without.start");
         }
-
-        if (!data.isSectionStart()) {
-          if (startSectionIndex == -1) {
-            return ApplicationBundle.message("arrangement.settings.validation.end.section.rule.without.start");
-          }
-          else if (startSectionIndex == index - 1) {
-            return ApplicationBundle.message("arrangement.settings.validation.empty.section.rule");
-          }
+        else if (startSectionIndex == index - 1) {
+          return ApplicationBundle.message("arrangement.settings.validation.empty.section.rule");
         }
       }
       return null;

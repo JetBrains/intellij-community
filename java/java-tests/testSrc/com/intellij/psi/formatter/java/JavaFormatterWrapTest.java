@@ -16,7 +16,6 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.idea.Bombed;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -448,4 +447,34 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "    public @TA String m();\n" +
       "}");
   }
+
+  public void testKeepSingleFieldAnnotationOnSameLine() {
+    getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = true;
+    doClassTest(
+      "@NotNull public String result = \"OK\"\n" +
+      "@NotNull String newResult = \"OK\"\n" +
+      "@NotNull\n" +
+      "@Deprecated public String bad = \"bad\"",
+
+      "@NotNull public String result = \"OK\"\n" +
+      "@NotNull String newResult = \"OK\"\n" +
+      "@NotNull\n" +
+      "@Deprecated\n" +
+      "public String bad = \"bad\""
+    );
+  }
+
+  public void testMoveSingleAnnotationOnSameLine() {
+    getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = true;
+    getSettings().KEEP_LINE_BREAKS = false;
+    doClassTest(
+      "@NotNull\n" +
+      "public String test = \"tst\";\n" +
+      "String ok = \"ok\";\n",
+      "@NotNull public String test = \"tst\";\n" +
+      "String ok = \"ok\";\n"
+    );
+  }
+
+
 }

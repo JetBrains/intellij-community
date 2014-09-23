@@ -16,6 +16,9 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class ClassFileDecompiler implements BinaryFileDecompiler {
+  private static final Logger LOG = Logger.getInstance(ClassFileDecompiler.class);
+
   /** @deprecated temporary solution, to remove in IDEA 14 */
   public interface PlatformDecompiler {
     @Nullable
@@ -54,9 +59,19 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
 
   @NotNull
   public static CharSequence decompileText(@NotNull VirtualFile file) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document != null) {
+      return document.getImmutableCharSequence();
+    }
+
     ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
     if (decompiler instanceof ClassFileDecompilers.Light) {
-      return ((ClassFileDecompilers.Light)decompiler).getText(file);
+      try {
+        return ((ClassFileDecompilers.Light)decompiler).getText(file);
+      }
+      catch (ClassFileDecompilers.Light.CannotDecompileException e) {
+        LOG.warn("decompiler: " + decompiler.getClass(), e);
+      }
     }
 
     return ClsFileImpl.decompile(file);

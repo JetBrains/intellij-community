@@ -34,6 +34,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,12 +55,12 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null && Registry.is("ide.scratch.enabled"));
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
     List<Language> languages = getLanguages();
@@ -136,7 +137,7 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
 
   @NotNull
   public static List<Language> getLanguages() {
-    Set<Language> result = ContainerUtil.newTreeSet(new Comparator<Language>() {
+    Set<Language> result = ContainerUtilRt.newTreeSet(new Comparator<Language>() {
       @Override
       public int compare(@NotNull Language l1, @NotNull Language l2) {
         return l1.getDisplayName().compareTo(l2.getDisplayName());
@@ -153,7 +154,7 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
         LanguageFileType type = lang.getAssociatedFileType();
         if (type == null) return false;
         String name = lang.getDisplayName();
-        if (StringUtil.startsWith(name, "<") || StringUtil.startsWith(name, "[") || StringUtil.isEmpty(name)) return false;
+        if (StringUtil.startsWith(name, "<") || StringUtil.startsWith(name, "[") || StringUtil.isEmpty(name) || StringUtil.equalsIgnoreCase(name, "SQL")) return false;
         return !StringUtil.isEmpty(type.getDefaultExtension());
       }
     });

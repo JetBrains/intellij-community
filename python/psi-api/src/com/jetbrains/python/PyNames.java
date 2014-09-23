@@ -164,6 +164,8 @@ public class PyNames {
 
   public static final String UNKNOWN_TYPE = "unknown";
 
+  public static final String UNNAMED_ELEMENT = "<unnamed>";
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */

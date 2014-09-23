@@ -15,18 +15,15 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.dvcs.push.PushTarget;
+import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.RepositoryNodeListener;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TextFieldWithAutoCompletion;
-import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,24 +31,20 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.util.Collection;
 import java.util.List;
 
-public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCellRenderer {
+public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePanel implements TreeCellRenderer {
 
   private final JBCheckBox myRepositoryCheckbox;
-  private final TextFieldWithAutoCompletion myDestBranchTextField;
+  private final PushTargetPanel<T> myDestPushTargetPanelComponent;
   private final JBLabel myLocalBranch;
   private final JLabel myArrowLabel;
   private final JLabel myRepositoryLabel;
   private final ColoredTreeCellRenderer myTextRenderer;
-  @NotNull private final List<RepositoryNodeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private String myOldDestination;
+  @NotNull private final List<RepositoryNodeListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public RepositoryWithBranchPanel(Project project, @NotNull String repoName,
-                                   @NotNull String sourceName, String targetName, @NotNull Collection<String> targetVariants) {
+  public RepositoryWithBranchPanel(@NotNull String repoName,
+                                   @NotNull String sourceName, @NotNull PushTargetPanel<T> destPushTargetPanelComponent) {
     super();
     setLayout(new BorderLayout());
     myRepositoryCheckbox = new JBCheckBox();
@@ -66,32 +59,7 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     myRepositoryLabel = new JLabel(repoName);
     myLocalBranch = new JBLabel(sourceName);
     myArrowLabel = new JLabel(" -> ");
-    myOldDestination = targetName;
-    TextFieldWithAutoCompletionListProvider<String> provider =
-      new TextFieldWithAutoCompletion.StringsCompletionProvider(targetVariants, null);
-    myDestBranchTextField = new TextFieldWithAutoCompletion<String>(project, provider, true, targetName) {
-
-      @Override
-      public boolean shouldHaveBorder() {
-        return false;
-      }
-
-      @Override
-      protected void updateBorder(@NotNull final EditorEx editor) {
-      }
-    };
-    myDestBranchTextField.setBorder(UIUtil.getTableFocusCellHighlightBorder());
-    myDestBranchTextField.setOneLineMode(true);
-    myDestBranchTextField.setOpaque(true);
-    FocusAdapter focusListener = new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        myDestBranchTextField.selectAll();
-      }
-    };
-    myDestBranchTextField.addFocusListener(focusListener);
-    addFocusListener(focusListener);
-
+    myDestPushTargetPanelComponent = destPushTargetPanelComponent;
     myTextRenderer = new ColoredTreeCellRenderer() {
       public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
@@ -111,7 +79,7 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     add(myRepositoryCheckbox, BorderLayout.WEST);
     JPanel panel = new NonOpaquePanel(new BorderLayout());
     panel.add(myTextRenderer, BorderLayout.WEST);
-    panel.add(myDestBranchTextField, BorderLayout.CENTER);
+    panel.add(myDestPushTargetPanelComponent, BorderLayout.CENTER);
     add(panel, BorderLayout.CENTER);
   }
 
@@ -126,15 +94,6 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
 
   public String getArrow() {
     return myArrowLabel.getText();
-  }
-
-  public TextFieldWithAutoCompletion getRemoteTextFiled() {
-    return myDestBranchTextField;
-  }
-
-  @NotNull
-  public String getRemoteTargetName() {
-    return myDestBranchTextField.getText();
   }
 
   @Override
@@ -164,20 +123,20 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getWidth() - bounds.x, bounds.height));
     }
-    myDestBranchTextField.grabFocus();
-    myDestBranchTextField.requestFocus();
+    myDestPushTargetPanelComponent.grabFocus();
+    myDestPushTargetPanelComponent.requestFocus();
     revalidate();
     return this;
   }
 
-  public void addRepoNodeListener(@NotNull RepositoryNodeListener listener) {
+  public void addRepoNodeListener(@NotNull RepositoryNodeListener<T> listener) {
     myListeners.add(listener);
   }
 
   public void fireOnChange() {
-    myOldDestination = myDestBranchTextField.getText();
-    for (RepositoryNodeListener listener : myListeners) {
-      listener.onTargetChanged(myOldDestination);
+    myDestPushTargetPanelComponent.fireOnChange();
+    for (RepositoryNodeListener<T> listener : myListeners) {
+      listener.onTargetChanged(myDestPushTargetPanelComponent.getValue());
     }
   }
 
@@ -188,7 +147,11 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
   }
 
   public void fireOnCancel() {
-    myDestBranchTextField.setText(myOldDestination);
+    myDestPushTargetPanelComponent.fireOnCancel();
+  }
+
+  public PushTargetPanel getTargetPanel() {
+    return myDestPushTargetPanelComponent;
   }
 }
 

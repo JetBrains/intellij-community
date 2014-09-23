@@ -20,6 +20,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.SmartHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -80,46 +81,50 @@ public class LogFileOptions implements JDOMExternalizable {
     return myPathPattern;
   }
 
+  @NotNull
   public Set<String> getPaths(){
-    Set<String> result = new HashSet<String>();
-    final File logFile = new File(myPathPattern);
+    File logFile = new File(myPathPattern);
     if (logFile.exists()){
-      result.add(myPathPattern);
+      return Collections.singleton(myPathPattern);
+    }
+
+    int dirIndex = myPathPattern.lastIndexOf(File.separator);
+    if (dirIndex == -1) {
+      return Collections.emptySet();
+    }
+
+    List<File> files = new SmartList<File>();
+    collectMatchedFiles(new File(myPathPattern.substring(0, dirIndex)), Pattern.compile(FileUtil.convertAntToRegexp(myPathPattern.substring(dirIndex + File.separator.length()))), files);
+    if (files.isEmpty()) {
+      return Collections.emptySet();
+    }
+
+    if (myShowAll) {
+      SmartHashSet<String> result = new SmartHashSet<String>();
+      result.ensureCapacity(files.size());
+      for (File file : files) {
+        result.add(file.getPath());
+      }
       return result;
     }
-    final int dirIndex = myPathPattern.lastIndexOf(File.separator);
-    if (dirIndex != -1) {
-      final ArrayList<File> files = new ArrayList<File>();
-      final String basePath = myPathPattern.substring(0, dirIndex);
-      final String pattern = myPathPattern.substring(dirIndex + File.separator.length());
-      collectMatchedFiles(new File(basePath), Pattern.compile(FileUtil.convertAntToRegexp(pattern)), files);
-      if (!files.isEmpty()) {
-        if (myShowAll) {
-          for (File file : files) {
-            result.add(file.getPath());
+    else {
+      File lastFile = null;
+      for (File file : files) {
+        if (lastFile != null) {
+          if (file.lastModified() > lastFile.lastModified()) {
+            lastFile = file;
           }
         }
         else {
-          File lastFile = null;
-          for (File file : files) {
-            if (lastFile != null) {
-              if (file.lastModified() > lastFile.lastModified()) {
-                lastFile = file;
-              }
-            }
-            else {
-              lastFile = file;
-            }
-          }
-          assert lastFile != null;
-          result.add(lastFile.getPath());
+          lastFile = file;
         }
       }
+      assert lastFile != null;
+      return Collections.singleton(lastFile.getPath());
     }
-    return result;
   }
 
-  public static void collectMatchedFiles(final File root, final Pattern pattern, final List<File> files) {
+  public static void collectMatchedFiles(@NotNull File root, @NotNull Pattern pattern, @NotNull List<File> files) {
     final File[] dirs = root.listFiles();
     if (dirs == null) return;
     for (File dir : dirs) {

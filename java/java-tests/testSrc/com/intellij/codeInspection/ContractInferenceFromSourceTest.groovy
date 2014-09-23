@@ -27,7 +27,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     def c = inferContract("""
   String smth(String s) {
     if (s == null) return null;
-    return s.substring(1);
+    return smth();
   }
 """)
     assert c == 'null -> null'
@@ -161,11 +161,10 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> fail']
   }
 
-  void "_test no NotNull duplication"() {
+  void "test no return value NotNull duplication"() {
     def c = inferContracts("""
-  boolean smth(@org.jetbrains.annotations.NotNull Object o) {
-    if (o == null) throw new RuntimeException();
-    return o.hashCode() == 1;
+  @org.jetbrains.annotations.NotNull String smth(Object o) {
+    return "abc";
   }
 """)
     assert c == []
@@ -308,6 +307,67 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     }
     """)
     assert c == []
+  }
+
+  public void "test skip empty declarations"() {
+    def c = inferContracts("""
+    final Object foo(Object bar) {
+        Object o = 2;
+        if (bar == null) return null;
+        return new String("abc");
+    }
+    """)
+    assert c == ['null -> null', '!null -> !null']
+  }
+
+  public void "test go inside do-while"() {
+    def c = inferContracts("""
+    final Object foo(Object bar) {
+        do {
+          if (bar == null) return null;
+          bar = smth(bar);
+        } while (smthElse());
+        return new String("abc");
+    }
+    """)
+    assert c == ['null -> null']
+  }
+
+  public void "test use invoked method notnull"() {
+    def c = inferContracts("""
+    final Object foo(Object bar) {
+        if (bar == null) return null;
+        return doo();
+    }
+
+    @org.jetbrains.annotations.NotNull Object doo() {}
+    """)
+    assert c == ['null -> null', '!null -> !null']
+  }
+
+  public void "test use delegated method notnull"() {
+    def c = inferContracts("""
+    final Object foo(Object bar) {
+        return doo();
+    }
+
+    @org.jetbrains.annotations.NotNull Object doo() {}
+    """)
+    assert c == ['_ -> !null']
+  }
+
+  public void "test use delegated method notnull with contracts"() {
+    def c = inferContracts("""
+    final Object foo(Object bar, Object o2) {
+        return doo(o2);
+    }
+
+    @org.jetbrains.annotations.NotNull Object doo(Object o) {
+      if (o == null) throw new RuntimeException();
+      return smth();
+    }
+    """)
+    assert c == ['_, null -> fail', '_, _ -> !null']
   }
 
   private String inferContract(String method) {

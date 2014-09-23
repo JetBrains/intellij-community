@@ -137,6 +137,7 @@
     <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
 
     <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
+    <callHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.call.PyCallHierarchyProvider"/>
     <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
 
     <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
@@ -531,7 +532,8 @@
 
   </extensions>
 
-  <extensionPoints>    
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider" interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider"/>
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
     <extensionPoint qualifiedName="Pythonid.magicLiteral" interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceSkipper" interface="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenceSkipperExtPoint"/>
@@ -633,8 +635,6 @@
       <separator/>
       <reference ref="AddToFavorites"/>
       <separator/>
-      <reference ref="RunContextPopupGroup"/>
-      <separator/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
       <reference ref="$Delete"/>
@@ -647,7 +647,26 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
+    <group id="PyCallHierarchyPopupMenu">
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator/>
 
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+    </group>
 
     <action id="com.jetbrains.python.console.PyOpenDebugConsoleAction"
             class="com.jetbrains.python.console.PyOpenDebugConsoleAction"

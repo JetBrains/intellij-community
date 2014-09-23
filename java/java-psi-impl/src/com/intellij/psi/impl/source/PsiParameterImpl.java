@@ -26,6 +26,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiParameterStub;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.search.LocalSearchScope;
@@ -72,6 +73,8 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
           if (type == null) {
             type = LambdaUtil.getFunctionalInterfaceType(lambdaExpression, false);
           }
+
+          type = FunctionalInterfaceParameterizationUtil.getGroundTargetType(type, lambdaExpression);
           if (type instanceof PsiIntersectionType) {
             final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
             for (PsiType conjunct : conjuncts) {
@@ -99,7 +102,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
         if (parameterIndex < parameters.length) {
           final PsiType psiType = LambdaUtil.getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
           if (!LambdaUtil.dependsOnTypeParams(psiType, conjunct, lambdaExpression)) {
-            return GenericsUtil.eliminateWildcards(psiType, false);
+            return psiType;
           }
         }
       }
@@ -324,4 +327,24 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     final PsiElement declarationScope = getDeclarationScope();
     return new LocalSearchScope(declarationScope);
   }
+
+  @Override
+  public PsiElement getOriginalElement() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiParameterList) {
+      PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiMethod) {
+        PsiElement originalMethod = gParent.getOriginalElement();
+        if (originalMethod instanceof PsiMethod) {
+          int index = ((PsiParameterList)parent).getParameterIndex(this);
+          PsiParameter[] originalParameters = ((PsiMethod)originalMethod).getParameterList().getParameters();
+          if (index < originalParameters.length) {
+            return originalParameters[index];
+          }
+        }
+      }
+    }
+    return this;
+  }
+
 }

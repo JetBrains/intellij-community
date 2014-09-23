@@ -38,6 +38,7 @@ import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
@@ -105,7 +106,7 @@ class FindInProjectTask {
     final Pattern pattern = FindInProjectUtil.createFileMaskRegExp(filter);
 
     //noinspection unchecked
-    myFileMask = pattern == null ? Condition.TRUE : new Condition<VirtualFile>() {
+    myFileMask = pattern == null ? Conditions.<VirtualFile>alwaysTrue() : new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
         return file != null && pattern.matcher(file.getName()).matches();
@@ -127,6 +128,9 @@ class FindInProjectTask {
         }
       });
       myProgress.setIndeterminate(false);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Searching for " + myFindModel.getStringToFind() + " in " + filesForFastWordSearch.size() + " indexed files");
+      }
 
       searchInFiles(filesForFastWordSearch, processPresentation, consumer);
 
@@ -136,6 +140,10 @@ class FindInProjectTask {
       final Collection<PsiFile> otherFiles = collectFilesInScope(filesForFastWordSearch, skipIndexed);
       myProgress.setIndeterminate(false);
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Searching for " + myFindModel.getStringToFind() + " in " + otherFiles.size() + " non-indexed files");
+      }
+
       long start = System.currentTimeMillis();
       searchInFiles(otherFiles, processPresentation, consumer);
       if (skipIndexed && otherFiles.size() > 1000) {
@@ -143,7 +151,10 @@ class FindInProjectTask {
       }
     }
     catch (ProcessCanceledException e) {
-      // fine
+      processPresentation.setCanceled(true);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Usage search canceled", e);
+      }
     }
 
     if (!myLargeFiles.isEmpty()) {

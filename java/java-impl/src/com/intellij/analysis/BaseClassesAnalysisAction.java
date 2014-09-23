@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,9 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
+            if (project.isDisposed()) {
+              return;
+            }
             if (!upToDate) {
               final int i = Messages.showYesNoCancelDialog(getProject(), AnalysisScopeBundle.message("recompile.confirmation.message"),
                                                            AnalysisScopeBundle.message("project.is.out.of.date"), Messages.getWarningIcon());

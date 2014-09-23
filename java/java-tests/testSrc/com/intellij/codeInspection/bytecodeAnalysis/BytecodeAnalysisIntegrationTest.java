@@ -18,6 +18,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.InferredAnnotationsManager;
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -26,6 +27,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,10 +39,15 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.AsynchConsumer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.decompiler.IdeaDecompiler;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -48,27 +56,24 @@ import java.util.List;
 public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestCase {
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
 
-  private InferredAnnotationsManager myInferredAnnotationsManager;
-  private ExternalAnnotationsManager myExternalAnnotationsManager;
   private MessageDigest myMessageDigest;
   private List<String> diffs = new ArrayList<String>();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    setUpLibraries();
-    setUpExternalUpAnnotations();
-
-    myInferredAnnotationsManager = InferredAnnotationsManager.getInstance(myModule.getProject());
-    myExternalAnnotationsManager = ExternalAnnotationsManager.getInstance(myModule.getProject());
     myMessageDigest = BytecodeAnalysisConverter.getMessageDigest();
   }
 
-  private void setUpLibraries() {
+  @NotNull
+  private static String getLibDirPath() {
     VirtualFile lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib");
     assertNotNull(lib);
-    PsiTestUtil.addLibrary(myModule, "velocity", lib.getPath(), new String[]{"/velocity.jar!/"}, new String[]{});
+    return lib.getPath();
+  }
+
+  private void setUpLibraries() {
+    PsiTestUtil.addLibrary(myModule, "velocity", getLibDirPath(), new String[]{"/velocity.jar!/"}, new String[]{});
   }
 
   private void setUpExternalUpAnnotations() {
@@ -103,7 +108,46 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     annotationsDir.refresh(false, true);
   }
 
+  private void openDecompiledClass(String name) {
+    PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(name, GlobalSearchScope.allScope(getProject()));
+    assertNotNull(psiClass);
+    myFixture.openFileInEditor(psiClass.getContainingFile().getVirtualFile());
+
+    String documentText = myFixture.getEditor().getDocument().getText();
+    assertTrue(documentText, documentText.startsWith(IdeaDecompiler.BANNER));
+  }
+
+  public void testInferredAnnoGutter() {
+    setUpLibraries();
+    openDecompiledClass("org.apache.velocity.util.ExceptionUtils");
+    checkHasGutter("<i>@org.jetbrains.annotations.Contract(&quot;null,_,_-&gt;null&quot;)</i>");
+  }
+
+  public void testExternalAnnoGutter() {
+    setUpExternalUpAnnotations();
+    openDecompiledClass("java.lang.Boolean");
+    checkHasGutter("@org.jetbrains.annotations.Contract(&quot;null-&gt;false&quot;)&nbsp;");
+  }
+
+  private void checkHasGutter(final String expectedText) {
+    Collection<String> gutters = ContainerUtil.mapNotNull(myFixture.findAllGutters(), new Function<GutterMark, String>() {
+      @Override
+      public String fun(GutterMark mark) {
+        return mark.getTooltipText();
+      }
+    });
+    String contractMark = ContainerUtil.find(gutters, new Condition<String>() {
+      @Override
+      public boolean value(String mark) {
+        return mark.contains(expectedText);
+      }
+    });
+    assertNotNull(StringUtil.join(gutters, "\n"), contractMark);
+  }
+
   public void testSdkAndLibAnnotations() {
+    setUpLibraries();
+    setUpExternalUpAnnotations();
 
     final PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assert rootPackage != null;
@@ -133,47 +177,53 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
       return;
     }
 
-    // not null-result
-    String externalOutAnnotation =
-      myExternalAnnotationsManager.findExternalAnnotation(method, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
-    String inferredOutAnnotation =
-      myInferredAnnotationsManager.findInferredAnnotation(method, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
     String methodKey = PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE);
 
-    if (!externalOutAnnotation.equals(inferredOutAnnotation)) {
-      diffs.add(methodKey + ": " + externalOutAnnotation + " != " + inferredOutAnnotation);
+    {
+      // @NotNull method
+      String externalNotNullMethodAnnotation = findExternalAnnotation(method, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
+      String inferredNotNullMethodAnnotation = findInferredAnnotation(method, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
+
+      if (!externalNotNullMethodAnnotation.equals(inferredNotNullMethodAnnotation)) {
+        diffs.add(methodKey + ": " + externalNotNullMethodAnnotation + " != " + inferredNotNullMethodAnnotation);
+      }
+    }
+
+    {
+      // @Nullable method
+      String externalNullableMethodAnnotation = findExternalAnnotation(method, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
+      String inferredNullableMethodAnnotation = findInferredAnnotation(method, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
+
+      if (!externalNullableMethodAnnotation.equals(inferredNullableMethodAnnotation)) {
+        diffs.add(methodKey + ": " + externalNullableMethodAnnotation + " != " + inferredNullableMethodAnnotation);
+      }
     }
 
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       String parameterKey = PsiFormatUtil.getExternalName(parameter, false, Integer.MAX_VALUE);
 
       {
-        // @NotNull
-        String externalNotNull =
-          myExternalAnnotationsManager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
-        String inferredNotNull =
-          myInferredAnnotationsManager.findInferredAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
+        // @NotNull parameter
+        String externalNotNull = findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
+        String inferredNotNull = findInferredAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
         if (!externalNotNull.equals(inferredNotNull)) {
           diffs.add(parameterKey + ": " + externalNotNull + " != " + inferredNotNull);
         }
       }
 
       {
-        // @Nullable
-        String externalNullable =
-          myExternalAnnotationsManager.findExternalAnnotation(parameter, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
-        String inferredNullable =
-          myInferredAnnotationsManager.findInferredAnnotation(parameter, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
+        // @Nullable parameter
+        String externalNullable = findExternalAnnotation(parameter, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
+        String inferredNullable = findInferredAnnotation(parameter, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
         if (!externalNullable.equals(inferredNullable)) {
           diffs.add(parameterKey + ": " + externalNullable + " != " + inferredNullable);
         }
       }
     }
 
-    PsiAnnotation externalContractAnnotation =
-      myExternalAnnotationsManager.findExternalAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-    PsiAnnotation inferredContractAnnotation =
-      myInferredAnnotationsManager.findInferredAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    // @Contract
+    PsiAnnotation externalContractAnnotation = findExternalAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    PsiAnnotation inferredContractAnnotation = findInferredAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
 
     String externalContractAnnotationString =
       externalContractAnnotation == null ? "null" : "@Contract(" + AnnotationUtil.getStringAttributeValue(externalContractAnnotation, null) + ")";
@@ -186,4 +236,11 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
 
   }
 
+  private PsiAnnotation findInferredAnnotation(PsiModifierListOwner owner, String fqn) {
+    return InferredAnnotationsManager.getInstance(myModule.getProject()).findInferredAnnotation(owner, fqn);
+  }
+
+  private PsiAnnotation findExternalAnnotation(PsiModifierListOwner owner, String fqn) {
+    return ExternalAnnotationsManager.getInstance(myModule.getProject()).findExternalAnnotation(owner, fqn);
+  }
 }

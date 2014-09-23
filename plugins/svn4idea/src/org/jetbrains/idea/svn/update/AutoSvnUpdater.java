@@ -62,7 +62,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
   }
 
   @Override
-  protected void actionPerformed(VcsContext context) {
+  protected void actionPerformed(@NotNull VcsContext context) {
     final SvnConfiguration configuration17 = SvnConfiguration.getInstance(myProject);
     configuration17.setForceUpdate(false);
     configuration17.setUpdateLockOnDemand(false);

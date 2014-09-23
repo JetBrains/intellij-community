@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,7 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
+import org.jetbrains.jps.builders.impl.BuildTargetRegistryImpl;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -153,12 +155,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     //we need this to ensure that the file won't be treated as changed by user during compilation and therefore marked for recompilation
     long delta;
     while ((delta = time - System.currentTimeMillis()) > 0) {
-      try {
-        //noinspection BusyWait
-        Thread.sleep(delta);
-      }
-      catch (InterruptedException ignored) {
-      }
+      TimeoutUtil.sleep(delta);
     }
   }
 
@@ -197,11 +194,12 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected ProjectDescriptor createProjectDescriptor(final BuildLoggingManager buildLoggingManager) {
     try {
-      BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(myModel);
+      BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(myModel);
       ModuleExcludeIndex index = new ModuleExcludeIndexImpl(myModel);
       IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(myModel);
       BuildDataPaths dataPaths = new BuildDataPathsImpl(myDataStorageRoot);
-      BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, myModel, index, dataPaths, ignoredFileIndex);
+      BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetRegistry, myModel, index, dataPaths, ignoredFileIndex);
+      BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
       BuildTargetsState targetsState = new BuildTargetsState(dataPaths, myModel, buildRootIndex);
       ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState);
       BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, true);

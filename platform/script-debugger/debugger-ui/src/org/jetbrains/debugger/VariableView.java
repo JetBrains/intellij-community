@@ -57,7 +57,11 @@ public final class VariableView extends XNamedValue implements VariableContext {
   private volatile int remainingChildrenOffset;
 
   public VariableView(@NotNull Variable variable, @NotNull VariableContext context) {
-    super(context.getViewSupport().normalizeMemberName(variable));
+    this(context.getViewSupport().normalizeMemberName(variable), variable, context);
+  }
+
+  public VariableView(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context) {
+    super(name);
 
     this.context = context;
     this.variable = variable;
@@ -162,14 +166,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
         @Override
         public void consume(Value value, String error) {
           if (!node.isObsolete()) {
-            value = getViewSupport().transformErrorOnGetUsedReferenceValue(value, error);
-            if (value == null) {
-              node.setPresentation(AllIcons.Debugger.Db_primitive, null, error, false);
-            }
-            else {
-              VariableView.this.value = value;
-              computePresentation(value, node);
-            }
+            setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(value, error), error, node);
           }
         }
       });
@@ -187,16 +184,27 @@ public final class VariableView extends XNamedValue implements VariableContext {
       public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
         ValueModifier valueModifier = variable.getValueModifier();
         assert valueModifier != null;
-        ObsolescentAsyncResults.consume(valueModifier.evaluateGet(variable, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
+        valueModifier.evaluateGet(variable, getEvaluateContext()).doWhenProcessed(new Consumer<Value>() {
           @Override
-          public void consume(Value value, XValueNode node) {
-            callback.evaluated("");
-            VariableView.this.value = value;
-            computePresentation(value, node);
+          public void consume(Value value) {
+            if (!node.isObsolete()) {
+              callback.evaluated("");
+              setEvaluatedValue(value, null, node);
+            }
           }
         });
       }
     }.setShowValuePopup(false));
+  }
+
+  private void setEvaluatedValue(@Nullable Value value, @Nullable String error, @NotNull XValueNode node) {
+    if (value == null) {
+      node.setPresentation(AllIcons.Debugger.Db_primitive, null, error == null ? "Internal Error" : error, false);
+    }
+    else {
+      this.value = value;
+      computePresentation(value, node);
+    }
   }
 
   @NotNull
@@ -358,7 +366,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
       @Override
       public void consumeVariables(@NotNull List<Variable> variables) {
-        node.addChildren(Variables.createVariablesList(variables, VariableView.this), isLastChildren);
+        node.addChildren(Variables.createVariablesList(variables, VariableView.this, null), isLastChildren);
       }
     }, null);
   }
@@ -395,7 +403,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
     if (count <= bucketSize) {
-      node.addChildren(Variables.createVariablesList(variables, this), true);
+      node.addChildren(Variables.createVariablesList(variables, this, null), true);
       return;
     }
 
@@ -413,7 +421,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     int notGroupedVariablesOffset;
     if ((variables.size() - count) > bucketSize) {
       for (notGroupedVariablesOffset = variables.size(); notGroupedVariablesOffset > 0; notGroupedVariablesOffset--) {
-        if (!variables.get(notGroupedVariablesOffset - 1).getName().startsWith(Variables.SPECIAL_PROPERTY_PREFIX)) {
+        if (!variables.get(notGroupedVariablesOffset - 1).getName().startsWith("__")) {
           break;
         }
       }

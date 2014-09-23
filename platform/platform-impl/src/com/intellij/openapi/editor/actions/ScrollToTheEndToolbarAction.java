@@ -48,7 +48,7 @@ public class ScrollToTheEndToolbarAction extends DumbAwareAction {
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     Dimension size = myEditor.getContentComponent().getSize();
     boolean isEndVisible = visibleArea.y + visibleArea.height >= size.height;
-    boolean isOnLastLine = document.getLineNumber(caretOffset) == document.getLineCount() - 1;
+    boolean isOnLastLine = document.getLineCount() == 0 || document.getLineNumber(caretOffset) == document.getLineCount() - 1;
     e.getPresentation().setEnabled(!isEndVisible || !isOnLastLine);
   }
 

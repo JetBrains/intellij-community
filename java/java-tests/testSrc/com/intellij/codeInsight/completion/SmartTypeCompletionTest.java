@@ -701,6 +701,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testNoSemicolonInsideParentheses() { doTest(); }
+
   public void testAssignFromTheSameFieldOfAnotherObject() throws Throwable {
     doTest();
   }

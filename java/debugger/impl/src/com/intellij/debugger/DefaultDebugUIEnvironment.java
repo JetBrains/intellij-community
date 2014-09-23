@@ -15,14 +15,10 @@
  */
 package com.intellij.debugger;
 
-import com.intellij.diagnostic.logging.LogFilesManager;
-import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -61,21 +57,6 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
   @Override
   public Icon getIcon() {
     return getRunProfile().getIcon();
-  }
-
-  @Override
-  public void initLogs(RunContentDescriptor content, LogFilesManager logFilesManager) {
-    ProcessHandler processHandler = content.getProcessHandler();
-    if (getRunProfile() instanceof RunConfigurationBase) {
-      RunConfigurationBase runConfiguration = (RunConfigurationBase)getRunProfile();
-
-      logFilesManager.registerFileMatcher(runConfiguration);
-
-      if (processHandler != null) {
-        logFilesManager.initLogConsoles(runConfiguration, processHandler);
-        OutputFileUtil.attachDumpListener(runConfiguration, processHandler, content.getExecutionConsole());
-      }
-    }
   }
 
   @Override

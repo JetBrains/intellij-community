@@ -81,7 +81,6 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author peter
@@ -193,9 +192,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (!CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
           myLookup.setFocusDegree(LookupImpl.FocusDegree.SEMI_FOCUSED);
           if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT, getProject())) {
-            addAdvertisement("Press " +
-                             CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_DOT) +
-                             " to choose the selected (or first) suggestion and insert a dot afterwards", null);
+            String dotShortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_DOT);
+            if (StringUtil.isNotEmpty(dotShortcut)) {
+              addAdvertisement("Press " + dotShortcut + " to choose the selected (or first) suggestion and insert a dot afterwards", null);
+            }
           }
         } else {
           myLookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
@@ -204,9 +204,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (!myEditor.isOneLineMode() &&
           FeatureUsageTracker.getInstance()
             .isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS, getProject())) {
-        addAdvertisement(CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_DOWN) + " and " +
-                         CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_UP) +
-                         " will move caret down and up in the editor", null);
+        String downShortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_DOWN);
+        String upShortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_UP);
+        if (StringUtil.isNotEmpty(downShortcut) && StringUtil.isNotEmpty(upShortcut)) {
+          addAdvertisement(downShortcut + " and " + upShortcut + " will move caret down and up in the editor", null);
+        }
       }
     } else if (DumbService.isDumb(getProject())) {
       addAdvertisement("The results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
@@ -269,11 +271,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         addAdvertisement(s, null);
       }
     }
-  }
-
-  @Override
-  public void cancel() {
-    super.cancel();
   }
 
   private boolean isOutdated() {
@@ -739,7 +736,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return false;
   }
 
-  AtomicReference<LookupElement[]> startCompletion(final CompletionInitializationContext initContext) {
+  void startCompletion(final CompletionInitializationContext initContext) {
     boolean sync = ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup;
     final CompletionThreading strategy = sync ? new SyncCompletion() : new AsyncCompletion();
 
@@ -751,14 +748,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
     final WeighingDelegate weigher = strategy.delegateWeighing(this);
 
-    final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
     class CalculateItems implements Runnable {
       @Override
       public void run() {
         try {
-          data.set(calculateItems(initContext, weigher));
+          calculateItems(initContext, weigher);
         }
         catch (ProcessCanceledException ignore) {
+          cancel(); // some contributor may just throw PCE; if indicator is not canceled everything will hang
         }
         catch (Throwable t) {
           cancel();
@@ -767,7 +764,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
     strategy.startThread(this, new CalculateItems());
-    return data;
   }
 
   private LookupElement[] calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {

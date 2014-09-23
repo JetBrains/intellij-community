@@ -51,25 +51,20 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
     if (!(element instanceof PsiModifierListOwner)) return null;
     if (element instanceof PsiParameter || element instanceof PsiLocalVariable) return null;
 
-    if (!shouldShowSignature(preferCompiledElement((PsiModifierListOwner)element))) {
+    if (!shouldShowSignature((PsiModifierListOwner)element)) {
       return null;
     }
 
     final Function<PsiModifierListOwner, String> annotationsCollector = new Function<PsiModifierListOwner, String>() {
       @Override
       public String fun(PsiModifierListOwner owner) {
-        return XmlStringUtil.wrapInHtml(JavaDocInfoGenerator.generateSignature(preferCompiledElement(owner)));
+        return XmlStringUtil.wrapInHtml(JavaDocInfoGenerator.generateSignature(owner));
       }
     };
     return new LineMarkerInfo<PsiModifierListOwner>((PsiModifierListOwner)element, element.getTextOffset(), AllIcons.Gutter.ExtAnnotation,
                                                     Pass.UPDATE_ALL,
                                                     annotationsCollector, new MyIconGutterHandler(),
                                                     GutterIconRenderer.Alignment.LEFT);
-  }
-
-  private static PsiModifierListOwner preferCompiledElement(PsiModifierListOwner element) {
-    PsiElement original = element.getOriginalElement();
-    return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
   }
 
   private static boolean shouldShowSignature(PsiModifierListOwner owner) {
@@ -111,7 +106,7 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
     if (ref == null) return true;
 
     PsiElement target = ref.resolve();
-    return !(target instanceof PsiClass) || JavaDocInfoGenerator.isDocumentedAnnotationType((PsiClass)target);
+    return !(target instanceof PsiClass) || JavaDocInfoGenerator.isDocumentedAnnotationType(target);
   }
 
   @Override

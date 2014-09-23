@@ -52,6 +52,7 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubRepo;
 import org.jetbrains.plugins.github.api.GithubUserDetailed;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
@@ -211,15 +212,15 @@ public class GithubShareAction extends DumbAwareAction {
           @Override
           public GithubInfo convert(ProgressIndicator indicator) throws IOException {
             // get existing github repos (network) and validate auth data
-            return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubAuthData, GithubInfo, IOException>() {
+            return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubConnection, GithubInfo, IOException>() {
               @NotNull
               @Override
-              public GithubInfo convert(@NotNull GithubAuthData auth) throws IOException {
+              public GithubInfo convert(@NotNull GithubConnection connection) throws IOException {
                 // check access to private repos (network)
-                GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserDetailed(auth);
+                GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserDetailed(connection);
 
                 HashSet<String> names = new HashSet<String>();
-                for (GithubRepo info : GithubApiUtil.getUserRepos(auth)) {
+                for (GithubRepo info : GithubApiUtil.getUserRepos(connection)) {
                   names.add(info.getName());
                 }
                 return new GithubInfo(userInfo, names);
@@ -243,11 +244,11 @@ public class GithubShareAction extends DumbAwareAction {
                                                final boolean isPrivate) {
 
     try {
-      return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubAuthData, GithubRepo, IOException>() {
+      return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubConnection, GithubRepo, IOException>() {
         @NotNull
         @Override
-        public GithubRepo convert(@NotNull GithubAuthData auth) throws IOException {
-          return GithubApiUtil.createRepo(auth, name, description, isPrivate);
+        public GithubRepo convert(@NotNull GithubConnection connection) throws IOException {
+          return GithubApiUtil.createRepo(connection, name, description, isPrivate);
         }
       }).getHtmlUrl();
     }

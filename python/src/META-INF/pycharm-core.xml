@@ -1,8 +1,9 @@
-<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2">
   <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin. -->
   <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PlatformLangPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/JsonPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ImagesPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
@@ -40,10 +41,10 @@
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
 
-    <projectConfigurable instance="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"/>
-    <projectConfigurable instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
+    <projectConfigurable groupId="project" instance="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"/>
+    <projectConfigurable groupId="build" instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
     <projectConfigurable groupId="project" instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
-    <projectConfigurable instance="com.jetbrains.python.configuration.PyDependenciesConfigurable"/>
+    <projectConfigurable groupId="project" instance="com.jetbrains.python.configuration.PyDependenciesConfigurable"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>
@@ -104,7 +105,7 @@
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="OpenFile"/>
     </action>
 
-    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction"
+    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <group id="WelcomeScreen.Platform.NewProject">

@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -177,7 +178,9 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   @Override
   public PsiElement findElementAt(int offset) {
-    PsiElement mirrorAt = getMirror().findElementAt(offset);
+    PsiElement mirror = getMirror();
+    if (mirror == null) return null;
+    PsiElement mirrorAt = mirror.findElementAt(offset);
     while (true) {
       if (mirrorAt == null) return null;
       PsiElement elementAt = mirrorToElement(mirrorAt);
@@ -188,7 +191,9 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   @Override
   public PsiReference findReferenceAt(int offset) {
-    PsiReference mirrorRef = getMirror().findReferenceAt(offset);
+    PsiElement mirror = getMirror();
+    if (mirror == null) return null;
+    PsiReference mirrorRef = mirror.findReferenceAt(offset);
     if (mirrorRef == null) return null;
     PsiElement mirrorElement = mirrorRef.getElement();
     PsiElement element = mirrorToElement(mirrorElement);
@@ -235,7 +240,8 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   @Override
   @NotNull
   public char[] textToCharArray() {
-    return getMirror().textToCharArray();
+    PsiElement mirror = getMirror();
+    return mirror != null ? mirror.textToCharArray() : ArrayUtil.EMPTY_CHAR_ARRAY;
   }
 
   @Override

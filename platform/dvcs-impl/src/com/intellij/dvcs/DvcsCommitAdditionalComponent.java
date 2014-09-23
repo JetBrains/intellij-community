@@ -43,9 +43,6 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
-/**
- * @author Nadya Zabrodina
- */
 public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComponent {
 
   private static final Logger log = Logger.getInstance(DvcsCommitAdditionalComponent.class);
@@ -179,4 +176,8 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
 
   @Nullable
   protected abstract String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException;
+
+  public boolean isAmend() {
+    return myAmend.isSelected();
+  }
 }

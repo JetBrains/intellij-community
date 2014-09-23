@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.FutureResult;
 import com.sun.jna.IntegerType;
 import org.jetbrains.annotations.NotNull;
@@ -146,12 +147,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
           return Toolkit.getDefaultToolkit().getSystemClipboard().getContents(this);
         }
         catch (IllegalStateException e) {
-          try {
-            //noinspection BusyWait
-            Thread.sleep(50);
-          }
-          catch (InterruptedException ignored) {
-          }
+          TimeoutUtil.sleep(50);
           last = e;
         }
       }
@@ -164,12 +160,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
           Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, owner);
         }
         catch (IllegalStateException e) {
-          try {
-            //noinspection BusyWait
-            Thread.sleep(50);
-          }
-          catch (InterruptedException ignored) {
-          }
+          TimeoutUtil.sleep(50);
           continue;
         }
         break;

@@ -89,8 +89,12 @@ public class MoreOperationNode extends ZenCodingNode {
       }
       return result;
     }
-    List<GenerationNode> leftGenNodes = myLeftOperand.expand(numberInIteration, totalIterations, surroundedText, callback, insertSurroundedTextAtTheEnd,
-                                                             parent);
+    List<GenerationNode> leftGenNodes = myLeftOperand.expand(numberInIteration, totalIterations, surroundedText, callback, insertSurroundedTextAtTheEnd, parent);
+
+    if (leftGenNodes.isEmpty()) {
+      return myRightOperand.expand(numberInIteration, totalIterations, surroundedText, callback, insertSurroundedTextAtTheEnd, parent);
+    }
+    
     for (GenerationNode leftGenNode : leftGenNodes) {
       myRightOperand.expand(numberInIteration,totalIterations , surroundedText, callback, insertSurroundedTextAtTheEnd, leftGenNode);
     }

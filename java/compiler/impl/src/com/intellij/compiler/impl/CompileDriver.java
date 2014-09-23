@@ -22,13 +22,12 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.ModuleCompilerUtil;
-import com.intellij.compiler.ProblemsView;
+import com.intellij.compiler.*;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
@@ -53,10 +52,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
@@ -65,9 +61,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Chunk;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.DateFormatUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +77,9 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -502,9 +502,24 @@ public class CompileDriver {
             if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
               ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
             }
-            CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, messageType).notify(myProject);
+
+            final String wrappedMessage = _status != ExitStatus.UP_TO_DATE? "<a href='#'>" + statusMessage + "</a>" : statusMessage;
+            final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
+              "", wrappedMessage,
+              messageType.toNotificationType(),
+              new MessagesActivationListener(compileContext)
+            ).setImportant(false);
+            compileContext.getBuildSession().registerCloseAction(new Runnable() {
+              @Override
+              public void run() {
+                notification.expire();
+              }
+            });
+            notification.notify(myProject);
+
             if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
-              compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
+              final String msg = DateFormatUtil.formatDateTime(new Date()) + " - " + statusMessage;
+              compileContext.addMessage(CompilerMessageCategory.INFORMATION, msg, null, -1, -1);
             }
           }
         }
@@ -670,22 +685,23 @@ public class CompileDriver {
         return false;
       }
 
-      final List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(scopeModules));
-      for (final Chunk<Module> chunk : chunks) {
-        final Set<Module> chunkModules = chunk.getNodes();
-        if (chunkModules.size() <= 1) {
+      final List<Chunk<ModuleSourceSet>> chunks = ModuleCompilerUtil.getCyclicDependencies(myProject, Arrays.asList(scopeModules));
+      for (final Chunk<ModuleSourceSet> chunk : chunks) {
+        final Set<ModuleSourceSet> sourceSets = chunk.getNodes();
+        if (sourceSets.size() <= 1) {
           continue; // no need to check one-module chunks
         }
         Sdk jdk = null;
         LanguageLevel languageLevel = null;
-        for (final Module module : chunkModules) {
+        for (final ModuleSourceSet sourceSet : sourceSets) {
+          Module module = sourceSet.getModule();
           final Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
           if (jdk == null) {
             jdk = moduleJdk;
           }
           else {
             if (!jdk.equals(moduleJdk)) {
-              showCyclicModulesHaveDifferentJdksError(chunkModules.toArray(new Module[chunkModules.size()]));
+              showCyclicModulesHaveDifferentJdksError(ModuleSourceSet.getModules(sourceSets));
               return false;
             }
           }
@@ -696,7 +712,7 @@ public class CompileDriver {
           }
           else {
             if (!languageLevel.equals(moduleLanguageLevel)) {
-              showCyclicModulesHaveDifferentLanguageLevel(chunkModules.toArray(new Module[chunkModules.size()]));
+              showCyclicModulesHaveDifferentLanguageLevel(ModuleSourceSet.getModules(sourceSets));
               return false;
             }
           }
@@ -710,25 +726,27 @@ public class CompileDriver {
     }
   }
 
-  private void showCyclicModulesHaveDifferentLanguageLevel(Module[] modulesInChunk) {
-    LOG.assertTrue(modulesInChunk.length > 0);
-    String moduleNameToSelect = modulesInChunk[0].getName();
+  private void showCyclicModulesHaveDifferentLanguageLevel(Set<Module> modulesInChunk) {
+    Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
+    LOG.assertTrue(firstModule != null);
+    String moduleNameToSelect = firstModule.getName();
     final String moduleNames = getModulesString(modulesInChunk);
     Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.language.level", moduleNames),
                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }
 
-  private void showCyclicModulesHaveDifferentJdksError(Module[] modulesInChunk) {
-    LOG.assertTrue(modulesInChunk.length > 0);
-    String moduleNameToSelect = modulesInChunk[0].getName();
+  private void showCyclicModulesHaveDifferentJdksError(Set<Module> modulesInChunk) {
+    Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
+    LOG.assertTrue(firstModule != null);
+    String moduleNameToSelect = firstModule.getName();
     final String moduleNames = getModulesString(modulesInChunk);
     Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames),
                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }
 
-  private static String getModulesString(Module[] modulesInChunk) {
+  private static String getModulesString(Collection<Module> modulesInChunk) {
     final StringBuilder moduleNames = StringBuilderSpinAllocator.alloc();
     try {
       for (Module module : modulesInChunk) {
@@ -784,5 +802,29 @@ public class CompileDriver {
 
   private void showConfigurationDialog(String moduleNameToSelect, String tabNameToSelect) {
     ProjectSettingsService.getInstance(myProject).showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect);
+  }
+
+  private static class MessagesActivationListener extends NotificationListener.Adapter {
+    private final WeakReference<Project> myProjectRef;
+    private final Object myContentId;
+
+    public MessagesActivationListener(CompileContextImpl compileContext) {
+      myProjectRef = new WeakReference<Project>(compileContext.getProject());
+      myContentId = compileContext.getBuildSession().getContentId();
+    }
+
+    @Override
+    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+      final Project project = myProjectRef.get();
+      if (project != null && !project.isDisposed() && CompilerTask.showCompilerContent(project, myContentId)) {
+        final ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+        if (tw != null) {
+          tw.activate(null, false);
+        }
+      }
+      else {
+        notification.expire();
+      }
+    }
   }
 }

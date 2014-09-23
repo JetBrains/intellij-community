@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -584,16 +585,7 @@ public abstract class HgUtil {
     if (state != HgRepository.State.NORMAL) {
       branchText += state.toString() + " ";
     }
-    return branchText + getActiveBranchName(repository);
-  }
-
-  @NotNull
-  public static String getActiveBranchName(@NotNull HgRepository repository) {
-    String branchOrBookMarkName = repository.getCurrentBookmark();
-    if (StringUtil.isEmptyOrSpaces(branchOrBookMarkName)) {
-      branchOrBookMarkName = repository.getCurrentBranch();
-    }
-    return branchOrBookMarkName;
+    return branchText + repository.getCurrentBranchName();
   }
 
   @NotNull
@@ -609,9 +601,8 @@ public abstract class HgUtil {
 
   @Nullable
   public static HgRepository getRepositoryForFile(@NotNull Project project, @Nullable VirtualFile file) {
-    if (file == null) {
-      return null;
-    }
+    if (file == null || project.isDisposed()) return null;
+
     HgRepositoryManager repositoryManager = getRepositoryManager(project);
     VirtualFile root = getHgRootOrNull(project, file);
     return repositoryManager.getRepositoryForRoot(root);
@@ -715,5 +706,15 @@ public abstract class HgUtil {
       email = "";
     }
     return Couple.of(userName, email);
+  }
+
+  @NotNull
+  public static List<String> getTargetNames(@NotNull HgRepository repository) {
+    return ContainerUtil.sorted(ContainerUtil.map(repository.getRepositoryConfig().getPaths(), new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return removePasswordIfNeeded(s);
+      }
+    }));
   }
 }

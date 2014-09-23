@@ -119,7 +119,7 @@ public class XmlCoreEnvironment {
       appEnvironment.addExtension(StandardResourceProvider.EP_NAME, new InternalResourceProvider());
 
       appEnvironment.registerApplicationComponent(PathMacros.class, new PathMacrosImpl());
-      appEnvironment.registerApplicationService(ExternalResourceManager.class, new ExternalResourceManagerExImpl(PathMacrosImpl.getInstanceEx()));
+      appEnvironment.registerApplicationService(ExternalResourceManager.class, new ExternalResourceManagerExImpl());
       appEnvironment.registerApplicationService(XmlFoldingSettings.class, new XmlFoldingSettings());
       Language[] myLanguages = new Language[]{XMLLanguage.INSTANCE, HTMLLanguage.INSTANCE, XHTMLLanguage.INSTANCE, DTDLanguage.INSTANCE};
       for (Language myLanguage : myLanguages) {
@@ -137,8 +137,7 @@ public class XmlCoreEnvironment {
   public static class ProjectEnvironment {
     public ProjectEnvironment(CoreProjectEnvironment projectEnvironment) {
       projectEnvironment.getProject().registerService(XmlElementFactory.class, new XmlElementFactoryImpl(projectEnvironment.getProject()));
-      projectEnvironment.getProject().registerService(ExternalResourceManagerExImpl.class,
-                                                      new ProjectResources(PathMacrosImpl.getInstanceEx()));
+      projectEnvironment.getProject().registerService(ExternalResourceManagerExImpl.class, new ProjectResources());
     }
   }
 }

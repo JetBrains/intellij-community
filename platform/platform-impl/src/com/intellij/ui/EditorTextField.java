@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -278,11 +279,16 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   
   public void selectAll() {
     if (myEditor != null) {
-      myEditor.getSelectionModel().setSelection(0, myDocument.getTextLength());
+      doSelectAll(myEditor);
     }
     else {
       myWholeTextSelected = true;
     }
+  }
+
+  private static void doSelectAll(@NotNull Editor editor) {
+    editor.getCaretModel().removeSecondaryCarets();
+    editor.getCaretModel().getPrimaryCaret().setSelection(0, editor.getDocument().getTextLength(), false);
   }
 
   public void removeSelection() {
@@ -514,7 +520,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       editor.getSelectionModel().removeSelection();
     }
     else if (myWholeTextSelected) {
-      editor.getSelectionModel().setSelection(0, myDocument.getTextLength());
+      doSelectAll(editor);
+      myWholeTextSelected = false;
     }
 
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
@@ -776,7 +783,12 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   @Override
   public Object getData(String dataId) {
-    if (myEditor != null && myEditor.isRendererMode()) return null;
+    if (myEditor != null && myEditor.isRendererMode()) {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return myEditor.getCopyProvider();
+      }
+      return null;
+    }
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;

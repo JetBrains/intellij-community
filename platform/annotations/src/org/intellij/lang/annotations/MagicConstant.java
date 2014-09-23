@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,10 +84,11 @@ public @interface MagicConstant {
   /**
    * @return int values (typically named constants) which are allowed here.
    * E.g.
-   * <tt>
+   * <tt><pre>
+   * {@code
    * void setConfirmOpenNewProject(@MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})
    *                               int confirmOpenNewProject);
-   * </tt>
+   * }</pre></tt>
    */
   long[] intValues() default {};
 
@@ -100,13 +101,13 @@ public @interface MagicConstant {
    * @return allowed int flags (i.e. values (typically named constants) which can be combined with bitwise or operator (|).
    *         Also 0 and -1 are considered allowed.
    * E.g.
-   * <tt>
-   * @MagicConstant(flags = {HierarchyEvent.PARENT_CHANGED,HierarchyEvent.DISPLAYABILITY_CHANGED,HierarchyEvent.SHOWING_CHANGED})
+   * <tt><pre>
+   * {@code @MagicConstant(flags = {HierarchyEvent.PARENT_CHANGED,HierarchyEvent.DISPLAYABILITY_CHANGED,HierarchyEvent.SHOWING_CHANGED})
    * int hFlags;
    *
    * hFlags = 3; // not allowed
    * if (hFlags & (HierarchyEvent.PARENT_CHANGED | HierarchyEvent.SHOWING_CHANGED) != 0); // OK
-   * </tt>
+   * }</pre></tt>
    */
   long[] flags() default {};
 
@@ -114,27 +115,27 @@ public @interface MagicConstant {
    * @return allowed values which are defined in the specified class public static final constants.
    *
    * E.g.
-   * <tt>
-   * @MagicConstant(valuesFromClass = Cursor.class)
+   * <tt><pre>
+   * {@code @MagicConstant(valuesFromClass = Cursor.class)
    * int cursorType;
    *
    * cursorType = 11; // not allowed;
    * cursorType = Cursor.E_RESIZE_CURSOR; // OK
-   * </tt>
+   * }</pre></tt>
    */
   Class valuesFromClass() default void.class;
-
 
   /**
    * @return allowed int flags which are defined in the specified class public static final constants.
    *
    * E.g.
-   * <tt>@MagicConstant(flagsFromClass = java.awt.InputEvent.class)
+   * <tt><pre>
+   * {@code @MagicConstant(flagsFromClass = java.awt.InputEvent.class)
    * int eventMask;
    *
    * eventMask = 10; // not allowed;
    * eventMask = InputEvent.CTRL_MASK | InputEvent.ALT_MASK; // OK
-   * </tt>
+   * }</pre></tt>
    */
   Class flagsFromClass() default void.class;
 }

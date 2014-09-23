@@ -29,6 +29,7 @@ import java.io.File;
 
 
 public class TabbedShowHistoryAction extends AbstractVcsAction {
+  @Override
   protected void update(VcsContext context, Presentation presentation) {
     presentation.setEnabled(isEnabled(context));
     final Project project = context.getProject();
@@ -69,7 +70,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
   protected static FilePath getSelectedFileOrNull(VcsContext context) {
     FilePath result = null;
     VirtualFile[] virtualFileArray = context.getSelectedFiles();
-    if (virtualFileArray != null) {
+    if (virtualFileArray.length != 0) {
       if (virtualFileArray.length > 1) return null;
       if (virtualFileArray.length > 0) {
         result = new FilePathImpl(virtualFileArray[0]);
@@ -92,7 +93,8 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
     return result;
   }
 
-  protected void actionPerformed(VcsContext context) {
+  @Override
+  protected void actionPerformed(@NotNull VcsContext context) {
     FilePath path = getSelectedFileOrNull(context);
     if (path == null) return;
     Project project = context.getProject();
@@ -105,6 +107,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
 
 
 
+  @Override
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;
   }

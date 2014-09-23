@@ -32,6 +32,7 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
       new BracePair(JavaTokenType.LBRACE, JavaTokenType.RBRACE, true),
       new BracePair(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET, false),
       new BracePair(JavaDocTokenType.DOC_INLINE_TAG_START, JavaDocTokenType.DOC_INLINE_TAG_END, false),
+      new BracePair(JavaTokenType.LT, JavaTokenType.GT, false)
   };
 
   @Override

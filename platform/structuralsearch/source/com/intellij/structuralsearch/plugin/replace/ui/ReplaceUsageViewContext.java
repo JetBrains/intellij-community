@@ -4,12 +4,13 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.SearchCommand;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import com.intellij.structuralsearch.plugin.ui.SearchStarter;
 import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -28,28 +29,19 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 class ReplaceUsageViewContext extends UsageViewContext {
-  private HashMap<Usage,ReplacementInfo> usage2ReplacementInfo;
-  private Replacer replacer;
+  private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<Usage, ReplacementInfo>();
+  private final Replacer replacer = new Replacer(mySearchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getOptions());
 
-  ReplaceUsageViewContext(final SearchContext context, final Configuration configuration) {
-    super(context,configuration);
-  }
-
-  protected SearchCommand createCommand() {
-    ReplaceCommand command = new ReplaceCommand(mySearchContext.getProject(), this);
-
-    usage2ReplacementInfo = new HashMap<Usage, ReplacementInfo>();
-    replacer = new Replacer(mySearchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getOptions());
-
-    return command;
+  ReplaceUsageViewContext(SearchContext context, Configuration configuration, SearchStarter searchStarter) {
+    super(configuration, context, searchStarter);
   }
 
   public Replacer getReplacer() {
     return replacer;
   }
 
-  public void addReplaceUsage(final Usage usage, final ReplacementInfo replacementInfo) {
-    usage2ReplacementInfo.put(usage,replacementInfo);
+  public void addReplaceUsage(Usage usage, MatchResult result) {
+    usage2ReplacementInfo.put(usage, getReplacer().buildReplacement(result));
   }
 
   private boolean isValid(UsageInfo2UsageAdapter info) {

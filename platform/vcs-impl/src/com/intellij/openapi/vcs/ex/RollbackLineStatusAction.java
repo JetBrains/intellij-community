@@ -12,8 +12,6 @@
  */
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,6 +71,15 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     BitSet lines = new BitSet(totalLines + 1);
 
     List<Caret> carets = editor.getCaretModel().getAllCarets();
+
+    if (carets.size() == 1) {
+      Caret caret = carets.get(0);
+      if (caret.getSelectionStart() == 0 && caret.getSelectionEnd() == document.getTextLength()) {
+        doRollback(tracker);
+        return;
+      }
+    }
+
     for (Caret caret : carets) {
       if (caret.hasSelection()) {
         int line1 = editor.offsetToLogicalPosition(caret.getSelectionStart()).line;
@@ -103,6 +110,15 @@ public class RollbackLineStatusAction extends DumbAwareAction {
       @Override
       public void run() {
         tracker.rollbackChanges(lines);
+      }
+    });
+  }
+
+  private static void doRollback(@NotNull final LineStatusTracker tracker) {
+    execute(tracker, new Runnable() {
+      @Override
+      public void run() {
+        tracker.rollbackAllChanges();
       }
     });
   }

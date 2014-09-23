@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 final class OldStreamProviderAdapter extends StreamProvider implements CurrentUserHolder {
   final com.intellij.openapi.options.StreamProvider myProvider;
   private final RoamingType myRoamingType;
@@ -32,9 +33,8 @@ final class OldStreamProviderAdapter extends StreamProvider implements CurrentUs
   }
 
   @Override
-  public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+  public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
     myProvider.saveContent(fileSpec, new BufferExposingByteArrayInputStream(content, size), size, roamingType, async);
-    return false;
   }
 
   @Nullable

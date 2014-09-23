@@ -48,6 +48,8 @@ public abstract class ExternalAnnotationsManager {
     return INSTANCE_KEY.getValue(project);
   }
 
+  public abstract boolean isExternalAnnotation(@NotNull PsiAnnotation annotation);
+
   @Nullable
   public abstract PsiAnnotation findExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 

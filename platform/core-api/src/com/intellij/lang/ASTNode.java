@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -291,6 +291,5 @@ public interface ASTNode extends UserDataHolder {
    * @param clazz expected psi class
    * @return the PSI element.
    */
-  @Nullable
-  <T extends PsiElement> T getPsi(Class<T> clazz);
+  <T extends PsiElement> T getPsi(@NotNull Class<T> clazz);
 }

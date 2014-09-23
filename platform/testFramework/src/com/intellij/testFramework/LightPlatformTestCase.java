@@ -32,7 +32,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -359,6 +358,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
           filePointerManager.storePointers();
         }
+        catch (RuntimeException e) {
+          throw e;
+        }
         catch (Exception e) {
           throw new RuntimeException(e);
         }
@@ -371,7 +373,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
                              @NotNull final Map<String, InspectionToolWrapper> availableInspectionTools) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
-
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
     }
@@ -459,6 +461,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
     }
+    UIUtil.dispatchAllInvocationEvents(); // startup activities
+
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 

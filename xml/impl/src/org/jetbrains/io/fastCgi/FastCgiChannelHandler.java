@@ -8,6 +8,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.Responses;
 import org.jetbrains.io.SimpleChannelInboundHandlerAdapter;
 
@@ -17,7 +18,7 @@ import static org.jetbrains.io.fastCgi.FastCgiService.LOG;
 public class FastCgiChannelHandler extends SimpleChannelInboundHandlerAdapter<FastCgiResponse> {
   private final ConcurrentIntObjectMap<Channel> requestToChannel;
 
-  public FastCgiChannelHandler(ConcurrentIntObjectMap<Channel> channel) {
+  public FastCgiChannelHandler(@NotNull ConcurrentIntObjectMap<Channel> channel) {
     requestToChannel = channel;
   }
 
@@ -92,7 +93,14 @@ public class FastCgiChannelHandler extends SimpleChannelInboundHandlerAdapter<Fa
 
       String value = builder.toString();
       if (key.equalsIgnoreCase("status")) {
-        response.setStatus(HttpResponseStatus.valueOf(Integer.parseInt(value.substring(0, value.indexOf(' ')))));
+        int index = value.indexOf(' ');
+        if (index == -1) {
+          LOG.warn("Cannot parse status: " + value);
+          response.setStatus(HttpResponseStatus.OK);
+        }
+        else {
+          response.setStatus(HttpResponseStatus.valueOf(Integer.parseInt(value.substring(0, index))));
+        }
       }
       else if (!(key.startsWith("http") || key.startsWith("HTTP"))) {
         response.headers().add(key, value);

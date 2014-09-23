@@ -122,7 +122,7 @@ class SearchForUsagesRunnable implements Runnable {
     return "<a href='" + SEARCH_IN_PROJECT_HREF_TARGET + "'>Search in Project</a>";
   }
 
-  private static void notifyByFindBalloon(final HyperlinkListener listener,
+  private static void notifyByFindBalloon(@Nullable final HyperlinkListener listener,
                                           @NotNull final MessageType info,
                                           @NotNull FindUsagesProcessPresentation processPresentation,
                                           @NotNull final Project project,
@@ -138,6 +138,7 @@ class SearchForUsagesRunnable implements Runnable {
 
       resultLines.add(shortMessage);
       resultListener = addHrefHandling(resultListener, LARGE_FILES_HREF_TARGET, new Runnable() {
+        @Override
         public void run() {
           String detailedMessage = detailedLargeFilesMessage(largeFiles);
           List<String> strings = new ArrayList<String>(lines);
@@ -247,9 +248,15 @@ class SearchForUsagesRunnable implements Runnable {
     };
   }
 
-  private static PsiElement getPsiElement(UsageTarget[] searchFor) {
-    if (!(searchFor[0] instanceof PsiElementUsageTarget)) return null;
-    return ((PsiElementUsageTarget)searchFor[0]).getElement();
+  private static PsiElement getPsiElement(@NotNull UsageTarget[] searchFor) {
+    final UsageTarget target = searchFor[0];
+    if (!(target instanceof PsiElementUsageTarget)) return null;
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+      @Override
+      public PsiElement compute() {
+        return ((PsiElementUsageTarget)target).getElement();
+      }
+    });
   }
 
   private static void flashUsageScriptaculously(@NotNull final Usage usage) {
@@ -321,13 +328,14 @@ class SearchForUsagesRunnable implements Runnable {
 
   private void searchUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
     ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
+    assert indicator != null : "must run find usages under progress";
     TooManyUsagesStatus.createFor(indicator);
     Alarm findUsagesStartedBalloon = new Alarm();
     findUsagesStartedBalloon.addRequest(new Runnable() {
       @Override
       public void run() {
         notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation, myProject,
-                            Collections.singletonList(UsageViewManagerImpl.getProgressTitle(myPresentation)));
+                            Collections.singletonList(StringUtil.escapeXml(UsageViewManagerImpl.getProgressTitle(myPresentation))));
         findStartedBalloonShown.set(true);
       }
     }, 300, ModalityState.NON_MODAL);
@@ -337,7 +345,8 @@ class SearchForUsagesRunnable implements Runnable {
       @Override
       public boolean process(final Usage usage) {
         ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
-        if (indicator != null && indicator.isCanceled()) return false;
+        assert indicator != null : "must run find usages under progress";
+        if (indicator.isCanceled()) return false;
 
         if (!UsageViewManagerImpl.isInScope(usage, mySearchScopeToWarnOfFallingOutOf)) {
           myOutOfScopeUsages.incrementAndGet();
@@ -368,7 +377,7 @@ class SearchForUsagesRunnable implements Runnable {
             });
           }
         }
-        return indicator == null || !indicator.isCanceled();
+        return !indicator.isCanceled();
       }
     });
     if (getUsageView(indicator) != null) {
@@ -400,6 +409,12 @@ class SearchForUsagesRunnable implements Runnable {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
+            if (myProcessPresentation.isCanceled()) {
+              notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation, myProject, Arrays.asList("Usage search was canceled"));
+              findStartedBalloonShown.set(false);
+              return;
+            }
+
             final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
             final String message = UsageViewBundle.message("dialog.no.usages.found.in",
                                                            StringUtil.decapitalize(myPresentation.getUsagesString()),

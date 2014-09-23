@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,10 +51,12 @@ public class ReplacePromptDialog extends DialogWrapper {
     replaceAction.putValue(DEFAULT_ACTION,Boolean.TRUE);
     if (myException == null) {
       if (myIsMultiple){
+        setCancelButtonText(UIBundle.message("replace.prompt.review.action"));
         return new Action[]{
           replaceAction,
           createSkipAction(),
           new DoAction(UIBundle.message("replace.prompt.all.in.this.file.button"), FindManager.PromptResult.ALL_IN_THIS_FILE),
+          new DoAction(UIBundle.message("replace.prompt.skip.all.in.file.button"), FindManager.PromptResult.SKIP_ALL_IN_THIS_FILE),
           new DoAction(UIBundle.message("replace.prompt.all.files.action"), FindManager.PromptResult.ALL_FILES),
           getCancelAction()
         };
@@ -84,10 +86,8 @@ public class ReplacePromptDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
     Icon icon = Messages.getQuestionIcon();
-    if (icon != null){
-      JLabel iconLabel = new JLabel(icon);
-      panel.add(iconLabel, BorderLayout.WEST);
-    }
+    JLabel iconLabel = new JLabel(icon);
+    panel.add(iconLabel, BorderLayout.WEST);
     JLabel label = new JLabel(getMessage());
     label.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
     label.setForeground(JBColor.foreground());

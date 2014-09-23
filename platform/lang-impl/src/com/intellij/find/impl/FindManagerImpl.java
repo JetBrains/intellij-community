@@ -203,12 +203,9 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
         if (findModel.isReplaceState()) {
           FindSettings.getInstance().addStringToReplace(findModel.getStringToReplace());
         }
-        if (findModel.isMultipleFiles() && !findModel.isProjectScope()) {
+        if (findModel.isMultipleFiles() && !findModel.isProjectScope() && findModel.getDirectoryName() != null) {
           FindSettings.getInstance().addDirectory(findModel.getDirectoryName());
-
-          if (findModel.getDirectoryName() != null) {
-            myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
-          }
+          myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
         }
         okHandler.run();
       }
@@ -446,8 +443,16 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       final FindModel model = new FindModel();
       model.copyFrom(findmodel);
       final String s = model.getStringToFind();
-      model.setStringToFind(StringUtil.escapeToRegexp(s));
-      model.setRegularExpressions(true);
+      String newStringToFind;
+
+      if (findmodel.isRegularExpressions()) {
+        newStringToFind = StringUtil.replace(s, "\n", "\\n\\s*"); // add \\s* for convenience
+      } else {
+        newStringToFind = StringUtil.escapeToRegexp(s);
+        model.setRegularExpressions(true);
+      }
+      model.setStringToFind(newStringToFind);
+
       return model;
     }
     return findmodel;

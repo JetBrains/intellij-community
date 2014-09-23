@@ -88,6 +88,12 @@ public class VcsPushDialog extends DialogWrapper {
     return actions.toArray(new Action[actions.size()]);
   }
 
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myListPanel.getPreferredFocusedComponent();
+  }
+
   @NotNull
   @Override
   protected Action getOKAction() {

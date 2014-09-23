@@ -39,7 +39,7 @@ import java.util.Comparator;
  * Change can be applied, then its sides would be equal.
  */
 public abstract class Change {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.Change");
+  private static final Logger LOG = Logger.getInstance(Change.class);
 
   public abstract ChangeSide getChangeSide(FragmentSide side);
 
@@ -63,7 +63,7 @@ public abstract class Change {
 
   /**
    * Apply the change, i.e. change the "Merge result" document and update range markers, highlighting, gutters, etc.
-   * @param source The source side of the change, which is being applied.
+   * @param original The source side of the change, which is being applied.
    */
   private void apply(@NotNull FragmentSide original) {
     FragmentSide targetSide = original.otherSide();
@@ -104,9 +104,11 @@ public abstract class Change {
    * @return the resulting TextRange from the target document, or null if the document if not writable.
    */
   @Nullable
-  private static TextRange modifyDocument(@NotNull Project project, @NotNull RangeMarker original, @NotNull RangeMarker target) {
+  private static TextRange modifyDocument(@Nullable Project project, @NotNull RangeMarker original, @NotNull RangeMarker target) {
     Document document = target.getDocument();
-    if (!ReadonlyStatusHandler.ensureDocumentWritable(project, document)) { return null; }
+    if (project != null && !ReadonlyStatusHandler.ensureDocumentWritable(project, document)) {
+      return null;
+    }
     if (DocumentUtil.isEmpty(original)) {
       int offset = target.getStartOffset();
       document.deleteString(offset, target.getEndOffset());
@@ -135,7 +137,10 @@ public abstract class Change {
     getHighlighterHolder(side).updateHighlighter(getChangeSide(side), getType());
   }
 
-  private Project getProject() { return getChangeList().getProject(); }
+  @Nullable
+  private Project getProject() {
+    return getChangeList().getProject();
+  }
 
   private ChangeHighlighterHolder getHighlighterHolder(FragmentSide side) {
     return getChangeSide(side).getHighlighterHolder();
@@ -149,8 +154,10 @@ public abstract class Change {
 
   public static void apply(final Change change, final FragmentSide fromSide) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         CommandProcessor.getInstance().executeCommand(change.getProject(), new Runnable() {
+          @Override
           public void run() {
             change.apply(fromSide);
           }
@@ -179,7 +186,8 @@ public abstract class Change {
       myMainSide = mainSide;
     }
 
-    public int compare(Change change, Change change1) {
+    @Override
+    public int compare(@NotNull Change change, @NotNull Change change1) {
       int result1 = compareSide(change, change1, myMainSide);
       if (result1 != 0) return result1;
       return compareSide(change, change1, myMainSide.otherSide());
@@ -212,11 +220,13 @@ public abstract class Change {
       return mySide;
     }
 
+    @Override
     @NotNull
     public DiffRangeMarker getRange() {
       return myRange;
     }
 
+    @Override
     public ChangeHighlighterHolder getHighlighterHolder() {
       return myHighlighterHolder;
     }

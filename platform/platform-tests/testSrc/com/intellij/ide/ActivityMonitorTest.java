@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package com.intellij.ide;
 
-import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
 import com.intellij.mock.MockProjectEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,28 +34,12 @@ import org.jetbrains.annotations.Nullable;
  * Time: 10:04 AM
  * To change this template use File | Settings | File Templates.
  */
-public class ActivityMonitorTest extends UsefulTestCase {
+public class ActivityMonitorTest extends LightPlatformTestCase {
   private UiActivityMonitorImpl myMonitor;
-  private ModalityState myCurrentState;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myCurrentState = ModalityState.NON_MODAL;
-    final ModalityStateEx any = new ModalityStateEx();
-    Extensions.registerAreaClass("IDEA_PROJECT", null);
-    ApplicationManager.setApplication(new MockApplication(getTestRootDisposable()) {
-      @NotNull
-      @Override
-      public ModalityState getCurrentModalityState() {
-        return myCurrentState;
-      }
-
-      @Override
-      public ModalityState getAnyModalityState() {
-        return any;
-      }
-    }, getTestRootDisposable());
     myMonitor = new UiActivityMonitorImpl();
     myMonitor.setActive(true);
     disposeOnTearDown(myMonitor);
@@ -150,19 +133,23 @@ public class ActivityMonitorTest extends UsefulTestCase {
     myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.NON_MODAL);
     assertBusy(null);
 
-    myCurrentState = new ModalityStateEx(new Object[] {"dialog"});
-    assertReady(null);
+    LaterInvocator.enterModal("dialog");
+    try {
+      assertReady(null);
 
-    myMonitor.addActivity(new UiActivity("non_modal2"), ModalityState.NON_MODAL);
-    assertReady(null);
+      myMonitor.addActivity(new UiActivity("non_modal2"), ModalityState.NON_MODAL);
+      assertReady(null);
 
-    myMonitor.addActivity(new UiActivity("modal_1"), new ModalityStateEx(new Object[] {"dialog"}));
-    assertBusy(null);
+      myMonitor.addActivity(new UiActivity("modal_1"), new ModalityStateEx(new Object[] {"dialog"}));
+      assertBusy(null);
 
-    myMonitor.addActivity(new UiActivity("modal_2"), new ModalityStateEx(new Object[] {"dialog", "popup"}));
-    assertBusy(null);
+      myMonitor.addActivity(new UiActivity("modal_2"), new ModalityStateEx(new Object[] {"dialog", "popup"}));
+      assertBusy(null);
+    }
+    finally {
+      LaterInvocator.leaveModal("dialog");
+    }
 
-    myCurrentState = ModalityState.NON_MODAL;
     assertBusy(null);
   }
 
@@ -172,8 +159,13 @@ public class ActivityMonitorTest extends UsefulTestCase {
     myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.any());
     assertBusy(null);
 
-    myCurrentState = new ModalityStateEx(new Object[] {"dialog"});
-    assertBusy(null);
+    try {
+      LaterInvocator.enterModal("dialog");
+      assertBusy(null);
+    }
+    finally {
+      LaterInvocator.leaveModal("dialog");
+    }
   }
 
   public void testUiActivity() throws Exception {
@@ -183,11 +175,12 @@ public class ActivityMonitorTest extends UsefulTestCase {
     assertFalse(new UiActivity("root", "folder2").isSameOrGeneralFor(new UiActivity("anotherRoot")));
   }
   
-  private void assertReady(@Nullable Project key, UiActivity ... activities) {
+  private void assertReady(@Nullable Project key, @NotNull UiActivity ... activities) {
+    UIUtil.dispatchAllInvocationEvents();
     BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key, activities) : myMonitor.getBusy(activities));
     assertTrue("Must be READY, but was: BUSY", busy.isReady());
     
-    final boolean[] done = new boolean[] {false};
+    final boolean[] done = {false};
     busy.getReady(this).doWhenDone(new Runnable() {
       @Override
       public void run() {
@@ -198,9 +191,9 @@ public class ActivityMonitorTest extends UsefulTestCase {
     assertTrue(done[0]);
   }
 
-  private void assertBusy(@Nullable Project key, UiActivity ... activities) {
+  private void assertBusy(@Nullable Project key, @NotNull UiActivity ... activities) {
+    UIUtil.dispatchAllInvocationEvents();
     BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key, activities) : myMonitor.getBusy(activities));
     assertFalse("Must be BUSY, but was: READY", busy.isReady());
   }
-
 }

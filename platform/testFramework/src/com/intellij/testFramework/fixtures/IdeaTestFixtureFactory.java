@@ -37,6 +37,7 @@ public abstract class IdeaTestFixtureFactory {
     }
   }
 
+  @NotNull
   public static IdeaTestFixtureFactory getFixtureFactory() {
     return ourInstance;
   }
@@ -59,6 +60,7 @@ public abstract class IdeaTestFixtureFactory {
 
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name);
 
+  @NotNull
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
 
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor);

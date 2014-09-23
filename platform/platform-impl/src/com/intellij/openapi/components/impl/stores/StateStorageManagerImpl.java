@@ -24,12 +24,14 @@ import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
@@ -99,9 +101,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  public synchronized void addMacro(String macro, String expansion) {
-    // avoid hundreds of $MODULE_FILE$ instances
-    myMacros.put(("$" + macro + "$").intern(), expansion);
+  public synchronized void addMacro(@NotNull String macro, @NotNull String expansion) {
+    assert !macro.isEmpty();
+    // backward compatibility
+    if (macro.charAt(0) != '$') {
+      LOG.warn("Add macros instead of macro name: " + macro);
+      expansion = '$' + macro + '$';
+    }
+    myMacros.put(macro, expansion);
   }
 
   @Override
@@ -123,15 +130,15 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
-  @Override
   @Nullable
-  public StateStorage getFileStateStorage(@NotNull String fileName) {
+  @Override
+  public StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
     myStorageLock.lock();
     try {
-      StateStorage stateStorage = myStorages.get(fileName);
+      StateStorage stateStorage = myStorages.get(fileSpec);
       if (stateStorage == null) {
-        stateStorage = createFileStateStorage(fileName);
-        putStorageToMap(fileName, stateStorage);
+        stateStorage = createFileStateStorage(fileSpec, roamingType);
+        putStorageToMap(fileSpec, stateStorage);
       }
       return stateStorage;
     }
@@ -140,6 +147,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
+  @Nullable
+  public StateStorage getFileStateStorage(@NotNull String fileSpec) {
+    return getStateStorage(fileSpec, RoamingType.PER_USER);
+  }
+
+  @NotNull
   @Override
   public Collection<String> getStorageFileNames() {
     myStorageLock.lock();
@@ -176,19 +190,19 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   private StateStorage createStateStorage(Storage storageSpec) throws StateStorageException {
-    if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
+    if (!storageSpec.storageClass().equals(StateStorage.class)) {
       String key = UUID.randomUUID().toString();
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
       return (StateStorage)myPicoContainer.getComponentInstance(key);
     }
-    if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
+    if (!storageSpec.stateSplitter().equals(StateSplitter.class)) {
       return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
     }
-    return createFileStateStorage(storageSpec.file());
+    return createFileStateStorage(storageSpec.file(), storageSpec.roamingType());
   }
 
   private static String getStorageSpecId(Storage storageSpec) {
-    if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
+    if (!storageSpec.storageClass().equals(StateStorage.class)) {
       return storageSpec.storageClass().getName();
     }
     else {
@@ -209,47 +223,40 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   private StateStorage createDirectoryStateStorage(String file, Class<? extends StateSplitter> splitterClass) throws StateStorageException {
-    String expandedFile = expandMacros(file);
-    if (expandedFile == null) {
-      myStorages.put(file, null);
-      return null;
-    }
-
     final StateSplitter splitter;
     try {
-      splitter = splitterClass.newInstance();
+      splitter = ReflectionUtil.newInstance(splitterClass);
     }
-    catch (InstantiationException e) {
+    catch (RuntimeException e) {
       throw new StateStorageException(e);
     }
-    catch (IllegalAccessException e) {
-      throw new StateStorageException(e);
-    }
-
-    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter, this, myPicoContainer);
+    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandMacros(file), splitter, this, myPicoContainer);
   }
 
   @Nullable
-  private StateStorage createFileStateStorage(@NotNull final String fileSpec) {
+  private StateStorage createFileStateStorage(@NotNull final String fileSpec, @Nullable RoamingType roamingType) {
     String expandedFile = expandMacros(fileSpec);
-    if (expandedFile == null) {
-      myStorages.put(fileSpec, null);
-      return null;
-    }
 
-    String extension = FileUtilRt.getExtension(new File(expandedFile).getName());
-    if (!ourHeadlessEnvironment && extension.isEmpty()) {
+    if (!ourHeadlessEnvironment && PathUtilRt.getFileName(expandedFile).lastIndexOf('.') < 0) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 
-    return new FileBasedStorage(getMacroSubstitutor(fileSpec), getStreamProvider(), expandedFile, fileSpec, myRootTagName, this,
-                                myPicoContainer, ComponentRoamingManager.getInstance(), this) {
+    if (roamingType != RoamingType.PER_USER && fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
+      roamingType = RoamingType.DISABLED;
+    }
+
+    beforeFileBasedStorageCreate();
+    return new FileBasedStorage(expandedFile, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, this,
+                                myPicoContainer, getStreamProvider(), this) {
       @Override
       @NotNull
       protected StorageData createStorageData() {
         return StateStorageManagerImpl.this.createStorageData(fileSpec);
       }
     };
+  }
+
+  protected void beforeFileBasedStorageCreate() {
   }
 
   @Override
@@ -271,8 +278,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
       try {
-        Document document = JDOMUtil.loadDocument(new File(filePath));
-        loadComponentVersions(result, document);
+        loadComponentVersions(result, JDOMUtil.loadDocument(new File(filePath)));
       }
       catch (JDOMException e) {
         LOG.debug(e);
@@ -294,6 +300,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   public static void loadComponentVersions(TObjectLongHashMap<String> result, Document document) {
     List<Element> componentObjects = document.getRootElement().getChildren("component");
+    result.ensureCapacity(componentObjects.size());
     for (Element component : componentObjects) {
       String name = component.getAttributeValue("name");
       String version = component.getAttributeValue("version");
@@ -330,26 +337,31 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
 
   @Override
-  @Nullable
-  public synchronized String expandMacros(final String file) {
-    final Matcher matcher = MACRO_PATTERN.matcher(file);
+  @NotNull
+  public synchronized String expandMacros(@NotNull String file) {
+    Matcher matcher = MACRO_PATTERN.matcher(file);
     while (matcher.find()) {
       String m = matcher.group(1);
-      if (!myMacros.containsKey(m) || !ApplicationManager.getApplication().isUnitTestMode() && myMacros.get(m) == null) {
-        throw new IllegalArgumentException("Unknown macro: " + m + " in storage spec: " + file);
+      if (!myMacros.containsKey(m)) {
+        throw new IllegalArgumentException("Unknown macro: " + m + " in storage file spec: " + file);
       }
     }
 
-    String actualFile = file;
-
+    String expanded = file;
     for (String macro : myMacros.keySet()) {
-      final String replacement = myMacros.get(macro);
-      if (replacement != null) {
-        actualFile = StringUtil.replace(actualFile, macro, replacement);
-      }
+      expanded = StringUtil.replace(expanded, macro, myMacros.get(macro));
     }
+    return expanded;
+  }
 
-    return actualFile;
+  @NotNull
+  @Override
+  public String collapseMacros(@NotNull String path) {
+    String result = path;
+    for (String macro : myMacros.keySet()) {
+      result = StringUtil.replace(result, myMacros.get(macro), macro);
+    }
+    return result;
   }
 
   @NotNull
@@ -424,9 +436,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   @Nullable
   public StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException {
-    return getFileStateStorage(getOldStorageSpec(component, componentName, operation));
+    String oldStorageSpec = getOldStorageSpec(component, componentName, operation);
+    //noinspection deprecation
+    return oldStorageSpec == null ? null : getStateStorage(oldStorageSpec, component instanceof RoamingTypeDisabled ? RoamingType.DISABLED : RoamingType.PER_USER);
   }
 
+  @Nullable
   protected abstract String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation)
     throws StateStorageException;
 
@@ -439,14 +454,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     @Override
     @NotNull
-    public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
+    public List<File> getAllStorageFilesToSave() throws StateStorageException {
       assert mySession == this;
       return myCompoundSaveSession.getAllStorageFilesToSave();
     }
 
     @Override
     @NotNull
-    public List<IFile> getAllStorageFiles() {
+    public List<File> getAllStorageFiles() {
       return myCompoundSaveSession.getAllStorageFiles();
     }
 
@@ -502,15 +517,16 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public void save() {
-    if (!isDirty) return;
+    if (!isDirty) {
+      return;
+    }
+
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
-      File dir = new File(filePath).getParentFile();
-      if (!dir.isDirectory() && !dir.mkdirs()) {
-        LOG.warn("Unable to create: " + dir);
-      }
+      File file = new File(filePath);
+      FileUtilRt.createParentDirs(file);
       try {
-        JDOMUtil.writeDocument(new Document(createComponentVersionsXml(getComponentVersions())), filePath, "\n");
+        JDOMUtil.writeParent(createComponentVersionsXml(getComponentVersions()), file, "\n");
         isDirty = false;
       }
       catch (IOException e) {
@@ -545,6 +561,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return root;
   }
 
+  @SuppressWarnings("deprecation")
   private static class OldStreamProviderManager extends StreamProvider implements CurrentUserHolder {
     private final List<OldStreamProviderAdapter> myStreamProviders = new SmartList<OldStreamProviderAdapter>();
 
@@ -574,22 +591,17 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     @Override
-    public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
-      boolean result = false;
+    public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
       for (StreamProvider streamProvider : myStreamProviders) {
         try {
-          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType) && streamProvider.saveContent(fileSpec, content, size, roamingType, async)) {
-            result = true;
+          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType)) {
+            streamProvider.saveContent(fileSpec, content, size, roamingType, async);
           }
-        }
-        catch (ConnectException e) {
-          LOG.debug("Cannot send user profile to server: " + e.getLocalizedMessage());
         }
         catch (Exception e) {
           LOG.debug(e);
         }
       }
-      return result;
     }
 
     @Override

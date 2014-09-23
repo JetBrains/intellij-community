@@ -37,6 +37,8 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
                     "HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Python\\PythonCore", "python.exe",
                     "HKEY_LOCAL_MACHINE\\SOFTWARE\\IronPython", "ipy.exe");
 
+  private static Set<String> ourRegistryCache;
+
   private WinPythonSdkFlavor() {
   }
 
@@ -78,18 +80,25 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   }
 
   public static void findInRegistry(Collection<String> candidates) {
-    for (Map.Entry<String, String> entry : ourRegistryMap.entrySet()) {
-      final String prefix = entry.getKey();
-      final String exePath = entry.getValue();
-      List<String> strings = WindowsRegistryUtil.readRegistryBranch(prefix);
-      for (String string : strings) {
-        final String path =
-          WindowsRegistryUtil.readRegistryDefault(prefix + "\\" + string +
-                                                  "\\InstallPath");
-        if (path != null) {
-          File f = new File(path, exePath);
-          if (f.exists()) {
-            candidates.add(FileUtil.toSystemDependentName(f.getPath()));
+    fillRegistryCache();
+    candidates.addAll(ourRegistryCache);
+  }
+
+  private static void fillRegistryCache() {
+    if (ourRegistryCache == null) {
+      ourRegistryCache = new HashSet<String>();
+      for (Map.Entry<String, String> entry : ourRegistryMap.entrySet()) {
+        final String prefix = entry.getKey();
+        final String exePath = entry.getValue();
+        List<String> strings = WindowsRegistryUtil.readRegistryBranch(prefix);
+        for (String string : strings) {
+          final String path = WindowsRegistryUtil.readRegistryDefault(prefix + "\\" + string +
+                                                                      "\\InstallPath");
+          if (path != null) {
+            File f = new File(path, exePath);
+            if (f.exists()) {
+              ourRegistryCache.add(FileUtil.toSystemDependentName(f.getPath()));
+            }
           }
         }
       }

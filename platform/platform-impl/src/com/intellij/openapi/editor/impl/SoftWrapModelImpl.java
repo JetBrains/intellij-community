@@ -28,10 +28,6 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,7 +168,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myUseSoftWraps = settings.isUseSoftWraps();
 
     int tabWidthBefore = myTabWidth;
-    myTabWidth = getCurrentTabWidth();
+    myTabWidth = EditorUtil.getTabSize(myEditor);
 
     boolean fontsChanged = false;
     if (!myFontPreferences.equals(myEditor.getColorsScheme().getFontPreferences())
@@ -187,20 +183,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDeferredFoldRegions.clear();
       myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
-  }
-
-  /**
-   * @return    tab width for the file used at the current editor (if it's possible to calculate the one);
-   *            <code>'-1'</code> otherwise
-   */
-  private int getCurrentTabWidth() {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myEditor.getProject());
-    final VirtualFile file = myEditor.getVirtualFile();
-    if (file == null) {
-      return -1;
-    } 
-    final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
-    return indentOptions.TAB_SIZE;
   }
 
   @Override

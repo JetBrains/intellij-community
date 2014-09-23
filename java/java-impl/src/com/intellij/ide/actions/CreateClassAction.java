@@ -65,7 +65,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     builder.setValidator(new InputValidatorEx() {
       @Override
       public String getErrorText(String inputString) {
-        if (inputString.length() > 0 && !JavaPsiFacade.getInstance(project).getNameHelper().isQualifiedName(inputString)) {
+        if (inputString.length() > 0 && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
           return "This is not a valid Java qualified name";
         }
         return null;

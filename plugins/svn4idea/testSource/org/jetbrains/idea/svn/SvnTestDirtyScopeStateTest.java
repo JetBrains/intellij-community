@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.TimeoutUtil;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -89,12 +90,7 @@ public class SvnTestDirtyScopeStateTest extends Svn17TestCase {
   }
 
   private void waitABit() {
-    try {
-      Thread.sleep(100);
-    }
-    catch (InterruptedException e) {
-      //
-    }
+    TimeoutUtil.sleep(100);
   }
 
   @Test

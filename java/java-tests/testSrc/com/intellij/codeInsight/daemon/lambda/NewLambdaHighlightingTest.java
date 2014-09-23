@@ -22,6 +22,8 @@ import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,9 +78,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA122616() { doTest(); }
   public void testIDEA122700() { doTest(); }
   public void testIDEA122406() { doTest(); }
-  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
-  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testIDEA123731() { doTest(); }
   public void testIDEA123869() { doTest(); }
   public void testIDEA123848() { doTest(); }
@@ -86,6 +86,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testLiftedIntersectionType() { doTest(); }
   public void testInferenceFromReturnStatements() { doTest(); }
   public void testDownUpThroughLambdaReturnStatements() { doTest(); }
+  @Bombed(day = 30, month = Calendar.OCTOBER)
   public void testIDEA124547() { doTest(); }
   public void testIDEA118362() { doTest(); }
   public void testIDEA126056() { doTest(); }
@@ -94,12 +95,20 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA126109() { doTest(); }
   public void testIDEA126809() { doTest(); }
   public void testIDEA124424() { doTest(); }
+  public void testNestedLambdaExpressions1() { doTest(); }
+  public void testNestedLambdaExpressionsNoFormalParams() { doTest(); }
+  public void testNestedLambdaExpressionsNoFormalParams1() { doTest(); }
+  public void testDeepNestedLambdaExpressionsNoFormalParams() { doTest(); }
+  public void testNestedLambdaExpressionsNoFormalParamsStopAtStandalone() { doTest(); }
+
+  public void testNestedLambdaCheckedExceptionsConstraints() throws Exception {
+    doTest();
+  }
 
   public void testIDEA127596() throws Exception {
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testIDEA124983() throws Exception {
     doTest();
   }
@@ -115,17 +124,42 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testParenthesizedExpressionsDuringConstrainsCollection() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA126778() throws Exception {
+    doTest();
+  }
+
+  public void testEnsureGroundTypeToGetLambdaParameterType() throws Exception {
+    doTest();
+  }
+
+  @Bombed(month = Calendar.OCTOBER, day = 30)
+  public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
 
   private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
   }
 
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();
   }
+/*
+  public static Test suite() {
+    final TestSuite suite = new TestSuite();
+    for (int i = 0; i < 100; i++) {
+      suite.addTestSuite(NewLambdaHighlightingTest.class);
+    }
+    return suite;
+  }*/
 }

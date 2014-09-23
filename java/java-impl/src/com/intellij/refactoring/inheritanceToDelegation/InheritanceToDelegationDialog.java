@@ -33,7 +33,6 @@ import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.classMembers.InterfaceMemberDependencyGraph;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +44,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 
 public class InheritanceToDelegationDialog extends RefactoringDialog {
   private final PsiClass[] mySuperClasses;
@@ -108,7 +108,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   @Override
   protected void canRun() throws ConfigurationException {
     final String fieldName = getFieldName();
-    final PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+    final PsiNameHelper helper = PsiNameHelper.getInstance(myProject);
     if (!helper.isIdentifier(fieldName)){
       throw new ConfigurationException("\'" + fieldName + "\' is invalid field name for delegation");
     }

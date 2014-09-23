@@ -7,8 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="lvcs-impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="lvcs-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="json" scope="RUNTIME" />
   </component>
 </module>
 

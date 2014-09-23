@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
@@ -26,8 +27,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -49,13 +53,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
@@ -79,9 +84,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private CheckboxTree myTree;
   private final List<TemplateGroup> myTemplateGroups = new ArrayList<TemplateGroup>();
   private JComboBox myExpandByCombo;
+  private HyperlinkLabel myOpenKeymapLabel;
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
+  private static final String CUSTOM = "Custom";
 
   private CheckedTreeNode myTreeRoot = new CheckedTreeNode(null);
 
@@ -135,16 +142,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
     initTemplates(groups, templateSettings.getLastSelectedTemplateGroup(), templateSettings.getLastSelectedTemplateKey());
 
 
-
-    if (templateSettings.getDefaultShortcutChar() == TemplateSettings.TAB_CHAR) {
-      myExpandByCombo.setSelectedItem(TAB);
-    }
-    else if (templateSettings.getDefaultShortcutChar() == TemplateSettings.ENTER_CHAR) {
-      myExpandByCombo.setSelectedItem(ENTER);
-    }
-    else {
-      myExpandByCombo.setSelectedItem(SPACE);
-    }
+    char shortcutChar = templateSettings.getDefaultShortcutChar();
+    myExpandByCombo.setSelectedItem(shortcutChar == TemplateSettings.CUSTOM_CHAR ? CUSTOM :
+                                    shortcutChar == TemplateSettings.TAB_CHAR ? TAB :
+                                    shortcutChar == TemplateSettings.ENTER_CHAR ? ENTER :
+                                    SPACE);
 
     UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
       @Override
@@ -278,15 +280,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   private char getDefaultShortcutChar() {
     Object selectedItem = myExpandByCombo.getSelectedItem();
-    if (TAB.equals(selectedItem)) {
-      return TemplateSettings.TAB_CHAR;
-    }
-    else if (ENTER.equals(selectedItem)) {
-      return TemplateSettings.ENTER_CHAR;
-    }
-    else {
-      return TemplateSettings.SPACE_CHAR;
-    }
+    if (TAB.equals(selectedItem)) return TemplateSettings.TAB_CHAR;
+    if (ENTER.equals(selectedItem)) return TemplateSettings.ENTER_CHAR;
+    if (SPACE.equals(selectedItem)) return TemplateSettings.SPACE_CHAR;
+    else return TemplateSettings.CUSTOM_CHAR;
   }
 
   private List<TemplateGroup> getTemplateGroups() {
@@ -346,16 +343,82 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new JComboBox();
-    myExpandByCombo.addItem(SPACE);
-    myExpandByCombo.addItem(TAB);
-    myExpandByCombo.addItem(ENTER);
+    myExpandByCombo = new ComboBox();
     panel.add(myExpandByCombo, gbConstraints);
 
+    myOpenKeymapLabel = new HyperlinkLabel("Change");
     gbConstraints.gridx = 2;
+    panel.add(myOpenKeymapLabel, gbConstraints);
+
+    gbConstraints.gridx = 3;
     gbConstraints.weightx = 1;
     panel.add(new JPanel(), gbConstraints);
     panel.setBorder(new EmptyBorder(0, 0, 10, 0));
+
+    myExpandByCombo.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        myOpenKeymapLabel.setVisible(myExpandByCombo.getSelectedItem() == CUSTOM);
+      }
+    });
+    for (String s : ContainerUtil.ar(SPACE, TAB, ENTER, CUSTOM)) {
+      //noinspection unchecked
+      myExpandByCombo.addItem(s);
+    }
+    //noinspection unchecked
+    myExpandByCombo.setRenderer(new ListCellRendererWrapper() {
+      @Override
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (value == CUSTOM) {
+          Shortcut[] shortcuts = getCurrentCustomShortcuts();
+          String shortcutText = shortcuts.length == 0 ? "" : KeymapUtil.getShortcutsText(shortcuts);
+          setText(StringUtil.isEmpty(shortcutText) ? "Custom..." : "Custom (" + shortcutText + ")");
+        }
+      }
+
+      private Shortcut[] getCurrentCustomShortcuts() {
+        Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel));
+        KeymapPanel keymapPanel = allSettings == null ? null : allSettings.find(KeymapPanel.class);
+        Shortcut[] shortcuts = keymapPanel == null ? null : keymapPanel.getCurrentShortcuts(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
+        if (shortcuts == null) {
+          Shortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
+          shortcuts = shortcut == null ? Shortcut.EMPTY_ARRAY : new Shortcut[]{shortcut};
+        }
+        return shortcuts;
+      }
+    });
+    addPropertyChangeListener(new PropertyChangeListener() {
+      public void propertyChange(final PropertyChangeEvent evt) {
+        if (isConfigurableOpenEvent(evt)) {
+          resizeComboToFitCustomShortcut();
+        }
+      }
+
+      private boolean isConfigurableOpenEvent(PropertyChangeEvent evt) {
+        return evt.getPropertyName().equals("ancestor") && evt.getNewValue() != null && evt.getOldValue() == null;
+      }
+
+      private void resizeComboToFitCustomShortcut() {
+        myExpandByCombo.setPrototypeDisplayValue(null);
+        myExpandByCombo.setPrototypeDisplayValue(CUSTOM);
+      }
+    });
+
+    myOpenKeymapLabel.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel));
+        final KeymapPanel keymapPanel = allSettings == null ? null : allSettings.find(KeymapPanel.class);
+        if (keymapPanel != null) {
+          allSettings.select(keymapPanel).doWhenDone(new Runnable() {
+            public void run() {
+              keymapPanel.selectAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
+            }
+          });
+        }
+      }
+    });
+
     return panel;
   }
 
@@ -689,6 +752,17 @@ public class TemplateListPanel extends JPanel implements Disposable {
         @Override
         public void updateButton(AnActionEvent e) {
           e.getPresentation().setEnabled(getTemplate(getSingleSelectedIndex()) != null);
+        }
+      }).addExtraAction(new AnActionButton("Restore deleted defaults", AllIcons.General.TodoDefault) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          TemplateSettings.getInstance().reset();
+          reset();
+        }
+
+        @Override
+        public boolean isEnabled() {
+          return super.isEnabled() && !TemplateSettings.getInstance().getDeletedTemplates().isEmpty();
         }
       });
     if (getSchemesManager().isExportAvailable()) {

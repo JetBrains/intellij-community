@@ -310,6 +310,17 @@ public class ReplaceInProjectManager {
         }
       }
 
+      if (result == FindManager.PromptResult.SKIP_ALL_IN_THIS_FILE) {
+        int j;
+        for(j = i + 1;j < usages.length; ++j) {
+          final PsiElement nextElt = ((UsageInfo2UsageAdapter)usages[j]).getUsageInfo().getElement();
+          if (nextElt == null) continue;
+          if (nextElt.getContainingFile() == psiFile) continue;
+          break;
+        }
+        i = j -1;
+      }
+
       if (result == FindManager.PromptResult.ALL_IN_THIS_FILE) {
         final int[] nextNumber = new int[1];
 

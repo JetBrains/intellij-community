@@ -373,6 +373,9 @@
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.time.DurationFormatUtils.Token java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.FastDateFormat FastDateFormat(java.lang.String, java.util.TimeZone, java.util.Locale) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -400,6 +403,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;null;_,!null-&gt;null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.time.FastDateFormat java.lang.String format(java.util.Calendar)">
     <annotation name="org.jetbrains.annotations.NotNull"/>

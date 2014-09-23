@@ -364,7 +364,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         TreeUtil.expandAll(myTree);
 
         int listSelection = 0;
-        int scrollRow = 0;
+        int scrollRow = -1;
 
         if (myShowCheckboxes) {
           if (myIncludedChanges.size() > 0) {
@@ -421,7 +421,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
                 return rowToSelect[0] == -1;
               }
             });
-            
+
             scrollRow = rowToSelect[0] == -1 ? scrollRow : rowToSelect[0];
           }
         }
@@ -430,7 +430,9 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
           myList.setSelectedIndex(listSelection);
           myList.ensureIndexIsVisible(listSelection);
 
-          myTree.setSelectionRow(scrollRow);
+          if (scrollRow >= 0) {
+            myTree.setSelectionRow(scrollRow);
+          }
           TreeUtil.showRowCentered(myTree, scrollRow, false);
         }
       }

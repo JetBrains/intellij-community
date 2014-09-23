@@ -278,7 +278,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   private static final PsiElementPattern.Capture<PsiElement> IN_IF_BODY =
     psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyIfPart.class)));
 
-  private static final PsiElementPattern.Capture<PsiElement> IN_LOOP = 
+  private static final PsiElementPattern.Capture<PsiElement> IN_LOOP =
     psiElement().inside(false, psiElement(PyLoopStatement.class), or(psiElement(PyFunction.class), psiElement(PyClass.class)));
 
   // not exactly a beauty
@@ -645,6 +645,20 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
            new PyKeywordCompletionProvider(PyNames.FROM));
   }
 
+  private void addYieldExpression() {
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .andOr(psiElement()
+                      .inside(false, psiElement(PyAssignmentStatement.class), psiElement(PyTargetExpression.class))
+                      .afterLeaf(psiElement().withElementType(PyTokenTypes.EQ)),
+                    psiElement()
+                      .inside(false, psiElement(PyAugAssignmentStatement.class), psiElement(PyTargetExpression.class))
+                      .afterLeaf(psiElement().withElementType(PyTokenTypes.AUG_ASSIGN_OPERATIONS)),
+                    psiElement().inside(true, psiElement(PyParenthesizedExpression.class))),
+           new PyKeywordCompletionProvider(PyNames.YIELD));
+  }
+
   private void addYieldFrom() {
     extend(CompletionType.BASIC,
            psiElement()
@@ -671,6 +685,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     //addExprIf();
     addExprElse();
     addRaiseFrom();
+    addYieldExpression();
     addYieldFrom();
     addForToComprehensions();
     addInToFor();

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -50,8 +51,7 @@ public class DfaExpressionFactory {
     }
     catch (Exception e) {
       LOG.error(e);
-      //noinspection unchecked
-      return Condition.FALSE;
+      return Conditions.alwaysFalse();
     }
   }
 

@@ -138,8 +138,8 @@ public class Runner {
                               optionalFiles,
                               ui);
 
-      logger.info("Packing jar file: " + patchFile );
-      ui.startProcess("Packing jar file '" + patchFile + "'...");
+      logger.info("Packing JAR file: " + patchFile );
+      ui.startProcess("Packing JAR file '" + patchFile + "'...");
 
       FileOutputStream fileOut = new FileOutputStream(patchFile);
       try {
@@ -272,8 +272,8 @@ public class Runner {
 
   private static File resolveJarFile() throws IOException {
     URL url = Runner.class.getResource("");
-    if (url == null) throw new IOException("Cannot resolve jar file path");
-    if (!"jar".equals(url.getProtocol())) throw new IOException("Patch file is not a 'jar' file");
+    if (url == null) throw new IOException("Cannot resolve JAR file path");
+    if (!"jar".equals(url.getProtocol())) throw new IOException("Patch file is not a JAR file");
 
     String path = url.getPath();
 

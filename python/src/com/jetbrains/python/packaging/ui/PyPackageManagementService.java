@@ -23,9 +23,11 @@ import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.apache.xmlrpc.AsyncCallback;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -112,7 +114,7 @@ public class PyPackageManagementService extends PackageManagementService {
   public String getInstallToUserText() {
     String userSiteText = "Install to user's site packages directory";
     if (!PythonSdkType.isRemote(mySdk))
-      userSiteText += " (" + PyPackageManagerImpl.getUserSite() + ")";
+      userSiteText += " (" + PySdkUtil.getUserSite() + ")";
     return userSiteText;
   }
 
@@ -130,12 +132,20 @@ public class PyPackageManagementService extends PackageManagementService {
   public Collection<InstalledPackage> getInstalledPackages() throws IOException {
     List<PyPackage> packages;
     try {
-      packages = ((PyPackageManagerImpl)PyPackageManager.getInstance(mySdk)).getPackages();
+      packages = PyPackageManager.getInstance(mySdk).getPackages(false);
+      if (packages != null) {
+        Collections.sort(packages, new Comparator<PyPackage>() {
+          @Override
+          public int compare(@NotNull PyPackage pkg1, @NotNull PyPackage pkg2) {
+            return pkg1.getName().compareTo(pkg2.getName());
+          }
+        });
+      }
     }
     catch (PyExternalProcessException e) {
       throw new IOException(e);
     }
-    return new ArrayList<InstalledPackage>(packages);
+    return packages != null ? new ArrayList<InstalledPackage>(packages) : new ArrayList<InstalledPackage>();
   }
 
   @Override
@@ -145,7 +155,7 @@ public class PyPackageManagementService extends PackageManagementService {
     final String repository = PyPIPackageUtil.PYPI_URL.equals(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
     final List<String> extraArgs = new ArrayList<String>();
     if (installToUser) {
-      extraArgs.add(PyPackageManagerImpl.USE_USER_SITE);
+      extraArgs.add(PyPackageManager.USE_USER_SITE);
     }
     if (extraOptions != null) {
       // TODO: Respect arguments quotation
@@ -166,7 +176,7 @@ public class PyPackageManagementService extends PackageManagementService {
       req = new PyRequirement(packageName);
     }
 
-    final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, mySdk, new PyPackageManagerImpl.UI.Listener() {
+    final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
       @Override
       public void started() {
         listener.operationStarted(packageName);
@@ -183,7 +193,7 @@ public class PyPackageManagementService extends PackageManagementService {
   private String toErrorDescription(List<PyExternalProcessException> exceptions) {
     String errorDescription = null;
     if (exceptions != null && exceptions.size() > 0) {
-      errorDescription = PyPackageManagerImpl.UI.createDescription(exceptions, "");
+      errorDescription = PyPackageManagerUI.createDescription(exceptions, "");
     }
     return errorDescription;
   }
@@ -191,7 +201,7 @@ public class PyPackageManagementService extends PackageManagementService {
   @Override
   public void uninstallPackages(List<InstalledPackage> installedPackages, final Listener listener) {
     final String packageName = installedPackages.size() == 1 ? installedPackages.get(0).getName() : null;
-    PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, mySdk, new PyPackageManagerImpl.UI.Listener() {
+    PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
       @Override
       public void started() {
         listener.operationStarted(packageName);

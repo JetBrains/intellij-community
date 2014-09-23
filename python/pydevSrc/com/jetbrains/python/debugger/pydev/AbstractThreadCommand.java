@@ -18,11 +18,11 @@ public abstract class AbstractThreadCommand<T> extends AbstractCommand<T> {
     return command == CREATE_THREAD ||
            command == KILL_THREAD ||
            command == RESUME_THREAD ||
-           command == SUSPEND_THREAD;
+           command == SUSPEND_THREAD ||
+           command == SHOW_CONSOLE;
   }
 
   public String getThreadId() {
     return myThreadId;
   }
-
 }

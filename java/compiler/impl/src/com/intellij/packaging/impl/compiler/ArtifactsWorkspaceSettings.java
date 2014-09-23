@@ -35,7 +35,7 @@ import java.util.List;
  */
 @State(name = "ArtifactsWorkspaceSettings",
   storages = {
-    @Storage( file = StoragePathMacros.WORKSPACE_FILE)
+    @Storage(file = StoragePathMacros.WORKSPACE_FILE)
   })
 public class ArtifactsWorkspaceSettings implements PersistentStateComponent<ArtifactsWorkspaceSettings.ArtifactsWorkspaceSettingsState> {
   private ArtifactsWorkspaceSettingsState myState = new ArtifactsWorkspaceSettingsState();

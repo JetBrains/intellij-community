@@ -69,7 +69,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   @NotNull
   @Override
   public String getText() {
-    return "Find jar on web";
+    return "Find JAR on web";
   }
 
   @NotNull
@@ -190,7 +190,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
           } else {
             JBPopupFactory.getInstance()
             .createListPopupBuilder(libNames)
-            .setTitle("Select a jar file")
+            .setTitle("Select a JAR file")
             .setItemChoosenCallback(new Runnable() {
               @Override
               public void run() {

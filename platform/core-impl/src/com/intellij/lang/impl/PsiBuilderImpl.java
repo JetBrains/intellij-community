@@ -1158,7 +1158,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     CharSequence context =
       index < myLexStarts.length ? myText.subSequence(Math.max(0, myLexStarts[index] - 1000), myLexStarts[index]) : "<none>";
     String language = myFile != null ? myFile.getLanguage() + ", " : "";
-    LOG.error(UNBALANCED_MESSAGE + "\n" + language + context);
+    LOG.error(UNBALANCED_MESSAGE + "\n" + 
+              "language: " + language + "\n" + 
+              "context: '" + context + "'");
   }
 
   private void balanceWhiteSpaces() {

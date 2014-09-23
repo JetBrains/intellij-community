@@ -7,15 +7,15 @@ import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.Alarm;
-import com.intellij.util.Function;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -103,6 +103,22 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
     }
 
     return null;
+  }
+
+  @NotNull
+  public List<ExternalSystemTask> findTasksOfState(@NotNull ProjectSystemId projectSystemId,
+                                                   @NotNull final ExternalSystemTaskState... taskStates) {
+    List<ExternalSystemTask> result = new SmartList<ExternalSystemTask>();
+    for (ExternalSystemTask task : myTasksDetails.values()) {
+      if (task instanceof AbstractExternalSystemTask) {
+        AbstractExternalSystemTask externalSystemTask = (AbstractExternalSystemTask)task;
+        if (externalSystemTask.getExternalSystemId().getId().equals(projectSystemId.getId()) &&
+            ArrayUtil.contains(externalSystemTask.getState(), taskStates)) {
+          result.add(task);
+        }
+      }
+    }
+    return result;
   }
 
   public void add(@NotNull ExternalSystemTask task) {

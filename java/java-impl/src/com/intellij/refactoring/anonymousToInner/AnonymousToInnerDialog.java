@@ -153,7 +153,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
       errorString = RefactoringBundle.message("anonymousToInner.no.inner.class.name");
     }
     else {
-      if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(innerClassName)) {
+      if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(innerClassName)) {
         errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(innerClassName);
       }
       else{

@@ -176,13 +176,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     mySdkList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent event) {
         updateOkButton();
-        updateUI(getSelectedSdk());
       }
     });
-  }
-
-  private void updateUI(final Sdk selectedSdk) {
-    myProjectSdksModel.setProjectSdk(selectedSdk);
   }
 
   @Nullable
@@ -221,7 +216,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     }
     myModificators.clear();
     myModifiedModificators.clear();
-    myProjectSdksModel.apply();
     mySdkListChanged = false;
     myShowMoreCallback.consume(getSelectedSdk());
     Disposer.dispose(getDisposable());
@@ -305,7 +299,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       else {
         editSdk(currentSdk);
       }
-      updateUI(currentSdk);
     }
   }
 
@@ -435,7 +428,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ShowPathButton extends AnActionButton implements DumbAware {
     public ShowPathButton() {
-      super("Show path for the selected interpreter", AllIcons.Actions.ShowAsTree);
+      super("Show paths for the selected interpreter", AllIcons.Actions.ShowAsTree);
     }
 
     @Override

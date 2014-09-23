@@ -58,8 +58,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CodeStyleManagerImpl extends CodeStyleManager {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl");
+  private static final Logger LOG = Logger.getInstance(CodeStyleManagerImpl.class);
   private static final ThreadLocal<ProcessingUnderProgressInfo> SEQUENTIAL_PROCESSING_ALLOWED
     = new ThreadLocal<ProcessingUnderProgressInfo>()
   {

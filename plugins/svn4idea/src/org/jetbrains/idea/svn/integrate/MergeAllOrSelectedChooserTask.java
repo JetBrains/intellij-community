@@ -17,45 +17,61 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.LoadRecentBranchRevisions;
-import org.jetbrains.idea.svn.dialogs.MergeContext;
-import org.jetbrains.idea.svn.dialogs.QuickMergeContentsVariants;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
+
   public MergeAllOrSelectedChooserTask(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
     super(mergeContext, interaction, "merge source selector", Where.AWT);
   }
 
   @Override
-  public void run(final ContinuationContext context) {
-    final QuickMergeContentsVariants variant = myInteraction.selectMergeVariant();
-    if (QuickMergeContentsVariants.cancel == variant) return;
-    if (QuickMergeContentsVariants.all == variant) {
-      insertMergeAll(context);
-      return;
-    }
-    if (QuickMergeContentsVariants.showLatest == variant) {
-      final LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeContext, -1);
-      final ShowRecentInDialogTask dialog = new ShowRecentInDialogTask(myMergeContext, myInteraction, loader);
-      context.next(loader, dialog);
-      return;
-    }
+  public void run(ContinuationContext context) {
+    //noinspection EnumSwitchStatementWhichMissesCases
+    switch (myInteraction.selectMergeVariant()) {
+      case all:
+        context.next(getMergeAllTasks());
+        break;
+      case showLatest:
+        LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeContext, -1);
+        ShowRecentInDialogTask dialog = new ShowRecentInDialogTask(myMergeContext, myInteraction, loader);
 
-    final MergeCalculatorTask calculator;
+        context.next(loader, dialog);
+        break;
+      case select:
+        MergeCalculatorTask calculator = getMergeCalculatorTask(context);
+
+        if (calculator != null) {
+          context.next(getCalculateFirstCopyPointTask(calculator), calculator);
+        }
+        break;
+    }
+  }
+
+  @NotNull
+  private TaskDescriptor getCalculateFirstCopyPointTask(@NotNull MergeCalculatorTask mergeCalculator) {
+    return myMergeContext.getVcs().getSvnBranchPointsCalculator()
+      .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getWcInfo().getRootUrl(),
+                             myMergeContext.getSourceUrl(), mergeCalculator);
+  }
+
+  @Nullable
+  private MergeCalculatorTask getMergeCalculatorTask(@NotNull ContinuationContext context) {
+    MergeCalculatorTask result = null;
+
     try {
-      calculator = new MergeCalculatorTask(myMergeContext, myInteraction);
+      result = new MergeCalculatorTask(myMergeContext, myInteraction);
     }
     catch (VcsException e) {
       finishWithError(context, e.getMessage(), true);
-      return;
     }
-    context.next(myMergeContext.getVcs().getSvnBranchPointsCalculator()
-                   .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getWcInfo().getRootUrl(),
-                                          myMergeContext.getSourceUrl(), calculator), calculator);
+
+    return result;
   }
 }

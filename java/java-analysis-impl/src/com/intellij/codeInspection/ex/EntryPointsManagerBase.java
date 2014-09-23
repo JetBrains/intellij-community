@@ -42,7 +42,7 @@ import java.util.*;
 
 @State(
     name = "EntryPointsManager",
-    storages = {@Storage( file = StoragePathMacros.PROJECT_FILE)}
+    storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)}
 )
 public abstract class EntryPointsManagerBase extends EntryPointsManager implements PersistentStateComponent<Element> {
   @NonNls private static final String[] STANDARD_ANNOS = {

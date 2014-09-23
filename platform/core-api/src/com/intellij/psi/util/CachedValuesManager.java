@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,12 @@ public abstract class CachedValuesManager {
    * @param trackValue if value tracking required. T should be trackable in this case.
    * @return new CachedValue instance.
    */
+  @NotNull
   public abstract <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue);
+  @NotNull
   public abstract <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue);
 
+  @NotNull
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider) {
     return createCachedValue(provider, true);
   }
@@ -54,7 +57,6 @@ public abstract class CachedValuesManager {
                               @NotNull ParameterizedCachedValueProvider<T, P> provider,
                               boolean trackValue,
                               P parameter) {
-
     ParameterizedCachedValue<T,P> value;
 
     if (dataHolder instanceof UserDataHolderEx) {
@@ -100,6 +102,7 @@ public abstract class CachedValuesManager {
   }
 
   private final ConcurrentMap<String, Key<CachedValue>> keyForProvider = new ConcurrentHashMap<String, Key<CachedValue>>();
+  @NotNull
   public <T> Key<CachedValue<T>> getKeyForClass(@NotNull Class<?> providerClass) {
     String name = providerClass.getName();
     assert name != null : providerClass + " doesn't have a name; can't be used for cache value provider";

@@ -100,6 +100,9 @@ public class GroovycRunner {
       method.invoke(null, forStubs, argPath);
     }
     catch (Throwable e) {
+      while (e.getCause() != null) {
+        e = e.getCause();
+      }
       e.printStackTrace();
       System.exit(1);
     }

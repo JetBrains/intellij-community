@@ -1,0 +1,43 @@
+package pkg;
+
+public class TestClassLoop {
+   public static void testSimpleInfinite() {
+      while(true) {
+         System.out.println();
+      }
+   }
+
+   public static void testFinally() {
+      boolean var0 = Math.random() > 0.0D;
+
+      while(true) {
+         try {
+            if(!var0) {
+               return;
+            }
+         } finally {
+            System.out.println("1");
+         }
+      }
+   }
+
+   public static void testFinallyContinue() {
+      boolean var0 = Math.random() > 0.0D;
+
+      while(true) {
+         while(true) {
+            try {
+               System.out.println("1");
+               break;
+            } finally {
+               if(var0) {
+                  System.out.println("3");
+                  continue;
+               }
+            }
+         }
+
+         System.out.println("4");
+      }
+   }
+}

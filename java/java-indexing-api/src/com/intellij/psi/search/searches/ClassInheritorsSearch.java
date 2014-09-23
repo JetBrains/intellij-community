@@ -21,10 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -106,7 +103,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     private final InheritanceChecker myInheritanceChecker;
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
-      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Condition.TRUE);
+      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.<String>alwaysTrue());
     }
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
@@ -170,7 +167,12 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   }
 
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, final boolean checkDeep) {
-    return search(aClass, aClass.getUseScope(), checkDeep);
+    return search(aClass, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return aClass.getUseScope();
+      }
+    }), checkDeep);
   }
 
   public static Query<PsiClass> search(@NotNull PsiClass aClass) {

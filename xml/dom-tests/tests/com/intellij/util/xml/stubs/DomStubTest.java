@@ -52,6 +52,19 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
     }
   };
 
+  public static ElementStub getRootStub(@TestDataFile String filePath, JavaCodeInsightTestFixture fixture) {
+    PsiFile psiFile = fixture.configureByFile(filePath);
+
+    StubTreeLoader loader = StubTreeLoader.getInstance();
+    VirtualFile file = psiFile.getVirtualFile();
+    assertTrue(loader.canHaveStub(file));
+    ObjectStubTree stubTree = loader.readFromVFile(fixture.getProject(), file);
+    assertNotNull(stubTree);
+    ElementStub root = (ElementStub)stubTree.getRoot();
+    assertNotNull(root);
+    return root;
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -65,19 +78,6 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
 
   protected ElementStub getRootStub(@TestDataFile String filePath) {
     return getRootStub(filePath, myFixture);
-  }
-
-  public static ElementStub getRootStub(@TestDataFile String filePath, JavaCodeInsightTestFixture fixture) {
-    PsiFile psiFile = fixture.configureByFile(filePath);
-
-    StubTreeLoader loader = StubTreeLoader.getInstance();
-    VirtualFile file = psiFile.getVirtualFile();
-    assertTrue(loader.canHaveStub(file));
-    ObjectStubTree stubTree = loader.readFromVFile(fixture.getProject(), file);
-    assertNotNull(stubTree);
-    ElementStub root = (ElementStub)stubTree.getRoot();
-    assertNotNull(root);
-    return root;
   }
 
   protected void doBuilderTest(@TestDataFile String file, String stubText) {
@@ -99,7 +99,7 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
     XmlFile file = (XmlFile)((PsiManagerEx)getPsiManager()).getFileManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
     ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), virtualFile, file);
-    assertNotNull(tree);
+    assertNotNull("Can't build stubs for " + path, tree);
 
     ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
 

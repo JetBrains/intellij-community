@@ -1,0 +1,40 @@
+package pkg;
+
+public class TestClassVar {
+   private boolean field_boolean = Math.random() > 0.0D;
+   public int field_int = 0;
+
+   public void testFieldSSAU() {
+      for(int var1 = 0; var1 < 10; ++var1) {
+         try {
+            System.out.println();
+         } finally {
+            if(this.field_boolean) {
+               System.out.println();
+            }
+
+         }
+      }
+
+   }
+
+   public Long testFieldSSAU1() {
+      return new Long((long)(this.field_int++));
+   }
+
+   public void testComplexPropagation() {
+      int var1 = 0;
+
+      while(var1 < 10) {
+         int var2;
+         for(var2 = var1; var1 < 10 && var1 == 0; ++var1) {
+            ;
+         }
+
+         if(var2 != var1) {
+            System.out.println();
+         }
+      }
+
+   }
+}

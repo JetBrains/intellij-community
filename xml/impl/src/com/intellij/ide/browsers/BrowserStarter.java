@@ -21,12 +21,12 @@ public class BrowserStarter {
   private static final Logger LOG = Logger.getInstance(BrowserStarter.class);
 
   private final StartBrowserSettings mySettings;
-  private final RunConfiguration myNodeRunConfiguration;
+  private final RunConfiguration myRunConfiguration;
   private final ProcessHandler myServerProcessHandler;
 
   public BrowserStarter(@NotNull RunConfiguration runConfiguration, @NotNull StartBrowserSettings settings, @NotNull ProcessHandler serverProcessHandler) {
     mySettings = settings;
-    myNodeRunConfiguration = runConfiguration;
+    myRunConfiguration = runConfiguration;
     myServerProcessHandler = serverProcessHandler;
   }
 
@@ -102,7 +102,7 @@ public class BrowserStarter {
 
   private void openPageNow() {
     if (!isProcessTerminated()) {
-      JavaScriptDebuggerStarter.Util.startDebugOrLaunchBrowser(myNodeRunConfiguration, mySettings);
+      JavaScriptDebuggerStarter.Util.startDebugOrLaunchBrowser(myRunConfiguration, mySettings);
     }
   }
 

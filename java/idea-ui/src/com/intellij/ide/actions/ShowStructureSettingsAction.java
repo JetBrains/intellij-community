@@ -37,6 +37,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 public class ShowStructureSettingsAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
@@ -61,7 +62,8 @@ public class ShowStructureSettingsAction extends AnAction implements DumbAware {
           return panel;
         }
       }.show();
-    } else {
+    }
+    else {
       ShowSettingsUtil
         .getInstance().editConfigurable(project, OptionsEditorDialog.DIMENSION_KEY, ProjectStructureConfigurable.getInstance(project));
     }

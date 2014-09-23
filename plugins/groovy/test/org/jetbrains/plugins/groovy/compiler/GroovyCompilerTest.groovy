@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.compiler.CompilerWorkspaceConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
 import com.intellij.execution.process.ProcessAdapter
@@ -27,6 +28,7 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
@@ -35,6 +37,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
@@ -45,7 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
  */
-public class GroovyCompilerTest extends GroovyCompilerTestCase {
+public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
     addGroovyLibrary(myModule);
@@ -303,24 +306,26 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
   }
 
   private void addTransform() throws IOException {
-    myFixture.addFileToProject("Transf.groovy", """
-import org.codehaus.groovy.ast.*
-import org.codehaus.groovy.control.*
-import org.codehaus.groovy.transform.*
+    myFixture.addFileToProject("Transf.java", """
+import org.codehaus.groovy.ast.*;
+import org.codehaus.groovy.control.*;
+import org.codehaus.groovy.transform.*;
 @GroovyASTTransformation(phase = CompilePhase.CONVERSION)
 public class Transf implements ASTTransformation {
-  void visit(ASTNode[] nodes, SourceUnit sourceUnit) {
-    ModuleNode module = nodes[0]
-    for (clazz in module.classes) {
-      if (clazz.name.contains('Bar')) {
-        module.addStaticStarImport('Foo', ClassHelper.makeWithoutCaching(Foo.class))
+  public void visit(ASTNode[] nodes, SourceUnit sourceUnit) {
+    ModuleNode module = (ModuleNode)nodes[0];
+    for (ClassNode clazz : module.getClasses()) {
+
+      if (clazz.getName().contains("Bar")) {
+        module.addStaticStarImport("Foo", ClassHelper.makeWithoutCaching(Foo.class));
       }
     }
+      //throw new RuntimeException("In class " + nodes[0]);
   }
 }""");
 
-    myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
-                                             "static def autoImported() { 239 }\n" +
+    myFixture.addFileToProject("Foo.java", "public class Foo {\n" +
+                                             "public static int autoImported() { return 239; }\n" +
                                              "}");
 
     CompilerConfiguration.getInstance(getProject()).addResourceFilePattern("*.ASTTransformation");
@@ -503,7 +508,7 @@ class Usage {
   }
 
   public void testGroovyAnnotations() {
-    myFixture.addClass 'public @interface Anno { Class[] value(); }'
+    myFixture.addClass 'public @interface Anno { Class<?>[] value(); }'
     myFixture.addFileToProject 'Foo.groovy', '@Anno([String]) class Foo {}'
     myFixture.addFileToProject 'Bar.java', 'class Bar extends Foo {}'
 
@@ -512,7 +517,7 @@ class Usage {
 
   public void testGenericStubs() {
     myFixture.addFileToProject 'Foo.groovy', 'class Foo { List<String> list }'
-    myFixture.addFileToProject 'Bar.java', 'class Bar {{ for (String s : new Foo().getList()) {} }}'
+    myFixture.addFileToProject 'Bar.java', 'class Bar {{ for (String s : new Foo().getList()) { s.hashCode(); } }}'
     assertEmpty make()
   }
 
@@ -697,8 +702,7 @@ public class Main {
     assertEmpty make()
   }
 
-  //todo jeka: when recompiling module, delete all class files including those with excluded source
-  public void "_test reporting module compile errors caused by missing files excluded from compilation"() {
+  public void "test reporting module compile errors caused by missing files excluded from compilation"() {
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {}')
     myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo {}')
 
@@ -721,22 +725,6 @@ public class Main {
 
     assertEmpty(make())
     assert findClassFile("Client")
-  }
-
-  public void "test navigate from stub to source"() {
-    GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")
-    myFixture.addClass("class Java4 extends Groovy3 {}").containingFile
-
-    def msg = make().find { it.message.contains('InvalidType') }
-    assert msg?.virtualFile
-    ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
-
-    def messages = make()
-    assert messages
-    def error = messages.find { it.message.contains('InvalidType') }
-    assert error?.virtualFile
-    assert groovyFile.classes[0] == GroovyCompilerLoader.findClassByStub(project, error.virtualFile)
-
   }
 
   public void "test ignore groovy internal non-existent interface helper inner class"() {
@@ -863,6 +851,45 @@ class AppTest {
     process.waitFor();
 
     assertTrue(exceptionFound.get());
+  }
+
+  static class GroovycTest extends GroovyCompilerTest {
+    public void "test navigate from stub to source"() {
+      GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")
+      myFixture.addClass("class Java4 extends Groovy3 {}").containingFile
+
+      def msg = make().find { it.message.contains('InvalidType') }
+      assert msg?.virtualFile
+      ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
+
+      def messages = make()
+      assert messages
+      def error = messages.find { it.message.contains('InvalidType') }
+      assert error?.virtualFile
+      assert groovyFile.classes[0] == GroovyCompilerLoader.findClassByStub(project, error.virtualFile)
+    }
+  }
+
+  static class EclipseTest extends GroovyCompilerTest {
+    @Override
+    protected void setUp() {
+      super.setUp()
+
+      def conf = CompilerWorkspaceConfiguration.getInstance(project)
+      assert conf.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS == CompilerWorkspaceConfiguration.DEFAULT_COMPILE_PROCESS_VM_OPTIONS
+
+      def jarName = "groovy-eclipse-batch-2.3.4-01.jar"
+      def jarPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/lib/" + jarName)
+      conf.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "-Dgroovy.eclipse.batch.jar=" + jarPath
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+      def conf = CompilerWorkspaceConfiguration.getInstance(project)
+      conf.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = CompilerWorkspaceConfiguration.DEFAULT_COMPILE_PROCESS_VM_OPTIONS
+
+      super.tearDown()
+    }
   }
 
 }

@@ -414,7 +414,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     outer:
     for (int i = 0; i < strings.length; i++) {
       String name = strings[i];
-      if (!matcher.prefixMatches(name) || !JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
+      if (!matcher.prefixMatches(name) || !PsiNameHelper.getInstance(project).isIdentifier(name, LanguageLevel.HIGHEST)) {
         continue;
       }
 

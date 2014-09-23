@@ -4,6 +4,7 @@ import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.facet.frameworks.beans.Artifacts;
 import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +32,13 @@ public class LibrariesDownloadAssistant {
 
   @NotNull
   public static Artifact[] getVersions(@NotNull String groupId, @NotNull URL... localUrls) {
-    final Artifact[] versions = getDownloadServiceVersions(groupId);
+    final Artifact[] versions;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      versions = getDownloadServiceVersions(groupId);
+    }
+    else {
+      versions = null;
+    }
     return versions == null ? getVersions(localUrls) : versions;
   }
 

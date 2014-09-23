@@ -16,11 +16,12 @@
 
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * SearchableConfigurable instances would be instantiated on buildSearchableOptions step during Installer's build to index of all available options. 
@@ -34,6 +35,12 @@ public interface SearchableConfigurable extends Configurable {
 
   interface Parent extends SearchableConfigurable, Composite {
     boolean hasOwnContent();
+
+    /**
+     * @deprecated use {@link ConfigurableProvider#canCreateConfigurable()} instead
+     *             to specify configurables which should not be visible
+     */
+    @Deprecated
     boolean isVisible();
 
     abstract class Abstract implements Parent {
@@ -86,6 +93,73 @@ public interface SearchableConfigurable extends Configurable {
       }
 
       protected abstract Configurable[] buildConfigurables();
+    }
+  }
+
+  /**
+   * Intended to use some search utility methods with any configurable.
+   *
+   * @author Sergey.Malenkov
+   */
+  class Delegate implements SearchableConfigurable {
+    private final Configurable myConfigurable;
+
+    public Delegate(@NotNull Configurable configurable) {
+      myConfigurable = configurable;
+    }
+
+    @NotNull
+    @Override
+    public String getId() {
+      return (myConfigurable instanceof SearchableConfigurable)
+             ? ((SearchableConfigurable)myConfigurable).getId()
+             : myConfigurable.getClass().getName();
+    }
+
+    @Nullable
+    @Override
+    public Runnable enableSearch(String option) {
+      return (myConfigurable instanceof SearchableConfigurable)
+             ? ((SearchableConfigurable)myConfigurable).enableSearch(option)
+             : null;
+    }
+
+    @Nls
+    @Override
+    public String getDisplayName() {
+      return myConfigurable.getDisplayName();
+    }
+
+    @Nullable
+    @Override
+    public String getHelpTopic() {
+      return myConfigurable.getHelpTopic();
+    }
+
+    @Nullable
+    @Override
+    public JComponent createComponent() {
+      return myConfigurable.createComponent();
+    }
+
+    @Override
+    public boolean isModified() {
+      return myConfigurable.isModified();
+    }
+
+    @Override
+    public void apply() throws ConfigurationException {
+      myConfigurable.apply();
+    }
+
+    @Override
+    public void reset() {
+      myConfigurable.reset();
+    }
+
+    @Override
+    public void disposeUIResources() {
+      myConfigurable.disposeUIResources();
     }
   }
 }

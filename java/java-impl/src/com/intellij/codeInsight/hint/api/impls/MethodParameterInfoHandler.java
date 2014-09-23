@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.project.DumbAware;
@@ -450,22 +451,18 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
       if (element != null) {
         final PsiElement resolved = element.resolve();
-        if (resolved instanceof PsiClass && !AnnotationUtil.isAnnotated((PsiClass)resolved, "java.lang.annotation.Documented", false, true)) {
+        if (resolved instanceof PsiClass && !JavaDocInfoGenerator.isDocumentedAnnotationType(resolved)) {
           continue;
         }
 
         String referenceName = element.getReferenceName();
-        if (shownAnnotations.add(referenceName) || isRepeatableAnnotation(resolved)) {
+        if (shownAnnotations.add(referenceName) || JavaDocInfoGenerator.isRepeatableAnnotationType(resolved)) {
           if (lastSize != buffer.length()) buffer.append(" ");
           buffer.append("@").append(referenceName);
         }
       }
     }
     if (lastSize != buffer.length()) buffer.append(" ");
-  }
-
-  private static boolean isRepeatableAnnotation(PsiElement resolved) {
-    return resolved instanceof PsiClass && !AnnotationUtil.isAnnotated((PsiModifierListOwner)resolved, CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE, false, true);
   }
 
   @Override

@@ -23,6 +23,9 @@
   <item name="java.sql.BatchUpdateException BatchUpdateException(java.lang.String, java.lang.String, int[], java.lang.Throwable) 2">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.sql.BatchUpdateException int[] getUpdateCounts()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.sql.Date java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -87,6 +90,12 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.sql.DriverManager void setLogWriter(java.io.PrintWriter) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.sql.DriverManager.2 java.lang.Object run()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.sql.DriverManager.2 java.lang.Void run()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.sql.SQLException java.util.Iterator&lt;java.lang.Throwable&gt; iterator()">

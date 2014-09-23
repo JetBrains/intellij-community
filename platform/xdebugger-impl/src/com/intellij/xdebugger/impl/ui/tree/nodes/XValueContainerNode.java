@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -90,14 +91,19 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
           XValueNodeImpl node = new XValueNodeImpl(myTree, XValueContainerNode.this, children.getName(i), children.getValue(i));
           myValueChildren.add(node);
           newChildren.add(node);
+
+          if (Registry.is("ide.debugger.inline") && "this".equals(node.getName())) { //todo[kb]: try to generify this dirty hack
+            //initialize "this" fields to display in inline view
+            node.getChildren();
+          }
         }
         myTopGroups = createGroupNodes(children.getTopGroups(), myTopGroups, newChildren);
         myBottomGroups = createGroupNodes(children.getBottomGroups(), myBottomGroups, newChildren);
         myCachedAllChildren = null;
         fireNodesInserted(newChildren);
-        if (last) {
+        if (last && myTemporaryMessageChildren != null) {
           final int[] ints = getNodesIndices(myTemporaryMessageChildren);
-          final TreeNode[] removed = getChildNodes(ints);
+          final TreeNode[] removed = myTemporaryMessageChildren.toArray(new TreeNode[myTemporaryMessageChildren.size()]);
           myCachedAllChildren = null;
           myTemporaryMessageChildren = null;
           fireNodesRemoved(ints, removed);
@@ -180,15 +186,15 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     List<MessageTreeNode> allMessageChildren = ContainerUtil.concat(myMessageChildren != null ? myMessageChildren : Collections.<MessageTreeNode>emptyList(),
                                                                     myTemporaryMessageChildren != null ? myTemporaryMessageChildren : Collections.<MessageTreeNode>emptyList());
     final int[] indices = getNodesIndices(allMessageChildren);
-    final TreeNode[] nodes = getChildNodes(indices);
-    myMessageChildren = null;
-    myTemporaryMessageChildren = null;
+    final TreeNode[] nodes = allMessageChildren.toArray(new TreeNode[allMessageChildren.size()]);
     fireNodesRemoved(indices, nodes);
     if (!temporary) {
       myMessageChildren = messages;
+      myTemporaryMessageChildren = null;
     }
     else {
       myTemporaryMessageChildren = messages;
+      myMessageChildren = null;
     }
     myCachedAllChildren = null;
     fireNodesInserted(messages);

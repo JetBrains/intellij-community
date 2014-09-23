@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.*;
+import com.jetbrains.python.debugger.pydev.PyVariableLocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,14 +22,13 @@ public class PyDebugValue extends XNamedValue {
   private final String myValue;
   private final boolean myContainer;
   private final PyDebugValue myParent;
+  private String myId = null;
 
   private final PyFrameAccessor myFrameAccessor;
 
-  private final boolean myErrorOnEval;
+  private PyVariableLocator myVariableLocator;
 
-  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container, boolean errorOnEval) {
-    this(name, type, value, container, errorOnEval, null, null);
-  }
+  private final boolean myErrorOnEval;
 
   public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container,
                       boolean errorOnEval, final PyFrameAccessor frameAccessor) {
@@ -97,13 +97,16 @@ public class PyDebugValue extends XNamedValue {
       myParent.buildExpression(result);
       if (("dict".equals(myParent.getType()) || "list".equals(myParent.getType()) || "tuple".equals(myParent.getType())) &&
           !isLen(myName)) {
-        result.append('[').append(removeId(myName)).append(']');
+        result.append('[').append(removeLeadingZeros(removeId(myName))).append(']');
       }
       else if (("set".equals(myParent.getType())) && !isLen(myName)) {
         //set doesn't support indexing
       }
       else if (isLen(myName)) {
         result.append('.').append(myName).append("()");
+      }
+      else if (("ndarray".equals(myParent.getType()) || "matrix".equals(myParent.getType())) && myName.startsWith("[")) {
+        result.append(removeLeadingZeros(myName));
       }
       else {
         result.append('.').append(myName);
@@ -117,6 +120,11 @@ public class PyDebugValue extends XNamedValue {
     }
 
     return name;
+  }
+
+  private static String removeLeadingZeros(@NotNull String name) {
+    //bugs.python.org/issue15254: "0" prefix for octal
+    return name.replaceFirst("^0+(?!$)", "");
   }
 
   private static boolean isLen(String name) {
@@ -178,5 +186,40 @@ public class PyDebugValue extends XNamedValue {
   
   public PyDebugValue setName(String newName) {
     return new PyDebugValue(newName, myType, myValue, myContainer, myErrorOnEval, myParent, myFrameAccessor);
+  }
+
+  @Nullable
+  @Override
+  public XReferrersProvider getReferrersProvider() {
+    if (myFrameAccessor.getReferrersLoader() != null) {
+      return new XReferrersProvider() {
+        @Override
+        public XValue getReferringObjectsValue() {
+          return new PyReferringObjectsValue(PyDebugValue.this);
+        }
+      };
+    } else {
+      return null;
+    }
+  }
+
+  public PyFrameAccessor getFrameAccessor() {
+    return myFrameAccessor;
+  }
+
+  public PyVariableLocator getVariableLocator() {
+    return myVariableLocator;
+  }
+
+  public void setVariableLocator(PyVariableLocator variableLocator) {
+    myVariableLocator = variableLocator;
+  }
+
+  public String getId() {
+    return myId;
+  }
+
+  public void setId(String id) {
+    myId = id;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,7 +35,7 @@ public abstract class PsiNavigationSupport {
   @Nullable
   public abstract Navigatable getDescriptor(final PsiElement element);
 
-  @Nullable
+  @NotNull
   public abstract Navigatable createNavigatable(Project project, VirtualFile vFile, int offset);
 
   public abstract boolean canNavigate(final PsiElement element);

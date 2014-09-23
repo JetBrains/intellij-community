@@ -1,0 +1,73 @@
+package pkg;
+
+import java.util.Date;
+
+public class TestConstants {
+   static final boolean T = true;
+   static final boolean F = false;
+   static final char C0 = '\n';
+   static final char C1 = 'a';
+   static final char C2 = 'Ȁ';
+   static final byte BMin = -128;
+   static final byte BMax = 127;
+   static final short SMin = -32768;
+   static final short SMax = 32767;
+   static final int IMin = -2147483648;
+   static final int IMax = 2147483647;
+   static final long LMin = -9223372036854775808L;
+   static final long LMax = 9223372036854775807L;
+   static final float FNan = 0.0F / 0.0;
+   static final float FNeg = -1.0F / 0.0;
+   static final float FPos = 1.0F / 0.0;
+   static final float FMin = 1.4E-45F;
+   static final float FMax = 3.4028235E38F;
+   static final double DNan = 0.0D / 0.0;
+   static final double DNeg = -1.0D / 0.0;
+   static final double DPos = 1.0D / 0.0;
+   static final double DMin = 4.9E-324D;
+   static final double DMax = 1.7976931348623157E308D;
+
+   @TestConstants.A(byte.class)
+   void m1() {
+   }
+
+   @TestConstants.A(char.class)
+   void m2() {
+   }
+
+   @TestConstants.A(double.class)
+   void m3() {
+   }
+
+   @TestConstants.A(float.class)
+   void m4() {
+   }
+
+   @TestConstants.A(int.class)
+   void m5() {
+   }
+
+   @TestConstants.A(long.class)
+   void m6() {
+   }
+
+   @TestConstants.A(short.class)
+   void m7() {
+   }
+
+   @TestConstants.A(boolean.class)
+   void m8() {
+   }
+
+   @TestConstants.A(void.class)
+   void m9() {
+   }
+
+   @TestConstants.A(Date.class)
+   void m10() {
+   }
+
+   @interface A {
+      Class<?> value();
+   }
+}

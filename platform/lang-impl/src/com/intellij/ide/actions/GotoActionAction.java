@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
@@ -32,9 +33,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Set;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
 
@@ -59,13 +64,54 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     showNavigationPopup(callback, null, createPopup(project, model, start.first, start.second), false);
   }
 
-  private static ChooseByNamePopup createPopup(Project project, GotoActionModel model, String initialText, int initialIndex) {
-    return ChooseByNamePopup.createPopup(project,
-                                         model,
-                                         new GotoActionItemProvider(model),
-                                         initialText,
-                                         false,
-                                         initialIndex);
+  private static ChooseByNamePopup createPopup(final Project project, final GotoActionModel model, final String initialText, final int initialIndex) {
+    final ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
+    if (oldPopup != null) {
+      oldPopup.close(false);
+    }
+    final ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
+      @NotNull
+      @Override
+      protected Set<Object> filter(@NotNull Set<Object> elements) {
+        return super.filter(model.sort(elements));
+      }
+
+      @Override
+      protected boolean closeForbidden(boolean ok) {
+        if (!ok) return false;
+        Object element = getChosenElement();
+        return element instanceof GotoActionModel.MatchedValue && processOptionInplace(((GotoActionModel.MatchedValue)element).value, this)
+               || super.closeForbidden(true);
+      }
+    };
+
+    if (project != null) {
+      project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, popup);
+    }
+    popup.addMouseClickListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(@NotNull MouseEvent e) {
+        Object element = popup.getSelectionByPoint(e.getPoint());
+        if (element instanceof GotoActionModel.MatchedValue) {
+          if (processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup)) {
+            e.consume();
+          }
+        }
+      }
+    });
+    return popup;
+  }
+
+  private static boolean processOptionInplace(Object value, ChooseByNamePopup popup) {
+    if (value instanceof BooleanOptionDescription) {
+      final BooleanOptionDescription option = (BooleanOptionDescription)value;
+      option.setOptionState(!option.isOptionEnabled());
+      if (popup != null) {
+        popup.repaintList();
+      }
+      return true;
+    }
+    return false;
   }
 
   public static void openOptionOrPerformAction(Object element,
@@ -73,6 +119,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                                                final Project project,
                                                final Component component,
                                                @Nullable final AnActionEvent e) {
+    if (processOptionInplace(element, null)) {
+      return;
+    }
     if (element instanceof OptionDescription) {
       final String configurableId = ((OptionDescription)element).getConfigurableId();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -96,7 +145,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             final DataContext context = DataManager.getInstance().getDataContext(component);
             final AnActionEvent event = new AnActionEvent(e == null ? null : e.getInputEvent(),
                                                           context,
-                                                          e == null ? ActionPlaces.UNKNOWN : e.getPlace(),
+                                                          ActionPlaces.ACTION_SEARCH,
                                                           presentation,
                                                           ActionManager.getInstance(),
                                                           e == null ? 0 : e.getModifiers());

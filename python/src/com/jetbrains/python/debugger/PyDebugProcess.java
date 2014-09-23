@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.remote.RemoteProcessHandlerBase;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
@@ -43,6 +44,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.run.PythonProcessHandler;
@@ -84,6 +86,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
   private PyStackFrame myStackFrameBeforeResume;
+  private PyStackFrame myConsoleContextFrame = null;
+  private PyReferrersLoader myReferrersProvider;
 
   public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
@@ -285,6 +289,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(myPositionConverter.convertSignature(signature));
   }
 
+  @Override
+  public void showConsole(PyThreadInfo thread) {
+    myConsoleContextFrame = new PyExecutionStack(this, thread).getTopFrame();
+    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          ((PythonDebugLanguageConsoleView)myExecutionConsole).enableConsole(false);
+        }
+      });
+    }
+  }
+
   protected void afterConnect() {
   }
 
@@ -472,7 +489,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute, trimResult);
   }
 
-  public void consoleExec(String command, ProcessDebugger.DebugCallback<String> callback) {
+  public void consoleExec(String command, PyDebugCallback<String> callback) {
     dropFrameCaches();
     try {
       final PyStackFrame frame = currentFrame();
@@ -522,10 +539,30 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
+  public void loadReferrers(PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback) {
+    try {
+      final PyStackFrame frame = currentFrame();
+      myDebugger.loadReferrers(frame.getThreadId(), frame.getFrameId(), var, callback);
+    }
+    catch (PyDebuggerException e) {
+      callback.error(e);
+    }
+  }
+
+  @Override
   public void changeVariable(final PyDebugValue var, final String value) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     PyDebugValue newValue = myDebugger.changeVariable(frame.getThreadId(), frame.getFrameId(), var, value);
     myNewVariableValue.put(frame.getThreadFrameId(), newValue);
+  }
+
+  @Nullable
+  @Override
+  public PyReferrersLoader getReferrersLoader() {
+    if (myReferrersProvider == null) {
+      myReferrersProvider = new PyReferrersLoader(this);
+    }
+    return myReferrersProvider;
   }
 
   @Nullable
@@ -534,9 +571,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public boolean isVariable(String name) {
+  public boolean canSaveToTemp(String name) {
     final Project project = getSession().getProject();
-    return PyDebugSupportUtils.isVariable(project, name);
+    return PyDebugSupportUtils.canSaveToTemp(project, name);
   }
 
   private PyStackFrame currentFrame() throws PyDebuggerException {
@@ -545,6 +582,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
 
     final PyStackFrame frame = (PyStackFrame)getSession().getCurrentStackFrame();
+
+    if (frame == null && myConsoleContextFrame != null) {
+      return myConsoleContextFrame;
+    }
+
     if (frame == null) {
       throw new PyDebuggerException("Process is running");
     }

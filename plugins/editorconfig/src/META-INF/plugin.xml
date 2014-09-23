@@ -12,6 +12,14 @@
 
   <depends>com.intellij.modules.lang</depends>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.editorconfig.plugincomponents.EditorConfigNotifier"
+                        serviceImplementation="org.editorconfig.plugincomponents.EditorConfigNotifier"/>
+    <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
+    <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
+    <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" />
+  </extensions>
+
   <application-components>
       <component>
           <implementation-class>org.editorconfig.plugincomponents.SettingsProviderComponent</implementation-class>

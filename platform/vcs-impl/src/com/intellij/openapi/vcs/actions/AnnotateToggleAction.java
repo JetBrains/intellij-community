@@ -205,6 +205,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         handler.completed(file.getPath());
 
         if (!exceptionRef.isNull()) {
+          LOG.warn(exceptionRef.get());
           AbstractVcsHelper.getInstance(project).showErrors(Arrays.asList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
         }
 

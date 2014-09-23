@@ -61,7 +61,7 @@ import java.util.*;
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")
   },
-  storageChooser = HttpConfigurable.StorageChooser.class
+  storageChooser = LastStorageChooserForWrite.class
 )
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ExportableApplicationComponent {
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
@@ -517,20 +517,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Override
   public String getPresentableName() {
     return "Proxy Settings";
-  }
-
-  public static class StorageChooser implements StateStorageChooser<HttpConfigurable> {
-    @Override
-    public Storage[] selectStorages(Storage[] storages, HttpConfigurable component, StateStorageOperation operation) {
-      if (operation == StateStorageOperation.WRITE) {
-        for (Storage storage : storages) {
-          if (storage.file().equals(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")) {
-            return new Storage[] {storage};
-          }
-        }
-      }
-      return storages;
-    }
   }
 
   public static class ProxyInfo {

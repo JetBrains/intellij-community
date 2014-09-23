@@ -37,10 +37,13 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -52,6 +55,7 @@ import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -82,7 +86,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private boolean myMadeStatic = false;
   private final Set<MethodToMoveUsageInfo> myUsages = new LinkedHashSet<MethodToMoveUsageInfo>();
   private PsiClass myInnerClass;
-  private ChangeSignatureProcessor myChangeSignatureProcessor;
+  private boolean myChangeReturnType;
   private Runnable myCopyMethodToInner;
 
   public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, final String innerClassName) {
@@ -100,8 +104,12 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    final PsiClass containingClass = getMethod().getContainingClass();
+    final SearchScope scope = PsiUtilCore.getVirtualFile(containingClass) == null
+                              ? new LocalSearchScope(containingClass)
+                              : GlobalSearchScope.projectScope(myProject);
     PsiReference[] refs =
-        ReferencesSearch.search(getMethod(), GlobalSearchScope.projectScope(myProject), false).toArray(PsiReference.EMPTY_ARRAY);
+        ReferencesSearch.search(getMethod(), scope, false).toArray(PsiReference.EMPTY_ARRAY);
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
       if (element != null && element.isValid()) {
@@ -141,7 +149,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  protected void performRefactoring(final UsageInfo[] usages) {
+  public void performRefactoring(final UsageInfo[] usages) {
     try {
       if (isCreateInnerClass()) {
         myInnerClass = (PsiClass)getMethod().getContainingClass().add(myElementFactory.createClass(getInnerClassName()));
@@ -258,12 +266,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       myInnerClass.add(GenerateMembersUtil.generateGetterPrototype(field));
     }
 
-    PsiParameter[] params = getMethod().getParameterList().getParameters();
-    ParameterInfoImpl[] infos = new ParameterInfoImpl[params.length];
-    for (int i = 0; i < params.length; i++) {
-      PsiParameter param = params[i];
-      infos[i] = new ParameterInfoImpl(i, param.getName(), param.getType());
-    }
     final PsiCodeBlock body = getMethod().getBody();
     LOG.assertTrue(body != null);
     final LinkedHashSet<PsiLocalVariable> vars = new LinkedHashSet<PsiLocalVariable>();
@@ -320,7 +322,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         for (PsiElement declaredElement : declaredElements) {
           if (declaredElement instanceof PsiVariable) {
             for (PsiVariable variable : outputVariables) {
-              PsiLocalVariable var = (PsiLocalVariable)declaredElement;
+              PsiVariable var = (PsiVariable)declaredElement;
               if (Comparing.strEqual(var.getName(), variable.getName())) {
                 final PsiExpression initializer = var.getInitializer();
                 if (initializer == null) {
@@ -385,23 +387,25 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    myChangeSignatureProcessor = new ChangeSignatureProcessor(myProject, getMethod(), false, null, getMethod().getName(),
-                                                                   new PsiImmediateClassType(myInnerClass, PsiSubstitutor.EMPTY), infos);
+    myChangeReturnType = true;
   }
 
   void runChangeSignature() {
-    if (myChangeSignatureProcessor != null) {
-      myChangeSignatureProcessor.run();
-    }
     if (myCopyMethodToInner != null) {
-      ApplicationManager.getApplication().runWriteAction(myCopyMethodToInner);
+      myCopyMethodToInner.run();
+    }
+    if (myChangeReturnType) {
+      final PsiTypeElement typeElement = ((PsiLocalVariable)((PsiDeclarationStatement)JavaPsiFacade.getElementFactory(myProject)
+        .createStatementFromText(myInnerClassName + " l =null;", myInnerClass)).getDeclaredElements()[0]).getTypeElement();
+      final PsiTypeElement innerMethodReturnTypeElement = myInnerMethod.getReturnTypeElement();
+      LOG.assertTrue(innerMethodReturnTypeElement != null);
+      innerMethodReturnTypeElement.replace(typeElement);
     }
   }
 
   private String getPureName(PsiVariable var) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
-    final VariableKind kind = var instanceof PsiLocalVariable ? VariableKind.LOCAL_VARIABLE : VariableKind.PARAMETER;
-    return styleManager.variableNameToPropertyName(var.getName(), kind);
+    return styleManager.variableNameToPropertyName(var.getName(), styleManager.getVariableKind(var));
   }
 
   public  PsiExpression processMethodDeclaration( PsiExpressionList expressionList) throws IncorrectOperationException {
@@ -624,6 +628,22 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return myExtractProcessor;
   }
 
+  protected AbstractExtractDialog createExtractMethodObjectDialog(final MyExtractMethodProcessor processor) {
+    return new ExtractMethodObjectDialog(myProject, processor.getTargetClass(), processor.getInputVariables(), processor.getReturnType(),
+                                         processor.getTypeParameterList(),
+                                         processor.getThrownExceptions(), processor.isStatic(), processor.isCanBeStatic(),
+                                         processor.getElements(), myMultipleExitPoints){
+      @Override
+      protected boolean isUsedAfter(PsiVariable variable) {
+        return ArrayUtil.find(processor.getOutputVariables(), variable) != -1;
+      }
+    };
+  }
+
+  public PsiClass getInnerClass() {
+    return myInnerClass;
+  }
+
   public class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
     public MyExtractMethodProcessor(Project project,
@@ -640,19 +660,13 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     @Override
     protected void apply(final AbstractExtractDialog dialog) {
       super.apply(dialog);
-      myCreateInnerClass = ((ExtractMethodObjectDialog)dialog).createInnerClass();
+      myCreateInnerClass = !(dialog instanceof ExtractMethodObjectDialog) || ((ExtractMethodObjectDialog)dialog).createInnerClass();
       myInnerClassName = myCreateInnerClass ? StringUtil.capitalize(dialog.getChosenMethodName()) : dialog.getChosenMethodName();
     }
 
     @Override
     protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
-      return new ExtractMethodObjectDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
-                                           myThrownExceptions, myStatic, myCanBeStatic, myElements, myMultipleExitPoints){
-        @Override
-        protected boolean isUsedAfter(PsiVariable variable) {
-          return ArrayUtil.find(myOutputVariables, variable) != -1;
-        }
-      };
+      return createExtractMethodObjectDialog(this);
     }
 
     @Override

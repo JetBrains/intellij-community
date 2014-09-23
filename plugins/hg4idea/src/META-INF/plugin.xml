@@ -18,6 +18,7 @@
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <search.topHitProvider implementation="org.zmlx.hg4idea.HgOptionsTopHitProvider"/>
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
@@ -75,7 +76,7 @@
       <action id="hg4idea.merge.files" class="org.zmlx.hg4idea.action.HgMerge" icon="AllIcons.Vcs.MergeSourcesTree"/>
       <separator/>
 
-      <action id="hg4idea.branches" class="org.zmlx.hg4idea.action.HgBranchesAction" text="_Branches..."/>
+      <action id="hg4idea.branches" class="org.zmlx.hg4idea.branch.HgBranchesAction" text="_Branches..."/>
       <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
       <action id="hg4idea.updateTo" class="org.zmlx.hg4idea.action.HgUpdateToAction"/>
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>

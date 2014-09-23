@@ -26,13 +26,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
+import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,6 +49,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -80,8 +86,18 @@ public class InspectionsConfigTreeTable extends TreeTable {
         if (maybeIcon instanceof MultiScopeSeverityIcon) {
           final LinkedHashMap<String, HighlightSeverity> scopeToAverageSeverityMap =
             ((MultiScopeSeverityIcon)maybeIcon).getScopeToAverageSeverityMap();
+          final JComponent component;
+          if (scopeToAverageSeverityMap.size() == 1) {
+            final HighlightSeverity severity = ContainerUtil.getFirstItem(scopeToAverageSeverityMap.values());
+            final JLabel label = new JLabel();
+            label.setIcon(HighlightDisplayLevel.find(severity).getIcon());
+            label.setText(SingleInspectionProfilePanel.renderSeverity(severity));
+            component = label;
+          } else {
+            component = new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap);
+          }
           IdeTooltipManager.getInstance().show(
-            new IdeTooltip(InspectionsConfigTreeTable.this, point, new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap)), false);
+            new IdeTooltip(InspectionsConfigTreeTable.this, point, component), false);
         }
       }
     });
@@ -220,7 +236,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     @Override
     public void setValueAt(final Object aValue, final Object node, final int column) {
       LOG.assertTrue(column == IS_ENABLED_COLUMN);
-      LOG.assertTrue(aValue != null);
+      LOG.assertTrue(aValue != null, "node = " + node);
       final boolean doEnable = (Boolean) aValue;
       for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode) node)) {
         final String toolId = aNode.getKey().toString();
@@ -247,32 +263,122 @@ public class InspectionsConfigTreeTable extends TreeTable {
     }
   }
 
+  private static class SeverityAndOccurrences {
+    private HighlightSeverity myPrimarySeverity;
+    private final Map<String, HighlightSeverity> myOccurrences = new HashMap<String, HighlightSeverity>();
+
+    public void setSeverityToMixed() {
+      myPrimarySeverity = ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY;
+    }
+
+    public SeverityAndOccurrences incOccurrences(final String toolName, final HighlightSeverity severity) {
+      if (myPrimarySeverity == null) {
+        myPrimarySeverity = severity;
+      } else if (!Comparing.equal(severity, myPrimarySeverity)) {
+        myPrimarySeverity = ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY;
+      }
+      myOccurrences.put(toolName, severity);
+      return this;
+    }
+
+    public HighlightSeverity getPrimarySeverity() {
+      return myPrimarySeverity;
+    }
+
+    public int getOccurrencesSize() {
+      return myOccurrences.size();
+    }
+
+    public Map<String, HighlightSeverity> getOccurrences() {
+      return myOccurrences;
+    }
+  }
+
   private static class MultiColoredHighlightSeverityIconSink {
 
-    private final Map<String, HighlightSeverity> myScopeToAverageSeverityMap = new HashMap<String, HighlightSeverity>();
+
+    private final Map<String, SeverityAndOccurrences> myScopeToAverageSeverityMap = new HashMap<String, SeverityAndOccurrences>();
 
     private String myDefaultScopeName;
-    private boolean myIsFirst = true;
 
     public Icon constructIcon(final InspectionProfileImpl inspectionProfile) {
+      final Map<String, HighlightSeverity> computedSeverities = computeSeverities(inspectionProfile);
+
+      if (computedSeverities == null) {
+        return null;
+      }
+
+      boolean allScopesHasMixedSeverity = true;
+      for (HighlightSeverity severity : computedSeverities.values()) {
+        if (!severity.equals(ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY)) {
+          allScopesHasMixedSeverity = false;
+          break;
+        }
+      }
+      return allScopesHasMixedSeverity
+             ? ScopesAndSeveritiesTable.MIXED_FAKE_LEVEL.getIcon()
+             : new MultiScopeSeverityIcon(computedSeverities, myDefaultScopeName, inspectionProfile);
+    }
+
+    @Nullable
+    private Map<String, HighlightSeverity> computeSeverities(final InspectionProfileImpl inspectionProfile) {
       if (myScopeToAverageSeverityMap.isEmpty()) {
         return null;
       }
-      return !allScopesHasMixedSeverity()
-             ? new MultiScopeSeverityIcon(myScopeToAverageSeverityMap, myDefaultScopeName, inspectionProfile)
-             : ScopesAndSeveritiesTable.MIXED_FAKE_LEVEL.getIcon();
-    }
+      final Map<String, HighlightSeverity> result = new HashMap<String, HighlightSeverity>();
+      final Map.Entry<String, SeverityAndOccurrences> entry = ContainerUtil.getFirstItem(myScopeToAverageSeverityMap.entrySet());
+      result.put(entry.getKey(), entry.getValue().getPrimarySeverity());
+      if (myScopeToAverageSeverityMap.size() == 1) {
+        return result;
+      }
+      String[] scopesOrder = inspectionProfile.getScopesOrder();
+      if (scopesOrder == null || scopesOrder.length == 0) {
+        final ArrayList<String> scopesList = new ArrayList<String>(myScopeToAverageSeverityMap.keySet());
+        scopesList.remove(myDefaultScopeName);
+        ContainerUtil.sort(scopesList);
+        scopesOrder = ArrayUtil.toStringArray(scopesList);
+      }
 
-    private boolean allScopesHasMixedSeverity() {
-      for (final Map.Entry<String, HighlightSeverity> e : myScopeToAverageSeverityMap.entrySet()) {
-        if (!ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY.equals(e.getValue())) {
-          return false;
+      final SeverityAndOccurrences defaultSeveritiesAndOccurrences = myScopeToAverageSeverityMap.get(myDefaultScopeName);
+      final int allInspectionsCount = defaultSeveritiesAndOccurrences.getOccurrencesSize();
+      final Map<String, HighlightSeverity> allScopes = defaultSeveritiesAndOccurrences.getOccurrences();
+      String[] reversedScopesOrder = ArrayUtil.reverseArray(scopesOrder);
+      for (String currentScope : reversedScopesOrder) {
+        final SeverityAndOccurrences currentSeverityAndOccurrences = myScopeToAverageSeverityMap.get(currentScope);
+        if (currentSeverityAndOccurrences == null) {
+          continue;
+        }
+        final HighlightSeverity currentSeverity = currentSeverityAndOccurrences.getPrimarySeverity();
+        if (currentSeverity == ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY ||
+            currentSeverityAndOccurrences.getOccurrencesSize() == allInspectionsCount) {
+          result.put(currentScope, currentSeverity);
+        }
+        else {
+          Set<String> toolsToCheck = ContainerUtil.newHashSet(allScopes.keySet());
+          toolsToCheck.removeAll(currentSeverityAndOccurrences.getOccurrences().keySet());
+          boolean doContinue = false;
+          final Map<String, HighlightSeverity> lowerScopeOccurrences = myScopeToAverageSeverityMap.get(myDefaultScopeName).getOccurrences();
+          for (String toolName : toolsToCheck) {
+            final HighlightSeverity currentToolSeverity = lowerScopeOccurrences.get(toolName);
+            if (currentToolSeverity != null) {
+              if (!currentSeverity.equals(currentToolSeverity)) {
+                result.put(currentScope, ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY);
+                doContinue = true;
+                break;
+              }
+            }
+          }
+          if (doContinue) {
+            continue;
+          }
+          result.put(currentScope, currentSeverity);
         }
       }
-      return true;
+
+      return result;
     }
 
-    public void put(final ScopeToolState defaultState, final Collection<ScopeToolState> nonDefault) {
+    public void put(@NotNull final ScopeToolState defaultState, @NotNull final List<ScopeToolState> nonDefault) {
       putOne(defaultState);
       if (myDefaultScopeName == null) {
         myDefaultScopeName = defaultState.getScopeName();
@@ -280,25 +386,19 @@ public class InspectionsConfigTreeTable extends TreeTable {
       for (final ScopeToolState scopeToolState : nonDefault) {
         putOne(scopeToolState);
       }
-      if (myIsFirst) {
-        myIsFirst = false;
-      }
     }
 
     private void putOne(final ScopeToolState state) {
       final Icon icon = state.getLevel().getIcon();
       final String scopeName = state.getScopeName();
       if (icon instanceof HighlightDisplayLevel.SingleColorIconWithMask) {
-        if (myIsFirst) {
-          myScopeToAverageSeverityMap.put(scopeName, state.getLevel().getSeverity());
+        final SeverityAndOccurrences severityAndOccurrences = myScopeToAverageSeverityMap.get(scopeName);
+        final String inspectionName = state.getTool().getShortName();
+        if (severityAndOccurrences == null) {
+          myScopeToAverageSeverityMap.put(scopeName, new SeverityAndOccurrences().incOccurrences(inspectionName, state.getLevel().getSeverity()));
         } else {
-          final HighlightSeverity severity = myScopeToAverageSeverityMap.get(scopeName);
-          if (!ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY.equals(severity) && !Comparing.equal(severity, state.getLevel().getSeverity())) {
-            myScopeToAverageSeverityMap.put(scopeName, ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY);
-          }
+          severityAndOccurrences.incOccurrences(inspectionName, state.getLevel().getSeverity());
         }
-      } else if (!ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY.equals(myScopeToAverageSeverityMap.get(scopeName))) {
-        myScopeToAverageSeverityMap.put(scopeName, ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY);
       }
     }
   }

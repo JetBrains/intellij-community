@@ -1,3 +1,4 @@
 def foo(args=None):
-    if not args: args = []
+    if not args:
+        args = []
     pass

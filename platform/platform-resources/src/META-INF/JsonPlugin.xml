@@ -1,0 +1,59 @@
+<idea-plugin version="2">
+
+  <module value="com.intellij.modules.json"/>
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+  </project-components>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
+    <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="JSON" implementationClass="com.intellij.json.JsonSyntaxHighlighterFactory"/>
+
+    <!-- Code style and formatting -->
+    <codeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonCodeStyleSettingsProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonLanguageCodeStyleSettingsProvider"/>
+    <lang.formatter language="JSON" implementationClass="com.intellij.json.formatter.JsonFormattingBuilderModel"/>
+    <lang.braceMatcher language="JSON" implementationClass="com.intellij.json.JsonBraceMatcher"/>
+    <quoteHandler fileType="JSON" className="com.intellij.json.JsonQuoteHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.json.formatter.JsonEnterBetweenBracesHandler"/>
+
+    <!-- Codeinsight -->
+    <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
+    <completion.contributor language="JSON" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
+    <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewBuilderFactory"/>
+    <lang.foldingBuilder language="JSON" implementationClass="com.intellij.json.editor.folding.JsonFoldingBuilder"/>
+    <lang.smartEnterProcessor language="JSON" implementationClass="com.intellij.json.editor.smartEnter.JsonSmartEnterProcessor"/>
+    <lang.namesValidator language="JSON" implementationClass="com.intellij.json.JsonNamesValidator"/>
+    <lang.commenter language="JSON" implementationClass="com.intellij.json.editor.JsonCommenter"/>
+    <lang.surroundDescriptor language="JSON" implementationClass="com.intellij.json.surroundWith.JsonSurroundDescriptor"/>
+    <lang.findUsagesProvider language="JSON" implementationClass="com.intellij.json.findUsages.JsonFindUsagesProvider"/>
+    <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
+    <liveTemplateContext implementation="com.intellij.json.JsonContextType"/>
+    <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
+    <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>
+    <basicWordSelectionFilter implementation="com.intellij.json.editor.selection.JsonBasicWordSelectionFilter"/>
+
+    <!-- Annotators -->
+    <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
+
+    <!-- Inspections -->
+    <localInspection language="JSON" groupPath="JSON" shortName="JsonStandardCompliance" key="name.standard.compliance.inspection"
+                     groupKey="name.json.inspection.group" enabledByDefault="true" level="ERROR"
+                     bundle="com.intellij.json.JsonBundle"
+                     implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
+
+    <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
+                             implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
+  </extensions>
+
+</idea-plugin>

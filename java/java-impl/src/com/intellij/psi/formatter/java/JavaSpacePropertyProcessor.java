@@ -1129,7 +1129,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitModifierList(PsiModifierList list) {
-    createSpaceInCode(true);
+    myResult = Spacing.createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   @Override
@@ -1183,6 +1183,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
+    }
+  }
+
+  @Override
+  public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+    if (myRole1 == ChildRole.TYPE && myRole2 == ChildRole.DOT
+        || myRole1 == ChildRole.DOT && myRole2 == ChildRole.CLASS_KEYWORD)
+    {
+      createSpaceInCode(false);
     }
   }
 

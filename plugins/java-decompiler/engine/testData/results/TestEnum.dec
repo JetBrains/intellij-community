@@ -1,0 +1,27 @@
+package pkg;
+
+public enum TestEnum {
+   E1,
+   E2 {
+      public void m() {
+      }
+   },
+   E3("-"),
+   E4("+") {
+      public void m() {
+      }
+   };
+
+   private String s;
+
+   public void m() {
+   }
+
+   private TestEnum() {
+      this((String)"?");
+   }
+
+   private TestEnum(@Deprecated String var3) {
+      this.s = var3;
+   }
+}

@@ -78,8 +78,13 @@ public class ScopesAndSeveritiesTable extends JBTable {
     scopeEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
-    severityColumn.setCellRenderer(SeverityRenderer.create(tableSettings.getInspectionProfile()));
-    severityColumn.setCellEditor(SeverityRenderer.create(tableSettings.getInspectionProfile()));
+    severityColumn.setCellRenderer(SeverityRenderer.create(tableSettings.getInspectionProfile(), null));
+    severityColumn.setCellEditor(SeverityRenderer.create(tableSettings.getInspectionProfile(), new Runnable() {
+      @Override
+      public void run() {
+        tableSettings.onSettingsChanged();
+      }
+    }));
 
     setColumnSelectionAllowed(false);
     setRowSelectionAllowed(true);
@@ -357,6 +362,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
       }
       else if (columnIndex == SCOPE_ENABLED_COLUMN) {
         final NamedScope scope = getScope(rowIndex);
+        if (scope == null) {
+          return;
+        }
         if ((Boolean)value) {
           if (rowIndex == lastRowIndex()) {
             myInspectionProfile.enableToolsByDefault(myKeyNames, myProject);
@@ -381,7 +389,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     @Override
     public void removeRow(final int idx) {
       if (idx != lastRowIndex()) {
-        myInspectionProfile.removeScopes(myKeyNames, getScope(idx), myProject);
+        myInspectionProfile.removeScopes(myKeyNames, getScopeName(idx), myProject);
         refreshAggregatedScopes();
         myTableSettings.onScopeRemoved(getRowCount());
       }

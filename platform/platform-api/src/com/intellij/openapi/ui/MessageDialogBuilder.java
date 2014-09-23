@@ -40,6 +40,7 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
     myMessage = message;
   }
 
+  @NotNull
   public static YesNo yesNo(@NotNull String title, @NotNull String message) {
     return new YesNo(title, message).icon(Messages.getQuestionIcon());
   }
@@ -50,6 +51,7 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
 
   protected abstract T getThis();
 
+  @NotNull
   public T project(@Nullable Project project) {
     myProject = project;
     return getThis();
@@ -66,6 +68,7 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
     return getThis();
   }
 
+  @NotNull
   public T doNotAsk(@NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
     myDoNotAskOption = doNotAskOption;
     return getThis();

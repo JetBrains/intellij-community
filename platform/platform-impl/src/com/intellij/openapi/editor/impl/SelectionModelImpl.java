@@ -24,6 +24,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -36,6 +37,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -462,6 +464,16 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   @Override
   public void addSelectionListener(SelectionListener listener) {
     mySelectionListeners.add(listener);
+  }
+
+  public void addSelectionListener(final SelectionListener listener, Disposable parent) {
+    mySelectionListeners.add(listener);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        mySelectionListeners.remove(listener);
+      }
+    });
   }
 
   @Override

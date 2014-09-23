@@ -104,14 +104,15 @@ public class GitMergeProvider implements MergeProvider2 {
     return reverseMap;
   }
 
+  @Override
   @NotNull
-  public MergeData loadRevisions(final VirtualFile file) throws VcsException {
+  public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
     final MergeData mergeData = new MergeData();
-    if (file == null) return mergeData;
     final VirtualFile root = GitUtil.getGitRoot(file);
     final FilePath path = VcsUtil.getFilePath(file.getPath());
 
     VcsRunnable runnable = new VcsRunnable() {
+      @Override
       @SuppressWarnings({"ConstantConditions"})
       public void run() throws VcsException {
         GitFileRevision original = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + ORIGINAL_REVISION_NUM));
@@ -205,8 +206,8 @@ public class GitMergeProvider implements MergeProvider2 {
     return myReverseRoots.contains(root) ? YOURS_REVISION_NUM : THEIRS_REVISION_NUM;
   }
 
-  public void conflictResolvedForFile(VirtualFile file) {
-    if (file == null) return;
+  @Override
+  public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
       GitFileUtils.addFiles(myProject, GitUtil.getGitRoot(file), file);
     }
@@ -215,10 +216,12 @@ public class GitMergeProvider implements MergeProvider2 {
     }
   }
 
+  @Override
   public boolean isBinary(@NotNull VirtualFile file) {
     return file.getFileType().isBinary();
   }
 
+  @Override
   @NotNull
   public MergeSession createMergeSession(List<VirtualFile> files) {
     return new MyMergeSession(files);
@@ -306,15 +309,18 @@ public class GitMergeProvider implements MergeProvider2 {
       }
     }
 
+    @Override
     public ColumnInfo[] getMergeInfoColumns() {
       return new ColumnInfo[]{new StatusColumn(false), new StatusColumn(true)};
     }
 
+    @Override
     public boolean canMerge(VirtualFile file) {
       Conflict c = myConflicts.get(file);
       return c != null;
     }
 
+    @Override
     public void conflictResolvedForFile(VirtualFile file, Resolution resolution) {
       Conflict c = myConflicts.get(file);
       assert c != null : "Conflict was not loaded for the file: " + file.getPath();
@@ -363,6 +369,7 @@ public class GitMergeProvider implements MergeProvider2 {
         myIsTheirs = isTheirs;
       }
 
+      @Override
       public String valueOf(VirtualFile file) {
         Conflict c = myConflicts.get(file);
         assert c != null : "No conflict for the file " + file;

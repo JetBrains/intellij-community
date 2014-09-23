@@ -43,6 +43,7 @@ import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.Parent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
-  private static final Logger LOG = Logger.getInstance("#" + SchemesManagerFactoryImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(SchemesManagerFactoryImpl.class);
 
   @NonNls private static final String DEFAULT_EXT = ".xml";
 
@@ -79,7 +80,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private boolean myListenerAdded = false;
   private Alarm myRefreshAlarm;
-  
+
   private String mySchemeExtension = DEFAULT_EXT;
   private boolean myUpgradeExtension = false;
 
@@ -535,7 +536,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   @Nullable
   private static Document loadGlobalScheme(final String schemePath) throws IOException {
     StreamProvider provider = getProvider();
-    return provider != null && provider.isEnabled() ? StorageUtil.loadDocument(provider.loadContent(schemePath, RoamingType.GLOBAL)) : null;
+    return provider != null && provider.isEnabled() ? StorageUtil.loadDocument(provider.loadContent(schemePath, getRoamingType(provider))) : null;
   }
 
   private void saveFileName(String fileName, final E schemeKey) {
@@ -548,12 +549,12 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     schemeKey.getExternalInfo().setCurrentFileName(fileName);
   }
 
-  private static long computeHashValue(final Document document) {
-    return JDOMUtil.getTreeHash(document);
+  private static long computeHashValue(Parent element) {
+    return JDOMUtil.getTreeHash(element instanceof Element ? (Element)element : ((Document)element).getRootElement());
   }
 
   @Nullable
-  private Document writeSchemeToDocument(final E scheme) throws WriteExternalException {
+  private org.jdom.Parent writeSchemeToDocument(@NotNull E scheme) throws WriteExternalException {
     if (isShared(scheme)) {
       String originalPath = scheme.getExternalInfo().getOriginalPath();
       if (originalPath != null) {
@@ -562,11 +563,10 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         root.setAttribute(ORIGINAL_SCHEME_PATH, originalPath);
 
         Element localCopy = new Element(SCHEME_LOCAL_COPY);
-        localCopy.addContent(myProcessor.writeScheme(scheme).getRootElement().clone());
+        localCopy.addContent(getClone(myProcessor.writeScheme(scheme)));
 
         root.addContent(localCopy);
-
-        return new Document(root);
+        return root;
       }
       else {
         return null;
@@ -577,8 +577,12 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
   }
 
-  public void updateConfigFilesFromStreamProviders() {
+  @NotNull
+  private static Element getClone(@NotNull Parent result) {
+    return (result instanceof Element ? (Element)result : ((Document)result).getRootElement()).clone();
+  }
 
+  public void updateConfigFilesFromStreamProviders() {
   }
 
   private static class SharedSchemeData {
@@ -605,9 +609,9 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
     Collection<String> names = new THashSet<String>(getAllSchemeNames(currentSchemeList));
     Map<String, SharedScheme<E>> result = new THashMap<String, SharedScheme<E>>();
-    for (String subPath : provider.listSubFiles(myFileSpec, RoamingType.GLOBAL)) {
+    for (String subPath : provider.listSubFiles(myFileSpec, getRoamingType(provider))) {
       try {
-        final Document subDocument = StorageUtil.loadDocument(provider.loadContent(getFileFullPath(subPath), RoamingType.GLOBAL));
+        final Document subDocument = StorageUtil.loadDocument(provider.loadContent(getFileFullPath(subPath), getRoamingType(provider)));
         if (subDocument != null) {
           SharedSchemeData original = unwrap(subDocument);
           final E scheme = myProcessor.readScheme(original.original);
@@ -669,6 +673,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return myFileSpec + '/' + subPath;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void exportScheme(@NotNull final E scheme, final String name, final String description) throws WriteExternalException, IOException {
     StreamProvider provider = getProvider();
@@ -676,31 +681,39 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       return;
     }
 
-    Document document = myProcessor.writeScheme(scheme);
+    Parent document = myProcessor.writeScheme(scheme);
     if (document != null) {
       String fileSpec = getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + mySchemeExtension;
-      if (!provider.isApplicable(fileSpec, RoamingType.GLOBAL)) {
+      if (!provider.isApplicable(fileSpec, getRoamingType(provider))) {
         return;
       }
 
-      Document wrapped = wrap(document, name, description);
+      Element wrapped = wrap(document, name, description);
       if (provider instanceof CurrentUserHolder) {
         wrapped = wrapped.clone();
         String userName = ((CurrentUserHolder)provider).getCurrentUserName();
         if (userName != null) {
-          wrapped.getRootElement().setAttribute(USER, userName);
+          wrapped.setAttribute(USER, userName);
         }
       }
-      StorageUtil.doSendContent(provider, fileSpec, wrapped, RoamingType.GLOBAL, false);
+      StorageUtil.doSendContent(provider, fileSpec, wrapped, getRoamingType(provider), false);
     }
   }
 
-  private static Document wrap(@NotNull Document original, @NotNull String name, @NotNull String description) {
+  @SuppressWarnings("deprecation")
+  @NotNull
+  private static RoamingType getRoamingType(@NotNull StreamProvider provider) {
+    // for deprecated old stream we use GLOBAL as before to preserve backward compatibility
+    return provider instanceof CurrentUserHolder ? RoamingType.GLOBAL : RoamingType.PER_USER;
+  }
+
+  @NotNull
+  private static Element wrap(@NotNull Parent original, @NotNull String name, @NotNull String description) {
     Element sharedElement = new Element(SHARED_SCHEME_ORIGINAL);
     sharedElement.setAttribute(NAME, name);
     sharedElement.setAttribute(DESCRIPTION, description);
-    sharedElement.addContent(original.getRootElement().clone());
-    return new Document(sharedElement);
+    sharedElement.addContent(getClone(original));
+    return sharedElement;
   }
 
   @Override
@@ -799,7 +812,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         deleteServerFiles(DELETED_XML);
       }
       else if (myProvider != null && myProvider.isEnabled()) {
-        StorageUtil.sendContent(myProvider, getFileFullPath(DELETED_XML), createDeletedDocument(), myRoamingType, true);
+        StorageUtil.sendContent(myProvider, getFileFullPath(DELETED_XML), createDeletedElement(), myRoamingType, true);
       }
     }
     finally {
@@ -850,11 +863,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           final String fileName = getFileNameForScheme(fileNameProvider, eScheme);
           try {
 
-            final Document document = writeSchemeToDocument(eScheme);
-            if (document != null) {
-              long newHash = computeHashValue(document);
+            final Parent element = writeSchemeToDocument(eScheme);
+            if (element != null) {
+              long newHash = computeHashValue(element);
               Long oldHash = eScheme.getExternalInfo().getHash();
-              saveIfNeeded(eScheme, fileName, document, newHash, oldHash);
+              saveIfNeeded(eScheme, fileName, element, newHash, oldHash);
             }
           }
           catch (final IOException e) {
@@ -889,18 +902,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return fileName + mySchemeExtension;
   }
 
-  private void saveIfNeeded(E schemeKey, String fileName, Document document, long newHash, Long oldHash) throws IOException {
+  private void saveIfNeeded(E schemeKey, String fileName, Parent element, long newHash, Long oldHash) throws IOException {
     if (oldHash == null || newHash != oldHash.longValue() || myVFSBaseDir.findChild(fileName) == null) {
-      ensureFileText(fileName, StorageUtil.documentToBytes(document, true).toByteArray());
+      ensureFileText(fileName, StorageUtil.elementToBytes(element, true).toByteArray());
       schemeKey.getExternalInfo().setHash(newHash);
       saveFileName(fileName, schemeKey);
-      saveOnServer(fileName, document);
+      saveOnServer(fileName, element);
     }
   }
 
-  private void saveOnServer(final String fileName, final Document document) {
+  private void saveOnServer(final String fileName, @NotNull Parent element) {
     if (myProvider != null && myProvider.isEnabled()) {
-      StorageUtil.sendContent(myProvider, getFileFullPath(fileName), document, myRoamingType, true);
+      StorageUtil.sendContent(myProvider, getFileFullPath(fileName), element, myRoamingType, true);
     }
   }
 
@@ -925,16 +938,15 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
   }
 
-  private Document createDeletedDocument() {
+  @NotNull
+  private Element createDeletedElement() {
     Element root = new Element("deleted-schemes");
-    Document result = new Document(root);
     for (String deletedName : myDeletedNames) {
       Element child = new Element("scheme");
       root.addContent(child);
       child.setAttribute("name", deletedName);
     }
-
-    return result;
+    return root;
   }
 
   @Override

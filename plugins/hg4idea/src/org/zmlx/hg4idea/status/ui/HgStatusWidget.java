@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.action.HgBranchPopup;
+import org.zmlx.hg4idea.branch.HgBranchPopup;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -93,7 +93,7 @@ public class HgStatusWidget extends EditorBasedWidget
   @Override
   public ListPopup getPopupStep() {
     Project project = getProject();
-    if (project == null) {
+    if (project == null || project.isDisposed()) {
       return null;
     }
     VirtualFile root = HgUtil.getRootForSelectedFile(project);

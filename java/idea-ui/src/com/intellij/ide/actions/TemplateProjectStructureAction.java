@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 
 public class TemplateProjectStructureAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
     ShowSettingsUtil.getInstance().editConfigurable(defaultProject, OptionsEditorDialog.DIMENSION_KEY, ProjectStructureConfigurable.getInstance(defaultProject));

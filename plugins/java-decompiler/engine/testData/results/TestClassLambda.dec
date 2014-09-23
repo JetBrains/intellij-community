@@ -1,0 +1,73 @@
+package pkg;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.function.Consumer;
+import java.util.function.IntBinaryOperator;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+public class TestClassLambda {
+   public int field = 0;
+
+   public void testLambda() {
+      List var1 = Arrays.asList(new Integer[]{Integer.valueOf(1), Integer.valueOf(2), Integer.valueOf(3), Integer.valueOf(4), Integer.valueOf(5), Integer.valueOf(6), Integer.valueOf(7)});
+      int var2 = (int)Math.random();
+      var1.forEach((var2x) -> {
+         int var3 = 2 * var2x.intValue();
+         System.out.println(var3 + var2 + this.field);
+      });
+   }
+
+   public void testLambda1() {
+      int var1 = (int)Math.random();
+      Runnable var2 = () -> {
+         System.out.println("hello1" + var1);
+      };
+      Runnable var3 = () -> {
+         System.out.println("hello2" + var1);
+      };
+   }
+
+   public void testLambda2() {
+      reduce((var0, var1) -> {
+         return Math.max(var0, var1);
+      });
+   }
+
+   public void testLambda3() {
+      reduce(Math::max);
+   }
+
+   public void testLambda4() {
+      reduce(TestClassLambda::localMax);
+   }
+
+   public void testLambda5() {
+      String var1 = "abcd";
+      function(var1::toString);
+   }
+
+   public void testLambda6() {
+      ArrayList var1 = new ArrayList();
+      int var2 = var1.size() * 2;
+      int var3 = var1.size() * 5;
+      var1.removeIf((var2x) -> {
+         return var2 >= var2x.length() && var2x.length() <= var3;
+      });
+   }
+
+   public static OptionalInt reduce(IntBinaryOperator var0) {
+      return null;
+   }
+
+   public static String function(Supplier<String> var0) {
+      return (String)var0.get();
+   }
+
+   public static int localMax(int var0, int var1) {
+      return 0;
+   }
+}

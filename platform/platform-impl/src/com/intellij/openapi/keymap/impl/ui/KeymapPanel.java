@@ -50,6 +50,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
@@ -66,6 +67,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -829,11 +831,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     Keymap[] keymaps = keymapManager.getAllKeymaps();
     for (Keymap keymap1 : keymaps) {
+
+      if (SystemInfo.isMac && KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap1.getName())) continue;
+
       KeymapImpl keymap = (KeymapImpl)keymap1;
       if (keymap.canModify()) {
         keymap = keymap.copy(true);
       }
-
       myKeymapListModel.addElement(keymap);
       if (Comparing.equal(keymapManager.getActiveKeymap(), keymap1)) {
         mySelectedKeymap = keymap;
@@ -955,13 +959,18 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   public void dispose() {
   }
 
+  @Nullable
+  public Shortcut[] getCurrentShortcuts(String actionId) {
+    return mySelectedKeymap == null ? null : mySelectedKeymap.getShortcuts(actionId);
+  }
+
   private void editSelection(InputEvent e) {
     final String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) return;
 
     DefaultActionGroup group = new DefaultActionGroup();
 
-    final Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
+    final Shortcut[] shortcuts = getCurrentShortcuts(actionId);
     final Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
 
     final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getForActionId(actionId);

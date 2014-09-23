@@ -99,7 +99,7 @@ fi
 
 VERSION_LOG=`"$MKTEMP" -t java.version.log.XXXXXX`
 "$JDK/bin/java" -version 2> "$VERSION_LOG"
-"$GREP" "64-Bit|x86_64" "$VERSION_LOG" > /dev/null
+"$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
 BITS=$?
 "$RM" -f "$VERSION_LOG"
 if [ $BITS -eq 0 ]; then
@@ -152,7 +152,7 @@ if [ "$IS_EAP" = "true" ]; then
   fi
 fi
 
-COMMON_JVM_ARGS="\"-Xbootclasspath/a:$IDE_HOME/lib/boot.jar\" -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
+COMMON_JVM_ARGS="-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log \"-Xbootclasspath/a:$IDE_HOME/lib/boot.jar\" -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
 IDE_JVM_ARGS="@@ide_jvm_args@@"
 ALL_JVM_ARGS="$VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
 

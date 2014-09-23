@@ -18,22 +18,32 @@ package com.intellij.appengine.facet;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.sdk.impl.AppEngineSdkUtil;
 import com.intellij.appengine.util.AppEngineUtil;
-import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetType;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.framework.FrameworkTypeEx;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.util.frameworkSupport.*;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelListener;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -50,6 +60,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.appengine.model.PersistenceApi;
 
 import javax.swing.*;
@@ -57,6 +68,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -64,32 +76,40 @@ import java.util.List;
 /**
  * @author nik
  */
-public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider<AppEngineFacet> {
+public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.facet.AppEngineSupportProvider");
-  private static final String JPA_PROVIDER_ID = "facet:jpa";
-  private static final String WEB_PROVIDER_ID = "facet:web";
+  public static final String JPA_FRAMEWORK_ID = "facet:jpa";
 
-  public AppEngineSupportProvider() {
-    super(AppEngineFacet.getFacetType());
+  @NotNull
+  @Override
+  public FrameworkTypeEx getFrameworkType() {
+    return AppEngineFrameworkType.getFrameworkType();
   }
 
   @Override
-  public String[] getPrecedingFrameworkProviderIds() {
-    return new String[]{JPA_PROVIDER_ID, WEB_PROVIDER_ID};
+  public List<FrameworkDependency> getDependenciesFrameworkIds() {
+    return Arrays.asList(FrameworkDependency.required("web"), FrameworkDependency.optional(JPA_FRAMEWORK_ID));
   }
 
-  protected void setupConfiguration(AppEngineFacet facet, ModifiableRootModel rootModel, FrameworkVersion version) {
+  @Override
+  public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
+    return moduleType instanceof JavaModuleType;
+  }
+
+  @Override
+  public boolean isSupportAlreadyAdded(@NotNull Module module, @NotNull FacetsProvider facetsProvider) {
+    return !facetsProvider.getFacetsByType(module, AppEngineFacet.ID).isEmpty();
   }
 
   @Nullable
-  private VirtualFile createFileFromTemplate(final String templateName, final VirtualFile parent, final String fileName) {
+  public static VirtualFile createFileFromTemplate(final String templateName, final VirtualFile parent, final String fileName) {
     parent.refresh(false, false);
     final FileTemplate template = FileTemplateManager.getInstance().getJ2eeTemplate(templateName);
     try {
       final String text = template.getText(FileTemplateManager.getInstance().getDefaultProperties());
       VirtualFile file = parent.findChild(fileName);
       if (file == null) {
-        file = parent.createChildData(this, fileName);
+        file = parent.createChildData(AppEngineSupportProvider.class, fileName);
       }
       VfsUtil.saveText(file, text);
       return file;
@@ -100,33 +120,35 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     }
   }
 
-  private void addSupport(final Module module, final ModifiableRootModel rootModel, String sdkPath, @Nullable PersistenceApi persistenceApi) {
-    super.addSupport(module, rootModel, null, null);
-
-    final AppEngineFacet appEngineFacet = AppEngineFacet.getAppEngineFacetByModule(module);
-    LOG.assertTrue(appEngineFacet != null);
+  private void addSupport(final Module module,
+                          final ModifiableRootModel rootModel,
+                          FrameworkSupportModel frameworkSupportModel,
+                          String sdkPath,
+                          @Nullable PersistenceApi persistenceApi) {
+    FacetType<AppEngineFacet, AppEngineFacetConfiguration> facetType = AppEngineFacet.getFacetType();
+    AppEngineFacet appEngineFacet = FacetManager.getInstance(module).addFacet(facetType, facetType.getDefaultFacetName(), null);
+    AppEngineWebIntegration webIntegration = AppEngineWebIntegration.getInstance();
+    webIntegration.registerFrameworkInModel(frameworkSupportModel, appEngineFacet);
     final AppEngineFacetConfiguration facetConfiguration = appEngineFacet.getConfiguration();
     facetConfiguration.setSdkHomePath(sdkPath);
     final AppEngineSdk sdk = appEngineFacet.getSdk();
-    final Artifact artifact = findOrCreateArtifact(appEngineFacet);
+    final Artifact webArtifact = findOrCreateWebArtifact(appEngineFacet);
 
-    AppEngineWebIntegration webIntegration = AppEngineWebIntegration.getInstance();
-    final VirtualFile descriptorDir = webIntegration.suggestParentDirectoryForAppEngineWebXml(module, rootModel);
-    if (descriptorDir != null) {
-      VirtualFile descriptor = createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE, descriptorDir,
+    final VirtualFile webDescriptorDir = webIntegration.suggestParentDirectoryForAppEngineWebXml(module, rootModel);
+    if (webDescriptorDir != null) {
+      VirtualFile descriptor = createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE, webDescriptorDir,
                                                       AppEngineUtil.APP_ENGINE_WEB_XML_NAME);
       if (descriptor != null) {
-        webIntegration.addDescriptor(artifact, module.getProject(), descriptor);
+        webIntegration.addDescriptor(webArtifact, module.getProject(), descriptor);
       }
     }
 
     final Project project = module.getProject();
-    webIntegration.setupRunConfiguration(sdk, artifact, project);
     webIntegration.addDevServerToModuleDependencies(rootModel, sdk);
 
     final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getUserLibraryPaths(), VirtualFile.EMPTY_ARRAY);
     rootModel.addLibraryEntry(apiJar);
-    webIntegration.addLibraryToArtifact(apiJar, artifact, project);
+    webIntegration.addLibraryToArtifact(apiJar, webArtifact, project);
 
     if (persistenceApi != null) {
       facetConfiguration.setRunEnhancerOnMake(true);
@@ -157,17 +179,17 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       }
       final Library library = addProjectLibrary(module, "AppEngine ORM", Collections.singletonList(sdk.getOrmLibDirectoryPath()), sdk.getOrmLibSources());
       rootModel.addLibraryEntry(library);
-      webIntegration.addLibraryToArtifact(library, artifact, project);
+      webIntegration.addLibraryToArtifact(library, webArtifact, project);
     }
   }
 
   @NotNull
-  private static Artifact findOrCreateArtifact(AppEngineFacet appEngineFacet) {
+  private static Artifact findOrCreateWebArtifact(AppEngineFacet appEngineFacet) {
     Module module = appEngineFacet.getModule();
-    ArtifactType artifactType = AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType();
+    ArtifactType webArtifactType = AppEngineWebIntegration.getInstance().getAppEngineWebArtifactType();
     final Collection<Artifact> artifacts = ArtifactUtil.getArtifactsContainingModuleOutput(module);
     for (Artifact artifact : artifacts) {
-      if (artifactType.equals(artifact.getArtifactType())) {
+      if (webArtifactType.equals(artifact.getArtifactType())) {
         return artifact;
       }
     }
@@ -175,7 +197,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     PackagingElementFactory elementFactory = PackagingElementFactory.getInstance();
     ArtifactRootElement<?> root = elementFactory.createArtifactRootElement();
     elementFactory.getOrCreateDirectory(root, "WEB-INF/classes").addOrFindChild(elementFactory.createModuleOutput(module));
-    return artifactManager.addArtifact(module.getName(), artifactType, root);
+    return artifactManager.addArtifact(module.getName(), webArtifactType, root);
   }
 
   private static Library addProjectLibrary(final Module module, final String name, final List<String> jarDirectories, final VirtualFile[] sources) {
@@ -211,11 +233,17 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
   @NotNull
   @Override
-  public FrameworkSupportConfigurableBase createConfigurable(@NotNull FrameworkSupportModel model) {
+  public FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
     return new AppEngineSupportConfigurable(model);
   }
 
-  private class AppEngineSupportConfigurable extends FrameworkSupportConfigurableBase implements FrameworkSupportModelListener {
+  @TestOnly
+  public static void setSdkPath(FrameworkSupportInModuleConfigurable configurable, String path) {
+    ((AppEngineSupportConfigurable)configurable).mySdkEditor.setPath(path);
+  }
+
+  private class AppEngineSupportConfigurable extends FrameworkSupportInModuleConfigurable implements FrameworkSupportModelListener {
+    private final FrameworkSupportModel myFrameworkSupportModel;
     private JPanel myMainPanel;
     private final AppEngineSdkEditor mySdkEditor;
     private JComboBox myPersistenceApiComboBox;
@@ -224,11 +252,11 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     private JPanel myErrorPanel;
 
     private AppEngineSupportConfigurable(FrameworkSupportModel model) {
-      super(AppEngineSupportProvider.this, model);
+      myFrameworkSupportModel = model;
       mySdkEditor = new AppEngineSdkEditor(model.getProject());
       mySdkPanel.add(LabeledComponent.create(mySdkEditor.getMainComponent(), "Google App Engine SDK:"), BorderLayout.CENTER);
       PersistenceApiComboboxUtil.setComboboxModel(myPersistenceApiComboBox, true);
-      if (model.isFrameworkSelected(JPA_PROVIDER_ID)) {
+      if (model.isFrameworkSelected(JPA_FRAMEWORK_ID)) {
         myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getDisplayName());
       }
       model.addFrameworkListener(this);
@@ -269,13 +297,13 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     }
 
     public void frameworkSelected(@NotNull FrameworkSupportProvider provider) {
-      if (provider.getId().equals(JPA_PROVIDER_ID)) {
+      if (provider.getId().equals(JPA_FRAMEWORK_ID)) {
         myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getDisplayName());
       }
     }
 
     public void frameworkUnselected(@NotNull FrameworkSupportProvider provider) {
-      if (provider.getId().equals(JPA_PROVIDER_ID)) {
+      if (provider.getId().equals(JPA_FRAMEWORK_ID)) {
         myPersistenceApiComboBox.setSelectedItem(PersistenceApiComboboxUtil.NONE_ITEM);
       }
     }
@@ -285,13 +313,15 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     }
 
     @Override
-    public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel rootModel, @Nullable Library library) {
-      AppEngineSupportProvider.this.addSupport(module, rootModel, mySdkEditor.getPath(), PersistenceApiComboboxUtil.getSelectedApi(myPersistenceApiComboBox));
+    public void addSupport(@NotNull Module module,
+                           @NotNull ModifiableRootModel rootModel,
+                           @NotNull ModifiableModelsProvider modifiableModelsProvider) {
+      AppEngineSupportProvider.this.addSupport(module, rootModel, myFrameworkSupportModel, mySdkEditor.getPath(), PersistenceApiComboboxUtil.getSelectedApi(myPersistenceApiComboBox));
     }
 
-
+    @Nullable
     @Override
-    public JComponent getComponent() {
+    public JComponent createComponent() {
       return myMainPanel;
     }
   }

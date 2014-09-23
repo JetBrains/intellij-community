@@ -848,9 +848,10 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean isFilePathAcceptable(@NotNull File root, @Nullable FileFilter fileFilter) {
+    if (fileFilter == null) return true;
     File file = root;
     do {
-      if (fileFilter != null && !fileFilter.accept(file)) return false;
+      if (!fileFilter.accept(file)) return false;
       file = file.getParentFile();
     }
     while (file != null);
@@ -1248,18 +1249,15 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean isWindowsAbsolutePath(@NotNull String pathString) {
-    if (pathString.length() >= 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':') {
-      return true;
-    }
-    return false;
+    return pathString.length() >= 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':';
   }
 
-  @Contract("null -> null")
+  @Contract("null -> null; !null -> !null")
   public static String getLocationRelativeToUserHome(@Nullable String path) {
     return getLocationRelativeToUserHome(path, true);
   }
 
-  @Contract("null,_ -> null")
+  @Contract("null,_ -> null; !null,_ -> !null")
   public static String getLocationRelativeToUserHome(@Nullable String path, boolean unixOnly) {
     if (path == null) return null;
 

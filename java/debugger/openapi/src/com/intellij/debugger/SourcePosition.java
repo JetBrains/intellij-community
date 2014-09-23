@@ -233,17 +233,19 @@ public abstract class SourcePosition implements Navigatable{
             }
           }
 
-          PsiElement element;
+          PsiElement element = null;
           int offset = startOffset;
           while (true) {
             final CharSequence charsSequence = document.getCharsSequence();
             for (; offset < charsSequence.length(); offset++) {
-              char c = charsSequence.charAt(startOffset);
+              char c = charsSequence.charAt(offset);
               if (c != ' ' && c != '\t') {
                 break;
               }
             }
-            element = rootElement.findElementAt(startOffset);
+            if (offset >= charsSequence.length()) break;
+
+            element = rootElement.findElementAt(offset);
 
             if (element instanceof PsiComment) {
               offset = element.getTextRange().getEndOffset() + 1;

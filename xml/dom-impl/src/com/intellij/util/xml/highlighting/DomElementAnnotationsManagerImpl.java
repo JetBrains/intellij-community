@@ -112,7 +112,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     myProject = project;
     final ProfileChangeAdapter profileChangeAdapter = new ProfileChangeAdapter() {
       @Override
-      public void profileActivated(@NotNull Profile oldProfile, Profile profile) {
+      public void profileActivated(Profile oldProfile, Profile profile) {
         dropAnnotationsCache();
       }
 

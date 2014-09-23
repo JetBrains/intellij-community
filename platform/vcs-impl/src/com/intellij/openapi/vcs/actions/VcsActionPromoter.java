@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.vcs.ex.RollbackLineStatusAction;
 import com.intellij.openapi.vcs.ui.Refreshable;
 
 import java.util.Arrays;
@@ -37,6 +38,11 @@ public class VcsActionPromoter implements ActionPromoter {
         }
       }
     }
+
+    for (AnAction action : actions) {
+      if (action instanceof RollbackLineStatusAction) return Arrays.asList(action);
+    }
+
     return Collections.emptyList();
   }
 }

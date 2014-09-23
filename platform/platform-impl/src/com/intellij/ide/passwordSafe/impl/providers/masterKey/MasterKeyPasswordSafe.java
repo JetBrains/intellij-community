@@ -193,7 +193,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
         }
         return myKey.get().get();
       }
-    }, project == null ? Condition.FALSE : project.getDisposed());
+    }, project == null ? Conditions.alwaysFalse() : project.getDisposed());
     if (key instanceof byte[]) return (byte[])key;
     if (key instanceof PasswordSafeException) throw (PasswordSafeException)key;
 

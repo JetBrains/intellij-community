@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,13 +81,27 @@ public abstract class ActionManager implements ApplicationComponent {
    * @param actionId Id of the registered action
    *
    * @return Action associated with the specified actionId, <code>null</code> if
-   *  there is no actions associated with the speicified actionId
+   *  there is no actions associated with the specified actionId
    *
    * @exception java.lang.IllegalArgumentException if <code>actionId</code> is <code>null</code>
    *
    * @see com.intellij.openapi.actionSystem.IdeActions
    */
   public abstract AnAction getAction(@NonNls @NotNull String actionId);
+
+  /**
+   * Returns action associated with the specified actionId.
+   *
+   * @param actionId Id of the registered action
+   *
+   * @return Action associated with the specified actionId, <code>null</code> if
+   *  there is no actions associated with the specified actionId
+   *
+   * @exception java.lang.IllegalArgumentException if <code>actionId</code> is <code>null</code>
+   *
+   * @see com.intellij.openapi.actionSystem.IdeActions
+   */
+  public abstract AnAction getAction(@NonNls @NotNull String actionId, @Nullable ProjectType projectType);
 
   /**
    * Returns actionId associated with the specified action.

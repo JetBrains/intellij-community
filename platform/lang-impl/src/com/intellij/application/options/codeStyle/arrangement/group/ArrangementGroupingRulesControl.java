@@ -38,6 +38,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -95,16 +96,20 @@ public class ArrangementGroupingRulesControl extends JBTable {
       model.removeRow(model.getRowCount() - 1);
     }
 
-    List<ArrangementSettingsToken> types = ContainerUtilRt.newArrayList(myComponents.keySet());
+    final Set<ArrangementSettingsToken> groupingTokens = ContainerUtilRt.newHashSet(myComponents.keySet());
+    for (ArrangementGroupingRule rule : rules) {
+      final ArrangementSettingsToken groupingType = rule.getGroupingType();
+      ArrangementGroupingComponent component = myComponents.get(groupingType);
+      component.setSelected(true);
+      component.setOrderType(rule.getOrderType());
+      model.addRow(new Object[]{component});
+      groupingTokens.remove(groupingType);
+    }
+
+    List<ArrangementSettingsToken> types = ContainerUtilRt.newArrayList(groupingTokens);
     types = mySettingsManager.sort(types);
     for (ArrangementSettingsToken type : types) {
       model.addRow(new Object[]{myComponents.get(type)});
-    }
-    for (ArrangementGroupingRule rule : rules) {
-      ArrangementGroupingComponent component = myComponents.get(rule.getGroupingType());
-      component.setSelected(true);
-      ArrangementSettingsToken orderType = rule.getOrderType();
-      component.setOrderType(orderType);
     }
   }
 

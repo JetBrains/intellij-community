@@ -14,6 +14,7 @@
         <runConfigurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGSuiteConfigurationProducer"/>
         <configurationType implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationType"/>
        <psi.referenceContributor language="JAVA" implementation="com.theoryinpractice.testng.TestNGReferenceContributor"/>
+       <psi.referenceContributor language="Groovy" implementation="com.theoryinpractice.testng.TestNGReferenceContributor"/>
        <psi.referenceContributor language="XML" implementation="com.theoryinpractice.testng.TestNGSuiteReferenceContributor"/>
       <library.dependencyScopeSuggester implementation="com.theoryinpractice.testng.configuration.TestNGDependencyScopeSuggester"/>
 
@@ -46,6 +47,9 @@
       <localInspection language="JAVA" shortName="MisorderedAssertEqualsArgumentsTestNG" displayName="Misordered 'assertEquals()' arguments"
                        groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.MisorderedAssertEqualsArgumentsTestNGInspection"/>
+      <localInspection language="JAVA" shortName="TestNGMethodNamingConvention" displayName="TestNG test method naming convention"
+                       groupName="TestNG" enabledByDefault="false" level="WARNING"
+                       implementationClass="com.theoryinpractice.testng.inspection.TestNGMethodNamingConventionInspection"/>
 
       <intentionAction>
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>

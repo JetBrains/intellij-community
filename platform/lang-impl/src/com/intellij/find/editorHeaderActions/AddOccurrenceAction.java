@@ -27,7 +27,7 @@ public class AddOccurrenceAction extends EditorHeaderAction implements DumbAware
     super(editorSearchComponent);
 
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_NEXT_OCCURENCE));
-    getTemplatePresentation().setIcon(AllIcons.General.Add);
+    getTemplatePresentation().setIcon(AllIcons.Actions.AddMulticaret);
 
     registerShortcutsForComponent(Arrays.asList(getShortcutSet().getShortcuts()), editorSearchComponent.getSearchField());
   }

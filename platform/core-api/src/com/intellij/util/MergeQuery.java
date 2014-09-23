@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,12 +66,12 @@ public class MergeQuery<T> implements Query<T>{
     fq.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result) {
       @Override
       public void onSuccess(Boolean value) {
-        if (!value.booleanValue()) {
-          result.set(false);
-        }
-        else {
+        if (value.booleanValue()) {
           final AsyncFuture<Boolean> fq2 = processSubQueryAsync(consumer, myQuery2);
           fq2.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result));
+        }
+        else {
+          result.set(false);
         }
       }
     });
@@ -85,12 +85,7 @@ public class MergeQuery<T> implements Query<T>{
   }
 
   private <V extends T> AsyncFuture<Boolean> processSubQueryAsync(@NotNull final Processor<T> consumer, @NotNull Query<V> query1) {
-    return query1.forEachAsync(new Processor<V>() {
-      @Override
-      public boolean process(final V t) {
-        return consumer.process(t);
-      }
-    });
+    return query1.forEachAsync((Processor<V>)consumer);
   }
 
   @NotNull

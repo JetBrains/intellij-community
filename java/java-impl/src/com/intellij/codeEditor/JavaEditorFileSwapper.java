@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,20 +24,19 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaEditorFileSwapper extends EditorFileSwapper {
-
-  public Pair<VirtualFile, Integer> getFileToSwapTo(Project project, EditorWithProviderComposite editorWithProviderComposite) {
-    VirtualFile file = editorWithProviderComposite.getFile();
+  @Override
+  public Pair<VirtualFile, Integer> getFileToSwapTo(Project project, EditorWithProviderComposite editor) {
+    VirtualFile file = editor.getFile();
     VirtualFile sourceFile = findSourceFile(project, file);
     if (sourceFile == null) return null;
 
     Integer position = null;
 
-    TextEditorImpl oldEditor = findSinglePsiAwareEditor(editorWithProviderComposite.getEditors());
+    TextEditorImpl oldEditor = findSinglePsiAwareEditor(editor.getEditors());
     if (oldEditor != null) {
       PsiCompiledFile clsFile = (PsiCompiledFile)PsiManager.getInstance(project).findFile(file);
       assert clsFile != null;
@@ -77,29 +76,20 @@ public class JavaEditorFileSwapper extends EditorFileSwapper {
   }
 
   @Nullable
-  public static VirtualFile findSourceFile(Project project, VirtualFile eachFile) {
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(eachFile);
-    if (!(psiFile instanceof PsiCompiledFile)) return null;
+  public static VirtualFile findSourceFile(Project project, VirtualFile file) {
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    if ((psiFile instanceof PsiCompiledFile && psiFile instanceof PsiClassOwner)) {
+      PsiClass clsClass = ((PsiClassOwner)psiFile).getClasses()[0];
+      if ((clsClass instanceof ClsClassImpl)) {
+        PsiClass sourceClass = ((ClsClassImpl)clsClass).getSourceMirrorClass();
+        if (sourceClass != null) {
+          VirtualFile result = sourceClass.getContainingFile().getVirtualFile();
+          assert result != null : sourceClass;
+          return result;
+        }
+      }
+    }
 
-    String fqn = getFQN(psiFile);
-    if (fqn == null) return null;
-
-    PsiClass clsClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
-    if (!(clsClass instanceof ClsClassImpl)) return null;
-
-    PsiClass sourceClass = ((ClsClassImpl)clsClass).getSourceMirrorClass();
-    if (sourceClass == null) return null;
-
-    VirtualFile result = sourceClass.getContainingFile().getVirtualFile();
-    assert result != null;
-    return result;
-  }
-
-  @Nullable
-  public static String getFQN(PsiFile psiFile) {
-    if (!(psiFile instanceof PsiJavaFile)) return null;
-    PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-    if (classes.length == 0) return null;
-    return classes[0].getQualifiedName();
+    return null;
   }
 }

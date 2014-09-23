@@ -24,17 +24,24 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public abstract class DialogWrapperPeerFactory {
+  @NotNull
   public static DialogWrapperPeerFactory getInstance() {
     if (ApplicationManager.getApplication() == null) {
-      try {
-        return (DialogWrapperPeerFactory)Class.forName("com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl").newInstance();
-      }
-      catch (Exception e) {
-        throw new RuntimeException("Can't instantiate DialogWrapperPeerFactory", e);
-      }
+      return getInstanceByName();
     }
 
-    return ServiceManager.getService(DialogWrapperPeerFactory.class);
+    DialogWrapperPeerFactory factory = ServiceManager.getService(DialogWrapperPeerFactory.class);
+    return factory == null ? getInstanceByName() : factory;
+  }
+
+  @NotNull
+  private static DialogWrapperPeerFactory getInstanceByName() {
+    try {
+      return (DialogWrapperPeerFactory)Class.forName("com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl").newInstance();
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Can't instantiate DialogWrapperPeerFactory", e);
+    }
   }
 
   @NotNull

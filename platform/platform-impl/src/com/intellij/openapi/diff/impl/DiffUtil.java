@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffContentUtil;
@@ -84,11 +85,22 @@ public class DiffUtil {
   }
 
   public static EditorEx createEditor(Document document, Project project, boolean isViewer) {
+    return createEditor(document, project, isViewer, null);
+  }
+
+  public static EditorEx createEditor(Document document, Project project, boolean isViewer, @Nullable FileType fileType) {
     EditorFactory factory = EditorFactory.getInstance();
     EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
     editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
     editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.VCS_DIFF);
     editor.getGutterComponentEx().revalidateMarkup();
+
+    if (fileType != null && project != null && !project.isDisposed()) {
+      CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
+      editor.getSettings().setTabSize(codeStyleFacade.getTabSize(fileType));
+      editor.getSettings().setUseTabCharacter(codeStyleFacade.useTabCharacter(fileType));
+    }
+
     return editor;
   }
 

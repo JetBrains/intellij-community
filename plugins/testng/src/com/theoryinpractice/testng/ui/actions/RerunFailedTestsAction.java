@@ -1,13 +1,14 @@
 package com.theoryinpractice.testng.ui.actions;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -30,23 +31,23 @@ import java.net.ServerSocket;
 import java.util.*;
 
 public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
-
-  public RerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
-    super(componentContainer);
+  public RerunFailedTestsAction(@NotNull ComponentContainer componentContainer, @NotNull TestConsoleProperties consoleProperties) {
+    super(componentContainer, consoleProperties);
   }
 
   @Override
-  public MyRunProfile getRunProfile() {
+  protected MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
     final TestNGConfiguration configuration = (TestNGConfiguration)getModel().getProperties().getConfiguration();
     final List<AbstractTestProxy> failedTests = getFailedTests(configuration.getProject());
     return new MyRunProfile(configuration) {
+      @Override
       @NotNull
       public Module[] getModules() {
-        return Module.EMPTY_ARRAY;
+        return configuration.getModules();
       }
 
-      public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
-
+      @Override
+      public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
         return new TestNGRunnableState(env, configuration) {
           @Override
           protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket,
@@ -99,5 +100,4 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
       }
     };
   }
-
 }

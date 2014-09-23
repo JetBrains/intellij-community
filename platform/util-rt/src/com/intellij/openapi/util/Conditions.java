@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
@@ -27,15 +28,18 @@ import java.util.HashMap;
 public class Conditions {
   private Conditions() {}
 
+  @NotNull
   public static <T> Condition<T> alwaysTrue() {
     return (Condition<T>)TRUE;
   }
+  @NotNull
   public static <T> Condition<T> alwaysFalse() {
     return (Condition<T>)FALSE;
   }
 
   public static <T> Condition<T> instanceOf(final Class<?> clazz) {
     return new Condition<T>() {
+      @Override
       public boolean value(T t) {
         return clazz.isInstance(t);
       }
@@ -44,6 +48,7 @@ public class Conditions {
 
   public static <T> Condition<T> is(final T option) {
     return new Condition<T>() {
+      @Override
       public boolean value(T t) {
         return Comparing.equal(t, option);
       }
@@ -52,6 +57,7 @@ public class Conditions {
 
   public static <T> Condition<T> oneOf(final T... options) {
     return new Condition<T>() {
+      @Override
       public boolean value(T t) {
         return ArrayUtilRt.find(options, t) >= 0;
       }
@@ -78,6 +84,7 @@ public class Conditions {
       myCondition = condition;
     }
 
+    @Override
     public boolean value(T value) {
       return !myCondition.value(value);
     }
@@ -91,6 +98,7 @@ public class Conditions {
       this.t2 = t2;
     }
 
+    @Override
     public boolean value(final T object) {
       return t1.value(object) && t2.value(object);
     }
@@ -104,17 +112,20 @@ public class Conditions {
       this.t2 = t2;
     }
 
+    @Override
     public boolean value(final T object) {
       return t1.value(object) || t2.value(object);
     }
   }
 
   public static Condition<Object> TRUE = new Condition<Object>() {
+    @Override
     public boolean value(final Object object) {
       return true;
     }
   };
   public static Condition<Object> FALSE = new Condition<Object>() {
+    @Override
     public boolean value(final Object object) {
       return false;
     }
@@ -128,6 +139,7 @@ public class Conditions {
       myCondition = condition;
     }
 
+    @Override
     public final boolean value(T object) {
       final int key = object.hashCode();
       final Pair<SoftReference<T>, Boolean> entry = myCache.get(key);

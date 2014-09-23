@@ -320,7 +320,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   }
 
   private void updateButtons() {
-    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(getEnteredName()));
+    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(getEnteredName()));
   }
 
   private void targetClassChanged() {
@@ -433,7 +433,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     String errorString = null;
     if ("".equals(fieldName)) {
       errorString = RefactoringBundle.message("no.field.name.specified");
-    } else if (!JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(fieldName)) {
+    } else if (!PsiNameHelper.getInstance(myProject).isIdentifier(fieldName)) {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
     } else if (newClass != null && !myParentClass.getLanguage().equals(newClass.getLanguage())) {
       errorString = RefactoringBundle.message("move.to.different.language", UsageViewUtil.getType(myParentClass),

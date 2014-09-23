@@ -3,6 +3,7 @@ package com.intellij.tasks.impl.httpclient;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.BaseRepository;
+import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
@@ -14,6 +15,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.impl.auth.BasicScheme;
@@ -152,6 +154,46 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
       if (credentials != null) {
         request.addHeader(new BasicScheme(Consts.UTF_8).authenticate(credentials, request, context));
       }
+    }
+  }
+
+  public class HttpTestConnection extends CancellableConnection {
+
+    // Request can be changed during test
+    protected volatile HttpRequestBase myCurrentRequest;
+
+    public HttpTestConnection(@NotNull HttpRequestBase request) {
+      myCurrentRequest = request;
+    }
+
+    @Override
+    protected void doTest() throws Exception {
+      try {
+        test();
+      }
+      catch (IOException e) {
+        // Depending on request state AbstractExecutionAwareRequest.abort() can cause either
+        // * RequestAbortedException if connection was not yet leased
+        // * InterruptedIOException before reading response
+        // * SocketException("Socket closed") during reading response
+        // However in all cases 'aborted' flag should be properly set
+        if (!myCurrentRequest.isAborted()) {
+          throw e;
+        }
+      }
+    }
+
+    protected void test() throws Exception {
+      HttpResponse response = getHttpClient().execute(myCurrentRequest);
+      StatusLine statusLine = response.getStatusLine();
+      if (statusLine != null && statusLine.getStatusCode() != HttpStatus.SC_OK) {
+        throw RequestFailedException.forStatusCode(statusLine.getStatusCode(), statusLine.getReasonPhrase());
+      }
+    }
+
+    @Override
+    public void cancel() {
+      myCurrentRequest.abort();
     }
   }
 }

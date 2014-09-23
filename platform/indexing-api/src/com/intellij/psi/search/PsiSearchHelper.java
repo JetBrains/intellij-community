@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,6 @@ public interface PsiSearchHelper {
    *
    * @param identifier  the identifier to search.
    * @param searchScope the scope in which occurrences are searched.
-   * @param processor
    * @return false if processor returned false, true otherwise
    */
   boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<PsiElement> processor);

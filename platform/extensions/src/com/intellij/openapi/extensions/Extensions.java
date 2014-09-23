@@ -28,23 +28,21 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Extensions {
-  private static LogProvider ourLogger = new SimpleLogProvider();
-
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
-
+  private static LogProvider ourLogger = new SimpleLogProvider();
   private static Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new THashMap<AreaInstance, ExtensionsAreaImpl>();
   private static Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new THashMap<String, AreaClassConfiguration>();
 
   @NotNull private static ExtensionsAreaImpl ourRootArea = createRootArea();
+
+  private Extensions() {
+  }
 
   @NotNull
   private static ExtensionsAreaImpl createRootArea() {
     ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
     rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
     return rootArea;
-  }
-
-  private Extensions() {
   }
 
   public static void setSynchronized() {
@@ -101,6 +99,7 @@ public class Extensions {
   @NotNull
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
+    // keep it until 1.7 JDK
     return Extensions.<T>getExtensions(extensionPointName.getName(), areaInstance);
   }
 

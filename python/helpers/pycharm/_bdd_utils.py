@@ -3,7 +3,7 @@
 Tools for running BDD frameworks in python.
 You probably need to extend BddRunner (see its doc).
 
-You may also need "get_path_by_args" that gets folder (current or passed as first argument)
+You may also need "get_what_to_run_by_env" that gets folder (current or passed as first argument)
 """
 import os
 import time
@@ -15,20 +15,47 @@ import tcmessages
 __author__ = 'Ilya.Kazakevich'
 
 
-def get_path_by_args(arguments):
+def fix_win_drive(feature_path):
     """
-    :type arguments list
-    :param arguments: arguments (sys.argv)
-    :return: tuple (base_dir, what_to_run) where dir is current or first argument from argv, checking it exists
-    :rtype tuple of str
-    """
-    what_to_run = arguments[1] if len(arguments) > 1 else "."
-    base_dir = what_to_run
-    assert os.path.exists(what_to_run), "{} does not exist".format(what_to_run)
+    Workaround to fix issues like http://bugs.python.org/issue7195 on windows.
+    Pass feature dir or file path as argument.
+    This function does nothing on non-windows platforms, so it could be run safely.
 
-    if os.path.isfile(what_to_run):
-        base_dir = os.path.dirname(what_to_run)  # User may point to the file directly
-    return base_dir, what_to_run
+    :param feature_path: path to feature (c:/fe.feature or /my/features)
+    """
+    current_disk = (os.path.splitdrive(os.getcwd()))[0]
+    feature_disk = (os.path.splitdrive(feature_path))[0]
+    if current_disk and feature_disk and current_disk != feature_disk:
+        os.chdir(feature_disk)
+
+
+def get_what_to_run_by_env(environment):
+    """
+    :type environment dict
+    :param environment: os.environment (files and folders should be separated with | and passed to PY_STUFF_TO_RUN).
+    Scenarios optionally could be passed as SCENARIOS (names or order numbers, depends on runner)
+    :return: tuple (base_dir, scenarios[], what_to_run(list of feature files or folders))) where dir is current or first argument from env, checking it exists
+    :rtype tuple of (str, iterable)
+    """
+    if "PY_STUFF_TO_RUN" not in environment:
+        what_to_run = ["."]
+    else:
+        what_to_run = str(environment["PY_STUFF_TO_RUN"]).split("|")
+
+    scenarios = []
+    if "SCENARIOS" in environment:
+        scenarios = str(environment["SCENARIOS"]).split("|")
+
+    if not what_to_run:
+        what_to_run = ["."]
+
+    for path in what_to_run:
+        assert os.path.exists(path), "{} does not exist".format(path)
+
+    base_dir = what_to_run[0]
+    if os.path.isfile(what_to_run[0]):
+        base_dir = os.path.dirname(what_to_run[0])  # User may point to the file directly
+    return base_dir, scenarios, what_to_run
 
 
 class BddRunner(object):

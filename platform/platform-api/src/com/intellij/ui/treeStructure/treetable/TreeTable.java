@@ -168,15 +168,23 @@ public class TreeTable extends JBTable {
   protected void processKeyEvent(KeyEvent e){
     int keyCode = e.getKeyCode();
     final int selColumn = columnModel.getSelectionModel().getAnchorSelectionIndex();
-    boolean treeHasFocus = selColumn >= 0 && isTreeColumn(selColumn);
+    boolean treeHasFocus = selColumn == -1 || selColumn >= 0 && isTreeColumn(selColumn);
     boolean oneRowSelected = getSelectedRowCount() == 1;
+    int rowToSelect = -1;
     if(treeHasFocus && oneRowSelected && ((keyCode == KeyEvent.VK_LEFT) || (keyCode == KeyEvent.VK_RIGHT))){
       TreePath selectionPath = myTree.getSelectionPath();
       myTree._processKeyEvent(e);
-      myTree.setSelectionPath(selectionPath);
+      if (myTree.isExpanded(selectionPath)) {
+        myTree.setSelectionPath(selectionPath);
+      } else if (keyCode == KeyEvent.VK_LEFT) {
+        rowToSelect = myTree.getRowForPath(myTree.getSelectionPath());
+      }
     }
     else{
       super.processKeyEvent(e);
+    }
+    if (rowToSelect > -1) {
+      getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
     }
   }
 

@@ -43,6 +43,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
@@ -141,7 +142,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private static final String[] PREFIX_CANDIDATES = {
-    "AppCode", "CppIde", "CidrCommon", 
+    "AppCode", "CLion", "CidrCommon", 
     "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea" };
 
   public static void autodetectPlatformPrefix() {
@@ -341,6 +342,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().cleanupForNextTest();
     }
 
+    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
+    if (projectManager.isDefaultProjectInitialized()) {
+      Project defaultProject = projectManager.getDefaultProject();
+      ((PsiManagerEx)PsiManager.getInstance(defaultProject)).getFileManager().cleanupForNextTest();
+    }
+
     LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
     if (localFileSystem != null) {
       localFileSystem.cleanupForNextTest();
@@ -482,7 +489,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private void disposeProject(@NotNull CompositeException result) /* throws nothing */ {
     try {
       DocumentCommitThread.getInstance().clearQueue();
-      UIUtil.dispatchAllInvocationEvents();
+      // sometimes SwingUtilities maybe confused about EDT at this point
+      if (SwingUtilities.isEventDispatchThread()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
     }
     catch (Exception e) {
       result.add(e);

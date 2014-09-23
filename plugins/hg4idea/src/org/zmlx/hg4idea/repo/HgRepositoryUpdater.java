@@ -106,7 +106,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       }
       else if (myRepositoryFiles.isBranchFile(filePath)) {
         branchFileChanged = true;
-        RepositoryUtil.visitAllChildrenRecursively(myBranchHeadsDir);
+        RepositoryUtil.ensureAllChildrenInVfs(myBranchHeadsDir);
       }
       else if (myRepositoryFiles.isDirstateFile(filePath)) {
         dirstateFileChanged = true;

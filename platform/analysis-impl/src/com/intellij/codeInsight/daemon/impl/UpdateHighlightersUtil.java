@@ -49,7 +49,7 @@ import java.util.List;
 public class UpdateHighlightersUtil {
   private static final Comparator<HighlightInfo> BY_START_OFFSET_NODUPS = new Comparator<HighlightInfo>() {
     @Override
-    public int compare(HighlightInfo o1, HighlightInfo o2) {
+    public int compare(@NotNull HighlightInfo o1, @NotNull HighlightInfo o2) {
       int d = o1.getActualStartOffset() - o2.getActualStartOffset();
       if (d != 0) return d;
       d = o1.getActualEndOffset() - o2.getActualEndOffset();
@@ -212,7 +212,7 @@ public class UpdateHighlightersUtil {
         if (!atStart) return true;
         if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
 
-        if (info.isFileLevelAnnotation() && psiFile.getViewProvider().isPhysical()) {
+        if (info.isFileLevelAnnotation()) {
           codeAnalyzer.addFileLevelHighlight(project, group, info, psiFile);
           changed[0] = true;
           return true;

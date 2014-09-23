@@ -146,6 +146,7 @@ public class RegistryUi implements Disposable {
           RegistryValue rv = myModel.getRegistryValue(row);
           if (rv.isBoolean()) {
             rv.setValue(!rv.asBoolean());
+            keyChanged(rv.getKey());
             for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(row, i);
             revaliateActions();
             if (search.isPopupActive()) search.hidePopup();
@@ -470,9 +471,10 @@ public class RegistryUi implements Disposable {
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       myValue = ((MyTableModel)table.getModel()).getRegistryValue(row);
       if (myValue.asColor(null) != null) {
-        final Color color = ColorChooser.chooseColor(table, "Choose color", ((RegistryValue)value).asColor(Color.WHITE));
+        final Color color = ColorChooser.chooseColor(table, "Choose color", myValue.asColor(Color.WHITE));
         if (color != null) {
           myValue.setValue(color.getRed() + "," + color.getGreen() + "," + color.getBlue());
+          keyChanged(myValue.getKey());
         }
         return null;
       } else if (myValue.isBoolean()) {

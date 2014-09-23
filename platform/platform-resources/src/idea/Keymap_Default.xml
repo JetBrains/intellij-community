@@ -509,6 +509,9 @@
   <action id="Vcs.RollbackChangedLines">
     <keyboard-shortcut first-keystroke="control alt Z"/>
   </action>
+  <action id="ChangesView.Revert">
+    <keyboard-shortcut first-keystroke="control alt Z"/>
+  </action>
 
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="F2"/>

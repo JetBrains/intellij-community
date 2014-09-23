@@ -40,6 +40,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
@@ -220,13 +221,9 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
   @Override
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode) {
     XDebugSession session = getSession(getTree());
-    if (session == null) {
-      return;
-    }
-
-    myRootNode.addWatchExpression(session.getDebugProcess().getEvaluator(), expression, index, navigateToWatchNode);
+    myRootNode.addWatchExpression(session != null ? session.getDebugProcess().getEvaluator() : null, expression, index, navigateToWatchNode);
     updateSessionData();
-    if (navigateToWatchNode) {
+    if (navigateToWatchNode && session != null) {
       showWatchesTab((XDebugSessionImpl)session);
     }
   }
@@ -342,8 +339,15 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     }
 
     XDebugSession session = getSession(getTree());
+    XExpression[] expressions = watchExpressions.toArray(new XExpression[watchExpressions.size()]);
     if (session != null) {
-      ((XDebugSessionImpl)session).setWatchExpressions(watchExpressions.toArray(new XExpression[watchExpressions.size()]));
+      ((XDebugSessionImpl)session).setWatchExpressions(expressions);
+    }
+    else {
+      XDebugSessionData data = getData(XDebugSessionData.DATA_KEY, getTree());
+      if (data != null) {
+        data.setWatchExpressions(expressions);
+      }
     }
   }
 

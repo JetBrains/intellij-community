@@ -32,7 +32,8 @@ import java.util.Collection;
  * @since 6.0
  */
 public abstract class VcsDirtyScopeManager {
-  public static VcsDirtyScopeManager getInstance(Project project) {
+  @NotNull
+  public static VcsDirtyScopeManager getInstance(@NotNull Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, VcsDirtyScopeManager.class);
   }
 

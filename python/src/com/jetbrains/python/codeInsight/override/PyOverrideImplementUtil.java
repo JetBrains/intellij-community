@@ -143,7 +143,7 @@ public class PyOverrideImplementUtil {
       return;
     }
     new WriteCommandAction(pyClass.getProject(), pyClass.getContainingFile()) {
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         write(pyClass, membersToOverride, editor, implement);
       }
     }.execute();
@@ -173,9 +173,7 @@ public class PyOverrideImplementUtil {
     PyPsiUtils.removeRedundantPass(statementList);
     if (element != null) {
       final PyStatementList targetStatementList = element.getStatementList();
-      final int start = targetStatementList != null
-                        ? targetStatementList.getTextRange().getStartOffset()
-                        : element.getTextRange().getStartOffset();
+      final int start = targetStatementList.getTextRange().getStartOffset();
       editor.getCaretModel().moveToOffset(start);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().setSelection(start, element.getTextRange().getEndOffset());
@@ -185,8 +183,11 @@ public class PyOverrideImplementUtil {
   private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass, PyFunction baseFunction, boolean implement) {
     PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(baseFunction.getName());
     final PyDecoratorList decorators = baseFunction.getDecoratorList();
-    if (decorators != null && decorators.findDecorator(PyNames.CLASSMETHOD) != null) {
-      pyFunctionBuilder.decorate(PyNames.CLASSMETHOD);
+    if (decorators != null) {
+      if (decorators.findDecorator(PyNames.CLASSMETHOD) != null)
+        pyFunctionBuilder.decorate(PyNames.CLASSMETHOD);
+      else if (decorators.findDecorator(PyNames.STATICMETHOD) != null)
+        pyFunctionBuilder.decorate(PyNames.STATICMETHOD);
     }
     PyAnnotation anno = baseFunction.getAnnotation();
     if (anno != null) {
@@ -238,7 +239,7 @@ public class PyOverrideImplementUtil {
           PsiElement outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true, PyFunction.class);
           String className = pyClass.getName();
           final List<String> nameResult = Lists.newArrayList(className);
-          while(outerClass instanceof PyClass) {
+          while(outerClass != null) {
             nameResult.add(0, ((PyClass)outerClass).getName());
             outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class, true, PyFunction.class);
           }

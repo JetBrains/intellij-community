@@ -21,7 +21,7 @@ def exit(retcode):
 
 
 def usage():
-    sys.stderr.write('Usage: packaging_tool.py <list|search|install|uninstall|pyvenv>\n')
+    sys.stderr.write('Usage: packaging_tool.py <list|install|uninstall|pyvenv>\n')
     sys.stderr.flush()
     exit(ERROR_WRONG_USAGE)
 
@@ -58,13 +58,6 @@ def do_install(pkgs):
         error_no_pip()
     return pip.main(['install'] + pkgs)
 
-def do_search(pkgs):
-    try:
-        import pip
-    except ImportError:
-        error_no_pip()
-    return pip.main(['search'] + pkgs)
-
 
 def do_uninstall(pkgs):
     try:
@@ -82,21 +75,21 @@ def do_pyvenv(path, system_site_packages):
     venv.create(path, system_site_packages=system_site_packages)
 
 
-def untarDirectory(name):
+def do_untar(name):
     import tempfile
 
     directory_name = tempfile.mkdtemp("pycharm-management")
 
     import tarfile
 
-    filename = name + ".tar.gz"
-    tar = tarfile.open(filename)
+    tar = tarfile.open(name)
     for item in tar:
         tar.extract(item, directory_name)
 
     sys.stdout.write(directory_name+chr(10))
     sys.stdout.flush()
     return 0
+
 
 def mkdtemp_ifneeded():
     try:
@@ -122,11 +115,6 @@ def main():
             if len(sys.argv) != 2:
                 usage()
             do_list()
-        elif cmd == 'search':
-            if len(sys.argv) < 2:
-                usage()
-            pkgs = sys.argv[2:]
-            do_search(pkgs)
         elif cmd == 'install':
             if len(sys.argv) < 2:
                 usage()
@@ -145,7 +133,7 @@ def main():
             if len(sys.argv) < 2:
                 usage()
             name = sys.argv[2]
-            retcode = untarDirectory(name)
+            retcode = do_untar(name)
         elif cmd == 'uninstall':
             if len(sys.argv) < 2:
                 usage()

@@ -81,7 +81,16 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @NonNls private static final String EPYDOC_PREFIX = "@";
 
   // provides ctrl+hover info
-  public String getQuickNavigateInfo(final PsiElement element, PsiElement originalElement) {
+  @Override
+  @Nullable
+  public String getQuickNavigateInfo(final PsiElement element, final PsiElement originalElement) {
+    for (final PythonDocumentationQuickInfoProvider point : PythonDocumentationQuickInfoProvider.EP_NAME.getExtensions()) {
+      String info = point.getQuickInfo(originalElement);
+      if (info != null) {
+        return info;
+      }
+    }
+
     if (element instanceof PyFunction) {
       PyFunction func = (PyFunction)element;
       StringBuilder cat = new StringBuilder();
@@ -637,8 +646,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           String raiseTarget = visitor.myRaiseTarget.getText();
           if (visitor.myRaiseTarget instanceof PyCallExpression) {
             final PyExpression callee = ((PyCallExpression)visitor.myRaiseTarget).getCallee();
-            if (callee != null)
+            if (callee != null) {
               raiseTarget = callee.getText();
+            }
           }
           builder.append(" ").append(raiseTarget);
         }

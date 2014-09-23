@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,7 +39,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class HotSwapProgressImpl extends HotSwapProgress{
-  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG, true);
+  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
 
   TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<List<String>>();
   private final ProgressWindow myProgressWindow;
@@ -54,12 +55,14 @@ public class HotSwapProgressImpl extends HotSwapProgress{
       public void processSentToBackground() {
       }
 
-    }, null, null, true) {
+    }, null, null, true);
+    myProgressWindow.addStateDelegate(new AbstractProgressIndicatorExBase(){
+      @Override
       public void cancel() {
-        HotSwapProgressImpl.this.cancel();
         super.cancel();
+        HotSwapProgressImpl.this.cancel();
       }
-    };
+    });
   }
 
   public void finished() {

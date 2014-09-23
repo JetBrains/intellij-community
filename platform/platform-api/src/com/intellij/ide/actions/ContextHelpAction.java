@@ -55,7 +55,7 @@ public class ContextHelpAction extends AnAction implements DumbAware {
       return;
     }
 
-    if (ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
+    if (ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
       DataContext dataContext = event.getDataContext();
       presentation.setEnabled(getHelpId(dataContext) != null);
     }

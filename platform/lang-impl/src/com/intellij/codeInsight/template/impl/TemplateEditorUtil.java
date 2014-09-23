@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.ide.DataManager;
-import com.intellij.lexer.CompositeLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -31,7 +30,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.ex.util.LayerDescriptor;
+import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -42,6 +42,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,54 +88,41 @@ public class TemplateEditorUtil {
     if (file != null) {
       EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project);
       ((EditorEx) editor).setHighlighter(highlighter);
+      
     }
 
     return editor;
   }
 
-  public static void setHighlighter(Editor editor, TemplateContext templateContext) {
-    SyntaxHighlighter baseHighlighter = null;
-    for(TemplateContextType type: TemplateManagerImpl.getAllContextTypes()) {
-      if (templateContext.isEnabled(type)) {
-        baseHighlighter = type.createHighlighter();
-        if (baseHighlighter != null) break;
+  public static void setHighlighter(Editor editor, @Nullable TemplateContext templateContext) {
+    SyntaxHighlighter highlighter = null;
+    if (templateContext != null) {
+      for(TemplateContextType type: TemplateManagerImpl.getAllContextTypes()) {
+        if (templateContext.isEnabled(type)) {
+          highlighter = type.createHighlighter();
+          if (highlighter != null) break;
+        }
       }
     }
-    if (baseHighlighter == null) {
-      baseHighlighter = new PlainSyntaxHighlighter();
-    }
-
-    SyntaxHighlighter highlighter = createTemplateTextHighlighter(baseHighlighter);
-    ((EditorEx)editor).setHighlighter(new LexerEditorHighlighter(highlighter, EditorColorsManager.getInstance().getGlobalScheme()));
+    setHighlighter((EditorEx)editor, highlighter);
   }
 
-  private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(TemplateTokenType.TEXT);
+  public static void setHighlighter(@NotNull Editor editor, @Nullable TemplateContextType templateContextType) {
+    setHighlighter((EditorEx)editor, templateContextType != null ? templateContextType.createHighlighter() : null);
+  }
 
-  private static SyntaxHighlighter createTemplateTextHighlighter(final SyntaxHighlighter original) {
-    return new TemplateHighlighter(original);
+  private static void setHighlighter(EditorEx editor, @Nullable SyntaxHighlighter highlighter) {
+    EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    LayeredLexerEditorHighlighter layeredHighlighter = new LayeredLexerEditorHighlighter(new TemplateHighlighter(), editorColorsScheme);
+    layeredHighlighter.registerLayer(TemplateTokenType.TEXT, new LayerDescriptor(ObjectUtils.notNull(highlighter, new PlainSyntaxHighlighter()), ""));
+    editor.setHighlighter(layeredHighlighter);
   }
 
   private static class TemplateHighlighter extends SyntaxHighlighterBase {
     private final Lexer myLexer;
-    private final SyntaxHighlighter myOriginalHighlighter;
 
-    public TemplateHighlighter(SyntaxHighlighter original) {
-      myOriginalHighlighter = original;
-      Lexer originalLexer = original.getHighlightingLexer();
-      Lexer templateLexer = new TemplateTextLexer();
-      templateLexer = new MergingLexerAdapter(templateLexer, TOKENS_TO_MERGE);
-
-      myLexer = new CompositeLexer(originalLexer, templateLexer) {
-        @Override
-        protected IElementType getCompositeTokenType(IElementType type1, IElementType type2) {
-          if (type2 == TemplateTokenType.VARIABLE) {
-            return type2;
-          }
-          else {
-            return type1;
-          }
-        }
-      };
+    public TemplateHighlighter() {
+      myLexer = new MergingLexerAdapter(new TemplateTextLexer(), TokenSet.create(TemplateTokenType.TEXT));
     }
 
     @Override
@@ -146,11 +134,7 @@ public class TemplateEditorUtil {
     @Override
     @NotNull
     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-      if (tokenType == TemplateTokenType.VARIABLE) {
-        return pack(myOriginalHighlighter.getTokenHighlights(tokenType), TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
-      }
-
-      return myOriginalHighlighter.getTokenHighlights(tokenType);
+      return tokenType == TemplateTokenType.VARIABLE ? pack(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES) : EMPTY;
     }
   }
 }

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public class RearrangeCheckinHandlerFactory extends CheckinHandlerFactory {
   @Override
   @NotNull
-  public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new RearrangeBeforeCheckinHandler(panel.getProject(), panel);
   }
 }

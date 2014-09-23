@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ public abstract class WebServerPathHandler {
   public abstract boolean process(@NotNull String path,
                                   @NotNull Project project,
                                   @NotNull FullHttpRequest request,
-                                  @NotNull Channel channel,
+                                  @NotNull ChannelHandlerContext context,
                                   @Nullable String projectName,
                                   @NotNull String decodedRawPath,
                                   boolean isCustomHost);

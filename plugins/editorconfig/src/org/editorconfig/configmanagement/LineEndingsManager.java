@@ -1,7 +1,6 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
@@ -15,6 +14,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.LineSeparatorPanel;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.LineSeparator;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
@@ -31,12 +31,11 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
   // Handles the following EditorConfig settings:
   private static final String lineEndingsKey = "end_of_line";
 
-  private final Logger LOG = Logger.getInstance("#org.editorconfig.codestylesettings.LineEndingsManager");
-  private final Project project;
+  private final Project myProject;
   private boolean statusBarUpdated = false;
 
   public LineEndingsManager(Project project) {
-    this.project = project;
+    this.myProject = project;
   }
 
   @Override
@@ -48,12 +47,12 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+        IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
         StatusBar statusBar = frame.getStatusBar();
         StatusBarWidget widget = statusBar != null ? statusBar.getWidget("LineSeparator") : null;
 
         if (widget instanceof LineSeparatorPanel) {
-          FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManager.getInstance(project),
+          FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManager.getInstance(myProject),
                                                                     null, null, null, null);
           ((LineSeparatorPanel)widget).selectionChanged(event);
         }
@@ -69,6 +68,7 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
 
   private void applySettings(VirtualFile file) {
     if (file == null || !file.isInLocalFileSystem()) return;
+    if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
 
     final String filePath = file.getCanonicalPath();
     final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
@@ -84,11 +84,11 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
             statusBarUpdated = true;
             updateStatusBar();
           }
-          LOG.debug(Utils.appliedConfigMessage(lineEndings, lineEndingsKey, filePath));
+          Utils.appliedConfigMessage(myProject, lineEndings, lineEndingsKey, filePath);
         }
       }
       catch (IllegalArgumentException e) {
-        LOG.warn(Utils.invalidConfigMessage(lineEndings, lineEndingsKey, filePath));
+        Utils.invalidConfigMessage(myProject, lineEndings, lineEndingsKey, filePath);
       }
     }
   }

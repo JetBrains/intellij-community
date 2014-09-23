@@ -19,12 +19,14 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -35,11 +37,14 @@ import java.util.SortedSet;
  * @author Dmitry Batkovich
  */
 public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
-  public SeverityRenderer(final SeverityState[] values) {
+  private final Runnable myOnClose;
+
+  public SeverityRenderer(final SeverityState[] values, @Nullable final Runnable onClose) {
     super(values);
+    myOnClose = onClose;
   }
 
-  public static SeverityRenderer create(final InspectionProfileImpl inspectionProfile) {
+  public static SeverityRenderer create(final InspectionProfileImpl inspectionProfile, @Nullable final Runnable onClose) {
     final SortedSet<HighlightSeverity> severities =
       LevelChooserAction.getSeverities(((SeverityProvider)inspectionProfile.getProfileManager()).getOwnSeverityRegistrar());
     return new SeverityRenderer(ContainerUtil.map2Array(severities, new SeverityState[severities.size()], new Function<HighlightSeverity, SeverityState>() {
@@ -47,7 +52,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
       public SeverityState fun(HighlightSeverity severity) {
         return new SeverityState(severity, true);
       }
-    }));
+    }), onClose);
   }
 
   @Override
@@ -69,5 +74,13 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   @Override
   public boolean isCellEditable(final EventObject event) {
     return !(event instanceof MouseEvent) || ((MouseEvent)event).getClickCount() >= 1;
+  }
+
+  @Override
+  public void onClosed(LightweightWindowEvent event) {
+    super.onClosed(event);
+    if (myOnClose != null) {
+      myOnClose.run();
+    }
   }
 }

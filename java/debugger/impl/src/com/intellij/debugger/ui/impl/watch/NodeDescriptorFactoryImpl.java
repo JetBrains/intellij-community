@@ -58,6 +58,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     myDisplayDescriptorSearcher.clear();
   }
 
+  @NotNull
   public <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> key) {
     final T descriptor = key.createDescriptor(myProject);
 
@@ -93,6 +94,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   }
 
   public void deriveHistoryTree(DescriptorTree tree, final StackFrameContext context) {
+    deriveHistoryTree(tree, context.getFrameProxy());
+  }
+
+  public void deriveHistoryTree(DescriptorTree tree, final StackFrameProxy frameProxy) {
 
     final MarkedDescriptorTree descriptorTree = new MarkedDescriptorTree();
     final MarkedDescriptorTree displayDescriptorTree = new MarkedDescriptorTree();
@@ -109,13 +114,12 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     myDescriptorSearcher = new DescriptorTreeSearcher(descriptorTree);
     myDisplayDescriptorSearcher = new DisplayDescriptorTreeSearcher(displayDescriptorTree);
 
-    myCurrentHistoryTree = createDescriptorTree(context, tree);
+    myCurrentHistoryTree = createDescriptorTree(frameProxy, tree);
   }
 
-  private static DescriptorTree createDescriptorTree(final StackFrameContext context, final DescriptorTree fromTree) {
+  private static DescriptorTree createDescriptorTree(final StackFrameProxy frameProxy, final DescriptorTree fromTree) {
     int frameCount = -1;
     int frameIndex = -1;
-    final StackFrameProxy frameProxy = context.getFrameProxy();
     if (frameProxy != null) {
       try {
         final ThreadReferenceProxy threadReferenceProxy = frameProxy.threadProxy();
@@ -137,6 +141,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, new ArrayItemData(array, index));
   }
 
+  @NotNull
   @Override
   public FieldDescriptorImpl getFieldDescriptor(NodeDescriptor parent, ObjectReference objRef, Field field) {
     final DescriptorData<FieldDescriptorImpl> descriptorData;

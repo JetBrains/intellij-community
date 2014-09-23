@@ -16,17 +16,22 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ApplyIntentionAction;
+import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -74,8 +79,30 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     if (!processIntentions(pattern, consumer, dataContext)) return false;
     if (!processActions(pattern, everywhere, consumer, dataContext)) return false;
     if (!processOptions(pattern, consumer, dataContext)) return false;
+    if (processTopHits(pattern, consumer, dataContext)) return false;
 
     return true;
+  }
+
+  private static boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final CollectConsumer<Object> collector = new CollectConsumer<Object>();
+    for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+      if (provider instanceof OptionsTopHitProvider) {
+        String prefix = "#" + ((OptionsTopHitProvider)provider).getId() + " ";
+        provider.consumeTopHits(prefix + pattern, collector, project);
+      }
+      provider.consumeTopHits(pattern, collector, project);
+    }
+    final Collection<Object> result = collector.getResult();
+    final List<Comparable> c = new ArrayList<Comparable>();
+    for (Object o : result) {
+      if (o instanceof Comparable) {
+        c.add((Comparable)o);
+      }
+    }
+    if (!processItems(pattern, c, consumer)) return true;
+    return false;
   }
 
   private boolean processOptions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
@@ -158,7 +185,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, intentions, consumer);
   }
 
-  private static boolean processItems(final String pattern, List<? extends Comparable> items, Processor<MatchedValue> consumer) {
+  private static boolean processItems(final String pattern, Collection<? extends Comparable> items, Processor<MatchedValue> consumer) {
     List<MatchedValue> matched = ContainerUtil.map(items, new Function<Comparable, MatchedValue>() {
       @Override
       public MatchedValue fun(Comparable comparable) {

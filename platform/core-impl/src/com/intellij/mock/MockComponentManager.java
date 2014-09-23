@@ -20,6 +20,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.ConcurrentHashSet;
@@ -45,7 +46,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     myPicoContainer = new IdeaPicoContainer(parent) {
-      private Set<Object> myDisposableComponents = new ConcurrentHashSet<Object>();
+      private final Set<Object> myDisposableComponents = new ConcurrentHashSet<Object>();
 
       @Override
       @Nullable
@@ -137,6 +138,6 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @NotNull
   @Override
   public Condition getDisposed() {
-    return Condition.FALSE;
+    return Conditions.alwaysFalse();
   }
 }

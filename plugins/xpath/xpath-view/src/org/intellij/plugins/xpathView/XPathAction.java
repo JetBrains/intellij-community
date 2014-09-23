@@ -41,10 +41,11 @@ public abstract class XPathAction extends AnAction {
         // provide icon for toolbar
         if (ActionPlaces.MAIN_TOOLBAR.equals(event.getPlace())) {
             updateToolbar(event);
-        } else if (ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
-            updateMainMenu(event);
-        } else if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace())) {
-            presentation.setVisible(presentation.isEnabled());
+        } else if (ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
+          updateMainMenu(event);
+        }
+        else if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace())) {
+          presentation.setVisible(presentation.isEnabled());
         }
     }
 

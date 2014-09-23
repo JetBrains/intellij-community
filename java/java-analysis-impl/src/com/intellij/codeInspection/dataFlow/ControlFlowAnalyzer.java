@@ -1434,6 +1434,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiAnnotation contractAnno = findContractAnnotation(method);
     final int paramCount = method.getParameterList().getParametersCount();
     if (contractAnno != null) {
+      if (AnnotationUtil.isInferredAnnotation(contractAnno) && PsiUtil.canBeOverriden(method)) {
+        return Collections.emptyList();
+      }
+
       return CachedValuesManager.getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
         @Nullable
         @Override
@@ -1463,6 +1467,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Nullable
   public static PsiAnnotation findContractAnnotation(PsiMethod method) {
     return AnnotationUtil.findAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+  }
+
+  public static boolean isPure(PsiMethod method) {
+    PsiAnnotation anno = findContractAnnotation(method);
+    return anno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"));
   }
 
   @Override public void visitNewExpression(PsiNewExpression expression) {

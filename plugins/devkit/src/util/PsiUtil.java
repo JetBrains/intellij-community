@@ -16,11 +16,14 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,6 +126,19 @@ public class PsiUtil {
     }
 
     return flag;
+  }
+
+  public static boolean isPluginProject(final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Boolean>() {
+      @Nullable
+      @Override
+      public Result<Boolean> compute() {
+        boolean foundMarkerClass =
+          JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS,
+                                                       GlobalSearchScope.allScope(project)) != null;
+        return Result.createSingleDependency(foundMarkerClass, ProjectRootManager.getInstance(project));
+      }
+    });
   }
 
   private static boolean isIntelliJBasedDir(VirtualFile baseDir) {

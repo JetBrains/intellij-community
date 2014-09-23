@@ -44,11 +44,7 @@ import java.util.*;
 
 @State(
   name = "KeymapManager",
-  roamingType = RoamingType.PER_PLATFORM,
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/keymap.xml"
-    )}
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/keymap.xml", roamingType = RoamingType.PER_PLATFORM)}
 )
 public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");
@@ -67,7 +63,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
     mySchemesManager = factory.createSchemesManager(
-      "$ROOT_CONFIG$/keymaps",
+      StoragePathMacros.ROOT_CONFIG + "/keymaps",
       new BaseSchemeProcessor<KeymapImpl>() {
         @Override
         public KeymapImpl readScheme(@NotNull final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
@@ -75,8 +71,8 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
         }
 
         @Override
-        public Document writeScheme(@NotNull final KeymapImpl scheme) throws WriteExternalException {
-          return new Document(scheme.writeExternal());
+        public Element writeScheme(@NotNull final KeymapImpl scheme) throws WriteExternalException {
+          return scheme.writeExternal();
         }
 
         @Override

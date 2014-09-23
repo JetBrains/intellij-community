@@ -24,4 +24,7 @@ import com.intellij.util.indexing.FileContent;
  *         Date: Jan 16, 2008
  */
 public abstract class FileTypeIdIndexer implements DataIndexer<IdIndexEntry, Integer, FileContent> {
+  public int getVersion() {
+    return 1;
+  }
 }

@@ -102,7 +102,7 @@ public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActio
       ) {
       return tool.isShownInProjectViews();
     }
-    else if (ActionPlaces.MAIN_MENU.equals(context)) {
+    else if (ActionPlaces.isMainMenuOrActionSearch(context)) {
       return tool.isShownInMainMenu();
     }
     else if (ActionPlaces.USAGE_VIEW_POPUP.equals(context)) {

@@ -54,6 +54,12 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{new LossyEncodingInspection()};
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    UIUtil.dispatchAllInvocationEvents(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
+    super.tearDown();
+  }
+
   public void testText() throws Exception {
     doTest("Text.txt");
     Charset ascii = CharsetToolkit.forName("US-ASCII");
@@ -115,6 +121,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
 
   private void doTest(@NonNls String filePath) throws Exception {
     doTest(BASE_PATH + "/" + filePath, true, false);
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   public void testNativeEncoding() throws Exception {

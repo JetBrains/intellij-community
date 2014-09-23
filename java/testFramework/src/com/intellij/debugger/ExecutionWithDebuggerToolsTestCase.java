@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.impl.SynchronizationBasedSemaphore;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.execution.ExecutionException;
@@ -47,6 +46,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.CompositeException;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Method;
 import com.sun.jdi.ThreadReference;
@@ -62,7 +62,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   private final SynchronizationBasedSemaphore myScriptRunnablesSema = new SynchronizationBasedSemaphore();
   protected static final int RATHER_LATER_INVOKES_N = 10;
   public DebugProcessImpl myDebugProcess = null;
-  private final CompositeException exception = new CompositeException();
+  private final CompositeException myException = new CompositeException();
 
   private class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
@@ -107,7 +107,9 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    if (!exception.isEmpty()) throw exception;
+    synchronized (myException) {
+      if (!myException.isEmpty()) throw myException;
+    }
   }
 
   protected void onBreakpoint(SuspendContextRunnable runnable) {
@@ -131,11 +133,11 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
               suspendContextRunnable.run(suspendContext);
             }
             catch (Exception e) {
-              exception.add(e);
+              addException(e);
               error(e);
             }
             catch (AssertionError e) {
-              exception.add(e);
+              addException(e);
             }
 
             if (myScriptRunnables.isEmpty()) {
@@ -270,6 +272,11 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
+  protected void addException(Throwable e) {
+    synchronized (myException) {
+      myException.add(e);
+    }
+  }
 
   protected void error(Throwable th) {
     fail(StringUtil.getThrowableText(th));
@@ -439,11 +446,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
 
     private void pauseExecution() {
-      try {
-        Thread.sleep(10);
-      }
-      catch (InterruptedException ignored) {
-      }
+      TimeoutUtil.sleep(10);
     }
   }
 }

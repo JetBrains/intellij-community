@@ -101,7 +101,11 @@ public class InplaceButton extends JComponent implements ActiveComponent {
     setIcons(source.getRegular(), source.getInactive(), source.getHovered());
   }
 
-  public void setIcons(final Icon regular, final Icon inactive, final Icon hovered) {
+  public void setIcons(final Icon regular, Icon inactive, Icon hovered) {
+    if (regular == null) return;
+    if (inactive == null) inactive = regular;
+    if (hovered == null) hovered = regular;
+
     int width = Math.max(regular.getIconWidth(), inactive.getIconWidth());
     width = Math.max(width, hovered.getIconWidth());
     int height = Math.max(regular.getIconHeight(), inactive.getIconHeight());

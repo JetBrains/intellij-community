@@ -115,7 +115,7 @@ public class FindInProjectUtil {
   @Nullable
   public static PsiDirectory getPsiDirectory(@NotNull final FindModel findModel, @NotNull Project project) {
     String directoryName = findModel.getDirectoryName();
-    if (findModel.isProjectScope() || directoryName == null) {
+    if (findModel.isProjectScope() || StringUtil.isEmpty(directoryName)) {
       return null;
     }
 

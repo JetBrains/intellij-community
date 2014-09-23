@@ -259,6 +259,11 @@ public class PyIntentionTest extends PyTestCase {
     doTest("Convert to 'import sys'");
   }
 
+  // PY-11074
+  public void testImportToImportFrom() {
+    doTest("Convert to 'from __builtin__ import ...'");
+  }
+
   public void testTypeInDocstring() {
     doDocReferenceTest();
   }

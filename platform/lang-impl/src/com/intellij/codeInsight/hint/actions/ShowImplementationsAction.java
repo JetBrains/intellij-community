@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
@@ -65,8 +66,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
   private static final Logger LOG = Logger.getInstance("#" + ShowImplementationsAction.class.getName());
 
-  private WeakReference<JBPopup> myPopupRef;
-  private WeakReference<BackgroundUpdaterTask> myTaskRef;
+  private Reference<JBPopup> myPopupRef;
+  private Reference<ImplementationsUpdaterTask> myTaskRef;
 
   public ShowImplementationsAction() {
     setEnabledInModalContext(true);
@@ -284,7 +285,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
           @Override
           public boolean process(JBPopup popup) {
             usageView.set(component.showInUsageView());
-            myTaskRef = new WeakReference<BackgroundUpdaterTask>(null);
+            myTaskRef = null;
             popup.cancel();
             return false;
           }
@@ -292,10 +293,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         .setCancelCallback(new Computable<Boolean>() {
           @Override
           public Boolean compute() {
-            final BackgroundUpdaterTask task = SoftReference.dereference(myTaskRef);
-            if (task != null) {
-              task.setCanceled();
-            }
+            ImplementationsUpdaterTask task = SoftReference.dereference(myTaskRef);
+            cancelTask(task);
             return Boolean.TRUE;
           }
         })
@@ -310,27 +309,31 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
   }
 
+  private static boolean cancelTask(ImplementationsUpdaterTask task) {
+    if (task != null) {
+      ProgressIndicator indicator = task.myIndicator;
+      if (indicator != null) {
+        indicator.cancel();
+      }
+      return task.setCanceled();
+    }
+    return false;
+  }
+
   private void updateInBackground(Editor editor,
                                   @Nullable PsiElement element,
                                   ImplementationViewComponent component,
                                   String title,
                                   AbstractPopup popup, Ref<UsageView> usageView) {
-    final BackgroundUpdaterTask updaterTask = SoftReference.dereference(myTaskRef);
-    if (updaterTask != null) {
-      updaterTask.setCanceled();
-    }
+    final ImplementationsUpdaterTask updaterTask = SoftReference.dereference(myTaskRef);
+    cancelTask(updaterTask);
 
     if (element == null) return; //already found
     final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(element, editor, title, isIncludeAlwaysSelf());
     task.init(popup, component, usageView);
 
-    myTaskRef = new WeakReference<BackgroundUpdaterTask>(task);
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task) {
-      @Override
-      public boolean isCanceled() {
-        return super.isCanceled() || task.isCanceled();
-      }
-    });
+    myTaskRef = new WeakReference<ImplementationsUpdaterTask>(task);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
   }
 
   protected boolean isIncludeAlwaysSelf() {
@@ -367,12 +370,17 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   private static PsiElement[] filterElements(final PsiElement[] targetElements) {
-    Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
-    for (PsiElement elt : targetElements) {
-      final PsiFile containingFile = elt.getContainingFile();
-      LOG.assertTrue(containingFile != null, elt);
-      PsiFile psiFile = containingFile.getOriginalFile();
-      if (psiFile.getVirtualFile() == null) unique.remove(elt);
+    final Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
+    for (final PsiElement elt : targetElements) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          final PsiFile containingFile = elt.getContainingFile();
+          LOG.assertTrue(containingFile != null, elt);
+          PsiFile psiFile = containingFile.getOriginalFile();
+          if (psiFile.getVirtualFile() == null) unique.remove(elt);
+        }
+      });
     }
     // special case for Python (PY-237)
     // if the definition is the tree parent of the target element, filter out the target element
@@ -392,11 +400,12 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   private static class ImplementationsUpdaterTask extends BackgroundUpdaterTask<ImplementationViewComponent> {
-    private String myCaption;
-    private Editor myEditor;
-    private PsiElement myElement;
+    private final String myCaption;
+    private final Editor myEditor;
+    private final PsiElement myElement;
     private final boolean myIncludeSelf;
     private PsiElement[] myElements;
+    private volatile ProgressIndicator myIndicator;
 
     public ImplementationsUpdaterTask(final PsiElement element, final Editor editor, final String caption, boolean includeSelf) {
       super(element.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
@@ -429,6 +438,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
+      myIndicator = indicator;
       super.run(indicator);
       final ImplementationSearcher.BackgroundableImplementationSearcher implementationSearcher =
         new ImplementationSearcher.BackgroundableImplementationSearcher() {
@@ -460,7 +470,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     @Override
     public void onSuccess() {
-      if (!setCanceled()) {
+      if (!cancelTask(this)) {
         myComponent.update(myElements, myComponent.getIndex());
       }
       super.onSuccess();

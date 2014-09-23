@@ -24,6 +24,9 @@
   <item name="org.apache.commons.collections.map.AbstractHashedMap int hash(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.Object clone()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.Object convertKey(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -38,6 +41,15 @@
   <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.Object entryValue(org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.Object get(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.Object put(java.lang.Object, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.Object remove(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -46,6 +58,9 @@
   </item>
   <item name="org.apache.commons.collections.map.AbstractHashedMap org.apache.commons.collections.map.AbstractHashedMap.HashEntry entryNext(org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap org.apache.commons.collections.map.AbstractHashedMap.HashEntry getEntry(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.collections.map.AbstractHashedMap void destroyEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -93,6 +108,9 @@
   <item name="org.apache.commons.collections.map.AbstractHashedMap.HashEntry boolean equals(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap.HashEntry java.lang.Object getKey()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.collections.map.AbstractHashedMap.HashEntry java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -115,6 +133,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.collections.map.AbstractLinkedMap boolean containsValue(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap java.lang.Object nextKey(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap java.lang.Object previousKey(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.map.AbstractHashedMap.HashEntry createEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, java.lang.Object, java.lang.Object)">
@@ -166,6 +190,9 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap java.lang.Object get(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.collections.map.LRUMap void doReadObject(java.io.ObjectInputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

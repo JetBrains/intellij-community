@@ -30,6 +30,10 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightInspectionTe
                  "}\n");
   }
 
+  public void testEvenSimpler() {
+    doStatementTest("System.out.println(/*Throwable argument 'new RuntimeException()' to 'System.out.println()' call*/new RuntimeException()/**/);");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new ThrowablePrintedToSystemOutInspection();

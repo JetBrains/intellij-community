@@ -33,7 +33,7 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
   private final PsiAnnotation myAnnotation;
   private final PsiModifierListOwner myListOwner;
 
-  public RemoveAnnotationQuickFix(PsiAnnotation annotation, final PsiModifierListOwner listOwner) {
+  public RemoveAnnotationQuickFix(@NotNull PsiAnnotation annotation, final PsiModifierListOwner listOwner) {
     myAnnotation = annotation;
     myListOwner = listOwner;
   }

@@ -1,13 +1,20 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.find.FindManager;
+import com.intellij.find.FindProgressIndicator;
+import com.intellij.find.FindSettings;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameIdentifierOwner;
@@ -15,11 +22,11 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,13 +36,82 @@ import com.intellij.util.Processor;
  * To change this template use File | Settings | File Templates.
  */
 public class SearchCommand {
-  protected UsageViewContext context;
+  protected final SearchContext mySearchContext;
+  protected final Configuration myConfiguration;
   private MatchingProcess process;
-  protected Project project;
 
-  public SearchCommand(Project _project, UsageViewContext _context) {
-    project = _project;
-    context = _context;
+  public SearchCommand(Configuration configuration, SearchContext searchContext) {
+    myConfiguration = configuration;
+    mySearchContext = searchContext;
+  }
+
+  protected UsageViewContext createUsageViewContext() {
+    final SearchStarter searchStarter = new SearchStarter() {
+      @Override
+      public void startSearch() {
+        new SearchCommand(myConfiguration, mySearchContext).startSearching();
+      }
+    };
+    return new UsageViewContext(myConfiguration, mySearchContext, searchStarter);
+  }
+
+  public void startSearching() {
+    final UsageViewContext context = createUsageViewContext();
+    final UsageViewPresentation presentation = new UsageViewPresentation();
+    presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
+    context.configure(presentation);
+
+    final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
+    processPresentation.setShowNotFoundMessage(true);
+    processPresentation.setShowPanelIfOnlyOneUsage(true);
+
+    processPresentation.setProgressIndicatorFactory(
+      new Factory<ProgressIndicator>() {
+        @Override
+        public ProgressIndicator create() {
+          FindProgressIndicator indicator = new FindProgressIndicator(mySearchContext.getProject(), presentation.getScopeText());
+          indicator.addStateDelegate(new AbstractProgressIndicatorExBase(){
+            @Override
+            public void cancel() {
+              super.cancel();
+              stopAsyncSearch();
+            }
+          });
+          return indicator;
+        }
+      }
+    );
+
+    PsiDocumentManager.getInstance(mySearchContext.getProject()).commitAllDocuments();
+    final ConfigurableUsageTarget target = context.getTarget();
+    ((FindManagerImpl)FindManager.getInstance(mySearchContext.getProject())).getFindUsagesManager().addToHistory(target);
+    UsageViewManager.getInstance(mySearchContext.getProject()).searchAndShowUsages(
+      new UsageTarget[]{target},
+      new Factory<UsageSearcher>() {
+        @Override
+        public UsageSearcher create() {
+          return new UsageSearcher() {
+            @Override
+            public void generate(@NotNull final Processor<Usage> processor) {
+              findUsages(processor);
+            }
+          };
+        }
+      },
+      processPresentation,
+      presentation,
+      new UsageViewManager.UsageViewStateListener() {
+        @Override
+        public void usageViewCreated(@NotNull UsageView usageView) {
+          context.setUsageView(usageView);
+          context.configureActions();
+        }
+
+        @Override
+        public void findingUsagesFinished(final UsageView usageView) {
+        }
+      }
+    );
   }
 
   public void findUsages(final Processor<Usage> processor) {
@@ -56,6 +132,7 @@ public class SearchCommand {
       }
 
       public void matchingFinished() {
+        if (mySearchContext.getProject().isDisposed()) return;
         findEnded();
         progress.setText(SSRBundle.message("found.progress.message", count));
       }
@@ -106,7 +183,7 @@ public class SearchCommand {
     };
 
     try {
-      new Matcher(project).findMatches(sink, context.getConfiguration().getMatchOptions());
+      new Matcher(mySearchContext.getProject()).findMatches(sink, myConfiguration.getMatchOptions());
     }
     catch (final StructuralSearchException e) {
       final Alarm alarm = new Alarm();
@@ -114,8 +191,8 @@ public class SearchCommand {
         new Runnable() {
           @Override
           public void run() {
-            NotificationGroup.toolWindowGroup("Structural Search", ToolWindowId.FIND, true)
-              .createNotification(SSRBundle.message("problem", e.getMessage()), MessageType.ERROR).notify(project);
+            NotificationGroup.toolWindowGroup("Structural Search", ToolWindowId.FIND)
+              .createNotification(SSRBundle.message("problem", e.getMessage()), MessageType.ERROR).notify(mySearchContext.getProject());
           }
         },
         100, ModalityState.NON_MODAL
@@ -128,15 +205,12 @@ public class SearchCommand {
   }
 
   protected void findStarted() {
-    StructuralSearchPlugin.getInstance(project).setSearchInProgress(true);
+    StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setSearchInProgress(true);
   }
 
   protected void findEnded() {
-    if (!project.isDisposed()) {
-      StructuralSearchPlugin.getInstance(project).setSearchInProgress(false);
-    }
+    StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setSearchInProgress(false);
   }
 
-  protected void foundUsage(MatchResult result, Usage usage) {
-  }
+  protected void foundUsage(MatchResult result, Usage usage) {}
 }

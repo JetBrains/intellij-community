@@ -126,6 +126,12 @@ class GitBekParentFixer {
 
       @Nullable
       @Override
+      public VcsLogHashFilter getHashFilter() {
+        return null;
+      }
+
+      @Nullable
+      @Override
       public VcsLogStructureFilter getStructureFilter() {
         return null;
       }

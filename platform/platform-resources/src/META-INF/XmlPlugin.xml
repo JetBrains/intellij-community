@@ -329,6 +329,7 @@
 
     <!--
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.XmlCopyPastePreProcessor"/>
+    <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.HtmlCopyPastePreProcessor"/>
     -->
 
     <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
@@ -547,7 +548,7 @@
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
-    <webServerPathHandler implementation="org.jetbrains.builtInWebServer.DefaultWebServerPathHandler"/>
+    <webServerPathHandler implementation="org.jetbrains.builtInWebServer.DefaultWebServerPathHandler" order="last"/>
     <webServerFileHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer$StaticFileHandler" order="last"/>
     <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.DefaultWebServerRootsProvider"/>
   </extensions>

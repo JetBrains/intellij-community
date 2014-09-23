@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncFutureFactory;
+import com.intellij.concurrency.AsyncUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -48,7 +48,7 @@ public class EmptyQuery<R> implements Query<R> {
   @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<R> consumer) {
-    return AsyncFutureFactory.wrap(true);
+    return AsyncUtil.wrapBoolean(true);
   }
 
   @NotNull

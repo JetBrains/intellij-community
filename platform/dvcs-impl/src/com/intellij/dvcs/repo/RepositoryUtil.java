@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -96,20 +96,15 @@ public class RepositoryUtil {
     for (String subdir : subDirs) {
       VirtualFile dir = gitDir.findFileByRelativePath(subdir);
       // process recursively, because we need to visit all branches under refs/heads and refs/remotes
-      visitAllChildrenRecursively(dir);
+      ensureAllChildrenInVfs(dir);
     }
   }
 
-  public static void visitAllChildrenRecursively(@Nullable VirtualFile dir) {
-    if (dir == null) {
-      return;
+  public static void ensureAllChildrenInVfs(@Nullable VirtualFile dir) {
+    if (dir != null) {
+      //noinspection unchecked
+      VfsUtilCore.processFilesRecursively(dir, Processor.TRUE);
     }
-    VfsUtil.processFilesRecursively(dir, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile virtualFile) {
-        return true;
-      }
-    });
   }
 
   public static class Updater implements Consumer<Object> {

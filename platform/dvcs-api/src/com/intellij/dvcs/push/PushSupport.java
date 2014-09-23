@@ -19,56 +19,38 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.ui.SimpleColoredText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 /**
  * Base class to provide vcs-specific info
  */
 
-public abstract class PushSupport<Repo extends Repository> {
+public abstract class PushSupport<Repo extends Repository, Source extends PushSource, Target extends PushTarget> {
 
-  public static final ExtensionPointName<PushSupport<? extends Repository>> PUSH_SUPPORT_EP =
+  public static final ExtensionPointName<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> PUSH_SUPPORT_EP =
     ExtensionPointName.create("com.intellij.pushSupport");
 
   @NotNull
   public abstract AbstractVcs getVcs();
 
   @NotNull
-  public abstract Pusher getPusher();
+  public abstract Pusher<Repo, Source, Target> getPusher();
 
   @NotNull
-  public abstract OutgoingCommitsProvider getOutgoingCommitsProvider();
+  public abstract OutgoingCommitsProvider<Repo, Source, Target> getOutgoingCommitsProvider();
 
   /**
    * @return Default push destination
    */
   @Nullable
-  public abstract PushTarget getDefaultTarget(@NotNull Repo repository);
-
-  /**
-   * @return All remembered remote destinations used for completion
-   */
-  @NotNull
-  public abstract Collection<String> getTargetNames(@NotNull Repo repository);
+  public abstract Target getDefaultTarget(@NotNull Repo repository);
 
   /**
    * @return current source(branch) for repository
    */
   @NotNull
-  public abstract PushSource getSource(@NotNull Repo repository);
-
-  /**
-   * Parse user input string, and create the valid target for push,
-   * or return <code><b>null</b></code> if the target name is not valid.
-   *
-   * @see #validateSpec(Repository, PushSpec)
-   */
-  @Nullable
-  public abstract PushTarget createTarget(@NotNull Repo repository, @NotNull String targetName);
+  public abstract Source getSource(@NotNull Repo repository);
 
   /**
    * @return RepositoryManager for vcs
@@ -81,11 +63,10 @@ public abstract class PushSupport<Repo extends Repository> {
     return null;
   }
 
-  /**
-   * @return null if target is valid for selected repository
-   */
-  @Nullable
-  public abstract VcsError validate(@NotNull Repository repository, @Nullable String targetToValidate);
+  @NotNull
+  public abstract PushTargetPanel<Target> createTargetPanel(@NotNull Repo repository, @Nullable Target defaultTarget);
 
-  public abstract SimpleColoredText renderTarget(@Nullable PushTarget target);
+  public boolean shouldRequestIncomingChangesForNotCheckedRepositories() {
+    return true;
+  }
 }

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Fernflower" default="dist" basedir=".">
+
+  <target name="init">
+    <property name="src" value="${basedir}/src"/>
+    <property name="out" value="${basedir}/out/production"/>
+    <property name="dist" value="${basedir}/fernflower.jar"/>
+    <property name="test-src" value="${basedir}/test"/>
+    <property name="test-out" value="${basedir}/out/test"/>
+  </target>
+
+  <!-- external dependencies, adjust to your own -->
+  <path id="junit">
+    <file name="${basedir}/../../../lib/junit-4.11.jar"/>
+    <file name="${basedir}/../../../lib/hamcrest-core-1.3.jar"/>
+    <file name="${basedir}/../../../lib/hamcrest-library-1.3.jar"/>
+  </path>
+
+  <target name="clean" depends="init">
+    <delete includeemptydirs="true" failonerror="false">
+      <fileset dir="${out}"/>
+      <fileset dir="${test-out}"/>
+      <fileset file="${dist}"/>
+    </delete>
+  </target>
+
+  <target name="compile" depends="init,clean">
+    <mkdir dir="${out}"/>
+    <javac srcdir="${src}" destdir="${out}" source="1.6" target="1.6" encoding="UTF-8" debug="true" includeantruntime="false"/>
+  </target>
+
+  <target name="dist" depends="init,compile">
+    <jar jarfile="${dist}" compress="true" basedir="${out}" includes="**/*.class">
+      <manifest>
+        <attribute name="Main-Class" value="org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="test-compile" depends="init,compile">
+    <mkdir dir="${test-out}"/>
+    <javac srcdir="${test-src}" destdir="${test-out}" source="1.6" target="1.6" encoding="UTF-8" debug="true" includeantruntime="false">
+      <classpath path="${out}"/>
+      <classpath refid="junit"/>
+    </javac>
+  </target>
+
+  <target name="test" depends="init,test-compile">
+    <junit printsummary="true" haltonfailure="true">
+      <classpath path="${test-out}:${out}"/>
+      <classpath refid="junit"/>
+      <batchtest>
+        <fileset dir="${test-src}" includes="**/*Test.java"/>
+      </batchtest>
+    </junit>
+  </target>
+
+</project>

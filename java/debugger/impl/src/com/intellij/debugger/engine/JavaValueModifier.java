@@ -34,6 +34,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleColoredComponent;
@@ -62,8 +63,11 @@ public class JavaValueModifier extends XValueModifier {
   @Override
   public String getInitialValueEditorText() {
     Value value = myJavaValue.getDescriptor().getValue();
-    if (value instanceof PrimitiveValue || value instanceof StringReference) {
+    if (value instanceof PrimitiveValue) {
       return myJavaValue.getValueString();
+    }
+    else if (value instanceof StringReference) {
+      return StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(myJavaValue.getValueString()));
     }
     return null;
   }
@@ -96,10 +100,12 @@ public class JavaValueModifier extends XValueModifier {
   @Override
   public void setValue(@NotNull String expression, @NotNull XModificationCallback callback) {
     final NodeDescriptorImpl descriptor = myJavaValue.getDescriptor();
-    if (!(descriptor instanceof ValueDescriptorImpl)) {
+    if(!((ValueDescriptorImpl)descriptor).canSetValue()) {
       return;
     }
-    if(!((ValueDescriptorImpl)descriptor).canSetValue()) {
+
+    if (myJavaValue.getEvaluationContext().getSuspendContext().isResumed()) {
+      callback.errorOccurred(DebuggerBundle.message("error.context.has.changed"));
       return;
     }
 

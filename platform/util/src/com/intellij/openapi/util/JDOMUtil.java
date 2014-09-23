@@ -398,9 +398,13 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull File file, String lineSeparator) throws IOException {
+    writeParent(document, file, lineSeparator);
+  }
+
+  public static void writeParent(@NotNull Parent element, @NotNull File file, String lineSeparator) throws IOException {
     OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
     try {
-      writeDocument(document, stream, lineSeparator);
+      writeParent(element, stream, lineSeparator);
     }
     finally {
       stream.close();
@@ -408,9 +412,23 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull OutputStream stream, String lineSeparator) throws IOException {
-    writeDocument(document, new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET), lineSeparator);
+    writeParent(document, stream, lineSeparator);
   }
 
+  public static void writeParent(@NotNull Parent element, @NotNull OutputStream stream, @NotNull String lineSeparator) throws IOException {
+    OutputStreamWriter writer = new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET);
+    try {
+      if (element instanceof Document) {
+        writeDocument((Document)element, writer, lineSeparator);
+      }
+      else {
+        writeElement((Element) element, writer, lineSeparator);
+      }
+    }
+    finally {
+      writer.close();
+    }
+  }
 
   @NotNull
   public static byte[] printDocument(@NotNull Document document, String lineSeparator) throws IOException {

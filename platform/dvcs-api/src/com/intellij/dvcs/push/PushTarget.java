@@ -15,15 +15,9 @@
  */
 package com.intellij.dvcs.push;
 
-import org.jetbrains.annotations.NotNull;
-
-
 /**
  * Destination for push action. (Remote  for git or push-path for mercurial).
  */
 public interface PushTarget {
 
-  @NotNull
-    //todo rename - > getName or smth
-  String getPresentation();
 }

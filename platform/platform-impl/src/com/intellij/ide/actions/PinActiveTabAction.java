@@ -116,12 +116,17 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
     super.update(e);
     Presentation presentation = e.getPresentation();
     DataContext context = e.getDataContext();
-    if (getFile(context) != null) {
-      presentation.setEnabledAndVisible(true);
-    }
-    else {
-      Content content = getContent(context);
-      presentation.setEnabledAndVisible(content != null && content.isPinnable());
+    EditorWindow window = getEditorWindow(context);
+    if (window == null || window.getOwner().isPreview()) {
+      presentation.setEnabledAndVisible(false);
+    } else {
+      if (getFile(context) != null) {
+        presentation.setEnabledAndVisible(true);
+      }
+      else {
+        Content content = getContent(context);
+        presentation.setEnabledAndVisible(content != null && content.isPinnable());
+      }
     }
     if (ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace()) ||
         ViewContext.CELL_POPUP_PLACE.equals(e.getPlace())) {

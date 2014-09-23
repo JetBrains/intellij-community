@@ -23,7 +23,6 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
@@ -41,7 +40,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -102,25 +100,19 @@ public class RunContentBuilder extends RunTab {
     return SearchScopeProvider.createSearchScope(project, runProfile);
   }
 
-  @NotNull
-  public ExecutionResult getExecutionResult() {
-    return myExecutionResult;
-  }
-
   public void addAction(@NotNull final AnAction action) {
     myRunnerActions.add(action);
   }
 
   @NotNull
   private RunContentDescriptor createDescriptor() {
-    final RunProfile profile = getEnvironment().getRunProfile();
+    final RunProfile profile = myEnvironment.getRunProfile();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
-      Disposer.register(contentDescriptor, this);
-      return contentDescriptor;
+      return new RunContentDescriptor(profile, myExecutionResult, myUi);
     }
 
     final ExecutionConsole console = myExecutionResult.getExecutionConsole();
+    RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
     if (console != null) {
       if (console instanceof ExecutionConsoleEx) {
         ((ExecutionConsoleEx)console).buildUi(myUi);
@@ -128,17 +120,15 @@ public class RunContentBuilder extends RunTab {
       else {
         buildConsoleUiDefault(myUi, console);
       }
-      initLogConsoles(profile, myExecutionResult.getProcessHandler(), console);
+      initLogConsoles(profile, contentDescriptor, console);
     }
-    RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
-    Disposer.register(contentDescriptor, this);
     myUi.getOptions().setLeftToolbar(createActionToolbar(contentDescriptor), ActionPlaces.UNKNOWN);
 
     if (profile instanceof RunConfigurationBase) {
       if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
         ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener((RunConfigurationBase)profile,
-                                                                                      getProject(),
-                                                                                      getEnvironment().getExecutor(),
+                                                                                      myProject,
+                                                                                      myEnvironment.getExecutor(),
                                                                                       contentDescriptor,
                                                                                       myUi),
                                                            this);
@@ -182,18 +172,15 @@ public class RunContentBuilder extends RunTab {
   }
 
   @NotNull
-  private ActionGroup createActionToolbar(@NotNull RunContentDescriptor contentDescriptor) {
+  private ActionGroup createActionToolbar(@NotNull final RunContentDescriptor contentDescriptor) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
-    if (myExecutionResult instanceof DefaultExecutionResult) {
-      final AnAction[] actions = ((DefaultExecutionResult)myExecutionResult).getRestartActions();
-      if (actions != null) {
-        actionGroup.addAll(actions);
-        if (actions.length > 0) {
-          actionGroup.addSeparator();
-        }
-      }
+    final AnAction[] actions = contentDescriptor.getRestartActions();
+    actionGroup.addAll(actions);
+    if (actions.length > 0) {
+      actionGroup.addSeparator();
     }
+
 
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));
     if (myExecutionResult instanceof DefaultExecutionResult) {
@@ -215,15 +202,10 @@ public class RunContentBuilder extends RunTab {
     actionGroup.add(myUi.getOptions().getLayoutActions());
     actionGroup.addSeparator();
     actionGroup.add(PinToolwindowTabAction.getPinAction());
-    actionGroup.add(new CloseAction(getEnvironment().getExecutor(), contentDescriptor, getProject()));
+    actionGroup.add(new CloseAction(myEnvironment.getExecutor(), contentDescriptor, myProject));
     final String helpId = contentDescriptor.getHelpId();
-    actionGroup.add(new ContextHelpAction(helpId != null ? helpId : getEnvironment().getExecutor().getHelpId()));
+    actionGroup.add(new ContextHelpAction(helpId != null ? helpId : myEnvironment.getExecutor().getHelpId()));
     return actionGroup;
-  }
-
-  @Override
-  public ProcessHandler getProcessHandler() {
-    return myExecutionResult.getProcessHandler();
   }
 
   /**
@@ -231,19 +213,11 @@ public class RunContentBuilder extends RunTab {
    */
   public RunContentDescriptor showRunContent(@Nullable RunContentDescriptor reuseContent) {
     RunContentDescriptor descriptor = createDescriptor();
+    Disposer.register(descriptor, this);
+    Disposer.register(myProject, descriptor);
     RunContentManagerImpl.copyContentAndBehavior(descriptor, reuseContent);
     myRunContentDescriptor = descriptor;
     return descriptor;
-  }
-
-  @Override
-  protected RunnerLayoutUi getUi() {
-    return myUi;
-  }
-
-  @Override
-  protected Icon getDefaultIcon() {
-    return AllIcons.Debugger.Console;
   }
 
   public static class ConsoleToFrontListener implements ConsoleViewImpl.ChangeListener {

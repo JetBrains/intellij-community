@@ -389,12 +389,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
             }
             else {
               //unbounded
-              substituted = PsiWildcardType.createExtends(manager, substitutedBoundType);
+              substituted = substitutedBoundType instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)substitutedBoundType).getWildcard() : PsiWildcardType.createExtends(manager, substitutedBoundType);
             }
           }
         }
       }
-    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper()) {
+    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper() && !(oldSubstituted instanceof PsiCapturedWildcardType)) {
       final PsiType erasure = TypeConversionUtil.erasure(((PsiWildcardType)substituted).getBound());
       if (erasure != null) {
         final PsiType[] boundTypes = typeParameter.getExtendsListTypes();

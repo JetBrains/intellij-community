@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
   VcsRevisionNumber NULL = new VcsRevisionNumber() {
     @Override public String asString() {
       return "";
     }
 
-    @Override public int compareTo(VcsRevisionNumber vcsRevisionNumber) {
+    @Override public int compareTo(@NotNull VcsRevisionNumber vcsRevisionNumber) {
       return 0;
     }
 
@@ -42,10 +44,12 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return myValue;
     }
 
+    @Override
     public String asString() {
       return String.valueOf(myValue);
     }
 
+    @Override
     public int compareTo(VcsRevisionNumber vcsRevisionNumber) {
       if (vcsRevisionNumber instanceof VcsRevisionNumber.Int){
         return myValue - ((Int)vcsRevisionNumber).myValue;
@@ -90,11 +94,13 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return myValue;
     }
 
+    @Override
     public String asString() {
       return String.valueOf(myValue);
     }
 
-    public int compareTo(VcsRevisionNumber vcsRevisionNumber) {
+    @Override
+    public int compareTo(@NotNull VcsRevisionNumber vcsRevisionNumber) {
       if (vcsRevisionNumber instanceof VcsRevisionNumber.Long){
         return java.lang.Long.signum(myValue - ((Long)vcsRevisionNumber).myValue);
       }

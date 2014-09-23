@@ -54,9 +54,9 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  public static List<? extends VcsCommitMetadata> loadMetadata(@NotNull final Project project,
-                                                               @NotNull final VirtualFile root, int limit,
-                                                               @NotNull List<String> parameters) throws VcsException {
+  public static List<VcsCommitMetadata> loadMetadata(@NotNull final Project project,
+                                                     @NotNull final VirtualFile root, int limit,
+                                                     @NotNull List<String> parameters) throws VcsException {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {

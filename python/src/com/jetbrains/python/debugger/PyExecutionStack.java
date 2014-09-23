@@ -37,7 +37,7 @@ public class PyExecutionStack extends XExecutionStack {
   }
 
   @Override
-  public XStackFrame getTopFrame() {
+  public PyStackFrame getTopFrame() {
     if (myTopFrame == null) {
       final List<PyStackFrameInfo> frames = myThreadInfo.getFrames();
       if (frames != null) {

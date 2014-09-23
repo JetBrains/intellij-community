@@ -20,8 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -270,7 +269,7 @@ public class AnnotationUtilEx {
    *
    * @see com.intellij.codeInsight.AnnotationUtil#isAnnotated(com.intellij.psi.PsiModifierListOwner, java.lang.String, boolean)
    */
-  private static PsiAnnotation[] getAnnotations(@NotNull PsiModifierListOwner listOwner, boolean inHierarchy) {
+  private static PsiAnnotation[] getAnnotations(@NotNull final PsiModifierListOwner listOwner, final boolean inHierarchy) {
     final PsiModifierList modifierList = listOwner.getModifierList();
     if (modifierList == null) {
       return PsiAnnotation.EMPTY_ARRAY;
@@ -278,6 +277,16 @@ public class AnnotationUtilEx {
     if (!inHierarchy) {
       return modifierList.getAnnotations();
     }
+    return CachedValuesManager.getCachedValue(listOwner, new CachedValueProvider<PsiAnnotation[]>() {
+      @Nullable
+      @Override
+      public Result<PsiAnnotation[]> compute() {
+        return Result.create(getHierarchyAnnotations(listOwner, modifierList), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
+  }
+
+  private static PsiAnnotation[] getHierarchyAnnotations(PsiModifierListOwner listOwner, PsiModifierList modifierList) {
     final Set<PsiAnnotation> all = new HashSet<PsiAnnotation>() {
       public boolean add(PsiAnnotation o) {
         // don't overwrite "higher level" annotations
@@ -317,5 +326,4 @@ public class AnnotationUtilEx {
     }
     return modifierList.getAnnotations();
   }
-
 }

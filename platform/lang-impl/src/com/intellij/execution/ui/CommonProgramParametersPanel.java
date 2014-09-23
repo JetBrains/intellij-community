@@ -56,6 +56,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   protected JComponent myAnchor;
 
   private Module myModuleContext = null;
+  private boolean myHasModuleMacro = false;
 
   public CommonProgramParametersPanel() {
     this(true);
@@ -120,7 +121,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
       @Override
       public void actionPerformed(ActionEvent e) {
         List<String> macros = new SmartList<String>(PathMacros.getInstance().getUserMacroNames());
-        if (myModuleContext != null) {
+        if (myModuleContext != null || myHasModuleMacro) {
           macros.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
         }
 
@@ -170,6 +171,10 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   public void setModuleContext(Module moduleContext) {
     myModuleContext = moduleContext;
+  }
+
+  public void setHasModuleMacro() {
+    myHasModuleMacro = true;
   }
 
   public LabeledComponent<RawCommandLineEditor> getProgramParametersComponent() {

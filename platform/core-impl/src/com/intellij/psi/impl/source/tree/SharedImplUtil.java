@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
@@ -32,11 +34,15 @@ import org.jetbrains.annotations.Nullable;
 
 public class SharedImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.SharedImplUtil");
+  private static final boolean CHECK_FOR_READ_ACTION = DebugUtil.DO_EXPENSIVE_CHECKS || ApplicationManager.getApplication().isInternal();
 
   private SharedImplUtil() {
   }
 
   public static PsiElement getParent(ASTNode thisElement) {
+    if (CHECK_FOR_READ_ACTION) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
     return SourceTreeToPsiMap.treeElementToPsi(thisElement.getTreeParent());
   }
 
@@ -76,6 +82,9 @@ public class SharedImplUtil {
   }
 
   public static FileElement findFileElement(@NotNull ASTNode element) {
+    if (CHECK_FOR_READ_ACTION) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
     ASTNode parent = element.getTreeParent();
     while (parent != null) {
       element = parent;

@@ -15,22 +15,18 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
 
 public class SingleRepositoryNode extends RepositoryNode {
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
 
-  public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull SimpleColoredText customTargetPresentation) {
-    super(repositoryPanel, customTargetPresentation);
+  public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
+    super(repositoryPanel);
     myRepositoryPanel = repositoryPanel;
   }
 
@@ -43,9 +39,11 @@ public class SingleRepositoryNode extends RepositoryNode {
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    EditorTextField textField = myRepositoryPanel.getRemoteTextFiled();
-    renderTargetName(renderer, textField);
-    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(textField);
-    renderer.setBorder(new EmptyBorder(insets));
+    PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
+    pushTargetPanel.render(renderer);
+
+    // hack to fix vertical size of the editor
+    renderer.setIcon(EmptyIcon.ICON_18);
+    renderer.setIconOnTheRight(true);
   }
 }

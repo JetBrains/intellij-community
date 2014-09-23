@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,14 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Jul 12, 2007
  */
-public class DelegatingProgressIndicator implements ProgressIndicator {
+public class DelegatingProgressIndicator implements WrappedProgressIndicator, StandardProgressIndicator {
   private final ProgressIndicator myIndicator;
 
   public DelegatingProgressIndicator(@NotNull ProgressIndicator indicator) {
@@ -54,12 +51,12 @@ public class DelegatingProgressIndicator implements ProgressIndicator {
   }
 
   @Override
-  public void cancel() {
+  public final void cancel() {
     myIndicator.cancel();
   }
 
   @Override
-  public boolean isCanceled() {
+  public final boolean isCanceled() {
     return myIndicator.isCanceled();
   }
 
@@ -140,11 +137,17 @@ public class DelegatingProgressIndicator implements ProgressIndicator {
   }
 
   @Override
-  public void checkCanceled() throws ProcessCanceledException {
+  public final void checkCanceled() throws ProcessCanceledException {
     myIndicator.checkCanceled();
   }
 
   protected final ProgressIndicator getDelegate() {
+    return myIndicator;
+  }
+
+  @NotNull
+  @Override
+  public ProgressIndicator getOriginalProgressIndicator() {
     return myIndicator;
   }
 

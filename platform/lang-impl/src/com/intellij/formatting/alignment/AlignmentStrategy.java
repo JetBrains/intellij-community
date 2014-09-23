@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,8 +69,7 @@ public abstract class AlignmentStrategy {
    * @return                      alignment strategy for the given arguments
    */
   public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(@NotNull Collection<IElementType> targetTypes,
-                                                                        boolean allowBackwardShift)
-  {
+                                                                        boolean allowBackwardShift) {
     return new AlignmentPerTypeStrategy(targetTypes, null, allowBackwardShift, Alignment.Anchor.LEFT);
   }
 
@@ -85,8 +84,7 @@ public abstract class AlignmentStrategy {
    * @return                   alignment retrieval strategy that follows the rules described above
    */
   public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(
-    @NotNull Collection<IElementType> targetTypes, @Nullable IElementType parentType, boolean allowBackwardShift)
-  {
+    @NotNull Collection<IElementType> targetTypes, @Nullable IElementType parentType, boolean allowBackwardShift) {
     return createAlignmentPerTypeStrategy(targetTypes, parentType, allowBackwardShift, Alignment.Anchor.LEFT);
   }
 
@@ -115,8 +113,7 @@ public abstract class AlignmentStrategy {
    */
   public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(
     @NotNull Collection<IElementType> targetTypes, @Nullable IElementType parentType, boolean allowBackwardShift,
-    @NotNull Alignment.Anchor anchor)
-  {
+    @NotNull Alignment.Anchor anchor) {
     return new AlignmentPerTypeStrategy(targetTypes, parentType, allowBackwardShift, anchor);
   }
 
@@ -162,7 +159,7 @@ public abstract class AlignmentStrategy {
     @Override
     @Nullable
     public Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
-      return (myFilterElementTypes.contains(childType) ^ myIgnoreFilterTypes) ? myAlignment : null;
+      return myFilterElementTypes.contains(childType) ^ myIgnoreFilterTypes ? myAlignment : null;
     }
   }
 
@@ -171,7 +168,6 @@ public abstract class AlignmentStrategy {
    * same types.
    */
   public static class AlignmentPerTypeStrategy extends AlignmentStrategy {
-
     private final Map<IElementType, Alignment> myAlignments = new HashMap<IElementType, Alignment>();
 
     private final IElementType     myParentType;
@@ -180,8 +176,7 @@ public abstract class AlignmentStrategy {
     AlignmentPerTypeStrategy(Collection<IElementType> targetElementTypes,
                              IElementType parentType,
                              boolean allowBackwardShift,
-                             Alignment.Anchor anchor)
-    {
+                             Alignment.Anchor anchor) {
       myParentType = parentType;
       myAllowBackwardShift = allowBackwardShift;
       for (IElementType elementType : targetElementTypes) {

@@ -43,6 +43,7 @@ public class FindUsagesProcessPresentation {
   private Collection<PsiFile> myLargeFiles;
   private boolean myShowFindOptionsPrompt = true;
   private Runnable mySearchWithProjectFiles;
+  private boolean myCanceled;
 
   public FindUsagesProcessPresentation(@NotNull UsageViewPresentation presentation) {
     myUsageViewPresentation = presentation;
@@ -111,6 +112,15 @@ public class FindUsagesProcessPresentation {
 
   public void setShowFindOptionsPrompt(boolean showFindOptionsPrompt) {
     myShowFindOptionsPrompt = showFindOptionsPrompt;
+  }
+
+
+  public void setCanceled(boolean canceled) {
+    myCanceled = canceled;
+  }
+
+  public boolean isCanceled() {
+    return myCanceled;
   }
 }
 

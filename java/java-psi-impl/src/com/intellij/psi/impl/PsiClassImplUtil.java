@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.OrFilter;
-import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -605,9 +604,15 @@ public class PsiClassImplUtil {
                                          @NotNull PsiElementFactory factory,
                                          @NotNull PsiMethod candidateMethod,
                                          @NotNull PsiSubstitutor substitutor) {
-    if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
-      PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
-      substitutor = factory.createRawSubstitutor(substitutor, methodTypeParameters);
+    //4.8-2. Raw Types and Inheritance
+    //certain members of a raw type are not erased,
+    //namely static members whose types are parameterized, and members inherited from a non-generic supertype.
+    if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      final PsiClass containingClass = candidateMethod.getContainingClass();
+      if (containingClass != null && containingClass.hasTypeParameters()) {
+        PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
+        substitutor = factory.createRawSubstitutor(substitutor, methodTypeParameters);
+      }
     }
     return substitutor;
   }
@@ -1010,7 +1015,7 @@ public class PsiClassImplUtil {
       return false;
     }
 
-    if (originalElement(aClass).equals(originalElement((PsiClass)another))) {
+    if (aClass.getOriginalElement().equals(another.getOriginalElement())) {
       return true;
     }
 
@@ -1054,13 +1059,6 @@ public class PsiClassImplUtil {
       }
     }
     return -1;
-  }
-
-  @NotNull
-  private static PsiElement originalElement(@NotNull PsiClass aClass) {
-    final PsiElement originalElement = aClass.getOriginalElement();
-    final PsiCompiledElement compiled = originalElement.getUserData(ClsElementImpl.COMPILED_ELEMENT);
-    return compiled != null ? compiled : originalElement;
   }
 
   public static boolean isFieldEquivalentTo(@NotNull PsiField field, PsiElement another) {

@@ -12,7 +12,6 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.soap.JiraLegacyApi;
@@ -52,6 +51,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   private static final boolean REDISCOVER_API = Boolean.getBoolean("tasks.jira.rediscover.api");
 
   public static final Pattern JIRA_ID_PATTERN = Pattern.compile("\\p{javaUpperCase}+-\\d+");
+  public static final String AUTH_COOKIE_NAME = "JSESSIONID";
 
   /**
    * Default JQL query
@@ -145,12 +145,13 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
+    clearCookies();
     // TODO cancellable connection for XML_RPC?
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
         ensureApiVersionDiscovered();
-        myApiVersion.findTasks("", 1);
+        myApiVersion.findTasks(mySearchQuery, 1);
       }
 
       @Override
@@ -226,20 +227,18 @@ public class JiraRepository extends BaseRepositoryImpl {
     HttpClient client = getHttpClient();
     // Fix for https://jetbrains.zendesk.com/agent/#/tickets/24566
     // See https://confluence.atlassian.com/display/ONDEMANDKB/Getting+randomly+logged+out+of+OnDemand for details
-    if (BASIC_AUTH_ONLY) {
+    // IDEA-128824, IDEA-128706 Use cookie authentication only for JIRA on-Demand
+    // TODO Make JiraVersion more suitable for such checks
+    final boolean isJiraOnDemand = StringUtil.notNullize(myJiraVersion).contains("OD");
+    if (isJiraOnDemand) {
+      LOG.info("Connecting to JIRA on-Demand. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
+    }
+    if (BASIC_AUTH_ONLY || !isJiraOnDemand) {
       // to override persisted settings
       setUseHttpAuthentication(true);
     }
     else {
-      boolean cookieAuthenticated = false;
-      for (Cookie cookie : client.getState().getCookies()) {
-        if (cookie.getName().equals("JSESSIONID") && !cookie.isExpired()) {
-          cookieAuthenticated = true;
-          break;
-        }
-      }
-      // disable subsequent basic authorization attempts if user already was authenticated
-      boolean enableBasicAuthentication = !(isRestApiSupported() && cookieAuthenticated);
+      boolean enableBasicAuthentication = !(isRestApiSupported() && containsCookie(client, AUTH_COOKIE_NAME));
       if (enableBasicAuthentication != isUseHttpAuthentication()) {
         LOG.info("Basic authentication for subsequent requests was " + (enableBasicAuthentication ? "enabled" : "disabled"));
       }
@@ -251,14 +250,15 @@ public class JiraRepository extends BaseRepositoryImpl {
     // may be null if 204 No Content received
     final InputStream stream = method.getResponseBodyAsStream();
     String entityContent = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8);
-    TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
+    //TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
     // besides SC_OK, can also be SC_NO_CONTENT in issue transition requests
     // see: JiraRestApi#setTaskStatus
     //if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NO_CONTENT) {
     if (statusCode >= 200 && statusCode < 300) {
       return entityContent;
     }
-    else if (method.getResponseHeader("Content-Type") != null) {
+    clearCookies();
+    if (method.getResponseHeader("Content-Type") != null) {
       Header header = method.getResponseHeader("Content-Type");
       if (header.getValue().startsWith("application/json")) {
         JsonObject object = GSON.fromJson(entityContent, JsonObject.class);
@@ -282,6 +282,19 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
     String statusText = HttpStatus.getStatusText(method.getStatusCode());
     throw new Exception(TaskBundle.message("failure.http.error", statusCode, statusText));
+  }
+
+  private static boolean containsCookie(@NotNull HttpClient client, @NotNull String cookieName) {
+    for (Cookie cookie : client.getState().getCookies()) {
+      if (cookie.getName().equals(cookieName) && !cookie.isExpired()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void clearCookies() {
+    getHttpClient().getState().clearCookies();
   }
 
   // Made public for SOAP API compatibility

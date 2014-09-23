@@ -198,6 +198,8 @@ public interface Caret extends UserDataHolderEx, Disposable {
 
   /**
    * Selects the specified range of text.
+   * <p>
+   * System selection will be updated, if such feature is supported by current editor.
    *
    * @param startOffset the start offset of the text range to select.
    * @param endOffset   the end offset of the text range to select.
@@ -205,11 +207,22 @@ public interface Caret extends UserDataHolderEx, Disposable {
   void setSelection(int startOffset, int endOffset);
 
   /**
+   * Selects the specified range of text.
+   *
+   * @param startOffset the start offset of the text range to select.
+   * @param endOffset   the end offset of the text range to select.
+   * @param updateSystemSelection whether system selection should be updated (might not have any effect if current editor doesn't support such a feature)
+   */
+  void setSelection(int startOffset, int endOffset, boolean updateSystemSelection);
+
+  /**
    * Selects target range providing information about visual boundary of selection end.
    * <p/>
    * That is the case for soft wraps-aware processing where the whole soft wraps virtual space is matched to the same offset.
    * <p/>
    * Also, in column mode this method allows to create selection spanning virtual space after the line end.
+   * <p>
+   * System selection will be updated, if such feature is supported by current editor.
    *
    * @param startOffset     start selection offset
    * @param endPosition     end visual position of the text range to select (<code>null</code> argument means that
@@ -224,6 +237,8 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * That is the case for soft wraps-aware processing where the whole soft wraps virtual space is matched to the same offset.
    * <p/>
    * Also, in column mode this method allows to create selection spanning virtual space after the line end.
+   * <p>
+   * System selection will be updated, if such feature is supported by current editor.
    *
    * @param startPosition   start visual position of the text range to select (<code>null</code> argument means that
    *                        no specific visual position should be used)
@@ -233,6 +248,23 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * @param endOffset       end selection offset
    */
   void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset);
+
+  /**
+   * Selects target range based on its visual boundaries.
+   * <p/>
+   * That is the case for soft wraps-aware processing where the whole soft wraps virtual space is matched to the same offset.
+   * <p/>
+   * Also, in column mode this method allows to create selection spanning virtual space after the line end.
+   *
+   * @param startPosition   start visual position of the text range to select (<code>null</code> argument means that
+   *                        no specific visual position should be used)
+   * @param endPosition     end visual position of the text range to select (<code>null</code> argument means that
+   *                        no specific visual position should be used)
+   * @param startOffset     start selection offset
+   * @param endOffset       end selection offset
+   * @param updateSystemSelection whether system selection should be updated (might not have any effect if current editor doesn't support such a feature)
+   */
+  void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset, boolean updateSystemSelection);
 
   /**
    * Removes the selection in the editor.

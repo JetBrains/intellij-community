@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,10 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.Calendar;
 
 public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/graphInference";
@@ -47,17 +44,14 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testInferenceFromSiblings() throws Exception {
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testChainedInferenceTypeParamsOrderIndependent() throws Exception {
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testCyclicParamsDependency() throws Exception {
     doTest();
   }
@@ -225,13 +219,37 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testSameMethodNestedChainedCallsNearFunctionInterfaces() throws Exception {
+    doTest();
+  }
+
+  public void testInfiniteTypes() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA126163() throws Exception {
+    doTest();
+  }
+
+  public void testIncompatibleBoundsFromAssignment() throws Exception {
+    doTest();
+  }
+
+  public void testFreshVariablesCreatedDuringResolveDependingOnAlreadyResolvedVariables() throws Exception {
+    doTest();
+  }
+
+  public void testCallToGenericMethodsOfNonGenericClassInsideRawInheritor() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
 
   private void doTest(final boolean checkWarnings) throws Exception {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 
   @Override

@@ -27,7 +27,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,12 +70,9 @@ public class TestPackage extends TestObject {
   protected ServerSocket myServerSocket;
   private boolean myFoundTests = true;
 
-  public TestPackage(final Project project,
-                     final JUnitConfiguration configuration,
-                     ExecutionEnvironment environment) {
-    super(project, configuration, environment);
+  public TestPackage(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+    super(configuration, environment);
   }
-
 
   @Override
   public SourceScope getSourceScope() {

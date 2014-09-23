@@ -40,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseListener;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -445,5 +446,18 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public void setAdText(final String adText) {
     myAdText = adText;
+  }
+
+  public void addMouseClickListener(MouseListener listener) {
+    myList.addMouseListener(listener);
+  }
+
+  public Object getSelectionByPoint(Point point) {
+    final int index = myList.locationToIndex(point);
+    return index > -1 ? myList.getModel().getElementAt(index) : null;
+  }
+
+  public void repaintList() {
+    myList.repaint();
   }
 }

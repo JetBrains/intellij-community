@@ -67,7 +67,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Jar files from libraries"/>
+        <border type="none" title="JAR files from libraries"/>
         <children>
           <component id="f9a17" class="javax.swing.JRadioButton" binding="myExtractJarsRadioButton">
             <constraints>
@@ -75,7 +75,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="&amp;extract to the target jar"/>
+              <text value="&amp;extract to the target JAR"/>
             </properties>
           </component>
           <hspacer id="90c4f">

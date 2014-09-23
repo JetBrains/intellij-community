@@ -30,10 +30,13 @@ public interface BuildTargetRegistry {
   <T extends BuildTarget<?>>
   List<T> getAllTargets(@NotNull BuildTargetType<T> type);
 
-  List<? extends BuildTarget<?>> getAllTargets();
+  @NotNull
+  List<BuildTarget<?>> getAllTargets();
 
   enum ModuleTargetSelector {
     PRODUCTION, TEST, ALL
   }
+
+  @NotNull
   Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull ModuleTargetSelector selector);
 }

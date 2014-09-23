@@ -15,29 +15,26 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.ui.*;
+import com.intellij.dvcs.push.OutgoingResult;
+import com.intellij.dvcs.push.PushTargetPanel;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode {
+public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode, Comparable<RepositoryNode> {
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
-  @NotNull protected SimpleColoredText myTargetPresentation;
-  private ProgressIndicator myCurrentIndicator;
+  private Future<AtomicReference<OutgoingResult>> myFuture;
 
-  public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull SimpleColoredText targetPresentation) {
+  public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
     super(repositoryPanel);
     myRepositoryPanel = repositoryPanel;
-    myTargetPresentation = targetPresentation;
-  }
-
-  public void setTargetPresentation(@NotNull SimpleColoredText targetPresentation) {
-    myTargetPresentation = targetPresentation;
   }
 
   public boolean isCheckboxVisible() {
@@ -51,30 +48,15 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
     renderer.appendFixedTextFragmentWidth(120);
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    EditorTextField textField = myRepositoryPanel.getRemoteTextFiled();
-    renderTargetName(renderer, textField);
-    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(textField);
+    PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
+    pushTargetPanel.render(renderer);
+    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(pushTargetPanel);
     renderer.setBorder(new EmptyBorder(insets));
-  }
-
-  protected void renderTargetName(@NotNull ColoredTreeCellRenderer renderer, @NotNull EditorTextField textField) {
-    ArrayList<String> strings = myTargetPresentation.getTexts();
-    ArrayList<SimpleTextAttributes> attributes = myTargetPresentation.getAttributes();
-    for (int i = 0; i < strings.size(); i++) {
-      //todo check that all texts belong to editable component!!!
-      renderer.append(strings.get(i), attributes.get(i), textField);
-    }
   }
 
   @Override
   public Object getUserObject() {
     return myRepositoryPanel;
-  }
-
-  @Override
-  @NotNull
-  public String getValue() {
-    return myRepositoryPanel.getRemoteTargetName();
   }
 
   @Override
@@ -94,14 +76,19 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
 
   @Override
   public void stopLoading() {
-    if (myCurrentIndicator != null && myCurrentIndicator.isRunning()) {
-      myCurrentIndicator.cancel();
+    if (myFuture != null && !myFuture.isDone()) {
+      myFuture.cancel(true);
     }
   }
 
   @Override
-  @NotNull
-  public ProgressIndicator startLoading() {
-    return myCurrentIndicator = new EmptyProgressIndicator();
+  public void startLoading(@NotNull Future<AtomicReference<OutgoingResult>> future) {
+    myFuture = future;
+  }
+
+  public int compareTo(@NotNull RepositoryNode repositoryNode) {
+    String name = myRepositoryPanel.getRepositoryName();
+    RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)repositoryNode.getUserObject();
+    return name.compareTo(panel.getRepositoryName());
   }
 }

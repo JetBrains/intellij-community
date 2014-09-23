@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class ClassRenderer extends NodeRendererImpl{
   public boolean SHOW_STATIC = false;
   public boolean SHOW_STATIC_FINAL = false;
 
-  public boolean SHOW_FQ_TYPE_NAMES = true;
+  public boolean SHOW_FQ_TYPE_NAMES = false;
   public boolean SHOW_DECLARED_TYPE = false;
   public boolean SHOW_OBJECT_ID = true;
   
@@ -174,7 +174,7 @@ public class ClassRenderer extends NodeRendererImpl{
           if (!shouldDisplay(evaluationContext, objRef, field)) {
             continue;
           }
-          children.add(nodeManager.createNode(nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field), evaluationContext));
+          children.add(nodeManager.createNode(createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext), evaluationContext));
         }
 
         if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
@@ -188,7 +188,16 @@ public class ClassRenderer extends NodeRendererImpl{
     builder.setChildren(children);
   }
 
-  private boolean shouldDisplay(EvaluationContext context, @NotNull ObjectReference objInstance, @NotNull Field field) {
+  @NotNull
+  protected FieldDescriptor createFieldDescriptor(ValueDescriptorImpl parentDescriptor,
+                                                  NodeDescriptorFactory nodeDescriptorFactory,
+                                                  ObjectReference objRef,
+                                                  Field field,
+                                                  EvaluationContext evaluationContext) {
+    return nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field);
+  }
+
+  protected boolean shouldDisplay(EvaluationContext context, @NotNull ObjectReference objInstance, @NotNull Field field) {
     final boolean isSynthetic = DebuggerUtils.isSynthetic(field);
     if (!SHOW_SYNTHETICS && isSynthetic) {
       return false;
@@ -250,7 +259,8 @@ public class ClassRenderer extends NodeRendererImpl{
         return ((ArrayReference)value).length() > 0;
       }
       else if(value instanceof ObjectReference) {
-        return ((ObjectReference)value).referenceType().allFields().size() > 0;
+        return true; // if object has no fields, it contains a child-message about that
+        //return ((ObjectReference)value).referenceType().allFields().size() > 0;
       }
     }
     catch (ObjectCollectedException e) {

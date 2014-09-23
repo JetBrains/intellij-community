@@ -19,7 +19,7 @@ package com.intellij.openapi.progress;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 
-public class EmptyProgressIndicator implements ProgressIndicator {
+public class EmptyProgressIndicator implements StandardProgressIndicator {
   private volatile boolean myIsRunning = false;
   private volatile boolean myIsCanceled = false;
 
@@ -40,14 +40,21 @@ public class EmptyProgressIndicator implements ProgressIndicator {
   }
 
   @Override
-  public void cancel() {
+  public final void cancel() {
     myIsCanceled = true;
-    ProgressIndicatorProvider.canceled();
+    ProgressManager.canceled(this);
   }
 
   @Override
-  public boolean isCanceled() {
+  public final boolean isCanceled() {
     return myIsCanceled;
+  }
+
+  @Override
+  public final void checkCanceled() {
+    if (myIsCanceled) {
+      throw new ProcessCanceledException();
+    }
   }
 
   @Override
@@ -115,13 +122,6 @@ public class EmptyProgressIndicator implements ProgressIndicator {
 
   @Override
   public void setIndeterminate(boolean indeterminate) {
-  }
-
-  @Override
-  public void checkCanceled() {
-    if (myIsCanceled) {
-      throw new ProcessCanceledException();
-    }
   }
 
   @Override

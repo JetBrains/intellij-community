@@ -193,16 +193,29 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * @deprecated override {@link #createTabLayouter()} and {@link com.intellij.xdebugger.ui.XDebugTabLayouter#registerAdditionalContent} instead
+   * @deprecated Override {@link #createTabLayouter()} and {@link com.intellij.xdebugger.ui.XDebugTabLayouter#registerAdditionalContent} instead
+   * to remove in IDEA 15
    */
+  @SuppressWarnings("UnusedParameters")
   @Deprecated
   public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+  }
+
+  @SuppressWarnings("UnusedParameters")
+  @Deprecated
+  /**
+   * @deprecated Override {@link #registerAdditionalActions(com.intellij.openapi.actionSystem.ActionGroup, com.intellij.openapi.actionSystem.ActionGroup, com.intellij.openapi.actionSystem.ActionGroup)} instead
+   * to remove in IDEA 15
+   */
+  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar) {
   }
 
   /**
    * Override this method to provide additional actions in 'Debug' tool window
    */
-  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar) {
+  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar, @NotNull DefaultActionGroup settings) {
+    //noinspection deprecation
+    registerAdditionalActions(leftToolbar, topToolbar);
   }
 
   /**
@@ -225,6 +238,7 @@ public abstract class XDebugProcess {
     return new XDebugTabLayouter() {
       @Override
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+        //noinspection deprecation
         XDebugProcess.this.registerAdditionalContent(ui);
       }
     };

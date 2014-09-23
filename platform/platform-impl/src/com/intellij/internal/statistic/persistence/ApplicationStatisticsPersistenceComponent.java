@@ -43,11 +43,7 @@ import java.util.Set;
 
 @State(
   name = "StatisticsApplicationUsages",
-  roamingType = RoamingType.DISABLED,
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/statistics.application.usages.xml"
-    )}
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/statistics.application.usages.xml", roamingType = RoamingType.DISABLED)}
 )
 public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence
   implements ApplicationComponent, PersistentStateComponent<Element> {

@@ -20,6 +20,7 @@
 
     <!--Project structure management services-->
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager"/>
+    <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService"/>

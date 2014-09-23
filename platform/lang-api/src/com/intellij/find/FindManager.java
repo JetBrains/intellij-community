@@ -285,5 +285,6 @@ public abstract class FindManager {
     int ALL = 3;
     int ALL_IN_THIS_FILE = 4;
     int ALL_FILES = 5;
+    int SKIP_ALL_IN_THIS_FILE = 6;
   }
 }

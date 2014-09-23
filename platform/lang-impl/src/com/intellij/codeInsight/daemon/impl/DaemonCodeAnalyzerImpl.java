@@ -46,6 +46,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -58,6 +59,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -184,8 +186,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
 
   @Override
   public void cleanFileLevelHighlights(@NotNull Project project, final int group, PsiFile psiFile) {
-    if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
-    VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
+    if (psiFile == null) return;
+    FileViewProvider provider = psiFile.getViewProvider();
+    VirtualFile vFile = provider.getVirtualFile();
     final FileEditorManager manager = FileEditorManager.getInstance(project);
     for (FileEditor fileEditor : manager.getEditors(vFile)) {
       final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
@@ -281,7 +284,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     if (application.isWriteAccessAllowed()) {
       throw new AssertionError("Must not start highlighting from within write action, or deadlock is imminent");
     }
-
+    DaemonProgressIndicator.setDebug(true);
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     // pump first so that queued event do not interfere
     UIUtil.dispatchAllInvocationEvents();
@@ -295,6 +298,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
 
     Project project = file.getProject();
     setUpdateByTimerEnabled(false);
+    FileStatusMap.getAndClearLog();
     FileStatusMap fileStatusMap = getFileStatusMap();
     fileStatusMap.allowDirt(canChangeDocument);
 
@@ -340,8 +344,15 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
       return getHighlights(document, null, project);
     }
     finally {
+      DaemonProgressIndicator.setDebug(false);
+      String log = FileStatusMap.getAndClearLog();
       fileStatusMap.allowDirt(true);
-      waitForTermination();
+      try {
+        waitForTermination();
+      }
+      catch (Throwable e) {
+        LOG.error(log, e);
+      }
     }
   }
 
@@ -709,11 +720,20 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     return new Runnable() {
       @Override
       public void run() {
-        if (myDisposed || !myProject.isInitialized()) return;
-        if (PowerSaveMode.isEnabled()) return;
-        Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+        ApplicationManager.getApplication().assertIsDispatchThread();
 
+        if (myDisposed || !myProject.isInitialized() || PowerSaveMode.isEnabled()) {
+          return;
+        }
+        if (HeavyProcessLatch.INSTANCE.isRunning()) {
+          if (myAlarm.isEmpty()) {
+            myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
+          }
+          return;
+        }
+        Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
         final PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+
         Runnable runnable = new Runnable() {
           @Override
           public void run() {
@@ -728,10 +748,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
             final Collection<FileEditor> activeEditors = getSelectedEditors();
             if (activeEditors.isEmpty()) return;
 
-            ApplicationManager.getApplication().assertIsDispatchThread();
             if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
               // makes no sense to start from within write action, will cancel anyway
-              // we'll restart when write action finish
+              // we'll restart when the write action finish
               return;
             }
             if (documentManager.hasUncommitedDocuments()) {
@@ -801,28 +820,30 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     // Editors in modal context
     List<Editor> editors = getActiveEditors();
 
-    Collection<FileEditor> activeFileEditors = new THashSet<FileEditor>(editors.size());
+    Collection<FileEditor> activeTextEditors = new THashSet<FileEditor>(editors.size());
     for (Editor editor : editors) {
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-      activeFileEditors.add(textEditor);
+      activeTextEditors.add(textEditor);
     }
     if (ApplicationManager.getApplication().getCurrentModalityState() != ModalityState.NON_MODAL) {
-      return activeFileEditors;
+      return activeTextEditors;
     }
 
     // Editors in tabs.
     Collection<FileEditor> result = new THashSet<FileEditor>();
-    Collection<Document> documents = new THashSet<Document>(activeFileEditors.size());
+    Collection<VirtualFile> files = new THashSet<VirtualFile>(activeTextEditors.size());
     final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
     for (FileEditor tabEditor : tabEditors) {
-      if (tabEditor instanceof TextEditor) {
-        documents.add(((TextEditor)tabEditor).getEditor().getDocument());
+      VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(tabEditor);
+      if (file != null) {
+        files.add(file);
       }
       result.add(tabEditor);
     }
     // do not duplicate documents
-    for (FileEditor fileEditor : activeFileEditors) {
-      if (fileEditor instanceof TextEditor && documents.contains(((TextEditor)fileEditor).getEditor().getDocument())) continue;
+    for (FileEditor fileEditor : activeTextEditors) {
+      VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor);
+      if (file != null && files.contains(file)) continue;
       result.add(fileEditor);
     }
     return result;

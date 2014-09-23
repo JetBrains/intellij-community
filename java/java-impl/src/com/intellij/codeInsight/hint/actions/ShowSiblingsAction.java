@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,11 @@ package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.psi.*;
@@ -36,8 +32,6 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
 public class ShowSiblingsAction extends ShowImplementationsAction {
-  private static final Logger LOG = Logger.getInstance("#" + ShowSiblingsAction.class.getName());
-
   public ShowSiblingsAction() {
     super();
   }

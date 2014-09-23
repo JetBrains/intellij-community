@@ -17,4 +17,7 @@ public interface PyFrameAccessor {
   XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException;
 
   void changeVariable(PyDebugValue variable, String expression) throws PyDebuggerException;
+
+  @Nullable
+  PyReferrersLoader getReferrersLoader();
 }

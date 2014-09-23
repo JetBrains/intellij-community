@@ -39,8 +39,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.fs.FileSystem;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -104,7 +102,7 @@ public class ClasspathStorage implements StateStorage {
 
   @Override
   @Nullable
-  public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
+  public <T> T getState(final Object component, @NotNull final String componentName, Class<T> stateClass, @Nullable T mergeInto)
     throws StateStorageException {
     assert component instanceof ModuleRootManager;
     assert componentName.equals("NewModuleRootManager");
@@ -144,7 +142,7 @@ public class ClasspathStorage implements StateStorage {
   }
 
   @Override
-  public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData)
+  public boolean hasState(final Object component, @NotNull final String componentName, final Class<?> aClass, final boolean reloadData)
     throws StateStorageException {
     return true;
   }
@@ -192,10 +190,9 @@ public class ClasspathStorage implements StateStorage {
     return session;
   }
 
-  private static void convert2Io(List<IFile> list, ArrayList<VirtualFile> virtualFiles) {
+  private static void convert2Io(List<File> list, ArrayList<VirtualFile> virtualFiles) {
     for (VirtualFile virtualFile : virtualFiles) {
-      final File ioFile = VfsUtilCore.virtualToIoFile(virtualFile);
-      list.add(FileSystem.FILE_SYSTEM.createFile(ioFile.getAbsolutePath()));
+      list.add(VfsUtilCore.virtualToIoFile(virtualFile));
     }
   }
 
@@ -384,12 +381,12 @@ public class ClasspathStorage implements StateStorage {
         }
 
         @Override
-        public Set<String> getClasspath(final ModifiableRootModel model, final Element element) throws IOException, InvalidDataException {
+        public Set<String> getClasspath(final ModifiableRootModel model, final Element element) throws InvalidDataException {
           throw new InvalidDataException(getDescription());
         }
 
         @Override
-        public void setClasspath(ModuleRootModel model) throws IOException, WriteExternalException {
+        public void setClasspath(ModuleRootModel model) throws WriteExternalException {
           throw new WriteExternalException(getDescription());
         }
       };
@@ -426,9 +423,9 @@ public class ClasspathStorage implements StateStorage {
 
     @NotNull
     @Override
-    public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
+    public Collection<File> getStorageFilesToSave() throws StateStorageException {
       if (needsSave()) {
-        final List<IFile> list = new ArrayList<IFile>();
+        final List<File> list = new ArrayList<File>();
         final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
         getFileSet().listModifiedFiles(virtualFiles);
         convert2Io(list, virtualFiles);
@@ -441,9 +438,9 @@ public class ClasspathStorage implements StateStorage {
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFiles() {
-      final List<IFile> list = new ArrayList<IFile>();
-      final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
+    public List<File> getAllStorageFiles() {
+      List<File> list = new ArrayList<File>();
+      ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
       getFileSet().listFiles(virtualFiles);
       convert2Io(list, virtualFiles);
       return list;

@@ -40,6 +40,7 @@ import com.intellij.util.TreeItem;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,36 +54,42 @@ import java.util.List;
 public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
   private static final ColumnInfo<TreeNodeAdapter,String> BRANCH_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.branch")){
+    @Override
     public String valueOf(final TreeNodeAdapter object) {
       return object.getRevision().getBranchName();
     }
   };
 
   private static final ColumnInfo<TreeNodeAdapter,String> REVISION_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.revision")){
+    @Override
     public String valueOf(final TreeNodeAdapter object) {
       return object.getRevision().getRevisionNumber().asString();
     }
   };
 
   private static final ColumnInfo<TreeNodeAdapter,String> DATE_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.filter")){
+    @Override
     public String valueOf(final TreeNodeAdapter object) {
       return DateFormatUtil.formatPrettyDateTime(object.getRevision().getRevisionDate());
     }
   };
 
   private static final ColumnInfo<TreeNodeAdapter,String> AUTHOR_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.author")){
+    @Override
     public String valueOf(final TreeNodeAdapter object) {
       return object.getRevision().getAuthor();
     }
   };
 
   private static final ColumnInfo<VcsFileRevision, String> REVISION_TABLE_COLUMN = new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
+    @Override
     public String valueOf(final VcsFileRevision vcsFileRevision) {
       return vcsFileRevision.getRevisionNumber().asString();
     }
   };
 
   private static final ColumnInfo<VcsFileRevision, String> DATE_TABLE_COLUMN = new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
+    @Override
     public String valueOf(final VcsFileRevision vcsFileRevision) {
       final Date date = vcsFileRevision.getRevisionDate();
       return date == null ? "" : DateFormatUtil.formatPrettyDateTime(date);
@@ -90,27 +97,32 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   };
 
   private static final ColumnInfo<VcsFileRevision,String> AUTHOR_TABLE_COLUMN = new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.author")){
+    @Override
     public String valueOf(final VcsFileRevision vcsFileRevision) {
       return vcsFileRevision.getAuthor();
     }
   };
 
   private static final ColumnInfo<VcsFileRevision,String> BRANCH_TABLE_COLUMN = new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revisions.list.branch")){
+    @Override
     public String valueOf(final VcsFileRevision vcsFileRevision) {
       return vcsFileRevision.getBranchName();
     }
   };
 
+  @Override
   public void update(VcsContext e, Presentation presentation) {
     AbstractShowDiffAction.updateDiffAction(presentation, e, VcsBackgroundableActions.COMPARE_WITH);
   }
 
 
+  @Override
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;
   }
 
-  protected void actionPerformed(VcsContext vcsContext) {
+  @Override
+  protected void actionPerformed(@NotNull VcsContext vcsContext) {
     final VirtualFile file = vcsContext.getSelectedFiles()[0];
     final Project project = vcsContext.getProject();
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
@@ -119,6 +131,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     new VcsHistoryProviderBackgroundableProxy(vcs, vcsHistoryProvider, vcs.getDiffProvider()).
       createSessionFor(vcs.getKeyInstanceMethod(), new FilePathImpl(file),
         new Consumer<VcsHistorySession>() {
+          @Override
           public void consume(VcsHistorySession session) {
             if (session == null) return;
             final List<VcsFileRevision> revisions = session.getRevisionList();
@@ -128,6 +141,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
             }
             else {
               showListPopup(revisions, project, new Consumer<VcsFileRevision>() {
+                @Override
                 public void consume(final VcsFileRevision revision) {
                   DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project,
                                               VcsBackgroundableActions.COMPARE_WITH);
@@ -143,6 +157,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
                                                                                       new ColumnInfo[]{BRANCH_COLUMN, REVISION_COLUMN,
                                                                                       DATE_COLUMN, AUTHOR_COLUMN}));
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         int index = treeTable.getSelectionModel().getMinSelectionIndex();
         if (index == -1) {
@@ -187,7 +202,8 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     JPanel panel = new JPanel(new BorderLayout());
     final JTextArea textArea = createTextArea();
     treeTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
+      @Override
+      public void valueChanged(@NotNull ListSelectionEvent e) {
         final int index = treeTable.getSelectionModel().getMinSelectionIndex();
         if (index == -1) {
           textArea.setText("");
@@ -230,6 +246,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     table.setShowHorizontalLines(false);
     table.setTableHeader(null);
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         VcsFileRevision revision = table.getSelectedObject();
         if (revision != null) {
@@ -243,6 +260,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     }
 
     new SpeedSearchBase<TableView>(table) {
+      @Override
       protected int getSelectedIndex() {
         return table.getSelectedRow();
       }
@@ -252,15 +270,18 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         return table.convertRowIndexToModel(viewIndex);
       }
 
+      @Override
       protected Object[] getAllElements() {
         return revisions.toArray();
       }
 
+      @Override
       protected String getElementText(Object element) {
         VcsFileRevision revision = (VcsFileRevision) element;
         return revision.getRevisionNumber().asString() + " " + revision.getBranchName() + " " + revision.getAuthor();
       }
 
+      @Override
       protected void selectElement(Object element, String selectedText) {
         VcsFileRevision revision = (VcsFileRevision) element;
         TableUtil.selectRows(myComponent, new int[] {myComponent.convertRowIndexToView(revisions.indexOf(revision))});
@@ -287,7 +308,8 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   private static JPanel createCommentsPanel(final TableView<VcsFileRevision> table) {
     final JTextArea textArea = createTextArea();
     table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
+      @Override
+      public void valueChanged(@NotNull ListSelectionEvent e) {
         final VcsFileRevision revision = table.getSelectedObject();
         if (revision == null) {
           textArea.setText("");

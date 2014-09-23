@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.RowInfo;
+import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
@@ -119,6 +120,12 @@ class EmptyVisibleGraph implements VisibleGraph<Integer> {
     @Override
     public Collection<PrintElement> getPrintElements() {
       return Collections.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public RowType getRowType() {
+      return RowType.NORMAL;
     }
   }
 }

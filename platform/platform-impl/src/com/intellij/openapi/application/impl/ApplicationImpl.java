@@ -54,7 +54,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -68,6 +67,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
@@ -76,9 +76,11 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
@@ -119,52 +121,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
   @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"})
   private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
-  private final AtomicInteger myAliveThreads = new AtomicInteger(0);
-  private static final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
 
-  private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
-    3,
-    Integer.MAX_VALUE,
-    5 * 60L,
-    TimeUnit.SECONDS,
-    new SynchronousQueue<Runnable>(),
-    new ThreadFactory() {
-      int i;
-      @NotNull
-      @Override
-      public Thread newThread(@NotNull Runnable r) {
-        final int count = myAliveThreads.incrementAndGet();
-        final Thread thread = new Thread(r, "ApplicationImpl pooled thread "+i++) {
-          @Override
-          public void interrupt() {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Interrupted worker, will remove from pool");
-            }
-            super.interrupt();
-          }
-
-          @Override
-          public void run() {
-            try {
-              super.run();
-            }
-            catch (Throwable t) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Worker exits due to exception", t);
-              }
-            }
-            myAliveThreads.decrementAndGet();
-          }
-        };
-        if (ApplicationInfoImpl.getShadowInstance().isEAP() && count > ourReasonableThreadPoolSize) {
-          LOG.info("Not enough pooled threads; dumping threads into a file");
-          PerformanceWatcher.getInstance().dumpThreads(true);
-        }
-        thread.setPriority(Thread.NORM_PRIORITY - 1);
-        return thread;
-      }
-    }
-  );
+  private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
   private boolean myIsFiringLoadingEvent = false;
   private boolean myLoaded = false;
   @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
@@ -336,25 +294,26 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
-    final CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    final boolean[] canClose = {true};
-    for (final Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
-      try {
-        commandProcessor.executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
-            if (!manager.closeProject(project, true, true, checkCanCloseProject)) {
-              canClose[0] = false;
+    final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
+    if (manager != null) {
+      final boolean[] canClose = {true};
+      for (final Project project : manager.getOpenProjects()) {
+        try {
+          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+            @Override
+            public void run() {
+              if (!manager.closeProject(project, true, true, checkCanCloseProject)) {
+                canClose[0] = false;
+              }
             }
-          }
-        }, ApplicationBundle.message("command.exit"), null);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-      if (!canClose[0]) {
-        return false;
+          }, ApplicationBundle.message("command.exit"), null);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+        if (!canClose[0]) {
+          return false;
+        }
       }
     }
     runWriteAction(new Runnable() {
@@ -529,9 +488,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load(String path) throws IOException, InvalidDataException {
-    getStateStore().setOptionsPath(path);
-    getStateStore().setConfigPath(PathManager.getConfigPath());
+  public void load(@Nullable String optionsPath) throws IOException {
+    load(PathManager.getConfigPath(), optionsPath == null ? PathManager.getOptionsPath() : optionsPath);
+  }
+
+  public void load(@NotNull String configPath, @NotNull String optionsPath) throws IOException {
+    IApplicationStore store = getStateStore();
+    store.setOptionsPath(optionsPath);
+    store.setConfigPath(configPath);
 
     myIsFiringLoadingEvent = true;
     try {
@@ -543,7 +507,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     HeavyProcessLatch.INSTANCE.processStarted();
     try {
-      getStateStore().load();
+      store.load();
     }
     catch (StateStorageException e) {
       throw new IOException(e.getMessage());
