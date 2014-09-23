@@ -14,7 +14,7 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_I18N_MESSAGES = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_SUPPRESS_WARNINGS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_END_OF_LINE_COMMENTS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = false;
 
   @Override
   public boolean isCollapseImports() {

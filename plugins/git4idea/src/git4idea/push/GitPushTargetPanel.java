@@ -68,7 +68,6 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     String initialBranch;
     String initialRemote;
     if (defaultTarget == null) {
-      // TODO
       initialBranch = "";
       initialRemote = NO_REMOTES;
     }
@@ -92,6 +91,11 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     setOpaque(false);
     add(myRemoteLabel, BorderLayout.WEST);
     add(myTargetTextField, BorderLayout.CENTER);
+    updateTextField();
+  }
+
+  private void updateTextField() {
+    myTargetTextField.setVisible(!myRepository.getRemotes().isEmpty());
   }
 
   private void showRemoteSelector() {
@@ -121,7 +125,7 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     String targetName = myTargetTextField.getText();
     if (StringUtil.isEmptyOrSpaces(targetName)) {
-      renderer.append("Specify remote branch to push", SimpleTextAttributes.ERROR_ATTRIBUTES, this);
+      renderer.append(NO_REMOTES, SimpleTextAttributes.ERROR_ATTRIBUTES, this);
     }
     else {
       GitPushTarget target = getValue();
