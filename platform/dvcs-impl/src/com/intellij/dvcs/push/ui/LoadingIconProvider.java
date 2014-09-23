@@ -15,29 +15,23 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 
-public class LoadingTreeNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode {
+class LoadingIconProvider {
 
   private static final String LOADING_ICON = "/icons/loading.gif";
   private static final JBImageIcon EMPTY_ICON = new JBImageIcon(UIUtil.createImage(18, 18, BufferedImage.TYPE_3BYTE_BGR));
-  @NotNull private ImageIcon myLoadingIcon;
-
-  public LoadingTreeNode() {
-    super(null, false);
-    myLoadingIcon = getLoadingIcon();
-  }
 
   @NotNull
   public static JBImageIcon getLoadingIcon() {
@@ -45,16 +39,34 @@ public class LoadingTreeNode extends DefaultMutableTreeNode implements CustomRen
     return image == null ? EMPTY_ICON : new JBImageIcon(image);
   }
 
-  @Override
-  public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    renderer.setIcon(myLoadingIcon);
-    // loading icon should be on the left and do not inherit parent config
-    renderer.setIconOnTheRight(false);
-    renderer.append("Loading Commits...", new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, JBColor.GRAY));
+  @NotNull
+  public static ImageObserver createObserver(@NotNull JTree tree, @NotNull TreeNode treeNode) {
+    return new NodeImageObserver(tree, treeNode);
   }
 
-  @NotNull
-  public ImageIcon getIcon() {
-    return myLoadingIcon;
+  private static class NodeImageObserver implements ImageObserver {
+    @NotNull private final JTree myTree;
+    @NotNull private final DefaultTreeModel myModel;
+    @NotNull private final TreeNode myNode;
+
+    NodeImageObserver(@NotNull JTree tree, @NotNull TreeNode node) {
+      myTree = tree;
+      myModel = (DefaultTreeModel)tree.getModel();
+      myNode = node;
+    }
+
+    public boolean imageUpdate(Image img, int flags, int x, int y, int w, int h) {
+      if ((flags & (FRAMEBITS | ALLBITS)) != 0) {
+        TreeNode[] pathToRoot = myModel.getPathToRoot(myNode);
+        if (pathToRoot != null) {
+          TreePath path = new TreePath(pathToRoot);
+          Rectangle rect = myTree.getPathBounds(path);
+          if (rect != null) {
+            myTree.repaint(rect);
+          }
+        }
+      }
+      return (flags & (ALLBITS | ABORT)) == 0;
+    }
   }
 }

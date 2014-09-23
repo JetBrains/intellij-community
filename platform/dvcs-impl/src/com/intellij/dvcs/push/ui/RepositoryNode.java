@@ -45,7 +45,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     setChecked(false);
     setEnabled(enabled);
     myRepositoryPanel = repositoryPanel;
-    myLoadingIcon = LoadingTreeNode.getLoadingIcon();
+    myLoadingIcon = LoadingIconProvider.getLoadingIcon();
   }
 
   public boolean isCheckboxVisible() {
@@ -102,7 +102,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
   public void startLoading(@NotNull JTree tree, @NotNull Future<AtomicReference<OutgoingResult>> future) {
     myFuture = future;
     myLoading.set(true);
-    myLoadingIcon.setImageObserver(new NodeImageObserver(tree, this));
+    myLoadingIcon.setImageObserver(LoadingIconProvider.createObserver(tree, this));
   }
 
   public int compareTo(@NotNull RepositoryNode repositoryNode) {
