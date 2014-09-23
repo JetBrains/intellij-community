@@ -20,12 +20,8 @@ fun copyLocalConfig() {
   val stateStorageManager = application.getStateStore().getStateStorageManager()
   val streamProvider = stateStorageManager.getStreamProvider()!!
 
-  val fileToComponents = ExportSettingsAction.getExportableComponentsMap()
+  val fileToComponents = ExportSettingsAction.getExportableComponentsMap(true)
   for (file in fileToComponents.keySet()) {
-    if (!file.exists()) {
-      continue
-    }
-
     val roamingType = getRoamingType(file, fileToComponents)
     if (roamingType == RoamingType.DISABLED) {
       continue
