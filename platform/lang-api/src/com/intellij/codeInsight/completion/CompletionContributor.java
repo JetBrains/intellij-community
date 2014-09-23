@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
@@ -30,7 +31,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Completion FAQ:<p>
@@ -174,7 +178,6 @@ public abstract class CompletionContributor {
   }
 
   /**
-   * @param parameters
    * @deprecated use {@link com.intellij.codeInsight.completion.CompletionResultSet#addLookupAdvertisement(String)}
    * @return text to be shown at the bottom of lookup list
    */
@@ -241,7 +244,28 @@ public abstract class CompletionContributor {
 
   @NotNull
   public static List<CompletionContributor> forLanguage(@NotNull Language language) {
-    return MyExtensionPointManager.INSTANCE.forKey(language);
+    List<CompletionContributor> contributors = MyExtensionPointManager.INSTANCE.forKey(language);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final List<Class> classes = ContainerUtil.map(contributors, new Function<CompletionContributor, Class>() {
+        @Override
+        public Class fun(CompletionContributor contributor) {
+          return contributor.getClass();
+        }
+      });
+      final Set<Class> uniques = new THashSet<Class>(classes);
+      if (uniques.size() != classes.size()) {
+        Class duplicate = ContainerUtil.find(classes, new Condition<Class>() {
+          @Override
+          public boolean value(Class aClass) {
+            return !uniques.remove(aClass);
+          }
+        });
+        if (duplicate != null) {
+          throw new AssertionError("Duplicate completion contributor registered: "+duplicate);
+        }
+      }
+    }
+    return contributors;
   }
 
   private static class MyExtensionPointManager extends KeyedExtensionCollector<CompletionContributor, Language> {
@@ -254,7 +278,7 @@ public abstract class CompletionContributor {
     @NotNull
     @Override
     protected List<CompletionContributor> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-      final THashSet<String> allowed = new THashSet<String>();
+      Set<String> allowed = new THashSet<String>();
       while (key != null) {
         allowed.add(keyToString(key));
         key = key.getBaseLanguage();

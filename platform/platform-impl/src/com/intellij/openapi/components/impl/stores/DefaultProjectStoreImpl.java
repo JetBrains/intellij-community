@@ -19,6 +19,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -135,6 +136,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       @Override
       public StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         return storage;
+      }
+
+      @NotNull
+      @Override
+      public Couple<Collection<FileBasedStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted) {
+        return new Couple<Collection<FileBasedStorage>>(Collections.<FileBasedStorage>emptyList(), Collections.<FileBasedStorage>emptyList());
       }
 
       @Override
