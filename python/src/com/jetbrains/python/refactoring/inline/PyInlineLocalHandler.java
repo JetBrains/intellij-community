@@ -31,7 +31,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -187,7 +190,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
           public void run() {
             final PsiElement[] exprs = new PsiElement[refsToInline.length];
             final PyExpression value = prepareValue(def, localName, project);
-            final PyExpression withParent = PyElementGenerator.getInstance(project).createExpressionFromText("(" + value.getText() + ")");
+            final PyExpression withParenthesis = PyElementGenerator.getInstance(project).createExpressionFromText("(" + value.getText() + ")");
             final PsiElement lastChild = def.getLastChild();
             if (lastChild != null && lastChild.getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
               final PsiElement parent = def.getParent();
@@ -197,7 +200,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
             for (int i = 0, refsToInlineLength = refsToInline.length; i < refsToInlineLength; i++) {
               final PsiElement element = refsToInline[i];
               if (PyReplaceExpressionUtil.isNeedParenthesis((PyExpression)element, value)) {
-                exprs[i] = element.replace(withParent);
+                exprs[i] = element.replace(withParenthesis);
               } else {
                 exprs[i] = element.replace(value);
               }

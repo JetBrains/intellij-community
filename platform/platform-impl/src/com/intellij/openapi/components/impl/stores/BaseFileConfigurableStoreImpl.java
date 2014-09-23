@@ -95,12 +95,14 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
       return result;
     }
 
-    @Override
     @Nullable
-    public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
-      final BaseStorageData data = (BaseStorageData)storageData;
-      if (myVersion != data.myVersion) return null;
-      return super.getDifference(storageData, substitutor);
+    @Override
+    public Set<String> getChangedComponentNames(@NotNull StorageData storageData, @Nullable PathMacroSubstitutor substitutor) {
+      BaseStorageData data = (BaseStorageData)storageData;
+      if (myVersion != data.myVersion) {
+        return null;
+      }
+      return super.getChangedComponentNames(storageData, substitutor);
     }
   }
 

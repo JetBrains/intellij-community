@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
@@ -133,47 +132,8 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   }
 
   @Override
-  public boolean reload(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles,
-                        @NotNull final Collection<String> notReloadableComponents) throws StateStorageException, IOException {
-    final SaveSession saveSession = startSave();
-    final Set<String> componentNames = saveSession.analyzeExternalChanges(changedFiles);
-
-    try {
-      if (componentNames == null) return false;
-
-      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        if (pair.second == null) return false;
-      }
-
-      for (String name : componentNames) {
-        if (!isReloadPossible(Collections.singleton(name))) {
-          notReloadableComponents.add(name);
-        }
-      }
-
-      StorageUtil.logStateDiffInfo(changedFiles, componentNames);
-
-      if (!isReloadPossible(componentNames)) {
-        return false;
-      }
-    }
-    finally {
-      finishSave(saveSession);
-    }
-
-    if (!componentNames.isEmpty()) {
-      myApplication.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
-
-      try {
-        doReload(changedFiles, componentNames);
-        reinitComponents(componentNames, false);
-      }
-      finally {
-        myApplication.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
-      }
-    }
-
-    return true;
+  public Collection<String> reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException {
+    return reload(changedFiles, myApplication.getMessageBus());
   }
 
   @NotNull
