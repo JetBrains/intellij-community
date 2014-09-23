@@ -188,7 +188,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   @NotNull
-  private static Collection<? extends Change> collectAllChanges(@NotNull RepositoryNode rootNode) {
+  private static Collection<Change> collectAllChanges(@NotNull RepositoryNode rootNode) {
     ArrayList<Change> changes = new ArrayList<Change>();
     if (rootNode.getChildCount() <= 0) return changes;
     for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)rootNode.getFirstChild();
@@ -218,9 +218,19 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       if (selectedNodes.length == 0) {
         return;
       }
-      Object object = selectedNodes[0].getUserObject();
+      DefaultMutableTreeNode node = selectedNodes[0];
+      Object object = node.getUserObject();
+
+      Collection<Change> changes = null;
       if (object instanceof VcsFullCommitDetails) {
-        sink.put(key, ArrayUtil.toObjectArray(((VcsFullCommitDetails)object).getChanges(), Change.class));
+        changes = ((VcsFullCommitDetails)object).getChanges();
+      }
+      else if (node instanceof RepositoryNode) {
+        changes = collectAllChanges((RepositoryNode)node);
+      }
+
+      if (changes != null) {
+        sink.put(key, ArrayUtil.toObjectArray(changes, Change.class));
       }
     }
   }
