@@ -67,30 +67,28 @@ import java.util.Map;
 
 public class LineStatusTrackerManager implements ProjectComponent, LineStatusTrackerManagerI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.LineStatusTrackerManager");
-  public final Object myLock = new Object();
-
-  public static LineStatusTrackerManagerI getInstance(final Project project) {
-    if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) {
-      return Dummy.getInstance();
-    }
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, LineStatusTrackerManagerI.class);
-  }
-
-  @NotNull private final Project myProject;
-
-  private final Map<Document, LineStatusTracker> myLineStatusTrackers;
-  // !!! no state queries and self lock for add/remove
-  // removal from here - not under write action
-  private final QueueProcessorRemovePartner<Document, BaseRevisionLoader> myPartner;
 
   @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
 
+  @NotNull public final Object myLock = new Object();
+
+  @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final VcsBaseContentProvider myStatusProvider;
   @NotNull private final Application myApplication;
   @NotNull private final FileEditorManager myFileEditorManager;
   @NotNull private final Disposable myDisposable;
+
+  @NotNull private final Map<Document, LineStatusTracker> myLineStatusTrackers;
+
+  // !!! no state queries and self lock for add/remove
+  // removal from here - not under write action
+  @NotNull private final QueueProcessorRemovePartner<Document, BaseRevisionLoader> myPartner;
   private long myLoadCounter;
+
+  public static LineStatusTrackerManagerI getInstance(final Project project) {
+    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, LineStatusTrackerManagerI.class);
+  }
 
   public LineStatusTrackerManager(@NotNull final Project project,
                                   @NotNull final ProjectLevelVcsManager vcsManager,
