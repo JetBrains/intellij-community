@@ -39,7 +39,17 @@ public abstract class ServerType<C extends ServerConfiguration> {
   public abstract C createDefaultConfiguration();
 
   @NotNull
-  public abstract UnnamedConfigurable createConfigurable(@NotNull C configuration);
+  public RemoteServerConfigurable createServerConfigurable(@NotNull C configuration) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * @deprecated override {@link #createServerConfigurable(com.intellij.remoteServer.configuration.ServerConfiguration)} instead
+   */
+  @NotNull
+  public UnnamedConfigurable createConfigurable(@NotNull C configuration) {
+    return createServerConfigurable(configuration);
+  }
 
   @NotNull
   public abstract DeploymentConfigurator<?, C> createDeploymentConfigurator(Project project);

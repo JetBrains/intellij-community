@@ -24,7 +24,7 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager;
-import com.intellij.remoteServer.impl.configuration.RemoteServerConfigurable;
+import com.intellij.remoteServer.impl.configuration.SingleRemoteServerConfigurable;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.impl.runtime.log.DeploymentLogManagerImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
@@ -227,7 +227,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @Override
     public void editConfiguration() {
-      ShowSettingsUtil.getInstance().editConfigurable(doGetProject(), new RemoteServerConfigurable(getValue(), null, false));
+      ShowSettingsUtil.getInstance().editConfigurable(doGetProject(), new SingleRemoteServerConfigurable(getValue(), null, false));
     }
 
     @Override

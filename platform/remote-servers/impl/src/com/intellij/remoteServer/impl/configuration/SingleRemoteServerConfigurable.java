@@ -1,13 +1,12 @@
 package com.intellij.remoteServer.impl.configuration;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnection;
@@ -31,14 +30,11 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author nik
  */
-public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>> {
-
-  private static final Logger LOG = Logger.getInstance("#" + RemoteServerConfigurable.class.getName());
-
+public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>> {
   private static final String HELP_TOPIC_ID = "reference.settings.clouds";
 
 
-  private final UnnamedConfigurable myConfigurable;
+  private final RemoteServerConfigurable myConfigurable;
   private final RemoteServer<?> myServer;
   private String myServerName;
   private boolean myNew;
@@ -57,7 +53,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
 
   private CloudDataLoader myDataLoader = CloudDataLoader.NULL;
 
-  public <C extends ServerConfiguration> RemoteServerConfigurable(RemoteServer<C> server, Runnable treeUpdater, boolean isNew) {
+  public <C extends ServerConfiguration> SingleRemoteServerConfigurable(RemoteServer<C> server, Runnable treeUpdater, boolean isNew) {
     super(true, treeUpdater);
     myServer = server;
     myNew = isNew;
@@ -68,13 +64,15 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
     myInnerApplied = false;
     myUncheckedApply = false;
 
-    myConfigurable = server.getType().createConfigurable(innerConfiguration);
+    myConfigurable = createConfigurable(server, innerConfiguration);
 
     myConnected = false;
     myRunner = new DelayedRunner(myMainPanel) {
 
       @Override
       protected boolean wasChanged() {
+        if (!myConfigurable.canCheckConnection()) return false;
+
         boolean modified = myConfigurable.isModified();
         boolean result = modified || myUncheckedApply;
         if (result) {
@@ -104,6 +102,15 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
         myConnectionTester.testConnection();
       }
     };
+  }
+
+  private static <C extends ServerConfiguration> RemoteServerConfigurable createConfigurable(RemoteServer<C> server, C configuration) {
+    try {
+      return server.getType().createServerConfigurable(configuration);
+    }
+    catch (UnsupportedOperationException e) {
+      return new DelegatingRemoteServerConfigurable(server.getType().createConfigurable(configuration));
+    }
   }
 
   private void setConnectionStatus(boolean error, boolean connected, String text) {

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBPasswordField;
 import com.intellij.ui.components.JBRadioButton;
@@ -37,7 +38,7 @@ import java.awt.event.ActionListener;
 /**
 * @author nik
 */
-public class AppEngineCloudConfigurable implements Configurable {
+public class AppEngineCloudConfigurable extends RemoteServerConfigurable implements Configurable {
   public static final String EMAIL_KEY = "GOOGLE_APP_ENGINE_ACCOUNT_EMAIL";
   private final AppEngineServerConfiguration myConfiguration;
   @Nullable private final Project myProject;
@@ -77,6 +78,12 @@ public class AppEngineCloudConfigurable implements Configurable {
 
   public String getEmail() {
     return StringUtil.nullize(myEmailField.getText(), true);
+  }
+
+  @Override
+  public boolean canCheckConnection() {
+    //currently our App Engine implementation actually doesn't connect to the cloud so it makes no sense to show connection status in 'Settings'
+    return false;
   }
 
   @Nls
@@ -163,9 +170,5 @@ public class AppEngineCloudConfigurable implements Configurable {
     return !Comparing.strEqual(getEmail(), myConfiguration.getEmail()) || myConfiguration.isOAuth2() != isOAuth2()
            || myRememberPasswordCheckBox.isSelected() != myConfiguration.isPasswordStored()
            || myRememberPasswordCheckBox.isSelected() && !getPassword().isEmpty();
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 }

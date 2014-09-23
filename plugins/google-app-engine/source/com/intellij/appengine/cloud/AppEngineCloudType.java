@@ -18,9 +18,9 @@ package com.intellij.appengine.cloud;
 import com.intellij.appengine.actions.AppEngineUploader;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.*;
@@ -65,9 +65,10 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     return new AppEngineServerConfiguration();
   }
 
+
   @NotNull
   @Override
-  public UnnamedConfigurable createConfigurable(@NotNull AppEngineServerConfiguration configuration) {
+  public RemoteServerConfigurable createServerConfigurable(@NotNull AppEngineServerConfiguration configuration) {
     return new AppEngineCloudConfigurable(configuration, null);
   }
 
