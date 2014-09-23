@@ -610,6 +610,7 @@ class Test {
   }
 
   public void "test insert boolean literal argument name"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """class Groo {
 
  public void test() {
@@ -667,6 +668,7 @@ class Test {
   }
 
   public void "test do not collapse varargs"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class VarArgTest {
 
@@ -780,6 +782,7 @@ public class CharSymbol {
   }
 
   public void "test inline names if literal expression can be assigned to method parameter"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class CharSymbol {
 
@@ -809,6 +812,7 @@ public class CharSymbol {
   }
 
   public void "test inline negative and positive numbers"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class CharSymbol {
 
@@ -836,6 +840,7 @@ public class CharSymbol {
   }
 
   public void "test inline constructor literal arguments names"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class Test {
 
@@ -866,6 +871,7 @@ public class Test {
   }
 
   public void "test inline anonymous class constructor literal arguments names"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class Test {
 
