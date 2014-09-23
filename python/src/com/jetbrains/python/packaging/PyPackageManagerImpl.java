@@ -131,7 +131,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Override
-  public boolean hasManagement(boolean cachedOnly) {
+  public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
     return (hasPackage(SETUPTOOLS, cachedOnly) || hasPackage(DISTRIBUTE, cachedOnly)) &&
            hasPackage(PIP, cachedOnly);
   }
@@ -160,13 +160,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return dirName;
   }
 
-  private boolean hasPackage(@NotNull String name, boolean cachedOnly) {
-    try {
-      return findPackage(name, cachedOnly) != null;
-    }
-    catch (ExecutionException ignored) {
-      return false;
-    }
+  private boolean hasPackage(@NotNull String name, boolean cachedOnly) throws ExecutionException {
+    return findPackage(name, cachedOnly) != null;
   }
 
   PyPackageManagerImpl(@NotNull Sdk sdk) {

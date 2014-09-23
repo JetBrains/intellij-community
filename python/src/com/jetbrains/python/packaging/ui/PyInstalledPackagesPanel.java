@@ -108,6 +108,9 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         catch (PyExecutionException e) {
           exception = e;
         }
+        catch (ExecutionException e) {
+          return;
+        }
         final PyExecutionException problem = exception;
         application.invokeLater(new Runnable() {
           @Override

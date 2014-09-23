@@ -304,7 +304,13 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       boolean installManagement = false;
       final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
-      if (!manager.hasManagement(false)) {
+      boolean hasManagement = false;
+      try {
+        hasManagement = manager.hasManagement(false);
+      }
+      catch (ExecutionException ignored) {
+      }
+      if (!hasManagement) {
         final int result = Messages.showYesNoDialog(project,
                                                     "Python packaging tools are required for installing packages. Do you want to " +
                                                     "install 'pip' and 'setuptools' for your interpreter?",

@@ -42,7 +42,7 @@ public abstract class PyPackageManager {
   }
 
   public abstract void installManagement() throws ExecutionException;
-  public abstract boolean hasManagement(boolean cachedOnly);
+  public abstract boolean hasManagement(boolean cachedOnly) throws ExecutionException;
   public abstract void install(@NotNull String requirementString) throws ExecutionException;
   public abstract void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException;
   public abstract void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException;
