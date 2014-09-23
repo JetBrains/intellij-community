@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,39 +15,28 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class JBTextField extends JTextField implements ComponentWithEmptyText {
-  private TextComponentEmptyText myEmptyText;
+/**
+ * @author nik
+ */
+public class JBPasswordField extends JPasswordField implements ComponentWithEmptyText {
+  private final TextComponentEmptyText myEmptyText;
 
-  public JBTextField() {
-    init();
-  }
-
-  public JBTextField(int i) {
-    super(i);
-    init();
-  }
-
-  public JBTextField(String s) {
-    super(s);
-    init();
-  }
-
-  public JBTextField(String s, int i) {
-    super(s, i);
-    init();
-  }
-
-  private void init() {
-    UIUtil.addUndoRedoActions(this);
+  public JBPasswordField() {
     myEmptyText = new TextComponentEmptyText(this);
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    myEmptyText.paintStatusText(g);
   }
 
   @NotNull
@@ -56,9 +45,12 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
     return myEmptyText;
   }
 
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    myEmptyText.paintStatusText(g);
+  public void setPasswordIsStored(boolean stored) {
+    if (stored) {
+      myEmptyText.setText("<hidden>", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    }
+    else {
+      myEmptyText.clear();
+    }
   }
 }
