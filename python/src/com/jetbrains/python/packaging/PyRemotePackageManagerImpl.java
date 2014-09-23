@@ -117,12 +117,12 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
               }
             }
           });
-          throw new PyExternalProcessException(helperPath, args, "Vagrant instance is down. <a href=\"" +
+          throw new PyExecutionException(helperPath, args, "Vagrant instance is down. <a href=\"" +
                                                                                              LAUNCH_VAGRANT +
                                                                                              "\">Launch vagrant</a>", fixes);
         }
         else {
-          throw new PyExternalProcessException(helperPath, args, e.getMessage());
+          throw new PyExecutionException(helperPath, args, e.getMessage());
         }
       }
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
@@ -154,16 +154,16 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
           return processOutput;
         }
         catch (ExecutionException e) {
-          throw new PyExternalProcessException(helperPath, args, "Error running SDK: " + e.getMessage());
+          throw new PyExecutionException(helperPath, args, "Error running SDK: " + e.getMessage());
         }
       }
       else {
-        throw new PyExternalProcessException(helperPath, args,
+        throw new PyExecutionException(helperPath, args,
                                              PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
       }
     }
     else {
-      throw new PyExternalProcessException(helperPath, args, "Invalid remote SDK");
+      throw new PyExecutionException(helperPath, args, "Invalid remote SDK");
     }
   }
 

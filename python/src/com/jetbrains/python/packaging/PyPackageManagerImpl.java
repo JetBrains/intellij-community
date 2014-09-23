@@ -424,11 +424,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, showProgress, workingDir);
     final int exitCode = output.getExitCode();
     if (output.isTimeout()) {
-      throw new PyExternalProcessException(path, args, "Timed out");
+      throw new PyExecutionException(path, args, "Timed out");
     }
     else if (exitCode != 0) {
       final String message = output.getStderr() + "\n" + output.getStdout();
-      throw new PyExternalProcessException(path, args, message);
+      throw new PyExecutionException(path, args, message);
     }
     return output.getStdout();
   }
@@ -499,7 +499,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (StringUtil.isEmptyOrSpaces(message)) {
           message = "Failed to perform action. Permission denied.";
         }
-        throw new PyExternalProcessException(helperPath, args, message);
+        throw new PyExecutionException(helperPath, args, message);
       }
       return result;
     }
@@ -507,10 +507,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw e;
     }
     catch (ExecutionException e) {
-      throw new PyExternalProcessException(helperPath, args, e.getMessage());
+      throw new PyExecutionException(helperPath, args, e.getMessage());
     }
     catch (IOException e) {
-      throw new PyExternalProcessException(helperPath, args, e.getMessage());
+      throw new PyExecutionException(helperPath, args, e.getMessage());
     }
   }
 
@@ -521,7 +521,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     for (String line : lines) {
       final List<String> fields = StringUtil.split(line, "\t");
       if (fields.size() < 3) {
-        throw new PyExternalProcessException(PACKAGING_TOOL, Collections.<String>emptyList(), "Invalid output format");
+        throw new PyExecutionException(PACKAGING_TOOL, Collections.<String>emptyList(), "Invalid output format");
       }
       final String name = fields.get(0);
       final String version = fields.get(1);

@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 /**
  * @author vlan
  */
-public class PyExternalProcessException extends ExecutionException {
+public class PyExecutionException extends ExecutionException {
   private static final Pattern WITH_CR_DELIMITER_PATTERN = Pattern.compile("(?<=\r|\n|\r\n)");
 
   @NotNull private String myName;
@@ -35,12 +35,12 @@ public class PyExternalProcessException extends ExecutionException {
   @NotNull private String myMessage;
   @NotNull private final List<? extends PyExecutionFix> myFixes;
 
-  public PyExternalProcessException(@NotNull String name, @NotNull List<String> args, @NotNull String message) {
+  public PyExecutionException(@NotNull String name, @NotNull List<String> args, @NotNull String message) {
     this(name, args, message, Collections.<PyExecutionFix>emptyList());
   }
 
-  public PyExternalProcessException(@NotNull String name, @NotNull List<String> args, @NotNull String message,
-                                    @NotNull List<? extends PyExecutionFix> fixes) {
+  public PyExecutionException(@NotNull String name, @NotNull List<String> args, @NotNull String message,
+                              @NotNull List<? extends PyExecutionFix> fixes) {
     super(String.format("External process error '%s %s':\n%s", name, StringUtil.join(args, " "), message));
     myName = name;
     myArgs = args;

@@ -97,18 +97,18 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        PyExternalProcessException exception = null;
+        PyExecutionException exception = null;
         try {
           myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement(false);
           if (!myHasManagement) {
-            throw new PyExternalProcessException("pip", Collections.<String>emptyList(), "Python packaging tools not found",
+            throw new PyExecutionException("pip", Collections.<String>emptyList(), "Python packaging tools not found",
                                            ImmutableList.of(new PyInstallPackageManagementFix()));
           }
         }
-        catch (PyExternalProcessException e) {
+        catch (PyExecutionException e) {
           exception = e;
         }
-        final PyExternalProcessException problem = exception;
+        final PyExecutionException problem = exception;
         application.invokeLater(new Runnable() {
           @Override
           public void run() {
