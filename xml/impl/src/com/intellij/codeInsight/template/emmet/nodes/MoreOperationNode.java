@@ -31,7 +31,7 @@ public class MoreOperationNode extends ZenCodingNode {
   private final ZenCodingNode myLeftOperand;
   private final ZenCodingNode myRightOperand;
 
-  public MoreOperationNode(ZenCodingNode leftOperand, ZenCodingNode rightOperand) {
+  public MoreOperationNode(@NotNull ZenCodingNode leftOperand, @NotNull ZenCodingNode rightOperand) {
     myLeftOperand = leftOperand;
     myRightOperand = rightOperand;
   }
