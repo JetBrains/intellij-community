@@ -916,7 +916,7 @@ Function ConfirmDesktopShortcut
   inetc::get "http://www.jetbrains.com/updates/python.txt" "$INSTDIR\python\python.txt"
   ${LineSum} "$INSTDIR\python\python.txt" $R0
   IfErrors cantOpenFile
-  StrCmp $R0 "2" getPythonInfo
+  StrCmp $R0 "4" getPythonInfo
 cantOpenFile:  
   MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded."
   goto association
