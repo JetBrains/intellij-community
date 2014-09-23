@@ -3,9 +3,9 @@ package org.jetbrains.settingsRepository
 import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.transport.URIish
 import com.intellij.util.ui.UIUtil
-import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.PathUtilRt
+import com.intellij.openapi.util.Computable
 
 public fun String?.nullize(): String? = StringUtil.nullize(this)
 
@@ -14,9 +14,8 @@ public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: 
     throw AssertionError("showAuthenticationForm called from tests")
   }
 
-  var filledCredentials: Credentials? = null
-  UIUtil.invokeAndWaitIfNeeded(object : Runnable {
-    override fun run() {
+  return UIUtil.invokeAndWaitIfNeeded(object : Computable<Credentials?> {
+    override fun compute(): Credentials? {
       val note = if (sshKeyFile == null) IcsBundle.message(if (host == "github.com") "login.github.note" else "login.other.git.provider.note") else null
       val authenticationForm = RepositoryAuthenticationForm(if (sshKeyFile == null) {
         IcsBundle.message("log.in.to", StringUtil.trimMiddle(uri, 50))
@@ -27,11 +26,13 @@ public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: 
       if (authenticationForm.showAndGet()) {
         val username = sshKeyFile ?: authenticationForm.getUsername()
         val passwordChars = authenticationForm.getPassword()
-        filledCredentials = Credentials(username, if (passwordChars == null) (if (username == null) null else "x-oauth-basic") else String(passwordChars))
+        return Credentials(username, if (passwordChars == null) (if (username == null) null else "x-oauth-basic") else String(passwordChars))
+      }
+      else {
+        return null
       }
     }
   })
-  return filledCredentials
 }
 
 public data class Credentials(username: String?, password: String?) {

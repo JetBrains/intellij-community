@@ -33,6 +33,8 @@ import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.ui.Messages
 import javax.swing.SwingUtilities
+import com.intellij.util.ui.UIUtil
+import com.intellij.openapi.util.Computable
 
 val PLUGIN_NAME: String = "Settings Repository"
 
@@ -47,17 +49,21 @@ enum class SyncType {
 class AuthenticationException(message: String, cause: Throwable) : Exception(message, cause)
 
 private fun getPathToBundledFile(filename: String): String {
-  val url = javaClass<IcsManager>().getResource("")!!
-  val folder: String
-  if ("jar" == url.getProtocol()) {
+  var pluginsDirectory: String
+  var folder = "/settings-repository"
+  if ("jar" == javaClass<IcsManager>().getResource("")!!.getProtocol()) {
     // running from build
-    folder = "/plugins/settings-repository"
+    pluginsDirectory = PathManager.getPluginsPath()
+    if (!File(pluginsDirectory + folder).exists()) {
+      pluginsDirectory = PathManager.getHomePath()
+      folder = "/plugins" + folder
+    }
   }
   else {
     // running from sources
-    folder = "/settings-repository"
+    pluginsDirectory = PathManager.getHomePath()
   }
-  return FileUtil.toSystemDependentName(PathManager.getHomePath() + folder + "/lib/" + filename)
+  return FileUtil.toSystemDependentName(pluginsDirectory + folder + "/lib/" + filename)
 }
 
 fun getPluginSystemDir(): File {
@@ -70,39 +76,7 @@ fun getPluginSystemDir(): File {
   }
 }
 
-private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResult: UpdateResult) {
-  val changedComponentNames = LinkedHashSet<String>()
-  val stateStorages = store.getStateStorageManager().getCachedFileStateStorages(updateResult.changed, updateResult.deleted)
-  val changed = stateStorages.first!!
-  val deleted = stateStorages.second!!
-  if (changed.isEmpty() && deleted.isEmpty()) {
-    return
-  }
-
-  val notReloadableComponents: Collection<String>
-  val token = WriteAction.start()
-  try {
-    updateStateStorage(changedComponentNames, changed, false)
-    updateStateStorage(changedComponentNames, deleted, true)
-
-    if (changedComponentNames.isEmpty()) {
-      return
-    }
-
-    notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
-    if (notReloadableComponents.isEmpty()) {
-      store.reinitComponents(changedComponentNames, false)
-      return
-    }
-  }
-  finally {
-    token.finish()
-  }
-
-  askToRestart(notReloadableComponents)
-}
-
-private fun askToRestart(notReloadableComponents: Collection<String>) {
+private fun askToRestart(notReloadableComponents: Collection<String>): Boolean {
   var message = StringBuilder("Application components were changed externally and cannot be reloaded:\n")
   for (component in notReloadableComponents) {
     message.append(component).append('\n')
@@ -112,11 +86,7 @@ private fun askToRestart(notReloadableComponents: Collection<String>) {
   val canRestart = application.isRestartCapable()
   message.append("\nWould you like to ").append(if (canRestart) "restart" else "shutdown").append(' ')
   message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?')
-
-  if (Messages.showYesNoDialog(message.toString(), "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES) {
-    // force to avoid saveAll & confirmation
-    application.exit(true, true, true, true)
-  }
+  return Messages.showYesNoDialog(message.toString(), "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES
 }
 
 private fun updateStateStorage(changedComponentNames: Set<String>, stateStorages: Collection<FileBasedStorage>, deleted: Boolean) {
@@ -227,7 +197,7 @@ public class IcsManager : ApplicationLoadListener {
     ApplicationManager.getApplication()!!.assertIsDispatchThread()
 
     var exception: Throwable? = null
-
+    var restartApplication = false
     cancelAndDisableAutoCommit()
     try {
       ApplicationManager.getApplication()!!.saveSettings()
@@ -284,9 +254,7 @@ public class IcsManager : ApplicationLoadListener {
           }
 
           if (updateResult != null) {
-            invokeAndWaitIfNeed {
-              updateStoragesFromStreamProvider((ApplicationManager.getApplication() as ApplicationImpl).getStateStore(), updateResult!!)
-            }
+            restartApplication = updateStoragesFromStreamProvider((ApplicationManager.getApplication() as ApplicationImpl).getStateStore(), updateResult!!)
           }
         }
       })
@@ -294,6 +262,12 @@ public class IcsManager : ApplicationLoadListener {
     finally {
       autoCommitEnabled = true
       writeAndDeleteProhibited = false
+    }
+
+    if (restartApplication) {
+      // force to avoid saveAll & confirmation
+      (ApplicationManager.getApplication() as ApplicationImpl).exit(true, true, true, true)
+      return
     }
 
     if (exception != null) {
@@ -367,4 +341,40 @@ public class IcsManager : ApplicationLoadListener {
 
 fun invokeAndWaitIfNeed(runnable: ()->Unit) {
   if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)
+}
+
+private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResult: UpdateResult): Boolean {
+  val changedComponentNames = LinkedHashSet<String>()
+  val stateStorages = store.getStateStorageManager().getCachedFileStateStorages(updateResult.changed, updateResult.deleted)
+  val changed = stateStorages.first!!
+  val deleted = stateStorages.second!!
+  if (changed.isEmpty() && deleted.isEmpty()) {
+    return false
+  }
+
+  return UIUtil.invokeAndWaitIfNeeded(object : Computable<Boolean> {
+    override fun compute(): Boolean {
+      val notReloadableComponents: Collection<String>
+      val token = WriteAction.start()
+      try {
+        updateStateStorage(changedComponentNames, changed, false)
+        updateStateStorage(changedComponentNames, deleted, true)
+
+        if (changedComponentNames.isEmpty()) {
+          return false
+        }
+
+        notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
+        if (notReloadableComponents.isEmpty()) {
+          store.reinitComponents(changedComponentNames, false)
+          return false
+        }
+      }
+      finally {
+        token.finish()
+      }
+
+      return askToRestart(notReloadableComponents)
+    }
+  })!!
 }
