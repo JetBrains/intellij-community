@@ -100,7 +100,7 @@ public class LineStatusTracker {
     synchronized (myLock) {
       try {
         if (myReleased) return;
-        if (myBaseRevisionNumber != null && myBaseRevisionNumber.after(baseRevisionNumber)) return;
+        if (myBaseRevisionNumber != null && myBaseRevisionNumber.contains(baseRevisionNumber)) return;
 
         myBaseRevisionNumber = baseRevisionNumber;
 
@@ -907,9 +907,9 @@ public class LineStatusTracker {
       return myRevision;
     }
 
-    public boolean after(final RevisionPack previous) {
-      if (myRevision.equals(previous.getRevision())) return false;
-      return myNumber > previous.getNumber();
+    public boolean contains(final RevisionPack previous) {
+      if (myRevision.equals(previous.getRevision()) && !myRevision.equals(VcsRevisionNumber.NULL)) return true;
+      return myNumber >= previous.getNumber();
     }
 
     @Override
