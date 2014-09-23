@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,41 +15,31 @@
  */
 package git4idea.push;
 
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.repo.GitRemote;
+import git4idea.config.UpdateMethod;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Kirill Likhodedov
- */
-public class GitPushSpec {
+// holds settings chosen in GitRejectedPushUpdate dialog to reuse if the next push is rejected again.
+class PushUpdateSettings {
 
-  @NotNull private final GitLocalBranch mySource;
-  @NotNull private final GitRemoteBranch myDest;
+  private final boolean myUpdateAllRoots;
+  @NotNull private final UpdateMethod myUpdateMethod;
 
-  GitPushSpec(@NotNull GitLocalBranch source, @NotNull GitRemoteBranch dest) {
-    myDest = dest;
-    mySource = source;
+  PushUpdateSettings(boolean updateAllRoots, @NotNull UpdateMethod updateMethod) {
+    myUpdateAllRoots = updateAllRoots;
+    myUpdateMethod = updateMethod;
+  }
+
+  boolean shouldUpdateAllRoots() {
+    return myUpdateAllRoots;
   }
 
   @NotNull
-  public GitRemote getRemote() {
-    return myDest.getRemote();
-  }
-
-  @NotNull
-  public GitLocalBranch getSource() {
-    return mySource;
-  }
-
-  @NotNull
-  public GitRemoteBranch getDest() {
-    return myDest;
+  UpdateMethod getUpdateMethod() {
+    return myUpdateMethod;
   }
 
   @Override
   public String toString() {
-    return mySource + "->" + myDest;
+    return String.format("UpdateSettings{myUpdateAllRoots=%s, myUpdateMethod=%s}", myUpdateAllRoots, myUpdateMethod);
   }
 }

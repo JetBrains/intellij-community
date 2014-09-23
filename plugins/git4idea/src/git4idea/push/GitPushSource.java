@@ -13,13 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.branch;
+package git4idea.push;
 
+import com.intellij.dvcs.push.PushSource;
+import git4idea.GitLocalBranch;
 import org.jetbrains.annotations.NotNull;
 
-public interface DvcsSyncBranchSettings {
-  @NotNull
-  DvcsBranchSync getSyncSetting();
+class GitPushSource implements PushSource {
 
-  void setSyncSetting(@NotNull DvcsBranchSync syncSetting);
+  @NotNull private final GitLocalBranch myBranch;
+
+  GitPushSource(@NotNull GitLocalBranch branch) {
+    myBranch = branch;
+  }
+
+  @NotNull
+  @Override
+  public String getPresentation() {
+    return myBranch.getName();
+  }
+
+  @NotNull
+  public GitLocalBranch getBranch() {
+    return myBranch;
+  }
 }

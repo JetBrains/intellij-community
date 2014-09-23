@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.branch;
+package x;
 
-public enum DvcsBranchSync {
-  SYNC,
-  DONT,
-  NOT_DECIDED
+public interface I {
+    void ffffff();
+}
+
+class XI implements I {
+    public void ffffff() {
+    }
+  public void <warning descr="Method 'ffffff2()' is never used">ffffff2</warning>() {
+  }
 }

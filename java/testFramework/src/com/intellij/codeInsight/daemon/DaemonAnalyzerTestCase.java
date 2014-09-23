@@ -342,6 +342,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   public void allowTreeAccessForFile(@NotNull VirtualFile file) {
     myFileTreeAccessFilter.allowTreeAccessForFile(file);
   }
+  public void allowTreeAccessForAllFiles() {
+    myFileTreeAccessFilter.allowTreeAccessForAllFiles();
+  }
 
   @NotNull
   protected List<HighlightInfo> highlightErrors() {

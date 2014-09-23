@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @author nik
@@ -39,6 +40,23 @@ public class ParametersListUtil {
     @Override
     public String fun(List<String> strings) {
       return StringUtil.join(strings, " ");
+    }
+  };
+  public static final  Function<String, List<String>> COLON_LINE_PARSER = new Function<String, List<String>>() {
+    @Override
+    public List<String> fun(String text) {
+      final ArrayList<String> result = ContainerUtilRt.newArrayList();
+      final StringTokenizer tokenizer = new StringTokenizer(text, ";", false);
+      while (tokenizer.hasMoreTokens()) {
+        result.add(tokenizer.nextToken());
+      }
+      return result;
+    }
+  };
+  public static final  Function<List<String>, String> COLON_LINE_JOINER = new Function<List<String>, String>() {
+    @Override
+    public String fun(List<String> strings) {
+      return StringUtil.join(strings, ";");
     }
   };
 

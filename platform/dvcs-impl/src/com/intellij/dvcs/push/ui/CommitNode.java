@@ -26,35 +26,31 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-public class VcsFullCommitDetailsNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode, TooltipNode {
+public class CommitNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode, TooltipNode {
 
   @NotNull private final Project myProject;
-  private final VcsFullCommitDetails myCommit;
 
-  public VcsFullCommitDetailsNode(@NotNull Project project, @NotNull VcsFullCommitDetails commit) {
+  public CommitNode(@NotNull Project project, @NotNull VcsFullCommitDetails commit) {
     super(commit, false);
     myProject = project;
-    myCommit = commit;
   }
 
   @Override
   public VcsFullCommitDetails getUserObject() {
-    return myCommit;
+    return (VcsFullCommitDetails)super.getUserObject();
   }
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    String subject = StringUtil.shortenTextWithEllipsis(myCommit.getSubject(), 80, 0);
-    renderer.append(subject, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, renderer.getForeground()));
+    String subject = StringUtil.shortenTextWithEllipsis(getUserObject().getSubject(), 80, 0);
+    renderer.append(subject, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground()));
   }
 
   public String getTooltip() {
-    return DvcsUtil.getShortHash(myCommit.getId().toString()) +
-           "  " +
-           DvcsUtil.getDateString(myCommit) +
-           "  by " +
-           myCommit.getAuthor().getName() +
-           "\n\n" +
-           IssueLinkHtmlRenderer.formatTextWithLinks(myProject, myCommit.getFullMessage());
+    String hash = DvcsUtil.getShortHash(getUserObject().getId().toString());
+    String date = DvcsUtil.getDateString(getUserObject());
+    String author = getUserObject().getAuthor().getName();
+    String message = IssueLinkHtmlRenderer.formatTextWithLinks(myProject, getUserObject().getFullMessage());
+    return String.format("%s  %s  by %s\n\n%s", hash, date, author, message);
   }
 }

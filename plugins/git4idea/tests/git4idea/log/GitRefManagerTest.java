@@ -3,8 +3,6 @@ package git4idea.log;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,17 +12,18 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
-import git4idea.branch.GitBranchesCollection;
-import git4idea.repo.*;
+import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRemote;
 import git4idea.test.GitMockRepositoryManager;
+import git4idea.test.MockGitRepository;
+import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class GitRefManagerTest extends UsefulTestCase {
 
-  public static final MockVirtualFile MOCK_VIRTUAL_FILE = new MockVirtualFile("mockFile");
+  public static final MockVirtualFile ROOT = new MockVirtualFile("mockFile");
 
   public void testEmpty() {
     check(Collections.<VcsRef>emptyList(), Collections.<VcsRef>emptyList());
@@ -133,7 +132,7 @@ public class GitRefManagerTest extends UsefulTestCase {
   }
 
   private static VcsRef ref(String hash, String name, VcsRefType type) {
-    return new VcsRefImpl(HashImpl.build(hash), name, type, MOCK_VIRTUAL_FILE);
+    return new VcsRefImpl(HashImpl.build(hash), name, type, ROOT);
   }
 
   private static void check(Collection<VcsRef> unsorted, List<VcsRef> expected) {
@@ -147,7 +146,7 @@ public class GitRefManagerTest extends UsefulTestCase {
 
   private static List<VcsRef> sort(final Collection<VcsRef> refs) {
     final GitMockRepositoryManager manager = new GitMockRepositoryManager();
-    manager.add(new MockGitRepository() {
+    manager.add(new MockGitRepository(EasyMock.createMock(Project.class), ROOT) {
       @NotNull
       @Override
       public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
@@ -204,122 +203,5 @@ public class GitRefManagerTest extends UsefulTestCase {
       }
     });
     return ContainerUtil.sorted(refs, new GitRefManager(manager).getComparator());
-  }
-
-  // TODO either use the real GitRepository, or move upwards and make more generic implementation
-  private static class MockGitRepository implements GitRepository {
-    @NotNull
-    @Override
-    public VirtualFile getGitDir() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public GitUntrackedFilesHolder getUntrackedFilesHolder() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public GitRepoInfo getInfo() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Nullable
-    @Override
-    public GitLocalBranch getCurrentBranch() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public GitBranchesCollection getBranches() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public Collection<GitRemote> getRemotes() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isRebaseInProgress() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isOnBranch() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public VirtualFile getRoot() {
-      return MOCK_VIRTUAL_FILE;
-    }
-
-    @NotNull
-    @Override
-    public String getPresentableUrl() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public Project getProject() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public State getState() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Nullable
-    @Override
-    public String getCurrentBranchName() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Nullable
-    @Override
-    public AbstractVcs getVcs() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public String getCurrentRevision() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isFresh() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void update() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public String toLogString() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void dispose() {
-    }
   }
 }
