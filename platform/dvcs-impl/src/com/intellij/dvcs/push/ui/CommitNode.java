@@ -26,12 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-public class VcsFullCommitDetailsNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode, TooltipNode {
+public class CommitNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode, TooltipNode {
 
   @NotNull private final Project myProject;
-  private final VcsFullCommitDetails myCommit;
+  @NotNull private final VcsFullCommitDetails myCommit;
 
-  public VcsFullCommitDetailsNode(@NotNull Project project, @NotNull VcsFullCommitDetails commit) {
+  public CommitNode(@NotNull Project project, @NotNull VcsFullCommitDetails commit) {
     super(commit, false);
     myProject = project;
     myCommit = commit;

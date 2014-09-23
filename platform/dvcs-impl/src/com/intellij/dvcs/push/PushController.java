@@ -387,7 +387,7 @@ public class PushController implements Disposable {
     Function<VcsFullCommitDetails, DefaultMutableTreeNode> commitToNode = new Function<VcsFullCommitDetails, DefaultMutableTreeNode>() {
       @Override
       public DefaultMutableTreeNode fun(VcsFullCommitDetails commit) {
-        return new VcsFullCommitDetailsNode(project, commit);
+        return new CommitNode(project, commit);
       }
     };
     List<DefaultMutableTreeNode> childrenToShown = new ArrayList<DefaultMutableTreeNode>();

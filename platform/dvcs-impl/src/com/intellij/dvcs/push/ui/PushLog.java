@@ -171,8 +171,8 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     if (nodes != null) {
       ArrayList<Change> changes = new ArrayList<Change>();
       for (TreePath path : nodes) {
-        if (path.getLastPathComponent() instanceof VcsFullCommitDetailsNode) {
-          VcsFullCommitDetailsNode commitDetailsNode = (VcsFullCommitDetailsNode)path.getLastPathComponent();
+        if (path.getLastPathComponent() instanceof CommitNode) {
+          CommitNode commitDetailsNode = (CommitNode)path.getLastPathComponent();
           changes.addAll(commitDetailsNode.getUserObject().getChanges());
         }
         else if (path.getLastPathComponent() instanceof RepositoryNode) {
@@ -194,8 +194,8 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)rootNode.getFirstChild();
          childNode != null;
          childNode = (DefaultMutableTreeNode)rootNode.getChildAfter(childNode)) {
-      if (childNode instanceof VcsFullCommitDetailsNode) {
-        changes.addAll(((VcsFullCommitDetailsNode)childNode).getUserObject().getChanges());
+      if (childNode instanceof CommitNode) {
+        changes.addAll(((CommitNode)childNode).getUserObject().getChanges());
       }
     }
     return changes;
