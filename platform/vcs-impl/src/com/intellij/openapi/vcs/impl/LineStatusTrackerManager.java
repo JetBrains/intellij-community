@@ -186,10 +186,22 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   @Override
   public LineStatusTracker getLineStatusTracker(final Document document) {
     myApplication.assertReadAccessAllowed();
-    if (isDisabled()) return null;
-
     synchronized (myLock) {
+      if (isDisabled()) return null;
+
       return myLineStatusTrackers.get(document);
+    }
+  }
+
+  private void resetTrackersForOpenFiles() {
+    myApplication.assertReadAccessAllowed();
+    if (isDisabled()) return;
+
+    log("LineStatusTrackerManager: fileStatusesChanged");
+
+    final VirtualFile[] openFiles = myFileEditorManager.getOpenFiles();
+    for (final VirtualFile openFile : openFiles) {
+      resetTracker(openFile);
     }
   }
 
@@ -206,40 +218,29 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     log("resetting tracker for file " + virtualFile.getPath());
 
     final boolean editorOpened = myFileEditorManager.isFileOpen(virtualFile);
-    final boolean shouldBeInstalled = shouldBeInstalled(virtualFile) && editorOpened;
+    final boolean shouldBeInstalled = editorOpened && shouldBeInstalled(virtualFile);
 
     synchronized (myLock) {
       final LineStatusTracker tracker = myLineStatusTrackers.get(document);
 
-      if (tracker == null && (!shouldBeInstalled)) return;
-
-      if (tracker != null) {
+      if (tracker != null && shouldBeInstalled) {
+        refreshTracker(tracker);
+      }
+      else if (tracker != null) {
         releaseTracker(document);
       }
-      if (shouldBeInstalled) {
+      else if (shouldBeInstalled) {
         installTracker(virtualFile, document);
       }
     }
   }
 
-  private void releaseTracker(@NotNull final Document document) {
-    if (isDisabled()) return;
-
-    synchronized (myLock) {
-      myPartner.remove(document);
-      final LineStatusTracker tracker = myLineStatusTrackers.remove(document);
-      if (tracker != null) {
-        tracker.release();
-      }
-    }
-  }
-
   private boolean shouldBeInstalled(@Nullable final VirtualFile virtualFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    myApplication.assertIsDispatchThread();
+    if (isDisabled()) return false;
 
     if (virtualFile == null || virtualFile instanceof LightVirtualFile) return false;
     if (!virtualFile.isInLocalFileSystem()) return false;
-    if (isDisabled()) return false;
     final FileStatusManager statusManager = FileStatusManager.getInstance(myProject);
     if (statusManager == null) return false;
     final AbstractVcs activeVcs = myVcsManager.getVcsFor(virtualFile);
@@ -255,8 +256,30 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     return true;
   }
 
+  private void refreshTracker(@NotNull LineStatusTracker tracker) {
+    synchronized (myLock) {
+      if (isDisabled()) return;
+
+      startAlarm(tracker.getDocument(), tracker.getVirtualFile());
+    }
+  }
+
+  private void releaseTracker(@NotNull final Document document) {
+    synchronized (myLock) {
+      if (isDisabled()) return;
+
+      myPartner.remove(document);
+      final LineStatusTracker tracker = myLineStatusTrackers.remove(document);
+      if (tracker != null) {
+        tracker.release();
+      }
+    }
+  }
+
   private void installTracker(@NotNull final VirtualFile virtualFile, @NotNull final Document document) {
     synchronized (myLock) {
+      if (isDisabled()) return;
+
       if (myLineStatusTrackers.containsKey(document)) return;
       assert !myPartner.containsKey(document);
 
@@ -296,7 +319,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
       final Pair<VcsRevisionNumber, String> baseRevision = myStatusProvider.getBaseRevision(myVirtualFile);
       if (baseRevision == null) {
-        log("installTracker() for file " + myVirtualFile.getPath() + " failed: null returned for base revision number");
+        log("installTracker() for file " + myVirtualFile.getPath() + " failed: null returned for base revision");
         reportTrackerBaseLoadFailed();
         return;
       }
@@ -304,7 +327,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       // loads are sequential (in single threaded QueueProcessor);
       // so myLoadCounter can't take less value for greater base revision -> the only thing we want from it
       final LineStatusTracker.RevisionPack revisionPack = new LineStatusTracker.RevisionPack(myLoadCounter, baseRevision.first);
-      ++myLoadCounter;
+      myLoadCounter++;
 
       final String converted = StringUtil.convertLineSeparators(baseRevision.second);
       final Runnable runnable = new Runnable() {
@@ -333,28 +356,13 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     private void reportTrackerBaseLoadFailed() {
       synchronized (myLock) {
         log("base revision load failed for file " + myVirtualFile.getPath());
-        final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
-        if (tracker != null) {
-          tracker.baseRevisionLoadFailed();
-        }
+        releaseTracker(myDocument);
       }
-    }
-  }
-
-  private void resetTrackersForOpenFiles() {
-    myApplication.assertReadAccessAllowed();
-    if (isDisabled()) return;
-
-    final VirtualFile[] openFiles = myFileEditorManager.getOpenFiles();
-    for (final VirtualFile openFile : openFiles) {
-      resetTracker(openFile);
     }
   }
 
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
-      if (myProject.isDisposed()) return;
-      log("LineStatusTrackerManager: fileStatusesChanged");
       resetTrackersForOpenFiles();
     }
 
@@ -371,12 +379,13 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       final Document document = editor.getDocument();
       final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+      if (virtualFile == null) return;
 
+      // TODO: is there possible race between editorCreated / editorReleased ?
       new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
         @Override
         public void run() {
           if (shouldBeInstalled(virtualFile)) {
-            assert virtualFile != null;
             installTracker(virtualFile, document);
           }
         }

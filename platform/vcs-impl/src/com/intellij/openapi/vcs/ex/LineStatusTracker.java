@@ -56,7 +56,7 @@ public class LineStatusTracker {
     new Key<CanNotCalculateDiffPanel>("LineStatusTracker.CanNotCalculateDiffPanel");
 
   private final Object myLock = new Object();
-  private BaseLoadState myBaseLoaded;
+  private boolean myInitialized;
 
   @NotNull private final Project myProject;
   @NotNull private final Document myDocument;
@@ -91,8 +91,6 @@ public class LineStatusTracker {
     myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
     myRanges = new ArrayList<Range>();
-
-    myBaseLoaded = BaseLoadState.LOADING;
   }
 
   public void initialize(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
@@ -116,7 +114,7 @@ public class LineStatusTracker {
         }
       }
       finally {
-        myBaseLoaded = BaseLoadState.LOADED;
+        myInitialized = true;
       }
     }
   }
@@ -311,7 +309,7 @@ public class LineStatusTracker {
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
+        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || !myInitialized) return;
         assert myDocument == e.getDocument();
 
         try {
@@ -338,7 +336,7 @@ public class LineStatusTracker {
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
+        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || !myInitialized) return;
         assert myDocument == e.getDocument();
 
         int afterChangedLines;
@@ -895,18 +893,6 @@ public class LineStatusTracker {
     final Document document = new DocumentImpl("", true);
     document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     return new LineStatusTracker(doc, document, project, virtualFile);
-  }
-
-  public void baseRevisionLoadFailed() {
-    synchronized (myLock) {
-      myBaseLoaded = BaseLoadState.FAILED;
-    }
-  }
-
-  public enum BaseLoadState {
-    LOADING,
-    FAILED,
-    LOADED
   }
 
   public static class RevisionPack {
