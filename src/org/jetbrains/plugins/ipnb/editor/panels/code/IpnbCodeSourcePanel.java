@@ -64,10 +64,13 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     final JPanel panel = new JPanel(new VerticalFlowLayout(FlowLayout.LEFT, true, true));
     panel.setBackground(UIUtil.isUnderDarcula() ? IpnbEditorUtil.getBackground() : Gray._247);
 
-    if (mySource.startsWith("%"))
+    if (mySource.startsWith("%")) {
       myEditor = IpnbEditorUtil.createPlainCodeEditor(myProject, mySource);
-    else
+    }
+    else {
       myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, mySource);
+    }
+
 
     final JComponent component = myEditor.getComponent();
     final JComponent contentComponent = myEditor.getContentComponent();

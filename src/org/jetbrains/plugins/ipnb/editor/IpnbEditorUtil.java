@@ -46,8 +46,11 @@ public class IpnbEditorUtil {
   public static int PANEL_WIDTH = 900;
 
   public static Editor createPythonCodeEditor(@NotNull Project project, @NotNull String text) {
-    EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(createPythonCodeDocument(project, text), project,
-                                                                         PythonFileType.INSTANCE, false);
+    final EditorFactory editorFactory = EditorFactory.getInstance();
+    assert editorFactory != null;
+    final Document document = createPythonCodeDocument(project, text);
+    assert document != null;
+    EditorEx editor = (EditorEx)editorFactory.createEditor(document, project, PythonFileType.INSTANCE, false);
 
     setupEditor(editor);
     return editor;
@@ -63,6 +66,7 @@ public class IpnbEditorUtil {
 
   public static Editor createPlainCodeEditor(@NotNull final Project project, @NotNull final String text) {
     final EditorFactory editorFactory = EditorFactory.getInstance();
+    assert editorFactory != null;
     final Document document = editorFactory.createDocument(text);
     EditorEx editor = (EditorEx)editorFactory.createEditor(document, project);
     setupEditor(editor);
@@ -80,7 +84,6 @@ public class IpnbEditorUtil {
     }
   }
 
-  @NotNull
   public static Document createPythonCodeDocument(@NotNull final Project project,
                                                   @NotNull String text) {
     text = text.trim();
@@ -94,7 +97,9 @@ public class IpnbEditorUtil {
     JLabel promptLabel = new JLabel(promptText);
     promptLabel.setHorizontalAlignment(SwingConstants.RIGHT);
     promptLabel.setPreferredSize(PROMPT_SIZE);
-    promptLabel.setFont(promptLabel.getFont().deriveFont(Font.BOLD));
+    final Font font = promptLabel.getFont();
+    assert font != null;
+    promptLabel.setFont(font.deriveFont(Font.BOLD));
     final JBColor darkRed = new JBColor(new Color(210, 30, 50), new Color(210, 30, 50));
     promptLabel.setForeground(type == PromptType.In ? JBColor.BLUE : darkRed);
     promptLabel.setBackground(getBackground());
