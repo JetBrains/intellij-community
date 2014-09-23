@@ -44,7 +44,7 @@ public interface StateStorage {
 
   void finishSave(@NotNull SaveSession saveSession);
 
-  void reload(@NotNull Set<String> changedComponents) throws StateStorageException;
+  void reload(@NotNull Set<String> changedComponents);
 
   interface ExternalizationSession {
     void setState(@NotNull Object component, final String componentName, @NotNull Object state, @Nullable final Storage storageSpec) throws StateStorageException;
@@ -53,6 +53,9 @@ public interface StateStorage {
   interface SaveSession {
     void save() throws StateStorageException;
 
+    /**
+     * Get changed component names
+     */
     @Nullable
     Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
 

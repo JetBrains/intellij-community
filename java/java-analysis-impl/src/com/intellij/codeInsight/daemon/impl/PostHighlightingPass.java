@@ -34,6 +34,7 @@ import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
+import com.intellij.find.findUsages.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,12 +61,12 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Predicate;
 import gnu.trove.THashSet;
@@ -609,7 +610,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     if (name == null) return false;
     SearchScope useScope = member.getUseScope();
     PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(project);
-    PsiFile ignoreFile = helper.isCurrentFileAlreadyChecked() ? containingFile : null;
+    final PsiFile ignoreFile = helper.isCurrentFileAlreadyChecked() ? containingFile : null;
     if (useScope instanceof GlobalSearchScope) {
       // some classes may have references from within XML outside dependent modules, e.g. our actions
       if (member instanceof PsiClass) {
@@ -637,8 +638,39 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
         }
       }
     }
-    if (ReferencesSearch.search(member, useScope, true).findFirst() != null) return false;
-    return !(useScope instanceof GlobalSearchScope) || !foundUsageInText(member, (GlobalSearchScope)useScope, searchHelper, ignoreFile);
+    FindUsagesOptions options;
+    if (member instanceof PsiPackage) {
+      options = new JavaPackageFindUsagesOptions(project);
+    }
+    else if (member instanceof PsiClass) {
+      options = new JavaClassFindUsagesOptions(project);
+    }
+    else if (member instanceof PsiMethod) {
+      JavaMethodFindUsagesOptions o = new JavaMethodFindUsagesOptions(project);
+      //o.isIncludeOverloadUsages = true;
+      options = o;
+    }
+    else if (member instanceof PsiVariable) {
+      options = new JavaVariableFindUsagesOptions(project);
+    }
+    else {
+      options = new FindUsagesOptions(project);
+    }
+    options.isSearchForTextOccurrences = true;
+    options.isUsages = true;
+    boolean foundUsage = !JavaFindUsagesHelper.processElementUsages(member, options, new Processor<UsageInfo>() {
+      @Override
+      public boolean process(UsageInfo info) {
+        PsiFile psiFile = info.getFile();
+        if (psiFile == ignoreFile || psiFile == null) return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
+        int offset = info.getNavigationOffset();
+        if (offset == -1) return true;
+        PsiElement element = psiFile.findElementAt(offset);
+        return element instanceof PsiComment; // ignore comments
+      }
+    });
+    if (foundUsage) return false;
+    return true;//!(useScope instanceof GlobalSearchScope) || !foundUsageInText(member, (GlobalSearchScope)useScope, searchHelper, ignoreFile);
   }
 
   private static boolean foundUsageInText(@NotNull PsiMember member,

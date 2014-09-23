@@ -1818,10 +1818,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       };
 
       if (pattern.equals("#")) {
+        final HashSet<String> ids = new HashSet<String>();
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
           check();
           if (provider instanceof OptionsTopHitProvider) {
-            consumer.consume(provider);
+            if (!ids.contains(((OptionsTopHitProvider)provider).getId())) {
+              consumer.consume(provider);
+              ids.add(((OptionsTopHitProvider)provider).getId());
+            }
           }
         }
       } else {
@@ -1833,6 +1837,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
           check();
+          if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) {
+            continue;
+          }
           provider.consumeTopHits(pattern, consumer, project);
         }
       }

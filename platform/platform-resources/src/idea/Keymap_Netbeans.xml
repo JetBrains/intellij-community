@@ -60,8 +60,10 @@
     <action id="CollapseSelection" />
     <action id="CommentByLineComment">
       <keyboard-shortcut first-keystroke="control SLASH" />
-      <keyboard-shortcut first-keystroke="control DIVIDE" />
       <keyboard-shortcut first-keystroke="shift control C" />
+    </action>
+    <action id="CollapseRegionRecursively">
+      <keyboard-shortcut first-keystroke="control DIVIDE"/>
     </action>
     <action id="Compile">
       <keyboard-shortcut first-keystroke="F9" />
@@ -128,6 +130,19 @@
     <action id="EvaluateExpression">
       <keyboard-shortcut first-keystroke="control F9" />
     </action>
+    <action id="ExpandAllToLevel1"/>
+    <action id="ExpandAllToLevel2"/>
+    <action id="ExpandAllToLevel3"/>
+    <action id="ExpandAllToLevel4"/>
+    <action id="ExpandAllToLevel5"/>
+    <action id="ExpandRegionRecursively">
+      <keyboard-shortcut first-keystroke="control MULTIPLY"/>
+    </action>
+    <action id="ExpandToLevel1"/>
+    <action id="ExpandToLevel2"/>
+    <action id="ExpandToLevel3"/>
+    <action id="ExpandToLevel4"/>
+    <action id="ExpandToLevel5"/>
     <action id="ExtractMethod">
       <keyboard-shortcut first-keystroke="shift alt M" />
     </action>

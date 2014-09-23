@@ -75,7 +75,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   }
 
   private MyNode addServerNode(RemoteServer<?> server, boolean isNew) {
-    MyNode node = new MyNode(new RemoteServerConfigurable(server, TREE_UPDATER, isNew));
+    MyNode node = new MyNode(new SingleRemoteServerConfigurable(server, TREE_UPDATER, isNew));
     addNode(node, myRoot);
     return node;
   }

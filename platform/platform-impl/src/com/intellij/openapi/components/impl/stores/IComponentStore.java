@@ -24,15 +24,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 public interface IComponentStore {
   void initComponent(@NotNull Object component, boolean service);
+
   void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData);
+
+  @NotNull
+  Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames);
+
   boolean isReloadPossible(@NotNull Set<String> componentNames);
 
   void load() throws IOException, StateStorageException;
+
   boolean isSaving();
 
   @NotNull
@@ -48,9 +55,8 @@ public interface IComponentStore {
     }
   }
 
-  //todo:remove throws
   @NotNull
-  SaveSession startSave() throws IOException;
+  SaveSession startSave();
 
   interface SaveSession {
     @NotNull

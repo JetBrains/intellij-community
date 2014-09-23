@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="library" name="asm5" level="project" />
+    <orderEntry type="module" module-name="platform-impl" />
   </component>
 </module>
 

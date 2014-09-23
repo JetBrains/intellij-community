@@ -66,4 +66,10 @@ public interface RepositoryManager<T extends Repository> {
   void updateAllRepositories();
 
   void waitUntilInitialized();
+
+  /**
+   * Returns true if repositories under this repository manager are controlled synchronously.
+   */
+  boolean isSyncEnabled();
+
 }

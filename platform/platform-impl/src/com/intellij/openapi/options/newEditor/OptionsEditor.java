@@ -17,8 +17,6 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
@@ -37,7 +35,6 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.OnePixelSplitter;
@@ -149,14 +146,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
     };
     if (Registry.is("ide.new.settings.dialog")) {
-      final JTextField editor = mySearch.getTextEditor();
-      if (!SystemInfo.isMac) {
-        editor.putClientProperty("JTextField.variant", "search");
-        if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
-          editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
-          editor.setBorder(new DarculaTextBorder());
-        }
-      }
       mySearch.setBackground(UIUtil.getSidePanelColor());
       mySearch.setBorder(new EmptyBorder(5, 10, 2, 10));
     }

@@ -170,11 +170,6 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   }
 
   @Override
-  public void copyFrom(final DomElement other) {
-    setValue(((GenericAttributeValue) other).getStringValue());
-  }
-
-  @Override
   protected void setValue(@Nullable final String value) {
     final XmlTag tag = ensureTagExists();
     final String attributeName = getXmlElementName();
@@ -197,8 +192,12 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
       }
     });
     final DomElement proxy = getProxy();
-    final DomElement element = proxy;
-    getManager().fireEvent(oldValue != null ? new DomEvent(proxy, false) : new DomEvent(element, true));
+    getManager().fireEvent(oldValue != null ? new DomEvent(proxy, false) : new DomEvent(proxy, true));
+  }
+
+  @Override
+  public void copyFrom(final DomElement other) {
+    setValue(((GenericAttributeValue) other).getStringValue());
   }
 
 }

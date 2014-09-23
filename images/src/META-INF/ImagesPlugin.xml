@@ -102,7 +102,7 @@
               text="Recursive"
               description="Toggle whether to show the images from subfolders recursively"
               icon="AllIcons.ObjectBrowser.FlattenPackages">
-        <keyboard-shortcut first-keystroke="control MULTIPLY" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="alt MULTIPLY" keymap="$default"/>
       </action>
       <separator/>
       <reference id="Images.ToggleTransparencyChessboard"/>

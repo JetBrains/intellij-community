@@ -32,8 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class ServiceManagerImpl implements BaseComponent {
   private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.applicationService");
@@ -55,11 +54,10 @@ public class ServiceManagerImpl implements BaseComponent {
   protected void installEP(final ExtensionPointName<ServiceDescriptor> pointName, final ComponentManager componentManager) {
     myExtensionPointName = pointName;
     final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(pointName);
-    assert extensionPoint != null;
-
     final MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
 
     myExtensionPointListener = new ExtensionPointListener<ServiceDescriptor>() {
+      @Override
       public void extensionAdded(@NotNull final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
         if (descriptor.overrides) {
           ComponentAdapter oldAdapter =
@@ -72,6 +70,7 @@ public class ServiceManagerImpl implements BaseComponent {
         picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, (ComponentManagerEx)componentManager));
       }
 
+      @Override
       public void extensionRemoved(@NotNull final ServiceDescriptor extension, final PluginDescriptor pluginDescriptor) {
         picoContainer.unregisterComponent(extension.getInterface());
       }
@@ -84,18 +83,47 @@ public class ServiceManagerImpl implements BaseComponent {
     return Arrays.asList(extensions);
   }
 
+  @NotNull
+  public static List<Class<?>> getAllImplementationClasses(@NotNull ComponentManager componentManager) {
+    Collection adapters = componentManager.getPicoContainer().getComponentAdapters();
+    if (adapters.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Class<?>> classes = new ArrayList<Class<?>>(512);
+    for (Object o : adapters) {
+      if (o instanceof MyComponentAdapter) {
+        MyComponentAdapter adapter = (MyComponentAdapter)o;
+        ComponentAdapter delegate = adapter.myDelegate;
+        // we cannot use getDelegate - not all components are instantiable (JobSchedulerImpl, for example, causes such error)
+        try {
+          classes.add(delegate == null ? adapter.loadClass(adapter.myDescriptor.getImplementation()) : delegate.getComponentImplementation());
+        }
+        catch (RuntimeException e) {
+          // ignore ClassNotFoundException - invalid entry (GithubSslSupport, for example)
+          if (!(e.getCause() instanceof ClassNotFoundException)) {
+            throw e;
+          }
+        }
+      }
+    }
+    return classes;
+  }
+
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return getClass().getName();
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(myExtensionPointName);
-    assert extensionPoint != null;
     extensionPoint.removeExtensionPointListener(myExtensionPointListener);
   }
 
@@ -113,10 +141,12 @@ public class ServiceManagerImpl implements BaseComponent {
       myDelegate = null;
     }
 
+    @Override
     public String getComponentKey() {
       return myDescriptor.getInterface();
     }
 
+    @Override
     public Class getComponentImplementation() {
       return loadClass(myDescriptor.getInterface());
     }
@@ -132,11 +162,13 @@ public class ServiceManagerImpl implements BaseComponent {
       }
     }
 
+    @Override
     public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
       Object instance = myInitializedComponentInstance;
       if (instance != null) return instance;
 
       return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
+        @Override
         public Object compute() {
           // prevent storages from flushing and blocking FS
           HeavyProcessLatch.INSTANCE.processStarted();
@@ -175,18 +207,22 @@ public class ServiceManagerImpl implements BaseComponent {
       return myDelegate;
     }
 
+    @Override
     public void verify(final PicoContainer container) throws PicoIntrospectionException {
       getDelegate().verify(container);
     }
 
+    @Override
     public void accept(final PicoVisitor visitor) {
       visitor.visitComponentAdapter(this);
     }
 
+    @Override
     public boolean isAssignableTo(Class aClass) {
       return aClass.getName().equals(getComponentKey());
     }
 
+    @Override
     public String getAssignableToClassName() {
       return myDescriptor.getInterface();
     }

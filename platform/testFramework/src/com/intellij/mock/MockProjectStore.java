@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -48,6 +50,12 @@ public class MockProjectStore implements IProjectStore {
   @Override
   public void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData) {
     throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
+  }
+
+  @NotNull
+  @Override
+  public Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames) {
+    return Collections.emptyList();
   }
 
   @Override
@@ -130,7 +138,7 @@ public class MockProjectStore implements IProjectStore {
 
   @Override
   @NotNull
-  public SaveSession startSave() throws IOException {
+  public SaveSession startSave() {
     throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
   }
 

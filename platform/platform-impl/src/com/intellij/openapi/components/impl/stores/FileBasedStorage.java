@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class FileBasedStorage extends XmlElementStorage {
   private static final Logger LOG = Logger.getInstance(FileBasedStorage.class);
@@ -262,7 +263,33 @@ public class FileBasedStorage extends XmlElementStorage {
     super.setDefaultState(element);
   }
 
+  public void updatedFromStreamProvider(@NotNull Set<String> changedComponentNames, boolean deleted) {
+    resetProviderCache();
+
+    try {
+      Element newElement = deleted ? null : loadDataFromStreamProvider();
+      if (newElement == null) {
+        StorageUtil.deleteFile(myFile, this, myCachedVirtualFile);
+        // if data was loaded, mark as changed all loaded components
+        if (myLoadedData != null) {
+          changedComponentNames.addAll(myLoadedData.myComponentStates.keySet());
+          resetData();
+        }
+      }
+      else if (myLoadedData != null) {
+        StorageData newStorageData = createStorageData();
+        loadState(newStorageData, newElement);
+        changedComponentNames.addAll(newStorageData.getChangedComponentNames(myLoadedData, myPathMacroSubstitutor));
+        myLoadedData = newStorageData;
+      }
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
+  }
+
   @Nullable
+  @Deprecated
   public File updateFileExternallyFromStreamProviders() throws IOException {
     Element element = getElement(loadData(true));
     if (element == null) {

@@ -13,6 +13,8 @@
 
   <module value="com.intellij.modules.java"/>
 
+  <resource-bundle>messages.Decompiler</resource-bundle>
+
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 

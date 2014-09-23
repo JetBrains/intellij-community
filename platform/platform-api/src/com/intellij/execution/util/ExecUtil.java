@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,23 +116,21 @@ public class ExecUtil {
   }
 
   @NotNull
-  public static String loadTemplate(@NotNull final ClassLoader loader,
-                                    @NotNull final String templateName,
-                                    @Nullable final Map<String, String> variables) throws IOException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final InputStream stream = loader.getResourceAsStream(templateName);
+  public static String loadTemplate(@NotNull ClassLoader loader, @NotNull String templateName, @Nullable Map<String, String> variables) throws IOException {
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") InputStream stream = loader.getResourceAsStream(templateName);
     if (stream == null) {
       throw new IOException("Template '" + templateName + "' not found by " + loader);
     }
 
-    final String template = FileUtil.loadTextAndClose(stream);
+    String template = FileUtil.loadTextAndClose(new InputStreamReader(stream, CharsetToolkit.UTF8));
     if (variables == null || variables.size() == 0) {
       return template;
     }
 
-    final StringBuilder buffer = new StringBuilder(template);
+    StringBuilder buffer = new StringBuilder(template);
     for (Map.Entry<String, String> var : variables.entrySet()) {
-      final String name = var.getKey();
-      final int pos = buffer.indexOf(name);
+      String name = var.getKey();
+      int pos = buffer.indexOf(name);
       if (pos >= 0) {
         buffer.replace(pos, pos + name.length(), var.getValue());
       }
@@ -140,12 +139,10 @@ public class ExecUtil {
   }
 
   @NotNull
-  public static File createTempExecutableScript(@NotNull final String prefix,
-                                                @NotNull final String suffix,
-                                                @NotNull final String source) throws IOException, ExecutionException {
+  public static File createTempExecutableScript(@NotNull String prefix, @NotNull String suffix, @NotNull String content) throws IOException, ExecutionException {
     File tempDir = new File(PathManager.getTempPath());
     File tempFile = FileUtil.createTempFile(tempDir, prefix, suffix, true, true);
-    FileUtil.writeToFile(tempFile, source);
+    FileUtil.writeToFile(tempFile, content.getBytes(CharsetToolkit.UTF8));
     if (!tempFile.setExecutable(true, true)) {
       throw new ExecutionException("Failed to make temp file executable: " + tempFile);
     }

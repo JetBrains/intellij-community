@@ -376,8 +376,9 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
   public final ActionGroup createPopupGroup() {
     final DefaultActionGroup group = createGearPopupGroup();
-
-    group.add(myToggleContentUiTypeAction);
+    if (!ToolWindowId.PREVIEW.equals(myInfo.getId())) {
+      group.add(myToggleContentUiTypeAction);
+    }
 
     final DefaultActionGroup moveGroup = new DefaultActionGroup(UIBundle.message("tool.window.move.to.action.group.name"), true);
     final ToolWindowAnchor anchor = myInfo.getAnchor();
@@ -432,7 +433,9 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       group.add(myToggleFloatingModeAction);
     }
     else if (myInfo.isSliding()) {
-      group.add(myToggleDockModeAction);
+      if (!ToolWindowId.PREVIEW.equals(myInfo.getId())) {
+        group.add(myToggleDockModeAction);
+      }
       group.add(myToggleFloatingModeAction);
       group.add(myToggleSideModeAction);
     }

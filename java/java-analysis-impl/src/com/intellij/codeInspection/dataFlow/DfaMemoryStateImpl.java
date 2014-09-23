@@ -705,7 +705,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     DfaBoxedValue.Factory boxedFactory = myFactory.getBoxedFactory();
-    return applyRelation(boxedFactory.createUnboxed(dfaLeft), boxedFactory.createUnboxed(dfaRight), negated);
+    DfaValue unboxedLeft = boxedFactory.createUnboxed(dfaLeft);
+    DfaValue unboxedRight = boxedFactory.createUnboxed(dfaRight);
+    return applyRelation(unboxedLeft, unboxedRight, negated) &&
+           checkCompareWithBooleanLiteral(unboxedLeft, unboxedRight, negated);
   }
 
   private boolean checkCompareWithBooleanLiteral(DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
@@ -714,6 +717,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (constVal instanceof Boolean) {
         DfaConstValue negVal = myFactory.getConstFactory().createFromValue(!((Boolean)constVal).booleanValue(), PsiType.BOOLEAN, null);
         if (!applyRelation(dfaLeft, negVal, !negated)) {
+          return false;
+        }
+        if (!applyRelation(dfaLeft.createNegated(), negVal, negated)) {
           return false;
         }
       }
