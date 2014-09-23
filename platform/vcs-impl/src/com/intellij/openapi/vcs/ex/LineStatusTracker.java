@@ -73,7 +73,7 @@ public class LineStatusTracker {
   private boolean mySuppressUpdate;
   private boolean myBulkUpdate;
   private boolean myAnathemaThrown;
-  private boolean myReleased = false;
+  private boolean myReleased;
 
   @NotNull private List<Range> myRanges;
 
@@ -81,17 +81,18 @@ public class LineStatusTracker {
                             @NotNull final Document vcsDocument,
                             @NotNull final Project project,
                             @NotNull final VirtualFile virtualFile) {
-    myVirtualFile = virtualFile;
-    myApplication = ApplicationManager.getApplication();
     myDocument = document;
     myVcsDocument = vcsDocument;
-    myVcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     myProject = project;
-    myBaseLoaded = BaseLoadState.LOADING;
-    myRanges = new ArrayList<Range>();
-    myAnathemaThrown = false;
+    myVirtualFile = virtualFile;
+
+    myApplication = ApplicationManager.getApplication();
     myFileEditorManager = FileEditorManager.getInstance(myProject);
     myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+
+    myRanges = new ArrayList<Range>();
+
+    myBaseLoaded = BaseLoadState.LOADING;
   }
 
   public void initialize(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
@@ -874,6 +875,7 @@ public class LineStatusTracker {
 
   public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile, @NotNull final Document doc, final Project project) {
     final Document document = new DocumentImpl("", true);
+    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     return new LineStatusTracker(doc, document, project, virtualFile);
   }
 
