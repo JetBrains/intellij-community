@@ -94,7 +94,7 @@ public class LineStatusTracker {
   }
 
   public void initialize(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    myApplication.assertIsDispatchThread();
 
     synchronized (myLock) {
       try {
@@ -120,7 +120,7 @@ public class LineStatusTracker {
   }
 
   private void reinstallRanges() {
-    myApplication.assertReadAccessAllowed();
+    myApplication.assertIsDispatchThread();
 
     synchronized (myLock) {
       removeAnathema();
@@ -129,7 +129,6 @@ public class LineStatusTracker {
         myRanges = new RangesBuilder(myDocument, myVcsDocument).getRanges();
       }
       catch (FilesTooBigForDiffException e) {
-        myRanges.clear();
         installAnathema();
         return;
       }
@@ -167,6 +166,8 @@ public class LineStatusTracker {
 
   @NotNull
   private RangeHighlighter createHighlighter(@NotNull Range range) {
+    myApplication.assertIsDispatchThread();
+
     LOG.assertTrue(!myReleased, "Already released");
 
     int first =
@@ -239,8 +240,6 @@ public class LineStatusTracker {
 
   @NotNull
   public List<Range> getRanges() {
-    myApplication.assertReadAccessAllowed();
-
     synchronized (myLock) {
       return myRanges;
     }
@@ -306,7 +305,7 @@ public class LineStatusTracker {
 
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
-      myApplication.assertWriteAccessAllowed();
+      myApplication.assertIsDispatchThread();
 
       synchronized (myLock) {
         if (myReleased) return;
@@ -333,7 +332,7 @@ public class LineStatusTracker {
 
     @Override
     public void documentChanged(final DocumentEvent e) {
-      myApplication.assertWriteAccessAllowed();
+      myApplication.assertIsDispatchThread();
 
       synchronized (myLock) {
         if (myReleased) return;
@@ -834,6 +833,8 @@ public class LineStatusTracker {
 
   @NotNull
   TextRange getCurrentTextRange(@NotNull Range range) {
+    myApplication.assertReadAccessAllowed();
+
     synchronized (myLock) {
       if (!range.isValid()) {
         LOG.warn("Current TextRange of invalid range");
