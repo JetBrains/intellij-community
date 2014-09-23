@@ -69,6 +69,9 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final StatusBar getStatusBar(final Project project) {
+    if (project == null) {
+      return null;
+    }
     synchronized (STATUS_BAR) {
       StatusBar statusBar = project.getUserData(STATUS_BAR);
       if (statusBar == null) {

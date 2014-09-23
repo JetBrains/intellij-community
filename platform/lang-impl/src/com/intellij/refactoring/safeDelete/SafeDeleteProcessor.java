@@ -42,6 +42,7 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -422,7 +423,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
 
   private void addNonCodeUsages(final PsiElement element, List<UsageInfo> usages, @Nullable final Condition<PsiElement> insideElements) {
-    TextOccurrencesUtil.UsageInfoFactory nonCodeUsageFactory = new TextOccurrencesUtil.UsageInfoFactory() {
+    UsageInfoFactory nonCodeUsageFactory = new UsageInfoFactory() {
       @Override
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         if (insideElements != null && insideElements.value(usage)) {

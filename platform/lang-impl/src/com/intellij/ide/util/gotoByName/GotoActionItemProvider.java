@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -84,13 +85,18 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   }
 
   private static boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<Object>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+      if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) {
+        continue;
+      }
+
       if (provider instanceof OptionsTopHitProvider) {
         String prefix = "#" + ((OptionsTopHitProvider)provider).getId() + " ";
-        provider.consumeTopHits(prefix + pattern, collector, CommonDataKeys.PROJECT.getData(dataContext));
+        provider.consumeTopHits(prefix + pattern, collector, project);
       }
-      provider.consumeTopHits(pattern, collector, CommonDataKeys.PROJECT.getData(dataContext));
+      provider.consumeTopHits(pattern, collector, project);
     }
     final Collection<Object> result = collector.getResult();
     final List<Comparable> c = new ArrayList<Comparable>();

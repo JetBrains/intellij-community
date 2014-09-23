@@ -51,7 +51,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull protected final String myRootElementName;
   private Object mySession;
-  private StorageData myLoadedData;
+  protected StorageData myLoadedData;
   protected final StreamProvider myStreamProvider;
   protected final String myFileSpec;
   protected boolean myBlockSavingTheContent = false;
@@ -144,18 +144,20 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     StorageData result = createStorageData();
 
     if (useProvidersData && myStreamProvider != null && myStreamProvider.isEnabled()) {
-      boolean wasLoaded = false;
       try {
-        wasLoaded = loadDataFromStreamProvider(result);
+        Element element = loadDataFromStreamProvider();
+        if (element != null) {
+          loadState(result, element);
+        }
+
+        //noinspection deprecation
+        if (!myStreamProvider.isVersioningRequired() && !(myStreamProvider instanceof OldStreamProviderAdapter || myStreamProvider instanceof CurrentUserHolder)) {
+          // we don't use local data if has stream provider (we don't use this logic for old stream providers)
+          return result;
+        }
       }
       catch (Exception e) {
         LOG.warn(e);
-      }
-
-      //noinspection deprecation
-      if (wasLoaded && !myStreamProvider.isVersioningRequired() && !(myStreamProvider instanceof OldStreamProviderAdapter || myStreamProvider instanceof CurrentUserHolder)) {
-        // we don't use local data if stream provider has one (to preserve backward compatibility, we don't use this logic for old stream providers)
-        return result;
       }
     }
 
@@ -167,20 +169,20 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return result;
   }
 
-  private boolean loadDataFromStreamProvider(@NotNull StorageData result) throws IOException, JDOMException {
+  @Nullable
+  protected final Element loadDataFromStreamProvider() throws IOException, JDOMException {
     assert myStreamProvider != null;
     InputStream inputStream = myStreamProvider.loadContent(myFileSpec, myRoamingType);
     if (inputStream == null) {
-      return false;
+      return null;
     }
 
     Element element = JDOMUtil.loadDocument(inputStream).getRootElement();
     filterOutOfDate(element);
-    loadState(result, element);
-    return true;
+    return element;
   }
 
-  private void loadState(@NotNull StorageData result, @NotNull Element element) {
+  protected final void loadState(@NotNull StorageData result, @NotNull Element element) {
     result.load(element, myPathMacroSubstitutor, true);
   }
 
@@ -467,15 +469,28 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      boolean containsSelf = false;
+      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+        if (pair.second == XmlElementStorage.this) {
+          containsSelf = true;
+          break;
+        }
+      }
+
+      if (!containsSelf) {
+        return Collections.emptySet();
+      }
+
       try {
         Element element = loadLocalData();
-        StorageData storageData = createStorageData();
         if (element == null) {
           return Collections.emptySet();
         }
+
+        StorageData storageData = createStorageData();
         loadState(storageData, element);
-        return storageData.getDifference(myStorageData, myPathMacroSubstitutor);
+        return storageData.getChangedComponentNames(myStorageData, myPathMacroSubstitutor);
       }
       catch (StateStorageException e) {
         LOG.info(e);
@@ -509,7 +524,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   @Override
-  public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
+  public void reload(@NotNull final Set<String> changedComponents) {
     final StorageData storageData = loadData(false);
     final StorageData oldLoadedData = myLoadedData;
     if (oldLoadedData != null) {

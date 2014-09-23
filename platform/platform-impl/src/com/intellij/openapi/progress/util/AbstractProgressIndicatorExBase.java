@@ -304,7 +304,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     onProgressChange();
   }
 
-  private void delegateRunningChange(@NotNull IndicatorAction action) {
+  protected void delegateRunningChange(@NotNull IndicatorAction action) {
     delegate(action);
     onRunningChange();
   }
@@ -344,7 +344,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     return myWasStarted;
   }
 
-  private interface IndicatorAction {
+  protected interface IndicatorAction {
     void execute(@NotNull ProgressIndicatorEx each);
   }
 }

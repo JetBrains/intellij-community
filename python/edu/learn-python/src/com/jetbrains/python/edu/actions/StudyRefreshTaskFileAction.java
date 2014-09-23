@@ -56,6 +56,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     assert openedFile != null;
     final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
     assert selectedTaskFile != null;
+    selectedTaskFile.setValidAndUpdate(true, openedFile, project);
     String openedFileName = openedFile.getName();
     Task currentTask = selectedTaskFile.getTask();
     resetTaskFile(document, project, course, selectedTaskFile, openedFileName, currentTask);
@@ -67,7 +68,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
       }
     });
     selectedTaskFile.navigateToFirstTaskWindow(editor);
-    showBaloon(project);
+    showBalloon(project);
   }
 
   public static void resetTaskFile(Document document, Project project, Course course, TaskFile taskFile, String name, Task task) {
@@ -78,7 +79,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     ProjectView.getInstance(project).refresh();
   }
 
-  private static void showBaloon(Project project) {
+  private static void showBalloon(Project project) {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can now start again", MessageType.INFO, null);
     final Balloon balloon = balloonBuilder.createBalloon();
@@ -102,7 +103,8 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static void resetDocument(Document document, Course course, String fileName, Task task) {
+  private static void resetDocument(final Document document, Course course, String fileName, Task task) {
+    StudyEditor.deleteGuardedBlocks(document);
     BufferedReader reader = null;
     StudyDocumentListener listener = StudyEditor.getListener(document);
     if (listener != null) {

@@ -2,10 +2,10 @@ package com.intellij.remoteServer.util;
 
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -17,7 +17,7 @@ import javax.swing.*;
 /**
  * @author michael.golubev
  */
-public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> implements UnnamedConfigurable {
+public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> extends RemoteServerConfigurable {
 
   private final ServerType<SC> myCloudType;
   protected final SC myConfiguration;
@@ -52,10 +52,6 @@ public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> i
   public void reset() {
     getEmailTextField().setText(myConfiguration.getEmail());
     getPasswordField().setText(myConfiguration.getPassword());
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 
   protected void applyCoreTo(SC configuration) throws ConfigurationException {

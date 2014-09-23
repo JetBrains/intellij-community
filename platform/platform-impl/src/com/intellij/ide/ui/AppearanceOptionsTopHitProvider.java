@@ -18,6 +18,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider
     appearance("Window: " + messageIde("checkbox.show.icons.in.menu.items"), "SHOW_ICONS_IN_MENUS"),
     appearance("Window: " + messageIde("checkbox.left.toolwindow.layout"), "LEFT_HORIZONTAL_SPLIT"),
     appearance("Window: " + messageIde("checkbox.show.editor.preview.popup"), "SHOW_EDITOR_TOOLTIP"),
-    appearance("Window: " + messageIde("checkbox.show.tool.window.bars"), "HIDE_TOOL_STRIPES"),
+    appearance("Window: " + "Hide Tool Window Bars", "HIDE_TOOL_STRIPES"),
     appearance("Window: " + messageIde("checkbox.show.tool.window.numbers"), "SHOW_TOOL_WINDOW_NUMBERS"),
     appearance("Window: Allow merging buttons on dialogs", "ALLOW_MERGE_BUTTONS"),
     appearance("Window: Small labels in editor tabs", "USE_SMALL_LABELS_ON_TABS"),
@@ -53,7 +54,7 @@ public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(Project project) {
+  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
     return ourOptions;
   }
 

@@ -184,7 +184,9 @@ public class ClassPath {
 
     if (loader != null && myCanUseCache) {
       try {
-        loader.buildCache(myCache);
+        ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData(loader);
+        loader.buildCache(loaderData);
+        myCache.applyLoaderData(loaderData);
       }
       catch (Throwable e) {
         // TODO: log can't create loader

@@ -39,7 +39,7 @@ abstract class Loader {
   @Nullable
   abstract Resource getResource(final String name, boolean flag);
 
-  abstract void buildCache(ClasspathCache cache) throws IOException;
+  abstract void buildCache(ClasspathCache.LoaderData loaderData) throws IOException;
 
   public int getIndex() {
     return myIndex;

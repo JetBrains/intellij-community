@@ -36,10 +36,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-/**
- * @author Nadya Zabrodina
- */
 public class RepositoryUtil {
+
+  public static final Comparator<Repository> REPOSITORY_COMPARATOR = new Comparator<Repository>() {
+    @Override
+    public int compare(Repository o1, Repository o2) {
+      return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
+    }
+  };
 
   private static final Logger LOGGER = Logger.getInstance(RepositoryUtil.class);
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
@@ -129,12 +133,7 @@ public class RepositoryUtil {
         return t.getRoot().isValid();
       }
     });
-    Collections.sort(repos, new Comparator<Repository>() {
-      @Override
-      public int compare(Repository o1, Repository o2) {
-        return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-      }
-    });
+    Collections.sort(repos, REPOSITORY_COMPARATOR);
     return repos;
   }
 }

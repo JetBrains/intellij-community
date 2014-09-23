@@ -47,6 +47,7 @@ public class DomStubBuilderTest extends DomStubTest {
   public void testFoo() throws Exception {
     doBuilderTest("foo.xml", "File:foo\n" +
                              "  Element:foo\n" +
+                             "    Element:id\n" +
                              "    Element:bar\n" +
                              "      Attribute:string:xxx\n" +
                              "      Attribute:int:666\n" +

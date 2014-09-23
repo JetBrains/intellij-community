@@ -103,6 +103,12 @@ public class StudyCheckAction extends DumbAwareAction {
             Task task = studyState.getTask();
             StudyStatus oldStatus = task.getStatus();
             Map<String, TaskFile> taskFiles = task.getTaskFiles();
+            for (TaskFile taskFile : taskFiles.values()) {
+              if (!taskFile.isValid()) {
+                createTestResultPopUp("It's not possible to check invalid files", MessageType.WARNING.getPopupBackground(), project);
+                return;
+              }
+            }
             VirtualFile taskDir = studyState.getTaskDir();
             flushWindows(task, taskDir);
             StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);

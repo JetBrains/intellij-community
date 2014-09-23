@@ -18,7 +18,9 @@ package com.intellij.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +32,7 @@ import java.util.List;
 
 public class BalloonLayoutImpl implements BalloonLayout {
 
-  private final JLayeredPane myParent;
+  private final JLayeredPane myLayeredPane;
   private final Insets myInsets;
 
   private final List<Balloon> myBalloons = new ArrayList<Balloon>();
@@ -41,13 +43,15 @@ public class BalloonLayoutImpl implements BalloonLayout {
       relayout();
     }
   };
+  @NotNull private final JRootPane myParent;
 
-  public BalloonLayoutImpl(@NotNull JLayeredPane parent, @NotNull Insets insets) {
+  public BalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     myParent = parent;
+    myLayeredPane = parent.getLayeredPane();
     myInsets = insets;
-    myParent.addComponentListener(new ComponentAdapter() {
+    myLayeredPane.addComponentListener(new ComponentAdapter() {
       @Override
-      public void componentResized(ComponentEvent e) {
+      public void componentResized(@NotNull ComponentEvent e) {
         queueRelayout();
       }
     });
@@ -64,7 +68,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
     });
 
     relayout();
-    balloon.show(myParent);
+    balloon.show(myLayeredPane);
   }
 
 
@@ -74,7 +78,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
   }
 
   private void relayout() {
-    final Dimension size = myParent.getSize();
+    final Dimension size = myLayeredPane.getSize();
 
     size.width -= myInsets.left + myInsets.right;
     size.height -= myInsets.top + myInsets.bottom;
@@ -88,12 +92,20 @@ public class BalloonLayoutImpl implements BalloonLayout {
     }
     List<Integer> columnWidths = computeWidths(columns);
 
-    int eachCoumnX = (int)layoutRec.getMaxX(); 
+    ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
+    JComponent component = pane != null ? pane : myParent;
+    int paneOnScreen = component.isShowing() ? component.getLocationOnScreen().y : 0;
+    int layerOnScreen = myLayeredPane.isShowing() ? myLayeredPane.getLocationOnScreen().y : 0;
+    int toolbarsOffset = paneOnScreen - layerOnScreen;
+    
+    JComponent layeredPane = pane != null ? pane.getMyLayeredPane() : null;
+    int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4; 
+    
     for (int i = 0; i < columns.size(); i++) {
       final ArrayList<Balloon> eachColumn = columns.get(i);
       final Integer eachWidth = columnWidths.get(i);
-      eachCoumnX -= eachWidth.intValue();
-      int eachY = layoutRec.y + 47; //todo[kb] calculate Y offset so balloon places exactly editor's top-right corner
+      eachColumnX -= eachWidth.intValue();
+      int eachY = toolbarsOffset + 2;
       for (Balloon eachBalloon : eachColumn) {
         final Rectangle eachRec = new Rectangle();
         final Dimension eachPrefSize = eachBalloon.getPreferredSize();
@@ -103,15 +115,13 @@ public class BalloonLayoutImpl implements BalloonLayout {
           eachRec.width += 2 * shadowSize;
           eachRec.height += 2 * shadowSize;
         }
-        eachY+=2; //space between two notifications
-        eachRec.setLocation(eachCoumnX + eachWidth.intValue() - eachRec.width - 14, eachY);
+        eachY += 2; //space between two notifications
+        eachRec.setLocation(eachColumnX + eachWidth.intValue() - eachRec.width, eachY);
         eachBalloon.setBounds(eachRec);
         eachY += eachRec.height;
       }
     }
   }
-
-
 
   private static List<Integer> computeWidths(List<ArrayList<Balloon>> columns) {
     List<Integer> columnWidths = new ArrayList<Integer>();

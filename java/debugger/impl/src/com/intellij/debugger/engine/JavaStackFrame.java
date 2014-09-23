@@ -64,21 +64,25 @@ public class JavaStackFrame extends XStackFrame {
   private static final Logger LOG = Logger.getInstance(JavaStackFrame.class);
 
   private final DebugProcessImpl myDebugProcess;
-  private final XSourcePosition myXSourcePosition;
+  @Nullable private final XSourcePosition myXSourcePosition;
   private final NodeManagerImpl myNodeManager;
-  private final StackFrameDescriptorImpl myDescriptor;
+  @NotNull private final StackFrameDescriptorImpl myDescriptor;
   private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
   private JavaDebuggerEvaluator myEvaluator = null;
 
   public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy,
-                        @NotNull DebugProcessImpl debugProcess,
-                        @NotNull MethodsTracker tracker,
-                        @NotNull NodeManagerImpl nodeManager) {
-    myDebugProcess = debugProcess;
-    myNodeManager = nodeManager;
-    myDescriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
-    myDescriptor.setContext(null);
-    myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
+                        @NotNull MethodsTracker tracker) {
+    this(new StackFrameDescriptorImpl(stackFrameProxy, tracker), true);
+  }
+
+  public JavaStackFrame(@NotNull StackFrameDescriptorImpl descriptor, boolean update) {
+    myDescriptor = descriptor;
+    if (update) {
+      myDescriptor.setContext(null);
+      myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
+    }
+    myDebugProcess = ((DebugProcessImpl)descriptor.getDebugProcess());
+    myNodeManager = myDebugProcess.getXdebugProcess().getNodeManager();
     myXSourcePosition = ApplicationManager.getApplication().runReadAction(new Computable<XSourcePosition>() {
       @Override
       public XSourcePosition compute() {
@@ -87,6 +91,7 @@ public class JavaStackFrame extends XStackFrame {
     });
   }
 
+  @NotNull
   public StackFrameDescriptorImpl getDescriptor() {
     return myDescriptor;
   }
@@ -392,5 +397,15 @@ public class JavaStackFrame extends XStackFrame {
   @Override
   public Object getEqualityObject() {
     return myDescriptor.getMethod();
+  }
+
+  @Override
+  public String toString() {
+    if (myXSourcePosition != null) {
+      return "JavaFrame " + myXSourcePosition.getFile().getName() + ":" + myXSourcePosition.getLine();
+    }
+    else {
+      return "JavaFrame position unknown";
+    }
   }
 }

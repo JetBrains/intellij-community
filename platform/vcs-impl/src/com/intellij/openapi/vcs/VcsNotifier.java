@@ -25,13 +25,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class VcsNotifier {
 
-  private static final NotificationGroup NOTIFICATION_GROUP_ID = NotificationGroup.toolWindowGroup(
+  public static final NotificationGroup NOTIFICATION_GROUP_ID = NotificationGroup.toolWindowGroup(
     "Vcs Messages", ChangesViewContentManager.TOOLWINDOW_ID);
-  private static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
+  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
     "Vcs Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
-  private static final NotificationGroup MINOR_NOTIFICATION = new NotificationGroup(
+  public static final NotificationGroup MINOR_NOTIFICATION = new NotificationGroup(
     "Vcs Minor Notifications", NotificationDisplayType.BALLOON, true);
-  private static final NotificationGroup SILENT_NOTIFICATION = new NotificationGroup(
+  public static final NotificationGroup SILENT_NOTIFICATION = new NotificationGroup(
     "Vcs Silent Notifications", NotificationDisplayType.NONE, true);
 
   private final @NotNull Project myProject;

@@ -29,6 +29,13 @@ public class Pair<A, B> {
   }
 
   @NotNull
+  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
+  public static <A, B> Pair<A, B> pair(A first, B second) {
+    //noinspection DontUsePairConstructor
+    return new Pair<A, B>(first, second);
+  }
+
+  @NotNull
   public static <A, B> Function<A, Pair<A, B>> createFunction(final B value) {
     return new Function<A, Pair<A, B>>() {
       public Pair<A, B> fun(A a) {

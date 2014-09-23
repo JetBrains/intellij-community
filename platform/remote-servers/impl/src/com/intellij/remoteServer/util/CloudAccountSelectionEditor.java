@@ -32,7 +32,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
-import com.intellij.remoteServer.impl.configuration.RemoteServerConfigurable;
+import com.intellij.remoteServer.impl.configuration.SingleRemoteServerConfigurable;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -118,7 +118,7 @@ public class CloudAccountSelectionEditor {
 
     final Ref<Consumer<String>> errorConsumerRef = new Ref<Consumer<String>>();
 
-    RemoteServerConfigurable configurable = new RemoteServerConfigurable(newAccount, null, true) {
+    SingleRemoteServerConfigurable configurable = new SingleRemoteServerConfigurable(newAccount, null, true) {
 
       @Override
       protected void setConnectionStatusText(boolean error, String text) {

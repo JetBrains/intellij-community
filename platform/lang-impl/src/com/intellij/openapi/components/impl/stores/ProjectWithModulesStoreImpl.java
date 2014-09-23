@@ -25,12 +25,15 @@ import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.SmartHashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -89,14 +92,9 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   private class ProjectWithModulesSaveSession extends ProjectSaveSession {
     List<SaveSession> myModuleSaveSessions = new ArrayList<SaveSession>();
 
-    public ProjectWithModulesSaveSession() throws StateStorageException {
-      try {
-        for (Module module : getPersistentModules()) {
-          myModuleSaveSessions.add(((ModuleImpl)module).getStateStore().startSave());
-        }
-      }
-      catch (IOException e) {
-        throw new StateStorageException(e.getMessage());
+    public ProjectWithModulesSaveSession() {
+      for (Module module : getPersistentModules()) {
+        myModuleSaveSessions.add(((ModuleImpl)module).getStateStore().startSave());
       }
     }
 
@@ -114,17 +112,26 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
 
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
-      final Set<String> result = super.analyzeExternalChanges(changedFiles);
-      if (result == null) return null;
-
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        final Set<String> s = moduleSaveSession.analyzeExternalChanges(changedFiles);
-        if (s == null) return null;
-        result.addAll(s);
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      Set<String> superResult = super.analyzeExternalChanges(changedFiles);
+      if (superResult == null) {
+        return null;
       }
 
-      return result;
+      Set<String> result = superResult.isEmpty() ? null : new THashSet<String>(superResult);
+      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+        Set<String> s = moduleSaveSession.analyzeExternalChanges(changedFiles);
+        if (s == null) {
+          return null;
+        }
+        if (!s.isEmpty()) {
+          if (result == null) {
+            result = new SmartHashSet<String>();
+          }
+          result.addAll(s);
+        }
+      }
+      return result == null ? Collections.<String>emptySet() : result;
     }
 
     @Override

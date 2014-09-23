@@ -24,11 +24,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +108,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     return myStorageData.getMergedState(componentName, stateClass, mySplitter, mergeInto);
   }
 
-  private DirectoryStorageData loadState() throws StateStorageException {
+  private DirectoryStorageData loadState() {
     DirectoryStorageData storageData = new DirectoryStorageData();
     storageData.loadFrom(LocalFileSystem.getInstance().findFileByIoFile(myDir), myPathMacroSubstitutor);
     return storageData;
@@ -158,7 +160,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   @Override
-  public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
+  public void reload(@NotNull Set<String> changedComponents) {
     myStorageData = loadState();
   }
 
@@ -239,28 +241,28 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       boolean containsSelf = false;
-
       for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
         if (pair.second == DirectoryBasedStorage.this) {
-          VirtualFile file = pair.first;
-          if ("xml".equalsIgnoreCase(file.getExtension())) {
+          if (StringUtilRt.endsWithIgnoreCase(pair.first.getNameSequence(), ".xml")) {
             containsSelf = true;
             break;
           }
         }
       }
 
-      if (!containsSelf) return Collections.emptySet();
-
-      if (myStorageData.getComponentNames().size() == 0) {
-        // no state yet, so try to initialize it now
-        final DirectoryStorageData storageData = loadState();
-        return new HashSet<String>(storageData.getComponentNames());
+      if (!containsSelf) {
+        return Collections.emptySet();
       }
 
-      return new HashSet<String>(myStorageData.getComponentNames());
+      if (myStorageData.getComponentNames().isEmpty()) {
+        // no state yet, so try to initialize it now
+        return new THashSet<String>(loadState().getComponentNames());
+      }
+      else {
+        return new THashSet<String>(myStorageData.getComponentNames());
+      }
     }
 
     @Override

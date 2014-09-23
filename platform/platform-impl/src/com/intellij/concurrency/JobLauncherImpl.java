@@ -90,6 +90,11 @@ public class JobLauncherImpl extends JobLauncher {
     catch (ApplierCompleter.ComputationAbortedException e) {
       return false;
     }
+    catch (ProcessCanceledException e) {
+      // task1.processor returns false and the task cancels the indicator
+      // then task2 calls checkCancel() and get here
+      return false;
+    }
     catch (RuntimeException e) {
       throw e;
     }

@@ -28,11 +28,13 @@ public class GitVcsConfigurable implements Configurable {
 
   private final Project myProject;
   private final GitVcsSettings mySettings;
+  @NotNull private final GitSharedSettings mySharedSettings;
   private GitVcsPanel panel;
 
-  public GitVcsConfigurable(@NotNull GitVcsSettings settings, @NotNull Project project) {
+  public GitVcsConfigurable(@NotNull Project project, @NotNull GitVcsSettings settings, @NotNull GitSharedSettings sharedSettings) {
     myProject = project;
     mySettings = settings;
+    mySharedSettings = sharedSettings;
   }
 
   @NotNull
@@ -51,23 +53,23 @@ public class GitVcsConfigurable implements Configurable {
   @Override
   public JComponent createComponent() {
     panel = new GitVcsPanel(myProject);
-    panel.load(mySettings);
+    panel.load(mySettings, mySharedSettings);
     return panel.getPanel();
   }
 
   @Override
   public boolean isModified() {
-    return panel.isModified(mySettings);
+    return panel.isModified(mySettings, mySharedSettings);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    panel.save(mySettings);
+    panel.save(mySettings, mySharedSettings);
   }
 
   @Override
   public void reset() {
-    panel.load(mySettings);
+    panel.load(mySettings, mySharedSettings);
   }
 
   @Override

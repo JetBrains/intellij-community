@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 
 public class HgPushOptionsPanel extends VcsPushOptionsPanel {
 
@@ -44,8 +43,4 @@ public class HgPushOptionsPanel extends VcsPushOptionsPanel {
     return (HgVcsPushOptionValue)myReferenceStrategyCombobox.getSelectedItem();
   }
 
-  @Override
-  public void addValueChangeListener(ActionListener listener) {
-    myReferenceStrategyCombobox.addActionListener(listener);
-  }
 }

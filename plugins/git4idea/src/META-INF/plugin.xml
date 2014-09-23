@@ -132,6 +132,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <search.topHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcsRootChecker implementation="git4idea.roots.GitRootChecker"/>
@@ -140,6 +141,7 @@
     <checkinHandlerFactory implementation="git4idea.checkin.UnresolvedMergeCheckFactory"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
+    <pushSupport implementation="git4idea.push.GitPushSupport"/>
     
     <projectService
       serviceInterface="git4idea.history.wholeTree.LogFactoryService"
@@ -165,6 +167,7 @@
     <projectService
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
+    <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
     <projectService
         serviceInterface="git4idea.settings.GitPushSettings"
         serviceImplementation="git4idea.settings.GitPushSettings"/>

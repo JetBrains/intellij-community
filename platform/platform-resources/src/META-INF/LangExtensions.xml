@@ -153,6 +153,8 @@
 
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
+    <applicationService serviceInterface="com.intellij.psi.search.PredefinedSearchScopeProvider"
+                        serviceImplementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl"/>
 
     <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
                         serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
@@ -523,9 +525,6 @@
     <completion.skip implementation="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor$Skipper"
                      id="skipLiveTemplate"/>
 
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInspection.magicConstant.MagicCompletionContributor"
-                            id="magicCompletion" order="first, before liveTemplates"/>
-
     <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings"
                         serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
     <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
@@ -891,6 +890,10 @@
 
     <projectService serviceInterface="com.intellij.execution.ExecutionManager" serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
+    <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
+    <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>
+    <projectService serviceInterface="com.intellij.openapi.preview.PreviewManager"
+                    serviceImplementation="com.intellij.openapi.preview.impl.PreviewManagerImpl"/>
   </extensions>
 </idea-plugin>
 

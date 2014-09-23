@@ -16,8 +16,11 @@
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementSectionRulesControl;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -25,6 +28,11 @@ import java.awt.*;
  * @author Svetlana.Zemlyanskaya
  */
 public abstract class AbstractArrangementRuleAction extends AnAction {
+
+  @Nullable
+  protected ArrangementMatchingRulesControl getRulesControl(AnActionEvent e) {
+    return ArrangementSectionRulesControl.KEY.getData(e.getDataContext());
+  }
 
   protected void scrollRowToVisible(@NotNull ArrangementMatchingRulesControl control, int row) {
     final Rectangle rect = control.getCellRect(row, 0, false);

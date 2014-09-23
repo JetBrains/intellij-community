@@ -57,6 +57,12 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     return super.hashCode() * 239 + myIndex;
   }
 
+  @Nullable
+  @Override
+  protected String getValue() {
+    return myStub == null ? super.getValue() : myStub.getValue();
+  }
+
   @Override
   protected XmlElement recomputeXmlElement(@NotNull final DomInvocationHandler parentHandler) {
     final XmlTag tag = parentHandler.getXmlTag();

@@ -20,6 +20,7 @@ import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
   @Override
   public boolean isValidFor(final Editor editor, final PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) {
+    if (!(file instanceof PsiJavaFile) && !(file instanceof PsiCodeFragment)) {
       return false;
     }
 

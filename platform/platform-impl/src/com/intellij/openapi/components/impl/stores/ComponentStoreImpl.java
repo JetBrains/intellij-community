@@ -29,6 +29,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -90,37 +91,28 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
   @Override
   @NotNull
-  public SaveSession startSave() throws IOException {
+  public SaveSession startSave() {
+    SaveSessionImpl session = createSaveSession();
     try {
-      final SaveSessionImpl session = createSaveSession();
+      session.commit();
+    }
+    catch (Throwable e) {
       try {
-        session.commit();
+        session.reset();
       }
-      catch (Throwable e) {
-        try {
-          session.reset();
-        }
-        catch (Exception e1_ignored) {
-          LOG.info(e1_ignored);
-        }
-
-        PluginId pluginId = IdeErrorsDialog.findPluginId(e);
-        if (pluginId != null) {
-          throw new PluginException(e, pluginId);
-        }
-
-        LOG.info(e);
-        IOException ioException = new IOException(e.getMessage());
-        ioException.initCause(e);
-        throw ioException;
+      catch (Exception e1_ignored) {
+        LOG.info(e1_ignored);
       }
-      mySession = session;
-      return mySession;
+
+      PluginId pluginId = IdeErrorsDialog.findPluginId(e);
+      if (pluginId != null) {
+        throw new PluginException(e, pluginId);
+      }
+
+      throw new StateStorageException(e);
     }
-    catch (StateStorageException e) {
-      LOG.info(e);
-      throw new IOException(e.getMessage());
-    }
+    mySession = session;
+    return mySession;
   }
 
   protected SaveSessionImpl createSaveSession() throws StateStorageException {
@@ -461,6 +453,22 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   @Override
+  @NotNull
+  public final Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames) {
+    Set<String> notReloadableComponents = null;
+    for (String componentName : componentNames) {
+      Object component = myComponents.get(componentName);
+      if (component != null && (!(component instanceof PersistentStateComponent) || !getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
+        if (notReloadableComponents == null) {
+          notReloadableComponents = new LinkedHashSet<String>();
+        }
+        notReloadableComponents.add(componentName);
+      }
+    }
+    return notReloadableComponents == null ? Collections.<String>emptySet() : notReloadableComponents;
+  }
+
+  @Override
   public void reinitComponents(@NotNull final Set<String> componentNames, final boolean reloadData) {
     for (String componentName : componentNames) {
       final PersistentStateComponent component = (PersistentStateComponent)myComponents.get(componentName);
@@ -470,13 +478,55 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull final Set<String> componentNames)
-      throws StateStorageException {
+  protected void doReload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> componentNames) {
     for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
       assert pair != null;
-      final StateStorage storage = pair.second;
+      StateStorage storage = pair.second;
       assert storage != null : "Null storage for: " + pair.first;
       storage.reload(componentNames);
     }
+  }
+
+  @Nullable
+  protected final Collection<String> reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull MessageBus messageBus) {
+    SaveSession saveSession = startSave();
+    Set<String> componentNames;
+    try {
+      componentNames = saveSession.analyzeExternalChanges(changedFiles);
+      if (componentNames == null) {
+        return Collections.emptyList();
+      }
+
+      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+        if (pair.second == null) {
+          return Collections.emptyList();
+        }
+      }
+
+      Collection<String> currentNotReloadableComponents = getNotReloadableComponents(componentNames);
+
+      StorageUtil.logStateDiffInfo(changedFiles, componentNames);
+
+      if (!currentNotReloadableComponents.isEmpty()) {
+        return currentNotReloadableComponents;
+      }
+    }
+    finally {
+      finishSave(saveSession);
+    }
+
+    if (!componentNames.isEmpty()) {
+      messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
+
+      try {
+        doReload(changedFiles, componentNames);
+        reinitComponents(componentNames, false);
+      }
+      finally {
+        messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
+      }
+    }
+
+    return null;
   }
 }

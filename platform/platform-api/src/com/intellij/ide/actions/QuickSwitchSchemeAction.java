@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     DefaultActionGroup group = new DefaultActionGroup();
     fillActions(project, group, e.getDataContext());
@@ -68,7 +68,13 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   }
 
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    popup.showCenteredInCurrentWindow(e.getData(CommonDataKeys.PROJECT));
+    Project project = e.getProject();
+    if (project != null) {
+      popup.showCenteredInCurrentWindow(project);
+    }
+    else {
+      popup.showInBestPositionFor(e.getDataContext());
+    }
   }
 
   protected JBPopupFactory.ActionSelectionAid getAidMethod() {
@@ -80,7 +86,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null && isEnabled());
   }

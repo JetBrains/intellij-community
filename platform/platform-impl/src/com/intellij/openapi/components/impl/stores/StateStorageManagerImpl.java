@@ -21,10 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.CurrentUserHolder;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RoamingTypeDisabled;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -151,6 +148,37 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Nullable
   public StateStorage getFileStateStorage(@NotNull String fileSpec) {
     return getStateStorage(fileSpec, RoamingType.PER_USER);
+  }
+
+  @NotNull
+  @Override
+  public Couple<Collection<FileBasedStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted) {
+    myStorageLock.lock();
+    try {
+      return Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted));
+    }
+    finally {
+      myStorageLock.unlock();
+    }
+  }
+
+  @NotNull
+  private Collection<FileBasedStorage> getCachedFileStorages(@NotNull Collection<String> fileSpecs) {
+    if (fileSpecs.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<FileBasedStorage> result = null;
+    for (String fileSpec : fileSpecs) {
+      StateStorage storage = myStorages.get(fileSpec);
+      if (storage instanceof FileBasedStorage) {
+        if (result == null) {
+          result = new SmartList<FileBasedStorage>();
+        }
+        result.add((FileBasedStorage)storage);
+      }
+    }
+    return result == null ? Collections.<FileBasedStorage>emptyList() : result;
   }
 
   @NotNull
@@ -480,23 +508,27 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
     }
 
-    //returns set of component which were changed, null if changes are much more than just component state.
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      Set<String> result = new THashSet<String>();
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      Set<String> result = null;
       for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        final StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(pair.second);
+        StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(pair.second);
         if (saveSession == null) {
           continue;
         }
-        final Set<String> changes = saveSession.analyzeExternalChanges(changedFiles);
+
+        Set<String> changes = saveSession.analyzeExternalChanges(changedFiles);
         if (changes == null) {
           return null;
         }
+
+        if (result == null) {
+          result = new THashSet<String>();
+        }
         result.addAll(changes);
       }
-      return result;
+      return result == null ? Collections.<String>emptySet() : result;
     }
   }
 

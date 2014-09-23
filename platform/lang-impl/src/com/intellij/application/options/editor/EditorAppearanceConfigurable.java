@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,9 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JCheckBox myCbRightMargin;
   private JCheckBox myCbShowLineNumbers;
   private JCheckBox myCbShowWhitespaces;
+  private JCheckBox myLeadingWhitespacesCheckBox;
+  private JCheckBox myInnerWhitespacesCheckBox;
+  private JCheckBox myTrailingWhitespacesCheckBox;
   private JTextField myBlinkIntervalField;
   private JPanel myAddonPanel;
   private JCheckBox myCbShowMethodSeparators;
@@ -73,9 +76,20 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     if (!OptionsApplicabilityFilter.isApplicable(OptionId.ICONS_IN_GUTTER)) {
       myCbShowIconsInGutter.setVisible(false);
     }
+    myCbShowWhitespaces.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateWhitespaceCheckboxesState();
+      }
+    });
   }
 
-
+  private void updateWhitespaceCheckboxesState() {
+    boolean enabled = myCbShowWhitespaces.isSelected();
+    myLeadingWhitespacesCheckBox.setEnabled(enabled);
+    myInnerWhitespacesCheckBox.setEnabled(enabled);
+    myTrailingWhitespacesCheckBox.setEnabled(enabled);
+  }
 
   @Override
   public void reset() {
@@ -89,9 +103,14 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myCbShowLineNumbers.setSelected(editorSettings.isLineNumbersShown());
     myCbBlockCursor.setSelected(editorSettings.isBlockCursor());
     myCbShowWhitespaces.setSelected(editorSettings.isWhitespacesShown());
+    myLeadingWhitespacesCheckBox.setSelected(editorSettings.isLeadingWhitespacesShown());
+    myInnerWhitespacesCheckBox.setSelected(editorSettings.isInnerWhitespacesShown());
+    myTrailingWhitespacesCheckBox.setSelected(editorSettings.isTrailingWhitespacesShown());
     myShowVerticalIndentGuidesCheckBox.setSelected(editorSettings.isIndentGuidesShown());
     myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     myCbShowIconsInGutter.setSelected(DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
+
+    updateWhitespaceCheckboxesState();
 
     super.reset();
   }
@@ -110,6 +129,9 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     editorSettings.setRightMarginShown(myCbRightMargin.isSelected());
     editorSettings.setLineNumbersShown(myCbShowLineNumbers.isSelected());
     editorSettings.setWhitespacesShown(myCbShowWhitespaces.isSelected());
+    editorSettings.setLeadingWhitespacesShown(myLeadingWhitespacesCheckBox.isSelected());
+    editorSettings.setInnerWhitespacesShown(myInnerWhitespacesCheckBox.isSelected());
+    editorSettings.setTrailingWhitespacesShown(myTrailingWhitespacesCheckBox.isSelected());
     editorSettings.setIndentGuidesShown(myShowVerticalIndentGuidesCheckBox.isSelected());
 
     EditorOptionsPanel.reinitAllEditors();
@@ -142,6 +164,9 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
 
     isModified |= isModified(myCbShowLineNumbers, editorSettings.isLineNumbersShown());
     isModified |= isModified(myCbShowWhitespaces, editorSettings.isWhitespacesShown());
+    isModified |= isModified(myLeadingWhitespacesCheckBox, editorSettings.isLeadingWhitespacesShown());
+    isModified |= isModified(myInnerWhitespacesCheckBox, editorSettings.isInnerWhitespacesShown());
+    isModified |= isModified(myTrailingWhitespacesCheckBox, editorSettings.isTrailingWhitespacesShown());
     isModified |= isModified(myShowVerticalIndentGuidesCheckBox, editorSettings.isIndentGuidesShown());
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     isModified |= isModified(myCbShowIconsInGutter, DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);

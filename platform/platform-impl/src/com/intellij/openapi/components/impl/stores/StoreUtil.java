@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 
 /**
@@ -24,7 +26,7 @@ public class StoreUtil {
   private StoreUtil() {
   }
 
-  public static void doSave(IComponentStore stateStore) throws IOException {
+  public static void doSave(@NotNull IComponentStore stateStore) throws IOException {
     IComponentStore.SaveSession session = null;
     try {
       session = stateStore.startSave();

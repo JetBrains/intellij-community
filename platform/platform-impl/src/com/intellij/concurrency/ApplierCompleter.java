@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import jsr166e.CountedCompleter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +52,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
   private final int hi;
   private final ApplierCompleter next; // keeps track of right-hand-side tasks
   volatile Throwable throwable;
+  private static final AtomicFieldUpdater<ApplierCompleter, Throwable> throwableUpdater = AtomicFieldUpdater.forFieldOfType(ApplierCompleter.class, Throwable.class);
 
   // if not null, the read action has failed and this list contains unfinished subtasks
   private List<ApplierCompleter> failedSubTasks;
@@ -76,7 +79,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
 
   @Override
   public void compute() {
-    compute(new Runnable() {
+    wrapInReadActionAndIndicator(new Runnable() {
       @Override
       public void run() {
         execAndForkSubTasks();
@@ -84,7 +87,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
     });
   }
 
-  private void compute(@NotNull final Runnable process) {
+  private void wrapInReadActionAndIndicator(@NotNull final Runnable process) {
     Runnable toRun = runInReadAction ? new Runnable() {
       @Override
       public void run() {
@@ -116,10 +119,12 @@ public class ApplierCompleter extends CountedCompleter<Void> {
     try {
       for (int i = lo; i < hi; ++i) {
         progressIndicator.checkCanceled();
-        if (!processor.process(array.get(i))) throw new ComputationAbortedException();
+        if (!processor.process(array.get(i))) {
+          throw new ComputationAbortedException();
+        }
         long finish = System.currentTimeMillis();
         long elapsed = finish - start;
-        if (elapsed > 10 && hi - i >= 2 && getSurplusQueuedTaskCount() <= JobSchedulerImpl.CORES_COUNT) {
+        if (elapsed > 5 && hi - i >= 2 && getSurplusQueuedTaskCount() <= JobSchedulerImpl.CORES_COUNT) {
           int mid = i + hi >>> 1;
           right = new ApplierCompleter(this, runInReadAction, progressIndicator, array, processor, mid, hi, right);
           //children.add(right);
@@ -132,7 +137,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
 
       // traverse the list looking for a task available for stealing
       if (right != null) {
-        right.tryToExecAllList();
+        throwable = right.tryToExecAllList();
       }
     }
     catch (Throwable e) {
@@ -140,40 +145,47 @@ public class ApplierCompleter extends CountedCompleter<Void> {
       throwable = e;
     }
     finally {
-      doComplete(throwable == null ? this.throwable : throwable);
+      doComplete(moreImportant(throwable, this.throwable));
     }
     return right;
+  }
+
+  private static Throwable moreImportant(Throwable throwable1, Throwable throwable2) {
+    Throwable result;
+    if (throwable1 == null) {
+      result = throwable2;
+    }
+    else if (throwable2 == null) {
+      result = throwable1;
+    }
+    else {
+      // any exception wins over PCE because the latter can be induced by canceled indicator because of the former
+      result = throwable1 instanceof ProcessCanceledException ? throwable2 : throwable1;
+    }
+    return result;
   }
 
   private void doComplete(Throwable throwable) {
     ApplierCompleter a = this;
     ApplierCompleter child = a;
     while (true) {
-      if (throwable != null) {
-        a.throwable = throwable;
-      }
+      // update parent.throwable in a thread safe way
+      Throwable oldThrowable;
+      Throwable newThrowable;
+      do {
+        oldThrowable = a.throwable;
+        newThrowable = moreImportant(oldThrowable, throwable);
+      } while (oldThrowable != newThrowable && !throwableUpdater.compareAndSet(a, oldThrowable, newThrowable));
+      throwable = newThrowable;
       if (a.getPendingCount() == 0) {
-        if (throwable == null) {
-          a.onCompletion(child);
-        }
-        else {
-          a.throwable = throwable;
-          // currently avoid using onExceptionalCompletion since it leaks exceptions via jsr166e.ForkJoinTask.exceptionTable
-          a.onCompletion(child);
-          //a.onExceptionalCompletion(throwable, child);
-        }
+        // currently avoid using onExceptionalCompletion since it leaks exceptions via jsr166e.ForkJoinTask.exceptionTable
+        a.onCompletion(child);
+        //a.onExceptionalCompletion(throwable, child);
         child = a;
         a = (ApplierCompleter)a.getCompleter();
         if (a == null) {
-          if (throwable == null) {
-            child.quietlyComplete();
-          }
-          else {
-            child.throwable = throwable;
-            // currently avoid using completeExceptionally since it leaks exceptions via jsr166e.ForkJoinTask.exceptionTable
-            child.quietlyComplete();
-            //child.completeExceptionally(throwable);
-          }
+          // currently avoid using completeExceptionally since it leaks exceptions via jsr166e.ForkJoinTask.exceptionTable
+          child.quietlyComplete();
           break;
         }
       }
@@ -190,14 +202,17 @@ public class ApplierCompleter extends CountedCompleter<Void> {
   }
 
   // tries to unfork, execute and re-link subtasks
-  private void tryToExecAllList() {
+  private Throwable tryToExecAllList() {
     ApplierCompleter right = this;
+    Throwable result = throwable;
     while (right != null) {
       if (right.tryUnfork()) {
         right.execAndForkSubTasks();
+        result = moreImportant(result, right.throwable);
       }
       right = right.next;
     }
+    return result;
   }
 
   boolean completeTaskWhichFailToAcquireReadAction() {
@@ -208,7 +223,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
     // these tasks could not be executed in the other thread; do them here
     for (final ApplierCompleter task : failedSubTasks) {
       task.failedSubTasks = null;
-      task.compute(new Runnable() {
+      task.wrapInReadActionAndIndicator(new Runnable() {
         @Override
         public void run() {
           for (int i = task.lo; i < task.hi; ++i) {

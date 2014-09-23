@@ -452,14 +452,15 @@ public class HintManagerImpl extends HintManager implements Disposable {
    * @return coordinates in layered pane coordinate system.
    */
   public Point getHintPosition(@NotNull LightweightHint hint, @NotNull Editor editor, @PositionFlags short constraint) {
-    JLayeredPane lp = editor.getComponent().getRootPane().getLayeredPane();
 
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
     final DataContext dataContext = ((EditorEx)editor).getDataContext();
     final Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    if (dominantArea == null) {
+    JRootPane rootPane = editor.getComponent().getRootPane();
+    if (dominantArea == null && rootPane != null) {
+      JLayeredPane lp = rootPane.getLayeredPane();
       for (HintInfo info : getHintsStackArray()) {
         if (!info.hint.isSelectingHint()) continue;
         IdeTooltip tooltip = info.hint.getCurrentIdeTooltip();

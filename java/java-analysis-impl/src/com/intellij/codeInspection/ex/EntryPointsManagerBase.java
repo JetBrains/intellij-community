@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -82,11 +83,10 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   public EntryPointsManagerBase(Project project) {
     myProject = project;
     myTemporaryEntryPoints = new HashSet<RefElement>();
-    myPersistentEntryPoints =
-        new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
+    myPersistentEntryPoints = new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
     Disposer.register(project, this);
     final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
-    point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
+    ((ExtensionPointImpl)point).addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
       public void extensionAdded(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
         extensionRemoved(extension, pluginDescriptor);
@@ -105,7 +105,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
           });
         }
       }
-    }, this);
+    }, false, this);
   }
 
   public static EntryPointsManagerBase getInstance(Project project) {

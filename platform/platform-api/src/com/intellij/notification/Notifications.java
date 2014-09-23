@@ -41,7 +41,8 @@ public interface Notifications {
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {
     /**
-     * Registration is OPTIONAL: STICKY_BALLOON display type will be used by default.
+     * Registration is OPTIONAL: BALLOON display type will be used by default.
+     * @deprecated use {@link com.intellij.notification.NotificationGroup}
      */
     @SuppressWarnings("JavaDoc")
     public static void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType) {

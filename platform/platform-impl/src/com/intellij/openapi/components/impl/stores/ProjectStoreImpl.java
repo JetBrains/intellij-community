@@ -691,43 +691,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  public boolean reload(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException, StateStorageException {
-    final SaveSession saveSession = startSave();
-
-    final Set<String> componentNames;
-    try {
-      componentNames = saveSession.analyzeExternalChanges(changedFiles);
-      if (componentNames == null) return false;
-
-      // TODO[mike]: This is a hack to prevent NPE (assert != null) in StateStorageManagerImpl.reload, storage is null for...
-      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        if (pair.second == null) {
-          return false;
-        }
-      }
-
-      StorageUtil.logStateDiffInfo(changedFiles, componentNames);
-
-      if (!isReloadPossible(componentNames)) {
-        return false;
-      }
-    }
-    finally {
-      finishSave(saveSession);
-    }
-
-    if (!componentNames.isEmpty()) {
-      myProject.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
-
-      try {
-        doReload(changedFiles, componentNames);
-        reinitComponents(componentNames, false);
-      }
-      finally {
-        myProject.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
-      }
-    }
-
-    return true;
+  public boolean reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException {
+    return reload(changedFiles, myProject.getMessageBus()) == null;
   }
 }

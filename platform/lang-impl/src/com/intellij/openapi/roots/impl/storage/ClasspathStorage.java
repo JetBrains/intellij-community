@@ -207,7 +207,7 @@ public class ClasspathStorage implements StateStorage {
   }
 
   @Override
-  public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
+  public void reload(@NotNull Set<String> changedComponents) {
   }
 
   public boolean needsSave() throws StateStorageException {
