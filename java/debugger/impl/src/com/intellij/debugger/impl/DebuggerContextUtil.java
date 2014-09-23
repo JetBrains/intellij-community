@@ -95,11 +95,8 @@ public class DebuggerContextUtil {
                 hasSameLine = true;
               }
             }
-            if (bestLine > 0) {
-              if (hasSameLine && breakPointLine - bestLine > 4) {
-                return SourcePosition.createFromLine(file, breakPointLine);
-              }
-              return SourcePosition.createFromLine(file, bestLine);
+            if (bestLine > -1) {
+              return SourcePosition.createFromLine(file, hasSameLine ? breakPointLine : bestLine);
             }
           }
         }
