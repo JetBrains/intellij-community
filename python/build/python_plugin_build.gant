@@ -14,7 +14,7 @@ setProperty("pluginHelp", "${outDir}/help")
 setProperty("buildNumber", requireProperty("build.number", snapshot))
 setProperty("ideaBuildNumber", requireProperty("idea.build.number"))
 
-setProperty("ideaSinceBuildNumber", ("${ideaBuildNumber}" =~ /(\d+\.\d+).\d+/)[0][0])
+setProperty("ideaSinceBuildNumber", ("${ideaBuildNumber}" =~ /(\d+\.\d+).\d+/)[0][1]) // should always have format xxx.yyy
 
 setProperty("ideaHomePacked", "${ideaDir}/jdk16") //compiled idea
 setProperty("ideaHome", "${ideaDir}/jdk16/idea-IC-${ideaBuildNumber}") //compiled idea
