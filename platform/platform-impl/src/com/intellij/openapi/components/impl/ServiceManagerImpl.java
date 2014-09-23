@@ -32,8 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class ServiceManagerImpl implements BaseComponent {
   private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.applicationService");
@@ -82,6 +81,33 @@ public class ServiceManagerImpl implements BaseComponent {
   public List<ServiceDescriptor> getAllDescriptors() {
     ServiceDescriptor[] extensions = Extensions.getExtensions(myExtensionPointName);
     return Arrays.asList(extensions);
+  }
+
+  @NotNull
+  public static List<Class<?>> getAllImplementationClasses(@NotNull ComponentManager componentManager) {
+    Collection adapters = componentManager.getPicoContainer().getComponentAdapters();
+    if (adapters.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Class<?>> classes = new ArrayList<Class<?>>(512);
+    for (Object o : adapters) {
+      if (o instanceof MyComponentAdapter) {
+        MyComponentAdapter adapter = (MyComponentAdapter)o;
+        ComponentAdapter delegate = adapter.myDelegate;
+        // we cannot use getDelegate - not all components are instantiable (JobSchedulerImpl, for example, causes such error)
+        try {
+          classes.add(delegate == null ? adapter.loadClass(adapter.myDescriptor.getImplementation()) : delegate.getComponentImplementation());
+        }
+        catch (RuntimeException e) {
+          // ignore ClassNotFoundException - invalid entry (GithubSslSupport, for example)
+          if (!(e.getCause() instanceof ClassNotFoundException)) {
+            throw e;
+          }
+        }
+      }
+    }
+    return classes;
   }
 
   @NonNls
