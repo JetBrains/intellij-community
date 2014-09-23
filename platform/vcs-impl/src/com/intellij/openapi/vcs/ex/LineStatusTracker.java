@@ -141,6 +141,19 @@ public class LineStatusTracker {
     }
   }
 
+  private void installAnathema() {
+    myAnathemaThrown = true;
+    final FileEditor[] editors = myFileEditorManager.getAllEditors(myVirtualFile);
+    for (FileEditor editor : editors) {
+      CanNotCalculateDiffPanel panel = editor.getUserData(PANEL_KEY);
+      if (panel == null) {
+        final CanNotCalculateDiffPanel newPanel = new CanNotCalculateDiffPanel();
+        editor.putUserData(PANEL_KEY, newPanel);
+        myFileEditorManager.addTopComponent(editor, newPanel);
+      }
+    }
+  }
+
   private void removeAnathema() {
     if (!myAnathemaThrown) return;
     myAnathemaThrown = false;
@@ -204,6 +217,11 @@ public class LineStatusTracker {
       removeHighlightersFromMarkupModel();
       myReleased = true;
     }
+  }
+
+  @NotNull
+  Project getProject() {
+    return myProject;
   }
 
   @NotNull
@@ -885,11 +903,6 @@ public class LineStatusTracker {
     }
   }
 
-  @NotNull
-  Project getProject() {
-    return myProject;
-  }
-
   public enum BaseLoadState {
     LOADING,
     FAILED,
@@ -931,19 +944,6 @@ public class LineStatusTracker {
     @Override
     public int hashCode() {
       return myRevision.hashCode();
-    }
-  }
-
-  private void installAnathema() {
-    myAnathemaThrown = true;
-    final FileEditor[] editors = myFileEditorManager.getAllEditors(myVirtualFile);
-    for (FileEditor editor : editors) {
-      CanNotCalculateDiffPanel panel = editor.getUserData(PANEL_KEY);
-      if (panel == null) {
-        final CanNotCalculateDiffPanel newPanel = new CanNotCalculateDiffPanel();
-        editor.putUserData(PANEL_KEY, newPanel);
-        myFileEditorManager.addTopComponent(editor, newPanel);
-      }
     }
   }
 
