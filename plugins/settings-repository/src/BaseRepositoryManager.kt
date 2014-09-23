@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider
-import javax.swing.SwingUtilities
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.openapi.fileTypes.StdFileTypes
@@ -128,12 +127,11 @@ fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider): Li
   }
 
   var processedFiles: List<VirtualFile>? = null
-  val resolver = {
+  invokeAndWaitIfNeed {
     val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, MergeDialogCustomizer())
     fileMergeDialog.show()
     processedFiles = fileMergeDialog.getProcessedFiles()
   }
-  if (SwingUtilities.isEventDispatchThread()) resolver() else SwingUtilities.invokeAndWait(resolver)
   return processedFiles!!
 }
 

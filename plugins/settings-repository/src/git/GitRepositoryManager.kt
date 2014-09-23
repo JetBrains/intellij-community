@@ -23,6 +23,7 @@ import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.remove
 import org.jetbrains.settingsRepository.UpdateResult
 import org.eclipse.jgit.revwalk.RevCommit
+import org.jetbrains.settingsRepository.MutableUpdateResult
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {
@@ -148,23 +149,11 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     }
   }
 
-  override fun pull(indicator: ProgressIndicator): UpdateResult? {
-    val pull = Pull(this, indicator)
-    pull.pull()
-    val dirCacheCheckout = pull.dirCacheCheckout
-    if (dirCacheCheckout == null) {
-      return null
-    }
-    return UpdateResult(dirCacheCheckout.getUpdated().keySet(), dirCacheCheckout.getRemoved())
-  }
+  override fun pull(indicator: ProgressIndicator) = Pull(this, indicator).pull()
 
-  override fun resetToTheirs(indicator: ProgressIndicator) {
-    Reset(this, indicator).reset(true)
-  }
+  override fun resetToTheirs(indicator: ProgressIndicator) = Reset(this, indicator).reset(true)
 
-  override fun resetToMy(indicator: ProgressIndicator) {
-    Reset(this, indicator).reset(false)
-  }
+  override fun resetToMy(indicator: ProgressIndicator) = Reset(this, indicator).reset(false)
 
   override fun canCommit() = repository.getRepositoryState().canCommit()
 }

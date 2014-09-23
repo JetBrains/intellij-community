@@ -15,21 +15,25 @@ import org.jetbrains.settingsRepository.removeFileAndParentDirectoryIfEmpty
 import org.jetbrains.jgit.dirCache.deleteAllFiles
 import com.intellij.openapi.util.io.FileUtil
 import org.eclipse.jgit.lib.Constants
+import org.jetbrains.settingsRepository.UpdateResult
+import org.jetbrains.settingsRepository.MutableUpdateResult
 
 class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
-  fun reset(toTheirs: Boolean) {
+  fun reset(toTheirs: Boolean): UpdateResult {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Reset to ${if (toTheirs) "theirs" else "my"}")
     }
 
-    repository.resetHard()
+    val resetResult = repository.resetHard()
+    val result = MutableUpdateResult(resetResult.getUpdated().keySet(), resetResult.getRemoved())
 
     indicator.checkCanceled()
 
     val commitMessage = "Reset to ${if (toTheirs) manager.getUpstream() else "my"}"
     // grab added/deleted/renamed/modified files
     val mergeStrategy = if (toTheirs) MergeStrategy.THEIRS else MergeStrategy.OURS
-    if (pull(mergeStrategy, commitMessage) == null) {
+    val firstMergeResult = pull(mergeStrategy, commitMessage)
+    if (firstMergeResult == null) {
       // nothing to merge, so, we merge latest origin commit
       val fetchRefSpecs = remoteConfig.getFetchRefSpecs()
       assert(fetchRefSpecs.size == 1)
@@ -40,6 +44,7 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
           LOG.debug("uninitialized remote (empty) - we don't need to merge")
         }
         else {
+          // todo update UpdateResult
           repository.deleteAllFiles()
 
           val files = repository.getWorkTree().listFiles { it.getName() != Constants.DOT_GIT }
@@ -51,14 +56,20 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
 
           manager.commit(commitMessage)
         }
-        return
+        return result
       }
 
       val mergeResult = merge(latestUpstreamCommit, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
       if (!mergeResult.getMergeStatus().isSuccessful()) {
         throw IllegalStateException(mergeResult.toString())
       }
+
+      updateResult(result)
     }
+    else {
+      result.add(firstMergeResult)
+    }
+    return result
 
 //    val reader = repository.newObjectReader()
 //
@@ -97,6 +108,13 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
 //    }
 
 //    manager.createCommitCommand().
+  }
+
+  private fun updateResult(result: MutableUpdateResult) {
+    if (mergeUpdateResult != null) {
+      result.add(mergeUpdateResult!!)
+      mergeUpdateResult = null
+    }
   }
 
   private fun computeEdits(walk: TreeWalk): List<PathEdit> {

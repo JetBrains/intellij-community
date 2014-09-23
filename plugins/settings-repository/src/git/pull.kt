@@ -32,6 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.util.ArrayList
 import git.JGitMergeProvider
 import org.jetbrains.settingsRepository.RepositoryVirtualFile
+import org.jetbrains.settingsRepository.ImmutableUpdateResult
+import org.jetbrains.settingsRepository.UpdateResult
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
   val message = e.getMessage()!!
@@ -61,9 +63,9 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   val config = repository.getConfig()
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
-  var dirCacheCheckout: DirCacheCheckout? = null
+  var mergeUpdateResult: ImmutableUpdateResult? = null
 
-  fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null): MergeResult? {
+  fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null): UpdateResult? {
     indicator.checkCanceled()
 
     LOG.debug("Pull")
@@ -91,23 +93,31 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       var unresolvedFiles = conflictsToVirtualFiles(mergeResult.getConflicts()!!)
       val mergeProvider = JGitMergeProvider(repository, mergedCommits[0], mergedCommits[1])
       val resolvedFiles: List<VirtualFile>
+      val mergedFiles = ArrayList<String>()
       while (true) {
         resolvedFiles = resolveConflicts(unresolvedFiles, mergeProvider)
+
+        for (file in resolvedFiles) {
+          mergedFiles.add(file.getPath())
+        }
+
         if (resolvedFiles.size == unresolvedFiles.size) {
           break
         }
         else {
-          unresolvedFiles.removeAll(resolvedFiles)
+          unresolvedFiles.removeAll(mergedFiles)
         }
       }
 
       manager.commit()
+
+      return mergeUpdateResult!!.toMutable().addChanged(mergedFiles)
     }
     else if (!mergeStatus.isSuccessful()) {
       throw IllegalStateException(mergeResult.toString())
     }
 
-    return mergeResult
+    return mergeUpdateResult
   }
 
   fun fetch(prevRefUpdateResult: RefUpdate.Result? = null): Ref? {
@@ -206,6 +216,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
 
     // Check for FAST_FORWARD, ALREADY_UP_TO_DATE
     val revWalk = RevWalk(repository)
+    var dirCacheCheckout: DirCacheCheckout? = null
     try {
       // handle annotated tags
       val ref = repository.peel(unpeeledRef)
@@ -304,10 +315,18 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
           refLogMessage.append(mergeStrategy.getName())
         }
         refLogMessage.append('.')
+
+        if (merger is ResolveMerger) {
+          mergeUpdateResult = ImmutableUpdateResult(merger.getToBeCheckedOut().keySet(), merger.getToBeDeleted())
+        }
+
         if (noProblems) {
-          dirCacheCheckout = DirCacheCheckout(repository, headCommit.getTree(), repository.lockDirCache(), merger.getResultTreeId())
-          dirCacheCheckout!!.setFailOnConflict(true)
-          dirCacheCheckout!!.checkout()
+          // ResolveMerger does checkout
+          if (merger !is ResolveMerger) {
+            dirCacheCheckout = DirCacheCheckout(repository, headCommit.getTree(), repository.lockDirCache(), merger.getResultTreeId())
+            dirCacheCheckout!!.setFailOnConflict(true)
+            dirCacheCheckout!!.checkout()
+          }
 
           var msg: String? = null
           var newHeadId: ObjectId? = null
@@ -348,6 +367,10 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     }
     finally {
       revWalk.release()
+
+      if (dirCacheCheckout != null) {
+        mergeUpdateResult = ImmutableUpdateResult(dirCacheCheckout!!.getUpdated().keySet(), dirCacheCheckout!!.getRemoved())
+      }
     }
   }
 }

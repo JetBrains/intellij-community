@@ -41,8 +41,10 @@ fun Repository.commit(message: String? = null, reflogComment: String? = null, au
   return commitCommand.call()
 }
 
-fun Repository.resetHard() {
-  ResetCommand(this).setMode(ResetCommand.ResetType.HARD).call()
+fun Repository.resetHard(): DirCacheCheckout {
+  val resetCommand = ResetCommand(this).setMode(ResetCommand.ResetType.HARD)
+  resetCommand.call()
+  return resetCommand.getDirCacheCheckout()!!
 }
 
 fun Config.getRemoteBranchFullName(): String {

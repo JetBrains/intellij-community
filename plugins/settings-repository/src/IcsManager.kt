@@ -7,8 +7,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.FileBasedStorage
-import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.diagnostic.Logger
@@ -29,6 +27,14 @@ import com.intellij.openapi.util.SystemInfo
 import com.mcdermottroe.apple.OSXKeychain
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import com.intellij.openapi.progress.ProcessCanceledException
+import java.util.LinkedHashSet
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.FileBasedStorage
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import javax.swing.SwingUtilities
 
 val PLUGIN_NAME: String = "Settings Repository"
 
@@ -66,17 +72,62 @@ fun getPluginSystemDir(): File {
   }
 }
 
-private fun updateStoragesFromStreamProvider(appStorageManager: StateStorageManager, storageFileNames: Collection<String>) {
-  for (storageFileName in storageFileNames) {
-    val stateStorage = appStorageManager.getFileStateStorage(storageFileName)
-    if (stateStorage is FileBasedStorage) {
-      try {
-        stateStorage.resetProviderCache()
-        stateStorage.updateFileExternallyFromStreamProviders()
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
+private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResult: UpdateResult) {
+  val changedComponentNames = LinkedHashSet<String>()
+  val stateStorages = store.getStateStorageManager().getCachedFileStateStorages(updateResult.changed, updateResult.deleted)
+  val changed = stateStorages.first!!
+  val deleted = stateStorages.second!!
+  if (changed.isEmpty() && deleted.isEmpty()) {
+    return
+  }
+
+  val notReloadableComponents: Collection<String>
+  val token = WriteAction.start()
+  try {
+    updateStateStorage(changedComponentNames, changed, false)
+    updateStateStorage(changedComponentNames, deleted, true)
+
+    if (changedComponentNames.isEmpty()) {
+      return
+    }
+
+    notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
+    if (notReloadableComponents.isEmpty()) {
+      store.reinitComponents(changedComponentNames, false)
+      return
+    }
+  }
+  finally {
+    token.finish()
+  }
+
+  askToRestart(notReloadableComponents)
+}
+
+private fun askToRestart(notReloadableComponents: Collection<String>) {
+  var message = StringBuilder("Application components were changed externally and cannot be reloaded:\n")
+  for (component in notReloadableComponents) {
+    message.append(component).append('\n')
+  }
+
+  val application = ApplicationManager.getApplication()!! as ApplicationImpl
+  val canRestart = application.isRestartCapable()
+  message.append("\nWould you like to ").append(if (canRestart) "restart" else "shutdown").append(' ')
+  message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?')
+
+  if (Messages.showYesNoDialog(message.toString(), "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES) {
+    // force to avoid saveAll & confirmation
+    application.exit(true, true, true, true)
+  }
+}
+
+private fun updateStateStorage(changedComponentNames: Set<String>, stateStorages: Collection<FileBasedStorage>, deleted: Boolean) {
+  for (stateStorage in stateStorages) {
+    try {
+      stateStorage.updatedFromStreamProvider(changedComponentNames, deleted)
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
     }
   }
 }
@@ -154,8 +205,7 @@ public class IcsManager : ApplicationLoadListener {
     }
 
     storageManager.setStreamProvider(ProjectLevelProvider(projectId.uid!!))
-
-    updateStoragesFromStreamProvider(storageManager, storageManager.getStorageFileNames())
+    // updateStoragesFromStreamProvider(storageManager, storageManager.getStorageFileNames())
   }
 
   private inner class ProjectLevelProvider(projectId: String) : IcsStreamProvider(projectId) {
@@ -209,16 +259,19 @@ public class IcsManager : ApplicationLoadListener {
             return
           }
 
+          var updateResult: UpdateResult? = null
           try {
             when (syncType) {
               SyncType.MERGE -> {
-                repositoryManager.pull(indicator)
+                updateResult = repositoryManager.pull(indicator)
                 repositoryManager.push(indicator)
               }
-              // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
-              SyncType.RESET_TO_THEIRS -> repositoryManager.resetToTheirs(indicator)
+              SyncType.RESET_TO_THEIRS -> {
+                // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
+                updateResult = repositoryManager.resetToTheirs(indicator)
+              }
               SyncType.RESET_TO_MY -> {
-                repositoryManager.resetToMy(indicator)
+                updateResult = repositoryManager.resetToMy(indicator)
                 repositoryManager.push(indicator)
               }
             }
@@ -230,6 +283,12 @@ public class IcsManager : ApplicationLoadListener {
               LOG.error(e)
             }
             exception = e
+          }
+
+          if (updateResult != null) {
+            invokeAndWaitIfNeed {
+              updateStoragesFromStreamProvider((ApplicationManager.getApplication() as ApplicationImpl).getStateStore(), updateResult!!)
+            }
           }
         }
       })
@@ -306,4 +365,8 @@ public class IcsManager : ApplicationLoadListener {
 
     override fun isEnabled() = repositoryActive
   }
+}
+
+fun invokeAndWaitIfNeed(runnable: ()->Unit) {
+  if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)
 }
