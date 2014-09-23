@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BatchSuppressManager;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,6 +37,9 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+
 
 /**
  * @author anna
@@ -360,7 +366,17 @@ public class RefJavaManagerImpl extends RefJavaManager {
   public EntryPointsManager getEntryPointsManager() {
     if (myEntryPointsManager == null) {
       final Project project = myRefManager.getProject();
-      myEntryPointsManager = EntryPointsManager.getInstance(project);
+      myEntryPointsManager = new EntryPointsManagerBase(project) {
+        @Override
+        public void configureAnnotations() {
+
+        }
+
+        @Override
+        public JButton createConfigureAnnotationsBtn() {
+          return null;
+        }
+      };
       ((EntryPointsManagerBase)myEntryPointsManager).addAllPersistentEntries(EntryPointsManagerBase.getInstance(project));
     }
     return myEntryPointsManager;
