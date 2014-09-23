@@ -1018,6 +1018,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="non.protected.constructor.in.abstract.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.inheritance.NonProtectedConstructorInAbstractClassInspection"/>
+    <localInspection language="JAVA" shortName="ParameterTypePreventsOverriding" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="parameter.type.prevents.overriding.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.inheritance.ParameterTypePreventsOverridingInspection"/>
     <localInspection language="JAVA" shortName="ProblematicVarargsMethodOverride" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="problematic.varargs.method.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
