@@ -25,7 +25,6 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,6 +57,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessorRemovePartner;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -189,22 +189,30 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     }
   }
 
-  private void resetTrackersForOpenFiles() {
-    if (isDisabled()) return;
+  private void resetTrackers() {
+    synchronized (myLock) {
+      if (isDisabled()) return;
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("resetTrackersForOpenFiles");
-    }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("resetTrackers");
+      }
 
-    final VirtualFile[] openFiles = myFileEditorManager.getOpenFiles();
-    for (final VirtualFile openFile : openFiles) {
-      resetTracker(openFile);
+      for (LineStatusTracker tracker : ContainerUtil.newArrayList(myLineStatusTrackers.values())) {
+        resetTracker(tracker.getDocument(), tracker.getVirtualFile(), tracker);
+      }
+
+      final VirtualFile[] openFiles = myFileEditorManager.getOpenFiles();
+      for (final VirtualFile openFile : openFiles) {
+        resetTracker(openFile, true);
+      }
     }
   }
 
   private void resetTracker(@NotNull final VirtualFile virtualFile) {
-    if (isDisabled()) return;
+    resetTracker(virtualFile, false);
+  }
 
+  private void resetTracker(@NotNull final VirtualFile virtualFile, boolean insertOnly) {
     final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document == null) {
       if (LOG.isDebugEnabled()) {
@@ -213,29 +221,31 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       return;
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("resetTracker: for file " + virtualFile.getPath());
-    }
+    synchronized (myLock) {
+      if (isDisabled()) return;
 
+      final LineStatusTracker tracker = myLineStatusTrackers.get(document);
+      if (insertOnly && tracker != null) return;
+      resetTracker(document, virtualFile, tracker);
+    }
+  }
+
+  private void resetTracker(@NotNull Document document, @NotNull VirtualFile virtualFile, @Nullable LineStatusTracker tracker) {
     final boolean editorOpened = myFileEditorManager.isFileOpen(virtualFile);
     final boolean shouldBeInstalled = editorOpened && shouldBeInstalled(virtualFile);
 
-    synchronized (myLock) {
-      final LineStatusTracker tracker = myLineStatusTrackers.get(document);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("resetTracker: shouldBeInstalled - " + shouldBeInstalled + ", tracker - " + (tracker == null ? "null" : "found"));
+    }
 
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("resetTracker: shouldBeInstalled - " + shouldBeInstalled + ", tracker - " + (tracker == null ? "null" : "found"));
-      }
-
-      if (tracker != null && shouldBeInstalled) {
-        refreshTracker(tracker);
-      }
-      else if (tracker != null) {
-        releaseTracker(document);
-      }
-      else if (shouldBeInstalled) {
-        installTracker(virtualFile, document);
-      }
+    if (tracker != null && shouldBeInstalled) {
+      refreshTracker(tracker);
+    }
+    else if (tracker != null) {
+      releaseTracker(document);
+    }
+    else if (shouldBeInstalled) {
+      installTracker(virtualFile, document);
     }
   }
 
@@ -373,7 +383,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
-      resetTrackersForOpenFiles();
+      resetTrackers();
     }
 
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
@@ -416,7 +426,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
   private class MyEditorColorsListener implements EditorColorsListener {
     public void globalSchemeChange(EditorColorsScheme scheme) {
-      resetTrackersForOpenFiles();
+      resetTrackers();
     }
   }
 }
