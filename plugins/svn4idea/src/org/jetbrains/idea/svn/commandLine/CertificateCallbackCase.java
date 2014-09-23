@@ -56,9 +56,8 @@ public class CertificateCallbackCase extends AuthCallbackCase {
       realm = serverUrl != null ? serverUrl.toString() : realm;
     }
 
-    if (!myTried && myAuthenticationService.acceptSSLServerCertificate(myUrl, realm)) {
+    if (myAuthenticationService.acceptSSLServerCertificate(myUrl, realm)) {
       accepted = true;
-      myTried = true;
       return true;
     }
     throw new SvnBindException("Server SSL certificate rejected");
