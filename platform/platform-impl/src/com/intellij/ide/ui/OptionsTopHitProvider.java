@@ -61,6 +61,10 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
 
   public abstract String getId();
 
+  public boolean isEnabled(@Nullable Project project) {
+    return true;
+  }
+
   static String messageApp(String property) {
     return StringUtil.stripHtml(ApplicationBundle.message(property), false);
   }
