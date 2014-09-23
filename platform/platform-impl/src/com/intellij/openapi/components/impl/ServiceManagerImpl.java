@@ -54,11 +54,10 @@ public class ServiceManagerImpl implements BaseComponent {
   protected void installEP(final ExtensionPointName<ServiceDescriptor> pointName, final ComponentManager componentManager) {
     myExtensionPointName = pointName;
     final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(pointName);
-    assert extensionPoint != null;
-
     final MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
 
     myExtensionPointListener = new ExtensionPointListener<ServiceDescriptor>() {
+      @Override
       public void extensionAdded(@NotNull final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
         if (descriptor.overrides) {
           ComponentAdapter oldAdapter =
@@ -71,6 +70,7 @@ public class ServiceManagerImpl implements BaseComponent {
         picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, (ComponentManagerEx)componentManager));
       }
 
+      @Override
       public void extensionRemoved(@NotNull final ServiceDescriptor extension, final PluginDescriptor pluginDescriptor) {
         picoContainer.unregisterComponent(extension.getInterface());
       }
@@ -110,18 +110,20 @@ public class ServiceManagerImpl implements BaseComponent {
     return classes;
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return getClass().getName();
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(myExtensionPointName);
-    assert extensionPoint != null;
     extensionPoint.removeExtensionPointListener(myExtensionPointListener);
   }
 
@@ -139,10 +141,12 @@ public class ServiceManagerImpl implements BaseComponent {
       myDelegate = null;
     }
 
+    @Override
     public String getComponentKey() {
       return myDescriptor.getInterface();
     }
 
+    @Override
     public Class getComponentImplementation() {
       return loadClass(myDescriptor.getInterface());
     }
@@ -158,11 +162,13 @@ public class ServiceManagerImpl implements BaseComponent {
       }
     }
 
+    @Override
     public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
       Object instance = myInitializedComponentInstance;
       if (instance != null) return instance;
 
       return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
+        @Override
         public Object compute() {
           // prevent storages from flushing and blocking FS
           HeavyProcessLatch.INSTANCE.processStarted();
@@ -201,18 +207,22 @@ public class ServiceManagerImpl implements BaseComponent {
       return myDelegate;
     }
 
+    @Override
     public void verify(final PicoContainer container) throws PicoIntrospectionException {
       getDelegate().verify(container);
     }
 
+    @Override
     public void accept(final PicoVisitor visitor) {
       visitor.visitComponentAdapter(this);
     }
 
+    @Override
     public boolean isAssignableTo(Class aClass) {
       return aClass.getName().equals(getComponentKey());
     }
 
+    @Override
     public String getAssignableToClassName() {
       return myDescriptor.getInterface();
     }
