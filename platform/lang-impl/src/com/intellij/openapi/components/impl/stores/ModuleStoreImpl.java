@@ -158,12 +158,14 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       return super.computeHash() * 31 + myOptions.hashCode();
     }
 
-    @Override
     @Nullable
-    public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
+    @Override
+    public Set<String> getChangedComponentNames(@NotNull StorageData storageData, @Nullable PathMacroSubstitutor substitutor) {
       final ModuleFileData data = (ModuleFileData)storageData;
-      if (!myOptions.equals(data.myOptions)) return null;
-      return super.getDifference(storageData, substitutor);
+      if (!myOptions.equals(data.myOptions)) {
+        return null;
+      }
+      return super.getChangedComponentNames(storageData, substitutor);
     }
 
     public void setOption(final String optionName, final String optionValue) {

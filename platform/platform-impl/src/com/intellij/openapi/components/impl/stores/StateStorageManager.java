@@ -17,6 +17,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.StreamProvider;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -42,12 +43,17 @@ public interface StateStorageManager {
   @Nullable
   StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
 
+  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   @Nullable
   /**
    * @deprecated Use {@link #getStateStorage(String, com.intellij.openapi.components.RoamingType)}
+   * to remove in IDEA 15
     */
   StateStorage getFileStateStorage(@NotNull String fileSpec);
+
+  @NotNull
+  Couple<Collection<FileBasedStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted);
 
   @NotNull
   Collection<String> getStorageFileNames();
@@ -87,7 +93,7 @@ public interface StateStorageManager {
   }
 
   interface SaveSession {
-    //returns set of component which were changed, null if changes are much more than just component state.
+    // returns set of component which were changed, null if changes are much more than just component state
     @Nullable
     Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files);
 

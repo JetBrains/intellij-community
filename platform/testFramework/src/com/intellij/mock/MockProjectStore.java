@@ -130,7 +130,7 @@ public class MockProjectStore implements IProjectStore {
 
   @Override
   @NotNull
-  public SaveSession startSave() throws IOException {
+  public SaveSession startSave() {
     throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
   }
 

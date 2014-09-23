@@ -16,10 +16,10 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -33,6 +33,11 @@ public interface IApplicationStore extends IComponentStore {
 
   void setConfigPath(@NotNull String configPath);
 
-  boolean reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Collection<String> notReloadableComponents)
-    throws StateStorageException, IOException;
+  /**
+   * null if reloaded
+   * empty list if nothing to reload
+   * list of not reloadable components (reload is not performed)
+   */
+  @Nullable
+  Collection<String> reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException;
 }

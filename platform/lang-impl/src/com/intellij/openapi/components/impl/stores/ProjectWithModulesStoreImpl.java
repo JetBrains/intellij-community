@@ -89,14 +89,9 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   private class ProjectWithModulesSaveSession extends ProjectSaveSession {
     List<SaveSession> myModuleSaveSessions = new ArrayList<SaveSession>();
 
-    public ProjectWithModulesSaveSession() throws StateStorageException {
-      try {
-        for (Module module : getPersistentModules()) {
-          myModuleSaveSessions.add(((ModuleImpl)module).getStateStore().startSave());
-        }
-      }
-      catch (IOException e) {
-        throw new StateStorageException(e.getMessage());
+    public ProjectWithModulesSaveSession() {
+      for (Module module : getPersistentModules()) {
+        myModuleSaveSessions.add(((ModuleImpl)module).getStateStore().startSave());
       }
     }
 

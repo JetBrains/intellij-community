@@ -188,7 +188,7 @@ public class StorageData {
     myHash = -1;
   }
 
-  public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
+  public Set<String> getChangedComponentNames(@NotNull StorageData storageData, @Nullable PathMacroSubstitutor substitutor) {
     Set<String> bothStates = new THashSet<String>(myComponentStates.keySet());
     bothStates.retainAll(storageData.myComponentStates.keySet());
 
