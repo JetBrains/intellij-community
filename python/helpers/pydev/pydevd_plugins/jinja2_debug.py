@@ -144,7 +144,6 @@ class Jinja2TemplateFrame:
         for k, v in self.back_context.items():
             if k == name:
                 self.back_context.vars[k] = value
-        print(self.back_context.vars)
 
 
 def _is_missing(item):

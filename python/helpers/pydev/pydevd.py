@@ -129,6 +129,7 @@ DONT_TRACE = {
               'jinja2_debug.py':1,
               'pydev_log.py':1,
               'pydev_monkey.py':1 ,
+              'pydev_monkey_qt.py':1 ,
               'pydevd.py':1 ,
               'pydevd_additional_thread_info.py':1,
               'pydevd_comm.py':1,
@@ -2076,7 +2077,6 @@ if __name__ == '__main__':
             finally:
                 dispatcher.close()
         else:
-            pydev_log.info("pydev debugger: starting\n")
             pydev_log.info("pydev debugger: starting\n")
 
             try:
