@@ -40,6 +40,8 @@ import static com.intellij.openapi.ui.Messages.OK;
 
 public class VcsPushDialog extends DialogWrapper {
 
+  private static final String ID = "Vcs.Push.Dialog";
+
   @NotNull private final Project myProject;
   private final PushLog myListPanel;
   private final PushController myController;
@@ -76,7 +78,7 @@ public class VcsPushDialog extends DialogWrapper {
 
   @Override
   protected String getDimensionServiceKey() {
-    return VcsPushDialog.class.getName();
+    return ID;
   }
 
   @Override
@@ -112,7 +114,7 @@ public class VcsPushDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    return "reference.mercurial.push.dialog";
+    return ID;
   }
 
   public void updateButtons() {
