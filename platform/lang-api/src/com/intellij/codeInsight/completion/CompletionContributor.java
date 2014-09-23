@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
@@ -31,9 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -244,28 +241,7 @@ public abstract class CompletionContributor {
 
   @NotNull
   public static List<CompletionContributor> forLanguage(@NotNull Language language) {
-    List<CompletionContributor> contributors = MyExtensionPointManager.INSTANCE.forKey(language);
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      final List<Class> classes = ContainerUtil.map(contributors, new Function<CompletionContributor, Class>() {
-        @Override
-        public Class fun(CompletionContributor contributor) {
-          return contributor.getClass();
-        }
-      });
-      final Set<Class> uniques = new THashSet<Class>(classes);
-      if (uniques.size() != classes.size()) {
-        Class duplicate = ContainerUtil.find(classes, new Condition<Class>() {
-          @Override
-          public boolean value(Class aClass) {
-            return !uniques.remove(aClass);
-          }
-        });
-        if (duplicate != null) {
-          throw new AssertionError("Duplicate completion contributor registered: "+duplicate);
-        }
-      }
-    }
-    return contributors;
+    return MyExtensionPointManager.INSTANCE.forKey(language);
   }
 
   private static class MyExtensionPointManager extends KeyedExtensionCollector<CompletionContributor, Language> {
