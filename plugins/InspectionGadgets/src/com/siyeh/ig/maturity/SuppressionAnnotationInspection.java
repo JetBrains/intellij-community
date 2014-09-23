@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
@@ -32,7 +30,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collection;
+import java.awt.*;
 
 /**
  * User: anna
@@ -42,23 +40,24 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
   @Override
   public JComponent createOptionsPanel() {
     final ListEditForm form = new ListEditForm("Ignore suppressions", myAllowedSuppressions);
-    return form.getContentPanel();
+    final JComponent panel = form.getContentPanel();
+    panel.setPreferredSize(new Dimension(150, 100));
+    return panel;
   }
 
   @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) { 
-    if (infos.length == 1) {
-      if (infos[0] instanceof PsiAnnotation) {
-        final PsiAnnotation annotation = (PsiAnnotation)infos[0];
-        PsiElement parent = annotation.getParent();
-        final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)parent);
-        if (!ids.isEmpty()) {
-          return new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null)), new AllowSuppressionsFix()};
-        }
-      } else if (infos[0] instanceof PsiComment) {
-        return new InspectionGadgetsFix[]{new RemoveSuppressCommentFix(), new AllowSuppressionsFix()};
-      }
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final boolean suppressionIdPresent = ((Boolean)infos[1]).booleanValue();
+    if (infos[0] instanceof PsiAnnotation) {
+      final PsiAnnotation annotation = (PsiAnnotation)infos[0];
+      return suppressionIdPresent
+             ? new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null)), new AllowSuppressionsFix()}
+             : new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null))};
+    } else if (infos[0] instanceof PsiComment) {
+      return suppressionIdPresent
+             ? new InspectionGadgetsFix[]{new RemoveSuppressCommentFix(), new AllowSuppressionsFix()}
+             : new InspectionGadgetsFix[]{new RemoveSuppressCommentFix()};
     }
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
@@ -68,7 +67,6 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement != null) {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
         psiElement.delete();
       }
     }
@@ -90,16 +88,23 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
-      final String suppressedIds = JavaSuppressionUtil.getSuppressedInspectionIdsIn(psiElement);
-      final Iterable<String> ids = suppressedIds != null ? StringUtil.tokenize(suppressedIds, "[, ]") : null;
-      if (ids != null) {
-        for (String id : ids) {
-          if (!myAllowedSuppressions.contains(id)) {
-            myAllowedSuppressions.add(id);
-          }
-        }
-        saveProfile(project);
+      final Iterable<String> ids;
+      if (psiElement instanceof PsiAnnotation) {
+        ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)psiElement.getParent());
       }
+      else {
+        final String suppressedIds = JavaSuppressionUtil.getSuppressedInspectionIdsIn(psiElement);
+        if (suppressedIds == null) {
+          return;
+        }
+        ids = StringUtil.tokenize(suppressedIds, ",");
+      }
+      for (String id : ids) {
+        if (!myAllowedSuppressions.contains(id)) {
+          myAllowedSuppressions.add(id);
+        }
+      }
+      saveProfile(project);
     }
 
     private void saveProfile(Project project) {
