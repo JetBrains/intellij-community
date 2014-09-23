@@ -52,6 +52,9 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     editorPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent(), BorderLayout.EAST);
     myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.label.text.code.fragment")), BorderLayout.NORTH);
     myMainPanel.add(editorPanel, BorderLayout.CENTER);
+    if (statements != null) {
+      myMultilineEditor.setExpression(statements);
+    }
   }
 
   @NotNull

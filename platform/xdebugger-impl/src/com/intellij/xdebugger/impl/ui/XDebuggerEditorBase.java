@@ -98,9 +98,10 @@ public abstract class XDebuggerEditorBase {
   private ListPopup createLanguagePopup() {
     DefaultActionGroup actions = new DefaultActionGroup();
     for (final Language language : getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition)) {
+      //noinspection ConstantConditions
       actions.add(new AnAction(language.getDisplayName(), null, language.getAssociatedFileType().getIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           XExpression currentExpression = getExpression();
           setExpression(new XExpressionImpl(currentExpression.getExpression(), language, currentExpression.getCustomInfo()));
           IdeFocusManager.getInstance(getProject()).requestFocus(getComponent(), true);
@@ -127,7 +128,7 @@ public abstract class XDebuggerEditorBase {
   public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
     if (mySourcePosition != sourcePosition) {
       mySourcePosition = sourcePosition;
-      setExpression(getExpression(), false);
+      setExpression(getExpression());
     }
   }
 
@@ -144,15 +145,8 @@ public abstract class XDebuggerEditorBase {
   protected abstract void doSetText(XExpression text);
 
   public void setExpression(@Nullable XExpression text) {
-    setExpression(text, true);
-  }
-
-  private void setExpression(@Nullable XExpression text, boolean saveInHistory) {
     if (text == null) {
       text = getMode() == EvaluationMode.EXPRESSION ? XExpressionImpl.EMPTY_EXPRESSION : XExpressionImpl.EMPTY_CODE_FRAGMENT;
-    }
-    if (saveInHistory) {
-      saveTextInHistory(text);
     }
     Language language = text.getLanguage();
     if (language == null) {
