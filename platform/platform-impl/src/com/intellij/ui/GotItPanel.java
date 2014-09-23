@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -48,9 +49,8 @@ public class GotItPanel {
         g.drawRoundRect(0,0,getWidth()-1, getHeight()-1, 5,5);
       }
     };
-    myMessage = new JEditorPane("text/html", "<html></html>");
-    myMessage.setEditorKit(UIUtil.getHTMLEditorKit());
-    myMessage.setEditable(false);
+
+    myMessage = IdeTooltipManager.initPane("", new HintHint().setAwtTooltip(true), null);
     myMessage.addHyperlinkListener(new BrowserHyperlinkListener());
     myMessage.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() + 2f));
   }
