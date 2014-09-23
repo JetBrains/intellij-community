@@ -178,10 +178,14 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   public void disposeComponent() {
   }
 
+  public boolean isDisabled() {
+    return !myProject.isOpen() || myProject.isDisposed();
+  }
+
   @Override
   public LineStatusTracker getLineStatusTracker(final Document document) {
     myApplication.assertReadAccessAllowed();
-    if ((!myProject.isOpen()) || myProject.isDisposed()) return null;
+    if (isDisabled()) return null;
 
     synchronized (myLock) {
       return myLineStatusTrackers.get(document);
@@ -190,7 +194,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
   private void resetTracker(@NotNull final VirtualFile virtualFile) {
     myApplication.assertReadAccessAllowed();
-    if ((!myProject.isOpen()) || myProject.isDisposed()) return;
+    if (isDisabled()) return;
 
     final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document == null) {
@@ -218,7 +222,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   private void releaseTracker(@NotNull final Document document) {
-    if ((!myProject.isOpen()) || myProject.isDisposed()) return;
+    if (isDisabled()) return;
 
     synchronized (myLock) {
       myPartner.remove(document);
@@ -234,7 +238,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
     if (virtualFile == null || virtualFile instanceof LightVirtualFile) return false;
     if (!virtualFile.isInLocalFileSystem()) return false;
-    if ((!myProject.isOpen()) || myProject.isDisposed()) return false;
+    if (isDisabled()) return false;
     final FileStatusManager statusManager = FileStatusManager.getInstance(myProject);
     if (statusManager == null) return false;
     final AbstractVcs activeVcs = myVcsManager.getVcsFor(virtualFile);
@@ -281,7 +285,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
     @Override
     public void run() {
-      if ((!myProject.isOpen()) || myProject.isDisposed()) return;
+      if (isDisabled()) return;
 
       if (!myVirtualFile.isValid()) {
         log("installTracker() for file " + myVirtualFile.getPath() + " failed: virtual file not valid");
@@ -326,7 +330,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       myApplication.invokeLater(runnable, ModalityState.NON_MODAL, new Condition() {
         @Override
         public boolean value(final Object ignore) {
-          return (!myProject.isOpen()) || myProject.isDisposed();
+          return isDisabled();
         }
       });
     }
@@ -344,7 +348,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
   private void resetTrackersForOpenFiles() {
     myApplication.assertReadAccessAllowed();
-    if ((!myProject.isOpen()) || myProject.isDisposed()) return;
+    if (isDisabled()) return;
 
     final VirtualFile[] openFiles = myFileEditorManager.getOpenFiles();
     for (final VirtualFile openFile : openFiles) {
