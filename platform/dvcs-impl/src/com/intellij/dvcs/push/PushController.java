@@ -313,6 +313,9 @@ public class PushController implements Disposable {
               myPushLog.setChildren(node,
                                     getPresentationForCommits(PushController.this.myProject, model.getLoadedCommits(),
                                                               model.getNumberOfShownCommits()));
+              if (!commits.isEmpty()) {
+                myPushLog.selectIfNothingSelected(node);
+              }
             }
             node.stopLoading();
             if (shouldBeSelected) { // never remove selection; initially all checkboxes are not selected

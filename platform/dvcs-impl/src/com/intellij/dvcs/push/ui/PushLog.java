@@ -251,6 +251,12 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     return myTree;
   }
 
+  public void selectIfNothingSelected(@NotNull TreeNode node) {
+    if (myTree.isSelectionEmpty()) {
+      myTree.setSelectionPath(TreeUtil.getPathFromRoot(node));
+    }
+  }
+
   private class MyTreeCellEditor extends AbstractCellEditor implements TreeCellEditor {
 
     private RepositoryWithBranchPanel myValue;
