@@ -46,6 +46,7 @@ import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
@@ -293,25 +294,19 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
         return;
       }
 
-      final VcsRevisionNumber baseRevision = myStatusProvider.getBaseRevision(myVirtualFile);
+      final Pair<VcsRevisionNumber, String> baseRevision = myStatusProvider.getBaseRevision(myVirtualFile);
       if (baseRevision == null) {
         log("installTracker() for file " + myVirtualFile.getPath() + " failed: null returned for base revision number");
         reportTrackerBaseLoadFailed();
         return;
       }
+
       // loads are sequential (in single threaded QueueProcessor);
       // so myLoadCounter can't take less value for greater base revision -> the only thing we want from it
-      final LineStatusTracker.RevisionPack revisionPack = new LineStatusTracker.RevisionPack(myLoadCounter, baseRevision);
+      final LineStatusTracker.RevisionPack revisionPack = new LineStatusTracker.RevisionPack(myLoadCounter, baseRevision.first);
       ++myLoadCounter;
 
-      final String lastUpToDateContent = myStatusProvider.getBaseVersionContent(myVirtualFile);
-      if (lastUpToDateContent == null) {
-        log("installTracker() for file " + myVirtualFile.getPath() + " failed: no up to date content");
-        reportTrackerBaseLoadFailed();
-        return;
-      }
-
-      final String converted = StringUtil.convertLineSeparators(lastUpToDateContent);
+      final String converted = StringUtil.convertLineSeparators(baseRevision.second);
       final Runnable runnable = new Runnable() {
         public void run() {
           synchronized (myLock) {
