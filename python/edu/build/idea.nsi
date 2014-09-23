@@ -14,6 +14,7 @@
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
 !define INSTALL_OPTION_ELEMENTS 7
+!define PYTHON_VERSIONS 4
 Name "${MUI_PRODUCT}"
 SetCompressor lzma
 ; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
@@ -705,7 +706,7 @@ FunctionEnd
 
 Function getPythonInfo
   ClearErrors
-  FileOpen $3 $INSTDIR\python\python.txt r
+  FileOpen $3 $Temp\python.txt r
   IfErrors cantOpenFile ;file can not be open.
   ${If} ${RunningX64}
     goto getPythonInfo
@@ -734,9 +735,9 @@ FunctionEnd
 ; Installer sections
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
-  ${LineSum} "$INSTDIR\python\python.txt" $R0
+  ${LineSum} "$TEMP\python.txt" $R0
   IfErrors cantOpenFile
-  StrCmp $R0 "4" getPythonInfo ;info about 2 and 3 version of python
+  StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo ;info about 2 and 3 version of python
 cantOpenFile:  
   MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is invalid. Python will not be downloaded."
   goto skip_python_download
@@ -760,10 +761,9 @@ installation_for_all_users:
   StrCmp $1 "" get_python
 verefy_python_launcher:
   IfFileExists $1\python.exe python_exists get_python
-get_python:  
+get_python:
+  CreateDirectory "$INSTDIR\python"
   inetc::get "$R3" "$INSTDIR\python\python_$R2.msi"
-  goto validate_download
-validate_download:
   Pop $0
   ${If} $0 == "OK" 
     ExecCmd::exec 'msiexec /i "$INSTDIR\python\python_$R2.msi" /quiet /qn /norestart'
@@ -912,11 +912,14 @@ Function ConfirmDesktopShortcut
   ${If} $0 == "1"
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Flags" "DISABLED"
   ${EndIf}
-  CreateDirectory "$INSTDIR\python"
-  inetc::get "http://www.jetbrains.com/updates/python.txt" "$INSTDIR\python\python.txt"
-  ${LineSum} "$INSTDIR\python\python.txt" $R0
+  IfFileExists "$TEMP\python.txt" deletePythonFileInfo getPythonFileInfo
+deletePythonFileInfo:  
+  Delete "$TEMP\python.txt"
+getPythonFileInfo:
+  inetc::get "http://www.jetbrains.com/updates/python.txt" "$TEMP\python.txt"
+  ${LineSum} "$TEMP\python.txt" $R0
   IfErrors cantOpenFile
-  StrCmp $R0 "4" getPythonInfo
+  StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
 cantOpenFile:  
   MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded."
   goto association
