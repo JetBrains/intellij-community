@@ -58,29 +58,29 @@ public class LineStatusTracker {
   private final Object myLock = new Object();
   private BaseLoadState myBaseLoaded;
 
-  private final Document myDocument;
-  private final Document myVcsDocument;
+  @NotNull private final Document myDocument;
+  @NotNull private final Document myVcsDocument;
 
-  private List<Range> myRanges;
+  @NotNull private List<Range> myRanges;
 
-  private final Project myProject;
+  @NotNull private final Project myProject;
 
   private MyDocumentListener myDocumentListener;
 
   private boolean mySuppressUpdate;
   private boolean myBulkUpdate;
-  private final Application myApplication;
+  @NotNull private final Application myApplication;
   @Nullable private RevisionPack myBaseRevisionNumber;
   private boolean myAnathemaThrown;
-  private FileEditorManager myFileEditorManager;
-  private final VcsDirtyScopeManager myVcsDirtyScopeManager;
-  private final VirtualFile myVirtualFile;
+  @NotNull private final FileEditorManager myFileEditorManager;
+  @NotNull private final VcsDirtyScopeManager myVcsDirtyScopeManager;
+  @NotNull private final VirtualFile myVirtualFile;
   private boolean myReleased = false;
 
   private LineStatusTracker(@NotNull final Document document,
                             @NotNull final Document vcsDocument,
-                            final Project project,
-                            @Nullable final VirtualFile virtualFile) {
+                            @NotNull final Project project,
+                            @NotNull final VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
     myApplication = ApplicationManager.getApplication();
     myDocument = document;
@@ -153,8 +153,8 @@ public class LineStatusTracker {
     }
   }
 
-  @SuppressWarnings({"AutoBoxing"})
-  private RangeHighlighter createHighlighter(final Range range) {
+  @NotNull
+  private RangeHighlighter createHighlighter(@NotNull Range range) {
     LOG.assertTrue(!myReleased, "Already released");
 
     int first =
@@ -205,10 +205,12 @@ public class LineStatusTracker {
     }
   }
 
+  @NotNull
   public Document getDocument() {
     return myDocument;
   }
 
+  @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
@@ -412,6 +414,7 @@ public class LineStatusTracker {
       Range lastRangeBefore = ContainerUtil.getLastItem(rangesBefore);
       Range firstRangeAfter = ContainerUtil.getFirstItem(rangesAfter);
 
+      //noinspection UnnecessaryLocalVariable
       int afterChangedLine1 = beforeChangedLine1;
       int afterChangedLine2 = beforeChangedLine2 + linesShift;
 
@@ -435,7 +438,7 @@ public class LineStatusTracker {
           if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
         }
 
-        if (myRanges.isEmpty() && myVirtualFile != null) {
+        if (myRanges.isEmpty()) {
           markFileUnchanged();
         }
       }
@@ -869,7 +872,7 @@ public class LineStatusTracker {
     }
   }
 
-  public static LineStatusTracker createOn(@Nullable VirtualFile virtualFile, @NotNull final Document doc, final Project project) {
+  public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile, @NotNull final Document doc, final Project project) {
     final Document document = new DocumentImpl("", true);
     return new LineStatusTracker(doc, document, project, virtualFile);
   }
@@ -880,6 +883,7 @@ public class LineStatusTracker {
     }
   }
 
+  @NotNull
   Project getProject() {
     return myProject;
   }
