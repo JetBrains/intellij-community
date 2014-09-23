@@ -4,6 +4,7 @@
 !include "strings.nsi"
 !include "Registry.nsi"
 !include "version.nsi"
+!include x64.nsh
 
 ; Product with version (IntelliJ IDEA #xxxx).
 
@@ -705,8 +706,15 @@ FunctionEnd
 Function getPythonInfo
   ClearErrors
   FileOpen $3 $INSTDIR\python\python.txt r
-  IfErrors cantOpenFile ;file can not be open.  
+  IfErrors cantOpenFile ;file can not be open.
+  ${If} ${RunningX64}
+    goto getPythonInfo
+  ${Else}
+    FileRead $3 $4
+    FileRead $3 $4
+  ${EndIf}
   ;get python2 info
+getPythonInfo:
   FileRead $3 $4
   ${StrTok} $0 $4 " " "1" "1"
   ${StrTok} $1 $4 " " "2" "1"
@@ -728,7 +736,7 @@ FunctionEnd
 Section "IDEA Files" CopyIdeaFiles
   ${LineSum} "$INSTDIR\python\python.txt" $R0
   IfErrors cantOpenFile
-  StrCmp $R0 "2" getPythonInfo ;info about 2 and 3 version of python
+  StrCmp $R0 "4" getPythonInfo ;info about 2 and 3 version of python
 cantOpenFile:  
   MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is invalid. Python will not be downloaded."
   goto skip_python_download
