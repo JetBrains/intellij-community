@@ -651,16 +651,10 @@ public class LineStatusTracker {
   @Nullable
   public Range getNextRange(final int line) {
     synchronized (myLock) {
-      final Range currentRange = getRangeForLine(line);
-      if (currentRange != null) {
-        return getNextRange(currentRange);
-      }
-
-      for (final Range range : myRanges) {
-        if (line > range.getLine1() || line > range.getLine2()) {
-          continue;
+      for (Range range : myRanges) {
+        if (line < range.getLine2() && !range.isSelectedByLine(line)) {
+          return range;
         }
-        return range;
       }
       return null;
     }
@@ -669,17 +663,11 @@ public class LineStatusTracker {
   @Nullable
   public Range getPrevRange(final int line) {
     synchronized (myLock) {
-      final Range currentRange = getRangeForLine(line);
-      if (currentRange != null) {
-        return getPrevRange(currentRange);
-      }
-
-      for (ListIterator<Range> iterator = myRanges.listIterator(myRanges.size()); iterator.hasPrevious(); ) {
-        final Range range = iterator.previous();
-        if (range.getLine1() > line) {
-          continue;
+      for (int i = myRanges.size() - 1; i >= 0; i--) {
+        Range range = myRanges.get(i);
+        if (line > range.getLine1() && !range.isSelectedByLine(line)) {
+          return range;
         }
-        return range;
       }
       return null;
     }
@@ -689,12 +677,7 @@ public class LineStatusTracker {
   public Range getRangeForLine(final int line) {
     synchronized (myLock) {
       for (final Range range : myRanges) {
-        if (range.getType() == Range.DELETED && line == range.getLine1()) {
-          return range;
-        }
-        else if (line >= range.getLine1() && line < range.getLine2()) {
-          return range;
-        }
+        if (range.isSelectedByLine(line)) return range;
       }
       return null;
     }
