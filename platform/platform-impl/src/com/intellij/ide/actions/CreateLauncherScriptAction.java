@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,15 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
+import java.util.Map;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static java.util.Arrays.asList;
 
@@ -44,7 +48,7 @@ import static java.util.Arrays.asList;
  * @author yole
  */
 public class CreateLauncherScriptAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateLauncherScriptAction");
+  private static final Logger LOG = Logger.getInstance(CreateLauncherScriptAction.class);
   private static final String CONTENTS = "/Contents";
 
   public static boolean isAvailable() {
@@ -52,15 +56,15 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    final boolean canCreateScript = isAvailable();
-    final Presentation presentation = e.getPresentation();
+  public void update(@NotNull AnActionEvent e) {
+    boolean canCreateScript = isAvailable();
+    Presentation presentation = e.getPresentation();
     presentation.setVisible(canCreateScript);
     presentation.setEnabled(canCreateScript);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (!isAvailable()) return;
 
     Project project = e.getProject();
@@ -71,8 +75,9 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     }
 
     String path = dialog.myPathField.getText();
+    assert path != null;
     if (!path.startsWith("/")) {
-      final String home = System.getenv("HOME");
+      String home = System.getenv("HOME");
       if (home != null && new File(home).isDirectory()) {
         if (path.startsWith("~")) {
           path = home + path.substring(1);
@@ -83,11 +88,13 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
       }
     }
 
-    final File target = new File(path, dialog.myNameField.getText());
+    String name = dialog.myNameField.getText();
+    assert name != null;
+    File target = new File(path, name);
     if (target.exists()) {
-      int rc = Messages.showOkCancelDialog(project, ApplicationBundle.message("launcher.script.overwrite", target),
-                                           "Create Launcher Script", Messages.getQuestionIcon());
-      if (rc != Messages.OK) {
+      String message = ApplicationBundle.message("launcher.script.overwrite", target);
+      String title = ApplicationBundle.message("launcher.script.title");
+      if (Messages.showOkCancelDialog(project, message, title, Messages.getQuestionIcon()) != Messages.OK) {
         return;
       }
     }
@@ -99,32 +106,30 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     if (!isAvailable()) return;
 
     try {
-      final File scriptFile = createLauncherScriptFile();
-      final File scriptTarget = new File(pathName);
+      File scriptFile = createLauncherScriptFile();
+      File scriptTarget = new File(pathName);
 
-      final File launcherScriptContainingDir = scriptTarget.getParentFile();
-      if (!(launcherScriptContainingDir.exists() || launcherScriptContainingDir.mkdirs()) ||
-          !scriptFile.renameTo(scriptTarget)) {
-        final String launcherScriptContainingDirPath = launcherScriptContainingDir.getCanonicalPath();
-        final String installationScriptSrc =
+      File scriptTargetDir = scriptTarget.getParentFile();
+      assert scriptTargetDir != null;
+      if (!(scriptTargetDir.exists() || scriptTargetDir.mkdirs()) || !scriptFile.renameTo(scriptTarget)) {
+        String scriptTargetDirPath = scriptTargetDir.getCanonicalPath();
+        // copy file and change ownership to root (UID 0 = root, GID 0 = root (wheel on Macs))
+        String installationScriptSrc =
           "#!/bin/sh\n" +
-          // create all intermediate folders
-          "mkdir -p \"" + launcherScriptContainingDirPath + "\"\n" +
-          // copy file and change ownership to root (UID 0 = root, GID 0 = root (wheel on Macs))
+          "mkdir -p \"" + scriptTargetDirPath + "\"\n" +
           "install -g 0 -o 0 \"" + scriptFile.getCanonicalPath() + "\" \"" + pathName + "\"";
-        final File installationScript = ExecUtil.createTempExecutableScript("launcher_installer", ".sh", installationScriptSrc);
-        final String prompt = ApplicationBundle.message("launcher.script.sudo.prompt", launcherScriptContainingDirPath);
+        File installationScript = ExecUtil.createTempExecutableScript("launcher_installer", ".sh", installationScriptSrc);
+        String prompt = ApplicationBundle.message("launcher.script.sudo.prompt", scriptTargetDirPath);
         ExecUtil.sudoAndGetOutput(asList(installationScript.getPath()), prompt, null);
       }
     }
     catch (Exception e) {
-      final String message = e.getMessage();
+      String message = e.getMessage();
       if (!StringUtil.isEmptyOrSpaces(message)) {
         LOG.warn(e);
         Notifications.Bus.notify(
           new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Failed to create launcher script", message, NotificationType.ERROR),
-          project
-        );
+          project);
       }
       else {
         LOG.error(e);
@@ -134,23 +139,20 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {
     String runPath = PathManager.getHomePath();
-    final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
-    if (!SystemInfo.isMac) {
-      // for Macs just use "*.app"
-      runPath += "/bin/" + productName + ".sh";
-    } else if (runPath.endsWith(CONTENTS)) {
-      runPath += "/MacOS/" + productName;
-    }
-    String launcherContents = ExecUtil.loadTemplate(CreateLauncherScriptAction.class.getClassLoader(), "launcher.py",
-                                                          newHashMap(asList("$CONFIG_PATH$", "$RUN_PATH$"),
-                                                                     asList(PathManager.getConfigPath(), runPath)));
+    String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    if (!SystemInfo.isMac) runPath += "/bin/" + productName + ".sh";
+    else if (runPath.endsWith(CONTENTS)) runPath += "/MacOS/" + productName;
 
-    launcherContents = StringUtil.convertLineSeparators(launcherContents);
+    ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
+    assert loader != null;
+    Map<String, String> variables = newHashMap(pair("$CONFIG_PATH$", PathManager.getConfigPath()), pair("$RUN_PATH$", runPath));
+    String launcherContents = StringUtil.convertLineSeparators(ExecUtil.loadTemplate(loader, "launcher.py", variables));
+
     return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);
   }
 
   public static String defaultScriptName() {
-    final String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
+    String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
     return StringUtil.isEmptyOrSpaces(scriptName) ? "idea" : scriptName;
   }
 
@@ -163,8 +165,8 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     protected CreateLauncherScriptDialog(Project project) {
       super(project);
       init();
-      setTitle("Create Launcher Script");
-      final String productName = ApplicationNamesInfo.getInstance().getProductName();
+      setTitle(ApplicationBundle.message("launcher.script.title"));
+      String productName = ApplicationNamesInfo.getInstance().getProductName();
       myTitle.setText(myTitle.getText().replace("$APP_NAME$", productName));
       myNameField.setText(defaultScriptName());
     }
