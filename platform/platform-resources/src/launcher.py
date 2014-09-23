@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import socket
 import struct
@@ -8,8 +9,8 @@ import time
 
 # see com.intellij.idea.SocketLock for the server side of this interface
 
-RUN_PATH = '$RUN_PATH$'
-CONFIG_PATH = '$CONFIG_PATH$'
+RUN_PATH = u'$RUN_PATH$'
+CONFIG_PATH = u'$CONFIG_PATH$'
 
 args = []
 skip_next = False
