@@ -58,24 +58,24 @@ public class LineStatusTracker {
   private final Object myLock = new Object();
   private BaseLoadState myBaseLoaded;
 
+  @NotNull private final Project myProject;
   @NotNull private final Document myDocument;
   @NotNull private final Document myVcsDocument;
+  @NotNull private final VirtualFile myVirtualFile;
 
-  @NotNull private List<Range> myRanges;
-
-  @NotNull private final Project myProject;
+  @NotNull private final Application myApplication;
+  @NotNull private final FileEditorManager myFileEditorManager;
+  @NotNull private final VcsDirtyScopeManager myVcsDirtyScopeManager;
 
   private MyDocumentListener myDocumentListener;
+  @Nullable private RevisionPack myBaseRevisionNumber;
 
   private boolean mySuppressUpdate;
   private boolean myBulkUpdate;
-  @NotNull private final Application myApplication;
-  @Nullable private RevisionPack myBaseRevisionNumber;
   private boolean myAnathemaThrown;
-  @NotNull private final FileEditorManager myFileEditorManager;
-  @NotNull private final VcsDirtyScopeManager myVcsDirtyScopeManager;
-  @NotNull private final VirtualFile myVirtualFile;
   private boolean myReleased = false;
+
+  @NotNull private List<Range> myRanges;
 
   private LineStatusTracker(@NotNull final Document document,
                             @NotNull final Document vcsDocument,
