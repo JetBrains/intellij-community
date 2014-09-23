@@ -25,6 +25,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +49,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -81,8 +81,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
   @NotNull private final Map<Document, LineStatusTracker> myLineStatusTrackers;
 
-  // !!! no state queries and self lock for add/remove
-  // removal from here - not under write action
   @NotNull private final QueueProcessorRemovePartner<Document, BaseRevisionLoader> myPartner;
   private long myLoadCounter;
 
@@ -184,7 +182,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
   @Override
   public LineStatusTracker getLineStatusTracker(final Document document) {
-    myApplication.assertReadAccessAllowed();
     synchronized (myLock) {
       if (isDisabled()) return null;
 
@@ -193,7 +190,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   private void resetTrackersForOpenFiles() {
-    myApplication.assertReadAccessAllowed();
     if (isDisabled()) return;
 
     if (LOG.isDebugEnabled()) {
@@ -207,7 +203,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   private void resetTracker(@NotNull final VirtualFile virtualFile) {
-    myApplication.assertReadAccessAllowed();
     if (isDisabled()) return;
 
     final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
@@ -245,7 +240,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   private boolean shouldBeInstalled(@Nullable final VirtualFile virtualFile) {
-    myApplication.assertIsDispatchThread();
     if (isDisabled()) return false;
 
     if (virtualFile == null || virtualFile instanceof LightVirtualFile) return false;
@@ -304,8 +298,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   private void startAlarm(@NotNull final Document document, @NotNull final VirtualFile virtualFile) {
-    myApplication.assertReadAccessAllowed();
-
     synchronized (myLock) {
       myPartner.add(document, new BaseRevisionLoader(document, virtualFile));
     }
@@ -398,16 +390,9 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       final Document document = editor.getDocument();
       final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
       if (virtualFile == null) return;
-
-      // TODO: is there possible race between editorCreated / editorReleased ?
-      new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
-        @Override
-        public void run() {
-          if (shouldBeInstalled(virtualFile)) {
-            installTracker(virtualFile, document);
-          }
-        }
-      }.callMe();
+      if (shouldBeInstalled(virtualFile)) {
+        installTracker(virtualFile, document);
+      }
     }
 
     public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -416,12 +401,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       final Document doc = editor.getDocument();
       final Editor[] editors = event.getFactory().getEditors(doc, myProject);
       if (editors.length == 0) {
-        new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
-          @Override
-          public void run() {
-            releaseTracker(doc);
-          }
-        }.callMe();
+        releaseTracker(doc);
       }
     }
   }
