@@ -14,6 +14,8 @@ setProperty("pluginHelp", "${outDir}/help")
 setProperty("buildNumber", requireProperty("build.number", snapshot))
 setProperty("ideaBuildNumber", requireProperty("idea.build.number"))
 
+setProperty("ideaSinceBuildNumber", ("${ideaBuildNumber}" =~ /(\d+\.\d+).\d+/)[0][0])
+
 setProperty("ideaHomePacked", "${ideaDir}/jdk16") //compiled idea
 setProperty("ideaHome", "${ideaDir}/jdk16/idea-IC-${ideaBuildNumber}") //compiled idea
 
@@ -164,7 +166,7 @@ target(name: "compile", description: "Compile module python") {
 
   ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
                     match: "since-build=\"\\d+\\.\\d+\"",
-                    replace: "since-build=\"${ideaBuildNumber}\"")
+                    replace: "since-build=\"${ideaSinceBuildNumber}\"")
 }
 
 target(name: "jar", description: "Generate jar file") {

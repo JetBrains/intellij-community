@@ -586,7 +586,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private void fireModificationForItem(final Configurable configurable) {
     if (configurable != null) {
-      if (!myConfigurable2Content.containsKey(configurable) && isParentWithContent(configurable)) {
+      if (!myConfigurable2Content.containsKey(configurable) && ConfigurableWrapper.hasOwnContent(configurable)) {
 
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
@@ -611,11 +611,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         fireModificationInt(configurable);
       }
     }
-  }
-
-  private static boolean isParentWithContent(final Configurable configurable) {
-    return configurable instanceof SearchableConfigurable.Parent &&
-        ((SearchableConfigurable.Parent)configurable).hasOwnContent();
   }
 
   private void fireModificationInt(final Configurable configurable) {

@@ -59,7 +59,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -319,7 +319,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (connector == null) {
           LOG.error("Cannot find connector: " + SOCKET_LISTENING_CONNECTOR_NAME);
         }
-        connector.stopListening(arguments);
+        else {
+          connector.stopListening(arguments);
+        }
       }
       else {
         if(myConnectionService != null) {
@@ -378,9 +380,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       deleteStepRequests(stepThreadReference);
       EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
       StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, StepRequest.STEP_LINE, depth);
-      DebuggerSettings settings = DebuggerSettings.getInstance();
       if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
         final List<ClassFilter> activeFilters = new ArrayList<ClassFilter>();
+        DebuggerSettings settings = DebuggerSettings.getInstance();
         if (settings.TRACING_FILTERS_ENABLED) {
           for (ClassFilter filter : settings.getSteppingFilters()) {
             if (filter.isEnabled()) {
@@ -581,10 +583,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myStatusUpdateAlarm.addRequest(new Runnable() {
         @Override
         public void run() {
-          final WindowManager wm = WindowManager.getInstance();
-          if (wm != null) {
-            wm.getStatusBar(myProject).setInfo(text);
-          }
+          StatusBarUtil.setStatusBarInfo(myProject, text);
         }
       }, 50);
     }

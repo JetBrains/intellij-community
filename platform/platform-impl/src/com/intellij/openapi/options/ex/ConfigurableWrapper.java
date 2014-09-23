@@ -81,6 +81,18 @@ public class ConfigurableWrapper implements SearchableConfigurable {
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).getConfigurable() instanceof NoScroll);
   }
 
+  public static boolean hasOwnContent(UnnamedConfigurable configurable) {
+    if (configurable instanceof ConfigurableWrapper) {
+      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      configurable = wrapper.getConfigurable();
+    }
+    if (configurable instanceof SearchableConfigurable.Parent) {
+      SearchableConfigurable.Parent parent = (SearchableConfigurable.Parent)configurable;
+      return parent.hasOwnContent();
+    }
+    return false;
+  }
+
   public static boolean isNonDefaultProject(Configurable configurable) {
     return configurable instanceof NonDefaultProjectConfigurable ||
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).myEp.nonDefaultProject);
