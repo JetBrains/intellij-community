@@ -45,7 +45,7 @@ public class VcsFullCommitDetailsNode extends DefaultMutableTreeNode implements 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     String subject = StringUtil.shortenTextWithEllipsis(myCommit.getSubject(), 80, 0);
-    renderer.append(subject, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, renderer.getForeground()));
+    renderer.append(subject, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground()));
   }
 
   public String getTooltip() {
