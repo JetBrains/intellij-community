@@ -119,6 +119,11 @@ public class FoldingUtil {
         }
         return allRegions[--current];
       }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
     };
   }
 
