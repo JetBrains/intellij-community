@@ -453,8 +453,6 @@
       <keyboard-shortcut first-keystroke="alt HOME"/>
     </action>
 
-    <action id="Console.History.Next" /> <!-- Disables meta up -->
-    <action id="Console.History.Previous" /> <!-- Disables meta down -->
     <action id="Console.TableResult.Reload" />
 
 
