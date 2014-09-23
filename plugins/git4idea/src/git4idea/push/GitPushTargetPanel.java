@@ -51,8 +51,8 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   private static final Logger LOG = Logger.getInstance(GitPushTargetPanel.class);
 
   private static final Comparator<GitRemoteBranch> REMOTE_BRANCH_COMPARATOR = new MyRemoteBranchComparator();
-  public static final String SEPARATOR = " \u25BE  ";
-  public static final String NO_REMOTES = "No remotes" + SEPARATOR;
+  private static final String SEPARATOR = " : ";
+  private static final String NO_REMOTES = "No remotes";
 
   private final GitRepository myRepository;
   private final PushTargetTextField myTargetTextField;
@@ -125,7 +125,7 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       if (target.isNewBranchCreated()) {
         renderer.append("+", SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
       }
-      renderer.append(target.getBranch().getNameForRemoteOperations() + SEPARATOR, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
+      renderer.append(target.getBranch().getNameForRemoteOperations(), SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
     }
   }
 
