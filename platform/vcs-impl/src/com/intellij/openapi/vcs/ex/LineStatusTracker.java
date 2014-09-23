@@ -228,21 +228,22 @@ public class LineStatusTracker {
   }
 
   @NotNull
+  public Document getVcsDocument() {
+    return myVcsDocument;
+  }
+
+  @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
+  @NotNull
   public List<Range> getRanges() {
     myApplication.assertReadAccessAllowed();
 
     synchronized (myLock) {
       return myRanges;
     }
-  }
-
-  public Document getVcsDocument() {
-    myApplication.assertIsDispatchThread();
-    return myVcsDocument;
   }
 
   public void startBulkUpdate() {
