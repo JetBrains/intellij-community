@@ -42,7 +42,6 @@ public class GitOutgoingCommitsProvider extends OutgoingCommitsProvider<GitRepos
                                            boolean initial) {
     String source = pushSpec.getSource().getBranch().getFullName();
     GitPushTarget target = pushSpec.getTarget();
-    assert target != null;
     String destination = target.getBranch().getFullName();
     try {
       List<GitCommit> commits;
