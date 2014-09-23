@@ -23,7 +23,6 @@ import java.io.File
 import java.io.InputStream
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import com.intellij.openapi.util.AtomicNotNullLazyValue
-import com.intellij.openapi.util.SystemInfo
 import com.mcdermottroe.apple.OSXKeychain
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -33,7 +32,6 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import javax.swing.SwingUtilities
 
 val PLUGIN_NAME: String = "Settings Repository"
@@ -143,12 +141,12 @@ public class IcsManager : ApplicationLoadListener {
 
   val repositoryManager: RepositoryManager = GitRepositoryManager(object : AtomicNotNullLazyValue<CredentialsStore>() {
     override fun compute(): CredentialsStore {
-      if (SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard) {
+      if (isOSXCredentialsStoreSupported) {
         try {
           OSXKeychain.setLibraryPath(getPathToBundledFile("osxkeychain.so"))
           return OsXCredentialsStore()
         }
-        catch (e: Exception) {
+        catch (e: Throwable) {
           LOG.error(e)
         }
       }
@@ -163,7 +161,7 @@ public class IcsManager : ApplicationLoadListener {
           try {
             repositoryManager.commit(indicator)
           }
-          catch (e: Exception) {
+          catch (e: Throwable) {
             LOG.error(e)
           }
         }
@@ -228,7 +226,7 @@ public class IcsManager : ApplicationLoadListener {
   public fun sync(syncType: SyncType, project: Project?) {
     ApplicationManager.getApplication()!!.assertIsDispatchThread()
 
-    var exception: Exception? = null
+    var exception: Throwable? = null
 
     cancelAndDisableAutoCommit()
     try {
@@ -245,7 +243,7 @@ public class IcsManager : ApplicationLoadListener {
             }
             // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
           }
-          catch (e: Exception) {
+          catch (e: Throwable) {
             LOG.error(e)
 
             // "RESET_TO_*" will do "reset hard", so, probably, error will be gone, so, we can continue operation
@@ -278,7 +276,7 @@ public class IcsManager : ApplicationLoadListener {
           }
           catch (e: ProcessCanceledException) {
           }
-          catch (e: Exception) {
+          catch (e: Throwable) {
             if (e !is AuthenticationException) {
               LOG.error(e)
             }

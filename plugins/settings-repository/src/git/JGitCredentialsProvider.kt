@@ -14,6 +14,7 @@ import org.jetbrains.settingsRepository.isOSXCredentialsStoreSupported
 import org.jetbrains.settingsRepository.isFulfilled
 import org.jetbrains.settingsRepository.showAuthenticationForm
 import org.jetbrains.settingsRepository.CredentialsStore
+import org.jetbrains.settingsRepository.LOG
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
   private var credentialsFromGit: Credentials? = null
@@ -78,7 +79,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     }
     else {
       // we open password protected SSH key file using OS X keychain - "git credentials" is pointless in this case
-      if (sshKeyFile == null || !isOSXCredentialsStoreSupported()) {
+      if (sshKeyFile == null || !isOSXCredentialsStoreSupported) {
         if (credentialsFromGit == null) {
           credentialsFromGit = getCredentialsUsingGit(uri, repository)
         }
@@ -89,7 +90,13 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
       }
 
       if (credentials == null) {
-        credentials = credentialsStore.getValue().get(uri.getHost(), sshKeyFile)
+        try {
+          credentials = credentialsStore.getValue().get(uri.getHost(), sshKeyFile)
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+        }
+
         saveCredentialsToStore = true
 
         if (userFromUri != null) {

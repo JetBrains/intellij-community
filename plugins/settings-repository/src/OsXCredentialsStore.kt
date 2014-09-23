@@ -7,7 +7,8 @@ import gnu.trove.THashMap
 import com.mcdermottroe.apple.OSXKeychainException
 import com.intellij.openapi.util.SystemInfo
 
-fun isOSXCredentialsStoreSupported() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
+val isOSXCredentialsStoreSupported: Boolean
+  get() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
 
 class OsXCredentialsStore : CredentialsStore {
   class object {
