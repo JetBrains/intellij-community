@@ -102,6 +102,10 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       }
     });
 
+    if (remotes.size() <= 1) {
+      return;
+    }
+
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(null, remotes) {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
