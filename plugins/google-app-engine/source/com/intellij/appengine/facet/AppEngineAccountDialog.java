@@ -64,7 +64,7 @@ public class AppEngineAccountDialog {
       PasswordSafe.getInstance().storePassword(project, AppEngineAccountDialog.class, getPasswordKey(email), password);
     }
     catch (PasswordSafeException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
   }
 
@@ -82,7 +82,7 @@ public class AppEngineAccountDialog {
       return PasswordSafe.getInstance().getPassword(project, AppEngineAccountDialog.class, getPasswordKey(email));
     }
     catch (PasswordSafeException e) {
-      LOG.error(e);
+      LOG.info(e);
       return null;
     }
   }
