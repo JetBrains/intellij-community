@@ -890,6 +890,10 @@
 
     <projectService serviceInterface="com.intellij.execution.ExecutionManager" serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
+    <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
+    <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>
+    <projectService serviceInterface="com.intellij.openapi.preview.PreviewManager"
+                    serviceImplementation="com.intellij.openapi.preview.impl.PreviewManagerImpl"/>
   </extensions>
 </idea-plugin>
 
