@@ -24,6 +24,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 public class AppEngineServerConfiguration extends ServerConfigurationBase<AppEngineServerConfiguration> {
   private String myEmail;
   private boolean myOAuth2;
+  private boolean myPasswordStored;
 
   @Attribute("email")
   public String getEmail() {
@@ -35,11 +36,20 @@ public class AppEngineServerConfiguration extends ServerConfigurationBase<AppEng
     return myOAuth2;
   }
 
+  @Attribute("password-stored")
+  public boolean isPasswordStored() {
+    return myPasswordStored;
+  }
+
   public void setEmail(String email) {
     myEmail = email;
   }
 
   public void setOAuth2(boolean OAuth2) {
     myOAuth2 = OAuth2;
+  }
+
+  public void setPasswordStored(boolean passwordStored) {
+    myPasswordStored = passwordStored;
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBPasswordField;
 import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class AppEngineCloudConfigurable implements Configurable {
   private final AppEngineServerConfiguration myConfiguration;
   @Nullable private final Project myProject;
   private JTextField myEmailField;
-  private JPasswordField myPasswordField;
+  private JBPasswordField myPasswordField;
   private JBRadioButton myPasswordLoginButton;
   private JBRadioButton myOAuthLoginButton;
   private JPanel myMainPanel;
@@ -108,6 +109,8 @@ public class AppEngineCloudConfigurable implements Configurable {
     else {
       myPasswordLoginButton.setSelected(true);
     }
+    myRememberPasswordCheckBox.setSelected(myConfiguration.isPasswordStored());
+    myPasswordField.setPasswordIsStored(myConfiguration.isPasswordStored());
     updateControls();
   }
 
@@ -141,6 +144,10 @@ public class AppEngineCloudConfigurable implements Configurable {
     String password = getPassword();
     if (myRememberPasswordCheckBox.isSelected() && !StringUtil.isEmpty(email) && !password.isEmpty()) {
       AppEngineAccountDialog.storePassword(email, password, myProject);
+      myConfiguration.setPasswordStored(true);
+    }
+    else {
+      myConfiguration.setPasswordStored(false);
     }
   }
 
@@ -153,7 +160,9 @@ public class AppEngineCloudConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    return !Comparing.strEqual(getEmail(), myConfiguration.getEmail()) || myConfiguration.isOAuth2() != isOAuth2();
+    return !Comparing.strEqual(getEmail(), myConfiguration.getEmail()) || myConfiguration.isOAuth2() != isOAuth2()
+           || myRememberPasswordCheckBox.isSelected() != myConfiguration.isPasswordStored()
+           || myRememberPasswordCheckBox.isSelected() && !getPassword().isEmpty();
   }
 
   @Override
