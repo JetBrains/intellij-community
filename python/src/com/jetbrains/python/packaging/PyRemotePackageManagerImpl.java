@@ -17,6 +17,7 @@ package com.jetbrains.python.packaging;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
@@ -95,28 +96,33 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       }
       catch (final ExecutionException e) {
         if (e.getCause() instanceof VagrantNotStartedException) {
-          throw new PyExternalProcessException(ERROR_VAGRANT_NOT_LAUNCHED, helperPath, args, "Vagrant instance is down. <a href=\"" +
-                                                                                             LAUNCH_VAGRANT +
-                                                                                             "\">Launch vagrant</a>")
-            .withHandler(LAUNCH_VAGRANT, new Runnable() {
-              @Override
-              public void run() {
-                final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-                if (manager != null) {
+          final List<? extends PyExecutionFix> fixes = ImmutableList.of(new PyExecutionFix() {
+            @NotNull
+            @Override
+            public String getName() {
+              return "Launch Vagrant";
+            }
 
-                  try {
-                    manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
-                    clearCaches();
-                  }
-                  catch (ExecutionException e1) {
-                    throw new RuntimeException(e1);
-                  }
+            @Override
+            public void run(@NotNull Sdk sdk) {
+              final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+              if (manager != null) {
+                try {
+                  manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
+                  clearCaches();
+                }
+                catch (ExecutionException e) {
+                  throw new RuntimeException(e);
                 }
               }
-            });
+            }
+          });
+          throw new PyExternalProcessException(helperPath, args, "Vagrant instance is down. <a href=\"" +
+                                                                                             LAUNCH_VAGRANT +
+                                                                                             "\">Launch vagrant</a>", fixes);
         }
         else {
-          throw new PyExternalProcessException(ERROR_REMOTE_ACCESS, helperPath, args, e.getMessage());
+          throw new PyExternalProcessException(helperPath, args, e.getMessage());
         }
       }
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
@@ -148,16 +154,16 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
           return processOutput;
         }
         catch (ExecutionException e) {
-          throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK: " + e.getMessage());
+          throw new PyExternalProcessException(helperPath, args, "Error running SDK: " + e.getMessage());
         }
       }
       else {
-        throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args,
+        throw new PyExternalProcessException(helperPath, args,
                                              PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
       }
     }
     else {
-      throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Invalid remote SDK");
+      throw new PyExternalProcessException(helperPath, args, "Invalid remote SDK");
     }
   }
 

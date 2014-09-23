@@ -16,11 +16,11 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -30,19 +30,22 @@ import java.util.regex.Pattern;
 public class PyExternalProcessException extends ExecutionException {
   private static final Pattern WITH_CR_DELIMITER_PATTERN = Pattern.compile("(?<=\r|\n|\r\n)");
 
-  private final int myRetcode;
   @NotNull private String myName;
   @NotNull private List<String> myArgs;
   @NotNull private String myMessage;
+  @NotNull private final List<? extends PyExecutionFix> myFixes;
 
-  private Pair<String, Runnable> myHandler = null;
+  public PyExternalProcessException(@NotNull String name, @NotNull List<String> args, @NotNull String message) {
+    this(name, args, message, Collections.<PyExecutionFix>emptyList());
+  }
 
-  public PyExternalProcessException(int retcode, @NotNull String name, @NotNull List<String> args, @NotNull String message) {
+  public PyExternalProcessException(@NotNull String name, @NotNull List<String> args, @NotNull String message,
+                                    @NotNull List<? extends PyExecutionFix> fixes) {
     super(String.format("External process error '%s %s':\n%s", name, StringUtil.join(args, " "), message));
-    myRetcode = retcode;
     myName = name;
     myArgs = args;
     myMessage = stripLinesWithoutLineFeeds(message);
+    myFixes = fixes;
   }
 
   @Override
@@ -55,10 +58,6 @@ public class PyExternalProcessException extends ExecutionException {
     b.append("The error output of the command:\n\n");
     b.append(getMessage());
     return b.toString();
-  }
-
-  public int getRetcode() {
-    return myRetcode;
   }
 
   @NotNull
@@ -88,17 +87,8 @@ public class PyExternalProcessException extends ExecutionException {
     return StringUtil.join(result, "");
   }
 
-  public PyExternalProcessException withHandler(@NotNull String name, @NotNull Runnable handler) {
-    myHandler = Pair.create(name, handler);
-    return this;
-  }
-
-
-  public boolean hasHandler() {
-    return myHandler != null;
-  }
-
-  public Pair<String, Runnable> getHandler() {
-    return myHandler;
+  @NotNull
+  public List<? extends PyExecutionFix> getFixes() {
+    return myFixes;
   }
 }
