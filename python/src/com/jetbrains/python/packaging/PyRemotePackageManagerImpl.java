@@ -117,9 +117,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
               }
             }
           });
-          throw new PyExecutionException(helperPath, args, "Vagrant instance is down. <a href=\"" +
-                                                                                             LAUNCH_VAGRANT +
-                                                                                             "\">Launch vagrant</a>", fixes);
+          throw new PyExecutionException(helperPath, args, "Vagrant instance is down", fixes);
         }
         else {
           throw new PyExecutionException(helperPath, args, e.getMessage());
