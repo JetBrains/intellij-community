@@ -89,24 +89,19 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
       provider.setCredentials(BASIC_AUTH_SCOPE, new UsernamePasswordCredentials(getUsername(), getPassword()));
     }
     // Proxy authentication
-    HttpConfigurable proxySettings = HttpConfigurable.getInstance();
-    if (isUseProxy() && proxySettings.PROXY_AUTHENTICATION) {
-      provider.setCredentials(new AuthScope(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT),
-                              new UsernamePasswordCredentials(proxySettings.PROXY_LOGIN, proxySettings.getPlainProxyPassword()));
-    }
+    HttpConfigurable.getInstance().setProxyCredentials(provider, isUseProxy());
+
     return provider;
   }
 
   @NotNull
   protected RequestConfig createRequestConfig() {
     TaskSettings tasksSettings = TaskSettings.getInstance();
-    HttpConfigurable proxySettings = HttpConfigurable.getInstance();
     RequestConfig.Builder builder = RequestConfig.custom()
       .setConnectTimeout(3000)
       .setSocketTimeout(tasksSettings.CONNECTION_TIMEOUT);
-    if (isUseProxy()) {
-      builder.setProxy(new HttpHost(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT));
-    }
+    HttpConfigurable.getInstance().setProxy(builder, isUseProxy());
+
     return builder.build();
   }
 

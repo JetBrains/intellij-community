@@ -145,10 +145,9 @@ public class GithubConnection {
       .setSocketTimeout(timeout);
 
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
-    if (auth.isUseProxy() && proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST)) {
-      builder
-        .setProxy(new HttpHost(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT));
-    }
+    boolean useProxy = auth.isUseProxy() && proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST);
+
+    proxySettings.setProxy(builder, useProxy);
 
     return builder.build();
   }
@@ -172,12 +171,10 @@ public class GithubConnection {
 
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
     //proxySettings.USE_HTTP_PROXY
-    if (auth.isUseProxy() && proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST)) {
-      if (proxySettings.PROXY_AUTHENTICATION) {
-        provider.setCredentials(new AuthScope(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT),
-                                new UsernamePasswordCredentials(proxySettings.PROXY_LOGIN, proxySettings.getPlainProxyPassword()));
-      }
-    }
+    boolean useProxy = auth.isUseProxy() && proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST);
+
+    proxySettings.setProxyCredentials(provider, useProxy);
+
     return provider;
   }
 
