@@ -91,7 +91,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   @Nullable
   protected File getFile() {
     final VirtualFile selected = myFileSystemTree.getSelectedFile();
-    if (selected != null && !selected.isDirectory()) {
+    if (selected != null && !selected.isDirectory() && selected.getName().equals(myFileName.getText())) {
       return new File(selected.getPath());
     }
 
@@ -100,6 +100,8 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     if (! dir.exists() || path == null) return null;
     if (dir.isDirectory()) {
       path += File.separator + myFileName.getText();
+    } else {
+      path = dir.getParent() + File.separator + myFileName.getText();
     }
 
     boolean correctExt = true;
