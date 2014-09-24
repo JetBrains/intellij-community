@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
@@ -25,23 +26,60 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 
-class LoadingIconProvider {
+class LoadingIcon extends JBImageIcon {
 
   private static final String LOADING_ICON = "/icons/loading.gif";
-  private static final JBImageIcon EMPTY_ICON = new JBImageIcon(UIUtil.createImage(18, 18, BufferedImage.TYPE_3BYTE_BGR));
+  private static final Logger LOG = Logger.getInstance(LoadingIcon.class);
 
-  @NotNull
-  public static JBImageIcon getLoadingIcon() {
-    Image image = ImageLoader.loadFromResource(LOADING_ICON);
-    return image == null ? EMPTY_ICON : new JBImageIcon(image);
+  private final int myWidth;
+  private final int myHeight;
+  private final int myDeltaX;
+  private final int myDeltaY;
+
+  LoadingIcon(@NotNull Image image, int width, int height) {
+    super(image);
+    int myOriginalWidth = image.getWidth(null);
+    int myOriginalHeight = image.getHeight(null);
+    myWidth = Math.max(width, myOriginalWidth);
+    myHeight = Math.max(height, myOriginalHeight);
+    myDeltaX = (myWidth - myOriginalWidth) / 2 - 2;
+    myDeltaY = (myHeight - myOriginalHeight) / 2 + 2;
   }
 
   @NotNull
-  public static ImageObserver createObserver(@NotNull JTree tree, @NotNull TreeNode treeNode) {
-    return new NodeImageObserver(tree, treeNode);
+  static LoadingIcon create(int width, int height) {
+    Image image = ImageLoader.loadFromResource(LOADING_ICON);
+    if (image == null) {
+      LOG.error("Couldn't load image: " + LOADING_ICON);
+      return createEmpty(width, height);
+    }
+    return new LoadingIcon(image, width, height);
+  }
+
+  @NotNull
+  static LoadingIcon createEmpty(int width, int height) {
+    return new LoadingIcon(UIUtil.createImage(width, height, Transparency.TRANSLUCENT), width, height);
+  }
+
+  void setObserver(@NotNull JTree tree, @NotNull TreeNode treeNode) {
+    setImageObserver(new NodeImageObserver(tree, treeNode));
+  }
+
+  @Override
+  public final synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
+    super.paintIcon(c, g, x + myDeltaX, y + myDeltaY);
+  }
+
+  @Override
+  public int getIconHeight() {
+    return myHeight;
+  }
+
+  @Override
+  public int getIconWidth() {
+    return myWidth;
   }
 
   private static class NodeImageObserver implements ImageObserver {
