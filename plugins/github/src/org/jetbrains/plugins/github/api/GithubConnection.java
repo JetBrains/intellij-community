@@ -145,7 +145,7 @@ public class GithubConnection {
       .setSocketTimeout(timeout);
 
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
-    boolean useProxy = auth.isUseProxy() && proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST);
+    boolean useProxy = auth.isUseProxy() && proxySettings.USE_HTTP_PROXY;
 
     proxySettings.setProxy(builder, useProxy);
 
@@ -171,7 +171,7 @@ public class GithubConnection {
 
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
     //proxySettings.USE_HTTP_PROXY
-    boolean useProxy = auth.isUseProxy() && proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST);
+    boolean useProxy = auth.isUseProxy() && proxySettings.USE_HTTP_PROXY;
 
     proxySettings.setProxyCredentials(provider, useProxy);
 
