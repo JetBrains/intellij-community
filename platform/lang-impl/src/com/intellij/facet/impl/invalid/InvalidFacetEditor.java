@@ -20,6 +20,7 @@ import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -51,6 +52,7 @@ public class InvalidFacetEditor extends FacetEditorTab {
     return myIgnoreCheckBox;
   }
 
+  @NotNull
   @Override
   public JComponent createComponent() {
     myIconLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
