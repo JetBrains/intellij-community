@@ -153,6 +153,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     JLabel templateTextLabel = new JLabel(CodeInsightBundle.message("dialog.edit.template.template.text.title"));
     templateTextLabel.setLabelFor(myTemplateEditor.getContentComponent());
     editorPanel.add(templateTextLabel, BorderLayout.NORTH);
+    editorPanel.setFocusable(false);
     panel.add(editorPanel, gb.nextLine().next().weighty(1).weightx(1).coverColumn(2));
 
     myEditVariablesButton = new JButton(CodeInsightBundle.message("dialog.edit.template.button.edit.variables"));
