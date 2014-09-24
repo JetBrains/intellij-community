@@ -1,6 +1,7 @@
 package org.jetbrains.yaml;
 
 import com.intellij.lang.Language;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
@@ -12,6 +13,7 @@ public class YAMLLanguage extends Language {
     super("yaml");
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return "Yaml";
