@@ -29,7 +29,7 @@ public class ParameterTypePreventsOverridingInspectionTest extends LightInspecti
            "import a.*;" +
            "import b.String;" +
            "class Sub extends Super {" +
-           "  void m(/*Parameter type 'String' is from package 'b' while super method parameter type is from package 'java.lang' preventing overriding*/String/**/ s) {}" +
+           "  void m(/*Parameter type 'String' is located in 'b' while super method parameter type is located in 'java.lang' preventing overriding*/String/**/ s) {}" +
            "}");
   }
 
@@ -50,10 +50,26 @@ public class ParameterTypePreventsOverridingInspectionTest extends LightInspecti
            "import a.*;" +
            "import b.String;" +
            "class Sub extends Super {" +
-           "  Integer n(/*Parameter type 'String' is from package 'b' while super method parameter type is from package 'java.lang' preventing overriding*/String/**/ s, " +
-           "            /*Parameter type 'String' is from package 'b' while super method parameter type is from package 'java.lang' preventing overriding*/String/**/ t) {" +
+           "  Integer n(/*Parameter type 'String' is located in 'b' while super method parameter type is located in 'java.lang' preventing overriding*/String/**/ s, " +
+           "            /*Parameter type 'String' is located in 'b' while super method parameter type is located in 'java.lang' preventing overriding*/String/**/ t) {" +
            "    return null;" +
            "  }" +
+           "}");
+  }
+
+  public void testTypeParameter1() {
+    doTest("package c;" +
+           "import a.*;" +
+           "class Y<T> extends X<T> {" +
+           "  void m(T t) {}" +
+           "}");
+  }
+
+  public void testTypeParameter2() {
+    doTest("package c;" +
+           "import a.*;" +
+           "class Y<T extends String> extends X {" +
+           "  void m(T t) {}" +
            "}");
   }
 
@@ -66,6 +82,10 @@ public class ParameterTypePreventsOverridingInspectionTest extends LightInspecti
       "  Object n(String s, String t) {" +
       "    return null;" +
       "  }" +
+      "}",
+      "package a;" +
+      "public class X<T> {" +
+      "  void m(T t) {}" +
       "}",
       "package b;" +
       "public class String {}"

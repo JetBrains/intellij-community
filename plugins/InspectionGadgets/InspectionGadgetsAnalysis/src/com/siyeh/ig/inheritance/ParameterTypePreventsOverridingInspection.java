@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,21 +45,17 @@ public class ParameterTypePreventsOverridingInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    final PsiTypeElement typeElement = (PsiTypeElement)infos[0];
-    final PsiType type = typeElement.getType();
-    final String packageName = StringUtil.getPackageName(type.getCanonicalText());
-    final PsiTypeElement superTypeElement = (PsiTypeElement)infos[1];
-    final PsiType superType = superTypeElement.getType();
-    final String superPackageName = StringUtil.getPackageName(superType.getCanonicalText());
+    final String qualifiedName1 = (String)infos[0];
+    final String packageName = StringUtil.getPackageName(qualifiedName1);
+    final String qualifiedName2 = (String)infos[1];
+    final String superPackageName = StringUtil.getPackageName(qualifiedName2);
     return InspectionGadgetsBundle.message("parameter.type.prevents.overriding.problem.descriptor", packageName, superPackageName);
   }
 
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiTypeElement typeElement = (PsiTypeElement)infos[1];
-    final PsiType type = typeElement.getType();
-    return new ParameterTypePreventsOverridingFix(type.getCanonicalText());
+    return new ParameterTypePreventsOverridingFix((String)infos[1]);
   }
 
   private static class ParameterTypePreventsOverridingFix extends InspectionGadgetsFix {
@@ -121,6 +118,9 @@ public class ParameterTypePreventsOverridingInspection extends BaseInspection {
       if (superClass == null) {
         return;
       }
+      if (MethodUtils.hasSuper(method)) {
+        return;
+      }
       final PsiParameter[] parameters = parameterList.getParameters();
       final String name = method.getName();
       final PsiMethod[] superMethods = superClass.findMethodsByName(name, true);
@@ -134,16 +134,16 @@ public class ParameterTypePreventsOverridingInspection extends BaseInspection {
           continue;
         }
         final PsiParameter[] superParameters = superParameterList.getParameters();
-        final Map<PsiTypeElement, PsiTypeElement> problemTypeElements = ContainerUtilRt.newHashMap(2);
+        final Map<PsiTypeElement, PsiClassType> problemTypeElements = ContainerUtilRt.newHashMap(2);
         for (int i = 0; i < parameters.length; i++) {
           final PsiParameter parameter = parameters[i];
           final PsiParameter superParameter = superParameters[i];
           final PsiType type = parameter.getType();
           final PsiType superType = superParameter.getType();
-          if (type.equals(superType)) {
+          if (!(superType instanceof PsiClassType) || type.equals(superType)) {
             continue;
           }
-          if (!type.getPresentableText().equals(superType.getPresentableText())) {
+          if (!(type instanceof PsiClassType) || !type.getPresentableText().equals(superType.getPresentableText())) {
             return;
           }
           final PsiTypeElement typeElement = parameter.getTypeElement();
@@ -154,10 +154,21 @@ public class ParameterTypePreventsOverridingInspection extends BaseInspection {
           if (superParameterTypeElement == null) {
             continue outer;
           }
-          problemTypeElements.put(typeElement, superParameterTypeElement);
+          problemTypeElements.put(typeElement, (PsiClassType)superType);
         }
-        for (Map.Entry<PsiTypeElement, PsiTypeElement> entry : problemTypeElements.entrySet()) {
-          registerError(entry.getKey(), entry.getKey(), entry.getValue());
+        for (Map.Entry<PsiTypeElement, PsiClassType> entry : problemTypeElements.entrySet()) {
+          final PsiTypeElement typeElement = entry.getKey();
+          final PsiClassType type = (PsiClassType)typeElement.getType();
+          final PsiClass aClass1 = type.resolve();
+          if (aClass1 == null || aClass1 instanceof PsiTypeParameter) {
+            return;
+          }
+          final PsiClassType classType = entry.getValue();
+          final PsiClass aClass2 = classType.resolve();
+          if (aClass2 == null || aClass2 instanceof PsiTypeParameter) {
+            continue;
+          }
+          registerError(typeElement, type.getCanonicalText(), classType.getCanonicalText());
         }
       }
     }
