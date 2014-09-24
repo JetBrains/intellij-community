@@ -18,7 +18,6 @@ package com.intellij.openapi.ui.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -49,6 +48,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -998,7 +998,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               toFocus = getRootPane().getDefaultButton();
             }
 
-            moveMousePointerOnButton(getRootPane().getDefaultButton());
+            IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
             setupSelectionOnPreferredComponent(toFocus);
 
             if (toFocus != null) {
@@ -1044,23 +1044,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         }
 
         return activeWrapper;
-      }
-
-      private void moveMousePointerOnButton(final JButton button) {
-        Application application = ApplicationManager.getApplication();
-        if (application != null && application.hasComponent(UISettings.class)) {
-          if (button != null && UISettings.getInstance().MOVE_MOUSE_ON_DEFAULT_BUTTON) {
-            Point p = button.getLocationOnScreen();
-            Rectangle r = button.getBounds();
-            try {
-              Robot robot = new Robot();
-              robot.mouseMove(p.x + r.width / 2, p.y + r.height / 2);
-            }
-            catch (AWTException e) {
-              LOG.warn(e);
-            }
-          }
-        }
       }
     }
 
