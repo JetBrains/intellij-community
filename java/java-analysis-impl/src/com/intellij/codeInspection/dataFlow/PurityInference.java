@@ -34,7 +34,7 @@ import java.util.List;
 public class PurityInference {
 
   public static boolean inferPurity(@NotNull final PsiMethod method) {
-    if (method instanceof PsiCompiledElement || method.getReturnType() == PsiType.VOID || method.getBody() == null || method.isConstructor()) {
+    if (ContractInference.isLibraryCode(method) || method.getReturnType() == PsiType.VOID || method.getBody() == null || method.isConstructor()) {
       return false;
     }
 
