@@ -194,6 +194,7 @@ public abstract class AbstractValueHint {
         if (myHideRunnable != null) {
           myHideRunnable.run();
         }
+        onHintHidden();
       }
     });
 
@@ -209,6 +210,10 @@ public abstract class AbstractValueHint {
                                                      HintManager.HIDE_BY_SCROLLING, 0, false,
                                                      HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true));
     return true;
+  }
+
+  protected void onHintHidden() {
+
   }
 
   protected boolean isHintHidden() {
