@@ -39,8 +39,8 @@ class GitPushResult {
                 @Nullable Label afterUpdateLabel) {
     myResults = results;
     myUpdatedFiles = files;
-    myAfterUpdateLabel = beforeUpdateLabel;
-    myBeforeUpdateLabel = afterUpdateLabel;
+    myBeforeUpdateLabel = beforeUpdateLabel;
+    myAfterUpdateLabel = afterUpdateLabel;
   }
 
   @NotNull
