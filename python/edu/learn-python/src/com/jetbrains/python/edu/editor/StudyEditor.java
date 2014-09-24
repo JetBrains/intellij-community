@@ -183,7 +183,7 @@ public class StudyEditor implements TextEditor {
     taskTextPane.setContentType("text/html");
     taskTextPane.setEditable(false);
     taskTextPane.setText(taskText);
-    taskTextPane.addHyperlinkListener(new BrowserHyperlinkListener());
+    taskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     int fontSize = editorColorsScheme.getEditorFontSize();
     String fontName = editorColorsScheme.getEditorFontName();

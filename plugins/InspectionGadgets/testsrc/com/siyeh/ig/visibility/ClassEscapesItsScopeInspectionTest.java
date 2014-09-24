@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.siyeh.ig.visibility;
 
-package com.intellij.openapi.fileTypes;
-
-import com.intellij.lang.Language;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Maxim.Mossienko
+ * @author Bas Leijdekkers
  */
-public class PlainTextLanguage extends Language {
+public class ClassEscapesItsScopeInspectionTest extends LightInspectionTestCase {
 
-  public static final PlainTextLanguage INSTANCE = new PlainTextLanguage();
+  public void testClassEscapesItsScope() { doTest(); }
 
-  private PlainTextLanguage() {
-    super("TEXT", "text/plain");
-  }
-
-  @NotNull
+  @Nullable
   @Override
-  public String getDisplayName() {
-    return "Plain text";
+  protected InspectionProfileEntry getInspection() {
+    return new ClassEscapesItsScopeInspection();
   }
 }

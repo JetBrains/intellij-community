@@ -49,6 +49,12 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightInspect
            "}");
   }
 
+  public void testPublicConstructor() {
+    doTest("class A {" +
+           "  public A() {}" +
+           "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

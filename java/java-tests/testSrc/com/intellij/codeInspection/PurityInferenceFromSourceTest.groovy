@@ -142,7 +142,7 @@ public Foo() {
         return new Example1();
     }
 
-    private int created = 0;
+    private static int created = 0;
 
     Example1() {
         created++;

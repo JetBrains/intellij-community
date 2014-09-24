@@ -157,12 +157,24 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
       @Override
       public boolean process(@NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
         State stateAnnotation = aClass.getAnnotation(State.class);
-        if (stateAnnotation != null && stateAnnotation.storages().length == 1 && !StringUtil.isEmpty(stateAnnotation.name())) {
+        if (stateAnnotation != null && !StringUtil.isEmpty(stateAnnotation.name())) {
           if (ExportableComponent.class.isAssignableFrom(aClass)) {
             return true;
           }
 
-          Storage storage = stateAnnotation.storages()[0];
+          int storageIndex;
+          Storage[] storages = stateAnnotation.storages();
+          if (storages.length == 1) {
+            storageIndex = 0;
+          }
+          else if (storages.length > 1 && stateAnnotation.storageChooser() == LastStorageChooserForWrite.class) {
+            storageIndex = storages.length - 1;
+          }
+          else {
+            return true;
+          }
+
+          Storage storage = storages[storageIndex];
           if (storage.roamingType() != RoamingType.DISABLED &&
               storage.storageClass().equals(StateStorage.class) &&
               storage.scheme() == StorageScheme.DEFAULT &&

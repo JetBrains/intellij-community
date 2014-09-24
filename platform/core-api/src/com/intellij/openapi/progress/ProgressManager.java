@@ -207,7 +207,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
         indicator.checkCanceled();
       }
       catch (ProcessCanceledException e) {
-        indicator.cancel();
+        canceled(indicator);
       }
     }
   }

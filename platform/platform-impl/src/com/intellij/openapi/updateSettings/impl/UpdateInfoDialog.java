@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,7 +206,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
                     "<a href=\'" + homePageUrl + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
         }
       }
-      configureMessageArea(myUpdateMessage, message, null, new BrowserHyperlinkListener());
+      configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
 
       myCurrentVersion.setText(formatVersion(appInfo.getFullVersion(), appInfo.getBuild().asStringWithoutProductCode()));
       myNewVersion.setText(formatVersion(myLatestBuild.getVersion(), myLatestBuild.getNumber().asStringWithoutProductCode()));

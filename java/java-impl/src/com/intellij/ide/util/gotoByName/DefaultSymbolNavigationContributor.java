@@ -21,7 +21,11 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -107,31 +111,48 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   @Override
   public void processElementsWithName(@NotNull String name,
                                       @NotNull final Processor<NavigationItem> processor,
-                                      @NotNull FindSymbolParameters parameters) {
+                                      @NotNull final FindSymbolParameters parameters) {
 
     GlobalSearchScope scope = parameters.getSearchScope();
     IdFilter filter = parameters.getIdFilter();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
+
+    String completePattern = parameters.getCompletePattern();
+    final Condition<PsiMember> qualifiedMatcher;
+    if (completePattern.contains(".")) {
+      final MinusculeMatcher matcher = new MinusculeMatcher("*" + StringUtil.replace(completePattern, ".", ".*"), NameUtil.MatchingCaseSensitivity.NONE);
+      qualifiedMatcher = new Condition<PsiMember>() {
+        @Override
+        public boolean value(PsiMember member) {
+          String qualifiedName = PsiUtil.getMemberQualifiedName(member);
+          return qualifiedName != null && matcher.matches(qualifiedName);
+        }
+      };
+    } else {
+      //noinspection unchecked
+      qualifiedMatcher = Condition.TRUE;
+    }
+
     //noinspection UnusedDeclaration
     final Set<PsiMethod> collectedMethods = new THashSet<PsiMethod>();
     boolean success = cache.processFieldsWithName(name, new Processor<PsiField>() {
       @Override
       public boolean process(PsiField field) {
-        if (isOpenable(field)) return processor.process(field);
+        if (isOpenable(field) && qualifiedMatcher.value(field)) return processor.process(field);
         return true;
       }
     }, scope, filter) &&
                     cache.processClassesWithName(name, new Processor<PsiClass>() {
                       @Override
                       public boolean process(PsiClass aClass) {
-                        if (isOpenable(aClass)) return processor.process(aClass);
+                        if (isOpenable(aClass) && qualifiedMatcher.value(aClass)) return processor.process(aClass);
                         return true;
                       }
                     }, scope, filter) &&
                     cache.processMethodsWithName(name, new Processor<PsiMethod>() {
                       @Override
                       public boolean process(PsiMethod method) {
-                        if(!method.isConstructor() && isOpenable(method)) {
+                        if(!method.isConstructor() && isOpenable(method) && qualifiedMatcher.value(method)) {
                           collectedMethods.add(method);
                         }
                         return true;
@@ -147,6 +168,11 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
         iterator.remove();
       }
     }
+  }
+
+  private boolean qualifiedNameMatches(PsiMember member, FindSymbolParameters parameters) {
+    if (!parameters.getCompletePattern().contains(".")) return true;
+    return false;
   }
 
   private static class MyComparator implements Comparator<PsiModifierListOwner>{

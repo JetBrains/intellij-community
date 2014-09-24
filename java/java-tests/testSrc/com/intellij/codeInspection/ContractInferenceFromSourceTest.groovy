@@ -373,7 +373,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
   public void "test dig into type cast"() {
     def c = inferContracts("""
   public static String cast(Object o) {
-    return o instanceof ProgressWrapper ? (String)o : null;
+    return o instanceof String ? (String)o : null;
   }
     """)
     assert c == ['null -> null']

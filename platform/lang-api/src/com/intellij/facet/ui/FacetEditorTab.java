@@ -31,6 +31,9 @@ import javax.swing.*;
  * @author nik
  */
 public abstract class FacetEditorTab implements Configurable {
+  @NotNull
+  @Override
+  public abstract JComponent createComponent();
 
   @Override
   @Nullable
