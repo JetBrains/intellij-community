@@ -38,22 +38,30 @@ public class MultiScopeSeverityIcon implements Icon {
 
   private final static int SIZE = 12;
 
-  private final LinkedHashMap<String, HighlightSeverity> myScopeToAverageSeverityMap;
+  private final LinkedHashMap<String, HighlightDisplayLevel> myScopeToAverageSeverityMap;
 
   public MultiScopeSeverityIcon(final Map<String, HighlightSeverity> scopeToAverageSeverityMap,
                                 final String defaultScopeName,
                                 final InspectionProfileImpl inspectionProfile) {
     final List<String> sortedScopeNames = new ArrayList<String>(scopeToAverageSeverityMap.keySet());
-    myScopeToAverageSeverityMap = new LinkedHashMap<String, HighlightSeverity>();
+    myScopeToAverageSeverityMap = new LinkedHashMap<String, HighlightDisplayLevel>();
     Collections.sort(sortedScopeNames, new ScopeOrderComparator(inspectionProfile));
     sortedScopeNames.remove(defaultScopeName);
     sortedScopeNames.add(defaultScopeName);
     for (final String scopeName : sortedScopeNames) {
-      myScopeToAverageSeverityMap.put(scopeName, scopeToAverageSeverityMap.get(scopeName));
+      final HighlightSeverity severity = scopeToAverageSeverityMap.get(scopeName);
+      if (severity == null) {
+        continue;
+      }
+      final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+      if (level == null) {
+        continue;
+      }
+      myScopeToAverageSeverityMap.put(scopeName, level);
     }
   }
 
-  public LinkedHashMap<String, HighlightSeverity> getScopeToAverageSeverityMap() {
+  public LinkedHashMap<String, HighlightDisplayLevel> getScopeToAverageSeverityMap() {
     return myScopeToAverageSeverityMap;
   }
 
@@ -63,14 +71,9 @@ public class MultiScopeSeverityIcon implements Icon {
 
     final int partWidth = iconWidth / myScopeToAverageSeverityMap.size();
 
-    final Collection<HighlightSeverity> values = myScopeToAverageSeverityMap.values();
+    final Collection<HighlightDisplayLevel> values = myScopeToAverageSeverityMap.values();
     int idx = 0;
-    for (final HighlightSeverity severity : values) {
-      final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
-      if (level == null) {
-        LOG.error(String.format("Level for severity \"%s\" not found", severity));
-        continue;
-      }
+    for (final HighlightDisplayLevel level : values) {
       final Icon icon = level.getIcon();
       g.setColor(icon instanceof HighlightDisplayLevel.SingleColorIconWithMask ?
                  ((HighlightDisplayLevel.SingleColorIconWithMask)icon).getColor() : MIXED_SEVERITY_COLOR);
