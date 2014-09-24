@@ -18,25 +18,29 @@ package com.intellij.ide.scratch;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,11 +51,11 @@ import java.util.Set;
 /**
  * @author ignatov
  */
-public class CreateScratchFileAction extends AnAction implements DumbAware {
+public class NewScratchFileAction extends AnAction implements DumbAware {
   public static final int MAX_VISIBLE_SIZE = 20;
 
-  public CreateScratchFileAction() {
-    super("Create Scratch File...", "New Scratch File", null);
+  public NewScratchFileAction() {
+    super("New Scratch Pad...", null, null);
   }
 
   @Override
@@ -63,18 +67,25 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
+    Language previous = ScratchpadManager.getInstance(project).getLatestLanguage();
+    ListPopup popup = buildLanguagePopup(previous, new Consumer<Language>() {
+      @Override
+      public void consume(Language language) {
+        VirtualFile file = ScratchpadManager.getInstance(project).createScratchFile(language);
+        FileEditorManager.getInstance(project).openFile(file, true);
+      }
+    });
+    popup.showCenteredInCurrentWindow(project);
+  }
+
+  @NotNull
+  static ListPopup buildLanguagePopup(@Nullable Language previous, final Consumer<Language> onChoosen) {
     List<Language> languages = getLanguages();
-    if (languages.isEmpty()) return;
     BaseListPopupStep<Language> step =
-      new BaseListPopupStep<Language>("Specify the language", languages) {
+      new BaseListPopupStep<Language>("Choose Language", languages) {
         @NotNull
         @Override
         public String getTextFor(Language value) {
-          return value.getDisplayName();
-        }
-
-        @Override
-        public String getIndexedString(Language value) {
           return value.getDisplayName();
         }
 
@@ -85,7 +96,7 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
 
         @Override
         public PopupStep onChosen(Language selectedValue, boolean finalChoice) {
-          doAction(project, selectedValue);
+          onChoosen.consume(selectedValue);
           return null;
         }
 
@@ -95,33 +106,20 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
           return associatedLanguage != null ? associatedLanguage.getIcon() : null;
         }
       };
+    step.setDefaultOptionIndex(Math.max(0, languages.indexOf(ObjectUtils.chooseNotNull(previous, StdLanguages.TEXT))));
 
-    Language previous = ScratchpadManager.getInstance(project).getLatestLanguage();
-    final String previousName = previous != null ? previous.getDisplayName() : "Plain text";
-
-    if (previousName != null) {
-      int defaultOption = ContainerUtil.indexOf(languages, new Condition<Language>() {
-        @Override
-        public boolean value(Language module) {
-          return module.getDisplayName().equals(previousName);
-        }
-      });
-      if (defaultOption >= 0) {
-        step.setDefaultOptionIndex(defaultOption);
-      }
-    }
-
-    ListPopup popup = updatePopupSize(JBPopupFactory.getInstance().createListPopup(step), languages);
-    popup.showCenteredInCurrentWindow(project);
+    return tweakSizeToPreferred(JBPopupFactory.getInstance().createListPopup(step));
   }
 
   @NotNull
-  public static ListPopup updatePopupSize(@NotNull ListPopup popup, @NotNull List<Language> languages) {
+  private static ListPopup tweakSizeToPreferred(@NotNull ListPopup popup) {
     int nameLen = 0;
-    for (Language language : languages) {
-      nameLen = Math.max(nameLen, language.getDisplayName().length());
+    ListPopupStep step = popup.getListStep();
+    List values = step.getValues();
+    for (Object v : values) {
+      nameLen = Math.max(nameLen, step.getTextFor(v).length());
     }
-    if (languages.size() > MAX_VISIBLE_SIZE) {
+    if (values.size() > MAX_VISIBLE_SIZE) {
       Dimension size = new JLabel(StringUtil.repeatSymbol('a', nameLen), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
       size.height *= MAX_VISIBLE_SIZE;
       popup.setSize(size);
@@ -129,14 +127,9 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
     return popup;
   }
 
-  public static void doAction(@NotNull Project project, @NotNull Language language) {
-    VirtualFile file = ScratchpadManager.getInstance(project).createScratchFile(language);
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
-    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-  }
 
   @NotNull
-  public static List<Language> getLanguages() {
+  private static List<Language> getLanguages() {
     Set<Language> result = ContainerUtilRt.newTreeSet(new Comparator<Language>() {
       @Override
       public int compare(@NotNull Language l1, @NotNull Language l2) {
