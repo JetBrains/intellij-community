@@ -37,6 +37,7 @@ import java.beans.PropertyChangeListener;
 public class RowNumberTable extends JBTable
   implements ChangeListener, PropertyChangeListener, TableModelListener {
   private JTable main;
+  private int rowShift = 0;
 
   public RowNumberTable(JTable table) {
     main = table;
@@ -96,7 +97,15 @@ public class RowNumberTable extends JBTable
    */
   @Override
   public Object getValueAt(int row, int column) {
-    return Integer.toString(row + 1);
+    return Integer.toString(row + rowShift);
+  }
+
+  public void setRowShift(int shift){
+    rowShift = shift;
+  }
+
+  public int getRowShift(){
+    return rowShift;
   }
 
   /*
