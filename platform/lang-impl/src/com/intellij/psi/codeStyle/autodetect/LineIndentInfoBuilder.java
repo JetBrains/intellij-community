@@ -43,7 +43,7 @@ public class LineIndentInfoBuilder {
       int lineEndOffset = getLineEndOffset(lineStartOffset);
       int textStartOffset = CharArrayUtil.shiftForward(myText, lineStartOffset, lineEndOffset, " \t");
 
-      if (textStartOffset != lineEndOffset && textStartOffset - lineStartOffset > 0) {
+      if (textStartOffset != lineEndOffset) {
         lineIndentInfos.add(createInfoFromWhiteSpaceRange(lineStartOffset, textStartOffset));
       } else {
         lineIndentInfos.add(LineIndentInfo.EMPTY_LINE);

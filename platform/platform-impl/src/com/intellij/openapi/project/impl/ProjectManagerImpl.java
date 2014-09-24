@@ -450,7 +450,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            startupManager.runPostStartupActivities();
+            if (!project.isDisposed()) {
+              startupManager.runPostStartupActivities();
+            }
           }
         });
       }

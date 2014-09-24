@@ -16,7 +16,6 @@
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
@@ -37,7 +36,7 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
   private final static int SCOPE_COLUMN = 0;
   private final static int SEVERITY_COLUMN = 1;
 
-  public ScopesAndSeveritiesHintTable(final LinkedHashMap<String, HighlightSeverity> scopeToAverageSeverityMap) {
+  public ScopesAndSeveritiesHintTable(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap) {
     super(new MyModel(scopeToAverageSeverityMap));
 
     getColumnModel().getColumn(SCOPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
@@ -64,9 +63,9 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
                                                      final int row,
                                                      final int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        final HighlightSeverity severity = (HighlightSeverity)value;
-        setIcon(HighlightDisplayLevel.find(severity).getIcon());
-        setText(SingleInspectionProfilePanel.renderSeverity(severity));
+        final HighlightDisplayLevel level = (HighlightDisplayLevel)value;
+        setIcon(level.getIcon());
+        setText(SingleInspectionProfilePanel.renderSeverity(level.getSeverity()));
         setOpaque(false);
         UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, this);
         return this;
@@ -90,10 +89,10 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
 
   private final static class MyModel extends AbstractTableModel {
 
-    private final LinkedHashMap<String, HighlightSeverity> myScopeToAverageSeverityMap;
+    private final LinkedHashMap<String, HighlightDisplayLevel> myScopeToAverageSeverityMap;
     private final List<String> myScopes;
 
-    public MyModel(final LinkedHashMap<String, HighlightSeverity> scopeToAverageSeverityMap) {
+    public MyModel(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap) {
       myScopeToAverageSeverityMap = scopeToAverageSeverityMap;
       myScopes = new ArrayList<String>(myScopeToAverageSeverityMap.keySet());
     }
@@ -102,7 +101,7 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
     public Class<?> getColumnClass(final int columnIndex) {
       switch (columnIndex) {
         case SCOPE_COLUMN: return String.class;
-        case SEVERITY_COLUMN: return HighlightSeverity.class;
+        case SEVERITY_COLUMN: return HighlightDisplayLevel.class;
         default: throw new IllegalArgumentException();
       }
     }

@@ -1018,6 +1018,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="non.protected.constructor.in.abstract.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.inheritance.NonProtectedConstructorInAbstractClassInspection"/>
+    <localInspection language="JAVA" shortName="ParameterTypePreventsOverriding" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="parameter.type.prevents.overriding.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.inheritance.ParameterTypePreventsOverridingInspection"/>
     <localInspection language="JAVA" shortName="ProblematicVarargsMethodOverride" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="problematic.varargs.method.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
@@ -1217,6 +1221,10 @@
                      key="property.value.set.to.itself.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javabeans.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.javabeans.PropertyValueSetToItselfInspection"/>
+    <localInspection language="JAVA" shortName="SuspiciousGetterSetter" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="suspicious.getter.setter.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.javabeans.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.javabeans.SuspiciousGetterSetterInspection"/>
 
     <!--group.names.javadoc.issues-->
     <localInspection language="JAVA" shortName="HtmlTagCanBeJavadocTag" bundle="com.siyeh.InspectionGadgetsBundle"

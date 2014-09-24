@@ -263,8 +263,12 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         if (myFlag) throw new ProcessCanceledException();
       }
     };
+    ensureCheckCanceledCalled(indicator);
+  }
+
+  private void ensureCheckCanceledCalled(@NotNull ProgressIndicator indicator) {
     myFlag = false;
-    Alarm alarm = new Alarm(myTestRootDisposable);
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myTestRootDisposable);
     alarm.addRequest(new Runnable() {
       @Override
       public void run() {
@@ -272,15 +276,36 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       }
     }, 100);
     final long start = System.currentTimeMillis();
-    ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-      @Override
-      public void run() {
-        while (System.currentTimeMillis() - start < 10000) {
-          ProgressManager.checkCanceled();
+    try {
+      ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+        @Override
+        public void run() {
+          while (System.currentTimeMillis() - start < 10000) {
+            ProgressManager.checkCanceled();
+          }
         }
+      }, indicator);
+      fail("must have thrown PCE");
+    }
+    catch (ProcessCanceledException e) {
+      assertTrue(checkCanceledCalled);
+    }
+  }
+
+  public void testExtremelyPerverseIndicatorWhichCancelMethodIsNoop() {
+    checkCanceledCalled = false;
+    ProgressIndicator indicator = new ProgressIndicatorStub() {
+      @Override
+      public void checkCanceled() throws ProcessCanceledException {
+        checkCanceledCalled = true;
+        if (myFlag) throw new ProcessCanceledException();
       }
-    }, indicator);
-    assertTrue(checkCanceledCalled);
+
+      @Override
+      public void cancel() {
+      }
+    };
+    ensureCheckCanceledCalled(indicator);
   }
 
   private static class ProgressIndicatorStub implements ProgressIndicatorEx {

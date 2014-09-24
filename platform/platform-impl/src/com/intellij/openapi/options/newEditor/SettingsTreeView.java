@@ -94,9 +94,8 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     TreeUtil.installActions(myTree);
 
     myTree.setOpaque(true);
-    myTree.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 0));
+    myTree.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
-    myTree.setRowHeight(-1);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     myTree.setCellRenderer(new MyRenderer());
@@ -275,7 +274,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     int height = mySeparator.getPreferredSize().height;
     String group = findGroupNameAt(0, height);
     if (group != null && group.equals(findGroupNameAt(0, 0))) {
-      mySeparator.setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 0));
+      mySeparator.setBorder(BorderFactory.createEmptyBorder(1, 22, 0, 0));
       mySeparator.setText(group);
 
       Rectangle bounds = myScroller.getViewport().getBounds();
@@ -285,7 +284,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       g.setColor(myTree.getBackground());
       g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       if (g instanceof Graphics2D) {
-        int h = 4; // gradient height
+        int h = 6; // gradient height
         int y = bounds.y + bounds.height;
         ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(
           0, y, g.getColor(),
@@ -467,6 +466,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       add(BorderLayout.CENTER, myTextLabel);
       add(BorderLayout.WEST, myNodeIcon);
       add(BorderLayout.EAST, myProjectIcon);
+      setBorder(BorderFactory.createEmptyBorder(1, 0, 3, 0));
     }
 
     public Component getTreeCellRendererComponent(JTree tree,

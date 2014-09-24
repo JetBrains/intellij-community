@@ -49,14 +49,16 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitUIUtil;
 import icons.GithubIcons;
+import org.apache.http.HttpStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubConnection;
-import org.jetbrains.plugins.github.api.GithubRepo;
-import org.jetbrains.plugins.github.api.GithubUserDetailed;
+import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
-import org.jetbrains.plugins.github.util.*;
+import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -114,18 +116,17 @@ public class GithubShareAction extends DumbAwareAction {
     final boolean gitDetected = gitRepository != null;
     final VirtualFile root = gitDetected ? gitRepository.getRoot() : project.getBaseDir();
 
+    final GithubAuthDataHolder authHolder = GithubAuthDataHolder.createFromSettings();
+
     // check for existing git repo
     boolean externalRemoteDetected = false;
     if (gitDetected) {
       final String githubRemote = GithubUtil.findGithubRemoteUrl(gitRepository);
       if (githubRemote != null) {
-        GithubNotifications.showInfoURL(project, "Project is already on GitHub", "GitHub", githubRemote);
-        return;
+        if (!checkExistingRemote(project, authHolder, githubRemote)) return;
       }
       externalRemoteDetected = !gitRepository.getRemotes().isEmpty();
     }
-
-    final GithubAuthDataHolder authHolder = GithubAuthDataHolder.createFromSettings();
 
     // get available GitHub repos with modal progress
     final GithubInfo githubInfo = loadGithubInfoWithModal(authHolder, project);
@@ -201,6 +202,53 @@ public class GithubShareAction extends DumbAwareAction {
         GithubNotifications.showInfoURL(project, "Successfully shared project on GitHub", name, url);
       }
     }.queue();
+  }
+
+  private static boolean checkExistingRemote(@NotNull final Project project,
+                                             @NotNull final GithubAuthDataHolder authHolder,
+                                             @NotNull String remote) {
+    final GithubFullPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remote);
+    if (path == null) {
+      return GithubNotifications.showYesNoDialog(project,
+                                                 "Project is already on GitHub",
+                                                 "Can't connect to repository from configured remote. You could want to check .git config.\n" +
+                                                 "Do you want to proceed anyway?");
+    }
+
+    try {
+      GithubRepo repo =
+        GithubUtil.computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubRepo, IOException>() {
+          @NotNull
+          @Override
+          public GithubRepo convert(ProgressIndicator indicator) throws IOException {
+            return GithubUtil
+              .runTask(project, authHolder, indicator, new ThrowableConvertor<GithubConnection, GithubRepo, IOException>() {
+                @NotNull
+                @Override
+                public GithubRepo convert(@NotNull GithubConnection connection) throws IOException {
+                  return GithubApiUtil.getDetailedRepoInfo(connection, path.getUser(), path.getRepository());
+                }
+              });
+          }
+        });
+      GithubNotifications.showInfoURL(project, "Project is already on GitHub", "GitHub", repo.getHtmlUrl());
+      return false;
+    }
+    catch (GithubStatusCodeException e) {
+      if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        return GithubNotifications.showYesNoDialog(project,
+                                                   "Project is already on GitHub",
+                                                   "Can't connect to repository from configured remote. You could want to check .git config.\n" +
+                                                   "Do you want to proceed anyway?");
+      }
+
+      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", e);
+      return false;
+    }
+    catch (IOException e) {
+      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", e);
+      return false;
+    }
   }
 
   @Nullable

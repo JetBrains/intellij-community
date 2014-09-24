@@ -26,9 +26,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -164,11 +162,16 @@ public abstract class AdvancedSettingsAction extends AnAction {
     public JComponent createCustomComponent(final boolean selected) {
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-      panel.add(createBaseComponent());
-      panel.add(installLeftIndentToLabel(new JBLabel(myDescription, UIUtil.ComponentStyle.MINI)));
-      panel.setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
-      panel.setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground());
+      final JComponent baseComponent = createBaseComponent();
+      panel.add(baseComponent);
+      final JLabel descriptionLabel = new JLabel(myDescription);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, descriptionLabel);
+      panel.add(installLeftIndentToLabel(descriptionLabel));
       UIUtil.setEnabled(panel, enabled(), true);
+
+      panel.setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+      descriptionLabel.setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground());
+      baseComponent.setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground());
       return panel;
     }
   }

@@ -150,6 +150,13 @@ public interface IdeActions {
   @NonNls String ACTION_COLLAPSE_ALL = "CollapseAll";
   @NonNls String ACTION_EXPORT_TO_TEXT_FILE = "ExportToTextFile";
 
+  @NonNls String ACTION_EXPAND_ALL_REGIONS = "ExpandAllRegions";
+  @NonNls String ACTION_COLLAPSE_ALL_REGIONS = "CollapseAllRegions";
+  @NonNls String ACTION_EXPAND_REGION_RECURSIVELY = "ExpandRegionRecursively";
+  @NonNls String ACTION_COLLAPSE_REGION_RECURSIVELY = "CollapseRegionRecursively";
+  @NonNls String ACTION_EXPAND_TO_LEVEL_1 = "ExpandToLevel1";
+  @NonNls String ACTION_EXPAND_ALL_TO_LEVEL_1 = "ExpandAllToLevel1";
+
   @NonNls String ACTION_NEW_HORIZONTAL_TAB_GROUP = "NewHorizontalTabGroup";
   @NonNls String ACTION_NEW_VERTICAL_TAB_GROUP = "NewVerticalTabGroup";
   @NonNls String ACTION_MOVE_EDITOR_TO_OPPOSITE_TAB_GROUP = "MoveEditorToOppositeTabGroup";

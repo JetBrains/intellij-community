@@ -435,6 +435,16 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @NotNull
+  public RequestConfig.Builder setProxy(@NotNull RequestConfig.Builder builder) {
+    return setProxy(builder, USE_HTTP_PROXY);
+  }
+
+  @NotNull
+  public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider) {
+    return setProxyCredentials(provider, USE_HTTP_PROXY);
+  }
+
+  @NotNull
   public RequestConfig.Builder setProxy(@NotNull RequestConfig.Builder builder, boolean useProxy) {
     if (useProxy) {
       builder.setProxy(new HttpHost(PROXY_HOST, PROXY_PORT));

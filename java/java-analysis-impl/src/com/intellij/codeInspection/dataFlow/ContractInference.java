@@ -17,13 +17,16 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,7 +47,7 @@ public class ContractInference {
 
   @NotNull
   public static List<MethodContract> inferContracts(@NotNull final PsiMethod method) {
-    if (method instanceof PsiCompiledElement) {
+    if (isLibraryCode(method)) {
       return Collections.emptyList();
     }
 
@@ -55,6 +58,12 @@ public class ContractInference {
         return Result.create(new ContractInferenceInterpreter(method).inferContracts(), method);
       }
     });
+  }
+
+  static boolean isLibraryCode(@NotNull PsiMethod method) {
+    if (method instanceof PsiCompiledElement) return true;
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(method);
+    return virtualFile != null && FileIndexFacade.getInstance(method.getProject()).isInLibrarySource(virtualFile);
   }
 }
 
@@ -211,6 +220,9 @@ class ContractInferenceInterpreter {
 
     if (expr instanceof PsiParenthesizedExpression) {
       return visitExpression(states, ((PsiParenthesizedExpression)expr).getExpression());
+    }
+    if (expr instanceof PsiTypeCastExpression) {
+      return visitExpression(states, ((PsiTypeCastExpression)expr).getOperand());
     }
 
     if (expr instanceof PsiPrefixExpression && ((PsiPrefixExpression)expr).getOperationTokenType() == JavaTokenType.EXCL) {

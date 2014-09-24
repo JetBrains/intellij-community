@@ -160,4 +160,17 @@ public class Range {
   public void invalidate() {
     myValid = false;
   }
+
+  /*
+   * Check, if caret at <line> is corresponds to the current range
+   */
+  public boolean isSelectedByLine(int line) {
+    if (getType() == DELETED && line == myLine1) {
+      return true;
+    }
+    else if (line >= myLine1 && line < myLine2) {
+      return true;
+    }
+    return false;
+  }
 }

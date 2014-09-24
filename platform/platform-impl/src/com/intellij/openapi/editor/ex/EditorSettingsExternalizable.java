@@ -16,10 +16,8 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -36,7 +33,7 @@ import java.util.Set;
   name = "EditorSettings",
   storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml")}
 )
-public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet>, ExportableComponent {
+public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   //Q: make it interface?
   public static final class OptionSet {
     public String LINE_SEPARATOR;
@@ -387,18 +384,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setRefrainFromScrolling(boolean b) {
     myOptions.REFRAIN_FROM_SCROLLING = b;
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("editor")};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return OptionsBundle.message("options.editor.settings.presentable.name");
   }
 
   public boolean isWhitespacesShown() {

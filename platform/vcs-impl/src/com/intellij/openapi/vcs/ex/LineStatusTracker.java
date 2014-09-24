@@ -56,58 +56,55 @@ public class LineStatusTracker {
     new Key<CanNotCalculateDiffPanel>("LineStatusTracker.CanNotCalculateDiffPanel");
 
   private final Object myLock = new Object();
-  private BaseLoadState myBaseLoaded;
+  private boolean myInitialized;
 
-  private final Document myDocument;
-  private final Document myVcsDocument;
+  @NotNull private final Project myProject;
+  @NotNull private final Document myDocument;
+  @NotNull private final Document myVcsDocument;
+  @NotNull private final VirtualFile myVirtualFile;
 
-  private List<Range> myRanges;
-
-  private final Project myProject;
+  @NotNull private final Application myApplication;
+  @NotNull private final FileEditorManager myFileEditorManager;
+  @NotNull private final VcsDirtyScopeManager myVcsDirtyScopeManager;
 
   private MyDocumentListener myDocumentListener;
+  @Nullable private RevisionPack myBaseRevisionNumber;
 
   private boolean mySuppressUpdate;
   private boolean myBulkUpdate;
-  private final Application myApplication;
-  @Nullable private RevisionPack myBaseRevisionNumber;
-  private String myPreviousBaseRevision;
   private boolean myAnathemaThrown;
-  private FileEditorManager myFileEditorManager;
-  private final VcsDirtyScopeManager myVcsDirtyScopeManager;
-  private final VirtualFile myVirtualFile;
-  private boolean myReleased = false;
+  private boolean myReleased;
+
+  @NotNull private List<Range> myRanges;
 
   private LineStatusTracker(@NotNull final Document document,
                             @NotNull final Document vcsDocument,
-                            final Project project,
-                            @Nullable final VirtualFile virtualFile) {
-    myVirtualFile = virtualFile;
-    myApplication = ApplicationManager.getApplication();
+                            @NotNull final Project project,
+                            @NotNull final VirtualFile virtualFile) {
     myDocument = document;
     myVcsDocument = vcsDocument;
-    myVcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     myProject = project;
-    myBaseLoaded = BaseLoadState.LOADING;
-    myRanges = new ArrayList<Range>();
-    myAnathemaThrown = false;
+    myVirtualFile = virtualFile;
+
+    myApplication = ApplicationManager.getApplication();
     myFileEditorManager = FileEditorManager.getInstance(myProject);
     myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+
+    myRanges = new ArrayList<Range>();
   }
 
   public void initialize(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    myApplication.assertIsDispatchThread();
 
     synchronized (myLock) {
       try {
         if (myReleased) return;
-        if (myBaseRevisionNumber != null && myBaseRevisionNumber.after(baseRevisionNumber)) return;
+        if (myBaseRevisionNumber != null && myBaseRevisionNumber.contains(baseRevisionNumber)) return;
 
         myBaseRevisionNumber = baseRevisionNumber;
-        myPreviousBaseRevision = null;
 
         myVcsDocument.setReadOnly(false);
-        myVcsDocument.replaceString(0, myVcsDocument.getTextLength(), vcsContent);
+        myVcsDocument.setText(vcsContent);
         myVcsDocument.setReadOnly(true);
         reinstallRanges();
 
@@ -117,27 +114,13 @@ public class LineStatusTracker {
         }
       }
       finally {
-        myBaseLoaded = BaseLoadState.LOADED;
+        myInitialized = true;
       }
     }
   }
 
-  public void useCachedBaseRevision(final RevisionPack number) {
-    synchronized (myLock) {
-      assert myBaseRevisionNumber != null;
-      if (myPreviousBaseRevision == null || myBaseRevisionNumber.after(number)) return;
-      initialize(myPreviousBaseRevision, number);
-    }
-  }
-
-  public boolean canUseBaseRevision(final RevisionPack number) {
-    synchronized (myLock) {
-      return myBaseRevisionNumber != null && myBaseRevisionNumber.equals(number) && myPreviousBaseRevision != null;
-    }
-  }
-
   private void reinstallRanges() {
-    myApplication.assertReadAccessAllowed();
+    myApplication.assertIsDispatchThread();
 
     synchronized (myLock) {
       removeAnathema();
@@ -146,12 +129,24 @@ public class LineStatusTracker {
         myRanges = new RangesBuilder(myDocument, myVcsDocument).getRanges();
       }
       catch (FilesTooBigForDiffException e) {
-        myRanges.clear();
         installAnathema();
         return;
       }
       for (final Range range : myRanges) {
         range.setHighlighter(createHighlighter(range));
+      }
+    }
+  }
+
+  private void installAnathema() {
+    myAnathemaThrown = true;
+    final FileEditor[] editors = myFileEditorManager.getAllEditors(myVirtualFile);
+    for (FileEditor editor : editors) {
+      CanNotCalculateDiffPanel panel = editor.getUserData(PANEL_KEY);
+      if (panel == null) {
+        final CanNotCalculateDiffPanel newPanel = new CanNotCalculateDiffPanel();
+        editor.putUserData(PANEL_KEY, newPanel);
+        myFileEditorManager.addTopComponent(editor, newPanel);
       }
     }
   }
@@ -169,8 +164,10 @@ public class LineStatusTracker {
     }
   }
 
-  @SuppressWarnings({"AutoBoxing"})
-  private RangeHighlighter createHighlighter(final Range range) {
+  @NotNull
+  private RangeHighlighter createHighlighter(@NotNull Range range) {
+    myApplication.assertIsDispatchThread();
+
     LOG.assertTrue(!myReleased, "Already released");
 
     int first =
@@ -221,25 +218,31 @@ public class LineStatusTracker {
     }
   }
 
+  @NotNull
+  Project getProject() {
+    return myProject;
+  }
+
+  @NotNull
   public Document getDocument() {
     return myDocument;
   }
 
+  @NotNull
+  public Document getVcsDocument() {
+    return myVcsDocument;
+  }
+
+  @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
+  @NotNull
   public List<Range> getRanges() {
-    myApplication.assertReadAccessAllowed();
-
     synchronized (myLock) {
       return myRanges;
     }
-  }
-
-  public Document getVcsDocument() {
-    myApplication.assertIsDispatchThread();
-    return myVcsDocument;
   }
 
   public void startBulkUpdate() {
@@ -273,28 +276,6 @@ public class LineStatusTracker {
     }
   }
 
-  /**
-   * @return true if was cleared and base revision contents load should be started
-   * false -> load was already started; after contents is loaded,
-   */
-  public void resetForBaseRevisionLoad() {
-    myApplication.assertReadAccessAllowed();
-
-    synchronized (myLock) {
-      // there can be multiple resets before init -> take from document only firts time -> when right after install(),
-      // where myPreviousBaseRevision become null
-      if (BaseLoadState.LOADED.equals(myBaseLoaded) && myPreviousBaseRevision == null) {
-        myPreviousBaseRevision = myVcsDocument.getText();
-      }
-      myVcsDocument.setReadOnly(false);
-      myVcsDocument.setText("");
-      myVcsDocument.setReadOnly(true);
-      removeAnathema();
-      removeHighlightersFromMarkupModel();
-      myBaseLoaded = BaseLoadState.LOADING;
-    }
-  }
-
   private void markFileUnchanged() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -324,11 +305,11 @@ public class LineStatusTracker {
 
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
-      myApplication.assertWriteAccessAllowed();
+      myApplication.assertIsDispatchThread();
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
+        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || !myInitialized) return;
         assert myDocument == e.getDocument();
 
         try {
@@ -351,11 +332,11 @@ public class LineStatusTracker {
 
     @Override
     public void documentChanged(final DocumentEvent e) {
-      myApplication.assertWriteAccessAllowed();
+      myApplication.assertIsDispatchThread();
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
+        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || !myInitialized) return;
         assert myDocument == e.getDocument();
 
         int afterChangedLines;
@@ -450,6 +431,7 @@ public class LineStatusTracker {
       Range lastRangeBefore = ContainerUtil.getLastItem(rangesBefore);
       Range firstRangeAfter = ContainerUtil.getFirstItem(rangesAfter);
 
+      //noinspection UnnecessaryLocalVariable
       int afterChangedLine1 = beforeChangedLine1;
       int afterChangedLine2 = beforeChangedLine2 + linesShift;
 
@@ -473,7 +455,7 @@ public class LineStatusTracker {
           if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
         }
 
-        if (myRanges.isEmpty() && myVirtualFile != null) {
+        if (myRanges.isEmpty()) {
           markFileUnchanged();
         }
       }
@@ -668,16 +650,10 @@ public class LineStatusTracker {
   @Nullable
   public Range getNextRange(final int line) {
     synchronized (myLock) {
-      final Range currentRange = getRangeForLine(line);
-      if (currentRange != null) {
-        return getNextRange(currentRange);
-      }
-
-      for (final Range range : myRanges) {
-        if (line > range.getLine1() || line > range.getLine2()) {
-          continue;
+      for (Range range : myRanges) {
+        if (line < range.getLine2() && !range.isSelectedByLine(line)) {
+          return range;
         }
-        return range;
       }
       return null;
     }
@@ -686,17 +662,11 @@ public class LineStatusTracker {
   @Nullable
   public Range getPrevRange(final int line) {
     synchronized (myLock) {
-      final Range currentRange = getRangeForLine(line);
-      if (currentRange != null) {
-        return getPrevRange(currentRange);
-      }
-
-      for (ListIterator<Range> iterator = myRanges.listIterator(myRanges.size()); iterator.hasPrevious(); ) {
-        final Range range = iterator.previous();
-        if (range.getLine1() > line) {
-          continue;
+      for (int i = myRanges.size() - 1; i >= 0; i--) {
+        Range range = myRanges.get(i);
+        if (line > range.getLine1() && !range.isSelectedByLine(line)) {
+          return range;
         }
-        return range;
       }
       return null;
     }
@@ -706,12 +676,7 @@ public class LineStatusTracker {
   public Range getRangeForLine(final int line) {
     synchronized (myLock) {
       for (final Range range : myRanges) {
-        if (range.getType() == Range.DELETED && line == range.getLine1()) {
-          return range;
-        }
-        else if (line >= range.getLine1() && line < range.getLine2()) {
-          return range;
-        }
+        if (range.isSelectedByLine(line)) return range;
       }
       return null;
     }
@@ -868,6 +833,8 @@ public class LineStatusTracker {
 
   @NotNull
   TextRange getCurrentTextRange(@NotNull Range range) {
+    myApplication.assertReadAccessAllowed();
+
     synchronized (myLock) {
       if (!range.isValid()) {
         LOG.warn("Current TextRange of invalid range");
@@ -907,25 +874,10 @@ public class LineStatusTracker {
     }
   }
 
-  public static LineStatusTracker createOn(@Nullable VirtualFile virtualFile, @NotNull final Document doc, final Project project) {
+  public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile, @NotNull final Document doc, final Project project) {
     final Document document = new DocumentImpl("", true);
+    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     return new LineStatusTracker(doc, document, project, virtualFile);
-  }
-
-  public void baseRevisionLoadFailed() {
-    synchronized (myLock) {
-      myBaseLoaded = BaseLoadState.FAILED;
-    }
-  }
-
-  Project getProject() {
-    return myProject;
-  }
-
-  public enum BaseLoadState {
-    LOADING,
-    FAILED,
-    LOADED
   }
 
   public static class RevisionPack {
@@ -945,9 +897,9 @@ public class LineStatusTracker {
       return myRevision;
     }
 
-    public boolean after(final RevisionPack previous) {
-      if (myRevision.equals(previous.getRevision())) return false;
-      return myNumber > previous.getNumber();
+    public boolean contains(final RevisionPack previous) {
+      if (myRevision.equals(previous.getRevision()) && !myRevision.equals(VcsRevisionNumber.NULL)) return true;
+      return myNumber >= previous.getNumber();
     }
 
     @Override
@@ -963,19 +915,6 @@ public class LineStatusTracker {
     @Override
     public int hashCode() {
       return myRevision.hashCode();
-    }
-  }
-
-  private void installAnathema() {
-    myAnathemaThrown = true;
-    final FileEditor[] editors = myFileEditorManager.getAllEditors(myVirtualFile);
-    for (FileEditor editor : editors) {
-      CanNotCalculateDiffPanel panel = editor.getUserData(PANEL_KEY);
-      if (panel == null) {
-        final CanNotCalculateDiffPanel newPanel = new CanNotCalculateDiffPanel();
-        editor.putUserData(PANEL_KEY, newPanel);
-        myFileEditorManager.addTopComponent(editor, newPanel);
-      }
     }
   }
 
