@@ -221,6 +221,9 @@ class ContractInferenceInterpreter {
     if (expr instanceof PsiParenthesizedExpression) {
       return visitExpression(states, ((PsiParenthesizedExpression)expr).getExpression());
     }
+    if (expr instanceof PsiTypeCastExpression) {
+      return visitExpression(states, ((PsiTypeCastExpression)expr).getOperand());
+    }
 
     if (expr instanceof PsiPrefixExpression && ((PsiPrefixExpression)expr).getOperationTokenType() == JavaTokenType.EXCL) {
       List<MethodContract> result = ContainerUtil.newArrayList();

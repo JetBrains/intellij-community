@@ -370,6 +370,15 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['_, null -> fail', '_, _ -> !null']
   }
 
+  public void "test dig into type cast"() {
+    def c = inferContracts("""
+  public static String cast(Object o) {
+    return o instanceof ProgressWrapper ? (String)o : null;
+  }
+    """)
+    assert c == ['null -> null']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
