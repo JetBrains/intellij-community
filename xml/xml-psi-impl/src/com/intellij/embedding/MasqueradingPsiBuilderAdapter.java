@@ -19,6 +19,7 @@ import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,9 +68,11 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   @Override
   public void advanceLexer() {
+//    logPos();
     myLexPosition++;
 
     synchronizePositions();
+//    logPos();
   }
 
   private void synchronizePositions() {
@@ -102,6 +105,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   @Override
   public IElementType lookAhead(int steps) {
     final PsiBuilderImpl delegate = (PsiBuilderImpl)getDelegate();
+    synchronizePositions();
 
     if (eof()) {    // ensure we skip over whitespace if it's needed
       return null;
@@ -144,10 +148,49 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     return myLexPosition < myShrunkSequence.size() ? myShrunkSequence.get(myLexPosition).shrunkStart : myShrunkCharSequence.length();
   }
 
+  @Nullable
+  @Override
+  public IElementType getTokenType() {
+    if (allIsEmpty()) {
+      return TokenType.DUMMY_HOLDER;
+    }
+    checkWhitespace();
+
+    return myLexPosition < myShrunkSequence.size() ? myShrunkSequence.get(myLexPosition).elementType : null;
+  }
+
+  @Nullable
+  @Override
+  public String getTokenText() {
+    if (allIsEmpty()) {
+      return getDelegate().getOriginalText().toString();
+    }
+    checkWhitespace();
+
+    if (myLexPosition >= myShrunkSequence.size()) {
+      return null;
+    }
+
+    final MyShiftedToken token = myShrunkSequence.get(myLexPosition);
+    return myShrunkCharSequence.subSequence(token.shrunkStart, token.shrunkEnd).toString();
+  }
+
   @Override
   public Marker mark() {
     final Marker mark = super.mark();
     return new MyMarker(mark, myLexPosition);
+  }
+
+  private boolean allIsEmpty() {
+    return myShrunkSequence.isEmpty() && getDelegate().getOriginalText().length() != 0;
+  }
+
+  private void checkWhitespace() {
+    while (myLexPosition < myShrunkSequence.size() &&
+           ((PsiBuilderImpl)myDelegate).whitespaceOrComment(myShrunkSequence.get(myLexPosition).elementType)) {
+      myLexPosition++;
+    }
+    synchronizePositions();
   }
 
   protected void initShrunkSequence() {
@@ -156,7 +199,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
     initTokenListAndCharSequence(lexer);
     myLexPosition = 0;
-    synchronizePositions();
+//    synchronizePositions();
   }
 
   private void initTokenListAndCharSequence(MasqueradingLexer lexer) {
@@ -166,8 +209,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
     int realPos = 0;
     int shrunkPos = 0;
-    IElementType realTokenType;
-    while ((realTokenType = lexer.getTokenType()) != null) {
+    while (lexer.getTokenType() != null) {
       final IElementType masqueTokenType = lexer.getMasqueTokenType();
       final String masqueTokenText = lexer.getMasqueTokenText();
 
@@ -176,7 +218,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
         assert masqueTokenText != null;
 
         final int masqueLength = masqueTokenText.length();
-        myShrunkSequence.add(new MyShiftedToken(realTokenType,
+        myShrunkSequence.add(new MyShiftedToken(masqueTokenType,
                                                 realPos, realPos + realLength,
                                                 shrunkPos, shrunkPos + masqueLength));
         charSequenceBuilder.append(masqueTokenText);
