@@ -920,4 +920,81 @@ public class Test {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
     assert 'return field;' == myFixture.editor.selectionModel.selectedText
   }
+
+  public void "test expand and collapse regions in selection"() {
+    def text = """
+class Foo {
+    public static void main() {
+        new Runnable(){
+            public void run() {
+            }
+        }.run();
+    }
+}
+"""
+    configure text
+    assertEquals 3, foldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
+    assertEquals 3, expandedFoldRegionsCount
+
+
+    myFixture.editor.selectionModel.setSelection(text.indexOf("new"), text.indexOf("run();"))
+    myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS)
+    assertEquals 1, expandedFoldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
+    assertEquals 3, expandedFoldRegionsCount
+  }
+
+  public void "test expand and collapse recursively"() {
+    def text = """
+class Foo {
+    public static void main() {
+        new Runnable(){
+            public void run() {
+            }
+        }.run();
+    }
+}
+"""
+    configure text
+    assertEquals 3, foldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
+    assertEquals 3, expandedFoldRegionsCount
+
+
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("new"))
+    myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_REGION_RECURSIVELY)
+    assertEquals 1, expandedFoldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_REGION_RECURSIVELY)
+    assertEquals 3, expandedFoldRegionsCount
+  }
+
+  public void "test expand to level"() {
+    def text = """
+class Foo {
+    public static void main() {
+        new Runnable(){
+            public void run() {
+            }
+        }.run();
+    }
+}
+"""
+    configure text
+    assertEquals 3, foldRegionsCount
+
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("new"))
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_TO_LEVEL_1)
+    assertEquals 2, expandedFoldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_TO_LEVEL_1)
+    assertEquals 1, expandedFoldRegionsCount
+  }
+
+  private int getFoldRegionsCount() {
+    return myFixture.editor.foldingModel.allFoldRegions.length
+  }
+
+  private int getExpandedFoldRegionsCount() {
+    return myFixture.editor.foldingModel.allFoldRegions.count { it.isExpanded() ? 1 : 0}
+  }
 }
