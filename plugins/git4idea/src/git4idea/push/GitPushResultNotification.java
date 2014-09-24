@@ -220,11 +220,12 @@ class GitPushResultNotification extends Notification {
     private final Label myBeforeUpdateLabel;
     private final Label myAfterUpdateLabel;
 
-    public ViewUpdatedFilesNotificationListener(@NotNull Project project, @NotNull UpdatedFiles updatedFiles, Label label, Label label1) {
+    public ViewUpdatedFilesNotificationListener(@NotNull Project project, @NotNull UpdatedFiles updatedFiles,
+                                                @Nullable Label beforeUpdate, @Nullable Label afterUpdate) {
       myProject = project;
       myUpdatedFiles = updatedFiles;
-      myBeforeUpdateLabel = label;
-      myAfterUpdateLabel = label1;
+      myBeforeUpdateLabel = beforeUpdate;
+      myAfterUpdateLabel = afterUpdate;
     }
 
     @Override
