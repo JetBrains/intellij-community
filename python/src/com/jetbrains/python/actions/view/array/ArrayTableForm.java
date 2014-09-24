@@ -46,14 +46,29 @@ public class ArrayTableForm {
     myParentDialog = dialog;
   }
 
+
+  public class JBTableWithRows extends JBTable {
+    private RowNumberTable myRowNumberTable;
+
+    public boolean getScrollableTracksViewportWidth() {
+      return getPreferredSize().width < getParent().getWidth();
+    }
+
+    public RowNumberTable getRowNumberTable() {
+      return myRowNumberTable;
+    }
+
+    public void setRowNumberTable(RowNumberTable rowNumberTable) {
+      myRowNumberTable = rowNumberTable;
+    }
+  }
+
   private void createUIComponents() {
-    myTable = new JBTable() {
-      public boolean getScrollableTracksViewportWidth() {
-        return getPreferredSize().width < getParent().getWidth();
-      }
-    };
+    myTable = new JBTableWithRows();
+
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     myTable.setRowSelectionAllowed(false);
+    myTable.getTableHeader().setReorderingAllowed(false);
 
     myScrollPane = new JBScrollPane();
     JTable rowTable = new RowNumberTable(myTable) {
@@ -66,6 +81,14 @@ public class ArrayTableForm {
     myScrollPane.setRowHeaderView(rowTable);
     myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
                            rowTable.getTableHeader());
+
+    ((JBTableWithRows)myTable).setRowNumberTable((RowNumberTable)rowTable);
+
+    myScrollPane.getHorizontalScrollBar()
+      .addAdjustmentListener(new TableAdjustmentListener(myTable, 100, 100, TableAdjustmentListener.HORIZONTAL_MODE, 50));
+
+    myScrollPane.getVerticalScrollBar()
+      .addAdjustmentListener(new TableAdjustmentListener(myTable, 100, 100, TableAdjustmentListener.VERTICAL_MODE, 50));
   }
 
   public JTextField getSliceTextField() {
@@ -76,7 +99,7 @@ public class ArrayTableForm {
     return myFormatTextField;
   }
 
-  public JTable getTable() {
+  public JBTable getTable() {
     return myTable;
   }
 
@@ -85,7 +108,10 @@ public class ArrayTableForm {
   }
 
   public void setDefaultStatus() {
-    myTable.getEmptyText().setText(DATA_LOADING_IN_PROCESS);
+    if (myTable != null) {
+      myTable.getEmptyText().setText(DATA_LOADING_IN_PROCESS);
+      myTable.setPaintBusy(true);
+    }
   }
 
   public void setErrorText(Exception e) {

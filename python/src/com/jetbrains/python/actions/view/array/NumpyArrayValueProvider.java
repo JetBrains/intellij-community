@@ -20,9 +20,11 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.table.JBTable;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -34,15 +36,18 @@ import javax.management.InvalidAttributeValueException;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 /**
  * @author amarch
  */
 class NumpyArrayValueProvider extends ArrayValueProvider {
   private ArrayTableForm myComponent;
-  private JTable myTable;
+  private JBTable myTable;
   private Project myProject;
   private PyDebuggerEvaluator myEvaluator;
   private Numpy2DArraySlice myLastPresentation;
@@ -58,6 +63,9 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     myProject = project;
     myTable = component.getTable();
     myEvaluator = new PyDebuggerEvaluator(project, ((PyDebugValue)((XValueNodeImpl)node).getValueContainer()).getFrameAccessor());
+
+    initSliceTextFieldAction();
+    initFormatTextFieldAction();
   }
 
   public PyDebugValue getValueContainer() {
@@ -80,8 +88,47 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     }
 
     List<Pair<Integer, Integer>> defaultSlice = getDefaultSlice();
-    startFillTable(new Numpy2DArraySlice(getNodeName(), defaultSlice, this, getShape(), getDtype()));
+    //startFillTable(new Numpy2DArraySlice(getNodeName(), defaultSlice, this, getShape(), getDtypeKind(), getDefaultFormat()));
+    falseFill();
   }
+
+
+  private void falseFill() {
+    int size = 50;
+    Object[][] data = new Object[size][size];
+
+    for (int i = 0; i < size; i++) {
+      for (int j = 0; j < size; j++) {
+        data[i][j] = "(" + i + "," + j + ")";
+      }
+    }
+
+    final DefaultTableModel model = new MyTableModel(data, range(0, data[0].length - 1));
+    DebuggerUIUtil.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        myTable.setModel(model);
+        myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
+      }
+    });
+    myTable.setPaintBusy(false);
+  }
+
+  public class MyTableModel extends DefaultTableModel {
+
+    public MyTableModel(Object[][] data, Object[] columnNames) {
+      super(data, columnNames);
+    }
+
+    public void removeColumn(int column) {
+      columnIdentifiers.remove(column);
+      for (Object row: dataVector) {
+        ((Vector) row).remove(column);
+      }
+      fireTableStructureChanged();
+    }
+  }
+
 
   private List<Pair<Integer, Integer>> getDefaultSlice() {
     return getSlice(COLUMNS_IN_DEFAULT_SLICE, ROWS_IN_DEFAULT_SLICE);
@@ -106,7 +153,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
       @Override
       public void evaluated(@NotNull XValue result) {
-        setDtype(((PyDebugValue)result).getValue());
+        setDtypeKind(((PyDebugValue)result).getValue());
         startFillTable();
       }
 
@@ -183,11 +230,11 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
           DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
           myTable.setModel(model);
           myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
-
+          myTable.setPaintBusy(false);
 
           //enableColor(data);
-          myComponent.getSliceTextField().setText(myLastPresentation.getPresentation());
-          myComponent.getFormatTextField().setText(getFormat());
+          myComponent.getSliceTextField().setText(arraySlice.getPresentation());
+          myComponent.getFormatTextField().setText(getDefaultFormat());
         }
       });
     }
@@ -285,12 +332,11 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     return array;
   }
 
-  public void setDtype(String dtype) {
+  public void setDtypeKind(String dtype) {
     this.myDtypeKind = dtype;
   }
 
-
-  public String getDtype() {
+  public String getDtypeKind() {
     return myDtypeKind;
   }
 
@@ -302,15 +348,67 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     this.myShape = shape;
   }
 
-  private void showError(String message) {
+  public void showError(String message) {
     myComponent.setErrorText(message);
   }
 
-  public String getFormat() {
+  public String getDefaultFormat() {
     if (isNumeric()) {
-      return "\'%.3f\'";
+      if (myDtypeKind.equals("f")) {
+        return "\'%.5f\'";
+      }
+
+      if (myDtypeKind.equals("i") || myDtypeKind.equals("u")) {
+        return "\'%d\'";
+      }
+
+      if (myDtypeKind.equals("b") || myDtypeKind.equals("c")) {
+        myComponent.getFormatTextField().setEditable(false);
+        return "\'%s\'";
+      }
     }
     return "\'%s\'";
+  }
+
+  private void initSliceTextFieldAction() {
+    myComponent.getSliceTextField().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "strokeEnter");
+    myComponent.getSliceTextField().getActionMap().put("strokeEnter", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doReslice(myComponent.getSliceTextField().getText());
+      }
+    });
+  }
+
+  private void doReslice(String newSlice) {
+
+  }
+
+  private void initFormatTextFieldAction() {
+    myComponent.getFormatTextField().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "strokeEnter");
+    myComponent.getFormatTextField().getActionMap().put("strokeEnter", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doApplyFormat(myComponent.getFormatTextField().getText());
+      }
+    });
+  }
+
+  private void doApplyFormat(String format) {
+    myLastPresentation.applyFormat(format, new Runnable() {
+      @Override
+      public void run() {
+        Object[][] data = myLastPresentation.getData();
+
+        DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
+        myTable.setModel(model);
+        myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
+
+        //enableColor(data);
+      }
+    });
   }
 
   private void enableColor(Object[][] data) {

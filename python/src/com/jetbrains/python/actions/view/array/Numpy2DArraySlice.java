@@ -45,18 +45,21 @@ class Numpy2DArraySlice {
   private int myColumns = 0;
   private int myRowsOffset = 0;
   private int myColumnsOffset = 0;
+  private String myFormat;
 
   public Numpy2DArraySlice(@NotNull String valueName,
                            @NotNull List<Pair<Integer, Integer>> fullSlice,
                            @NotNull NumpyArrayValueProvider valueProvider,
                            @NotNull int[] shape,
-                           @Nullable String dtype) {
+                           @Nullable String dtype,
+                           @NotNull String format) {
     myValueName = valueName;
     myFullSlice = fullSlice;
     myValueProvider = valueProvider;
     myShape = shape;
     myDtype = dtype;
     myDataEvaluator = new DataEvaluator();
+    myFormat = format;
 
     checkShapeConsistency();
   }
@@ -113,6 +116,14 @@ class Numpy2DArraySlice {
     return myDataEvaluator.dataFilled();
   }
 
+  public void applyFormat(@NotNull String newFormat, Runnable callback) {
+    if (newFormat.equals(myFormat)) {
+      return;
+    }
+    myFormat = newFormat;
+    myDataEvaluator.evaluateData(callback);
+  }
+
   private class DataEvaluator {
     private Object[][] myData;
     private int myFilledRows = 0;
@@ -143,6 +154,7 @@ class Numpy2DArraySlice {
 
         @Override
         public void errorOccurred(@NotNull String errorMessage) {
+          myValueProvider.showError(errorMessage);
         }
       };
 
@@ -186,22 +198,39 @@ class Numpy2DArraySlice {
       myRows = myData.length;
       myValueProvider.getTree().addTreeListener(treeListener);
       nextRow = myRowsOffset;
+      myFilledRows = 0;
       startEvalNextRow(computeChildrenCallback);
     }
 
     private void startEvalNextRow(XDebuggerEvaluator.XEvaluationCallback callback) {
-      String evalRowCommand = "list(" + getUpperSlice(getPresentation());
+      String evalRowCommand = "map(lambda l: " + evalTypeFunc() + ", list(" + getUpperSlice(getPresentation());
       if (!isOneDimensional()) {
         evalRowCommand += "[" + nextRow + "]";
       }
       evalRowCommand +=
-        "[" + myColumnsOffset + ":" + (myColumnsOffset + myColumns) + "])";
+        "[" + myColumnsOffset + ":" + (myColumnsOffset + myColumns) + "]))";
       myValueProvider.getEvaluator().evaluate(evalRowCommand, callback, null);
     }
 
     private String getUpperSlice(String presentation) {
       return presentation.substring(0, presentation.lastIndexOf('['));
     }
+  }
+
+  private String evalTypeFunc() {
+    String typeCommand = "(" + myFormat + " % l)";
+    if (myDtype.equals("f")) {
+      typeCommand = "float" + typeCommand;
+    } else if (myDtype.equals("i") || myDtype.equals("u")) {
+      typeCommand =  "int" + typeCommand;
+    } else if (myDtype.equals("b")) {
+      typeCommand =  "l";
+    } else if (myDtype.equals("c")) {
+      typeCommand =  "complex" + typeCommand;
+    } else {
+      typeCommand = "str" + typeCommand;
+    }
+    return typeCommand;
   }
 
   private boolean isOneDimensional() {
