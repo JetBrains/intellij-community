@@ -111,6 +111,7 @@
 
     <applicationService serviceInterface="com.intellij.find.FindSettings"
                         serviceImplementation="com.intellij.find.impl.FindSettingsImpl"/>
+    <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.CodeInsightSettings"
                         serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
