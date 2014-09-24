@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
@@ -32,7 +33,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public class ServiceManagerImpl implements BaseComponent {
   private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.applicationService");
@@ -83,31 +86,34 @@ public class ServiceManagerImpl implements BaseComponent {
     return Arrays.asList(extensions);
   }
 
-  @NotNull
-  public static List<Class<?>> getAllImplementationClasses(@NotNull ComponentManager componentManager) {
+  public static void processAllImplementationClasses(@NotNull ComponentManager componentManager, @NotNull PairProcessor<Class<?>, PluginDescriptor> processor) {
     Collection adapters = componentManager.getPicoContainer().getComponentAdapters();
     if (adapters.isEmpty()) {
-      return Collections.emptyList();
+      return;
     }
 
-    List<Class<?>> classes = new ArrayList<Class<?>>(512);
     for (Object o : adapters) {
       if (o instanceof MyComponentAdapter) {
         MyComponentAdapter adapter = (MyComponentAdapter)o;
         ComponentAdapter delegate = adapter.myDelegate;
-        // we cannot use getDelegate - not all components are instantiable (JobSchedulerImpl, for example, causes such error)
+        Class aClass;
         try {
-          classes.add(delegate == null ? adapter.loadClass(adapter.myDescriptor.getImplementation()) : delegate.getComponentImplementation());
+          // we cannot use getDelegate - not all components are instantiable (JobSchedulerImpl, for example, causes such error)
+          aClass = delegate == null ? adapter.loadClass(adapter.myDescriptor.getImplementation()) : delegate.getComponentImplementation();
         }
         catch (RuntimeException e) {
           // ignore ClassNotFoundException - invalid entry (GithubSslSupport, for example)
           if (!(e.getCause() instanceof ClassNotFoundException)) {
             throw e;
           }
+          continue;
+        }
+
+        if (!processor.process(aClass, adapter.myPluginDescriptor)) {
+          break;
         }
       }
     }
-    return classes;
   }
 
   @Override

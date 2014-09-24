@@ -22,6 +22,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
@@ -33,7 +34,7 @@ import java.util.SortedSet;
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionFilterAction extends DefaultActionGroup {
+public class InspectionFilterAction extends DefaultActionGroup implements Toggleable {
 
   private final SeverityRegistrar mySeverityRegistrar;
   private final InspectionsFilter myInspectionsFilter;
@@ -44,6 +45,12 @@ public class InspectionFilterAction extends DefaultActionGroup {
     mySeverityRegistrar = ((SeverityProvider)profile.getProfileManager()).getOwnSeverityRegistrar();
     getTemplatePresentation().setIcon(AllIcons.General.Filter);
     tune();
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, !myInspectionsFilter.isEmptyFilter());
   }
 
   private void tune() {

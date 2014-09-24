@@ -41,6 +41,7 @@ import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.UIUtil;
 import com.trilead.ssh2.auth.AgentProxy;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.config.ProxyGroup;
@@ -722,20 +723,20 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   // 30 seconds
   private final static int DEFAULT_READ_TIMEOUT = 30 * 1000;
 
-  @Override
-  public int getReadTimeout(final SVNRepository repository) {
-    String protocol = repository.getLocation().getProtocol();
+  public int getReadTimeout(@NotNull SVNURL url) {
+    String protocol = url.getProtocol();
     if (HTTP.equals(protocol) || HTTPS.equals(protocol)) {
-        String host = repository.getLocation().getHost();
-        String timeout = getServersPropertyIdea(host, "http-timeout");
-        if (timeout != null) {
-            try {
-                return Integer.parseInt(timeout)*1000;
-            } catch (NumberFormatException nfe) {
-              // use default
-            }
+      String host = url.getHost();
+      String timeout = getServersPropertyIdea(host, "http-timeout");
+      if (timeout != null) {
+        try {
+          return Integer.parseInt(timeout) * 1000;
         }
-        return DEFAULT_READ_TIMEOUT;
+        catch (NumberFormatException nfe) {
+          // use default
+        }
+      }
+      return DEFAULT_READ_TIMEOUT;
     }
     if (SVN_SSH.equals(protocol)) {
       return (int)getConfig().getSshReadTimeout();
@@ -743,17 +744,26 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return 0;
   }
 
-  @Override
-  public int getConnectTimeout(SVNRepository repository) {
-    String protocol = repository.getLocation().getProtocol();
+  public int getConnectTimeout(@NotNull SVNURL url) {
+    String protocol = url.getProtocol();
     if (SVN_SSH.equals(protocol)) {
       return (int)getConfig().getSshConnectionTimeout();
     }
-    final int connectTimeout = super.getConnectTimeout(repository);
+    final int connectTimeout = getHostOptionsProvider().getHostOptions(url).getConnectTimeout();
     if ((HTTP.equals(protocol) || HTTPS.equals(protocol)) && (connectTimeout <= 0)) {
       return DEFAULT_READ_TIMEOUT;
     }
     return connectTimeout;
+  }
+
+  @Override
+  public int getReadTimeout(@NotNull SVNRepository repository) {
+    return getReadTimeout(repository.getLocation());
+  }
+
+  @Override
+  public int getConnectTimeout(@NotNull SVNRepository repository) {
+    return getConnectTimeout(repository.getLocation());
   }
 
   // taken from default manager as is

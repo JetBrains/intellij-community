@@ -626,26 +626,34 @@ public class HintManagerImpl extends HintManager implements Disposable {
     int col2 = pos2.column;
 
     Point location;
-    JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
+    @NotNull JComponent externalComponent = editor.getComponent();
+    JRootPane rootPane = externalComponent.getRootPane();
+    if (rootPane != null) {
+      externalComponent = rootPane;
+      JLayeredPane layeredPane = rootPane.getLayeredPane();
+      if (layeredPane != null) {
+        externalComponent = layeredPane;
+      }
+    }
     JComponent internalComponent = editor.getContentComponent();
     if (constraint == RIGHT_UNDER) {
       Point p = editor.logicalPositionToXY(new LogicalPosition(line2, col2));
       if (!showByBalloon) {
         p.y += editor.getLineHeight();
       }
-      location = SwingUtilities.convertPoint(internalComponent, p, layeredPane);
+      location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
     }
     else {
       Point p = editor.logicalPositionToXY(new LogicalPosition(line1, col1));
       if (constraint == UNDER) {
         p.y += editor.getLineHeight();
       }
-      location = SwingUtilities.convertPoint(internalComponent, p, layeredPane);
+      location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
     }
 
     if (constraint == ABOVE && !showByBalloon) {
       location.y -= hintSize.height;
-      int diff = location.x + hintSize.width - layeredPane.getWidth();
+      int diff = location.x + hintSize.width - externalComponent.getWidth();
       if (diff > 0) {
         location.x = Math.max(location.x - diff, 0);
       }

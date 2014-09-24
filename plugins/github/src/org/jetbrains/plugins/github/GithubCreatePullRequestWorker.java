@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -488,12 +487,12 @@ public class GithubCreatePullRequestWorker {
     String localBranchName = "'" + myCurrentBranch + "'";
     String targetBranchName = "'" + fork.getRemoteName() + "/" + branch.getRemoteName() + "'";
     if (info.getInfo().getBranchToHeadCommits(myGitRepository).isEmpty()) {
-      return Messages.YES == GithubNotifications
+      return GithubNotifications
         .showYesNoDialog(myProject, "Do you want to proceed anyway?",
                          "Empty pull request: the branch " + localBranchName + " is fully merged to the branch " + targetBranchName);
     }
     if (!info.getInfo().getHeadToBranchCommits(myGitRepository).isEmpty()) {
-      return Messages.YES == GithubNotifications
+      return GithubNotifications
         .showYesNoDialog(myProject, "Do you want to proceed anyway?",
                          "The branch " + targetBranchName + " is not fully merged to the branch " + localBranchName);
     }
