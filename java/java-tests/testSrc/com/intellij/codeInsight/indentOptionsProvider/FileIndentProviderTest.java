@@ -38,6 +38,7 @@ public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestC
 
   private final static FileIndentOptionsProvider TEST_FILE_INDENT_OPTIONS_PROVIDER = new TestIndentOptionsProvider();
   private static CommonCodeStyleSettings.IndentOptions myTestIndentOptions;
+  private static boolean myUseOnFullReformat;
 
   @Override
   protected void setUp() throws Exception {
@@ -54,6 +55,7 @@ public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestC
       Extensions.getRootArea().getExtensionPoint(FileIndentOptionsProvider.EP_NAME);
     extensionPoint.unregisterExtension(TEST_FILE_INDENT_OPTIONS_PROVIDER);
     myTestIndentOptions = null;
+    myUseOnFullReformat = false;
     super.tearDown();
   }
 
@@ -79,6 +81,11 @@ public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestC
     @Override
     public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file) {
       return myTestIndentOptions;
+    }
+
+    @Override
+    public boolean useOnFullReformat() {
+      return myUseOnFullReformat;
     }
   }
 
@@ -111,7 +118,40 @@ public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestC
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 
+  public void testReformatFileSupported() {
+    myUseOnFullReformat = true;
+    myTestIndentOptions.INDENT_SIZE = 3;
+    myTestIndentOptions.TAB_SIZE = 2;
+    myTestIndentOptions.USE_TAB_CHARACTER = true;
+    PsiFile file = myFixture.configureByFile(getTestName(true) + "_before.java");
+    CodeStyleManager.getInstance(getProject()).reformat(file);
+    myFixture.checkResultByFile(getTestName(true) + "_after.java");
+  }
+
   public void testReformatText() {
+    myTestIndentOptions.INDENT_SIZE = 3;
+    myTestIndentOptions.TAB_SIZE = 2;
+    myTestIndentOptions.USE_TAB_CHARACTER = true;
+    PsiFile file = myFixture.configureByFile(getTestName(true) + "_before.java");
+    CodeStyleManager.getInstance(getProject()).reformatText(file, 0, file.getTextRange().getEndOffset());
+    myFixture.checkResultByFile(getTestName(true) + "_after.java");
+  }
+
+  /**
+   * Reformat using indent provider if a part of the file is selected.
+   */
+  public void testReformatTextRange() {
+    myTestIndentOptions.INDENT_SIZE = 3;
+    myTestIndentOptions.TAB_SIZE = 2;
+    myTestIndentOptions.USE_TAB_CHARACTER = true;
+    PsiFile file = myFixture.configureByFile(getTestName(true) + "_before.java");
+    // Just any range smaller than the file
+    CodeStyleManager.getInstance(getProject()).reformatText(file, 6, file.getTextRange().getEndOffset() - 1);
+    myFixture.checkResultByFile(getTestName(true) + "_after.java");
+  }
+
+  public void testReformatTextFullSupported() {
+    myUseOnFullReformat = true;
     myTestIndentOptions.INDENT_SIZE = 3;
     myTestIndentOptions.TAB_SIZE = 2;
     myTestIndentOptions.USE_TAB_CHARACTER = true;

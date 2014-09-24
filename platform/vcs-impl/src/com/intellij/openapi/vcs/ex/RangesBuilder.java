@@ -29,7 +29,7 @@ import java.util.List;
  */
 
 public class RangesBuilder {
-  private List<Range> myRanges;
+  @NotNull private final List<Range> myRanges;
 
   public RangesBuilder(@NotNull Document current, @NotNull Document vcs) throws FilesTooBigForDiffException {
     this(new DocumentWrapper(current).getLines(), new DocumentWrapper(vcs).getLines(), 0, 0);
@@ -47,8 +47,8 @@ public class RangesBuilder {
     }
   }
 
+  @NotNull
   public List<Range> getRanges() {
     return myRanges;
   }
-
 }

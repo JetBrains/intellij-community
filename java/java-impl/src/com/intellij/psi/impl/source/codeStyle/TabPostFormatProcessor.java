@@ -72,7 +72,7 @@ public class TabPostFormatProcessor implements PostFormatProcessor {
 
     if (!source.isValid()) return range;
     PsiFile file = source.getContainingFile();
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(file);
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(file, range);
 
     boolean useTabs = indentOptions.USE_TAB_CHARACTER;
     boolean smartTabs = indentOptions.SMART_TABS;

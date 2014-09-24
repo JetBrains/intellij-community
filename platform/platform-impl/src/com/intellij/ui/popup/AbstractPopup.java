@@ -45,6 +45,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ChildFocusWatcher;
 import com.intellij.util.ui.EmptyIcon;
@@ -900,6 +901,7 @@ public class AbstractPopup implements JBPopup {
       public void run() {
         if (myPreferredFocusedComponent != null && myInStack && myFocusable) {
           myFocusTrackback.registerFocusComponent(myPreferredFocusedComponent);
+          IJSwingUtilities.moveMousePointerOn(myPreferredFocusedComponent);
         }
 
         removeActivity();

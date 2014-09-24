@@ -95,6 +95,11 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   @Override
   public void checkServerTrusted(final X509Certificate[] certificates, String s) throws CertificateException {
+    checkServerTrusted(certificates, s, true, true);
+  }
+
+  public void checkServerTrusted(final X509Certificate[] certificates, String s, boolean addToKeyStore, boolean askUser)
+    throws CertificateException {
     try {
       mySystemManager.checkServerTrusted(certificates, s);
     }
@@ -105,7 +110,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
           myCustomManager.checkServerTrusted(certificates, s);
         }
         catch (CertificateException e2) {
-          if (myCustomManager.isBroken() || !confirmAndUpdate(certificates)) {
+          if (myCustomManager.isBroken() || !confirmAndUpdate(certificates, addToKeyStore, askUser)) {
             throw e;
           }
         }
@@ -113,7 +118,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   }
 
-  private boolean confirmAndUpdate(final X509Certificate[] chain) {
+  private boolean confirmAndUpdate(final X509Certificate[] chain, boolean addToKeyStore, boolean askUser) {
     Application app = ApplicationManager.getApplication();
     final X509Certificate endPoint = chain[0];
     // IDEA-123467 and IDEA-123335 workaround
@@ -125,10 +130,12 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     CertificateManager.Config config = CertificateManager.getInstance().getState();
     if (app.isUnitTestMode() || app.isHeadlessEnvironment() || config.ACCEPT_AUTOMATICALLY) {
       LOG.debug("Certificate will be accepted automatically");
-      myCustomManager.addCertificate(endPoint);
+      if (addToKeyStore) {
+        myCustomManager.addCertificate(endPoint);
+      }
       return true;
     }
-    boolean accepted = CertificateManager.showAcceptDialog(new Callable<DialogWrapper>() {
+    boolean accepted = askUser && CertificateManager.showAcceptDialog(new Callable<DialogWrapper>() {
       @Override
       public DialogWrapper call() throws Exception {
         // TODO may be another kind of warning, if default trust store is missing
@@ -137,7 +144,9 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     });
     if (accepted) {
       LOG.info("Certificate was accepted by user");
-      myCustomManager.addCertificate(endPoint);
+      if (addToKeyStore) {
+        myCustomManager.addCertificate(endPoint);
+      }
     }
     return accepted;
   }

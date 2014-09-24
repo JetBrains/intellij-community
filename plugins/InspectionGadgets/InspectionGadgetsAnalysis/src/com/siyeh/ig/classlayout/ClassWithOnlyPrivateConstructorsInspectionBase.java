@@ -62,7 +62,7 @@ public class ClassWithOnlyPrivateConstructorsInspectionBase extends BaseInspecti
         return;
       }
       for (PsiMethod constructor : constructors) {
-        if (constructor.hasModifierProperty(PsiModifier.FINAL)) {
+        if (!constructor.hasModifierProperty(PsiModifier.PRIVATE)) {
           return;
         }
       }

@@ -392,24 +392,24 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, Point p, HintHint hintInfo, boolean updateSize) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
+    JComponent externalComponent = getExternalComponent(editor);
     Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
 
     if (hint.isRealPopup()) {
       final Point editorCorner = editor.getComponent().getLocation();
-      SwingUtilities.convertPointToScreen(editorCorner, layeredPane);
+      SwingUtilities.convertPointToScreen(editorCorner, externalComponent);
       final Point point = new Point(p);
-      SwingUtilities.convertPointToScreen(point, layeredPane);
+      SwingUtilities.convertPointToScreen(point, externalComponent);
       final Rectangle editorScreen = ScreenUtil.getScreenRectangle(point.x, point.y);
 
-      SwingUtilities.convertPointToScreen(p, layeredPane);
+      SwingUtilities.convertPointToScreen(p, externalComponent);
       final Rectangle rectangle = new Rectangle(p, size);
       ScreenUtil.moveToFit(rectangle, editorScreen, null);
       p = rectangle.getLocation();
-      SwingUtilities.convertPointFromScreen(p, layeredPane);
+      SwingUtilities.convertPointFromScreen(p, externalComponent);
     }
-    else if (layeredPane.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
-      p.x = Math.max(0, layeredPane.getWidth() - size.width);
+    else if (externalComponent.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
+      p.x = Math.max(0, externalComponent.getWidth() - size.width);
     }
 
     if (hint.isVisible()) {
@@ -420,7 +420,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     }
     else {
-      hint.show(layeredPane, p.x, p.y, editor.getContentComponent(), hintInfo);
+      hint.show(externalComponent, p.x, p.y, editor.getContentComponent(), hintInfo);
     }
   }
 
@@ -516,17 +516,16 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                                  final Rectangle lookupBounds,
                                                  final LogicalPosition pos) {
 
-    JComponent editorComponent = editor.getComponent();
-    JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+    JComponent externalComponent = getExternalComponent(editor);
 
     IdeTooltip ideTooltip = hint.getCurrentIdeTooltip();
     if (ideTooltip != null) {
       Point point = ideTooltip.getPoint();
-      return SwingUtilities.convertPoint(ideTooltip.getComponent(), point, layeredPane);
+      return SwingUtilities.convertPoint(ideTooltip.getComponent(), point, externalComponent);
     }
 
     Dimension hintSize = hint.getComponent().getPreferredSize();
-    int layeredPaneHeight = layeredPane.getHeight();
+    int layeredPaneHeight = externalComponent.getHeight();
 
     switch (constraint) {
       case LEFT: {
@@ -591,18 +590,18 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                        boolean showByBalloon) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
     Point p = _getHintPosition(hint, editor, pos1, pos2, constraint, showByBalloon);
-    JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
+    JComponent externalComponent = getExternalComponent(editor);
     Dimension hintSize = hint.getComponent().getPreferredSize();
     if (constraint == ABOVE) {
       if (p.y < 0) {
         Point p1 = _getHintPosition(hint, editor, pos1, pos2, UNDER, showByBalloon);
-        if (p1.y + hintSize.height <= layeredPane.getSize().height) {
+        if (p1.y + hintSize.height <= externalComponent.getSize().height) {
           return p1;
         }
       }
     }
     else if (constraint == UNDER) {
-      if (p.y + hintSize.height > layeredPane.getSize().height) {
+      if (p.y + hintSize.height > externalComponent.getSize().height) {
         Point p1 = _getHintPosition(hint, editor, pos1, pos2, ABOVE, showByBalloon);
         if (p1.y >= 0) {
           return p1;
@@ -611,6 +610,15 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
 
     return p;
+  }
+
+  @NotNull
+  private static JComponent getExternalComponent(@NotNull Editor editor) {
+    JComponent externalComponent = editor.getComponent();
+    JRootPane rootPane = externalComponent.getRootPane();
+    if (rootPane == null) return externalComponent;
+    JLayeredPane layeredPane = rootPane.getLayeredPane();
+    return layeredPane != null ? layeredPane : rootPane;
   }
 
   private static Point _getHintPosition(@NotNull LightweightHint hint,
@@ -626,26 +634,26 @@ public class HintManagerImpl extends HintManager implements Disposable {
     int col2 = pos2.column;
 
     Point location;
-    JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
+    JComponent externalComponent = getExternalComponent(editor);
     JComponent internalComponent = editor.getContentComponent();
     if (constraint == RIGHT_UNDER) {
       Point p = editor.logicalPositionToXY(new LogicalPosition(line2, col2));
       if (!showByBalloon) {
         p.y += editor.getLineHeight();
       }
-      location = SwingUtilities.convertPoint(internalComponent, p, layeredPane);
+      location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
     }
     else {
       Point p = editor.logicalPositionToXY(new LogicalPosition(line1, col1));
       if (constraint == UNDER) {
         p.y += editor.getLineHeight();
       }
-      location = SwingUtilities.convertPoint(internalComponent, p, layeredPane);
+      location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
     }
 
     if (constraint == ABOVE && !showByBalloon) {
       location.y -= hintSize.height;
-      int diff = location.x + hintSize.width - layeredPane.getWidth();
+      int diff = location.x + hintSize.width - externalComponent.getWidth();
       if (diff > 0) {
         location.x = Math.max(location.x - diff, 0);
       }

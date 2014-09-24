@@ -20,6 +20,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
@@ -38,6 +39,10 @@ public class GotoResourceBundleLocalizationsProvider extends GotoRelatedProvider
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull final DataContext context) {
+    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
+    if (editor instanceof ResourceBundleEditor) {
+      return Collections.emptyList();
+    }
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(context);
     if (psiFile == null || !(psiFile instanceof PropertiesFile)) {
       return Collections.emptyList();

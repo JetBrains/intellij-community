@@ -129,11 +129,19 @@ public class XValueHint extends AbstractValueHint {
   }
 
   @Override
+  protected void onHintHidden() {
+    super.onHintHidden();
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
+    }
+  }
+
+  @Override
   public void hideHint() {
     super.hideHint();
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
-
     }
   }
 

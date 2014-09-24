@@ -33,4 +33,12 @@ public abstract class FileIndentOptionsProvider {
    */
   @Nullable
   public abstract CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file);
+
+  /**
+   * Tells if the provider can be used when a complete file is reformatted.
+   * @return True by default
+   */
+  public boolean useOnFullReformat() {
+    return true;
+  }
 }

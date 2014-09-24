@@ -168,7 +168,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   }
 
   @NotNull
-  private static SSLContext getSystemSslContext() {
+  public static SSLContext getSystemSslContext() {
     // NOTE: SSLContext.getDefault() should not be called because it automatically creates
     // default context which can't be initialized twice
     try {

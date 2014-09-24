@@ -139,7 +139,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
       if (documentManager != null) {
         PsiFile file = documentManager.getPsiFile(document);
         if (file != null) {
-          CommonCodeStyleSettings.IndentOptions indentOptions = getSettings(project).getIndentOptionsByFile(file, true);
+          CommonCodeStyleSettings.IndentOptions indentOptions = getSettings(project).getIndentOptionsByFile(file, null, true);
           indentOptions.associateWithDocument(document);
         }
       }

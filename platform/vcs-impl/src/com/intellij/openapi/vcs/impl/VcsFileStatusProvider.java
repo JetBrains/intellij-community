@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -150,45 +151,38 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
 
   @Override
   @Nullable
-  public String getBaseVersionContent(final VirtualFile file) {
+  public Pair<VcsRevisionNumber, String> getBaseRevision(@NotNull final VirtualFile file) {
     final Change change = ChangeListManager.getInstance(myProject).getChange(file);
     if (change != null) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
-      if (beforeRevision instanceof BinaryContentRevision) {
-        return null;
-      }
+      if (beforeRevision instanceof BinaryContentRevision) return null;
       if (beforeRevision != null) {
         String content;
         try {
           content = beforeRevision.getContent();
         }
-        catch(VcsException ex) {
+        catch (VcsException ex) {
           content = null;
         }
-        if (content == null) myHaveEmptyContentRevisions = true;
-        return content;
+        if (content == null) {
+          myHaveEmptyContentRevisions = true;
+          return null;
+        }
+        return Pair.create(beforeRevision.getRevisionNumber(), content);
       }
       return null;
     }
 
     if (isDocumentModified(file)) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      String content = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         @Override
         public String compute() {
           return LoadTextUtil.loadText(file).toString();
         }
       });
+      return Pair.create(VcsRevisionNumber.NULL, content);
     }
 
-    return null;
-  }
-
-  @Override
-  public VcsRevisionNumber getBaseRevision(VirtualFile file) {
-    final Change change = ChangeListManager.getInstance(myProject).getChange(file);
-    if (change != null && change.getBeforeRevision() != null && (! FileStatus.ADDED.equals(change.getFileStatus()))) {
-      return change.getBeforeRevision().getRevisionNumber();
-    }
     return null;
   }
 }

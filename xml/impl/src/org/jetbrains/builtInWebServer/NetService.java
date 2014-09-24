@@ -8,6 +8,8 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -119,7 +121,10 @@ public abstract class NetService implements Disposable {
   @Nullable
   protected abstract OSProcessHandler createProcessHandler(@NotNull Project project, int port) throws ExecutionException;
 
-  protected void connectToProcess(@NotNull AsyncResult<OSProcessHandler> asyncResult, int port, @NotNull OSProcessHandler processHandler, @NotNull Consumer<String> errorOutputConsumer) {
+  protected void connectToProcess(@NotNull AsyncResult<OSProcessHandler> asyncResult,
+                                  int port,
+                                  @NotNull OSProcessHandler processHandler,
+                                  @NotNull Consumer<String> errorOutputConsumer) {
     asyncResult.setDone(processHandler);
   }
 
@@ -138,6 +143,11 @@ public abstract class NetService implements Disposable {
 
   @NotNull
   protected abstract Icon getConsoleToolWindowIcon();
+
+  @NotNull
+  public ActionGroup getConsoleToolWindowActions() {
+    return new DefaultActionGroup();
+  }
 
   private final class MyProcessAdapter extends ProcessAdapter implements Consumer<String> {
     @Override
