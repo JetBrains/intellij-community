@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
@@ -105,14 +106,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myKeyField.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
-        myTemplate.setKey(myKeyField.getText().trim());
+        myTemplate.setKey(StringUtil.notNullize(myKeyField.getText()).trim());
         myNodeChanged.run();
       }
     });
     myDescription.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
-        myTemplate.setDescription(myDescription.getText().trim());
+        myTemplate.setDescription(StringUtil.notNullize(myDescription.getText()).trim());
         myNodeChanged.run();
       }
     });
@@ -421,7 +422,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
       public boolean accept(Object _node) {
         final CheckedTreeNode node = (CheckedTreeNode)_node;
         if (node.isChecked()) {
-          checkboxTree.expandPath(new TreePath(node.getPath()).getParentPath());
+          final TreeNode[] path = node.getPath();
+          if (path != null) {
+            checkboxTree.expandPath(new TreePath(path).getParentPath());
+          }
         }
         return true;
       }
