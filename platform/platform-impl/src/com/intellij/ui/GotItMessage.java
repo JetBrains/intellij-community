@@ -23,7 +23,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -34,8 +36,10 @@ import java.awt.event.MouseEvent;
 public class GotItMessage {
   @NotNull private final String myTitle;
   @NotNull private final String myMessage;
-  private Runnable myCallback;
+
   private Disposable myDisposable;
+  private Runnable myCallback;
+  private HyperlinkListener myHyperlinkListener = BrowserHyperlinkListener.INSTANCE;
   private boolean myShowCallout = true;
 
   private GotItMessage(@NotNull String title, @NotNull String message) {
@@ -55,8 +59,13 @@ public class GotItMessage {
     return this;
   }
 
-  public GotItMessage setCallback(Runnable callback) {
+  public GotItMessage setCallback(@Nullable Runnable callback) {
     myCallback = callback;
+    return this;
+  }
+
+  public GotItMessage setHyperlinkListener(@Nullable HyperlinkListener hyperlinkListener) {
+    myHyperlinkListener = hyperlinkListener;
     return this;
   }
 
@@ -68,7 +77,11 @@ public class GotItMessage {
   public void show(RelativePoint point, Balloon.Position position) {
     final GotItPanel panel = new GotItPanel();
     panel.myTitle.setText(myTitle);
+
     panel.myMessage.setText(myMessage);
+    if (myHyperlinkListener != null) {
+      panel.myMessage.addHyperlinkListener(myHyperlinkListener);
+    }
 
     panel.myButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 

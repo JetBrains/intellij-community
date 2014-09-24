@@ -16,15 +16,18 @@
 package org.jetbrains.java.decompiler;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -38,6 +41,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.ui.GotItMessage;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -49,6 +53,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -83,7 +88,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     myOptions.put(IFernflowerPreferences.INDENT_STRING, StringUtil.repeat(" ", options.INDENT_SIZE));
 
     Application app = ApplicationManager.getApplication();
-    myLegalNoticeAccepted = app.isUnitTestMode() || PropertiesComponent.getInstance().isTrueValue(LEGAL_NOTICE_KEY);
+    myLegalNoticeAccepted = app.isUnitTestMode() || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY);
     if (!myLegalNoticeAccepted) {
       MessageBusConnection connection = app.getMessageBus().connect(app);
       connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
@@ -110,6 +115,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
             Rectangle rect = component.getVisibleRect();
             String message = "<div align='left'>" + IdeaDecompilerBundle.message("legal.notice.text") + "</div>";
             GotItMessage.createMessage(IdeaDecompilerBundle.message("legal.notice.title"), message)
+              .setDisposable(editor)
               .setCallback(new Runnable() {
                 @Override
                 public void run() {
@@ -117,7 +123,19 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
                   myLegalNoticeAccepted = true;
                 }
               })
-              .setDisposable(editor)
+              .setHyperlinkListener(new HyperlinkAdapter() {
+                @Override
+                protected void hyperlinkActivated(HyperlinkEvent e) {
+                  final PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
+                  ShowSettingsUtil.getInstance().editConfigurable(editor.getComponent(), configurable, new Runnable() {
+                    @Override
+                    public void run() {
+                      IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId("org.jetbrains.java.decompiler"));
+                      if (plugin != null) configurable.select(plugin);
+                    }
+                  });
+                }
+              })
               .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
           }
         }
