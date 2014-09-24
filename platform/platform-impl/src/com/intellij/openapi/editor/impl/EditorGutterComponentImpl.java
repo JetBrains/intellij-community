@@ -210,6 +210,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         paintFoldingBackground(g, clip);
         paintFoldingLines((Graphics2D)g, clip);
         paintLineMarkers(g, clip, firstVisibleOffset, lastVisibleOffset);
+        paintEditorBackgrounds(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintLineNumbers(g, clip);
       }
@@ -221,6 +222,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     finally {
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
+    }
+  }
+
+  private void paintEditorBackgrounds(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+    IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true);
+    while (!state.atEnd()) {
+      g.setColor(state.getMergedAttributes().getBackgroundColor());
+      int startX = getWhitespaceSeparatorOffset() + 1;
+      int y = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(state.getStartOffset())).y;
+      g.fillRect(startX, y, clip.width - startX, myEditor.getLineHeight());
+      state.advance();
     }
   }
 
