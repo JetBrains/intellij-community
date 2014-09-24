@@ -94,6 +94,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     }
     else if (myEditorTabs.length == 1) {
       editorComponent = myEditorTabs[0].createComponent();
+      UIUtil.addInsets(editorComponent, new Insets(0, 5, 0, 0));
     }
     else {
       editorComponent = new JPanel();
