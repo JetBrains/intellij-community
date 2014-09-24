@@ -40,6 +40,7 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
     super.setUp();
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     oldSettings = settings.getState();
+    settings.loadState(new EditorSettingsExternalizable.OptionSet());
     settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
     settings.setVirtualSpace(false);
   }
