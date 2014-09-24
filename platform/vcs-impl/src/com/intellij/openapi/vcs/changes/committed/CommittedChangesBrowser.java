@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public class CommittedChangesBrowser extends JPanel {
 
     myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
     myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
-    myCommitMessageArea.addHyperlinkListener(new BrowserHyperlinkListener());
+    myCommitMessageArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     myCommitMessageArea.setPreferredSize(new Dimension(150, 100));
     myCommitMessageArea.setEditable(false);
 

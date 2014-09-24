@@ -367,7 +367,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myComments.setPreferredSize(new Dimension(150, 100));
     myComments.setEditable(false);
     myComments.setBackground(UIUtil.getComboBoxDisabledBackground());
-    myComments.addHyperlinkListener(new BrowserHyperlinkListener());
+    myComments.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
     myRevisionsOrder = new HashMap<VcsRevisionNumber, Integer>();
     refreshRevisionsOrder();
