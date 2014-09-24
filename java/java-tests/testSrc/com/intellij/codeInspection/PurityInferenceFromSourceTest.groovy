@@ -136,6 +136,20 @@ public Foo() {
 """
   }
 
+  public void "test calling constructor with side effects"() {
+    assertPure false, """
+    Object newExample() {
+        return new Example1();
+    }
+
+    private int created = 0;
+
+    Example1() {
+        created++;
+    }
+    """
+  }
+
   private void assertPure(boolean expected, String classBody) {
     def clazz = myFixture.addClass("final class Foo { $classBody }")
     assert expected == PurityInference.inferPurity(clazz.methods[0])
