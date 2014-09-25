@@ -18,13 +18,14 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 class TagBinding implements Binding {
@@ -57,6 +58,7 @@ class TagBinding implements Binding {
   }
 
   @Override
+  @Nullable
   public Object deserialize(Object o, @NotNull Object... nodes) {
     assert nodes.length > 0;
     Object[] children;
@@ -65,12 +67,11 @@ class TagBinding implements Binding {
     }
     else {
       String name = ((Element)nodes[0]).getName();
-      List<Object> childrenList = new ArrayList<Object>();
+      List<Content> childrenList = new SmartList<Content>();
       for (Object node : nodes) {
         assert ((Element)node).getName().equals(name);
-        ContainerUtil.addAll(childrenList, JDOMUtil.getContent((Element)node));
+        childrenList.addAll(((Element)node).getContent());
       }
-
       children = ArrayUtil.toObjectArray(childrenList);
     }
 
