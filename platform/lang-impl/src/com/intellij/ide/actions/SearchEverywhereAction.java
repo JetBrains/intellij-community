@@ -1589,15 +1589,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
 
     private synchronized void buildClasses(final String pattern) {
-      if (pattern.indexOf('.') != -1) {
-        //todo[kb] it's not a mistake. If we search for "*.png" or "index.xml" in SearchEverywhere
-        //todo[kb] we don't want to see Java classes started with Png or Xml. This approach should be reworked someday.
-        return;
-      }
-      check();
-
       final SearchResult classes = getClasses(pattern, showAll.get(), MAX_CLASSES, myClassChooseByName);
-
       check();
 
       if (classes.size() > 0) {
