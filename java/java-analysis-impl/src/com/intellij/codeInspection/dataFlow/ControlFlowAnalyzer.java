@@ -1471,7 +1471,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Nullable
   public static PsiAnnotation findContractAnnotation(PsiMethod method) {
-    return AnnotationUtil.findAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    return AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(ORG_JETBRAINS_ANNOTATIONS_CONTRACT));
   }
 
   public static boolean isPure(PsiMethod method) {
