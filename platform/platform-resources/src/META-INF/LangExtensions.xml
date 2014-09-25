@@ -71,9 +71,7 @@
                         serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
     <exportable serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"/>
 
-    <applicationService serviceInterface="com.intellij.codeEditor.printing.PrintSettings"
-                        serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
-    <exportable serviceInterface="com.intellij.codeEditor.printing.PrintSettings"/>
+    <applicationService serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
 
