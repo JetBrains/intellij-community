@@ -103,10 +103,13 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     for (int startPosition = 0; startPosition < visibleElements.size(); startPosition++) {
       GraphElement element = visibleElements.get(startPosition);
       if (element instanceof GraphNode) {
-        for (GraphEdge edge : myEdgesInRowGenerator.createDownEdges(((GraphNode)element).getNodeIndex())) {
-          Integer endPos = endPosition.fun(edge);
-          if (endPos != null)
-            result.add(new ShortEdge(edge, startPosition, endPos));
+        int nodeIndex = ((GraphNode)element).getNodeIndex();
+        for (GraphEdge edge : myLinearGraph.getAdjacentEdges(nodeIndex)) {
+          if (isEdgeToDown(edge, nodeIndex)) {
+            Integer endPos = endPosition.fun(edge);
+            if (endPos != null)
+              result.add(new ShortEdge(edge, startPosition, endPos));
+          }
         }
       }
 
@@ -175,11 +178,11 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
             case DOTTED_ARROW_DOWN:
             case NOT_LOAD_COMMIT:
               if (intEqual(edge.getUpNodeIndex(), visibleRowIndex - 1))
-                new SimpleRowElement(edge, SimplePrintElement.Type.DOWN_ARROW, position);
+                result.add(new SimpleRowElement(edge, SimplePrintElement.Type.DOWN_ARROW, position));
               break;
             case DOTTED_ARROW_UP:
               if (intEqual(edge.getDownNodeIndex(), visibleRowIndex + 1)) // todo case 0-row arrow
-                new SimpleRowElement(edge, SimplePrintElement.Type.UP_ARROW, position);
+                result.add(new SimpleRowElement(edge, SimplePrintElement.Type.UP_ARROW, position));
               break;
             default:
               // todo log some error (nothing here)
