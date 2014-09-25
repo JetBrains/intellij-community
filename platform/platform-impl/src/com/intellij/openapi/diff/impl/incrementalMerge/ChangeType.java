@@ -136,7 +136,7 @@ public class ChangeType {
         Graphics2D g2 = (Graphics2D)g;
         Color color = myDiffType.getPolygonColor(markup.getEditor());
         if (color != null) {
-          x2 = g.getClipBounds().width - x1;
+          x2 = g.getClipBounds().width;
           if (type.isApplied()) {
             UIUtil.drawBoldDottedLine(g2, x1, x2, y, null, color, false);
           }
