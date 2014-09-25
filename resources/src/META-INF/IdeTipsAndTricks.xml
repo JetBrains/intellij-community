@@ -153,6 +153,7 @@
     <tipAndTrick file="ChangeSorting.html" feature-id="editing.completion.changeSorting"/>
 
     <tipAndTrick file="PostfixCompletion.html" feature-id="editing.completion.postfix"/>
+    <tipAndTrick file="Scratch.html" feature-id="scratch"/>
     <tipAndTrick file="LiveTemplatesRestore.html"/>
     <tipAndTrick file="Multicursor.html"/>
     <tipAndTrick file="Multicursor1.html"/>
