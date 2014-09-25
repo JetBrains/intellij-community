@@ -299,7 +299,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public List<? extends SMTestProxy> getChildren() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    //ApplicationManager.getApplication().assertIsDispatchThread();
     return myChildren != null ? myChildren : Collections.<SMTestProxy>emptyList();
   }
 
