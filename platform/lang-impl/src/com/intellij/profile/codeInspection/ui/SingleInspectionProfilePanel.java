@@ -823,6 +823,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
             @Override
             protected void onScopeAdded() {
+              myTreeTable.updateUI();
               updateOptionsAndDescriptionPanel();
             }
 
