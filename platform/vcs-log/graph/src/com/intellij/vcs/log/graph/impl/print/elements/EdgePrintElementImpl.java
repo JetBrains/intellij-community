@@ -27,8 +27,11 @@ public class EdgePrintElementImpl extends AbstractPrintElement implements EdgePr
   public static EdgePrintElement.LineStyle convertToLineStyle(@NotNull GraphEdgeType edgeType) {
     switch (edgeType) {
       case USUAL:
+      case NOT_LOAD_COMMIT:
         return EdgePrintElement.LineStyle.SOLID;
       case DOTTED:
+      case DOTTED_ARROW_UP:
+      case DOTTED_ARROW_DOWN:
         return EdgePrintElement.LineStyle.DASHED;
       default:
         throw new IllegalStateException("Edge type not supported: " + edgeType);

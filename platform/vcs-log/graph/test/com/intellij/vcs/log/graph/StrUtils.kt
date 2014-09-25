@@ -20,6 +20,9 @@ import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.*
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.parser.CommitParser
+import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
+import com.intellij.vcs.log.graph.api.elements.GraphElement
+import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement
 
 fun LinearGraph.asString(): String {
   val s = StringBuilder()
@@ -39,3 +42,55 @@ fun GraphNode.asString(): String = "${getNodeIndex()}:${getNodeId()}_${toChar(ge
 fun Int?.asString() = if (this == null) "n" else toString()
 
 fun GraphEdge.asString(): String = "${getUpNodeIndex().asString()}:${getDownNodeIndex().asString()}:${getAdditionInfo().asString()}_${toChar(getType())}"
+
+fun GraphElement.asString(): String = when(this) {
+  is GraphNode -> asString()
+  is GraphEdge -> asString()
+  else -> throw IllegalArgumentException("Uncown type of PrintElement: $this")
+}
+
+fun PrintElementWithGraphElement.asString(): String {
+  val element = getGraphElement().asString()
+
+  val row = getRowIndex()
+  val color = getColorId()
+  val pos = getPositionInCurrentRow()
+  val sel = if (isSelected()) "Select" else "Unselect"
+  return when(this) {
+    is SimplePrintElement -> {
+      val t = getType()
+      "Simple:${t}|-$row:${pos}|-$color:${sel}($element)"
+    }
+    is EdgePrintElement -> {
+      val t = getType()
+      val ls = getLineStyle()
+      val posO = getPositionInOtherRow()
+      "Edge:$t:${ls}|-$row:$pos:${posO}|-$color:$sel($element)"
+    }
+
+    else -> {
+      throw IllegalStateException("Uncown type of PrintElement: $this")
+    }
+  }
+}
+
+fun PrintElementGenerator.asString(size: Int): String {
+  val s = StringBuilder()
+
+  for (row in 0..size - 1) {
+    if (row > 0)
+      s.append("\n")
+    val elements = getPrintElements(row).sortBy {
+      val pos = it.getPositionInCurrentRow()
+      if (it is SimplePrintElement) {
+        1024 * pos + it.getType().ordinal()
+      } else if (it is EdgePrintElement) {
+        1024 * pos + (it.getType().ordinal() + 1) * 64 + it.getPositionInOtherRow()
+      } else
+        0
+    }
+    elements.map { it.asString() }.joinTo(s, separator = "\n  ")
+  }
+
+  return s.toString()
+}
