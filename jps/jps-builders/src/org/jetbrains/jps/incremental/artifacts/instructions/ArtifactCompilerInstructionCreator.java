@@ -28,9 +28,13 @@ public interface ArtifactCompilerInstructionCreator {
 
   void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName);
 
+  void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName, @NotNull FileCopyingHandler copyingHandler);
+
   void addDirectoryCopyInstructions(@NotNull File directory);
 
   void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter);
+
+  void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter, @NotNull FileCopyingHandler copyingHandler);
 
   /**
    * Add instruction to extract directory from a jar file into the current place in the artifact layout.
@@ -54,4 +58,6 @@ public interface ArtifactCompilerInstructionCreator {
   ArtifactCompilerInstructionCreator archive(@NotNull String archiveFileName);
 
   ArtifactCompilerInstructionCreator subFolderByRelativePath(@NotNull String relativeDirectoryPath);
+
+  ArtifactInstructionsBuilder getInstructionsBuilder();
 }
