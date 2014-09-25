@@ -76,15 +76,11 @@ public class BekSorter {
 
       @Override
       public int getBekIndex(int usualIndex) {
-        if (usualIndex == LinearGraph.NOT_LOAD_COMMIT)
-          return LinearGraph.NOT_LOAD_COMMIT;
         return compressedReverseMap.get(usualIndex);
       }
 
       @Override
       public int getUsualIndex(int bekIndex) {
-        if (bekIndex == LinearGraph.NOT_LOAD_COMMIT)
-          return LinearGraph.NOT_LOAD_COMMIT;
         return compressedBekMap.get(bekIndex);
       }
     };

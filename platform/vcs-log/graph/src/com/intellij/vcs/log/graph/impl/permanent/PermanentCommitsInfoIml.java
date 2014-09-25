@@ -164,7 +164,7 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
   }
 
   @NotNull
-  public Set<Integer> convertToCommitIndexes(@NotNull Collection<CommitId> commitIds) {
+  public Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> commitIds) {
     Set<Integer> result = ContainerUtil.newHashSet();
     for (int i = 0; i < myCommitIdIndexes.size(); i++) {
       CommitId commitId = myCommitIdIndexes.get(i);

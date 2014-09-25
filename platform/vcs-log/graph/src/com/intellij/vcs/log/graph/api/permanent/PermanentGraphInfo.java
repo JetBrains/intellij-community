@@ -32,6 +32,7 @@ public interface PermanentGraphInfo<CommitId> {
   LinearGraph getPermanentLinearGraph();
   @NotNull
   GraphLayout getPermanentGraphLayout();
+  // by nodeId
   @NotNull
   Condition<Integer> getNotCollapsedNodes();
 

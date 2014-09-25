@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
+import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
+
 class BekBranchCreator {
   @NotNull
   private final LinearGraph myPermanentGraph;
@@ -69,11 +72,9 @@ class BekBranchCreator {
       @Override
       public int fun(int currentNode) {
         int currentLayout = myGraphLayout.getLayoutIndex(currentNode);
-        List<Integer> downNodes = myPermanentGraph.getDownNodes(currentNode);
+        List<Integer> downNodes = getDownNodes(myPermanentGraph, currentNode);
         for (int i = downNodes.size() - 1; i >= 0; i--) {
           int downNode = downNodes.get(i);
-          if (downNode == LinearGraph.NOT_LOAD_COMMIT)
-            continue;
 
           if (myDoneNodes.get(downNode)) {
             if (myGraphLayout.getLayoutIndex(downNode) < startLayout)
@@ -83,7 +84,7 @@ class BekBranchCreator {
 
             // almost ok node, except (may be) up nodes
             boolean hasUndoneUpNodes = false;
-            for (int upNode : myPermanentGraph.getUpNodes(downNode)) {
+            for (int upNode : getUpNodes(myPermanentGraph, downNode)) {
               if (!myDoneNodes.get(upNode) && myGraphLayout.getLayoutIndex(upNode) <= currentLayout) {
                 hasUndoneUpNodes = true;
                 break;

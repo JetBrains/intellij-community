@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
+
 class BekBranch {
 
   private static final int MAX_BLOCK_SIZE = 20;
@@ -62,7 +64,7 @@ class BekBranch {
         break;
 
       // upNode is mergeCommit
-      List<Integer> downNodes = myPermanentGraph.getDownNodes(upNode);
+      List<Integer> downNodes = getDownNodes(myPermanentGraph, upNode);
       if (downNodes.size() > 1 && downNodes.contains(downNode))
         continue;
 

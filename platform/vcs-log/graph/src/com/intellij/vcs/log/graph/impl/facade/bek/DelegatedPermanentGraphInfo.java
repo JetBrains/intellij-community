@@ -21,10 +21,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.RefactoringLinearGraph;
+import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -50,28 +53,36 @@ public class DelegatedPermanentGraphInfo<CommitId> implements PermanentGraphInfo
       @NotNull
       @Override
       public CommitId getCommitId(int nodeId) {
+        if (nodeId < 0)
+          return commitsInfo.getCommitId(nodeId);
         return commitsInfo.getCommitId(myBekIntMap.getUsualIndex(nodeId));
       }
 
       @Override
       public long getTimestamp(int nodeId) {
+        if (nodeId < 0)
+          return commitsInfo.getTimestamp(nodeId);
         return commitsInfo.getTimestamp(myBekIntMap.getUsualIndex(nodeId));
       }
 
       @Override
       public int getNodeId(@NotNull CommitId commitId) {
-        int usualIndex = commitsInfo.getNodeId(commitId);
-        return myBekIntMap.getBekIndex(usualIndex);
+        int nodeId = commitsInfo.getNodeId(commitId);
+        if (nodeId < 0)
+          return nodeId;
+        return myBekIntMap.getBekIndex(nodeId);
       }
 
       @NotNull
       @Override
-      public Set<Integer> convertToCommitIndexes(@NotNull Collection<CommitId> heads) {
-        Set<Integer> usualIndexes = commitsInfo.convertToCommitIndexes(heads);
-        return ContainerUtil.map2Set(usualIndexes, new Function<Integer, Integer>() {
+      public Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> heads) {
+        Set<Integer> nodeIds = commitsInfo.convertToNodeIds(heads);
+        return ContainerUtil.map2Set(nodeIds, new Function<Integer, Integer>() {
           @Override
-          public Integer fun(Integer integer) {
-            return myBekIntMap.getBekIndex(integer);
+          public Integer fun(Integer nodeId) {
+            if (nodeId < 0)
+              return nodeId;
+            return myBekIntMap.getBekIndex(nodeId);
           }
         });
       }
@@ -81,35 +92,68 @@ public class DelegatedPermanentGraphInfo<CommitId> implements PermanentGraphInfo
   @NotNull
   @Override
   public LinearGraph getPermanentLinearGraph() {
-    final LinearGraph linearGraph = myDelegateInfo.getPermanentLinearGraph();
-    return new RefactoringLinearGraph() {
-      @Override
-      public int nodesCount() {
-        return linearGraph.nodesCount();
-      }
+    return new DelegateLinearGraph(myDelegateInfo.getPermanentLinearGraph());
+  }
 
-      @NotNull
-      private List<Integer> convertToBekIndexes(@NotNull List<Integer> usualIndexes) {
-        return ContainerUtil.map(usualIndexes, new Function<Integer, Integer>() {
-          @Override
-          public Integer fun(Integer integer) {
-            return myBekIntMap.getBekIndex(integer);
-          }
-        });
-      }
+  private class DelegateLinearGraph implements LinearGraph {
+    @NotNull
+    private final LinearGraph myDelegateGraph;
 
-      @NotNull
-      @Override
-      public List<Integer> getUpNodes(int nodeIndex) {
-        return convertToBekIndexes(linearGraph.getUpNodes(myBekIntMap.getUsualIndex(nodeIndex)));
-      }
+    private DelegateLinearGraph(@NotNull LinearGraph delegateGraph) {
+      this.myDelegateGraph = delegateGraph;
+    }
 
-      @NotNull
-      @Override
-      public List<Integer> getDownNodes(int nodeIndex) {
-        return convertToBekIndexes(linearGraph.getDownNodes(myBekIntMap.getUsualIndex(nodeIndex)));
-      }
-    };
+    @Override
+    public int nodesCount() {
+      return myDelegateGraph.nodesCount();
+    }
+
+    @NotNull
+    @Override
+    public List<Integer> getUpNodes(int nodeIndex) {
+      return LinearGraphUtils.getUpNodes(this, nodeIndex);
+    }
+
+    @NotNull
+    @Override
+    public List<Integer> getDownNodes(int nodeIndex) {
+      return LinearGraphUtils.getDownNodes(this, nodeIndex);
+    }
+
+    @Nullable
+    private Integer convertToBek(@Nullable Integer usualIndex) {
+      if (usualIndex == null)
+        return null;
+      return myBekIntMap.getBekIndex(usualIndex);
+    }
+
+    @NotNull
+    @Override
+    public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
+      return ContainerUtil.map(myDelegateGraph.getAdjacentEdges(myBekIntMap.getUsualIndex(nodeIndex)), new Function<GraphEdge, GraphEdge>() {
+        @Override
+        public GraphEdge fun(GraphEdge edge) {
+          return new GraphEdge(convertToBek(edge.getUpNodeIndex()), convertToBek(edge.getDownNodeIndex()), edge.getAdditionInfo(), edge.getType());
+        }
+      });
+    }
+
+    @NotNull
+    @Override
+    public GraphNode getGraphNode(int nodeIndex) {
+      GraphNode delegateNode = myDelegateGraph.getGraphNode(myBekIntMap.getUsualIndex(nodeIndex));
+      return new GraphNode(delegateNode.getNodeId(), nodeIndex, delegateNode.getType());
+    }
+
+    @Nullable
+    @Override
+    public Integer getNodeIndexById(int nodeId) {
+      Integer usualIndex = myDelegateGraph.getNodeIndexById(nodeId);
+      if (usualIndex == null)
+        return null;
+
+      return myBekIntMap.getBekIndex(usualIndex);
+    }
   }
 
   @NotNull
@@ -136,8 +180,10 @@ public class DelegatedPermanentGraphInfo<CommitId> implements PermanentGraphInfo
     final Condition<Integer> notCollapsedNodes = myDelegateInfo.getNotCollapsedNodes();
     return new Condition<Integer>() {
       @Override
-      public boolean value(Integer bekIndex) {
-        return notCollapsedNodes.value(myBekIntMap.getUsualIndex(bekIndex));
+      public boolean value(Integer bekNodeId) {
+        if (bekNodeId < 0)
+          return notCollapsedNodes.value(bekNodeId);
+        return notCollapsedNodes.value(myBekIntMap.getUsualIndex(bekNodeId));
       }
     };
   }
