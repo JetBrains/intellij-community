@@ -21,6 +21,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -38,6 +39,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class ServiceManagerImpl implements BaseComponent {
+  private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
+
   private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.applicationService");
   private static final ExtensionPointName<ServiceDescriptor> PROJECT_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.projectService");
   private ExtensionPointName<ServiceDescriptor> myExtensionPointName;
@@ -103,10 +106,13 @@ public class ServiceManagerImpl implements BaseComponent {
         }
         catch (RuntimeException e) {
           // ignore ClassNotFoundException - invalid entry (GithubSslSupport, for example)
-          if (!(e.getCause() instanceof ClassNotFoundException)) {
+          if (e.getCause() instanceof ClassNotFoundException) {
+            LOG.warn(e);
+            continue;
+          }
+          else {
             throw e;
           }
-          continue;
         }
 
         if (!processor.process(aClass, adapter.myPluginDescriptor)) {
