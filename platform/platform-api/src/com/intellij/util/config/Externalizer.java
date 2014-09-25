@@ -29,11 +29,13 @@ import java.util.List;
 public interface Externalizer<T> {
   @NonNls String VALUE_ATTRIBUTE = "value";
   Externalizer<String> STRING = new BaseExternalizer<String>(){
+    @Override
     public String readValue(Element dataElement) {
       return dataElement.getAttributeValue(VALUE_ATTRIBUTE);
     }
   };
   Externalizer<Integer> INTEGER = new BaseExternalizer<Integer>() {
+    @Override
     public Integer readValue(Element dataElement) {
       try {
         return new Integer(dataElement.getAttributeValue(VALUE_ATTRIBUTE));
@@ -46,11 +48,13 @@ public interface Externalizer<T> {
 
   abstract class BaseExternalizer<T> implements Externalizer<T> {
 
+    @Override
     public void writeValue(Element dataElement, T value) {
       dataElement.setAttribute(VALUE_ATTRIBUTE, value.toString());
     }
   }
   Externalizer<Boolean> BOOLEAN = new BaseExternalizer<Boolean>() {
+    @Override
     public Boolean readValue(Element dataElement) {
       return Boolean.valueOf(dataElement.getAttributeValue(VALUE_ATTRIBUTE));
     }
@@ -67,12 +71,14 @@ public interface Externalizer<T> {
       myFactory = factory;
     }
 
+    @Override
     public T readValue(Element dataElement) throws InvalidDataException {
       T data = myFactory.create();
       data.readExternal(dataElement);
       return data;
     }
 
+    @Override
     public void writeValue(Element dataElement, T value) throws WriteExternalException {
       value.writeExternal(dataElement);
     }
@@ -87,6 +93,7 @@ public interface Externalizer<T> {
     @NonNls private static final String KEY_ATTR = "key";
     @NonNls private static final String VALUE_ATTR = "value";
 
+    @Override
     public Storage readValue(Element dataElement) throws InvalidDataException {
       Storage.MapStorage storage = new Storage.MapStorage();
       List<Element> children = dataElement.getChildren(ITEM_TAG);
@@ -97,6 +104,7 @@ public interface Externalizer<T> {
       return storage;
     }
 
+    @Override
     public void writeValue(Element dataElement, Storage storage) throws WriteExternalException {
       Iterator<String> keys = ((Storage.MapStorage)storage).getKeys();
       while (keys.hasNext()) {
