@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,5 +147,21 @@ public class HardcodedContracts {
       return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
     }
     return Collections.emptyList();
+  }
+
+  public static boolean isHardcodedPure(PsiMethod method) {
+    String qName = PsiUtil.getMemberQualifiedName(method);
+    if ("java.lang.System.exit".equals(qName)) {
+      return false;
+    }
+
+    if ("java.util.Objects.requireNonNull".equals(qName)) {
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 2 && parameters[1].getType().getCanonicalText().contains("Supplier")) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
