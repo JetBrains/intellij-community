@@ -40,8 +40,6 @@ public class MultiScopeSeverityIcon implements Icon {
 
   private final LinkedHashMap<String, HighlightDisplayLevel> myScopeToAverageSeverityMap;
 
-  private final String myDefaultScopeName;
-
   public MultiScopeSeverityIcon(final Map<String, HighlightSeverity> scopeToAverageSeverityMap,
                                 final String defaultScopeName,
                                 final InspectionProfileImpl inspectionProfile) {
@@ -61,16 +59,10 @@ public class MultiScopeSeverityIcon implements Icon {
       }
       myScopeToAverageSeverityMap.put(scopeName, level);
     }
-
-    myDefaultScopeName = defaultScopeName;
   }
 
   public LinkedHashMap<String, HighlightDisplayLevel> getScopeToAverageSeverityMap() {
     return myScopeToAverageSeverityMap;
-  }
-
-  public String getDefaultScopeName() {
-    return myDefaultScopeName;
   }
 
   @Override

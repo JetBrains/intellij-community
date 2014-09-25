@@ -95,7 +95,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
       public void valueChanged(final ListSelectionEvent e) {
         final int idx = getSelectionModel().getMinSelectionIndex();
         if (idx >= 0) {
-          final List<ScopeToolState> existedStates = ((MyTableModel)getModel()).getScopeToolState(idx);
+          final ExistedScopesStatesAndNonExistNames scopeToolState = ((MyTableModel)getModel()).getScopeToolState(idx);
+          final List<ScopeToolState> existedStates = scopeToolState.getExistedStates();
           if (existedStates.size() == 1) {
             tableSettings.onScopeChosen(existedStates.get(0));
           }
@@ -165,13 +166,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
   }
 
   @NotNull
-  public static HighlightSeverity getSeverity(final List<ScopeToolState> scopeToolStates, boolean onlyEnabled) {
+  public static HighlightSeverity getSeverity(final List<ScopeToolState> scopeToolStates) {
     HighlightSeverity previousValue = null;
-    onlyEnabled = onlyEnabled && scopeToolStates.size() != 1;
     for (final ScopeToolState scopeToolState : scopeToolStates) {
-      if (onlyEnabled && !scopeToolState.isEnabled()) {
-        continue;
-      }
       final HighlightSeverity currentValue = scopeToolState.getLevel().getSeverity();
       if (previousValue == null) {
         previousValue = currentValue;
@@ -209,7 +206,14 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     @Override
     public boolean isCellEditable(final int rowIndex, final int columnIndex) {
-      return columnIndex != SCOPE_NAME_COLUMN;
+      if (columnIndex == SCOPE_NAME_COLUMN) {
+        return false;
+      } else if (columnIndex == SCOPE_ENABLED_COLUMN) {
+        return true;
+      }
+      assert columnIndex == SEVERITY_COLUMN;
+      final ExistedScopesStatesAndNonExistNames scopeToolState = getScopeToolState(rowIndex);
+      return scopeToolState.getNonExistNames().isEmpty();
     }
 
     @Override
@@ -260,24 +264,27 @@ public class ScopesAndSeveritiesTable extends JBTable {
     }
 
     private NamedScope getScope(final int rowIndex) {
-      return getScopeToolState(rowIndex).get(0).getScope(myProject);
+      return getScopeToolState(rowIndex).getExistedStates().get(0).getScope(myProject);
     }
 
     private String getScopeName(final int rowIndex) {
-      return getScopeToolState(rowIndex).get(0).getScopeName();
+      return getScopeToolState(rowIndex).getExistedStates().get(0).getScopeName();
     }
 
     @NotNull
     private SeverityState getSeverityState(final int rowIndex) {
-      final List<ScopeToolState> existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
-      return new SeverityState(getSeverity(existedScopesStatesAndNonExistNames, true), true);
+      final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
+      if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
+        return new SeverityState(MIXED_FAKE_SEVERITY, false);
+      }
+      return new SeverityState(getSeverity(existedScopesStatesAndNonExistNames.getExistedStates()), true);
     }
 
     @Nullable
     private Boolean isEnabled(final int rowIndex) {
       Boolean previousValue = null;
-      final List<ScopeToolState> existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
-      for (final ScopeToolState scopeToolState : existedScopesStatesAndNonExistNames) {
+      final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
+      for (final ScopeToolState scopeToolState : existedScopesStatesAndNonExistNames.getExistedStates()) {
         final boolean currentValue = scopeToolState.isEnabled();
         if (previousValue == null) {
           previousValue = currentValue;
@@ -285,18 +292,24 @@ public class ScopesAndSeveritiesTable extends JBTable {
           return null;
         }
       }
+      if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty() && !Boolean.FALSE.equals(previousValue)) {
+        return null;
+      }
       return previousValue;
     }
 
-    private List<ScopeToolState> getScopeToolState(final int rowIndex) {
+    private ExistedScopesStatesAndNonExistNames getScopeToolState(final int rowIndex) {
+      final List<String> nonExistNames = new SmartList<String>();
       final List<ScopeToolState> existedStates = new SmartList<ScopeToolState>();
       for (final String keyName : myKeyNames) {
         final ScopeToolState scopeToolState = getScopeToolState(keyName, rowIndex);
         if (scopeToolState != null) {
           existedStates.add(scopeToolState);
+        } else {
+          nonExistNames.add(keyName);
         }
       }
-      return existedStates;
+      return new ExistedScopesStatesAndNonExistNames(existedStates, nonExistNames);
     }
 
     @Nullable
@@ -417,6 +430,25 @@ public class ScopesAndSeveritiesTable extends JBTable {
     @Override
     public boolean canExchangeRows(final int oldIndex, final int newIndex) {
       return false;
+    }
+  }
+
+  private static class ExistedScopesStatesAndNonExistNames {
+
+    private final List<ScopeToolState> myExistedStates;
+    private final List<String> myNonExistNames;
+
+    public ExistedScopesStatesAndNonExistNames(final List<ScopeToolState> existedStates, final List<String> nonExistNames) {
+      myExistedStates = existedStates;
+      myNonExistNames = nonExistNames;
+    }
+
+    public List<ScopeToolState> getExistedStates() {
+      return myExistedStates;
+    }
+
+    public List<String> getNonExistNames() {
+      return myNonExistNames;
     }
   }
 }

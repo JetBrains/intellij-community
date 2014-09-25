@@ -19,7 +19,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -37,9 +36,8 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
   private final static int SCOPE_COLUMN = 0;
   private final static int SEVERITY_COLUMN = 1;
 
-  public ScopesAndSeveritiesHintTable(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap,
-                                      final @NotNull String defaultScopeName) {
-    super(new MyModel(scopeToAverageSeverityMap, defaultScopeName));
+  public ScopesAndSeveritiesHintTable(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap) {
+    super(new MyModel(scopeToAverageSeverityMap));
 
     getColumnModel().getColumn(SCOPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
       @Override
@@ -92,14 +90,10 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
   private final static class MyModel extends AbstractTableModel {
 
     private final LinkedHashMap<String, HighlightDisplayLevel> myScopeToAverageSeverityMap;
-    @NotNull
-    private final String myDefaultScopeName;
     private final List<String> myScopes;
 
-    public MyModel(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap,
-                   final @NotNull String defaultScopeName) {
+    public MyModel(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap) {
       myScopeToAverageSeverityMap = scopeToAverageSeverityMap;
-      myDefaultScopeName = defaultScopeName;
       myScopes = new ArrayList<String>(myScopeToAverageSeverityMap.keySet());
     }
 
@@ -125,9 +119,7 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
     @Override
     public Object getValueAt(final int rowIndex, final int columnIndex) {
       switch (columnIndex) {
-        case SCOPE_COLUMN:
-          final String scopeName = myScopes.get(rowIndex);
-          return myDefaultScopeName.equals(scopeName) ? "Everywhere else" : scopeName;
+        case SCOPE_COLUMN: return rowIndex < getRowCount() - 1 ? myScopes.get(rowIndex) : "Everywhere else";
         case SEVERITY_COLUMN: return myScopeToAverageSeverityMap.get(myScopes.get(rowIndex));
         default: throw new IllegalArgumentException();
       }
