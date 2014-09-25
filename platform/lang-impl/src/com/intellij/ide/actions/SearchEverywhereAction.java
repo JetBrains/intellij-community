@@ -1361,7 +1361,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       finally {
         if (!isCanceled()) {
-          myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+            }
+          });
           updatePopup();
         }
         if (!myDone.isProcessed()) {
