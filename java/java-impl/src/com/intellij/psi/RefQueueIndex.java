@@ -102,7 +102,7 @@ public class RefQueueIndex extends FileBasedIndexExtension<Void,Void> {
     return new FileBasedIndex.InputFilter() {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
-        return !file.isDirectory();
+        return !file.isDirectory() && RefResolveServiceImpl.isSupportedFileType(file);
       }
     };
   }
