@@ -24,6 +24,7 @@ import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -64,18 +65,12 @@ class MapBinding implements Binding {
     myMapAnnotation = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), MapAnnotation.class);
   }
 
+  @Nullable
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
+  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
     Map map = (Map)o;
-
-    Element m;
-
-    if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
-      m = new Element(MAP);
-    }
-    else {
-      m = (Element)context;
-    }
+    Element m = myMapAnnotation == null || myMapAnnotation.surroundWithTag() ? new Element(MAP) : (Element)context;
+    assert m != null;
 
     final Set keySet = map.keySet();
     final Object[] keys = ArrayUtil.toObjectArray(keySet);
@@ -91,10 +86,8 @@ class MapBinding implements Binding {
       m.addContent(entry);
 
       Object kNode = myKeyBinding.serialize(k, entry, filter);
-
       if (kNode instanceof Text) {
-        Text text = (Text)kNode;
-        entry.setAttribute(getKeyAttributeName(), text.getText());
+        entry.setAttribute(getKeyAttributeName(), ((Text)kNode).getText());
       }
       else {
         if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
@@ -109,8 +102,7 @@ class MapBinding implements Binding {
 
       Object vNode = myValueBinding.serialize(v, entry, filter);
       if (vNode instanceof Text) {
-        Text text = (Text)vNode;
-        entry.setAttribute(getValueAttributeName(), text.getText());
+        entry.setAttribute(getValueAttributeName(), ((Text)vNode).getText());
       }
       else {
         if (myMapAnnotation != null && !myMapAnnotation.surroundValueWithTag()) {

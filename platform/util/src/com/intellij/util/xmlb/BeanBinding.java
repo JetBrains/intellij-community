@@ -75,8 +75,8 @@ class BeanBinding implements Binding {
 
   @Override
   @Nullable
-  public Object serialize(@NotNull Object o, Object context, SerializationFilter filter) {
-    return serializeInto(o, null, filter);
+  public Object serialize(@NotNull Object o, @Nullable Object context, SerializationFilter filter) {
+    return serializeInto(o, context == null ? new Element(myTagName) : null, filter);
   }
 
   @Nullable
@@ -287,28 +287,29 @@ class BeanBinding implements Binding {
     return binding;
   }
 
-  private static Binding _createBinding(final Accessor accessor) {
-    Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
-    Tag tag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Tag.class);
+  private static Binding _createBinding(@NotNull Accessor accessor) {
+    Binding binding = XmlSerializerImpl.getTypeBinding(accessor.getGenericType(), accessor);
+    if (binding instanceof JDOMElementBinding) {
+      return binding;
+    }
+
     Attribute attribute = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Attribute.class);
-    Text text = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Text.class);
-
-    final Binding binding = XmlSerializerImpl.getTypeBinding(accessor.getGenericType(), accessor);
-
-    if (binding instanceof JDOMElementBinding) return binding;
-
-    if (text != null) return new TextBinding(accessor);
-
     if (attribute != null) {
       return new AttributeBinding(accessor, attribute);
     }
 
-    if (tag != null) {
-      if (!tag.value().isEmpty()) return new TagBinding(accessor, tag);
+    Tag tag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Tag.class);
+    if (tag != null && !tag.value().isEmpty()) {
+      return new TagBinding(accessor, tag);
+    }
+
+    Text text = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Text.class);
+    if (text != null) {
+      return new TextBinding(accessor);
     }
 
     boolean surroundWithTag = true;
-
+    Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
     if (property != null) {
       surroundWithTag = property.surroundWithTag();
     }

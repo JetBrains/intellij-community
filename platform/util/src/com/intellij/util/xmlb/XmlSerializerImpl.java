@@ -42,12 +42,8 @@ class XmlSerializerImpl {
   @NotNull
   Element serialize(@NotNull Object object) throws XmlSerializationException {
     try {
-      Element serialized = (Element)getBinding(object.getClass()).serialize(object, null, filter);
-      if (serialized == null) {
-        // top level expects not null (null indicates error, empty element will be omitted)
-        return new Element("empty");
-      }
-      return serialized;
+      //noinspection ConstantConditions
+      return (Element)getBinding(object.getClass()).serialize(object, null, filter);
     }
     catch (XmlSerializationException e) {
       throw e;

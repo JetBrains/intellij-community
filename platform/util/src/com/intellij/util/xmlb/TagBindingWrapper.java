@@ -21,6 +21,7 @@ import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 //todo: merge with option tag binding
 class TagBindingWrapper implements Binding {
@@ -36,20 +37,22 @@ class TagBindingWrapper implements Binding {
     myAttributeName = attributeName;
   }
 
+  @Nullable
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
+  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
     Element e = new Element(myTagName);
-    Object n = binding.serialize(o, e, filter);
+    Content n = (Content)binding.serialize(o, e, filter);
+    if (n == null) {
+      return null;
+    }
 
-    final String value = ((Content)n).getValue();
-
+    String value = n.getValue();
     if (!myAttributeName.isEmpty()) {
       e.setAttribute(myAttributeName, value);
     }
     else {
       e.addContent(new Text(value));
     }
-
     return e;
   }
 

@@ -17,6 +17,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jdom.Content;
@@ -103,17 +104,22 @@ abstract class AbstractCollectionBinding implements Binding {
   }
 
   abstract Object processResult(Collection result, Object target);
-  abstract Iterable getIterable(Object o);
 
+  @NotNull
+  abstract Collection<Object> getIterable(@NotNull Object o);
+
+  @Nullable
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
-    Iterable iterable = getIterable(o);
-    if (iterable == null) return context;
+  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
+    Collection<Object> collection = o == null ? null : getIterable(o);
+    if (ContainerUtil.isEmpty(collection)) {
+      return null;
+    }
 
     final String tagName = getTagName(o);
     if (tagName != null) {
       Element result = new Element(tagName);
-      for (Object e : iterable) {
+      for (Object e : collection) {
         if (e == null) {
           throw new XmlSerializationException("Collection " + myAccessor + " contains 'null' object");
         }
@@ -122,12 +128,11 @@ abstract class AbstractCollectionBinding implements Binding {
           result.addContent(child);
         }
       }
-
       return result;
     }
     else {
-      List<Object> result = new ArrayList<Object>();
-      for (Object e : iterable) {
+      List<Object> result = new SmartList<Object>();
+      for (Object e : collection) {
         ContainerUtil.addIfNotNull(result, getElementBinding(e.getClass()).serialize(e, result, filter));
       }
       return result;
@@ -196,8 +201,7 @@ abstract class AbstractCollectionBinding implements Binding {
 
   @Nullable
   private String getTagName(final Object target) {
-    if (myAnnotation == null || myAnnotation.surroundWithTag()) return getCollectionTagName(target);
-    return null;
+    return myAnnotation == null || myAnnotation.surroundWithTag() ? getCollectionTagName(target) : null;
   }
 
   protected String getCollectionTagName(final Object target) {
