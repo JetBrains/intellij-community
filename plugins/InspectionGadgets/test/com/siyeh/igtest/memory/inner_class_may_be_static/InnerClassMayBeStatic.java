@@ -138,3 +138,19 @@ class Complex {
     }
   }
 }
+class Test1<T> {
+  class Inner {
+    private final T test;
+    public Inner(T test) {
+      this.test = test;
+    }
+  }
+}
+class Test2 {
+  class <warning descr="Inner class 'Inner' may be 'static'">Inner</warning><T> {
+    private final T test;
+    public Inner(T test) {
+      this.test = test;
+    }
+  }
+}
