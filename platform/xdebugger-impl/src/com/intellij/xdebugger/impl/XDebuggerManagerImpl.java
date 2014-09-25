@@ -34,7 +34,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -95,11 +95,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
         updateExecutionPoint(file);
       }
-
-      private void updateExecutionPoint(@NotNull VirtualFile file) {
-        if (file.equals(myExecutionPointHighlighter.getCurrentFile())) {
-          myExecutionPointHighlighter.update();
-        }
+    });
+    messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        updateExecutionPoint(file);
       }
     });
     myBreakpointManager.addBreakpointListener(new XBreakpointAdapter<XBreakpoint<?>>() {
@@ -137,6 +137,12 @@ public class XDebuggerManagerImpl extends XDebuggerManager
         }
       }
     });
+  }
+
+  private void updateExecutionPoint(@NotNull VirtualFile file) {
+    if (file.equals(myExecutionPointHighlighter.getCurrentFile())) {
+      myExecutionPointHighlighter.update();
+    }
   }
 
   @Override

@@ -85,7 +85,7 @@ public class ExecutionPointHighlighter {
         myGutterIconRenderer = gutterIconRenderer;
         myUseSelection = useSelection;
 
-        doShow();
+        doShow(true);
       }
     });
   }
@@ -128,7 +128,7 @@ public class ExecutionPointHighlighter {
         @Override
         public void run() {
           if (updateRequested.compareAndSet(true, false)) {
-            doShow();
+            doShow(false);
           }
         }
       }, myProject.getDisposed());
@@ -146,13 +146,18 @@ public class ExecutionPointHighlighter {
     });
   }
 
-  private void doShow() {
+  private void doShow(boolean navigate) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     removeHighlighter();
 
-    myEditor = myOpenFileDescriptor == null ? null : XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
+
+    OpenFileDescriptor fileDescriptor = myOpenFileDescriptor;
+    if (!navigate && myOpenFileDescriptor != null) {
+      fileDescriptor = new OpenFileDescriptor(myProject, myOpenFileDescriptor.getFile());
+    }
+    myEditor = fileDescriptor == null ? null : XDebuggerUtilImpl.createEditor(fileDescriptor);
     if (myEditor != null) {
       addHighlighter();
     }
