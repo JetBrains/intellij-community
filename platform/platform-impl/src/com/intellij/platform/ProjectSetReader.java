@@ -18,6 +18,7 @@ package com.intellij.platform;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.intellij.projectImport.ProjectSetProcessor;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,8 @@ public class ProjectSetReader {
       JsonObject object = entry.getValue().getAsJsonObject();
       for (Map.Entry<String, JsonElement> elementEntry : object.entrySet()) {
         Object o = processor.interactWithUser();
-        processor.processEntry(elementEntry.getKey(), elementEntry.getValue().getAsString(), o);
+        JsonElement value = elementEntry.getValue();
+        processor.processEntry(elementEntry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString(), o);
       }
     }
   }

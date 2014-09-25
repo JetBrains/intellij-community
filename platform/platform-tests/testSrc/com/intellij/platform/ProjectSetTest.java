@@ -63,6 +63,8 @@ public class ProjectSetTest extends LightPlatformTestCase {
 
     @Language("JSON") String descriptor = FileUtil.loadFile(new File(getTestDataPath() + "descriptor.json"));
     reader.readDescriptor(descriptor);
-    assertEquals(1, entries.size());
+    assertEquals(2, entries.size());
+    assertEquals("git://foo.bar", entries.get(0));
+    assertEquals("{\"foo\":\"bar\"}", entries.get(1));
   }
 }

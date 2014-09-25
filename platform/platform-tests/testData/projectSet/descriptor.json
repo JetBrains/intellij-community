@@ -1,5 +1,8 @@
 {
   "test": {
-    "url": "git://foo.bar"
+    "url": "git://foo.bar",
+    "element": {
+      "foo": "bar"
+    }
   }
 }
