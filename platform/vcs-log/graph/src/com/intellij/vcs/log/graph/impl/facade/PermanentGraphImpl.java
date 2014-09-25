@@ -23,13 +23,19 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.impl.facade.bek.*;
+import com.intellij.vcs.log.graph.impl.facade.bek.BekChecker;
+import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
+import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
+import com.intellij.vcs.log.graph.impl.facade.bek.DelegatedPermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.permanent.*;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
 
@@ -75,7 +81,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull
   private final Set<CommitId> myBranchesCommitId;
   @NotNull
-  private final Set<Integer> myBranchNodeIndexes;
+  private final Set<Integer> myBranchNodeIds;
   @NotNull
   private final ContainingBranchesGetter myBranchesGetter;
   @NotNull
@@ -91,8 +97,8 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     myPermanentLinearGraph = permanentLinearGraph;
     myGraphColorManager = graphColorManager;
     myBranchesCommitId = branchesCommitId;
-    myBranchNodeIndexes = permanentCommitsInfo.convertToCommitIndexes(branchesCommitId);
-    myBranchesGetter = new ContainingBranchesGetter(permanentLinearGraph, myBranchNodeIndexes);
+    myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
+    myBranchesGetter = new ContainingBranchesGetter(permanentLinearGraph, myBranchNodeIds);
     myBekGraphInfo = createBekSort();
   }
 
@@ -183,8 +189,8 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
-  public Set<Integer> getBranchNodeIndexes() {
-    return myBranchNodeIndexes;
+  public Set<Integer> getBranchNodeIds() {
+    return myBranchNodeIds;
   }
 
   @NotNull
@@ -192,7 +198,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     return new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
-        return myBranchNodeIndexes.contains(integer);
+        return myBranchNodeIds.contains(integer);
       }
     };
   }
