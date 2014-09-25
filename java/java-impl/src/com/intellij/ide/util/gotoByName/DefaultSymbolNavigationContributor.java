@@ -170,11 +170,6 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     }
   }
 
-  private boolean qualifiedNameMatches(PsiMember member, FindSymbolParameters parameters) {
-    if (!parameters.getCompletePattern().contains(".")) return true;
-    return false;
-  }
-
   private static class MyComparator implements Comparator<PsiModifierListOwner>{
     public static final MyComparator INSTANCE = new MyComparator();
 
