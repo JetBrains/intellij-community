@@ -607,14 +607,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     assert project != null;
     myRenderer.myProject = project;
-    myCurrentWorker.doWhenProcessed(new Runnable() {
+    final Runnable run = new Runnable() {
       @Override
       public void run() {
         myCalcThread = new CalcThread(project, pattern, false);
         myPopupActualWidth = 0;
         myCurrentWorker = myCalcThread.start();
       }
-    });
+    };
+    if (myCurrentWorker.isDone()) {
+      myCurrentWorker.doWhenDone(run);
+    } else {
+      myCurrentWorker.doWhenRejected(run);
+    }
   }
 
   @Override
