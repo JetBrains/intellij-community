@@ -98,24 +98,25 @@ public class ServiceManagerImpl implements BaseComponent {
     for (Object o : adapters) {
       if (o instanceof MyComponentAdapter) {
         MyComponentAdapter adapter = (MyComponentAdapter)o;
-        ComponentAdapter delegate = adapter.myDelegate;
+        PluginDescriptor pluginDescriptor = adapter.myPluginDescriptor;
         Class aClass;
         try {
-          // we cannot use getDelegate - not all components are instantiable (JobSchedulerImpl, for example, causes such error)
-          aClass = delegate == null ? adapter.loadClass(adapter.myDescriptor.getImplementation()) : delegate.getComponentImplementation();
-        }
-        catch (RuntimeException e) {
-          // ignore ClassNotFoundException - invalid entry (GithubSslSupport, for example)
-          if (e.getCause() instanceof ClassNotFoundException) {
-            LOG.warn(e);
-            continue;
+          ComponentAdapter delegate = adapter.myDelegate;
+          // avoid delegation creation & class initialization
+          if (delegate == null) {
+            ClassLoader classLoader = pluginDescriptor == null ? ServiceManagerImpl.class.getClassLoader() : pluginDescriptor.getPluginClassLoader();
+            aClass = Class.forName(adapter.myDescriptor.getImplementation(), false, classLoader);
           }
           else {
-            throw e;
+            aClass = delegate.getComponentImplementation();
           }
         }
+        catch (Throwable e) {
+          LOG.error(e);
+          continue;
+        }
 
-        if (!processor.process(aClass, adapter.myPluginDescriptor)) {
+        if (!processor.process(aClass, pluginDescriptor)) {
           break;
         }
       }
