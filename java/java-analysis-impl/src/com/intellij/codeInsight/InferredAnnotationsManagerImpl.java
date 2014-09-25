@@ -88,6 +88,10 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation getInferredContractAnnotation(PsiMethod method) {
+    if (method.getModifierList().findAnnotation(ORG_JETBRAINS_ANNOTATIONS_CONTRACT) != null) {
+      return null;
+    }
+
     return createContractAnnotation(ContractInference.inferContracts(method), PurityInference.inferPurity(method));
   }
 
