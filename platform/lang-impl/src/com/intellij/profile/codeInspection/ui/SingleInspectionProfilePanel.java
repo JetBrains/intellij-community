@@ -375,6 +375,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       @Override
       public void actionPerformed(AnActionEvent e) {
         mySelectedProfile.resetToEmpty(e.getProject());
+        initToolStates();
         postProcessModification();
       }
     });
@@ -387,6 +388,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       @Override
       protected void postProcessModification() {
+        initToolStates();
         SingleInspectionProfilePanel.this.postProcessModification();
       }
     });
