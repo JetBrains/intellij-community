@@ -44,10 +44,10 @@ public class FoldingUtil {
 
   @Nullable
   public static FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line){
-    FoldRegion result = null;
     if (line < 0 || line >= editor.getDocument().getLineCount()) {
-      return result;
+      return null;
     }
+    FoldRegion result = null;
     FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : regions) {
       if (!region.isValid()) {
@@ -85,7 +85,6 @@ public class FoldingUtil {
    */
   public static Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
     final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-    Arrays.sort(allRegions, RangeMarker.BY_START_OFFSET); // It's already sorted in this way in current implementation, but we don't want to depend on that here
     return new Iterator<FoldRegion>() {
       private int sectionStart;
       private int current;
