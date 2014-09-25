@@ -86,11 +86,17 @@ public class ImportUtils {
       return true;
     }
     final PsiField field = containingClass.findFieldByName(memberName, true);
-    if (field != null) {
+    if (field != null && PsiUtil.isAccessible(field, context, null)) {
       return false;
     }
     final PsiMethod[] methods = containingClass.findMethodsByName(memberName, true);
-    if (methods.length > 0) {
+    for (PsiMethod method : methods) {
+      if (PsiUtil.isAccessible(method, context, null)) {
+        return false;
+      }
+    }
+    final PsiClass innerClass = containingClass.findInnerClassByName(memberName, true);
+    if (innerClass != null && PsiUtil.isAccessible(innerClass, context, null)) {
       return false;
     }
     return !hasOnDemandImportStaticConflict(fqName, memberName, context, true) &&
