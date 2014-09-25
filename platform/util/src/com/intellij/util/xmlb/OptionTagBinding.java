@@ -55,24 +55,31 @@ class OptionTagBinding extends BasePrimitiveBinding {
   }
 
   @Override
+  @Nullable
   public Object serialize(Object o, Object context, SerializationFilter filter) {
-    Element targetElement = new Element(myTagName);
     Object value = myAccessor.read(o);
-
-    if (!StringUtil.isEmpty(myNameAttribute)) {
-      targetElement.setAttribute(myNameAttribute, myName);
-    }
-
     if (value == null) {
-      return targetElement;
+      return null;
     }
 
+    Element targetElement = new Element(myTagName);
     if (myConverter != null) {
+      if (!StringUtil.isEmpty(myNameAttribute)) {
+        targetElement.setAttribute(myNameAttribute, myName);
+      }
       targetElement.setAttribute(myValueAttribute, myConverter.toString(value));
     }
     else {
       assert myBinding != null;
       Object node = myBinding.serialize(value, targetElement, filter);
+      if (node == null) {
+        return null;
+      }
+
+      if (!StringUtil.isEmpty(myNameAttribute)) {
+        targetElement.setAttribute(myNameAttribute, myName);
+      }
+
       if (node instanceof Text) {
         Text text = (Text)node;
         targetElement.setAttribute(myValueAttribute, text.getText());

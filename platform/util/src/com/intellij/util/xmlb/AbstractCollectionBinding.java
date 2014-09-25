@@ -17,6 +17,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -116,8 +117,10 @@ abstract class AbstractCollectionBinding implements Binding {
         if (e == null) {
           throw new XmlSerializationException("Collection " + myAccessor + " contains 'null' object");
         }
-        final Binding binding = getElementBinding(e.getClass());
-        result.addContent((Content)binding.serialize(e, result, filter));
+        Content child = (Content)getElementBinding(e.getClass()).serialize(e, result, filter);
+        if (child != null) {
+          result.addContent(child);
+        }
       }
 
       return result;
@@ -125,10 +128,8 @@ abstract class AbstractCollectionBinding implements Binding {
     else {
       List<Object> result = new ArrayList<Object>();
       for (Object e : iterable) {
-        final Binding binding = getElementBinding(e.getClass());
-        result.add(binding.serialize(e, result, filter));
+        ContainerUtil.addIfNotNull(result, getElementBinding(e.getClass()).serialize(e, result, filter));
       }
-
       return result;
     }
   }

@@ -43,12 +43,13 @@ class TagBinding implements Binding {
   @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     Object value = accessor.read(o);
-    if (value == null) return context;
+    if (value == null) {
+      return null;
+    }
 
     Element v = new Element(myTagName);
-
     Object node = binding.serialize(value, v, filter);
-    if (node != v) {
+    if (node != null && node != v) {
       JDOMUtil.addContent(v, node);
     }
 
