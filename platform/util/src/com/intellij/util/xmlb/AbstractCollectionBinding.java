@@ -112,12 +112,13 @@ abstract class AbstractCollectionBinding implements Binding {
   @Override
   public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
     Collection<Object> collection = o == null ? null : getIterable(o);
-    if (ContainerUtil.isEmpty(collection)) {
-      return null;
-    }
 
     final String tagName = getTagName(o);
     if (tagName != null) {
+      if (ContainerUtil.isEmpty(collection)) {
+        return context == null ? new Element(tagName) : null;
+      }
+
       Element result = new Element(tagName);
       for (Object e : collection) {
         if (e == null) {
@@ -132,6 +133,10 @@ abstract class AbstractCollectionBinding implements Binding {
     }
     else {
       List<Object> result = new SmartList<Object>();
+      if (ContainerUtil.isEmpty(collection)) {
+        return result;
+      }
+
       for (Object e : collection) {
         ContainerUtil.addIfNotNull(result, getElementBinding(e.getClass()).serialize(e, result, filter));
       }

@@ -41,18 +41,19 @@ class TagBinding extends BasePrimitiveBinding {
   @Override
   public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
     Object value = myAccessor.read(o);
-    if (value == null) {
-      return null;
-    }
-
     Element v = new Element(myName);
-    assert myBinding != null;
-    Object node = myBinding.serialize(value, v, filter);
-    if (node == null || node == v) {
+    if (value == null) {
       return v;
     }
 
-    JDOMUtil.addContent(v, node);
+    assert myBinding != null;
+    Object node = myBinding.serialize(value, v, filter);
+    if (node != v) {
+      if (node == null) {
+        return context == null ? v : null;
+      }
+      JDOMUtil.addContent(v, node);
+    }
     return v;
   }
 

@@ -75,7 +75,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
       assert myBinding != null;
       Object node = myBinding.serialize(value, targetElement, filter);
       if (node == null) {
-        return null;
+        return context == null ? targetElement : null;
       }
 
       if (node instanceof Text) {
