@@ -270,7 +270,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
       RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
       myValue = panel;
-      return panel.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, true);
+      return panel.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row, true);
     }
 
     @Override

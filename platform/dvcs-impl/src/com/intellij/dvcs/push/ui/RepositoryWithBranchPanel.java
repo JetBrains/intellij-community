@@ -31,13 +31,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePanel implements TreeCellRenderer {
+public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePanel {
 
   private final JBCheckBox myRepositoryCheckbox;
   private final PushTargetPanel<T> myDestPushTargetPanelComponent;
@@ -112,14 +111,14 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     return myArrowLabel.getText();
   }
 
-  @Override
-  public Component getTreeCellRendererComponent(JTree tree,
-                                                Object value,
-                                                boolean selected,
-                                                boolean expanded,
-                                                boolean leaf,
-                                                int row,
-                                                boolean hasFocus) {
+  @NotNull
+  public Component getTreeCellEditorComponent(JTree tree,
+                                              Object value,
+                                              boolean selected,
+                                              boolean expanded,
+                                              boolean leaf,
+                                              int row,
+                                              boolean hasFocus) {
     Rectangle bounds = tree.getPathBounds(tree.getPathForRow(row));
     invalidate();
     if (!(value instanceof SingleRepositoryNode)) {
