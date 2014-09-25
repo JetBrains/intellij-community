@@ -22,9 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.TransferToPooledThreadQueue;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -958,7 +956,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     for (FileType type : fileTypes) {
       writeExtensionsMap(map, type, true);
     }
-    JDOMExternalizer.write(parentNode, "fileTypeChangedCounter", fileTypeChangedCount.get());
+
+    int value = fileTypeChangedCount.get();
+    if (value != 0) {
+      JDOMExternalizer.write(parentNode, "fileTypeChangedCounter", value);
+    }
   }
 
   private void writeExtensionsMap(final Element map, final FileType type, boolean specifyTypeName) {
