@@ -356,11 +356,14 @@ public class ReflectionUtil {
     }
     catch (NoSuchFieldException e) {
       LOG.debug(e);
+      // this 'return' was moved into 'catch' block because otherwise reference to common super-class of these exceptions (ReflectiveOperationException)
+      // which doesn't exist in JDK 1.6 will be added to class-file during instrumentation
+      return false;
     }
     catch (IllegalAccessException e) {
       LOG.debug(e);
+      return false;
     }
-    return false;
   }
 
   public static Type resolveVariableInHierarchy(@NotNull TypeVariable variable, @NotNull Class aClass) {
