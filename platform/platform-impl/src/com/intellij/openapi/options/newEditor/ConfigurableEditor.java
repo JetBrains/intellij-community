@@ -289,9 +289,6 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         scroll.getVerticalScrollBar().setUnitIncrement(10);
         content = scroll;
       }
-      else {
-        content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // TODO: allow to remove border
-      }
     }
     else {
       content = new JPanel(new BorderLayout());
