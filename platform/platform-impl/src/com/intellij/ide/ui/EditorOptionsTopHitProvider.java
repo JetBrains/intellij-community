@@ -57,7 +57,8 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     editorTabs("Tabs: Show directory in editor tabs for non-unique filenames", "SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES"),
     editorTabs("Tabs: " + messageApp("checkbox.editor.tabs.show.close.button"), "SHOW_CLOSE_BUTTON"),
     editorTabs("Tabs: " + messageApp("checkbox.mark.modified.tabs.with.asterisk"), "MARK_MODIFIED_TABS_WITH_ASTERISK"),
-    editorTabs("Tabs: " + messageApp("checkbox.show.tabs.tooltips"), "SHOW_TABS_TOOLTIPS")));
+    editorTabs("Tabs: " + messageApp("checkbox.show.tabs.tooltips"), "SHOW_TABS_TOOLTIPS"),
+    editorTabs("Tabs: " + messageApp("radio.close.non.modified.files.first"), "CLOSE_NON_MODIFIED_FILES_FIRST")));
 
   @NotNull
   @Override
