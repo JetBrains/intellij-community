@@ -157,7 +157,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
       "    public void foo(boolean a, int x, int y, int z) {\n" +
       "        do {\n" +
       "            if (x > 0) {\n" +
-      "            <caret>\n" +
+      "                <caret>\n" +
       "            }\n" +
       "        }\n" +
       "        while (y > 0);\n" +

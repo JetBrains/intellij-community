@@ -3149,7 +3149,7 @@ public void testSCR260() throws Exception {
       "        do {\n" +
       "            \n" +
       "            if (x > 0) {\n" +
-      "            \n" +
+      "                \n" +
       "            } else if (x < 0) {\n" +
       "                \n" +
       "                int r;\n" +

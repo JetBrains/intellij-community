@@ -326,6 +326,10 @@ class InitialInfoBuilder {
       myCurrentWhiteSpace.setKeepFirstColumn(myCurrentSpaceProperty.shouldKeepFirstColumn());
     }
 
+    if (info.isEndOfCodeBlock()) {
+      myCurrentWhiteSpace.setBeforeCodeBlockEnd(true);
+    }
+
     info.setSpaceProperty(myCurrentSpaceProperty);
     myCurrentWhiteSpace = new WhiteSpace(textRange.getEndOffset(), false);
     if (myReadOnlyMode) myCurrentWhiteSpace.setReadOnly(true);

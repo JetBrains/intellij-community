@@ -28,6 +28,7 @@ public class IndentInfo {
 
   /** @see WhiteSpace#setForceSkipTabulationsUsage(boolean)  */
   private final boolean   myForceSkipTabulationsUsage;
+  private boolean myIndentEmptyLines; // Additional indent on empty lines (before the end of code block)
 
   public IndentInfo(final int lineFeeds, final int indentSpaces, final int spaces) {
     this(lineFeeds, indentSpaces, spaces, false);
@@ -57,7 +58,8 @@ public class IndentInfo {
     StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < myLineFeeds; i ++) {
       if (options.KEEP_INDENTS_ON_EMPTY_LINES && i > 0) {
-        generateLineWhitespace(buffer, options, myIndentSpaces, 0, true);
+        int spaces = myIndentEmptyLines ? myIndentSpaces + options.INDENT_SIZE : myIndentSpaces;
+        generateLineWhitespace(buffer, options, spaces, 0, true);
       }
       buffer.append('\n');
     }
@@ -102,5 +104,10 @@ public class IndentInfo {
         StringUtil.repeatSymbol(buffer, ' ', spaces);
       }
     }
+  }
+
+  public IndentInfo setIndentEmptyLines(boolean indentEmptyLines) {
+    myIndentEmptyLines = indentEmptyLines;
+    return this;
   }
 }
