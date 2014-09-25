@@ -519,17 +519,4 @@ class FindInProjectTask {
     });
   }
 
-  private void addFilesUnderDirectory(@NotNull PsiDirectory directory, @NotNull ContentIterator iterator) {
-    for (PsiElement child : directory.getChildren()) {
-      if (child instanceof PsiFile) {
-        VirtualFile virtualFile = ((PsiFile)child).getVirtualFile();
-        if (virtualFile != null) {
-          iterator.processFile(virtualFile);
-        }
-      }
-      else if (myFindModel.isWithSubdirectories() && child instanceof PsiDirectory) {
-        addFilesUnderDirectory((PsiDirectory)child, iterator);
-      }
-    }
-  }
 }
