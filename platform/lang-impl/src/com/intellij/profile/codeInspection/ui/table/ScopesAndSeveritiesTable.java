@@ -366,6 +366,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
           return;
         }
         if ((Boolean)value) {
+          for (final String keyName : myKeyNames) {
+            myInspectionProfile.enableTool(keyName, myProject);
+          }
           if (rowIndex == lastRowIndex()) {
             myInspectionProfile.enableToolsByDefault(myKeyNames, myProject);
           }
