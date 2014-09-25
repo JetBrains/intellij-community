@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -277,22 +276,6 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   public static boolean isSymLink(@NotNull final PsiFileSystemItem element) {
     final VirtualFile virtualFile = element.getVirtualFile();
     return virtualFile != null && virtualFile.is(VFileProperty.SYMLINK);
-  }
-
-  /**
-   * Get PSI file from virtual file
-   * @param virtualFile virtual file
-   * @param project project where conversion takes place
-   * @return psi file or null if failed to load
-   */
-  @Nullable
-  public static PsiFile asPsiFile(@NotNull final VirtualFile virtualFile,
-                                      @NotNull final Project project) {
-    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    if (document == null) {
-      return null;
-    }
-    return PsiDocumentManager.getInstance(project).getPsiFile(document);
   }
 
   @Nullable
