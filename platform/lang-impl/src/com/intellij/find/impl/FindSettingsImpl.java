@@ -113,7 +113,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
   @Tag("recentFileMasks")
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag = "i", elementValueAttribute = "v")
+  @AbstractCollection(surroundWithTag = false, elementTag = "mask", elementValueAttribute = "")
   public List<String> recentFileMasks = new ArrayList<String>();
 
   @Override
@@ -434,17 +434,17 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
     @Tag("findStrings")
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false, elementTag = "i", elementValueAttribute = "v")
+    @AbstractCollection(surroundWithTag = false, elementTag = "find", elementValueAttribute = "")
     public List<String> findStrings = new ArrayList<String>();
 
     @Tag("replaceStrings")
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false, elementTag = "i", elementValueAttribute = "v")
+    @AbstractCollection(surroundWithTag = false, elementTag = "replace", elementValueAttribute = "")
     public List<String> replaceStrings = new ArrayList<String>();
 
     @Tag("dirStrings")
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false, elementTag = "i", elementValueAttribute = "v")
+    @AbstractCollection(surroundWithTag = false, elementTag = "dir", elementValueAttribute = "")
     public List<String> dirStrings = new ArrayList<String>();
 
     @Override
