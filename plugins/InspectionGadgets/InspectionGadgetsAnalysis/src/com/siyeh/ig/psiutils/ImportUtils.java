@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ImportUtils {
+public final class ImportUtils {
 
   private ImportUtils() {}
 
@@ -130,7 +130,7 @@ public class ImportUtils {
         return false;
       }
       field = containingClass.findFieldByName(shortName, true);
-      if (field != null && PsiUtil.isAccessible(containingClass.getProject(), field, containingClass, null)) {
+      if (field != null && PsiUtil.isAccessible(field, containingClass, null)) {
         return false;
       }
     }
@@ -566,11 +566,12 @@ public class ImportUtils {
    */
   public static boolean containsConflictingReference(PsiFile element, String fullyQualifiedName) {
     final Map<String, Boolean> cachedValue =
-      CachedValuesManager.getManager(element.getProject()).getCachedValue(element, new CachedValueProvider<Map<String, Boolean>>() {
+      CachedValuesManager.getCachedValue(element, new CachedValueProvider<Map<String, Boolean>>() {
         @Nullable
         @Override
         public Result<Map<String, Boolean>> compute() {
-          return new Result<Map<String, Boolean>>(Collections.synchronizedMap(new HashMap<String, Boolean>()), PsiModificationTracker.MODIFICATION_COUNT);
+          return new Result<Map<String, Boolean>>(Collections.synchronizedMap(new HashMap<String, Boolean>()),
+                                                  PsiModificationTracker.MODIFICATION_COUNT);
         }
       });
     Boolean conflictingRef = cachedValue.get(fullyQualifiedName);
