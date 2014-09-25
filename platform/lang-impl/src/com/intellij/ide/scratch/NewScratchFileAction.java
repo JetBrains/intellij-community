@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.scratch;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
@@ -71,6 +72,7 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
     ListPopup popup = buildLanguagePopup(previous, new Consumer<Language>() {
       @Override
       public void consume(Language language) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
         VirtualFile file = ScratchpadManager.getInstance(project).createScratchFile(language);
         FileEditorManager.getInstance(project).openFile(file, true);
       }
