@@ -20,10 +20,10 @@ import org.jetbrains.settingsRepository.BaseRepositoryManager
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.AddLoadedFile
-import org.jetbrains.jgit.dirCache.remove
 import org.jetbrains.settingsRepository.UpdateResult
 import org.eclipse.jgit.revwalk.RevCommit
 import org.jetbrains.settingsRepository.MutableUpdateResult
+import org.jetbrains.jgit.dirCache.deletePath
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {
@@ -104,7 +104,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   override fun deleteFromIndex(path: String, isFile: Boolean) {
-    repository.remove(path, isFile)
+    repository.deletePath(path, isFile, false)
   }
 
   override fun commit(indicator: ProgressIndicator) {

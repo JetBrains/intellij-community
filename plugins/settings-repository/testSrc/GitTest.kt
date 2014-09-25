@@ -39,18 +39,20 @@ import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.AddFile
 import org.jetbrains.settingsRepository.git.commit
 import org.eclipse.jgit.api.Git
+import org.jetbrains.jgit.dirCache.deletePath
+import org.jetbrains.jgit.dirCache.writePath
+import kotlin.properties.Delegates
 
 class GitTest {
-  data class FileInfo (val name: String, val data: ByteArray)
-
   private var fixture: IdeaProjectTestFixture? = null
 
-  private var remoteRepository: File? = null
-
-  private val testWatcher = GitTestWatcher()
+  private val testHelper = GitTestWatcher()
 
   Rule
-  public fun getTestWatcher(): GitTestWatcher = testWatcher
+  public fun getTestWatcher(): GitTestWatcher = testHelper
+
+  private val remoteRepository: Repository
+    get() = testHelper.repository!!
 
   class object {
     private var ICS_DIR: File? = null
@@ -131,8 +133,6 @@ class GitTest {
 
   After
   public fun tearDown() {
-    remoteRepository = null
-
     IcsManager.getInstance().repositoryActive = false
     try {
       if (fixture != null) {
@@ -207,7 +207,7 @@ class GitTest {
   private fun doPullToRepositoryWithoutCommits(remoteBranchName: String?) {
     createLocalRepository(remoteBranchName)
     repositoryManager.pull(EmptyProgressIndicator())
-    compareFiles(repository.getWorkTree(), remoteRepository!!)
+    compareFiles(repository.getWorkTree(), remoteRepository.getWorkTree())
   }
 
   public Test fun pullToRepositoryWithCommits() {
@@ -225,12 +225,12 @@ class GitTest {
     repositoryManager.commit(progressIndicator)
     repositoryManager.pull(progressIndicator)
     assertThat(FileUtil.loadFile(File(repository.getWorkTree(), file.name)), equalTo(String(file.data, CharsetToolkit.UTF8_CHARSET)))
-    compareFiles(repository.getWorkTree(), remoteRepository!!, PathUtilRt.getFileName(file.name))
+    compareFiles(repository.getWorkTree(), remoteRepository.getWorkTree(), null, PathUtilRt.getFileName(file.name))
   }
   
   private fun createLocalRepository(remoteBranchName: String?) {
-    remoteRepository = createFileRemote(remoteBranchName)
-    repositoryManager.setUpstream(remoteRepository!!.getAbsolutePath(), remoteBranchName)
+    createFileRemote(remoteBranchName)
+    repositoryManager.setUpstream(remoteRepository.getWorkTree().getAbsolutePath(), remoteBranchName)
   }
 
   private fun createLocalRepositoryAndCommit(remoteBranchName: String?): FileInfo {
@@ -238,13 +238,19 @@ class GitTest {
     return addAndCommit("\$APP_CONFIG$/local.xml")
   }
 
+  private fun compareFiles(fs: MockVirtualFileSystem) {
+    compareFiles(fs.getRoot())
+  }
+
+  private fun compareFiles(expected: VirtualFile?) {
+    compareFiles(repository.getWorkTree(), remoteRepository.getWorkTree(), expected)
+  }
+
   // never was merged. we reset using "merge with strategy "theirs", so, we must test - what's happen if it is not first merge? - see next test
   public Test fun resetToTheirsIfFirstMerge() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.RESET_TO_THEIRS)
-    val fs = MockVirtualFileSystem()
-    fs.findFileByPath("\$APP_CONFIG$/remote.xml")
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+    compareFiles(fs("\$APP_CONFIG$/remote.xml"))
   }
 
   public Test fun resetToTheirsISecondMergeIsNull() {
@@ -258,14 +264,14 @@ class GitTest {
     fun testRemote() {
       fs.findFileByPath("\$APP_CONFIG$/local.xml")
       fs.findFileByPath("\$APP_CONFIG$/remote.xml")
-      compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+      compareFiles(fs.getRoot())
     }
     testRemote()
 
     addAndCommit("_mac/local2.xml")
     sync(SyncType.RESET_TO_THEIRS)
 
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+    compareFiles(fs.getRoot())
 
     // test: merge and push to remote after such reset
     sync(SyncType.MERGE)
@@ -279,21 +285,17 @@ class GitTest {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.RESET_TO_MY)
     restoreRemoteAfterPush()
-    val fs = MockVirtualFileSystem()
-    fs.findFileByPath("\$APP_CONFIG$/local.xml")
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+    compareFiles(fs("\$APP_CONFIG$/local.xml"))
   }
 
-  public Test fun resetToMyIfSecondMergeIsNull() {
+  public Test fun `reset to my, second merge is null`() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.MERGE)
 
     restoreRemoteAfterPush()
 
-    val fs = MockVirtualFileSystem()
-    fs.findFileByPath("\$APP_CONFIG$/local.xml")
-    fs.findFileByPath("\$APP_CONFIG$/remote.xml")
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+    val fs = fs("\$APP_CONFIG$/local.xml", "\$APP_CONFIG$/remote.xml")
+    compareFiles(fs)
 
     val local2FilePath = "_mac/local2.xml"
     addAndCommit(local2FilePath)
@@ -301,28 +303,62 @@ class GitTest {
     restoreRemoteAfterPush()
 
     fs.findFileByPath(local2FilePath)
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+    compareFiles(fs)
 
     // test: merge to remote after such reset
     sync(SyncType.MERGE)
 
     restoreRemoteAfterPush()
 
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+    compareFiles(fs)
   }
 
-  public Test fun `merge, resolve conflicts to my`() {
+  public Test fun `merge - resolve conflicts to my`() {
     createLocalRepository(null)
 
-    val data = "reset to my".toByteArray()
+    val data = AM.MARKER_ACCEPT_MY
     getProvider().saveContent("\$APP_CONFIG$/remote.xml", data, data.size, RoamingType.PER_USER, false)
 
     sync(SyncType.MERGE)
 
-    val fs = MockVirtualFileSystem()
-    fs.findFileByPath("\$APP_CONFIG$/remote.xml")
-    restoreRemoteAfterPush();
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+    restoreRemoteAfterPush()
+    compareFiles(fs("\$APP_CONFIG$/remote.xml"))
+  }
+
+  public Test fun `merge - theirs file deleted, my modified, accept theirs`() {
+    createLocalRepository(null)
+
+    sync(SyncType.MERGE)
+
+    val data = AM.MARKER_ACCEPT_THEIRS
+    getProvider().saveContent("\$APP_CONFIG$/remote.xml", data, data.size, RoamingType.PER_USER, false)
+    repositoryManager.commit(EmptyProgressIndicator())
+
+    val remoteRepository = testHelper.repository!!
+    remoteRepository.deletePath("\$APP_CONFIG$/remote.xml")
+    remoteRepository.commit("delete remote.xml")
+
+    sync(SyncType.MERGE)
+
+    compareFiles(fs())
+  }
+
+  public Test fun `merge - my file deleted, theirs modified, accept my`() {
+    createLocalRepository(null)
+
+    sync(SyncType.MERGE)
+
+    getProvider().delete("\$APP_CONFIG$/remote.xml", RoamingType.PER_USER)
+    repositoryManager.commit(EmptyProgressIndicator())
+
+    val remoteRepository = testHelper.repository!!
+    remoteRepository.writePath("\$APP_CONFIG$/remote.xml", AM.MARKER_ACCEPT_THEIRS)
+    remoteRepository.commit("")
+
+    sync(SyncType.MERGE)
+    restoreRemoteAfterPush()
+
+    compareFiles(fs())
   }
 
   // remote is uninitialized (empty - initial commit is not done)
@@ -339,8 +375,8 @@ class GitTest {
   }
 
   private fun doSyncWithUninitializedUpstream(syncType: SyncType) {
-    remoteRepository = createFileRemote(null, false)
-    repositoryManager.setUpstream(remoteRepository!!.getAbsolutePath(), null)
+    createFileRemote(null, false)
+    repositoryManager.setUpstream(remoteRepository.getWorkTree().getAbsolutePath(), null)
 
     val path = "\$APP_CONFIG$/local.xml"
     val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
@@ -353,7 +389,7 @@ class GitTest {
       fs.findFileByPath(path)
     }
     restoreRemoteAfterPush();
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+    compareFiles(fs)
   }
 
   private fun restoreRemoteAfterPush() {
@@ -365,7 +401,7 @@ class GitTest {
     "
     so, we do "git reset --hard"
      */
-    testWatcher.repository!!.resetHard()
+    testHelper.repository!!.resetHard()
   }
 
   private fun sync(syncType: SyncType) {
@@ -375,7 +411,7 @@ class GitTest {
   }
 
   private fun createFileRemote(branchName: String? = null, initialCommit: Boolean = true): File {
-    val repository = testWatcher.getRepository(ICS_DIR!!)
+    val repository = testHelper.getRepository(ICS_DIR!!)
     if (branchName != null) {
       // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
       repository.commit("")
@@ -390,66 +426,5 @@ class GitTest {
       repository.commit("")
     }
     return workTree
-  }
-}
-
-private fun compareFiles(local: File, remote: File, vararg localExcludes: String) {
-  compareFiles(local, remote, null, *localExcludes)
-}
-
-private fun compareFiles(local: File, remote: File, expected: VirtualFile?, vararg localExcludes: String) {
-  var localFiles = local.list()!!
-  var remoteFiles = remote.list()!!
-
-  localFiles = ArrayUtil.remove(localFiles, Constants.DOT_GIT)
-  remoteFiles = ArrayUtil.remove(remoteFiles, Constants.DOT_GIT)
-
-  Arrays.sort(localFiles)
-  Arrays.sort(remoteFiles)
-
-  if (localExcludes.size != 0) {
-    for (localExclude in localExcludes) {
-      localFiles = ArrayUtil.remove(localFiles, localExclude)
-    }
-  }
-
-  assertThat(localFiles, equalTo(remoteFiles))
-
-  val expectedFiles: Array<VirtualFile>?
-  if (expected == null) {
-    expectedFiles = null
-  }
-  else {
-    //noinspection UnsafeVfsRecursion
-    expectedFiles = expected.getChildren()
-    Arrays.sort(expectedFiles!!, object : Comparator<VirtualFile> {
-      override fun compare(o1: VirtualFile, o2: VirtualFile): Int {
-        return o1.getName().compareTo(o2.getName())
-      }
-    })
-
-    for (i in 0..expectedFiles!!.size - 1) {
-      assertThat(localFiles[i], equalTo(expectedFiles[i].getName()))
-    }
-  }
-
-  for (i in 0..localFiles.size - 1) {
-    val localFile = File(local, localFiles[i])
-    val remoteFile = File(remote, remoteFiles[i])
-    val expectedFile: VirtualFile?
-    if (expectedFiles == null) {
-      expectedFile = null
-    }
-    else {
-      expectedFile = expectedFiles[i]
-      assertThat(expectedFile!!.isDirectory(), equalTo(localFile.isDirectory()))
-    }
-
-    if (localFile.isFile()) {
-      assertThat(FileUtil.loadFile(localFile), equalTo(FileUtil.loadFile(remoteFile)))
-    }
-    else {
-      compareFiles(localFile, remoteFile, expectedFile, *localExcludes)
-    }
   }
 }

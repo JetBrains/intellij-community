@@ -9,13 +9,16 @@ import java.io.InputStream
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
-import com.intellij.openapi.vcs.merge.MergeProvider
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.vfs.CharsetToolkit
 import java.io.OutputStream
 import com.intellij.openapi.application.ApplicationManager
+import java.util.Arrays
+import com.intellij.openapi.vcs.merge.MergeProvider2
+import com.intellij.openapi.vcs.merge.MergeSession
+import org.jetbrains.annotations.TestOnly
 
 public abstract class BaseRepositoryManager protected() : RepositoryManager {
   protected var dir: File = File(getPluginSystemDir(), "repository")
@@ -78,7 +81,7 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
       }
 
       val isFile = file.isFile()
-      removeFileAndParentDirectoryIfEmpty(file, isFile, dir)
+      removeFileAndParentDirectoryIfEmpty(file, dir, isFile)
 
       synchronized (lock) {
         deleteFromIndex(path, isFile)
@@ -97,7 +100,7 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
   }
 }
 
-fun removeFileAndParentDirectoryIfEmpty(file: File, isFile: Boolean, root: File) {
+fun removeFileAndParentDirectoryIfEmpty(file: File, root: File, isFile: Boolean = true) {
   FileUtil.delete(file)
 
   if (isFile) {
@@ -109,18 +112,30 @@ fun removeFileAndParentDirectoryIfEmpty(file: File, isFile: Boolean, root: File)
     }
   }
 }
+// kotlin bug, cannot be val (.NoSuchMethodError: org.jetbrains.settingsRepository.SettingsRepositoryPackage.getMARKER_ACCEPT_MY()[B)
+TestOnly object AM {
+  val MARKER_ACCEPT_MY: ByteArray = "__accept my__".toByteArray()
+  val MARKER_ACCEPT_THEIRS: ByteArray = "__accept theirs__".toByteArray()
+}
 
-fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider): List<VirtualFile> {
+fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): List<VirtualFile> {
   if (ApplicationManager.getApplication()!!.isUnitTestMode()) {
+    val mergeSession = mergeProvider.createMergeSession(files)
     for (file in files) {
       val mergeData = mergeProvider.loadRevisions(file)
-      if (String(mergeData.CURRENT!!, CharsetToolkit.UTF8_CHARSET) == "reset to my") {
-        file.setBinaryContent(mergeData.CURRENT!!)
+      if (Arrays.equals(mergeData.CURRENT, AM.MARKER_ACCEPT_MY) || Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_THEIRS)) {
+        mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedYours)
       }
-      else if (String(mergeData.LAST!!, CharsetToolkit.UTF8_CHARSET) == "reset to my") {
+      else if (Arrays.equals(mergeData.CURRENT, AM.MARKER_ACCEPT_THEIRS) || Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
+        mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
+      }
+      else if (Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
         file.setBinaryContent(mergeData.LAST!!)
+        mergeProvider.conflictResolvedForFile(file)
       }
-      mergeProvider.conflictResolvedForFile(file)
+      else {
+        throw UnsupportedOperationException()
+      }
     }
 
     return files

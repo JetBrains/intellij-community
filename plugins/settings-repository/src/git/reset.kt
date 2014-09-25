@@ -60,7 +60,7 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
       }
 
       val mergeResult = merge(latestUpstreamCommit, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
-      if (!mergeResult.getMergeStatus().isSuccessful()) {
+      if (!mergeResult.mergeStatus.isSuccessful()) {
         throw IllegalStateException(mergeResult.toString())
       }
 
@@ -125,7 +125,7 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
       val newMode = walk.getFileMode(1)
       if (newMode == FileMode.MISSING) {
         edits.add(DeleteFile(walk.getRawPath()))
-        removeFileAndParentDirectoryIfEmpty(File(workingDirectory, walk.getPathString()), true, workingDirectory)
+        removeFileAndParentDirectoryIfEmpty(File(workingDirectory, walk.getPathString()), workingDirectory)
         continue
       }
 

@@ -13,6 +13,8 @@ import java.io.File
 import org.eclipse.jgit.lib.FileMode
 import java.io.FileInputStream
 import java.util.Collections
+import org.jetbrains.settingsRepository.removeFileAndParentDirectoryIfEmpty
+import com.intellij.openapi.util.io.FileUtil
 
 private val EDIT_CMP = object : Comparator<PathEdit> {
   override fun compare(o1: PathEdit, o2: PathEdit): Int {
@@ -135,7 +137,7 @@ class AddFile(private val pathString: String) : PathEdit(Constants.encode(pathSt
   }
 }
 
-class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int, private val lastModified: Long) : PathEdit(Constants.encode(path)) {
+class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size, private val lastModified: Long = System.currentTimeMillis()) : PathEdit(Constants.encode(path)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
     entry.setFileMode(FileMode.REGULAR_FILE)
     entry.setLength(size)
@@ -196,6 +198,19 @@ public fun Repository.deleteAllFiles() {
   }
 }
 
-public fun Repository.remove(path: String, isFile: Boolean) {
+public fun Repository.writePath(path: String, bytes: ByteArray, size: Int = bytes.size) {
+  edit(AddLoadedFile(path, bytes, size))
+  FileUtil.writeToFile(File(getWorkTree(), path), bytes, 0, size)
+}
+
+public fun Repository.deletePath(path: String, isFile: Boolean = true, fromWorkingTree: Boolean = true) {
   edit((if (isFile) DeleteFile(path) else DeleteDirectory(path)))
+
+  if (fromWorkingTree) {
+    val workTree = getWorkTree()
+    val ioFile = File(workTree, path)
+    if (ioFile.exists()) {
+      removeFileAndParentDirectoryIfEmpty(ioFile, workTree)
+    }
+  }
 }
