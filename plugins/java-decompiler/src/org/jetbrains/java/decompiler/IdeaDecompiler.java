@@ -15,37 +15,38 @@
  */
 package org.jetbrains.java.decompiler;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
-import com.intellij.ui.GotItMessage;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.Gray;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -53,8 +54,8 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -97,7 +98,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
           if (file.getFileType() == StdFileTypes.CLASS) {
             FileEditor editor = source.getSelectedEditor(file);
             if (editor != null) {
-              showLegalNotice(editor);
+              showLegalNotice(source.getProject(), file);
             }
           }
         }
@@ -105,39 +106,12 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     }
   }
 
-  private void showLegalNotice(final FileEditor editor) {
+  private void showLegalNotice(final Project project, final VirtualFile file) {
     if (!myLegalNoticeAccepted) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
-          if (component != null) {
-            Rectangle rect = component.getVisibleRect();
-            String message = "<div align='left'>" + IdeaDecompilerBundle.message("legal.notice.text") + "</div>";
-            GotItMessage.createMessage(IdeaDecompilerBundle.message("legal.notice.title"), message)
-              .setDisposable(editor)
-              .setCallback(new Runnable() {
-                @Override
-                public void run() {
-                  PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, Boolean.TRUE.toString());
-                  myLegalNoticeAccepted = true;
-                }
-              })
-              .setHyperlinkListener(new HyperlinkAdapter() {
-                @Override
-                protected void hyperlinkActivated(HyperlinkEvent e) {
-                  final PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-                  ShowSettingsUtil.getInstance().editConfigurable(editor.getComponent(), configurable, new Runnable() {
-                    @Override
-                    public void run() {
-                      IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId("org.jetbrains.java.decompiler"));
-                      if (plugin != null) configurable.select(plugin);
-                    }
-                  });
-                }
-              })
-              .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
-          }
+          new LegalNoticeDialog(project, file).show();
         }
       }, ModalityState.NON_MODAL);
     }
@@ -238,5 +212,79 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
 
     @Override
     public void closeArchive(String path, String archiveName) { }
+  }
+
+  private class LegalNoticeDialog extends DialogWrapper {
+    private final Project myProject;
+    private final VirtualFile myFile;
+    private JEditorPane myMessage;
+
+    public LegalNoticeDialog(Project project, VirtualFile file) {
+      super(project);
+      myProject = project;
+      myFile = file;
+      setTitle(IdeaDecompilerBundle.message("legal.notice.title"));
+      setOKButtonText(IdeaDecompilerBundle.message("legal.notice.action.accept"));
+      setCancelButtonText(IdeaDecompilerBundle.message("legal.notice.action.postpone"));
+      init();
+      pack();
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      JPanel iconPanel = new JBPanel(new BorderLayout());
+      iconPanel.add(new JBLabel(AllIcons.General.WarningDialog), BorderLayout.NORTH);
+
+      myMessage = new JEditorPane();
+      myMessage.setEditorKit(UIUtil.getHTMLEditorKit());
+      myMessage.setEditable(false);
+      myMessage.setPreferredSize(new Dimension(500, 100));
+      myMessage.setBorder(BorderFactory.createLineBorder(Gray._200));
+      String text = "<div style='margin:5px;'>" + IdeaDecompilerBundle.message("legal.notice.text") + "</div>";
+      myMessage.setText(text);
+
+      JPanel panel = new JBPanel(new BorderLayout(10, 0));
+      panel.add(iconPanel, BorderLayout.WEST);
+      panel.add(myMessage, BorderLayout.CENTER);
+      return panel;
+    }
+
+    @NotNull
+    @Override
+    protected Action[] createActions() {
+      DialogWrapperAction decline = new DialogWrapperAction(IdeaDecompilerBundle.message("legal.notice.action.reject")) {
+        @Override
+        protected void doAction(ActionEvent e) {
+          doDeclineAction();
+        }
+      };
+      return new Action[]{getOKAction(), decline, getCancelAction()};
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myMessage;
+    }
+
+    @Override
+    protected void doOKAction() {
+      super.doOKAction();
+      PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, Boolean.TRUE.toString());
+      myLegalNoticeAccepted = true;
+    }
+
+    private void doDeclineAction() {
+      doCancelAction();
+      PluginManagerCore.disablePlugin("org.jetbrains.java.decompiler");
+      ApplicationManagerEx.getApplicationEx().restart(true);
+    }
+
+    @Override
+    public void doCancelAction() {
+      super.doCancelAction();
+      FileEditorManager.getInstance(myProject).closeFile(myFile);
+    }
   }
 }
