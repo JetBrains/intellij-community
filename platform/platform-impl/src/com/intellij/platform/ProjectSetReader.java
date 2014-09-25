@@ -30,7 +30,6 @@ import java.util.Map;
  */
 public class ProjectSetReader {
 
-
   public void readDescriptor(@Language("JSON") @NotNull String descriptor) {
 
     ProjectSetProcessor[] extensions = ProjectSetProcessor.EXTENSION_POINT_NAME.getExtensions();
