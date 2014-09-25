@@ -166,6 +166,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES = false;
 
+  public boolean AUTODETECT_INDENTS = true;
+
   @Deprecated
   public final IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
   @Deprecated
@@ -694,7 +696,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       FileIndentOptionsProvider[] providers = Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME);
       for (FileIndentOptionsProvider provider : providers) {
         if (!isFullReformat || provider.useOnFullReformat()) {
-          IndentOptions indentOptions = provider.getIndentOptions(file);
+          IndentOptions indentOptions = provider.getIndentOptions(this, file);
           if (indentOptions != null) {
             logIndentOptions(file, provider, indentOptions);
             return indentOptions;

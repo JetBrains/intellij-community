@@ -3049,4 +3049,44 @@ public void testSCR260() throws Exception {
       "}"
     );
   }
+
+  public void testDetectableIndentOptions() {
+    final String original =
+       "public class Main {\n" +
+      "\tpublic void main() {\n" +
+      "try {\n" +
+      "\t\t\tSystem.out.println();\n" +
+      "\t} catch (java.lang.Exception exception) {\n" +
+      "\t\t\texception.printStackTrace();\n" +
+      "\t}\n" +
+      "}\n" +
+      "}";
+    // Enabled but full reformat (no detection)
+    doTestWithDetectableIndentOptions(
+      original,
+      "public class Main {\n" +
+      "    public void main() {\n" +
+      "        try {\n" +
+      "            System.out.println();\n" +
+      "        } catch (java.lang.Exception exception) {\n" +
+      "            exception.printStackTrace();\n" +
+      "        }\n" +
+      "    }\n" +
+      "}"
+    );
+    // Reformat with a smaller text range (detection is on)
+    myTextRange = new TextRange(1, original.length());
+    doTestWithDetectableIndentOptions(
+      original,
+      "public class Main {\n" +
+      "\tpublic void main() {\n" +
+      "\t\ttry {\n" +
+      "\t\t\tSystem.out.println();\n" +
+      "\t\t} catch (java.lang.Exception exception) {\n" +
+      "\t\t\texception.printStackTrace();\n" +
+      "\t\t}\n" +
+      "\t}\n" +
+      "}"
+    );
+  }
 }

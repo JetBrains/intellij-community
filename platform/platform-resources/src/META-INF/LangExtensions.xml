@@ -895,6 +895,8 @@
     <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>
     <projectService serviceInterface="com.intellij.openapi.preview.PreviewManager"
                     serviceImplementation="com.intellij.openapi.preview.impl.PreviewManagerImpl"/>
+
+    <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider" order="last"/>
   </extensions>
 </idea-plugin>
 
