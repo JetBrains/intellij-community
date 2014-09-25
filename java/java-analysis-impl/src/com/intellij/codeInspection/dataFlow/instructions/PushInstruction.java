@@ -37,20 +37,20 @@ import org.jetbrains.annotations.Nullable;
 public class PushInstruction extends Instruction {
   private final DfaValue myValue;
   private final PsiExpression myPlace;
-  private final boolean myReferenceRead;
+  private final boolean myReferenceWrite;
 
   public PushInstruction(@Nullable DfaValue value, PsiExpression place) {
     this(value, place, false);
   }
 
-  public PushInstruction(@Nullable DfaValue value, PsiExpression place, final boolean isReferenceRead) {
+  public PushInstruction(@Nullable DfaValue value, PsiExpression place, final boolean isReferenceWrite) {
     myValue = value != null ? value : DfaUnknownValue.getInstance();
     myPlace = place;
-    myReferenceRead = isReferenceRead;
+    myReferenceWrite = isReferenceWrite;
   }
 
-  public boolean isReferenceRead() {
-    return myReferenceRead;
+  public boolean isReferenceWrite() {
+    return myReferenceWrite;
   }
 
   @NotNull

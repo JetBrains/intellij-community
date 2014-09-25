@@ -111,7 +111,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Override
   public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    if (instruction.isReferenceRead()) {
+    if (!instruction.isReferenceWrite() && instruction.getPlace() instanceof PsiReferenceExpression) {
       DfaValue dfaValue = instruction.getValue();
       if (dfaValue instanceof DfaVariableValue) {
         DfaConstValue constValue = memState.getConstantValue((DfaVariableValue)dfaValue);
