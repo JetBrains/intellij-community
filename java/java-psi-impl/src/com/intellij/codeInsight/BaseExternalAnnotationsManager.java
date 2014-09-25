@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -386,6 +386,11 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       int result = annotationClassFqName.hashCode();
       result = 31 * result + annotationParameters.hashCode();
       return result;
+    }
+
+    @Override
+    public String toString() {
+      return annotationClassFqName + "("+annotationParameters+")";
     }
   }
 
