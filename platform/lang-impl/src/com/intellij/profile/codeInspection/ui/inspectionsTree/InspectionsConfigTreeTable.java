@@ -389,6 +389,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
     }
 
     private void putOne(final ScopeToolState state) {
+      if (!state.isEnabled()) {
+        return;
+      }
       final Icon icon = state.getLevel().getIcon();
       final String scopeName = state.getScopeName();
       if (icon instanceof HighlightDisplayLevel.SingleColorIconWithMask) {
