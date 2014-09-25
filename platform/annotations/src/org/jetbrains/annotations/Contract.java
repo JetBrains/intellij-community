@@ -56,7 +56,7 @@ public @interface Contract {
   /**
    * Specifies that the annotated method has no visible side effects, in the following sense.
    * If its return value is not used, removing its invocation won't
-   * affect program state and change the semantics. Such methods shouldn't throw exceptions by design, as exceptions affect semantics.<br><br>
+   * affect program state and change the semantics. Exception throwing is not considered to be a side effect.
    *
    * "Invisible" side effects (such as logging) that don't affect the "important" program semantics are allowed.<br><br>
    *
