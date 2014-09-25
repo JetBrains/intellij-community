@@ -21,21 +21,18 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -49,7 +46,14 @@ import java.util.List;
  * <p/>
  * Also used to manage highlighters.
  */
-public class XPathAppComponent implements ApplicationComponent, JDOMExternalizable, DefaultLiveTemplatesProvider {
+@State(
+  name = "XPathView.XPathViewPlugin",
+  storages = {
+    @Storage(
+      file = StoragePathMacros.APP_CONFIG + "/other.xml"
+    )}
+)
+public class XPathAppComponent implements ApplicationComponent, PersistentStateComponent<Config>, DefaultLiveTemplatesProvider {
   private static final String ACTION_FIND_NEXT = "FindNext";
   private static final String ACTION_FIND_PREVIOUS = "FindPrevious";
 
@@ -86,14 +90,15 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
     //    actionManager.registerAction(ACTION_FIND_PREVIOUS, prevAction);
   }
 
+  @Nullable
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    configuration.readExternal(element);
+  public Config getState() {
+    return configuration;
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    configuration.writeExternal(element);
+  public void loadState(Config state) {
+    configuration = state;
   }
 
   /**
