@@ -28,13 +28,6 @@ public abstract class HttpRequestHandler {
   // Your handler will be instantiated on first user request
   public static final ExtensionPointName<HttpRequestHandler> EP_NAME = ExtensionPointName.create("com.intellij.httpRequestHandler");
 
-  public boolean isSupported(@NotNull FullHttpRequest request) {
-    return request.method() == HttpMethod.GET || request.method() == HttpMethod.HEAD;
-  }
-
-  public abstract boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
-    throws IOException;
-
   protected static boolean checkPrefix(@NotNull String uri, @NotNull String prefix) {
     if (uri.length() > prefix.length() && uri.charAt(0) == '/' && uri.regionMatches(true, 1, prefix, 0, prefix.length())) {
       if ((uri.length() - prefix.length()) == 1) {
@@ -47,4 +40,14 @@ public abstract class HttpRequestHandler {
     }
     return false;
   }
+
+  public boolean isSupported(@NotNull FullHttpRequest request) {
+    return request.method() == HttpMethod.GET || request.method() == HttpMethod.HEAD;
+  }
+
+  /**
+   * @return true if processed successfully, false to pass processing to other handlers.
+   */
+  public abstract boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
+    throws IOException;
 }
