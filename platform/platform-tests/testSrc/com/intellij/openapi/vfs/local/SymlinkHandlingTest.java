@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +101,19 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     File link1 = createSymLink(targetDir.getPath(), myTempDir + "/link1");
     File link2 = createSymLink(targetDir.getPath(), myTempDir + "/link2");
     assertVisitedPaths(targetDir.getPath(), link1.getPath(), link2.getPath());
+  }
+
+  public void testSidewaysRecursiveLink() throws Exception {
+    File target = createTestDir(myTempDir, "dir_a");
+    File link1Home = createTestDir(target, "dir_b");
+    File link1 = createSymLink("../../" + target.getName(), link1Home.getPath() + "/link1");
+    File mainDir = createTestDir(myTempDir, "project");
+    File subDir = createTestDir(mainDir, "dir_c");
+    File link2Home = createTestDir(subDir, "dir_d");
+    File link2 = createSymLink("../../../" + target.getName(), link2Home.getPath() + "/link2");
+    assertVisitedPaths(mainDir,
+                       subDir.getPath(), link2Home.getPath(), link2.getPath(), link2.getPath() + "/" + link1Home.getName(),
+                       link2.getPath() + "/" + link1Home.getName() + "/" + link1.getName());
   }
 
   public void testTargetIsWritable() throws Exception {
@@ -238,7 +251,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     VirtualFile vLink2 = myFileSystem.findFileByIoFile(link);
     assertEquals(vLink1, vLink2);
     assertTrue("link=" + link + ", vLink=" + vLink2,
-               vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
+               vLink2 != null && vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
     assertEquals(2, vLink2.getChildren().length);
     assertPathsEqual(targetDir2.getPath(), vLink1.getCanonicalPath());
   }
@@ -264,7 +277,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     VirtualFile vLink2 = myFileSystem.findFileByIoFile(link);
     assertEquals(vLink1, vLink2);
     assertTrue("link=" + link + ", vLink=" + vLink2,
-               !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
+               vLink2 != null && !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
     assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink2));
     assertPathsEqual(target2.getPath(), vLink1.getCanonicalPath());
   }
@@ -346,11 +359,15 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
   }
 
   private void assertVisitedPaths(String... expected) {
-    VirtualFile vDir = refreshAndFind(myTempDir);
+    assertVisitedPaths(myTempDir, expected);
+  }
+
+  private void assertVisitedPaths(File from, String... expected) {
+    VirtualFile vDir = refreshAndFind(from);
     assertNotNull(vDir);
 
     Set<String> expectedSet = new HashSet<String>(expected.length + 1, 1);
-    ContainerUtil.addAll(expectedSet, FileUtil.toSystemIndependentName(myTempDir.getPath()));
+    ContainerUtil.addAll(expectedSet, vDir.getPath());
     ContainerUtil.addAll(expectedSet, ContainerUtil.map(expected, new Function<String, String>() {
       @Override
       public String fun(String path) {
