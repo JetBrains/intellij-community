@@ -15,13 +15,16 @@
  */
 package com.intellij.platform;
 
+import com.intellij.openapi.application.ApplicationManager;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.HttpRequestHandler;
+import org.jetbrains.io.Responses;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -40,9 +43,14 @@ public class ProjectSetRequestHandler extends HttpRequestHandler {
   public boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
     throws IOException {
 
-    @Language("JSON") String desc = request.content().toString(Charset.defaultCharset());
-    new ProjectSetReader().readDescriptor(desc);
-
+    @Language("JSON") final String desc = request.content().toString(Charset.defaultCharset());
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        new ProjectSetReader().readDescriptor(desc);
+      }
+    });
+    Responses.sendStatus(HttpResponseStatus.OK, context.channel(), request);
     return true;
   }
 }
