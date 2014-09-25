@@ -366,8 +366,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       PsiAnnotation a = annotation;
       if (a == null) {
         a = context.createAnnotationFromText("@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "("+annotationParameters+")"));
-        a.putUserData(EXTERNAL_ANNO_MARKER, Boolean.TRUE);
-        annotation = a;
+        annotation = markAsExternalAnnotation(a);
       }
       return a;
     }
@@ -390,6 +389,11 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
   }
 
+  private static PsiAnnotation markAsExternalAnnotation(@NotNull PsiAnnotation annotation) {
+    annotation.putUserData(EXTERNAL_ANNO_MARKER, Boolean.TRUE);
+    return annotation;
+  }
+
   @NotNull
   private PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
     // synchronize during interning in charTable
@@ -399,8 +403,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       if (!(element instanceof PsiAnnotation)) {
         throw new IncorrectOperationException("Incorrect annotation \"" + text + "\".");
       }
-      element.putUserData(EXTERNAL_ANNO_MARKER, Boolean.TRUE);
-      return (PsiAnnotation)element;
+      return markAsExternalAnnotation((PsiAnnotation)element);
     }
   }
   private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
