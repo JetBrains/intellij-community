@@ -61,10 +61,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   @TestOnly
   @Nullable
   public static DetectableIndentOptionsProvider getInstance() {
-    FileIndentOptionsProvider[] providers = Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME);
-    for (FileIndentOptionsProvider provider : providers) {
-      if (provider instanceof DetectableIndentOptionsProvider) return (DetectableIndentOptionsProvider)provider;
-    }
-    return null;
+    return FileIndentOptionsProvider.EP_NAME.findExtension(DetectableIndentOptionsProvider.class);
   }
 }
