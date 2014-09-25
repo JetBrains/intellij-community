@@ -765,7 +765,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             public ScopeToolState fun(InspectionConfigTreeNode node) {
               return node.getDefaultDescriptor().getState();
             }
-          }));
+          }), false);
         severityLevelChooser.setChosen(severity);
 
         final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, new Function<InspectionConfigTreeNode, Descriptor>() {
