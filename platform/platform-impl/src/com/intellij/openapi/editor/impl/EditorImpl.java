@@ -99,7 +99,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
@@ -6720,7 +6719,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyScrollPane extends JBScrollPane {
     private MyScrollPane() {
-      setViewportBorder(new EmptyBorder(0, 0, 0, 0));
+      super(0);
+      setupCorners();
     }
 
     @Override
