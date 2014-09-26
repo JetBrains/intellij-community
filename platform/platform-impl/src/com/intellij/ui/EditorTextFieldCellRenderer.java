@@ -128,6 +128,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   private static class MyPanel extends CellRendererPanel implements Disposable {
     private static final String ABBREVIATION_SUFFIX = "\u2026"; // 2026 '...'
+    private static final char RETURN_SYMBOL = '\u23ce';
 
     private final StringBuilder myDocumentTextBuilder = new StringBuilder();
     private final EditorEx myEditor;
@@ -170,14 +171,20 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     private void updateText() {
       FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(Font.PLAIN);
+      DocumentEx document = myEditor.getDocument();
       Insets insets = getInsets();
       int maxLineWidth = getWidth() - (insets != null ? insets.left + insets.right : 0);
 
       myDocumentTextBuilder.setLength(0);
-      DocumentEx document = myEditor.getDocument();
-      for (LineIterator line = document.createLineIterator(); !line.atEnd(); line.advance()) {
-        String lineText = document.getText(new TextRange(line.getStart(), line.getEnd()));
-        appendAbbreviatedLine(myDocumentTextBuilder, lineText, fontMetrics, maxLineWidth);
+      if (getHeight() / myEditor.getLineHeight() < 1.1f) {
+        String line = document.getText().replace('\n', RETURN_SYMBOL);
+        appendAbbreviatedLine(myDocumentTextBuilder, line, fontMetrics, maxLineWidth);
+      }
+      else {
+        for (LineIterator line = document.createLineIterator(); !line.atEnd(); line.advance()) {
+          String lineText = document.getText(new TextRange(line.getStart(), line.getEnd()));
+          appendAbbreviatedLine(myDocumentTextBuilder, lineText, fontMetrics, maxLineWidth);
+        }
       }
 
       setText(myDocumentTextBuilder.toString(), false);
