@@ -34,7 +34,6 @@ import org.jdom.filter.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -224,16 +223,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         return Collections.emptySet();
       }
 
-      @NotNull
       @Override
-      public Collection<File> getStorageFilesToSave() throws StateStorageException {
-        return Collections.emptySet();
-      }
-
-      @NotNull
-      @Override
-      public List<File> getAllStorageFiles() {
-        return Collections.emptyList();
+      public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
       }
     };
   }
@@ -325,11 +316,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     public MySaveSession(MyExternalizationSession externalizationSession) {
       myStorageData = externalizationSession.myStorageData;
-    }
-
-    public final boolean needsSave() {
-      assert mySession == this;
-      return _needsSave(calcHash());
     }
 
     private boolean _needsSave(int hash) {

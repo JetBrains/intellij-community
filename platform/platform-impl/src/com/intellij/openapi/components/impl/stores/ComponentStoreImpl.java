@@ -37,7 +37,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -420,10 +419,9 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       return myStorageManagerSaveSession.analyzeExternalChanges(changedFiles);
     }
 
-    @NotNull
     @Override
-    public List<File> getAllStorageFiles(final boolean includingSubStructures) {
-      return myStorageManagerSaveSession.getAllStorageFiles();
+    public void collectAllStorageFiles(boolean includingSubStructures, @NotNull List<VirtualFile> files) {
+      myStorageManagerSaveSession.collectAllStorageFiles(files);
     }
   }
 

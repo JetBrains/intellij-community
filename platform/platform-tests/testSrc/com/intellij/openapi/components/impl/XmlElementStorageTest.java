@@ -23,12 +23,12 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.ComponentVersionProvider;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformLangTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -106,16 +106,8 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
           mySavedElement = elementToSave == null ? null : elementToSave.clone();
         }
 
-        @NotNull
         @Override
-        public Collection<File> getStorageFilesToSave() throws StateStorageException {
-          return needsSave() ? getAllStorageFiles() : Collections.<File>emptyList();
-        }
-
-        @NotNull
-        @Override
-        public List<File> getAllStorageFiles() {
-          throw new UnsupportedOperationException("Method getAllStorageFiles not implemented in " + getClass());
+        public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
         }
       };
     }

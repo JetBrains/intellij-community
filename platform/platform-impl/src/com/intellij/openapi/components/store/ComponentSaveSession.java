@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 import java.util.Set;
 
@@ -37,6 +36,5 @@ public interface ComponentSaveSession {
   @Nullable
   Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
 
-  @NotNull
-  List<File> getAllStorageFiles(boolean includingSubStructures);
+  void collectAllStorageFiles(boolean includingSubStructures, @NotNull List<VirtualFile> files);
 }

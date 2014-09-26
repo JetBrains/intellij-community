@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +16,23 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.util.SmartList;
+import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author mike
- */
 public class CompoundSaveSession {
   private final Map<StateStorage, StateStorage.SaveSession> mySaveSessions = new THashMap<StateStorage, StateStorage.SaveSession>();
 
-  public CompoundSaveSession(final CompoundExternalizationSession compoundExternalizationSession) {
+  public CompoundSaveSession(@NotNull CompoundExternalizationSession compoundExternalizationSession) {
     for (StateStorage stateStorage : compoundExternalizationSession.getStateStorages()) {
       mySaveSessions.put(stateStorage, stateStorage.startSave(compoundExternalizationSession.getExternalizationSession(stateStorage)));
     }
   }
 
-  public List<File> getAllStorageFilesToSave() throws StateStorageException {
-    List<File> result = new SmartList<File>();
-    for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
-      result.addAll(saveSession.getStorageFilesToSave());
-    }
-    return result;
-  }
-
-  public void save() throws StateStorageException {
+  public void save() {
     for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
       saveSession.save();
     }
@@ -66,15 +54,13 @@ public class CompoundSaveSession {
     }
   }
 
-  public StateStorage.SaveSession getSaveSession(final StateStorage storage) {
+  public StateStorage.SaveSession getSaveSession(@NotNull StateStorage storage) {
     return mySaveSessions.get(storage);
   }
 
-  public List<File> getAllStorageFiles() {
-    List<File> result = new SmartList<File>();
+  public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
     for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
-      result.addAll(saveSession.getAllStorageFiles());
+      saveSession.collectAllStorageFiles(files);
     }
-    return result;
   }
 }

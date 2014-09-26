@@ -32,7 +32,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -101,16 +100,15 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       }
     }
 
-    @NotNull
     @Override
-    public List<File> getAllStorageFiles(boolean includingSubStructures) {
-      List<File> result = super.getAllStorageFiles(includingSubStructures);
+    public void collectAllStorageFiles(boolean includingSubStructures, @NotNull List<VirtualFile> files) {
+      super.collectAllStorageFiles(includingSubStructures, files);
+
       if (includingSubStructures) {
         for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
-          result.addAll(moduleSaveSession.getAllStorageFiles(true));
+          moduleSaveSession.collectAllStorageFiles(true, files);
         }
       }
-      return result;
     }
 
     @Override

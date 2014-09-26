@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -99,16 +98,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
           myProjectManager.setDefaultProjectRootElement(element == null ? null : element);
         }
 
-        @NotNull
         @Override
-        public Collection<File> getStorageFilesToSave() throws StateStorageException {
-          return Collections.emptyList();
-        }
-
-        @NotNull
-        @Override
-        public List<File> getAllStorageFiles() {
-          return Collections.emptyList();
+        public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
         }
       }
     };
@@ -257,16 +248,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
     }
 
-    @NotNull
     @Override
-    public List<File> getAllStorageFilesToSave() throws StateStorageException {
-      return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public List<File> getAllStorageFiles() {
-      return Collections.emptyList();
+    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
     }
 
     @Override

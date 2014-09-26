@@ -476,21 +476,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   protected class MySaveSession implements SaveSession {
     CompoundSaveSession myCompoundSaveSession;
 
-    public MySaveSession(final MyExternalizationSession externalizationSession) {
+    public MySaveSession(@NotNull MyExternalizationSession externalizationSession) {
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
     }
 
     @Override
-    @NotNull
-    public List<File> getAllStorageFilesToSave() throws StateStorageException {
-      assert mySession == this;
-      return myCompoundSaveSession.getAllStorageFilesToSave();
-    }
-
-    @Override
-    @NotNull
-    public List<File> getAllStorageFiles() {
-      return myCompoundSaveSession.getAllStorageFiles();
+    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
+      myCompoundSaveSession.collectAllStorageFiles(files);
     }
 
     @Override
