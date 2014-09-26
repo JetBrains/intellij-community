@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -259,7 +261,18 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
       return key + ".headless";
     }
 
-    JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() : WindowManager.getInstance().getFrame(project);
+    JFrame frame = null;
+    if (project == null) {
+      final Component owner = IdeFocusManager.findInstance().getFocusOwner();
+      if (owner != null) {
+        frame = UIUtil.getParentOfType(JFrame.class, owner);
+      }
+      if (frame == null) {
+        frame = WindowManager.getInstance().findVisibleFrame();
+      }
+    } else {
+      frame = WindowManager.getInstance().getFrame(project);
+    }
     Rectangle screen = new Rectangle(0, 0, 0, 0);
     if (frame != null) {
       final Point topLeft = frame.getLocation();
