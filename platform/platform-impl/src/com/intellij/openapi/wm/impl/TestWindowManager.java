@@ -97,151 +97,6 @@ public final class TestWindowManager extends WindowManagerEx {
   @Override
   public void resetWindow(final Window window) { }
 
-  private static final class DummyStatusBar implements StatusBarEx {
-    private final Map<String, StatusBarWidget> myWidgetMap = new HashMap<String, StatusBarWidget>();
-    
-    @Override
-    public Dimension getSize() {
-      return new Dimension(0, 0);
-    }
-
-    @Override
-    public StatusBar createChild() {
-      return null;
-    }
-
-    @Override
-    public IdeFrame getFrame() {
-      return null;
-    }
-
-    @Override
-    public StatusBar findChild(Component c) {
-      return null;
-    }
-
-    @Override
-    public void install(IdeFrame frame) { }
-
-    @Override
-    public void setInfo(@Nullable String s, @Nullable String requestor) {     }
-
-    @Override
-    public String getInfoRequestor() {
-      return null;
-    }
-
-    @Override
-    public boolean isVisible() {
-      return false;
-    }
-
-    @Override
-    public final void setInfo(final String s) {}
-
-    @Override
-    public void addCustomIndicationComponent(@NotNull JComponent c) { }
-
-    @Override
-    public void removeCustomIndicationComponent(@NotNull JComponent c) { }
-
-    @Override
-    public void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info) { }
-
-    @Override
-    public List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public void addWidget(@NotNull StatusBarWidget widget) {
-      myWidgetMap.put(widget.ID(), widget);
-    }
-
-    @Override
-    public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) {
-      addWidget(widget);
-    }
-
-    @Override
-    public void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable) {
-      Disposer.register(parentDisposable, widget);
-      addWidget(widget);
-    }
-
-    @Override
-    public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable) {
-      Disposer.register(parentDisposable, widget);
-      addWidget(widget);
-    }
-
-    @Override
-    public void updateWidgets() { }
-
-    @Override
-    public void dispose() { }
-
-    @Override
-    public void updateWidget(@NotNull String id) { }
-
-    @Override
-    public StatusBarWidget getWidget(String id) {
-      return myWidgetMap.get(id);
-    }
-
-    @Override
-    public void removeWidget(@NotNull String id) { }
-
-    @Override
-    public void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor) { }
-
-    @Override
-    public JComponent getComponent() {
-      return null;
-    }
-
-    @Override
-    public final String getInfo() {
-      return null;
-    }
-
-    @Override
-    public void startRefreshIndication(final String tooltipText) { }
-
-    @Override
-    public void stopRefreshIndication() { }
-
-    @Override
-    public boolean isProcessWindowOpen() {
-      return false;
-    }
-
-    @Override
-    public void setProcessWindowOpen(final boolean open) { }
-
-    @Override
-    public void removeCustomIndicationComponents() { }
-
-    @Override
-    public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
-      return new BalloonHandler() {
-        public void hide() {
-        }
-      };
-    }
-
-    @Override
-    public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type,
-                                                  @NotNull String htmlBody,
-                                                  @Nullable Icon icon,
-                                                  @Nullable HyperlinkListener listener) {
-      return new BalloonHandler() {
-        public void hide() {
-        }
-      };
-    }
-  }
-
   @Override
   @NotNull
   public IdeFrameImpl[] getAllProjectFrames() {
@@ -275,7 +130,7 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final Component getFocusedComponent(final Project project) {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @Override
@@ -366,5 +221,150 @@ public final class TestWindowManager extends WindowManagerEx {
   @Override
   public boolean isFullScreenSupportedInCurrentOS() {
     return false;
+  }
+
+  private static final class DummyStatusBar implements StatusBarEx {
+    private final Map<String, StatusBarWidget> myWidgetMap = new HashMap<String, StatusBarWidget>();
+
+    @Override
+    public Dimension getSize() {
+      return new Dimension(0, 0);
+    }
+
+    @Override
+    public StatusBar createChild() {
+      return null;
+    }
+
+    @Override
+    public IdeFrame getFrame() {
+      return null;
+    }
+
+    @Override
+    public StatusBar findChild(Component c) {
+      return null;
+    }
+
+    @Override
+    public void install(IdeFrame frame) { }
+
+    @Override
+    public void setInfo(@Nullable String s, @Nullable String requestor) {     }
+
+    @Override
+    public String getInfoRequestor() {
+      return null;
+    }
+
+    @Override
+    public boolean isVisible() {
+      return false;
+    }
+
+    @Override
+    public void addCustomIndicationComponent(@NotNull JComponent c) { }
+
+    @Override
+    public void removeCustomIndicationComponent(@NotNull JComponent c) { }
+
+    @Override
+    public void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info) { }
+
+    @Override
+    public List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public void addWidget(@NotNull StatusBarWidget widget) {
+      myWidgetMap.put(widget.ID(), widget);
+    }
+
+    @Override
+    public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) {
+      addWidget(widget);
+    }
+
+    @Override
+    public void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable) {
+      Disposer.register(parentDisposable, widget);
+      addWidget(widget);
+    }
+
+    @Override
+    public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable) {
+      Disposer.register(parentDisposable, widget);
+      addWidget(widget);
+    }
+
+    @Override
+    public void updateWidgets() { }
+
+    @Override
+    public void dispose() { }
+
+    @Override
+    public void updateWidget(@NotNull String id) { }
+
+    @Override
+    public StatusBarWidget getWidget(String id) {
+      return myWidgetMap.get(id);
+    }
+
+    @Override
+    public void removeWidget(@NotNull String id) { }
+
+    @Override
+    public void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor) { }
+
+    @Override
+    public JComponent getComponent() {
+      return null;
+    }
+
+    @Override
+    public final String getInfo() {
+      return null;
+    }
+
+    @Override
+    public final void setInfo(final String s) {}
+
+    @Override
+    public void startRefreshIndication(final String tooltipText) { }
+
+    @Override
+    public void stopRefreshIndication() { }
+
+    @Override
+    public boolean isProcessWindowOpen() {
+      return false;
+    }
+
+    @Override
+    public void setProcessWindowOpen(final boolean open) { }
+
+    @Override
+    public void removeCustomIndicationComponents() { }
+
+    @Override
+    public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
+      return new BalloonHandler() {
+        public void hide() {
+        }
+      };
+    }
+
+    @Override
+    public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type,
+                                                  @NotNull String htmlBody,
+                                                  @Nullable Icon icon,
+                                                  @Nullable HyperlinkListener listener) {
+      return new BalloonHandler() {
+        public void hide() {
+        }
+      };
+    }
   }
 }

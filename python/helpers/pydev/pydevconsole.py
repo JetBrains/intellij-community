@@ -455,7 +455,13 @@ def consoleExec(thread_id, frame_id, expression):
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
-    sys.stdin = BaseStdIn()
+    #Important: don't use this module directly as the __main__ module, rather, import itself as pydevconsole
+    #so that we don't get multiple pydevconsole modules if it's executed directly (otherwise we'd have multiple
+    #representations of its classes).
+    #See: https://sw-brainwy.rhcloud.com/tracker/PyDev/446: 
+    #'Variables' and 'Expressions' views stopped working when debugging interactive console
+    import pydevconsole
+    sys.stdin = pydevconsole.BaseStdIn()
     port, client_port = sys.argv[1:3]
     import pydev_localhost
 
@@ -464,4 +470,4 @@ if __name__ == '__main__':
 
         client_port = p
 
-    StartServer(pydev_localhost.get_localhost(), int(port), int(client_port))
+    pydevconsole.StartServer(pydev_localhost.get_localhost(), int(port), int(client_port))

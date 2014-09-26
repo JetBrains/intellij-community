@@ -87,4 +87,9 @@ public interface Configurable extends UnnamedConfigurable {
   interface NoScroll {
   }
 
+  /**
+   * Forbids setting an empty border to the content of the configurable.
+   */
+  interface NoMargin {
+  }
 }

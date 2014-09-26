@@ -38,4 +38,29 @@ public abstract class MasqueradingLexer extends DelegateLexer {
   @Nullable
   public abstract String getMasqueTokenText();
 
+  public static class SmartDelegate extends MasqueradingLexer {
+
+    public SmartDelegate(Lexer delegate) {
+      super(delegate);
+    }
+
+    @Nullable
+    public IElementType getMasqueTokenType() {
+      if (myDelegate instanceof MasqueradingLexer) {
+        return ((MasqueradingLexer)myDelegate).getMasqueTokenType();
+      }
+
+      return myDelegate.getTokenType();
+    }
+
+    @Nullable
+    public String getMasqueTokenText() {
+      if (myDelegate instanceof MasqueradingLexer) {
+        return ((MasqueradingLexer)myDelegate).getMasqueTokenText();
+      }
+
+      return myDelegate.getTokenText();
+    }
+  }
+
 }

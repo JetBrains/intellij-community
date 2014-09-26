@@ -41,17 +41,12 @@ public abstract class Settings {
 
   @Nullable
   public final <T extends Configurable> T find(@NotNull Class<T> type) {
-    Configurable configurable = new ConfigurableVisitor.ByType(type).find(myGroups);
-    if (type.isInstance(configurable)) {
-      return type.cast(configurable);
-    }
-    return unwrap(configurable, type);
+    return unwrap(new ConfigurableVisitor.ByType(type).find(myGroups), type);
   }
 
   @Nullable
   public final Configurable find(@NotNull String id) {
-    Configurable configurable = new ConfigurableVisitor.ByID(id).find(myGroups);
-    return choose(configurable, unwrap(configurable, Configurable.class));
+    return unwrap(new ConfigurableVisitor.ByID(id).find(myGroups), Configurable.class);
   }
 
   @NotNull
@@ -64,15 +59,11 @@ public abstract class Settings {
   protected abstract ActionCallback selectImpl(Configurable configurable);
 
   private <T extends Configurable> T unwrap(Configurable configurable, Class<T> type) {
-    if (configurable instanceof ConfigurableWrapper) {
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-      UnnamedConfigurable unnamed = wrapper.getConfigurable();
-      if (type.isInstance(unnamed)) {
-        myMap.put(unnamed, wrapper);
-        return type.cast(unnamed);
-      }
+    T result = ConfigurableWrapper.cast(type, configurable);
+    if (result != null && configurable instanceof ConfigurableWrapper) {
+      myMap.put(result, (ConfigurableWrapper)configurable);
     }
-    return null;
+    return result;
   }
 
   private static Configurable choose(Configurable configurable, Configurable variant) {

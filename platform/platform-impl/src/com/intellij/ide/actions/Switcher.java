@@ -1128,7 +1128,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (value instanceof FileInfo) {
         Project project = mySwitcherPanel.project;
         VirtualFile virtualFile = ((FileInfo)value).getFirst();
-        String name = virtualFile instanceof VirtualFilePathWrapper
+        String name = virtualFile instanceof VirtualFilePathWrapper && ((VirtualFilePathWrapper)virtualFile).enforcePresentableName()
                       ? ((VirtualFilePathWrapper)virtualFile).getPresentablePath()
                       : UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES
                         ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, virtualFile)

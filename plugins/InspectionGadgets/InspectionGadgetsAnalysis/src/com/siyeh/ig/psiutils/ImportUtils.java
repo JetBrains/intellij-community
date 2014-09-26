@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ImportUtils {
+public final class ImportUtils {
 
   private ImportUtils() {}
 
@@ -63,8 +63,7 @@ public class ImportUtils {
     if (containingPackageName.equals(packageName) || importList.findSingleClassImportStatement(qualifiedName) != null) {
       return;
     }
-    if (importList.findOnDemandImportStatement(packageName) != null &&
-        !hasDefaultImportConflict(qualifiedName, javaFile) && !hasOnDemandImportConflict(qualifiedName, javaFile)) {
+    if (importList.findOnDemandImportStatement(packageName) != null && !hasOnDemandImportConflict(qualifiedName, javaFile)) {
       return;
     }
     if (hasExactImportConflict(qualifiedName, javaFile)) {
@@ -99,7 +98,7 @@ public class ImportUtils {
     if (innerClass != null && PsiUtil.isAccessible(innerClass, context, null)) {
       return false;
     }
-    return !hasOnDemandImportStaticConflict(fqName, memberName, context, true) &&
+    return !hasOnDemandImportConflict(fqName + '.' + memberName, context, true) &&
            !hasExactImportStaticConflict(fqName, memberName, context);
   }
 
@@ -130,7 +129,7 @@ public class ImportUtils {
         return false;
       }
       field = containingClass.findFieldByName(shortName, true);
-      if (field != null && PsiUtil.isAccessible(containingClass.getProject(), field, containingClass, null)) {
+      if (field != null && PsiUtil.isAccessible(field, containingClass, null)) {
         return false;
       }
     }
@@ -225,8 +224,8 @@ public class ImportUtils {
     return false;
   }
 
-  public static boolean hasOnDemandImportConflict(@NotNull String fqName, @NotNull PsiJavaFile file) {
-    return hasOnDemandImportConflict(fqName, file, false);
+  public static boolean hasOnDemandImportConflict(@NotNull String fqName, @NotNull PsiElement context) {
+    return hasOnDemandImportConflict(fqName, context, false);
   }
 
   /**
@@ -235,15 +234,20 @@ public class ImportUtils {
    *               on demand import can be overridden with an exact import for the fqName
    *               without breaking stuff.
    */
-  private static boolean hasOnDemandImportConflict(@NotNull String fqName, @NotNull PsiJavaFile file, boolean strict) {
-    final PsiImportList imports = file.getImportList();
+  private static boolean hasOnDemandImportConflict(@NotNull String fqName, @NotNull PsiElement context, boolean strict) {
+    final PsiFile containingFile = context.getContainingFile();
+    if (!(containingFile instanceof PsiJavaFile)) {
+      return false;
+    }
+    final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
+    final PsiImportList imports = javaFile.getImportList();
     if (imports == null) {
       return false;
     }
-    final PsiImportStatement[] importStatements = imports.getImportStatements();
+    final PsiImportStatementBase[] importStatements = imports.getAllImportStatements();
     final String shortName = ClassUtil.extractClassName(fqName);
     final String packageName = ClassUtil.extractPackageName(fqName);
-    for (final PsiImportStatement importStatement : importStatements) {
+    for (final PsiImportStatementBase importStatement : importStatements) {
       if (!importStatement.isOnDemand()) {
         continue;
       }
@@ -256,67 +260,75 @@ public class ImportUtils {
         continue;
       }
       final PsiElement element = importReference.resolve();
-      if (!(element instanceof PsiPackage)) {
-        continue;
-      }
-      final PsiPackage aPackage = (PsiPackage)element;
-      if (!strict && aPackage.containsClassNamed(shortName)) {
-        return true;
-      }
-      else {
-        final PsiClass[] classes = aPackage.findClassByShortName(shortName, file.getResolveScope());
-        for (final PsiClass aClass : classes) {
-          final String qualifiedClassName = aClass.getQualifiedName();
-          if (qualifiedClassName == null || fqName.equals(qualifiedClassName)) {
-            continue;
+      if (element instanceof PsiPackage) {
+        final PsiPackage aPackage = (PsiPackage)element;
+        if (!strict) {
+          if (aPackage.containsClassNamed(shortName)) {
+            return true;
           }
-          return containsConflictingReference(file, qualifiedClassName);
+        }
+        else {
+          final PsiClass[] classes = aPackage.findClassByShortName(shortName, containingFile.getResolveScope());
+          for (final PsiClass aClass : classes) {
+            final String qualifiedClassName = aClass.getQualifiedName();
+            if (qualifiedClassName == null || fqName.equals(qualifiedClassName)) {
+              continue;
+            }
+            return containsConflictingReference(containingFile, qualifiedClassName);
+          }
+        }
+      }
+      else if (element instanceof PsiClass) {
+        final PsiClass aClass = (PsiClass)element;
+        final PsiClass innerClass = aClass.findInnerClassByName(shortName, true);
+        if (importStatement instanceof PsiImportStatement) {
+          if (innerClass != null && PsiUtil.isAccessible(innerClass, containingFile, null)) {
+            final String qualifiedName = innerClass.getQualifiedName();
+            if (!fqName.equals(qualifiedName) && (!strict || containsConflictingReference(containingFile, qualifiedName))) {
+              return true;
+            }
+          }
+        }
+        else {
+          if (innerClass != null && PsiUtil.isAccessible(innerClass, containingFile, null) &&
+              innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+            final String qualifiedName = innerClass.getQualifiedName();
+            if (!fqName.equals(qualifiedName) && (!strict || memberReferenced(innerClass, javaFile))) {
+              return true;
+            }
+          }
+          final PsiField field = aClass.findFieldByName(shortName, true);
+          if (field != null && PsiUtil.isAccessible(field, containingFile, null) && field.hasModifierProperty(PsiModifier.STATIC)) {
+            final PsiClass containingClass = field.getContainingClass();
+            if (containingClass == null) {
+              continue;
+            }
+            final String qualifiedName = containingClass.getQualifiedName() + '.' + field.getName();
+            if (!fqName.equals(qualifiedName) && (!strict || memberReferenced(field, javaFile))) {
+              return true;
+            }
+          }
+          final PsiMethod[] methods = aClass.findMethodsByName(shortName, true);
+          for (PsiMethod method : methods) {
+            if (!PsiUtil.isAccessible(method, containingFile, null) || !method.hasModifierProperty(PsiModifier.STATIC)) {
+              continue;
+            }
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass == null) {
+              continue;
+            }
+            final String qualifiedName = containingClass.getQualifiedName() + '.' + method.getName();
+            if (!fqName.equals(qualifiedName) && (!strict || memberReferenced(method, javaFile))) {
+              return true;
+            }
+          }
         }
       }
     }
-    return hasJavaLangImportConflict(fqName, file);
+    return hasJavaLangImportConflict(fqName, javaFile) || hasDefaultImportConflict(fqName, javaFile);
   }
 
-  private static boolean hasOnDemandImportStaticConflict(String fqName, String memberName, PsiElement context) {
-    return hasOnDemandImportStaticConflict(fqName, memberName, context, false);
-  }
-
-  private static boolean hasOnDemandImportStaticConflict(String fqName, String memberName, PsiElement context, boolean strict) {
-    final PsiFile file = context.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) {
-      return false;
-    }
-    final PsiJavaFile javaFile = (PsiJavaFile)file;
-    final PsiImportList importList = javaFile.getImportList();
-    if (importList == null) {
-      return false;
-    }
-    final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
-    for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
-      if (!importStaticStatement.isOnDemand()) {
-        continue;
-      }
-      final PsiClass targetClass = importStaticStatement.resolveTargetClass();
-      if (targetClass == null) {
-        continue;
-      }
-      final String name = targetClass.getQualifiedName();
-      if (fqName.equals(name)) {
-        continue;
-      }
-      final PsiField field = targetClass.findFieldByName(memberName, true);
-      if (field != null && (!strict || memberReferenced(field, javaFile))) {
-        return true;
-      }
-      final PsiMethod[] methods = targetClass.findMethodsByName(memberName, true);
-      if (methods.length > 0 && (!strict || membersReferenced(methods, javaFile))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static boolean hasDefaultImportConflict(String fqName, PsiJavaFile file) {
+  private static boolean hasDefaultImportConflict(String fqName, PsiJavaFile file) {
     final String shortName = ClassUtil.extractClassName(fqName);
     final String packageName = ClassUtil.extractPackageName(fqName);
     final String filePackageName = file.getPackageName();
@@ -332,7 +344,7 @@ public class ImportUtils {
     return filePackage.containsClassNamed(shortName);
   }
 
-  public static boolean hasJavaLangImportConflict(String fqName, PsiJavaFile file) {
+  private static boolean hasJavaLangImportConflict(String fqName, PsiJavaFile file) {
     final String shortName = ClassUtil.extractClassName(fqName);
     final String packageName = ClassUtil.extractPackageName(fqName);
     if (HardcodedMethodConstants.JAVA_LANG.equals(packageName)) {
@@ -408,7 +420,7 @@ public class ImportUtils {
       return false;
     }
     final PsiImportStaticStatement onDemandImportStatement = findOnDemandImportStaticStatement(importList, qualifierClass);
-    if (onDemandImportStatement != null && !hasOnDemandImportStaticConflict(qualifierClass, memberName, context)) {
+    if (onDemandImportStatement != null && !hasOnDemandImportConflict(qualifierClass + '.' + memberName, javaFile)) {
       return true;
     }
     final Project project = context.getProject();
@@ -506,7 +518,7 @@ public class ImportUtils {
     }
     final PsiImportStaticStatement onDemandImportStatement = findOnDemandImportStaticStatement(importList, memberClassName);
     if (onDemandImportStatement != null) {
-      if (!hasOnDemandImportStaticConflict(memberClassName, memberName, context)) {
+      if (!hasOnDemandImportConflict(memberClassName + '.' + memberName, javaFile)) {
         return true;
       }
     }
@@ -566,11 +578,12 @@ public class ImportUtils {
    */
   public static boolean containsConflictingReference(PsiFile element, String fullyQualifiedName) {
     final Map<String, Boolean> cachedValue =
-      CachedValuesManager.getManager(element.getProject()).getCachedValue(element, new CachedValueProvider<Map<String, Boolean>>() {
+      CachedValuesManager.getCachedValue(element, new CachedValueProvider<Map<String, Boolean>>() {
         @Nullable
         @Override
         public Result<Map<String, Boolean>> compute() {
-          return new Result<Map<String, Boolean>>(Collections.synchronizedMap(new HashMap<String, Boolean>()), PsiModificationTracker.MODIFICATION_COUNT);
+          return new Result<Map<String, Boolean>>(Collections.synchronizedMap(new HashMap<String, Boolean>()),
+                                                  PsiModificationTracker.MODIFICATION_COUNT);
         }
       });
     Boolean conflictingRef = cachedValue.get(fullyQualifiedName);

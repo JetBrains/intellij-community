@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EmbeddedLazyParseableElementType extends ILazyParseableElementType {
+public class EmbeddedLazyParseableElementType extends ILazyParseableElementType implements EmbeddingElementType {
 
   public EmbeddedLazyParseableElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
     super(debugName, language);

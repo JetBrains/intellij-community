@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.project.ExternalModuleBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -69,9 +70,9 @@ public class GradleBuildClasspathManager {
     final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
     for (final ExternalProjectBuildClasspathPojo projectBuildClasspathPojo : localSettings.getProjectBuildClasspath().values()) {
       final List<VirtualFile> projectBuildClasspath = ContainerUtil.newArrayList();
-      ExternalSystemApiUtil.executeOnEdt(true, new Runnable() {
+      ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
         @Override
-        public void run() {
+        public void execute() {
           for (String path : projectBuildClasspathPojo.getProjectBuildClasspath()) {
             final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByPath(path);
             if (virtualFile != null) {
@@ -84,9 +85,9 @@ public class GradleBuildClasspathManager {
 
       for (final ExternalModuleBuildClasspathPojo moduleBuildClasspathPojo : projectBuildClasspathPojo.getModulesBuildClasspath().values()) {
         final List<VirtualFile> moduleBuildClasspath = ContainerUtil.newArrayList(projectBuildClasspath);
-        ExternalSystemApiUtil.executeOnEdt(true, new Runnable() {
+        ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
           @Override
-          public void run() {
+          public void execute() {
             for (String path : moduleBuildClasspathPojo.getEntries()) {
               final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByPath(path);
               if (virtualFile != null) {
