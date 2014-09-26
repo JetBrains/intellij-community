@@ -61,7 +61,7 @@ public class ExecutionPointHighlighter {
       colorsManager.addEditorColorsListener(new EditorColorsListener() {
         @Override
         public void globalSchemeChange(EditorColorsScheme scheme) {
-          update();
+          update(false);
         }
       }, project);
     }
@@ -122,13 +122,13 @@ public class ExecutionPointHighlighter {
     return myOpenFileDescriptor != null ? myOpenFileDescriptor.getFile() : null;
   }
 
-  public void update() {
+  public void update(final boolean navigate) {
     if (updateRequested.compareAndSet(false, true)) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
           if (updateRequested.compareAndSet(true, false)) {
-            doShow(false);
+            doShow(navigate);
           }
         }
       }, myProject.getDisposed());
