@@ -52,7 +52,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
       myProject = project;
 
-      myComponent = new ArrayTableForm(this);
+      myComponent = new ArrayTableForm(this, myProject);
       myTable = myComponent.getTable();
 
       init();
@@ -74,7 +74,6 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
         }
         else {
           myComponent.setNotApplicableStatus(node);
-          //this.close(CLOSE_EXIT_CODE);
         }
       }
     }

@@ -94,11 +94,12 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
 
 
   private void falseFill() {
-    int size = 50;
-    Object[][] data = new Object[size][size];
+    int rsize = 30;
+    int csize = 40;
+    Object[][] data = new Object[rsize][csize];
 
-    for (int i = 0; i < size; i++) {
-      for (int j = 0; j < size; j++) {
+    for (int i = 0; i < rsize; i++) {
+      for (int j = 0; j < csize; j++) {
         data[i][j] = "(" + i + "," + j + ")";
       }
     }
