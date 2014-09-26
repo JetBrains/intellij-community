@@ -794,11 +794,11 @@ public class SingleInspectionProfilePanel extends JPanel {
                                                  new Insets(10, 0, 10, 0), 0, 0));
         final JComponent severityLevelChooserComponent = severityLevelChooser.createCustomComponent(severityLevelChooser.getTemplatePresentation());
         severityPanel.add(severityLevelChooserComponent,
-                          new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                          new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                  new Insets(10, 0, 10, 0), 0, 0));
         final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(scopesChooser.getTemplatePresentation());
         severityPanel.add(scopesChooserComponent,
-                          new GridBagConstraints(2, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                          new GridBagConstraints(2, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                  new Insets(10, 0, 10, 0), 0, 0));
         final JLabel label = new JLabel("", SwingConstants.RIGHT);
         severityPanel.add(label,
