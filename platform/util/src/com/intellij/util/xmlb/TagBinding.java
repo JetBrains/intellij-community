@@ -28,32 +28,32 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class TagBinding implements Binding {
-  private final Accessor accessor;
+class TagBinding extends BasePrimitiveBinding {
   private final Tag myTagAnnotation;
-  private final String myTagName;
-  private final Binding binding;
 
   public TagBinding(Accessor accessor, Tag tagAnnotation) {
-    this.accessor = accessor;
+    super(accessor, tagAnnotation.value(), null);
+
     myTagAnnotation = tagAnnotation;
-    myTagName = tagAnnotation.value();
-    binding = XmlSerializerImpl.getBinding(accessor);
   }
 
+  @Nullable
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
-    Object value = accessor.read(o);
+  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
+    Object value = myAccessor.read(o);
+    Element v = new Element(myName);
     if (value == null) {
-      return null;
+      return v;
     }
 
-    Element v = new Element(myTagName);
-    Object node = binding.serialize(value, v, filter);
-    if (node != null && node != v) {
+    assert myBinding != null;
+    Object node = myBinding.serialize(value, v, filter);
+    if (node != v) {
+      if (node == null) {
+        return context == null ? v : null;
+      }
       JDOMUtil.addContent(v, node);
     }
-
     return v;
   }
 
@@ -79,23 +79,15 @@ class TagBinding implements Binding {
       children = new Object[] {new Text(myTagAnnotation.textIfEmpty())};
     }
 
-    Object v = binding.deserialize(accessor.read(o), children);
-    Object value = XmlSerializerImpl.convert(v, accessor.getValueClass());
-    accessor.write(o, value);
+    assert myBinding != null;
+    Object v = myBinding.deserialize(myAccessor.read(o), children);
+    Object value = XmlSerializerImpl.convert(v, myAccessor.getValueClass());
+    myAccessor.write(o, value);
     return o;
   }
 
   @Override
   public boolean isBoundTo(Object node) {
-    return node instanceof Element && ((Element)node).getName().equals(myTagName);
-  }
-
-  @Override
-  public Class getBoundNodeType() {
-    throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
-  }
-
-  @Override
-  public void init() {
+    return node instanceof Element && ((Element)node).getName().equals(myName);
   }
 }

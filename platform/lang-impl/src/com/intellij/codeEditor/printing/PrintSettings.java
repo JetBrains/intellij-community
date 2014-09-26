@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 @State(
-  name="PrintSettings",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/print.xml"
-    )}
+  name = "PrintSettings",
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/print.xml")}
 )
-public class PrintSettings implements PersistentStateComponent<PrintSettings>, ExportableComponent {
+public class PrintSettings implements PersistentStateComponent<PrintSettings> {
   @NonNls public String PAPER_SIZE = "A4";
 
   public boolean COLOR_PRINTING = false;
@@ -79,18 +71,6 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings>, E
 
   public static PrintSettings getInstance() {
     return ServiceManager.getService(PrintSettings.class);
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("print")};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return CodeEditorBundle.message("title.print.settings");
   }
 
   public int getPrintScope() {

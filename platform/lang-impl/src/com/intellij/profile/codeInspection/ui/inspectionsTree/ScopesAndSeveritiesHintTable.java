@@ -36,8 +36,8 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
   private final static int SCOPE_COLUMN = 0;
   private final static int SEVERITY_COLUMN = 1;
 
-  public ScopesAndSeveritiesHintTable(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap) {
-    super(new MyModel(scopeToAverageSeverityMap));
+  public ScopesAndSeveritiesHintTable(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap, String defaultScopeName) {
+    super(new MyModel(scopeToAverageSeverityMap, defaultScopeName));
 
     getColumnModel().getColumn(SCOPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
       @Override
@@ -90,10 +90,12 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
   private final static class MyModel extends AbstractTableModel {
 
     private final LinkedHashMap<String, HighlightDisplayLevel> myScopeToAverageSeverityMap;
+    private final String myDefaultScopeName;
     private final List<String> myScopes;
 
-    public MyModel(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap) {
+    public MyModel(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap, String defaultScopeName) {
       myScopeToAverageSeverityMap = scopeToAverageSeverityMap;
+      myDefaultScopeName = defaultScopeName;
       myScopes = new ArrayList<String>(myScopeToAverageSeverityMap.keySet());
     }
 
@@ -118,9 +120,11 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
 
     @Override
     public Object getValueAt(final int rowIndex, final int columnIndex) {
+      final String scopeName = myScopes.get(rowIndex);
       switch (columnIndex) {
-        case SCOPE_COLUMN: return rowIndex < getRowCount() - 1 ? myScopes.get(rowIndex) : "Everywhere else";
-        case SEVERITY_COLUMN: return myScopeToAverageSeverityMap.get(myScopes.get(rowIndex));
+        case SCOPE_COLUMN:
+          return myDefaultScopeName.equals(scopeName) ? "Everywhere else" : scopeName;
+        case SEVERITY_COLUMN: return myScopeToAverageSeverityMap.get(scopeName);
         default: throw new IllegalArgumentException();
       }
 

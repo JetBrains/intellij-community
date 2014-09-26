@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -37,8 +38,6 @@ import org.picocontainer.PicoContainer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -135,25 +134,9 @@ public class FileBasedStorage extends XmlElementStorage {
       myCachedVirtualFile = StorageUtil.save(myFile, getElementToSave(), this, true, myCachedVirtualFile);
     }
 
-    @NotNull
     @Override
-    public Collection<File> getStorageFilesToSave() {
-      if (needsSave()) {
-        if (LOG.isDebugEnabled()) {
-          LOG.info("File " + myFileSpec + " needs save; hash=" + myUpToDateHash + "; currentHash=" + calcHash() + "; " +
-                   "content needs save=" + physicalContentNeedsSave());
-        }
-        return getAllStorageFiles();
-      }
-      else {
-        return Collections.emptyList();
-      }
-    }
-
-    @NotNull
-    @Override
-    public List<File> getAllStorageFiles() {
-      return Collections.singletonList(myFile);
+    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
+      ContainerUtil.addIfNotNull(files, getVirtualFile());
     }
   }
 

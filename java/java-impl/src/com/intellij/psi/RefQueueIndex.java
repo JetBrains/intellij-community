@@ -102,7 +102,7 @@ public class RefQueueIndex extends FileBasedIndexExtension<Void,Void> {
     return new FileBasedIndex.InputFilter() {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
-        return !file.isDirectory() && RefResolveServiceImpl.isSupportedFileType(file);
+        return ResolveScopeManagerImpl.ENABLED_REF_BACK && !file.isDirectory() && RefResolveServiceImpl.isSupportedFileType(file);
       }
     };
   }
@@ -114,6 +114,6 @@ public class RefQueueIndex extends FileBasedIndexExtension<Void,Void> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return ResolveScopeManagerImpl.ENABLED_REF_BACK ? 0xFF : 0;
   }
 }

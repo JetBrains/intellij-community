@@ -19,6 +19,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.projectImport.ProjectSetProcessor;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,8 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class ProjectSetReader {
+
+  private static final Logger LOG = Logger.getInstance(ProjectSetReader.class);
 
   public void readDescriptor(@Language("JSON") @NotNull String descriptor) {
 
@@ -43,6 +46,11 @@ public class ProjectSetReader {
     for (Map.Entry<String, JsonElement> entry : parse.getAsJsonObject().entrySet()) {
       String key = entry.getKey();
       ProjectSetProcessor processor = processors.get(key);
+      if (processor == null) {
+        LOG.error("Processor not found for " + key);
+        continue;
+      }
+
       JsonObject object = entry.getValue().getAsJsonObject();
       for (Map.Entry<String, JsonElement> elementEntry : object.entrySet()) {
         Object o = processor.interactWithUser();

@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -97,11 +96,7 @@ public interface StateStorageManager {
     @Nullable
     Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files);
 
-    @NotNull
-    List<File> getAllStorageFilesToSave() throws StateStorageException;
-
-    @NotNull
-    List<File> getAllStorageFiles();
+    void collectAllStorageFiles(@NotNull List<VirtualFile> files);
 
     void save() throws StateStorageException;
   }

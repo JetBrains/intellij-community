@@ -123,4 +123,21 @@ class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
       referencesStaticallyAccessible = false;
     }
   }
+
+  @Override
+  public void visitTypeElement(PsiTypeElement typeElement) {
+    if (!referencesStaticallyAccessible) {
+      return;
+    }
+    super.visitTypeElement(typeElement);
+    final PsiType type = typeElement.getType();
+    if (!(type instanceof PsiClassType)) {
+      return;
+    }
+    final PsiClassType classType = (PsiClassType)type;
+    final PsiClass aClass = classType.resolve();
+    if ((aClass instanceof PsiTypeParameter) && !PsiTreeUtil.isAncestor(innerClass, aClass, true)) {
+      referencesStaticallyAccessible = false;
+    }
+  }
 }

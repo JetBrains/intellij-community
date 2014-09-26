@@ -51,7 +51,6 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest("<Bean />", new EmptyBeanWithCustomName());
   }
 
-
   public static class BeanWithPublicFields implements Comparable<BeanWithPublicFields> {
     public int INT_V = 1;
     public String STRING_V = "hello";
@@ -127,9 +126,6 @@ public class XmlSerializerTest extends TestCase {
     BeanWithSubBean bean = new BeanWithSubBean();
     doSerializerTest(
       "<BeanWithSubBean>\n" +
-      "  <option name=\"BEAN1\">\n" +
-      "    <Bean />\n" +
-      "  </option>\n" +
       "  <option name=\"BEAN2\">\n" +
       "    <BeanWithPublicFields>\n" +
       "      <option name=\"INT_V\" value=\"1\" />\n" +
@@ -143,9 +139,6 @@ public class XmlSerializerTest extends TestCase {
 
     doSerializerTest(
       "<BeanWithSubBean>\n" +
-      "  <option name=\"BEAN1\">\n" +
-      "    <Bean />\n" +
-      "  </option>\n" +
       "  <option name=\"BEAN2\">\n" +
       "    <BeanWithPublicFields>\n" +
       "      <option name=\"INT_V\" value=\"2\" />\n" +
@@ -790,11 +783,7 @@ public class XmlSerializerTest extends TestCase {
     final BeanWithPolymorphicArray bean = new BeanWithPolymorphicArray();
 
     doSerializerTest(
-      "<BeanWithPolymorphicArray>\n" +
-      "  <option name=\"V\">\n" +
-      "    <array />\n" +
-      "  </option>\n" +
-      "</BeanWithPolymorphicArray>", bean);
+      "<BeanWithPolymorphicArray />", bean);
 
     bean.V = new BeanWithPublicFields[] {new BeanWithPublicFields(), new BeanWithPublicFieldsDescendant(), new BeanWithPublicFields()};
 
@@ -1191,6 +1180,20 @@ public class XmlSerializerTest extends TestCase {
                      "</BeanWithConverter>", bean);
   }
 
+  public void testConverterUsingSkipDefaultsFilters() {
+    BeanWithConverter bean = new BeanWithConverter();
+    doSerializerTest("<BeanWithConverter />", bean, new SkipDefaultValuesSerializationFilters());
+
+    bean.foo = Ref.create("testValue");
+    doSerializerTest("<BeanWithConverter foo=\"testValue\" />", bean, new SkipDefaultValuesSerializationFilters());
+
+    bean.foo = Ref.create();
+    bean.bar = Ref.create("testValue2");
+    doSerializerTest("<BeanWithConverter foo=\"\">\n" +
+                     "  <option name=\"bar\" value=\"testValue2\" />\n" +
+                     "</BeanWithConverter>", bean);
+  }
+
   private static class BeanWithDefaultAttributeName {
     @Attribute
     public String getFoo() {
@@ -1212,36 +1215,27 @@ public class XmlSerializerTest extends TestCase {
   }
 
   private static <T> T doSerializerTest(@Language("XML") String expectedText, T bean) {
-    try {
-      Element element = assertSerializer(bean, expectedText, null);
+    return doSerializerTest(expectedText, bean, null);
+  }
 
-      //test deserializer
+  private static <T> T doSerializerTest(@Language("XML") String expectedText, T bean, @Nullable SerializationFilter filter) {
+    Element element = assertSerializer(bean, expectedText, filter);
 
-      Class<T> aClass = (Class<T>)bean.getClass();
-      T o = XmlSerializer.deserialize(element, aClass);
-      assertSerializer(o, expectedText, "Deserialization failure", null);
-      return o;
-    }
-    catch (XmlSerializationException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    //test deserializer
+    Class<T> aClass = (Class<T>)bean.getClass();
+    T o = XmlSerializer.deserialize(element, aClass);
+    assertSerializer(o, expectedText, "Deserialization failure", filter);
+    return o;
   }
 
   private static Element assertSerializer(Object bean, String expectedText, String message, SerializationFilter filter) throws XmlSerializationException {
     Element element = serialize(bean, filter);
-
-
     String actualString = JDOMUtil.writeElement(element, "\n").trim();
-
     if (!expectedText.startsWith(XML_PREFIX)) {
       if (actualString.startsWith(XML_PREFIX)) actualString = actualString.substring(XML_PREFIX.length()).trim();
     }
 
     assertEquals(message, expectedText, actualString);
-
     return element;
   }
 

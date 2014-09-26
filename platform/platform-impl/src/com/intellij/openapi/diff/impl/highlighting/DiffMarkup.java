@@ -172,7 +172,6 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     marker.setLineSeparatorRenderer(new LineSeparatorRenderer() {
       @Override
       public void drawLine(Graphics g, int x1, int x2, int y) {
-        x2 = g.getClipBounds().width;
         if (type.isInlineWrapper()) {
           UIUtil.drawLine((Graphics2D)g, x1, y, x2, y, null, DiffUtil.getFramingColor(color));
         }

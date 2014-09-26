@@ -20,6 +20,7 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -138,7 +139,7 @@ public class MockProjectStore implements IProjectStore {
 
   @Override
   @NotNull
-  public SaveSession startSave() {
+  public ComponentSaveSession startSave() {
     throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
   }
 

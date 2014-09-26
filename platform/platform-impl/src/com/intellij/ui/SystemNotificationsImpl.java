@@ -16,16 +16,13 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -33,13 +30,11 @@ import java.util.Set;
  */
 @State(
   name = "SystemNotifications",
-  storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
-  }
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/systemNotifications.xml", roamingType = RoamingType.DISABLED)}
 )
 public class SystemNotificationsImpl extends SystemNotifications implements PersistentStateComponent<SystemNotificationsImpl.State> {
   public static class State {
-    public Set<String> NOTIFICATIONS = new HashSet<String>();
+    public Set<String> NOTIFICATIONS = new THashSet<String>();
   }
 
   interface Notifier {

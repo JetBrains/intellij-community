@@ -29,13 +29,15 @@ public class TextBinding implements Binding {
     myAccessor = accessor;
   }
 
+  @Nullable
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
-    final Object v = myAccessor.read(o);
-    if (v == null) return context;
-    final Object node = myBinding.serialize(v, context, filter);
-
-    return new Text(((Content)node).getValue());
+  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
+    Object v = myAccessor.read(o);
+    if (v == null) {
+      return null;
+    }
+    Object node = myBinding.serialize(v, context, filter);
+    return node == null ? null : new Text(((Content)node).getValue());
   }
 
   @Override

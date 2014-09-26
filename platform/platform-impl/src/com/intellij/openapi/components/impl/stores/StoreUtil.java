@@ -15,9 +15,13 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.components.store.ComponentSaveSession;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
+import java.util.List;
 
 /**
  * @author yole
@@ -26,11 +30,12 @@ public class StoreUtil {
   private StoreUtil() {
   }
 
-  public static void doSave(@NotNull IComponentStore stateStore) throws IOException {
-    IComponentStore.SaveSession session = null;
+  public static void doSave(@NotNull IComponentStore stateStore) {
+    ComponentSaveSession session = null;
     try {
       session = stateStore.startSave();
-      session.save();
+      List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles = new SmartList<Pair<StateStorageManager.SaveSession, VirtualFile>>();
+      session.save(readonlyFiles);
     }
     finally {
       if (session != null) {

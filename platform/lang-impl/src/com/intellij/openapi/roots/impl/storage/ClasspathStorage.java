@@ -36,7 +36,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -49,7 +52,9 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -76,7 +81,7 @@ public class ClasspathStorage implements StateStorage {
     final MessageBus messageBus = module.getMessageBus();
     final VirtualFileTracker virtualFileTracker =
       (VirtualFileTracker)module.getPicoContainer().getComponentInstanceOfType(VirtualFileTracker.class);
-    if (virtualFileTracker != null && messageBus != null) {
+    if (virtualFileTracker != null) {
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
       try {
         myConverter.getFileSet().listFiles(files);
@@ -190,11 +195,6 @@ public class ClasspathStorage implements StateStorage {
     return session;
   }
 
-  private static void convert2Io(List<File> list, ArrayList<VirtualFile> virtualFiles) {
-    for (VirtualFile virtualFile : virtualFiles) {
-      list.add(VfsUtilCore.virtualToIoFile(virtualFile));
-    }
-  }
 
   @Override
   public void finishSave(@NotNull final SaveSession saveSession) {
@@ -208,10 +208,6 @@ public class ClasspathStorage implements StateStorage {
 
   @Override
   public void reload(@NotNull Set<String> changedComponents) {
-  }
-
-  public boolean needsSave() throws StateStorageException {
-    return getFileSet().hasChanged();
   }
 
   public void save() throws StateStorageException {
@@ -253,6 +249,7 @@ public class ClasspathStorage implements StateStorage {
 
   @NotNull
   public static String getModuleDir(@NotNull Module module) {
+    //noinspection ConstantConditions
     return new File(module.getModuleFilePath()).getParent();
   }
 
@@ -404,13 +401,8 @@ public class ClasspathStorage implements StateStorage {
   }
 
   private class MySaveSession implements SaveSession, SafeWriteRequestor {
-    public boolean needsSave() throws StateStorageException {
-      assert mySession == this;
-      return ClasspathStorage.this.needsSave();
-    }
-
     @Override
-    public void save() throws StateStorageException {
+    public void save() {
       assert mySession == this;
       ClasspathStorage.this.save();
     }
@@ -421,29 +413,9 @@ public class ClasspathStorage implements StateStorage {
       return null;
     }
 
-    @NotNull
     @Override
-    public Collection<File> getStorageFilesToSave() throws StateStorageException {
-      if (needsSave()) {
-        final List<File> list = new ArrayList<File>();
-        final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
-        getFileSet().listModifiedFiles(virtualFiles);
-        convert2Io(list, virtualFiles);
-        return list;
-      }
-      else {
-        return Collections.emptyList();
-      }
-    }
-
-    @NotNull
-    @Override
-    public List<File> getAllStorageFiles() {
-      List<File> list = new ArrayList<File>();
-      ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
-      getFileSet().listFiles(virtualFiles);
-      convert2Io(list, virtualFiles);
-      return list;
+    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
+      getFileSet().listFiles(files);
     }
   }
 }

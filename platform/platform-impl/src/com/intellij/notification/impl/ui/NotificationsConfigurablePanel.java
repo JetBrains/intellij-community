@@ -19,9 +19,11 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
@@ -55,11 +57,15 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     setLayout(new BorderLayout());
     myTable = new NotificationsTable();
 
+    boolean newSettings = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view");
     JScrollPane scrollPane = new JBScrollPane(myTable);
-    scrollPane.setBorder(new LineBorder(UIUtil.getBorderColor()));
+    scrollPane.setBorder(newSettings ? BorderFactory.createEmptyBorder() : new LineBorder(UIUtil.getBorderColor()));
     add(scrollPane, BorderLayout.CENTER);
     myDisplayBalloons = new JCheckBox("Display balloon notifications");
     myDisplayBalloons.setMnemonic('b');
+    if (newSettings) {
+      myDisplayBalloons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    }
     add(myDisplayBalloons, BorderLayout.NORTH);
     myDisplayBalloons.addActionListener(new ActionListener() {
       @Override

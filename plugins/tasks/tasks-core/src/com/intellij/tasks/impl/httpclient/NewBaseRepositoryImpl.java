@@ -1,5 +1,6 @@
 package com.intellij.tasks.impl.httpclient;
 
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.BaseRepository;
@@ -17,6 +18,7 @@ import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -144,10 +146,17 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
   private static class PreemptiveBasicAuthInterceptor implements HttpRequestInterceptor {
     @Override
     public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
-      CredentialsProvider provider = (CredentialsProvider)context.getAttribute(HttpClientContext.CREDS_PROVIDER);
-      Credentials credentials = provider.getCredentials(BASIC_AUTH_SCOPE);
+      final CredentialsProvider provider = (CredentialsProvider)context.getAttribute(HttpClientContext.CREDS_PROVIDER);
+      final Credentials credentials = provider.getCredentials(BASIC_AUTH_SCOPE);
       if (credentials != null) {
-        request.addHeader(new BasicScheme(Consts.UTF_8).authenticate(credentials, request, context));
+        request.addHeader(new BasicScheme(CharsetToolkit.UTF8_CHARSET).authenticate(credentials, request, context));
+      }
+      final HttpHost proxyHost = ((HttpRoute)context.getAttribute(HttpClientContext.HTTP_ROUTE)).getProxyHost();
+      if (proxyHost != null) {
+        final Credentials proxyCredentials = provider.getCredentials(new AuthScope(proxyHost));
+        if (proxyCredentials != null) {
+          request.addHeader(BasicScheme.authenticate(proxyCredentials, CharsetToolkit.UTF8, true));
+        }
       }
     }
   }
