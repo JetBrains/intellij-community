@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class UniqueNameEditorTabTitleProvider implements EditorTabTitleProvider {
   @Override
   public String getEditorTabTitle(Project project, VirtualFile file) {
-    if (!UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES || DumbService.isDumb(project) || !file.isInLocalFileSystem()) {
+    if (!UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES || DumbService.isDumb(project)) {
       return null;
     }
     final String uniqueName = UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePathWithinOpenedFileEditors(project, file);

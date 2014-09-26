@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.ProjectScope;
 import gnu.trove.THashSet;
@@ -63,6 +64,9 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     filesWithSameName = setOfFilesWithTheSameName;
 
     if (filesWithSameName.size() > 1 && filesWithSameName.contains(file)) {
+      if (file instanceof VirtualFilePathWrapper) {
+        return ((VirtualFilePathWrapper)file).getPresentablePath();
+      }
       String path = project.getBasePath();
       path = path == null ? "" : FileUtil.toSystemIndependentName(path);
       UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<VirtualFile>(path, File.separator, 25);
