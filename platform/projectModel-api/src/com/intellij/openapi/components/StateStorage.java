@@ -51,7 +51,7 @@ public interface StateStorage {
   }
 
   interface SaveSession {
-    void save() throws StateStorageException;
+    void save();
 
     /**
      * Get changed component names

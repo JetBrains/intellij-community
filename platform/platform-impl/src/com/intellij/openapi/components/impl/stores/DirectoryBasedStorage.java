@@ -25,7 +25,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
@@ -168,7 +171,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   public void dispose() {
   }
 
-  private class MySaveSession implements SaveSession, SafeWriteRequestor {
+  private class MySaveSession implements SaveSession {
     private final DirectoryStorageData myStorageData;
     private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
 

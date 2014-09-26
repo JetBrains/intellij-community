@@ -18,6 +18,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
@@ -92,7 +93,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   }
 
   private class ProjectWithModulesSaveSession extends ProjectSaveSession {
-    List<SaveSession> myModuleSaveSessions = new SmartList<SaveSession>();
+    List<ComponentSaveSession> myModuleSaveSessions = new SmartList<ComponentSaveSession>();
 
     public ProjectWithModulesSaveSession() {
       for (Module module : getPersistentModules()) {
@@ -105,7 +106,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     public List<File> getAllStorageFiles(boolean includingSubStructures) {
       List<File> result = super.getAllStorageFiles(includingSubStructures);
       if (includingSubStructures) {
-        for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+        for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
           result.addAll(moduleSaveSession.getAllStorageFiles(true));
         }
       }
@@ -121,7 +122,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       }
 
       Set<String> result = superResult.isEmpty() ? null : new THashSet<String>(superResult);
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+      for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
         Set<String> s = moduleSaveSession.analyzeExternalChanges(changedFiles);
         if (s == null) {
           return null;
@@ -140,7 +141,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     public void finishSave() {
       try {
         Throwable first = null;
-        for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+        for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
           try {
             moduleSaveSession.finishSave();
           }
@@ -163,7 +164,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     @Override
     public void reset() {
       try {
-        for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+        for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
           moduleSaveSession.reset();
         }
       }
@@ -173,16 +174,17 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    protected void beforeSave() {
-      super.beforeSave();
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        moduleSaveSession.save();
+    protected void beforeSave(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+      super.beforeSave(readonlyFiles);
+
+      for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
+        moduleSaveSession.save(readonlyFiles);
       }
     }
 
     @Override
     protected void collectSubFilesToSave(@NotNull List<File> result) {
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+      for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
         result.addAll(moduleSaveSession.getAllStorageFilesToSave(true));
       }
     }

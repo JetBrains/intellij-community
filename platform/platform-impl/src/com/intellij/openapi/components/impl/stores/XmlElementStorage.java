@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -217,7 +216,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private static SaveSession createNullSession() {
     return new SaveSession(){
       @Override
-      public void save() throws StateStorageException {
+      public void save() {
       }
 
       @Override
@@ -320,7 +319,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return element;
   }
 
-  protected abstract class MySaveSession implements SaveSession, SafeWriteRequestor {
+  protected abstract class MySaveSession implements SaveSession {
     final StorageData myStorageData;
     private Element myElementToSave;
 
@@ -380,7 +379,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     @Override
-    public final void save() throws StateStorageException {
+    public final void save() {
       assert mySession == this;
 
       if (myBlockSavingTheContent) {
@@ -392,27 +391,17 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         if (myStreamProvider != null && myStreamProvider.isEnabled() && (myProviderUpToDateHash == -1 || myProviderUpToDateHash != hash)) {
           try {
             saveForProvider();
-          }
-          catch (IOException e) {
-            LOG.warn(e);
-          }
-          finally {
             myProviderUpToDateHash = hash;
+          }
+          catch (Throwable e) {
+            LOG.error(e);
           }
         }
       }
       finally {
-        saveLocally(hash);
-      }
-    }
-
-    private void saveLocally(int hash) {
-      try {
         if (!(myUpToDateHash != -1 && myUpToDateHash == hash) && _needsSave(hash)) {
           doSave();
         }
-      }
-      finally {
         myUpToDateHash = hash;
       }
     }

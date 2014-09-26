@@ -162,7 +162,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @NotNull
       @Override
-      public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
+      public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
         return new MySaveSession(storage, externalizationSession);
       }
 

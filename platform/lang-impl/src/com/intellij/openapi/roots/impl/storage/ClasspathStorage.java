@@ -410,7 +410,7 @@ public class ClasspathStorage implements StateStorage {
     }
 
     @Override
-    public void save() throws StateStorageException {
+    public void save() {
       assert mySession == this;
       ClasspathStorage.this.save();
     }

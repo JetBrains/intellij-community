@@ -32,9 +32,9 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
+import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
@@ -918,7 +918,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         final String location = projectImpl.getPresentableUrl();
         final List<File> original;
         try {
-          IComponentStore.SaveSession saveSession = projectImpl.getStateStore().startSave();
+          ComponentSaveSession saveSession = projectImpl.getStateStore().startSave();
           original = saveSession.getAllStorageFiles(true);
           saveSession.finishSave();
         }

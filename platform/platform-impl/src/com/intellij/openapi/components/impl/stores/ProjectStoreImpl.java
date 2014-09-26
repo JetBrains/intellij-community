@@ -19,10 +19,9 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.notification.NotificationsManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -32,7 +31,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -51,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -87,7 +84,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
                                              name + OLD_PROJECT_SUFFIX + projectFile.getExtension());
       if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
 
-      final ArrayList<String> conversionProblems = getConversionProblemsStorage();
+      List<String> conversionProblems = getConversionProblemsStorage();
       if (conversionProblems != null && !conversionProblems.isEmpty()) {
         StringBuilder buffer = new StringBuilder();
         buffer.append(ProjectBundle.message("project.convert.problems.detected"));
@@ -494,97 +491,57 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     @NotNull
     @Override
-    public SaveSession save() {
+    public ComponentSaveSession save(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
       ProjectImpl.UnableToSaveProjectNotification[] notifications =
         NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
       if (notifications.length > 0) {
         throw new SaveCancelledException();
       }
 
-      ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable();
-      if (operationStatus == null) {
-        throw new StateStorageException();
-      }
-      else if (operationStatus.hasReadonlyFiles()) {
-        ProjectImpl.dropUnableToSaveProjectNotification(myProject, operationStatus.getReadonlyFiles());
-        throw new SaveCancelledException();
+      beforeSave(readonlyFiles);
+
+      super.save(readonlyFiles);
+
+      if (!readonlyFiles.isEmpty()) {
+        ReadonlyStatusHandler.OperationStatus status;
+        AccessToken token = ReadAction.start();
+        try {
+          status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(getFilesList(readonlyFiles));
+        }
+        finally {
+          token.finish();
+        }
+
+        if (status.hasReadonlyFiles()) {
+          ProjectImpl.dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles());
+          throw new SaveCancelledException();
+        }
+        else {
+          readonlyFiles.clear();
+          for (Pair<StateStorageManager.SaveSession, VirtualFile> entry : readonlyFiles) {
+            executeSave(entry.first, readonlyFiles);
+          }
+
+          if (!readonlyFiles.isEmpty()) {
+            ProjectImpl.dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles));
+            throw new SaveCancelledException();
+          }
+        }
       }
 
-      beforeSave();
-      super.save();
       return this;
     }
 
-    protected void beforeSave() {
+    @NotNull
+    private VirtualFile[] getFilesList(List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+      final VirtualFile[] files = new VirtualFile[readonlyFiles.size()];
+      for (int i = 0, size = readonlyFiles.size(); i < size; i++) {
+        files[i] = readonlyFiles.get(i).second;
+      }
+      return files;
     }
 
-    private ReadonlyStatusHandler.OperationStatus ensureConfigFilesWritable() {
-      return ApplicationManager.getApplication().runReadAction(new Computable<ReadonlyStatusHandler.OperationStatus>() {
-        @Override
-        public ReadonlyStatusHandler.OperationStatus compute() {
-          List<File> filesToSave;
-          try {
-            filesToSave = getAllStorageFilesToSave(true);
-            Iterator<File> iterator = filesToSave.iterator();
-            while (iterator.hasNext()) {
-              if (!iterator.next().exists()) {
-                iterator.remove();
-              }
-            }
-          }
-          catch (Exception e) {
-            LOG.error(e);
-            return null;
-          }
-
-          List<VirtualFile> readonlyFiles = new ArrayList<VirtualFile>();
-
-          if (myProject.isToSaveProjectName()) {
-            final VirtualFile baseDir = getProjectBaseDir();
-            if (baseDir != null && baseDir.isValid()) {
-              filesToSave.add(new File(new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE));
-            }
-          }
-
-          for (File file : filesToSave) {
-            final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-            if (virtualFile != null) {
-              virtualFile.refresh(false, false);
-              if (virtualFile.isValid() && !virtualFile.isWritable()) {
-                readonlyFiles.add(virtualFile);
-              }
-            }
-          }
-
-          if (readonlyFiles.isEmpty()) {
-            final VirtualFile projectBaseDir = getProjectBaseDir();
-            if (projectBaseDir != null && projectBaseDir.isValid()) {
-              if (!projectBaseDir.isWritable()) {
-                readonlyFiles.add(projectBaseDir);
-              }
-
-              final LocalFileSystem instance = LocalFileSystem.getInstance();
-              final VirtualFile ideaDir1 =
-                instance.findFileByIoFile(new File(projectBaseDir.getPath(), Project.DIRECTORY_STORE_FOLDER));
-              if (ideaDir1 != null && ideaDir1.isValid()) {
-                if (!ideaDir1.isWritable()) {
-                  readonlyFiles.add(ideaDir1);
-                }
-              } else {
-                final VirtualFile ideaDir2 =
-                  instance.findFileByIoFile(new File(new File(projectBaseDir.getPath()).getParent(), Project.DIRECTORY_STORE_FOLDER));
-                if (ideaDir2 != null && ideaDir2.isValid()) {
-                  if (!ideaDir2.isWritable()) {
-                    readonlyFiles.add(ideaDir2);
-                  }
-                }
-              }
-            }
-          }
-
-          return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readonlyFiles);
-        }
-      });
+    protected void beforeSave(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
     }
   }
 

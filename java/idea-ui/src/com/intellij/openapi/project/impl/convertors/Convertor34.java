@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +51,7 @@ public class Convertor34 {
   private static final String JAVA_DOC_ROOTS_CANNOT_BE_CONVERTED = ProjectBundle.message("project.convert.javadoc.paths.error");
   private static final String MULTIPLE_OUTPUT_PATHS = ProjectBundle.message("project.convert.multiple.output.paths.error");
 
-  public static void execute(Element root, String filePath, @Nullable ArrayList<String> conversionProblems) {
+  public static void execute(Element root, String filePath, @Nullable List<String> conversionProblems) {
     if (filePath == null) return;
 
     if (conversionProblems == null) {
@@ -122,7 +121,7 @@ public class Convertor34 {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void convertProjectFile(Element root, String filePath, ArrayList<String> conversionProblems) {
+  private static void convertProjectFile(Element root, String filePath, List<String> conversionProblems) {
     Element rootComponent = null;
     List components = root.getChildren("component");
     for (final Object component1 : components) {
@@ -184,7 +183,7 @@ public class Convertor34 {
       String name = root.getAttributeValue("name");
       String url = root.getAttributeValue("url");
 
-      if(name == null || url == null) continue;
+      if (name == null || url == null) continue;
 
       String filepath = VirtualFileManager.extractPath(url);
 
@@ -203,7 +202,7 @@ public class Convertor34 {
         module.addContent(moduleProperties);
 
         Document moduleDocument = new Document(module);
-        String moduleName = (!"".equals(name) ? name : moduleDirectory.getName());
+        String moduleName = (!name.isEmpty() ? name : moduleDirectory.getName());
         if(moduleName.equals(mainModule)) moduleName = "web" + moduleName;
         try {
           final String modulePath = moduleDirectory.getPath() + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
@@ -305,14 +304,14 @@ public class Convertor34 {
 
     VirtualFile classesDir = moduleDirectory.findFileByRelativePath("WEB-INF/classes");
     if(classesDir != null) {
-      Element classes = createLibraryEntry(classesDir, module, moduleDirectory);
+      Element classes = createLibraryEntry(classesDir, moduleDirectory);
       newModuleRootManager.addContent(classes);
     }
 
     VirtualFile lib = moduleDirectory.findFileByRelativePath("WEB-INF/lib");
     if(lib != null) {
       for (VirtualFile virtualFile : lib.getChildren()) {
-        Element libEntry = createLibraryEntry(virtualFile, module, moduleDirectory);
+        Element libEntry = createLibraryEntry(virtualFile, moduleDirectory);
         newModuleRootManager.addContent(libEntry);
       }
     }
@@ -321,10 +320,10 @@ public class Convertor34 {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static Element createLibraryEntry(VirtualFile file, Element module, VirtualFile moduleDirectory) {
+  private static Element createLibraryEntry(VirtualFile file, VirtualFile moduleDirectory) {
     String path = file.getPath().substring(moduleDirectory.getPath().length() + 1);
     if(file.getFileSystem() instanceof JarFileSystem) {
-      path = path + "!/";
+      path += "!/";
     }
 
     Element orderEntry = new Element("orderEntry");
@@ -340,7 +339,7 @@ public class Convertor34 {
   }
 
   private static String getModulePath(String path, String moduleDirectory) {
-    return "".equals(path) ? moduleDirectory  : moduleDirectory + "/" + path;
+    return path != null && path.isEmpty() ? moduleDirectory  : moduleDirectory + "/" + path;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -357,11 +356,11 @@ public class Convertor34 {
     modulesEntry.addContent(moduleEntry);
   }
 
-  private static Element convertProjectRootManager(Element projectRootManager, ArrayList<String> conversionProblems) {
+  private static Element convertProjectRootManager(Element projectRootManager, List<String> conversionProblems) {
     return new ProjectToModuleConverter(projectRootManager, conversionProblems).getModuleRootManager();
   }
 
-  private static interface RootElementProcessor {
+  private interface RootElementProcessor {
     void processSimpleRoot(Element root);
 
     void processJdkRoot(Element root);
@@ -468,9 +467,9 @@ public class Convertor34 {
     private final ArrayList<String> myProjectRoots;
     private final List<String> mySourceFolders;
     private final ArrayList<String> myExcludeFolders;
-    private final ArrayList<String> myDetectedProblems;
+    private final List<String> myDetectedProblems;
 
-    private ProjectToModuleConverter(Element projectRootManager, ArrayList<String> problems) {
+    private ProjectToModuleConverter(Element projectRootManager, List<String> problems) {
       myProjectRootManager = projectRootManager;
       myModuleRootManager = new Element("component");
       myModuleRootManager.setAttribute("name", "NewModuleRootManager");
@@ -553,10 +552,10 @@ public class Convertor34 {
     }
 
     private static void createFolders(final Element contentElement,
-                               final Element patternFolderElement,
-                               final List<String> folders) {
+                                      final Element patternFolderElement,
+                                      final List<String> folders) {
       for (String folder : folders) {
-        Element folderElement = (Element)patternFolderElement.clone();
+        Element folderElement = patternFolderElement.clone();
         folderElement.setAttribute("url", folder);
         contentElement.addContent(folderElement);
       }
@@ -708,7 +707,7 @@ public class Convertor34 {
         final Element libraryElement = new Element("library");
         final Element classesElement = new Element("CLASSES");
         final Element rootElement = new Element("root");
-        rootElement.setAttribute((Attribute)root.getAttribute("url").clone());
+        rootElement.setAttribute(root.getAttribute("url").clone());
         classesElement.addContent(rootElement);
         libraryElement.addContent(classesElement);
         orderEntry.addContent(libraryElement);
