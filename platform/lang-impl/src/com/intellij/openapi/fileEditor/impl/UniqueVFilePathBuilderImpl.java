@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     return getUniqueVirtualFilePath(project, vFile, true);
   }
 
-  private String getUniqueVirtualFilePath(Project project, VirtualFile file, boolean skipNonOpenedFiles) {
+  private static String getUniqueVirtualFilePath(Project project, VirtualFile file, boolean skipNonOpenedFiles) {
     String fileName = file.getName();
     Collection<VirtualFile> filesWithSameName = skipNonOpenedFiles ? Collections.<VirtualFile>emptySet() :
                                                 FilenameIndex.getVirtualFilesByName(project, fileName, ProjectScope.getProjectScope(project));
