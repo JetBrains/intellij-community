@@ -354,10 +354,10 @@ public final class LoadTextUtil {
     }
 
     if (file.isDirectory()) {
-      throw new AssertionError("'" + file.getPresentableUrl() + "' is directory");
+      throw new AssertionError("'" + file.getPresentableUrl() + "' is a directory");
     }
-    final FileType fileType = file.getFileType();
 
+    FileType fileType = file.getFileType();
     if (fileType.isBinary()) {
       final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType);
       if (decompiler != null) {
@@ -366,7 +366,7 @@ public final class LoadTextUtil {
         return text;
       }
 
-      throw new IllegalArgumentException("Attempt to load text for binary file, that doesn't have decompiler plugged in: "+file.getPresentableUrl());
+      throw new IllegalArgumentException("Attempt to load text for binary file which doesn't have a decompiler plugged in: " + file.getPresentableUrl());
     }
 
     try {
