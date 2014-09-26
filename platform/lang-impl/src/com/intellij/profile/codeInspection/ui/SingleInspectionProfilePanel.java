@@ -849,7 +849,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions();
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
-        severityPanel.add(new JBLabel("Scopes & Severities"),
+        severityPanel.add(new JBLabel("Severity by Scope"),
                           new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                  new Insets(5, 0, 2, 10), 0, 0));
         severityPanel.add(new JBLabel("Add scope to change its settings", UIUtil.ComponentStyle.SMALL),
