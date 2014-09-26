@@ -756,9 +756,8 @@ public class SingleInspectionProfilePanel extends JPanel {
                 final boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope, project) != level;
                 mySelectedProfile.setErrorLevel(key, level, null, project);
                 if (toUpdate) node.dropCache();
-                myTreeTable.updateUI();
               }
-
+              myTreeTable.updateUI();
             }
           };
         final HighlightSeverity severity =
@@ -778,13 +777,13 @@ public class SingleInspectionProfilePanel extends JPanel {
         }), mySelectedProfile, project, null) {
           @Override
           protected void onScopesOrderChanged() {
-            myTreeTable.getTree().updateUI();
+            myTreeTable.updateUI();
             updateOptionsAndDescriptionPanel();
           }
 
           @Override
           protected void onScopeAdded() {
-            myTreeTable.getTree().updateUI();
+            myTreeTable.updateUI();
             updateOptionsAndDescriptionPanel();
           }
         };
