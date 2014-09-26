@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -366,8 +366,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       PsiAnnotation a = annotation;
       if (a == null) {
         a = context.createAnnotationFromText("@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "("+annotationParameters+")"));
-        a.putUserData(EXTERNAL_ANNO_MARKER, Boolean.TRUE);
-        annotation = a;
+        annotation = markAsExternalAnnotation(a);
       }
       return a;
     }
@@ -388,6 +387,16 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       result = 31 * result + annotationParameters.hashCode();
       return result;
     }
+
+    @Override
+    public String toString() {
+      return annotationClassFqName + "("+annotationParameters+")";
+    }
+  }
+
+  private static PsiAnnotation markAsExternalAnnotation(@NotNull PsiAnnotation annotation) {
+    annotation.putUserData(EXTERNAL_ANNO_MARKER, Boolean.TRUE);
+    return annotation;
   }
 
   @NotNull
@@ -399,8 +408,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       if (!(element instanceof PsiAnnotation)) {
         throw new IncorrectOperationException("Incorrect annotation \"" + text + "\".");
       }
-      element.putUserData(EXTERNAL_ANNO_MARKER, Boolean.TRUE);
-      return (PsiAnnotation)element;
+      return markAsExternalAnnotation((PsiAnnotation)element);
     }
   }
   private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {

@@ -337,9 +337,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
       case INVOKEVIRTUAL:
         int insnIndex = insns.indexOf(insn);
         if (origins[insnIndex]) {
-          boolean stable = (opCode == INVOKESTATIC) ||
-                           (opCode == INVOKESPECIAL) ||
-                           (values.get(0) == ThisValue);
+          boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
           MethodInsnNode mNode = ((MethodInsnNode)insn);
           Method method = new Method(mNode.owner, mNode.name, mNode.desc);
           int label = 1 << originsMapping[insnIndex];

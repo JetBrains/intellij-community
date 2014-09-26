@@ -223,7 +223,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
   @Override
   @NotNull
-  public MergeSession createMergeSession(List<VirtualFile> files) {
+  public MergeSession createMergeSession(@NotNull List<VirtualFile> files) {
     return new MyMergeSession(files);
   }
 
@@ -309,19 +309,20 @@ public class GitMergeProvider implements MergeProvider2 {
       }
     }
 
+    @NotNull
     @Override
     public ColumnInfo[] getMergeInfoColumns() {
       return new ColumnInfo[]{new StatusColumn(false), new StatusColumn(true)};
     }
 
     @Override
-    public boolean canMerge(VirtualFile file) {
+    public boolean canMerge(@NotNull VirtualFile file) {
       Conflict c = myConflicts.get(file);
       return c != null;
     }
 
     @Override
-    public void conflictResolvedForFile(VirtualFile file, Resolution resolution) {
+    public void conflictResolvedForFile(VirtualFile file, @NotNull Resolution resolution) {
       Conflict c = myConflicts.get(file);
       assert c != null : "Conflict was not loaded for the file: " + file.getPath();
       try {

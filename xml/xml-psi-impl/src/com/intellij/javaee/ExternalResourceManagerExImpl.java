@@ -48,8 +48,10 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 
-@State(name = "ExternalResourceManagerImpl",
-       storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")})
+@State(
+  name = "ExternalResourceManagerImpl",
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")}
+)
 public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements PersistentStateComponent<Element> {
   static final Logger LOG = Logger.getInstance(ExternalResourceManagerExImpl.class);
 
@@ -59,14 +61,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @NonNls public static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
   private static final String CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES";
 
-
   private final Map<String, Map<String, String>> myResources = new HashMap<String, Map<String, String>>();
   private final Set<String> myResourceLocations = new HashSet<String>();
 
   private final Set<String> myIgnoredResources = new HashSet<String>();
 
   private final AtomicNotNullLazyValue<Map<String, Map<String, Resource>>> myStdResources = new AtomicNotNullLazyValue<Map<String, Map<String, Resource>>>() {
-
     @NotNull
     @Override
     protected Map<String, Map<String, Resource>> compute() {
@@ -391,14 +391,13 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
     final String[] ignoredResources = getIgnoredResources();
     for (String ignoredResource : ignoredResources) {
-      final Element e = new Element(IGNORED_RESOURCE_ELEMENT);
-
+      Element e = new Element(IGNORED_RESOURCE_ELEMENT);
       e.setAttribute(URL_ATTR, ignoredResource);
       element.addContent(e);
     }
 
     if (myDefaultHtmlDoctype != null && !HTML5_DOCTYPE_ELEMENT.equals(myDefaultHtmlDoctype)) {
-      final Element e = new Element(HTML_DEFAULT_DOCTYPE_ELEMENT);
+      Element e = new Element(HTML_DEFAULT_DOCTYPE_ELEMENT);
       e.setText(myDefaultHtmlDoctype);
       element.addContent(e);
     }

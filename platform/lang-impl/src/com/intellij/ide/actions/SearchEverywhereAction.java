@@ -607,14 +607,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     assert project != null;
     myRenderer.myProject = project;
-    myCurrentWorker.doWhenProcessed(new Runnable() {
+    final Runnable run = new Runnable() {
       @Override
       public void run() {
         myCalcThread = new CalcThread(project, pattern, false);
         myPopupActualWidth = 0;
         myCurrentWorker = myCalcThread.start();
       }
-    });
+    };
+    if (myCurrentWorker.isDone()) {
+      myCurrentWorker.doWhenDone(run);
+    } else {
+      myCurrentWorker.doWhenRejected(run);
+    }
   }
 
   @Override
@@ -1356,7 +1361,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       finally {
         if (!isCanceled()) {
-          myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+            }
+          });
           updatePopup();
         }
         if (!myDone.isProcessed()) {
@@ -1578,15 +1589,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
 
     private synchronized void buildClasses(final String pattern) {
-      if (pattern.indexOf('.') != -1) {
-        //todo[kb] it's not a mistake. If we search for "*.png" or "index.xml" in SearchEverywhere
-        //todo[kb] we don't want to see Java classes started with Png or Xml. This approach should be reworked someday.
-        return;
-      }
-      check();
-
       final SearchResult classes = getClasses(pattern, showAll.get(), MAX_CLASSES, myClassChooseByName);
-
       check();
 
       if (classes.size() > 0) {

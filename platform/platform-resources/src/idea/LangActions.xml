@@ -336,7 +336,7 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <action id="NewScratchFile" class="com.intellij.ide.scratch.CreateScratchFileAction">
+    <action id="NewScratchFile" class="com.intellij.ide.scratch.NewScratchFileAction">
       <add-to-group group-id="ToolsBasicGroup" anchor="first"/>
     </action>
 

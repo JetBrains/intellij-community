@@ -58,6 +58,7 @@ public interface FoldingModel {
 
   /**
    * Gets the list of all fold regions in the specified editor.
+   * Returned array is sorted according to {@link RangeMarker#BY_START_OFFSET} comparator, i.e. first by start offset, then by end offset.
    *
    * @return the array of fold regions, or an empty array if folding is currently disabled.
    */

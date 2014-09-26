@@ -54,7 +54,6 @@ public class GotItPanel {
     };
 
     myMessage = IdeTooltipManager.initPane("", new HintHint().setAwtTooltip(true), null);
-    myMessage.addHyperlinkListener(new BrowserHyperlinkListener());
     myMessage.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() + 2f));
   }
 }

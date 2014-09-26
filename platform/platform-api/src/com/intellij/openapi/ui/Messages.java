@@ -1605,7 +1605,7 @@ public class Messages {
       messageComponent.setEditorKit(editorKit);
       messageComponent.setContentType(UIUtil.HTML_MIME);
       if (addBrowserHyperlinkListener) {
-        messageComponent.addHyperlinkListener(new BrowserHyperlinkListener());
+        messageComponent.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
       }
     }
     messageComponent.setText(message);

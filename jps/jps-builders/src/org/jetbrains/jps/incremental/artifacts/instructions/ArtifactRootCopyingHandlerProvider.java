@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
 import java.io.File;
 
@@ -28,6 +29,20 @@ import java.io.File;
  */
 public abstract class ArtifactRootCopyingHandlerProvider {
   @Nullable
-  public abstract FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact, @NotNull File root, @NotNull JpsModel model,
-                                                         @NotNull BuildDataPaths buildDataPaths);
+  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
+                                                @NotNull File root,
+                                                @NotNull JpsPackagingElement contextElement,
+                                                @NotNull JpsModel model,
+                                                @NotNull BuildDataPaths buildDataPaths) {
+    return createCustomHandler(artifact, root, model, buildDataPaths);
+  }
+
+  /**
+   * @deprecated override {@link #createCustomHandler(JpsArtifact, File, JpsPackagingElement, JpsModel, BuildDataPaths)} instead
+   */
+  @Nullable
+  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact, @NotNull File root, @NotNull JpsModel model,
+                                                @NotNull BuildDataPaths buildDataPaths) {
+    throw new UnsupportedOperationException();
+  }
 }

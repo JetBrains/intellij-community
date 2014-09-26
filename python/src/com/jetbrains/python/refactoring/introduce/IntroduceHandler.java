@@ -31,10 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -511,9 +508,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   public PyAssignmentStatement createDeclaration(IntroduceOperation operation) {
     final Project project = operation.getProject();
     final PyExpression initializer = operation.getInitializer();
-    InitializerTextBuilder builder = new InitializerTextBuilder();
-    initializer.accept(builder);
-    String assignmentText = operation.getName() + " = " + builder.result();
+    String assignmentText = operation.getName() + " = " + new InitializerTextBuilder(initializer).result();
     PsiElement anchor = operation.isReplaceAll()
                         ? findAnchor(operation.getOccurrences())
                         : PsiTreeUtil.getParentOfType(initializer, PyStatement.class);
@@ -522,6 +517,18 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
   private static class InitializerTextBuilder extends PyRecursiveElementVisitor {
     private final StringBuilder myResult = new StringBuilder();
+
+    public InitializerTextBuilder(@NotNull PyExpression expression) {
+      if (PsiTreeUtil.findChildOfType(expression, PsiComment.class) != null) {
+        myResult.append(expression.getText());
+      }
+      else {
+        expression.accept(this);
+      }
+      if (needToWrapTopLevelExpressionInParenthesis(expression)) {
+        myResult.insert(0, "(").append(")");
+      }
+    }
 
     @Override
     public void visitWhiteSpace(PsiWhiteSpace space) {
@@ -561,17 +568,6 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
 
     @Override
-    public void visitPyGeneratorExpression(PyGeneratorExpression node) {
-      final PsiElement firstChild = node.getFirstChild();
-      if (firstChild != null && firstChild.getNode().getElementType() != PyTokenTypes.LPAR) {
-        myResult.append("(").append(node.getText()).append(")");
-      }
-      else {
-        super.visitPyGeneratorExpression(node);
-      }
-    }
-
-    @Override
     public void visitElement(PsiElement element) {
       if (element.getChildren().length == 0) {
         myResult.append(element.getText());
@@ -579,6 +575,16 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       else {
         super.visitElement(element);
       }
+    }
+
+    private boolean needToWrapTopLevelExpressionInParenthesis(@NotNull PyExpression node) {
+      if (node instanceof PyGeneratorExpression) {
+        final PsiElement firstChild = node.getFirstChild();
+        if (firstChild != null && firstChild.getNode().getElementType() != PyTokenTypes.LPAR) {
+          return true;
+        }
+      }
+      return false;
     }
 
     public String result() {

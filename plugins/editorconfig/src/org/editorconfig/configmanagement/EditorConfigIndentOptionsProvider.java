@@ -27,13 +27,12 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
 
   @Nullable
   @Override
-  public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile psiFile) {
+  public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile psiFile) {
     final VirtualFile file = psiFile.getVirtualFile();
     if (file == null || !file.isInLocalFileSystem()) return null;
 
     final Project project = psiFile.getProject();
-    final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    if (!Utils.isEnabled(currentSettings)) return null;
+    if (!Utils.isEnabled(settings)) return null;
 
     // Get editorconfig settings
     final String filePath = file.getCanonicalPath();

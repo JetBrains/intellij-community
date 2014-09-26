@@ -48,35 +48,33 @@ public class ConfigurableExtensionPointUtil {
       }
     }
 
-    final Map<String, ConfigurableWrapper> idToConfigurable = new LinkedHashMap<String, ConfigurableWrapper>();
+    final Map<String, ConfigurableWrapper> idToConfigurable = ContainerUtil.newHashMap();
+    List<String> idsInEpOrder = ContainerUtil.newArrayList();
     for (ConfigurableEP<Configurable> ep : extensions) {
       final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
       if (isSuppressed(configurable, filter)) continue;
       if (configurable instanceof ConfigurableWrapper) {
         final ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
         idToConfigurable.put(wrapper.getId(), wrapper);
+        idsInEpOrder.add(wrapper.getId());
       }
       else {
 //        dumpConfigurable(configurablesExtensionPoint, ep, configurable);
         ContainerUtil.addIfNotNull(configurable, result);
       }
     }
-    //modify configurables (append children)
-    for (final String id : idToConfigurable.keySet()) {
-      final ConfigurableWrapper wrapper = idToConfigurable.get(id);
-      final String parentId = wrapper.getParentId();
-      if (parentId != null) {
-        final ConfigurableWrapper parent = idToConfigurable.get(parentId);
-        if (parent != null) {
-          idToConfigurable.put(parentId, parent.addChild(wrapper));
-        }
-        else {
-          LOG.debug("Can't find parent for " + parentId + " (" + wrapper + ")");
-        }
-      }
+
+    Set<String> visited = ContainerUtil.newHashSet();
+    Map<String, List<String>> idTree = buildIdTree(idToConfigurable, idsInEpOrder);
+    // modify configurables (append children)
+    // Before adding a child to a parent, all children of the child should be already added to the child,
+    //   because ConfigurableWrapper#addChild may return a new instance.
+    for (final String id : idsInEpOrder) {
+      addChildrenRec(id, idToConfigurable, visited, idTree);
     }
     // add roots only (i.e. configurables without parents)
-    for (ConfigurableWrapper wrapper : idToConfigurable.values()) {
+    for (String id : idsInEpOrder) {
+      ConfigurableWrapper wrapper = idToConfigurable.get(id);
       String parentId = wrapper.getParentId();
       if (parentId == null || !idToConfigurable.containsKey(parentId)) {
         result.add(wrapper);
@@ -84,6 +82,51 @@ public class ConfigurableExtensionPointUtil {
     }
 
     return result;
+  }
+
+  @NotNull
+  private static ConfigurableWrapper addChildrenRec(@NotNull String id,
+                                                    @NotNull Map<String, ConfigurableWrapper> idToConfigurable,
+                                                    @NotNull Set<String> visited,
+                                                    @NotNull Map<String, List<String>> idTree) {
+    ConfigurableWrapper wrapper = idToConfigurable.get(id);
+    if (visited.contains(id)) {
+      return wrapper;
+    }
+    visited.add(id);
+    List<String> childIds = idTree.get(id);
+    if (childIds != null) {
+      for (String childId : childIds) {
+        ConfigurableWrapper childWrapper = addChildrenRec(childId, idToConfigurable, visited, idTree);
+        wrapper = wrapper.addChild(childWrapper);
+      }
+      idToConfigurable.put(id, wrapper);
+    }
+    return wrapper;
+  }
+
+  @NotNull
+  private static Map<String, List<String>> buildIdTree(@NotNull Map<String, ConfigurableWrapper> idToConfigurable,
+                                                       @NotNull List<String> idsInEpOrder) {
+    Map<String, List<String>> tree = ContainerUtil.newHashMap();
+    for (String id : idsInEpOrder) {
+      ConfigurableWrapper wrapper = idToConfigurable.get(id);
+      String parentId = wrapper.getParentId();
+      if (parentId != null) {
+        ConfigurableWrapper parent = idToConfigurable.get(parentId);
+        if (parent == null) {
+          LOG.warn("Can't find parent for " + parentId + " (" + wrapper + ")");
+          continue;
+        }
+        List<String> children = tree.get(parentId);
+        if (children == null) {
+          children = ContainerUtil.newArrayListWithCapacity(5);
+          tree.put(parentId, children);
+        }
+        children.add(id);
+      }
+    }
+    return tree;
   }
 
   private static boolean isSuppressed(Configurable each, ConfigurableFilter filter) {

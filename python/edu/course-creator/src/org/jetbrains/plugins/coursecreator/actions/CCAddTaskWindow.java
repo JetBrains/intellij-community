@@ -66,6 +66,9 @@ public class CCAddTaskWindow extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
+    if (!CCProjectService.setCCActionAvailable(event)) {
+      return;
+    }
     final Presentation presentation = event.getPresentation();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

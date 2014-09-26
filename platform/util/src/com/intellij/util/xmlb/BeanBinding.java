@@ -74,15 +74,13 @@ class BeanBinding implements Binding {
   }
 
   @Override
-  public Object serialize(@NotNull Object o, Object context, SerializationFilter filter) {
-    Element element = new Element(myTagName);
-
-    serializeInto(o, element, filter);
-
-    return element;
+  @Nullable
+  public Object serialize(@NotNull Object o, @Nullable Object context, SerializationFilter filter) {
+    return serializeInto(o, context == null ? new Element(myTagName) : null, filter);
   }
 
-  public void serializeInto(@NotNull final Object o, final Element element, SerializationFilter filter) {
+  @Nullable
+  public Element serializeInto(@NotNull Object o, @Nullable Element element, @NotNull SerializationFilter filter) {
     for (Binding binding : myPropertyBindingsList) {
       Accessor accessor = myPropertyBindings.get(binding);
       if (!filter.accepts(accessor, o)) continue;
@@ -101,8 +99,12 @@ class BeanBinding implements Binding {
         }
       }
 
+      if (element == null) {
+        element = new Element(myTagName);
+      }
+
       Object node = binding.serialize(o, element, filter);
-      if (node != element) {
+      if (node != null && node != element) {
         if (node instanceof org.jdom.Attribute) {
           org.jdom.Attribute attr = (org.jdom.Attribute)node;
           element.setAttribute(attr.getName(), attr.getValue());
@@ -112,6 +114,7 @@ class BeanBinding implements Binding {
         }
       }
     }
+    return element;
   }
 
   public void deserializeInto(final Object bean, @NotNull Element element) {
@@ -131,6 +134,9 @@ class BeanBinding implements Binding {
     }
 
     if (nodes.size() != 1) {
+      if (nodes.isEmpty()) {
+        return result;
+      }
       throw new XmlSerializationException("Wrong set of nodes: " + nodes + " for bean" + myBeanClass + " in " + myAccessor);
     }
     assert nodes.get(0) instanceof Element : "Wrong node: " + nodes;
@@ -281,28 +287,29 @@ class BeanBinding implements Binding {
     return binding;
   }
 
-  private static Binding _createBinding(final Accessor accessor) {
-    Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
-    Tag tag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Tag.class);
+  private static Binding _createBinding(@NotNull Accessor accessor) {
+    Binding binding = XmlSerializerImpl.getTypeBinding(accessor.getGenericType(), accessor);
+    if (binding instanceof JDOMElementBinding) {
+      return binding;
+    }
+
     Attribute attribute = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Attribute.class);
-    Text text = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Text.class);
-
-    final Binding binding = XmlSerializerImpl.getTypeBinding(accessor.getGenericType(), accessor);
-
-    if (binding instanceof JDOMElementBinding) return binding;
-
-    if (text != null) return new TextBinding(accessor);
-
     if (attribute != null) {
       return new AttributeBinding(accessor, attribute);
     }
 
-    if (tag != null) {
-      if (!tag.value().isEmpty()) return new TagBinding(accessor, tag);
+    Tag tag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Tag.class);
+    if (tag != null && !tag.value().isEmpty()) {
+      return new TagBinding(accessor, tag);
+    }
+
+    Text text = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Text.class);
+    if (text != null) {
+      return new TextBinding(accessor);
     }
 
     boolean surroundWithTag = true;
-
+    Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
     if (property != null) {
       surroundWithTag = property.surroundWithTag();
     }

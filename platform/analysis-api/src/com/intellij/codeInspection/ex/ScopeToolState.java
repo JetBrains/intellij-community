@@ -109,6 +109,7 @@ public class ScopeToolState {
   }
 
   public void resetConfigPanel(){
+    myAdditionalConfigPanelCreated = false;
     myAdditionalConfigPanel = null;
   }
 

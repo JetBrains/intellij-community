@@ -153,7 +153,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       protected void doTest() throws Exception {
         myProjects = null;
         try {
-          createSoap().mc_enum_access_levels(getUsername(), getPassword());
+          refreshProjects();
         }
         catch (Exception e) {
           throw handleException(e);

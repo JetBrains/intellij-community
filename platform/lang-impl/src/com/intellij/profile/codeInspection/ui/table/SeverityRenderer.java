@@ -25,6 +25,7 @@ import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,10 +39,12 @@ import java.util.SortedSet;
  */
 public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   private final Runnable myOnClose;
+  private Icon myDisabledIcon;
 
   public SeverityRenderer(final SeverityState[] values, @Nullable final Runnable onClose) {
     super(values);
     myOnClose = onClose;
+    myDisabledIcon = HighlightDisplayLevel.createIconByMask(UIUtil.getLabelDisabledForeground());
   }
 
   public static SeverityRenderer create(final InspectionProfileImpl inspectionProfile, @Nullable final Runnable onClose) {
@@ -50,7 +53,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
     return new SeverityRenderer(ContainerUtil.map2Array(severities, new SeverityState[severities.size()], new Function<HighlightSeverity, SeverityState>() {
       @Override
       public SeverityState fun(HighlightSeverity severity) {
-        return new SeverityState(severity, true);
+        return new SeverityState(severity, true, false);
       }
     }), onClose);
   }
@@ -59,6 +62,8 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   protected void customizeComponent(SeverityState value, JTable table, boolean isSelected) {
     super.customizeComponent(value, table, isSelected);
     setPaintArrow(value.isEnabledForEditing());
+    setEnabled(!value.isDisabled());
+    setDisabledIcon(myDisabledIcon);
   }
 
   @Override

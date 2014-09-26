@@ -74,6 +74,8 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
     doTestIndentSize(4);
   }
 
+  public void testManyZeroIndents() { doTestIndentSize(2); }
+
   public void testSpacesToNumbers() throws Exception {
     String text = "     i\n" +
                   "    a\n" +

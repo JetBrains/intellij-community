@@ -21,16 +21,17 @@ import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -38,14 +39,19 @@ import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class GlobalAntConfiguration implements ApplicationComponent, JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntGlobalConfiguration");
+@State(
+  name = "GlobalAntConfiguration",
+  storages = {@com.intellij.openapi.components.Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")}
+)
+public class GlobalAntConfiguration implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(GlobalAntConfiguration.class);
+
   public static final StorageProperty FILTERS_TABLE_LAYOUT = new StorageProperty("filtersTableLayout");
   public static final StorageProperty PROPERTIES_TABLE_LAYOUT = new StorageProperty("propertiesTableLayout");
   static final ListProperty<AntInstallation> ANTS = ListProperty.create("registeredAnts");
@@ -53,6 +59,7 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
   private final AntInstallation myBundledAnt;
   public static final String BUNDLED_ANT_NAME = AntBundle.message("ant.reference.bundled.ant.name");
   public final Condition<AntInstallation> IS_USER_ANT = new Condition<AntInstallation>() {
+    @Override
     public boolean value(AntInstallation antInstallation) {
       return antInstallation != myBundledAnt;
     }
@@ -74,15 +81,9 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
     myBundledAnt = createBundledAnt();
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "GlobalAntConfiguration";
-  }
-
-  public void initComponent() { }
-
   public static AntInstallation createBundledAnt() {
     AntInstallation bundledAnt = new AntInstallation() {
+      @Override
       public AntReference getReference() {
         return AntReference.BUNDLED_ANT;
       }
@@ -97,18 +98,32 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
     return bundledAnt;
   }
 
-  public void disposeComponent() {}
-
-  public void readExternal(Element element) throws InvalidDataException {
-    myProperties.readExternal(element);
+  @Nullable
+  @Override
+  public Element getState() {
+    Element element = new Element("state");
+    try {
+      myProperties.writeExternal(element);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+      return null;
+    }
+    return element;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    myProperties.writeExternal(element);
+  @Override
+  public void loadState(Element state) {
+    try {
+      myProperties.readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public static GlobalAntConfiguration getInstance() {
-    return ApplicationManager.getApplication().getComponent(GlobalAntConfiguration.class);
+    return ServiceManager.getService(GlobalAntConfiguration.class);
   }
 
   public Map<AntReference, AntInstallation> getConfiguredAnts() {

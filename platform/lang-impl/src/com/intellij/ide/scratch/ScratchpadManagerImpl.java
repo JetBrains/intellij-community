@@ -35,10 +35,10 @@ public class ScratchpadManagerImpl extends ScratchpadManager implements Disposab
     myProject = project;
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar == null) return;
-    if (statusBar.getWidget(ScratchWidget.ID) != null) return;
+    if (statusBar.getWidget(ScratchWidget.WIDGET_ID) != null) return;
     ScratchWidget widget = new ScratchWidget(myProject);
     statusBar.addWidget(widget, "before Encoding", myProject);
-    statusBar.updateWidget(ScratchWidget.ID);
+    statusBar.updateWidget(ScratchWidget.WIDGET_ID);
     project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, widget);
   }
 

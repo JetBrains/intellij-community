@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -79,7 +80,7 @@ public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestC
   private static class TestIndentOptionsProvider extends FileIndentOptionsProvider {
     @Nullable
     @Override
-    public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file) {
+    public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
       return myTestIndentOptions;
     }
 

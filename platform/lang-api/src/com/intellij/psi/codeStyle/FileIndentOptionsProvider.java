@@ -28,11 +28,12 @@ public abstract class FileIndentOptionsProvider {
   public final static ExtensionPointName<FileIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileIndentOptionsProvider");
   /**
    * Retrieves indent options for PSI file.
+   * @param settings Code style settings for which indent options are calculated.
    * @param file The file to retrieve options for.
    * @return Indent options or <code>null</code> if the provider can't retrieve them.
    */
   @Nullable
-  public abstract CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file);
+  public abstract CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file);
 
   /**
    * Tells if the provider can be used when a complete file is reformatted.

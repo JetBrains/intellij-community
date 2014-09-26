@@ -239,6 +239,7 @@ public class MockApplication extends MockComponentManager implements Application
     return getNoneModalityState();
   }
 
+  @NotNull
   @Override
   public ModalityState getAnyModalityState() {
     return getNoneModalityState();

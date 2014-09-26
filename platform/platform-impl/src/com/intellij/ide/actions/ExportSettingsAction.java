@@ -73,7 +73,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
       return;
     }
 
-    Set<File> exportFiles = new THashSet<File>();
+    Set<File> exportFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     for (final ExportableComponent markedComponent : markedComponents) {
       ContainerUtil.addAll(exportFiles, markedComponent.getExportFiles());
     }

@@ -21,6 +21,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -38,6 +39,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class ServiceManagerImpl implements BaseComponent {
+  private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
+
   private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.applicationService");
   private static final ExtensionPointName<ServiceDescriptor> PROJECT_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.projectService");
   private ExtensionPointName<ServiceDescriptor> myExtensionPointName;
@@ -95,21 +98,25 @@ public class ServiceManagerImpl implements BaseComponent {
     for (Object o : adapters) {
       if (o instanceof MyComponentAdapter) {
         MyComponentAdapter adapter = (MyComponentAdapter)o;
-        ComponentAdapter delegate = adapter.myDelegate;
+        PluginDescriptor pluginDescriptor = adapter.myPluginDescriptor;
         Class aClass;
         try {
-          // we cannot use getDelegate - not all components are instantiable (JobSchedulerImpl, for example, causes such error)
-          aClass = delegate == null ? adapter.loadClass(adapter.myDescriptor.getImplementation()) : delegate.getComponentImplementation();
-        }
-        catch (RuntimeException e) {
-          // ignore ClassNotFoundException - invalid entry (GithubSslSupport, for example)
-          if (!(e.getCause() instanceof ClassNotFoundException)) {
-            throw e;
+          ComponentAdapter delegate = adapter.myDelegate;
+          // avoid delegation creation & class initialization
+          if (delegate == null) {
+            ClassLoader classLoader = pluginDescriptor == null ? ServiceManagerImpl.class.getClassLoader() : pluginDescriptor.getPluginClassLoader();
+            aClass = Class.forName(adapter.myDescriptor.getImplementation(), false, classLoader);
           }
+          else {
+            aClass = delegate.getComponentImplementation();
+          }
+        }
+        catch (Throwable e) {
+          LOG.error(e);
           continue;
         }
 
-        if (!processor.process(aClass, adapter.myPluginDescriptor)) {
+        if (!processor.process(aClass, pluginDescriptor)) {
           break;
         }
       }

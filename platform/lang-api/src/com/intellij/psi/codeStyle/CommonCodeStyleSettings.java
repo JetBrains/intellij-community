@@ -907,6 +907,7 @@ public class CommonCodeStyleSettings {
     public int LABEL_INDENT_SIZE = 0;
     public boolean LABEL_INDENT_ABSOLUTE = false;
     public boolean USE_RELATIVE_INDENTS = false;
+    public boolean KEEP_INDENTS_ON_EMPTY_LINES = false;
 
     private final static Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS");
 

@@ -41,6 +41,9 @@ public class CCShowPreview extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (!CCProjectService.setCCActionAvailable(e)) {
+      return;
+    }
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     presentation.setVisible(false);

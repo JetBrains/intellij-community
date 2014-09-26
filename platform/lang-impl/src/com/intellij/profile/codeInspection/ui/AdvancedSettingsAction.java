@@ -95,7 +95,7 @@ public abstract class AdvancedSettingsAction extends AnAction {
 
     @Override
     protected JComponent createBaseComponent() {
-      return installLeftIndentToLabel(new JLabel("Reset to Defaults Settings"));
+      return installLeftIndentToLabel(new JLabel("Reset to Default Settings"));
     }
 
     @Override

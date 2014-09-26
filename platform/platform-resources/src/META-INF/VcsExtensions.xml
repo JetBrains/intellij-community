@@ -61,6 +61,7 @@
     <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
     <search.topHitProvider implementation="com.intellij.openapi.vcs.actions.VcsTopHitProvider"/>
     <actionPromoter implementation="com.intellij.openapi.vcs.actions.VcsActionPromoter"/>
+    <projectSetProcessor implementation="com.intellij.openapi.vcs.VcsProjectSetProcessor"/>
   </extensions>
 </idea-plugin>
 

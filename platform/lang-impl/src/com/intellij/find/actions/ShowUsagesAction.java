@@ -983,16 +983,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     int rowsToShow = Math.min(30, data.size());
     Dimension dimension = new Dimension(newWidth, table.getRowHeight() * rowsToShow);
     Rectangle rectangle = fitToScreen(dimension, popupPosition, table);
-    dimension = rectangle.getSize();
-    Point location = window.getLocation();
-    if (!location.equals(rectangle.getLocation())) {
-      window.setLocation(rectangle.getLocation());
-    }
-
     if (!data.isEmpty()) {
       TableScrollingUtil.ensureSelectionExists(table);
     }
-    table.setSize(dimension);
+    table.setSize(rectangle.getSize());
     //table.setPreferredSize(dimension);
     //table.setMaximumSize(dimension);
     //table.setPreferredScrollableViewportSize(dimension);
@@ -1000,9 +994,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     Dimension footerSize = ((AbstractPopup)popup).getFooterPreferredSize();
 
-    int newHeight = (int)(dimension.height + headerSize.getHeight() + footerSize.getHeight()) + 4/* invisible borders, margins etc*/;
-    Dimension newDim = new Dimension(dimension.width, newHeight);
-    window.setSize(newDim);
+    rectangle.height += headerSize.height + footerSize.height + 4/* invisible borders, margins etc*/;
+    ScreenUtil.fitToScreen(rectangle);
+    Dimension newDim = rectangle.getSize();
+    window.setBounds(rectangle);
     window.setMinimumSize(newDim);
     window.setMaximumSize(newDim);
 

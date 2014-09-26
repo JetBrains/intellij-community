@@ -16,17 +16,12 @@
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -36,20 +31,18 @@ import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.FileContentUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
+import com.intellij.util.Consumer;
+import com.intellij.util.FileContentUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
-import java.util.List;
 
 class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.Multiframe, CustomStatusBarWidget {
-  public static final String ID = "Scratch";
+  static final String WIDGET_ID = "Scratch";
+
   private final MyTextPanel myPanel = new MyTextPanel();
 
   public ScratchWidget(Project project) {
@@ -57,14 +50,23 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        Project project = getProject();
+        final Project project = getProject();
         Editor editor = getEditor();
-        VirtualFile selectedFile = getSelectedFile();
+        final LightVirtualFile selectedFile = getScratchFile();
         if (project == null || editor == null || selectedFile == null) return false;
 
-        DataContext dataContext = createDataContext(editor, myPanel, selectedFile, project);
-        actionPerformed(dataContext);
-        update();
+        ListPopup popup = NewScratchFileAction.buildLanguagePopup(selectedFile.getLanguage(), new Consumer<Language>() {
+          @Override
+          public void consume(Language language) {
+            selectedFile.setLanguage(language);
+            FileContentUtilCore.reparseFiles(selectedFile);
+            update();
+          }
+        });
+        Dimension dimension = popup.getContent().getPreferredSize();
+        Point at = new Point(0, -dimension.height);
+        popup.show(new RelativePoint(myPanel, at));
+
         return true;
       }
     }.installOn(myPanel);
@@ -73,7 +75,7 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
   @NotNull
   @Override
   public String ID() {
-    return ID;
+    return WIDGET_ID;
   }
 
   @Nullable
@@ -83,62 +85,27 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
   }
 
   private void update() {
-    VirtualFile file = getSelectedFile();
-    boolean enabled = checkEnabled(file);
-    if (enabled) {
-      Language lang = ((LightVirtualFile)file).getLanguage();
+    LightVirtualFile file = getScratchFile();
+    if (file != null) {
+      Language lang = file.getLanguage();
       myPanel.setText(lang.getDisplayName());
       myPanel.setBorder(WidgetBorder.INSTANCE);
       myPanel.setIcon(getDefaultIcon(lang));
+      myPanel.setVisible(true);
     }
     else {
       myPanel.setBorder(null);
+      myPanel.setVisible(false);
     }
-    myPanel.setVisible(enabled);
-    if (myStatusBar != null) myStatusBar.updateWidget(ID);
-  }
-
-  @NotNull
-  public static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
-    DataContext parent = DataManager.getInstance().getDataContext(component);
-    DataContext context = SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent);
-    DataContext projectContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), project, context);
-    return SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE.getName(), selectedFile, projectContext);
-  }
-
-  void actionPerformed(DataContext context) {
-    ListPopup popup = createPopup(context);
-    if (popup != null) {
-      Dimension dimension = popup.getContent().getPreferredSize();
-      Point at = new Point(0, -dimension.height);
-      popup.show(new RelativePoint(myPanel, at));
+    if (myStatusBar != null) {
+      myStatusBar.updateWidget(WIDGET_ID);
     }
   }
 
   @Nullable
-  private ListPopup createPopup(DataContext context) {
-    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
-    boolean enabled = checkEnabled(virtualFile);
-    if (!enabled) return null;
-
-    List<Language> languages = CreateScratchFileAction.getLanguages();
-    DefaultActionGroup group = createActionGroup(virtualFile, languages);
-    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Choose language", group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
-    return CreateScratchFileAction.updatePopupSize(popup, languages);
-  }
-
-  @NotNull
-  private DefaultActionGroup createActionGroup(@NotNull VirtualFile virtualFile, @NotNull List<Language> languages) {
-    List<AnAction> list = ContainerUtil.newArrayListWithCapacity(languages.size());
-    for (Language language : languages) {
-      list.add(new ChangeLanguageAction(virtualFile, language));
-    }
-    return new DefaultActionGroup("Change language", list);
-  }
-
-  @Contract("null -> false")
-  private static boolean checkEnabled(@Nullable VirtualFile virtualFile) {
-    return virtualFile != null && virtualFile.getFileSystem() instanceof ScratchpadFileSystem;
+  private LightVirtualFile getScratchFile() {
+    VirtualFile file = getSelectedFile();
+    return file instanceof LightVirtualFile && file.getFileSystem() instanceof ScratchpadFileSystem ? (LightVirtualFile)file : null;
   }
 
   @Override
@@ -217,26 +184,4 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     }
   }
 
-  private class ChangeLanguageAction extends AnAction implements DumbAware {
-    private final VirtualFile myVirtualFile;
-
-    private final Language myLanguage;
-
-    public ChangeLanguageAction(@NotNull VirtualFile virtualFile, @NotNull Language language) {
-      super(language.getDisplayName(), "", getDefaultIcon(language));
-      myVirtualFile = virtualFile;
-      myLanguage = language;
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      Project project = e.getProject();
-      if (project == null) return;
-      if (myVirtualFile instanceof LightVirtualFile) {
-        ((LightVirtualFile)myVirtualFile).setLanguage(myLanguage);
-        FileContentUtil.reparseFiles(project, Collections.singletonList(myVirtualFile), false);
-        ScratchWidget.this.update();
-      }
-    }
-  }
 }

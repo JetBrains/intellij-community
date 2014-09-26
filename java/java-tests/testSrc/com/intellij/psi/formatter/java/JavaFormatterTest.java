@@ -3049,4 +3049,115 @@ public void testSCR260() throws Exception {
       "}"
     );
   }
+
+  public void testDetectableIndentOptions() {
+    final String original =
+       "public class Main {\n" +
+      "\tpublic void main() {\n" +
+      "try {\n" +
+      "\t\t\tSystem.out.println();\n" +
+      "\t} catch (java.lang.Exception exception) {\n" +
+      "\t\t\texception.printStackTrace();\n" +
+      "\t}\n" +
+      "}\n" +
+      "}";
+    // Enabled but full reformat (no detection)
+    doTestWithDetectableIndentOptions(
+      original,
+      "public class Main {\n" +
+      "    public void main() {\n" +
+      "        try {\n" +
+      "            System.out.println();\n" +
+      "        } catch (java.lang.Exception exception) {\n" +
+      "            exception.printStackTrace();\n" +
+      "        }\n" +
+      "    }\n" +
+      "}"
+    );
+    // Reformat with a smaller text range (detection is on)
+    myTextRange = new TextRange(1, original.length());
+    doTestWithDetectableIndentOptions(
+      original,
+      "public class Main {\n" +
+      "\tpublic void main() {\n" +
+      "\t\ttry {\n" +
+      "\t\t\tSystem.out.println();\n" +
+      "\t\t} catch (java.lang.Exception exception) {\n" +
+      "\t\t\texception.printStackTrace();\n" +
+      "\t\t}\n" +
+      "\t}\n" +
+      "}"
+    );
+  }
+
+  public void testKeepIndentsOnEmptyLines() {
+    CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getIndentOptions();
+    assertNotNull(indentOptions);
+    final String original =
+         "public class Main {\n" +
+      "    public int x;\n" +
+      "           \n" +
+      "    public int y;\n" +
+      "\n" +
+      "    public void foo(boolean a, int x, int y, int z) {\n" +
+      "        do {\n" +
+      "  \n" +
+      "            if (x > 0) {\n" +
+      "  \n" +
+      "            } else if (x < 0) {\n" +
+      "            \n" +
+      "            int r;\n" +
+      "            }\n" +
+      "    }\n" +
+      "        while (y > 0);\n" +
+      "  }\n" +
+      "}";
+
+    indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = false;
+    doTextTest(
+      original,
+
+      "public class Main {\n" +
+      "    public int x;\n" +
+      "\n" +
+      "    public int y;\n" +
+      "\n" +
+      "    public void foo(boolean a, int x, int y, int z) {\n" +
+      "        do {\n" +
+      "\n" +
+      "            if (x > 0) {\n" +
+      "\n" +
+      "            } else if (x < 0) {\n" +
+      "\n" +
+      "                int r;\n" +
+      "            }\n" +
+      "        }\n" +
+      "        while (y > 0);\n" +
+      "    }\n" +
+      "}"
+    );
+    indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = true;
+    doTextTest(
+      original,
+
+      "public class Main {\n" +
+      "    public int x;\n" +
+      "    \n" +
+      "    public int y;\n" +
+      "    \n" +
+      "    public void foo(boolean a, int x, int y, int z) {\n" +
+      "        do {\n" +
+      "            \n" +
+      "            if (x > 0) {\n" +
+      "                \n" +
+      "            } else if (x < 0) {\n" +
+      "                \n" +
+      "                int r;\n" +
+      "            }\n" +
+      "        }\n" +
+      "        while (y > 0);\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

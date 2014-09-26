@@ -249,6 +249,6 @@ public class PasswordDatabase implements PersistentStateComponent<PasswordDataba
     /**
      * The password database
      */
-    public String[][] PASSWORDS = new String[0][];
+    public String[][] PASSWORDS = new String[2][];
   }
 }

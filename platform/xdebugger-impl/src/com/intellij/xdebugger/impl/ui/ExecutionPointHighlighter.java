@@ -61,7 +61,7 @@ public class ExecutionPointHighlighter {
       colorsManager.addEditorColorsListener(new EditorColorsListener() {
         @Override
         public void globalSchemeChange(EditorColorsScheme scheme) {
-          update();
+          update(false);
         }
       }, project);
     }
@@ -85,7 +85,7 @@ public class ExecutionPointHighlighter {
         myGutterIconRenderer = gutterIconRenderer;
         myUseSelection = useSelection;
 
-        doShow();
+        doShow(true);
       }
     });
   }
@@ -122,13 +122,13 @@ public class ExecutionPointHighlighter {
     return myOpenFileDescriptor != null ? myOpenFileDescriptor.getFile() : null;
   }
 
-  public void update() {
+  public void update(final boolean navigate) {
     if (updateRequested.compareAndSet(false, true)) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
           if (updateRequested.compareAndSet(true, false)) {
-            doShow();
+            doShow(navigate);
           }
         }
       }, myProject.getDisposed());
@@ -146,13 +146,18 @@ public class ExecutionPointHighlighter {
     });
   }
 
-  private void doShow() {
+  private void doShow(boolean navigate) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     removeHighlighter();
 
-    myEditor = myOpenFileDescriptor == null ? null : XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
+
+    OpenFileDescriptor fileDescriptor = myOpenFileDescriptor;
+    if (!navigate && myOpenFileDescriptor != null) {
+      fileDescriptor = new OpenFileDescriptor(myProject, myOpenFileDescriptor.getFile());
+    }
+    myEditor = fileDescriptor == null ? null : XDebuggerUtilImpl.createEditor(fileDescriptor);
     if (myEditor != null) {
       addHighlighter();
     }
@@ -172,7 +177,7 @@ public class ExecutionPointHighlighter {
   private void addHighlighter() {
     int line = mySourcePosition.getLine();
     Document document = myEditor.getDocument();
-    if (line >= document.getLineCount()) return;
+    if (line < 0 || line >= document.getLineCount()) return;
 
     if (myUseSelection) {
       myEditor.getSelectionModel().setSelection(document.getLineStartOffset(line), document.getLineEndOffset(line) + document.getLineSeparatorLength(line));

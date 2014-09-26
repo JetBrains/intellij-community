@@ -24,9 +24,7 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
-import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
-import org.jetbrains.jps.incremental.artifacts.instructions.CopyToDirectoryInstructionCreator;
+import org.jetbrains.jps.incremental.artifacts.instructions.*;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.*;
 import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement;
@@ -124,9 +122,12 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private static void generateModuleOutputInstructions(@Nullable String outputUrl, ArtifactCompilerInstructionCreator creator) {
+  private static void generateModuleOutputInstructions(@Nullable String outputUrl,
+                                                       @NotNull ArtifactCompilerInstructionCreator creator,
+                                                       @NotNull JpsPackagingElement contextElement) {
     if (outputUrl != null) {
-      creator.addDirectoryCopyInstructions(JpsPathUtil.urlToFile(outputUrl));
+      File directory = JpsPathUtil.urlToFile(outputUrl);
+      creator.addDirectoryCopyInstructions(directory, null, creator.getInstructionsBuilder().createCopyingHandler(directory, contextElement));
     }
   }
 
@@ -177,7 +178,7 @@ public class LayoutElementBuildersRegistry {
       final String dirPath = element.getDirectoryPath();
       if (dirPath != null) {
         final File directory = new File(dirPath);
-        instructionCreator.addDirectoryCopyInstructions(directory);
+        instructionCreator.addDirectoryCopyInstructions(directory, null, instructionCreator.getInstructionsBuilder().createCopyingHandler(directory, element));
       }
     }
 
@@ -204,7 +205,9 @@ public class LayoutElementBuildersRegistry {
       if (filePath != null) {
         final File file = new File(filePath);
         final String fileName = element.getRenamedOutputFileName();
-        instructionCreator.addFileCopyInstruction(file, fileName != null ? fileName : file.getName());
+        String outputFileName = fileName != null ? fileName : file.getName();
+        instructionCreator.addFileCopyInstruction(file, outputFileName,
+                                                  instructionCreator.getInstructionsBuilder().createCopyingHandler(file, element));
       }
     }
 
@@ -243,7 +246,7 @@ public class LayoutElementBuildersRegistry {
     public void generateInstructions(JpsProductionModuleOutputPackagingElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
-      generateModuleOutputInstructions(element.getOutputUrl(), instructionCreator);
+      generateModuleOutputInstructions(element.getOutputUrl(), instructionCreator, element);
     }
 
     @Override
@@ -266,7 +269,7 @@ public class LayoutElementBuildersRegistry {
     public void generateInstructions(JpsTestModuleOutputPackagingElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
-      generateModuleOutputInstructions(element.getOutputUrl(), instructionCreator);
+      generateModuleOutputInstructions(element.getOutputUrl(), instructionCreator, element);
     }
 
     @Override

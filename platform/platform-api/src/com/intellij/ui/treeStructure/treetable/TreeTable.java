@@ -178,6 +178,14 @@ public class TreeTable extends JBTable {
         myTree.setSelectionPath(selectionPath);
       } else if (keyCode == KeyEvent.VK_LEFT) {
         rowToSelect = myTree.getRowForPath(myTree.getSelectionPath());
+        if (!getScrollableTracksViewportHeight()) {
+          int visibleYPosition = getVisibleRect().y;
+          final Rectangle cellRect = getCellRect(rowToSelect, 0, false);
+          int selectedRowYPosition = cellRect.y;
+          if (selectedRowYPosition < visibleYPosition) {
+            scrollRectToVisible(cellRect);
+          }
+        }
       }
     }
     else{

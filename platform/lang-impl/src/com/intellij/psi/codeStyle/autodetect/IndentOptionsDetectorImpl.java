@@ -99,8 +99,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     }
 
     if (maxUsedIndentSize <= MAX_INDENT_TO_DETECT) {
-      int totalUsagesWithoutZeroIndent = stats.getTotalLinesWithLeadingSpaces() - stats.getTimesIndentUsed(0);
-      double usageRate = (double)maxUsedIndentInfo.getTimesUsed() / totalUsagesWithoutZeroIndent;
+      double usageRate = (double)maxUsedIndentInfo.getTimesUsed() / stats.getTotalLinesWithLeadingSpaces();
       if (usageRate > RATE_THRESHOLD) {
         return maxUsedIndentSize;
       }

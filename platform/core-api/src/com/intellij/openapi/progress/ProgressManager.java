@@ -193,9 +193,10 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     }
   }
 
+  public static volatile boolean ALWAYS_CHECK_CANCELED = false;
   public static void checkCanceled() throws ProcessCanceledException {
     boolean thereIsCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
-    if (thereIsCanceledIndicator) {
+    if (thereIsCanceledIndicator || ALWAYS_CHECK_CANCELED) {
       getInstance().doCheckCanceled();
     }
   }

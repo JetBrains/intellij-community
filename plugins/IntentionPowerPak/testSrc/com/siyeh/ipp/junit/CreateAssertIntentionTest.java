@@ -28,6 +28,8 @@ public class CreateAssertIntentionTest extends IPPTestCase {
   public void testAnonymousClassJUnit4() { doTest(); }
   public void testStaticImportJUnit4() { doTest(); }
   public void testAssertFalse() { doTest(); }
+  public void testConflictingMethod() { doTest(); }
+  public void testNonConflictingMethod() { doTest(); }
 
   @Override
   protected String getRelativePath() {

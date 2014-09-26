@@ -44,4 +44,9 @@ abstract class BasePrimitiveBinding implements Binding {
       myBinding = XmlSerializerImpl.getBinding(myAccessor);
     }
   }
+
+  @Override
+  public Class getBoundNodeType() {
+    throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
+  }
 }
