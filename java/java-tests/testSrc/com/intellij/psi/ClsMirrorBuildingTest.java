@@ -112,7 +112,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
 
   public void testDocumentReuse() throws IOException {
     File classFile = new File(FileUtil.getTempDirectory(), "ReuseTest.class");
-    assertTrue(classFile.getPath(), classFile.createNewFile());
+    FileUtil.writeToFile(classFile, "");
     VirtualFile vFile = StandardFileSystems.local().findFileByPath(classFile.getPath());
     assertNotNull(classFile.getPath(), vFile);
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
