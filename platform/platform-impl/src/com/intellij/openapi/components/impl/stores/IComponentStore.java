@@ -45,8 +45,7 @@ public interface IComponentStore {
   @NotNull
   StateStorageManager getStateStorageManager();
 
-
-  class SaveCancelledException extends IOException {
+  class SaveCancelledException extends RuntimeException {
     public SaveCancelledException() {
     }
 
@@ -60,10 +59,10 @@ public interface IComponentStore {
 
   interface SaveSession {
     @NotNull
-    List<File> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException;
+    List<File> getAllStorageFilesToSave(boolean includingSubStructures);
 
     @NotNull
-    SaveSession save() throws IOException;
+    SaveSession save();
 
     void finishSave();
 

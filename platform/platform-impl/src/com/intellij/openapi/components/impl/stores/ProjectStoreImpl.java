@@ -474,27 +474,36 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     @NotNull
     @Override
-    public List<File> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
-      List<File> result = new SmartList<File>();
+    public List<File> getAllStorageFilesToSave(boolean includingSubStructures) {
+      List<File> result = null;
       if (includingSubStructures) {
+        result = new SmartList<File>();
         collectSubFilesToSave(result);
       }
-      result.addAll(super.getAllStorageFilesToSave(false));
+
+      List<File> filesToSave = super.getAllStorageFilesToSave(false);
+      if (result == null) {
+        return filesToSave;
+      }
+      result.addAll(filesToSave);
       return result;
     }
 
-    protected void collectSubFilesToSave(final List<File> result) throws IOException { }
+    protected void collectSubFilesToSave(@NotNull List<File> result) {
+    }
 
     @NotNull
     @Override
-    public SaveSession save() throws IOException {
-      final ProjectImpl.UnableToSaveProjectNotification[] notifications =
+    public SaveSession save() {
+      ProjectImpl.UnableToSaveProjectNotification[] notifications =
         NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
-      if (notifications.length > 0) throw new SaveCancelledException();
+      if (notifications.length > 0) {
+        throw new SaveCancelledException();
+      }
 
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable();
+      ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable();
       if (operationStatus == null) {
-        throw new IOException();
+        throw new StateStorageException();
       }
       else if (operationStatus.hasReadonlyFiles()) {
         ProjectImpl.dropUnableToSaveProjectNotification(myProject, operationStatus.getReadonlyFiles());
@@ -502,30 +511,28 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }
 
       beforeSave();
-
       super.save();
-
       return this;
     }
 
-    protected void beforeSave() throws IOException {
+    protected void beforeSave() {
     }
 
     private ReadonlyStatusHandler.OperationStatus ensureConfigFilesWritable() {
       return ApplicationManager.getApplication().runReadAction(new Computable<ReadonlyStatusHandler.OperationStatus>() {
         @Override
         public ReadonlyStatusHandler.OperationStatus compute() {
-          final List<File> filesToSave;
+          List<File> filesToSave;
           try {
             filesToSave = getAllStorageFilesToSave(true);
-            final Iterator<File> iterator = filesToSave.iterator();
+            Iterator<File> iterator = filesToSave.iterator();
             while (iterator.hasNext()) {
               if (!iterator.next().exists()) {
                 iterator.remove();
               }
             }
           }
-          catch (IOException e) {
+          catch (Exception e) {
             LOG.error(e);
             return null;
           }
@@ -549,7 +556,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
             }
           }
 
-          if (readonlyFiles.size() == 0) {
+          if (readonlyFiles.isEmpty()) {
             final VirtualFile projectBaseDir = getProjectBaseDir();
             if (projectBaseDir != null && projectBaseDir.isValid()) {
               if (!projectBaseDir.isWritable()) {
@@ -580,7 +587,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       });
     }
   }
-
 
   private final StateStorageChooser<PersistentStateComponent<?>> myStateStorageChooser = new StateStorageChooser<PersistentStateComponent<?>>() {
     @Override

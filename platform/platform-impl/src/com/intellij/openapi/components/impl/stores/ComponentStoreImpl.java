@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -346,42 +345,25 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     @NotNull
     @Override
-    public List<File> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
-      try {
-        return myStorageManagerSaveSession.getAllStorageFilesToSave();
-      }
-      catch (StateStorageException e) {
-        throw new IOException(e.getMessage());
-      }
+    public List<File> getAllStorageFilesToSave(final boolean includingSubStructures) {
+      return myStorageManagerSaveSession.getAllStorageFilesToSave();
     }
 
     @NotNull
     @Override
-    public SaveSession save() throws IOException {
-      try {
-        final SettingsSavingComponent[] settingsComponents =
-            mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
-
-        for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {
-          try {
-            settingsSavingComponent.save();
-          }
-          catch (StateStorageException e) {
-            LOG.info(e);
-            throw new IOException(e.getMessage());
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+    public SaveSession save() {
+      SettingsSavingComponent[] settingsComponents =
+        mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
+      for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {
+        try {
+          settingsSavingComponent.save();
         }
-
-        myStorageManagerSaveSession.save();
-      }
-      catch (StateStorageException e) {
-        LOG.info(e);
-        throw new IOException(e.getMessage(), e);
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
 
+      myStorageManagerSaveSession.save();
       return this;
     }
 

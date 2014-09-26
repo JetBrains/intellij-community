@@ -25,13 +25,13 @@ import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -90,7 +90,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   }
 
   private class ProjectWithModulesSaveSession extends ProjectSaveSession {
-    List<SaveSession> myModuleSaveSessions = new ArrayList<SaveSession>();
+    List<SaveSession> myModuleSaveSessions = new SmartList<SaveSession>();
 
     public ProjectWithModulesSaveSession() {
       for (Module module : getPersistentModules()) {
@@ -169,7 +169,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    protected void beforeSave() throws IOException {
+    protected void beforeSave() {
       super.beforeSave();
       for (SaveSession moduleSaveSession : myModuleSaveSessions) {
         moduleSaveSession.save();
@@ -177,7 +177,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    protected void collectSubFilesToSave(final List<File> result) throws IOException {
+    protected void collectSubFilesToSave(@NotNull List<File> result) {
       for (SaveSession moduleSaveSession : myModuleSaveSessions) {
         result.addAll(moduleSaveSession.getAllStorageFilesToSave(true));
       }
