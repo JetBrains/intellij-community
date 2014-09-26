@@ -40,7 +40,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
     } else {
       final PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
       this.importStatements = new ArrayList<PsiImportStatementBase>(Arrays.asList(importStatements));
-      Collections.reverse(this.importStatements);
+      Collections.sort(this.importStatements, ImportStatementComparator.getInstance());
     }
   }
 
@@ -101,33 +101,33 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
       return null;
     }
     final boolean hasOnDemandImportConflict = ImportUtils.hasOnDemandImportConflict(qualifiedName, myFile);
-    for (PsiImportStatementBase importStatementBase : importStatements) {
-      if (!importStatementBase.isOnDemand()) {
-        if (member.equals(importStatementBase.resolve())) {
-          return importStatementBase;
+    for (PsiImportStatementBase importStatement : importStatements) {
+      if (!importStatement.isOnDemand()) {
+        if (member.equals(importStatement.resolve())) {
+          return importStatement;
         }
       }
       else {
         if (hasOnDemandImportConflict) {
           continue;
         }
-        final PsiElement target = importStatementBase.resolve();
+        final PsiElement target = importStatement.resolve();
         if (target instanceof PsiPackage) {
           final PsiPackage aPackage = (PsiPackage)target;
           if (packageName.equals(aPackage.getQualifiedName())) {
-            return importStatementBase;
+            return importStatement;
           }
         }
         else if (target instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)target;
           if (InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) {
-            if (importStatementBase instanceof PsiImportStaticStatement) {
+            if (importStatement instanceof PsiImportStaticStatement) {
               if (member.hasModifierProperty(PsiModifier.STATIC)) {
-                return importStatementBase;
+                return importStatement;
               }
             }
-            else if (importStatementBase instanceof PsiImportStatement && member instanceof PsiClass) {
-              return importStatementBase;
+            else if (importStatement instanceof PsiImportStatement && member instanceof PsiClass) {
+              return importStatement;
             }
           }
         }

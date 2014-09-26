@@ -63,8 +63,7 @@ public final class ImportUtils {
     if (containingPackageName.equals(packageName) || importList.findSingleClassImportStatement(qualifiedName) != null) {
       return;
     }
-    if (importList.findOnDemandImportStatement(packageName) != null &&
-        !hasDefaultImportConflict(qualifiedName, javaFile) && !hasOnDemandImportConflict(qualifiedName, javaFile)) {
+    if (importList.findOnDemandImportStatement(packageName) != null && !hasOnDemandImportConflict(qualifiedName, javaFile)) {
       return;
     }
     if (hasExactImportConflict(qualifiedName, javaFile)) {
@@ -326,7 +325,7 @@ public final class ImportUtils {
         }
       }
     }
-    return hasJavaLangImportConflict(fqName, javaFile);
+    return hasJavaLangImportConflict(fqName, javaFile) || hasDefaultImportConflict(fqName, javaFile);
   }
 
   private static boolean hasDefaultImportConflict(String fqName, PsiJavaFile file) {

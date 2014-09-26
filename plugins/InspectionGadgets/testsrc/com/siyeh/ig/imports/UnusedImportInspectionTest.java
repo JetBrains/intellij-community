@@ -163,6 +163,26 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "}");
   }
 
+  public void testOrderIsNotImportant() {
+    doTest("package a;" +
+           "import java.util.*;" +
+           "/*Unused import 'import java.util.List;'*/import java.util.List;/**/" +
+           "class X {{" +
+           "  List list = new ArrayList();" +
+           "}}");
+
+  }
+
+  public void testConflictInSamePackage() {
+    addEnvironmentClass("package a; public class List {}");
+    doTest("package a;" +
+           "import java.util.List;" +
+           "import java.util.*;" +
+           "class X {{" +
+           "  List list = new ArrayList();" +
+           "}}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new UnusedImportInspection();
