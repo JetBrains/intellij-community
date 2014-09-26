@@ -31,8 +31,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.ui.DetailsComponent;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -262,32 +260,18 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   private JComponent createContent(Configurable configurable) {
-    if (configurable instanceof MasterDetails) {
-      MasterDetails master = (MasterDetails)configurable;
-      master.initUi();
-
-      DetailsComponent details = master.getDetails();
-      JComponent toolbar = master.getToolbar();
-
-      JPanel leftPanel = new JPanel(new BorderLayout());
-      leftPanel.add(BorderLayout.NORTH, toolbar);
-      leftPanel.add(BorderLayout.CENTER, master.getMaster());
-
-      details.setBannerMinHeight(toolbar.getPreferredSize().height);
-
-      Splitter splitter = new Splitter(false);
-      splitter.setFirstComponent(leftPanel);
-      splitter.setSecondComponent(details.getComponent());
-      configurable.reset();
-      return splitter;
-    }
     JComponent content = configurable == null ? null : configurable.createComponent();
     if (content != null) {
       configurable.reset();
-      if (!ConfigurableWrapper.isNoScroll(configurable)) {
-        JScrollPane scroll = ScrollPaneFactory.createScrollPane(content, true);
-        scroll.getVerticalScrollBar().setUnitIncrement(10);
-        content = scroll;
+      if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
+        if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
+          content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        }
+        if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
+          JScrollPane scroll = ScrollPaneFactory.createScrollPane(content, true);
+          scroll.getVerticalScrollBar().setUnitIncrement(10);
+          content = scroll;
+        }
       }
     }
     else {

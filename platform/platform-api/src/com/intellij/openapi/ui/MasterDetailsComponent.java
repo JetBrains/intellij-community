@@ -140,6 +140,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   private boolean isNewProjectSettings() {
+    if (Registry.is("ide.new.settings.view")) {
+      return true;
+    }
     if (!Registry.is("ide.new.project.settings")) {
       return false;
     }
