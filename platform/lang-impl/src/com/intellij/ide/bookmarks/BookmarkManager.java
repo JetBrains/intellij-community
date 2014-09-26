@@ -442,6 +442,30 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
   private class MyDocumentListener extends DocumentAdapter {
     @Override
+    public void beforeDocumentChange(DocumentEvent e) {
+      List<Bookmark> bookmarksToRemove = null;
+      for (Bookmark bookmark : myBookmarks) {
+        Document document = FileDocumentManager.getInstance().getCachedDocument(bookmark.getFile());
+        if (document == null || document != e.getDocument()) continue;
+        if (bookmark.getLine() ==-1) continue;
+
+        int start = bookmark.getDocument().getLineStartOffset(bookmark.getLine());
+        int end = bookmark.getDocument().getLineEndOffset(bookmark.getLine());
+        if (start >= e.getOffset() && end <= e.getOffset() + e.getOldLength() ) {
+          if (bookmarksToRemove == null) {
+            bookmarksToRemove = new ArrayList<Bookmark>();
+          }
+          bookmarksToRemove.add(bookmark);
+        }
+      }
+      if (bookmarksToRemove != null) {
+        for (Bookmark bookmark : bookmarksToRemove) {
+          removeBookmark(bookmark);
+        }
+      }
+    }
+
+    @Override
     public void documentChanged(DocumentEvent e) {
       List<Bookmark> bookmarksToRemove = null;
       for (Bookmark bookmark : myBookmarks) {
