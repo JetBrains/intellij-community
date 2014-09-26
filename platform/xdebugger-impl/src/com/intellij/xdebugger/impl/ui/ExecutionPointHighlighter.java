@@ -177,7 +177,7 @@ public class ExecutionPointHighlighter {
   private void addHighlighter() {
     int line = mySourcePosition.getLine();
     Document document = myEditor.getDocument();
-    if (line >= document.getLineCount()) return;
+    if (line < 0 || line >= document.getLineCount()) return;
 
     if (myUseSelection) {
       myEditor.getSelectionModel().setSelection(document.getLineStartOffset(line), document.getLineEndOffset(line) + document.getLineSeparatorLength(line));
