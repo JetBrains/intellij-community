@@ -575,28 +575,26 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   private void moveSelectedRows(int increment) {
-    if (increment == 0) {
-      return;
-    }
-    if (myEntryTable.isEditing()){
+    LOG.assertTrue(increment == -1 || increment == 1);
+    if (myEntryTable.isEditing()) {
       myEntryTable.getCellEditor().stopCellEditing();
     }
     final ListSelectionModel selectionModel = myEntryTable.getSelectionModel();
-    for(int row = increment < 0? 0 : myModel.getRowCount() - 1; increment < 0? row < myModel.getRowCount() : row >= 0; row +=
-      increment < 0? +1 : -1){
+    for (int row = increment < 0 ? 0 : myModel.getRowCount() - 1; increment < 0 ? row < myModel.getRowCount() : row >= 0; row +=
+      increment < 0 ? +1 : -1) {
       if (selectionModel.isSelectedIndex(row)) {
         final int newRow = moveRow(row, increment);
         selectionModel.removeSelectionInterval(row, row);
         selectionModel.addSelectionInterval(newRow, newRow);
       }
     }
+    List<OrderEntry> entries = getEntries();
+    myState.getRootModel().rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
+
     myModel.fireTableRowsUpdated(0, myModel.getRowCount() - 1);
     Rectangle cellRect = myEntryTable.getCellRect(selectionModel.getMinSelectionIndex(), 0, true);
-    if (cellRect != null) {
-      myEntryTable.scrollRectToVisible(cellRect);
-    }
+    myEntryTable.scrollRectToVisible(cellRect);
     myEntryTable.repaint();
-    myListeners.getMulticaster().entryMoved();
   }
 
   public void selectOrderEntry(@NotNull OrderEntry entry) {
