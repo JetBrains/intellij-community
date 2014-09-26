@@ -226,12 +226,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintEditorBackgrounds(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+    int startX = getWhitespaceSeparatorOffset() + 1;
     IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true);
     while (!state.atEnd()) {
-      g.setColor(state.getMergedAttributes().getBackgroundColor());
-      int startX = getWhitespaceSeparatorOffset() + 1;
-      int y = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(state.getStartOffset())).y;
-      g.fillRect(startX, y, clip.width - startX, myEditor.getLineHeight());
+      VisualPosition logicalStart = myEditor.offsetToVisualPosition(state.getStartOffset());
+      int startY = myEditor.visualPositionToXY(logicalStart).y;
+      int endY = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(state.getEndOffset())).y;
+      if (logicalStart.getColumn() == 0) {
+        g.setColor(myEditor.getBackgroundColor(state.getMergedAttributes()));
+        g.fillRect(startX, startY, clip.width - startX, endY - startY + myEditor.getLineHeight());
+      }
+      else if (startY != endY) {
+        g.setColor(myEditor.getBackgroundColor(state.getMergedAttributes()));
+        g.fillRect(startX, startY + myEditor.getLineHeight(), clip.width - startX, endY - startY + myEditor.getLineHeight());
+      }
       state.advance();
     }
   }
