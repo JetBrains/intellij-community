@@ -311,7 +311,6 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
       ColoredTreeCellRenderer renderer = getTextRenderer();
-      renderer.setBorder(null);
       if (value instanceof CustomRenderedTreeNode) {
         ((CustomRenderedTreeNode)value).render(renderer);
       }
