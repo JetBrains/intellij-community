@@ -18,7 +18,6 @@ package com.jetbrains.python.actions.view.array;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 
@@ -30,17 +29,23 @@ public class TableAdjustmentListener implements AdjustmentListener {
   private int rMax;
   private int cMax;
   private int myMode;
-  private int mySize;
+  private int myRSize;
+  private int myCSize;
+  private int myRChunk;
+  private int myCChunk;
 
   public static final int VERTICAL_MODE = 0;
   public static final int HORIZONTAL_MODE = 1;
 
-  public TableAdjustmentListener(JBTable table, int rMax, int cMax, int mode, int size) {
+  public TableAdjustmentListener(JBTable table, int rMax, int cMax, int mode, int rSize, int cSize, int rChunk, int cChunk) {
     myTable = table;
     this.rMax = rMax;
     this.cMax = cMax;
     myMode = mode;
-    mySize = size;
+    myRSize = rSize;
+    myCSize = cSize;
+    myRChunk = rChunk;
+    myCChunk = cChunk;
   }
 
   @Override
@@ -48,43 +53,67 @@ public class TableAdjustmentListener implements AdjustmentListener {
 
     //reach right or bottom border
     if (e.getValue() + e.getAdjustable().getVisibleAmount() == e.getAdjustable().getMaximum()) {
-      if (myMode == HORIZONTAL_MODE && myTable.getColumnCount() == mySize) {
+      if (myMode == HORIZONTAL_MODE && myTable.getColumnCount() == myCSize) {
 
-        int x = Integer.parseInt(myTable.getColumnModel().getColumn(mySize - 1).getHeaderValue().toString()) + 1;
+        int x = Integer.parseInt(myTable.getColumnModel().getColumn(myCSize - 1).getHeaderValue().toString()) + 1;
+        if (x >= cMax) {
+          return;
+        }
+        int cS = myCChunk;
+        if (x + myCChunk >= cMax) {
+          cS = Math.min(myCChunk, Math.abs(cMax-x));
+        }
         int y = myTable.getRowCount();
-        String repr = "val[" + y + ":, " + x + ":]";
+        String repr = "val[" +
+                      ((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable().getRowShift() +
+                      ":, " +
+                      (Integer.parseInt(myTable.getColumnModel().getColumn(0).getHeaderValue().toString()) + cS) +
+                      ":]";
 
-        ArrayChunk chunk = new ArrayChunk(repr, y, 5, x, ((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable().getRowShift());
+        ArrayChunk chunk =
+          new ArrayChunk(repr, y, cS, x, ((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable().getRowShift());
         chunk.loadData();
 
         moveNFirstColumns(chunk.getColumns());
-        loadDataIntoTable(chunk, mySize - chunk.getColumns(), 0);
+        loadDataIntoTable(chunk, myCSize - chunk.getColumns(), 0);
       }
-      else if (myMode == VERTICAL_MODE && myTable.getColumnCount() == mySize) {
+      else if (myMode == VERTICAL_MODE && myTable.getRowCount() == myRSize) {
+
 
         RowNumberTable rowTable = ((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable();
-        int x = rowTable.getRowShift() + mySize;
+        int x = rowTable.getRowShift() + myRSize;
+        if (x == cMax) {
+          return;
+        }
+        int rS = myRChunk;
+        if (x + myRChunk >= rMax) {
+          rS = Math.min(myRChunk, Math.abs(rMax-x));
+        }
         int y = myTable.getColumnCount();
-        String repr = "val[" + y + ":, " + x + ":]";
+        String repr = "val[" +
+                      (((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable().getRowShift() + rS) +
+                      ":, " +
+                      Integer.parseInt(myTable.getColumnModel().getColumn(0).getHeaderValue().toString()) +
+                      ":]";
 
         ArrayChunk chunk =
-          new ArrayChunk(repr, 5, y, Integer.parseInt(myTable.getColumnModel().getColumn(0).getHeaderValue().toString()), x);
+          new ArrayChunk(repr, rS, y, Integer.parseInt(myTable.getColumnModel().getColumn(0).getHeaderValue().toString()), x);
         chunk.loadData();
 
         moveNFirstRows(chunk.getRows());
-        loadDataIntoTable(chunk, 0, mySize - chunk.getRows());
+        loadDataIntoTable(chunk, 0, myRSize - chunk.getRows());
       }
     }
 
     //reach left or upper border
     if (e.getValue() == 0) {
-      if (myMode == HORIZONTAL_MODE && myTable.getColumnCount() == mySize) {
+      if (myMode == HORIZONTAL_MODE && myTable.getColumnCount() == myCSize) {
 
         int x = Integer.parseInt(myTable.getColumnModel().getColumn(0).getHeaderValue().toString());
         if (x != 0) {
           int y = myTable.getRowCount();
-          int leftSpace = Math.min(5, x);
-          String repr = "val[" + y + ":, " + (x - leftSpace) + ":]";
+          int leftSpace = Math.min(myCChunk, x);
+          String repr = "val[" + ((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable().getRowShift() + ":, " + (x-leftSpace) + ":]";
 
           ArrayChunk chunk =
             new ArrayChunk(repr, y, leftSpace, x - leftSpace, ((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable().getRowShift());
@@ -94,14 +123,14 @@ public class TableAdjustmentListener implements AdjustmentListener {
           loadDataIntoTable(chunk, 0, 0);
         }
       }
-      else if (myMode == VERTICAL_MODE && myTable.getColumnCount() == mySize) {
+      else if (myMode == VERTICAL_MODE && myTable.getRowCount() == myRSize) {
 
         RowNumberTable rowTable = ((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable();
         int x = rowTable.getRowShift();
         if (x != 0) {
           int y = myTable.getColumnCount();
-          int leftSpace = Math.min(5, x);
-          String repr = "val[" + (x - leftSpace) + ":, " + y + ":]";
+          int leftSpace = Math.min(myRChunk, x);
+          String repr = "val[" + (x-leftSpace) + ":, " + Integer.parseInt(myTable.getColumnModel().getColumn(0).getHeaderValue().toString()) + ":]";
 
           ArrayChunk chunk = new ArrayChunk(repr, leftSpace, y,
                                             Integer.parseInt(myTable.getColumnModel().getColumn(0).getHeaderValue().toString()),
@@ -155,75 +184,6 @@ public class TableAdjustmentListener implements AdjustmentListener {
         myTable.setValueAt(data[j][i], j + vShift, i + hShift);
       }
     }
-  }
-
-  private void removeFirstNColumns(int n) {
-    if (myTable.getColumnCount() == mySize + 5) {
-      DefaultTableModel dtm = (DefaultTableModel)myTable.getModel();
-      for (int j = 0; j < n; j++) {
-        ((NumpyArrayValueProvider.MyTableModel)dtm).removeColumn(0);
-      }
-    }
-  }
-
-  private void removeLastNColumns(int n) {
-    if (myTable.getColumnCount() == mySize + 5) {
-      DefaultTableModel dtm = (DefaultTableModel)myTable.getModel();
-      for (int j = 0; j < n; j++) {
-        myTable.getColumnModel().removeColumn(myTable.getColumnModel().getColumn(myTable.getColumnCount() - 1));
-      }
-    }
-  }
-
-  private void addLastNColumns(int n) {
-    DefaultTableModel dtm = (DefaultTableModel)myTable.getModel();
-    int index = Integer.parseInt(myTable.getColumnModel().getColumn(mySize - 1).getHeaderValue().toString());
-    for (int j = 0; j < n; j++) {
-      dtm.addColumn(index + j + 1,
-                    new Object[dtm.getRowCount()]);
-    }
-  }
-
-  private void addFirstNColumns(int n) {
-    DefaultTableModel dtm = (DefaultTableModel)myTable.getModel();
-    int index = Integer.parseInt(myTable.getColumnModel().getColumn(0).getHeaderValue().toString());
-    for (int j = 0; j < n; j++) {
-      TableColumn col = new TableColumn(myTable.getColumnModel().getColumn(myTable.getColumnCount() - j - 1).getModelIndex());
-      col.setHeaderValue(index - 1 - j);
-      col.setIdentifier(index - 1 - j);
-      myTable.addColumn(col);
-    }
-    for (int j = n; j > 0; j--) {
-      myTable.moveColumn(myTable.getColumnCount() - j, 0);
-    }
-  }
-
-
-  private void removeFirstNRows(int n) {
-    if (myTable.getRowCount() == mySize + 5) {
-      for (int j = 0; j < n; j++) {
-        ((DefaultTableModel)myTable.getModel()).removeRow(0);
-      }
-    }
-  }
-
-  private void removeLastNRows(int n) {
-    if (myTable.getRowCount() == mySize + 5) {
-      for (int j = 0; j < n; j++) {
-        ((DefaultTableModel)myTable.getModel()).removeRow(myTable.getRowCount() - 1);
-      }
-    }
-  }
-
-  private void addLastNRows(int n) {
-    for (int j = 0; j < n; j++) {
-      ((DefaultTableModel)myTable.getModel()).addRow(new Object[myTable.getColumnCount()]);
-    }
-  }
-
-  private void addFirstNRows(int n) {
-    for (int j = 0; j < n; j++) {
-      ((DefaultTableModel)myTable.getModel()).insertRow(0, new Object[myTable.getColumnCount()]);
-    }
+    ((ArrayTableForm.JBTableWithRows)myTable).getSliceField().setText(chunk.getDataCommand());
   }
 }
