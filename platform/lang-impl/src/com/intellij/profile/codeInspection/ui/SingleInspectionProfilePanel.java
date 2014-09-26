@@ -850,25 +850,22 @@ public class SingleInspectionProfilePanel extends JPanel {
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
         severityPanel.add(new JBLabel("Severity by Scope"),
-                          new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                          new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                  new Insets(5, 0, 2, 10), 0, 0));
-        severityPanel.add(new JBLabel("Add scope to change its settings", UIUtil.ComponentStyle.SMALL),
-                          new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.NORTHEAST, GridBagConstraints.NONE,
-                                                 new Insets(5, 0, 2, 0), 0, 0));
-        severityPanel.add(panel, new GridBagConstraints(0, 1, 2, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+        severityPanel.add(panel, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                         new Insets(0, 0, 0, 0), 0, 0));
         severityPanelWeightY = 0.3;
       }
       myOptionsPanel.add(severityPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, severityPanelWeightY, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
       if (configPanelAnchor.getComponentCount() != 0) {
-        configPanelAnchor.setBorder(IdeBorderFactory.createTitledBorder("Options", false, new Insets(0, 0, 0, 0)));
+        configPanelAnchor.setBorder(IdeBorderFactory.createTitledBorder("Options", false, new Insets(7, 0, 0, 0)));
       }
+      GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
       if (configPanelAnchor.getComponentCount() != 0 || scopesNames.isEmpty()) {
         myOptionsPanel.add(configPanelAnchor, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                                      new Insets(0, 0, 0, 0), 0, 0));
       }
       myOptionsPanel.revalidate();
-      GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
     }
     else {
       initOptionsAndDescriptionPanel();
@@ -914,6 +911,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (additionalConfigPanel != null) {
       configPanelAnchor.add(ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE));
     }
+    UIUtil.setEnabled(configPanelAnchor, state.isEnabled(), true);
   }
 
   private static InspectionConfigTreeNode getGroupNode(InspectionConfigTreeNode root, String[] groupPath) {

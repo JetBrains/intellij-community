@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -218,11 +219,14 @@ public class InspectionsConfigTreeTable extends TreeTable {
     private Boolean isEnabled(final List<HighlightDisplayKey> selectedInspectionsNodes) {
       Boolean isPreviousEnabled = null;
       for (final HighlightDisplayKey key : selectedInspectionsNodes) {
-        final boolean enabled = mySettings.getInspectionProfile().getTools(key.toString(), mySettings.getProject()).isEnabled();
-        if (isPreviousEnabled == null) {
-          isPreviousEnabled = enabled;
-        } else if (!isPreviousEnabled.equals(enabled)) {
-          return null;
+        final ToolsImpl tools = mySettings.getInspectionProfile().getTools(key.toString(), mySettings.getProject());
+        for (final ScopeToolState state : tools.getTools()) {
+          final boolean enabled = state.isEnabled();
+          if (isPreviousEnabled == null) {
+            isPreviousEnabled = enabled;
+          } else if (!isPreviousEnabled.equals(enabled)) {
+            return null;
+          }
         }
       }
       return isPreviousEnabled;
