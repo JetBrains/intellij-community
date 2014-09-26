@@ -289,7 +289,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         rootConfigurable.select((LibraryOrderEntry)entry, true);
       }
       else {
-        myEditButton.actionPerformed(null);
+        doEdit();
       }
     }
     else if (entry instanceof JdkOrderEntry) {
