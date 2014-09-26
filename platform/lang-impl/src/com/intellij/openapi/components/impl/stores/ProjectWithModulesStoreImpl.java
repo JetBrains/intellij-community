@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
@@ -26,13 +25,13 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -41,12 +40,12 @@ import java.util.Set;
  * @author yole
  */
 public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
-  public ProjectWithModulesStoreImpl(final ProjectImpl project) {
+  public ProjectWithModulesStoreImpl(@NotNull ProjectImpl project) {
     super(project);
   }
 
   @Override
-  public void reinitComponents(@NotNull final Set<String> componentNames, final boolean reloadData) {
+  public void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData) {
     super.reinitComponents(componentNames, reloadData);
 
     for (Module module : getPersistentModules()) {
@@ -56,32 +55,35 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
 
   @Override
   public TrackingPathMacroSubstitutor[] getSubstitutors() {
-    final List<TrackingPathMacroSubstitutor> result = new ArrayList<TrackingPathMacroSubstitutor>();
-    result.add(getStateStorageManager().getMacroSubstitutor());
+    List<TrackingPathMacroSubstitutor> result = new SmartList<TrackingPathMacroSubstitutor>();
+    ContainerUtil.addIfNotNull(result, getStateStorageManager().getMacroSubstitutor());
 
     for (Module module : getPersistentModules()) {
-      result.add(((ModuleImpl)module).getStateStore().getStateStorageManager().getMacroSubstitutor());
+      ContainerUtil.addIfNotNull(result, ((ModuleImpl)module).getStateStore().getStateStorageManager().getMacroSubstitutor());
     }
 
     return result.toArray(new TrackingPathMacroSubstitutor[result.size()]);
   }
 
   @Override
-  public boolean isReloadPossible(@NotNull final Set<String> componentNames) {
-    if (!super.isReloadPossible(componentNames)) return false;
+  public boolean isReloadPossible(@NotNull Set<String> componentNames) {
+    if (!super.isReloadPossible(componentNames)) {
+      return false;
+    }
 
     for (Module module : getPersistentModules()) {
-      if (!((ModuleImpl)module).getStateStore().isReloadPossible(componentNames)) return false;
+      if (!((ModuleImpl)module).getStateStore().isReloadPossible(componentNames)) {
+        return false;
+      }
     }
 
     return true;
   }
 
+  @NotNull
   protected Module[] getPersistentModules() {
     ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    if (moduleManager == null) return Module.EMPTY_ARRAY;
-
-    return moduleManager.getModules();
+    return moduleManager == null ? Module.EMPTY_ARRAY : moduleManager.getModules();
   }
 
   @Override
@@ -100,7 +102,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
 
     @NotNull
     @Override
-    public List<File> getAllStorageFiles(final boolean includingSubStructures) {
+    public List<File> getAllStorageFiles(boolean includingSubStructures) {
       List<File> result = super.getAllStorageFiles(includingSubStructures);
       if (includingSubStructures) {
         for (SaveSession moduleSaveSession : myModuleSaveSessions) {
@@ -142,8 +144,10 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
           try {
             moduleSaveSession.finishSave();
           }
-          catch(Throwable e) {
-            if (first == null) first = e;
+          catch (Throwable e) {
+            if (first == null) {
+              first = e;
+            }
           }
         }
 
