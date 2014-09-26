@@ -17,10 +17,12 @@ package com.intellij.psi;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -31,6 +33,7 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
+import java.io.File;
 import java.io.IOException;
 
 public class ClsMirrorBuildingTest extends LightIdeaTestCase {
@@ -107,6 +110,34 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     new ClassReader(file.contentsToByteArray()).accept(visitor, ClassReader.SKIP_FRAMES);
   }
 
+  public void testDocumentReuse() throws IOException {
+    File classFile = new File(FileUtil.getTempDirectory(), "ReuseTest.class");
+    assertTrue(classFile.getPath(), classFile.createNewFile());
+    VirtualFile vFile = StandardFileSystems.local().findFileByPath(classFile.getPath());
+    assertNotNull(classFile.getPath(), vFile);
+    PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
+    assertNotNull(psiFile);
+    String testDir = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/mirror/";
+
+    FileUtil.copy(new File(testDir, "pkg/ReuseTestV1.class"), classFile);
+    vFile.refresh(false, false);
+    String text1 = psiFile.getText();
+    assertTrue(text1, text1.contains("private int f1"));
+    assertFalse(text1, text1.contains("private int f2"));
+    Document doc1 = FileDocumentManager.getInstance().getCachedDocument(vFile);
+    assertNotNull(doc1);
+    assertSame(doc1, PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+
+    FileUtil.copy(new File(testDir, "pkg/ReuseTestV2.class"), classFile);
+    vFile.refresh(false, false);
+    String text2 = psiFile.getText();
+    assertTrue(text2, text2.contains("private int f1"));
+    assertTrue(text2, text2.contains("private int f2"));
+    Document doc2 = FileDocumentManager.getInstance().getCachedDocument(vFile);
+    assertNotNull(doc2);
+    assertSame(doc2, PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+  }
+
   private void doTest() {
     doTest(getTestName(false));
   }
@@ -117,8 +148,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   }
 
   private static void doTest(String clsPath, String txtPath) {
-    VirtualFileSystem fs = clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local();
-    VirtualFile file = fs.findFileByPath(clsPath);
+    VirtualFile file = (clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local()).findFileByPath(clsPath);
     assertNotNull(clsPath, file);
 
     String expected;
@@ -126,8 +156,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
       expected = StringUtil.trimTrailing(PlatformTestUtil.loadFileText(txtPath));
     }
     catch (IOException e) {
-      fail(e.getMessage());
-      return;
+      throw new RuntimeException(e);
     }
 
     assertEquals(expected, ClsFileImpl.decompile(file).toString());
