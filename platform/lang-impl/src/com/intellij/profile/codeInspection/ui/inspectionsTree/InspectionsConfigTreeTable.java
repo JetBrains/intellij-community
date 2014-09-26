@@ -85,17 +85,19 @@ public class InspectionsConfigTreeTable extends TreeTable {
         final int row = rowAtPoint(point);
         final Object maybeIcon = getModel().getValueAt(row, column);
         if (maybeIcon instanceof MultiScopeSeverityIcon) {
+          final MultiScopeSeverityIcon icon = (MultiScopeSeverityIcon)maybeIcon;
           final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap =
-            ((MultiScopeSeverityIcon)maybeIcon).getScopeToAverageSeverityMap();
+            icon.getScopeToAverageSeverityMap();
           final JComponent component;
-          if (scopeToAverageSeverityMap.size() == 1) {
+          if (scopeToAverageSeverityMap.size() == 1 &&
+              icon.getDefaultScopeName().equals(ContainerUtil.getFirstItem(scopeToAverageSeverityMap.keySet()))) {
             final HighlightDisplayLevel level = ContainerUtil.getFirstItem(scopeToAverageSeverityMap.values());
             final JLabel label = new JLabel();
             label.setIcon(level.getIcon());
             label.setText(SingleInspectionProfilePanel.renderSeverity(level.getSeverity()));
             component = label;
           } else {
-            component = new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap);
+            component = new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap, icon.getDefaultScopeName());
           }
           IdeTooltipManager.getInstance().show(
             new IdeTooltip(InspectionsConfigTreeTable.this, point, component), false);
@@ -242,12 +244,16 @@ public class InspectionsConfigTreeTable extends TreeTable {
       LOG.assertTrue(column == IS_ENABLED_COLUMN);
       LOG.assertTrue(aValue != null, "node = " + node);
       final boolean doEnable = (Boolean) aValue;
+      final InspectionProfileImpl profile = mySettings.getInspectionProfile();
       for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode) node)) {
         final String toolId = aNode.getKey().toString();
         if (doEnable) {
-          mySettings.getInspectionProfile().enableTool(toolId, mySettings.getProject());
+          profile.enableTool(toolId, mySettings.getProject());
         } else {
-          mySettings.getInspectionProfile().disableTool(toolId, mySettings.getProject());
+          profile.disableTool(toolId, mySettings.getProject());
+        }
+        for (ScopeToolState state : profile.getTools(toolId, mySettings.getProject()).getTools()) {
+          state.setEnabled(doEnable);
         }
         aNode.dropCache();
         mySettings.onChanged(aNode);
@@ -344,6 +350,15 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
 
       final SeverityAndOccurrences defaultSeveritiesAndOccurrences = myScopeToAverageSeverityMap.get(myDefaultScopeName);
+      if (defaultSeveritiesAndOccurrences == null) {
+        for (Map.Entry<String, SeverityAndOccurrences> e: myScopeToAverageSeverityMap.entrySet()) {
+          final HighlightSeverity primarySeverity = e.getValue().getPrimarySeverity();
+          if (primarySeverity != null) {
+            result.put(e.getKey(), primarySeverity);
+          }
+        }
+        return result;
+      }
       final int allInspectionsCount = defaultSeveritiesAndOccurrences.getOccurrencesSize();
       final Map<String, HighlightSeverity> allScopes = defaultSeveritiesAndOccurrences.getOccurrences();
       String[] reversedScopesOrder = ArrayUtil.reverseArray(scopesOrder);
