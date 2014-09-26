@@ -181,12 +181,5 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
         moduleSaveSession.save(readonlyFiles);
       }
     }
-
-    @Override
-    protected void collectSubFilesToSave(@NotNull List<File> result) {
-      for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
-        result.addAll(moduleSaveSession.getAllStorageFilesToSave(true));
-      }
-    }
   }
 }

@@ -28,9 +28,6 @@ import java.util.Set;
 
 public interface ComponentSaveSession {
   @NotNull
-  List<File> getAllStorageFilesToSave(boolean includingSubStructures);
-
-  @NotNull
   ComponentSaveSession save(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles);
 
   void finishSave();
@@ -41,5 +38,5 @@ public interface ComponentSaveSession {
   Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
 
   @NotNull
-  List<File> getAllStorageFiles(final boolean includingSubStructures);
+  List<File> getAllStorageFiles(boolean includingSubStructures);
 }

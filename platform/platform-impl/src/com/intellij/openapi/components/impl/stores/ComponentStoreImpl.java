@@ -356,12 +356,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     @NotNull
     @Override
-    public List<File> getAllStorageFilesToSave(final boolean includingSubStructures) {
-      return myStorageManagerSaveSession.getAllStorageFilesToSave();
-    }
-
-    @NotNull
-    @Override
     public ComponentSaveSession save(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
       SettingsSavingComponent[] settingsComponents =
         mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);

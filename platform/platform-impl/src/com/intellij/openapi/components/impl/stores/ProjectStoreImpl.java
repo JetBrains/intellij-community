@@ -38,7 +38,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtilRt;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.OrderedSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -466,29 +465,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   protected class ProjectSaveSession extends SaveSessionImpl {
-    ProjectSaveSession() throws StateStorageException {
-    }
-
-    @NotNull
-    @Override
-    public List<File> getAllStorageFilesToSave(boolean includingSubStructures) {
-      List<File> result = null;
-      if (includingSubStructures) {
-        result = new SmartList<File>();
-        collectSubFilesToSave(result);
-      }
-
-      List<File> filesToSave = super.getAllStorageFilesToSave(false);
-      if (result == null) {
-        return filesToSave;
-      }
-      result.addAll(filesToSave);
-      return result;
-    }
-
-    protected void collectSubFilesToSave(@NotNull List<File> result) {
-    }
-
     @NotNull
     @Override
     public ComponentSaveSession save(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
