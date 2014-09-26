@@ -73,6 +73,7 @@ public class JavaStackFrame extends XStackFrame {
   @NotNull private final StackFrameDescriptorImpl myDescriptor;
   private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
   private JavaDebuggerEvaluator myEvaluator = null;
+  private final String myEqualityObject;
 
   public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy,
                         @NotNull MethodsTracker tracker) {
@@ -85,6 +86,7 @@ public class JavaStackFrame extends XStackFrame {
       myDescriptor.setContext(null);
       myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
     }
+    myEqualityObject = update ? NodeManagerImpl.getContextKeyForFrame(myDescriptor.getFrameProxy()) : null;
     myDebugProcess = ((DebugProcessImpl)descriptor.getDebugProcess());
     myNodeManager = myDebugProcess.getXdebugProcess().getNodeManager();
     myXSourcePosition = myDescriptor.getSourcePosition() != null ? new JavaXSourcePosition(myDescriptor.getSourcePosition()) : null;
@@ -395,7 +397,7 @@ public class JavaStackFrame extends XStackFrame {
   @Nullable
   @Override
   public Object getEqualityObject() {
-    return myDescriptor.getMethod();
+    return myEqualityObject;
   }
 
   @Override
