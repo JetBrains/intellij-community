@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
@@ -65,12 +66,12 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     MyPanel panel = getEditorPanel(table);
-    EditorEx editor = panel.editor;
+    EditorEx editor = panel.myEditor;
     int tableFontSize = table.getFont().getSize();
     if (editor.getColorsScheme().getEditorFontSize() != tableFontSize) {
       editor.getColorsScheme().setEditorFontSize(tableFontSize);
     }
-    setText(editor, getText(((EditorImpl)editor).getFontMetrics(Font.PLAIN), table, value, row, column));
+    panel.setText(getText(((EditorImpl)editor).getFontMetrics(Font.PLAIN), table, value, row, column));
 
     ((EditorImpl)editor).setPaintSelection(isSelected);
     editor.getSelectionModel().setSelection(0, isSelected ? editor.getDocument().getTextLength() : 0);
@@ -94,7 +95,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   private MyPanel getEditorPanel(JTable table) {
     MyPanel panel = (MyPanel)table.getClientProperty(MY_PANEL_PROPERTY);
     if (panel != null) {
-      EditorColorsScheme scheme = panel.editor.getColorsScheme();
+      EditorColorsScheme scheme = panel.myEditor.getColorsScheme();
       if (scheme instanceof DelegateColorScheme) {
         ((DelegateColorScheme)scheme).setDelegate(getColorScheme());
       }
@@ -125,20 +126,25 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   public void dispose() {
   }
 
-  private static void setText(EditorEx editor, String text) {
-    editor.getMarkupModel().removeAllHighlighters();
-
-    editor.getDocument().setText(text);
-    editor.getHighlighter().setText(text);
-    ((EditorImpl)editor).resetSizes();
-  }
-
   private static class MyPanel extends CellRendererPanel implements Disposable {
-    EditorEx editor;
+    private static final String ABBREVIATION_SUFFIX = "\u2026"; // 2026 '...'
+
+    private final StringBuilder myDocumentTextBuilder = new StringBuilder();
+    private final EditorEx myEditor;
+    private Dimension myPreferredSize;
 
     public MyPanel(EditorEx editor) {
       add(editor.getContentComponent());
-      this.editor = editor;
+      this.myEditor = editor;
+    }
+
+    public void setText(String text) {
+      setText(text, true);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return myPreferredSize == null ? super.getPreferredSize() : myPreferredSize;
     }
 
     @Override
@@ -146,14 +152,72 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       if (getBorder() == null) return;
       Color oldColor = g.getColor();
       Rectangle clip = g.getClipBounds();
-      g.setColor(editor.getBackgroundColor());
+      g.setColor(myEditor.getBackgroundColor());
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
       g.setColor(oldColor);
     }
 
     @Override
+    protected void paintChildren(Graphics g) {
+      updateText();
+      super.paintChildren(g);
+    }
+
+    @Override
     public void dispose() {
-      EditorFactory.getInstance().releaseEditor(editor);
+      EditorFactory.getInstance().releaseEditor(myEditor);
+    }
+
+    private void updateText() {
+      FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(Font.PLAIN);
+      Insets insets = getInsets();
+      int maxLineWidth = getWidth() - (insets != null ? insets.left + insets.right : 0);
+
+      myDocumentTextBuilder.setLength(0);
+      DocumentEx document = myEditor.getDocument();
+      for (LineIterator line = document.createLineIterator(); !line.atEnd(); line.advance()) {
+        String lineText = document.getText(new TextRange(line.getStart(), line.getEnd()));
+        appendAbbreviatedLine(myDocumentTextBuilder, lineText, fontMetrics, maxLineWidth);
+      }
+
+      setText(myDocumentTextBuilder.toString(), false);
+    }
+
+    private static void appendAbbreviatedLine(StringBuilder to, String line, FontMetrics metrics, int maxWidth) {
+      if (metrics.charWidth('m') * line.length() <= maxWidth) {
+        to.append(line);
+        return;
+      }
+
+      int abbrWidth = metrics.stringWidth(ABBREVIATION_SUFFIX);
+      int abbrIdx = 0;
+
+      for (; abbrIdx < line.length(); abbrIdx++) {
+        int nextCharWidth = metrics.charWidth(line.charAt(abbrIdx));
+        if (abbrWidth + nextCharWidth >= maxWidth) break;
+        abbrWidth += nextCharWidth;
+      }
+
+      to.append(line, 0, abbrIdx);
+      to.append(ABBREVIATION_SUFFIX);
+      if (abbrIdx != line.length() && line.endsWith("\n")) {
+        to.append('\n');
+      }
+    }
+
+    private void setText(String text, boolean updatePreferredSize) {
+      myEditor.getMarkupModel().removeAllHighlighters();
+
+      myEditor.getDocument().setText(text);
+      myEditor.getHighlighter().setText(text);
+      ((EditorImpl)myEditor).resetSizes();
+
+      SelectionModel selectionModel = myEditor.getSelectionModel();
+      selectionModel.setSelection(0, selectionModel.hasSelection() ? text.length() : 0);
+
+      if (updatePreferredSize) {
+        myPreferredSize = super.getPreferredSize();
+      }
     }
   }
 
