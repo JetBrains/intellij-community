@@ -152,7 +152,7 @@ public class ClasspathStorage implements StateStorage {
     return true;
   }
 
-  public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state) throws StateStorageException {
+  public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
     assert component instanceof ModuleRootManager;
     assert componentName.equals("NewModuleRootManager");
     assert state.getClass() == ModuleRootManagerImpl.ModuleRootManagerState.class;
@@ -173,8 +173,7 @@ public class ClasspathStorage implements StateStorage {
   public ExternalizationSession startExternalization() {
     final ExternalizationSession session = new ExternalizationSession() {
       @Override
-      public void setState(@NotNull final Object component, final String componentName, @NotNull final Object state, final Storage storageSpec)
-        throws StateStorageException {
+      public void setState(@NotNull Object component, String componentName, @NotNull Object state, Storage storageSpec) {
         assert mySession == this;
         ClasspathStorage.this.setState(component, componentName, state);
       }
