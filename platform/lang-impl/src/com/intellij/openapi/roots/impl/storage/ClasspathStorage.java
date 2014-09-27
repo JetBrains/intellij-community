@@ -173,7 +173,7 @@ public class ClasspathStorage implements StateStorage {
   public ExternalizationSession startExternalization() {
     final ExternalizationSession session = new ExternalizationSession() {
       @Override
-      public void setState(@NotNull Object component, String componentName, @NotNull Object state, Storage storageSpec) {
+      public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
         assert mySession == this;
         ClasspathStorage.this.setState(component, componentName, state);
       }

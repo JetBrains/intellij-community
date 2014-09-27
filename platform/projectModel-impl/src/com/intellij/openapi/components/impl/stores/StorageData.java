@@ -141,7 +141,7 @@ public class StorageData {
     clearHash();
   }
 
-  void setState(@NotNull final String componentName, final Element element) {
+  void setState(@NotNull String componentName, @NotNull Element element) {
     element.setName(COMPONENT);
 
     // componentName should be first
