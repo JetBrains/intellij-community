@@ -69,8 +69,13 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   private final DumbService myDumbService;
   private volatile DaemonProgressIndicator myProgress;
 
+  @Nullable
   public static InjectedLanguageManagerImpl getInstanceImpl(Project project) {
-    return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
+    InjectedLanguageManager instance = InjectedLanguageManager.getInstance(project);
+    if (instance instanceof InjectedLanguageManagerImpl) {
+      return (InjectedLanguageManagerImpl)instance;
+    }
+    return null;
   }
 
   public InjectedLanguageManagerImpl(Project project, DumbService dumbService) {
