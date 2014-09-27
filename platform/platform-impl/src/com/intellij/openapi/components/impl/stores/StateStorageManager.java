@@ -87,7 +87,7 @@ public interface StateStorageManager {
   void reset();
 
   interface ExternalizationSession {
-    void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, String componentName, @NotNull Object state);
+    void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);
 
     void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
   }

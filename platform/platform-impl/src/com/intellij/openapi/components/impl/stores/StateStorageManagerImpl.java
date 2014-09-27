@@ -400,16 +400,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @NotNull
   @Override
-  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
+  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
-    SaveSession session = createSaveSession(externalizationSession);
+    SaveSession session = new MySaveSession((MyExternalizationSession)externalizationSession);
     mySession = session;
     return session;
-  }
-
-  @NotNull
-  protected MySaveSession createSaveSession(final ExternalizationSession externalizationSession) {
-    return new MySaveSession((MyExternalizationSession)externalizationSession);
   }
 
   @Override
@@ -430,19 +425,19 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   protected class MyExternalizationSession implements ExternalizationSession {
-    CompoundExternalizationSession myCompoundExternalizationSession = new CompoundExternalizationSession();
+    final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new SmartHashMap<StateStorage, StateStorage.ExternalizationSession>();
 
     @Override
-    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
-      throws StateStorageException {
+    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       assert mySession == this;
 
       for (Storage storageSpec : storageSpecs) {
         StateStorage stateStorage = getStateStorage(storageSpec);
-        if (stateStorage == null) continue;
+        if (stateStorage == null) {
+          continue;
+        }
 
-        final StateStorage.ExternalizationSession extSession = myCompoundExternalizationSession.getExternalizationSession(stateStorage);
-        extSession.setState(component, componentName, state, storageSpec);
+        getExternalizationSession(stateStorage).setState(component, componentName, state, storageSpec);
       }
     }
 
@@ -451,8 +446,17 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       assert mySession == this;
       StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
       if (stateStorage != null) {
-        myCompoundExternalizationSession.getExternalizationSession(stateStorage).setState(component, componentName, state, null);
+        getExternalizationSession(stateStorage).setState(component, componentName, state, null);
       }
+    }
+
+    @NotNull
+    private StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStore) {
+      StateStorage.ExternalizationSession session = mySessions.get(stateStore);
+      if (session == null) {
+        mySessions.put(stateStore, session = stateStore.startExternalization());
+      }
+      return session;
     }
   }
 
@@ -471,8 +475,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     private final Map<StateStorage, StateStorage.SaveSession> mySaveSessions = new SmartHashMap<StateStorage, StateStorage.SaveSession>();
 
     public MySaveSession(@NotNull MyExternalizationSession externalizationSession) {
-      for (StateStorage stateStorage : externalizationSession.myCompoundExternalizationSession.getStateStorages()) {
-        mySaveSessions.put(stateStorage, stateStorage.startSave(externalizationSession.myCompoundExternalizationSession.getExternalizationSession(stateStorage)));
+      for (StateStorage stateStorage : externalizationSession.mySessions.keySet()) {
+        mySaveSessions.put(stateStorage, stateStorage.startSave(externalizationSession.getExternalizationSession(stateStorage)));
       }
     }
 
