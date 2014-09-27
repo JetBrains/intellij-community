@@ -708,7 +708,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
       PsiClass containingClass = method.getContainingClass();
       if (method.getReturnType() != null || containingClass != null && Comparing.strEqual(containingClass.getName(), method.getName())) {
         //ignore methods with deleted return types as they are always marked as unused without any reason
-        ChangeSignatureGestureDetector.getInstance(method.getProject()).dismissForElement(method);
+        ChangeSignatureGestureDetector gestureDetector = ChangeSignatureGestureDetector.getInstance(method.getProject());
+        if (gestureDetector != null) {
+          gestureDetector.dismissForElement(method);
+        }
       }
     }
     return new SafeDeleteFix(element);
