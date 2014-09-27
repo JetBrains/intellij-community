@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -467,29 +468,47 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   protected abstract String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
   protected class MySaveSession implements SaveSession {
-    CompoundSaveSession myCompoundSaveSession;
+    private final Map<StateStorage, StateStorage.SaveSession> mySaveSessions = new SmartHashMap<StateStorage, StateStorage.SaveSession>();
 
     public MySaveSession(@NotNull MyExternalizationSession externalizationSession) {
-      myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
+      for (StateStorage stateStorage : externalizationSession.myCompoundExternalizationSession.getStateStorages()) {
+        mySaveSessions.put(stateStorage, stateStorage.startSave(externalizationSession.myCompoundExternalizationSession.getExternalizationSession(stateStorage)));
+      }
     }
 
     @Override
     public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
-      myCompoundSaveSession.collectAllStorageFiles(files);
+      for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
+        saveSession.collectAllStorageFiles(files);
+      }
     }
 
     @Override
     public void save() throws StateStorageException {
       assert mySession == this;
-      myCompoundSaveSession.save();
+      for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
+        saveSession.save();
+      }
     }
 
     public void finishSave() {
+      RuntimeException re = null;
       try {
         LOG.assertTrue(mySession == this);
       }
       finally {
-        myCompoundSaveSession.finishSave();
+        for (StateStorage stateStorage : mySaveSessions.keySet()) {
+          try {
+            stateStorage.finishSave(mySaveSessions.get(stateStorage));
+          }
+          catch (RuntimeException e) {
+            re = e;
+          }
+        }
+      }
+
+      if (re != null) {
+        throw re;
       }
     }
 
@@ -498,7 +517,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       Set<String> result = null;
       for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(pair.second);
+        StateStorage.SaveSession saveSession = mySaveSessions.get(pair.second);
         if (saveSession == null) {
           continue;
         }
