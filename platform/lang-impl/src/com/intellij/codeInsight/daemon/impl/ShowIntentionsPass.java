@@ -182,7 +182,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (state != null && !state.isFinished()) return;
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    DaemonCodeAnalyzerEx codeAnalyzer = (DaemonCodeAnalyzerEx)DaemonCodeAnalyzer.getInstance(myProject);
     getIntentionActionsToShow();
     updateActions(codeAnalyzer);
   }
@@ -201,8 +201,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (myShowBulb && (state == null || state.isFinished()) && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)) {
-      DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-      codeAnalyzer.setLastIntentionHint(myProject, myFile, myEditor, myIntentionsInfo, myHasToRecreate);
+      DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+      if (daemonCodeAnalyzer instanceof DaemonCodeAnalyzerImpl) {
+        DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)daemonCodeAnalyzer;
+        codeAnalyzer.setLastIntentionHint(myProject, myFile, myEditor, myIntentionsInfo, myHasToRecreate);
+      }
     }
   }
 
@@ -241,8 +244,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  private void updateActions(@NotNull DaemonCodeAnalyzerImpl codeAnalyzer) {
-    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
+  private void updateActions(@NotNull DaemonCodeAnalyzerEx codeAnalyzer) {
+    IntentionHintComponent hintComponent = null;
+    if (codeAnalyzer instanceof DaemonCodeAnalyzerImpl) {
+      hintComponent = ((DaemonCodeAnalyzerImpl)codeAnalyzer).getLastIntentionHint();
+    }
     if (!myShowBulb || hintComponent == null) {
       return;
     }
@@ -271,7 +277,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     List<HighlightInfo.IntentionActionDescriptor> fixes = getAvailableActions(hostEditor, hostFile, passIdToShowIntentionsFor);
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     final Document hostDocument = hostEditor.getDocument();
-    HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(hostDocument, offset, true);
+    HighlightInfo infoAtCursor = null;
+    if (codeAnalyzer instanceof DaemonCodeAnalyzerImpl) {
+      infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(hostDocument, offset, true);
+    }
     if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
       intentions.errorFixesToShow.addAll(fixes);
     }
