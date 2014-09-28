@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
@@ -50,8 +49,6 @@ import java.util.Locale;
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "UnusedDeclaration"})
 public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
-  private static final boolean isOracleRetina = UIUtil.isRetina() && SystemInfo.isOracleJvm;
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
 
   public static final Color SHADOW_COLOR = new JBColor(new Color(250, 250, 250, 140), Gray._0.withAlpha(50));
@@ -382,10 +379,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       height += insets.top + insets.bottom;
     }
 
-    if (isOracleRetina) {
-      width++; //todo[kb] remove when IDEA-108760 will be fixed
-    }
-
     return new Dimension(width, height);
   }
 
@@ -401,7 +394,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       wasSmaller = isSmaller;
       final String text = myFragments.get(i);
-      result += isOracleRetina ? GraphicsUtil.stringWidth(text, font) : getFontMetrics(font).stringWidth(text);
+      result += getFontMetrics(font).stringWidth(text);
 
       final int fixedWidth = myFixedWidths.get(i);
       if (fixedWidth > 0 && result < fixedWidth) {
@@ -444,7 +437,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       wasSmaller = isSmaller;
 
       final String text = myFragments.get(i);
-      final int curWidth = isOracleRetina ? GraphicsUtil.stringWidth(text, font) : getFontMetrics(font).stringWidth(text);
+      final int curWidth = getFontMetrics(font).stringWidth(text);
       if (x >= curX && x < curX + curWidth) {
         return i;
       }
@@ -644,7 +637,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       final FontMetrics metrics = g.getFontMetrics(font);
 
       final String fragment = myFragments.get(i);
-      final int fragmentWidth = isOracleRetina ? GraphicsUtil.stringWidth(fragment, font) : metrics.stringWidth(fragment);
+      final int fragmentWidth = metrics.stringWidth(fragment);
 
       final Color bgColor = attributes.isSearchMatch() ? null : attributes.getBgColor();
       if ((attributes.isOpaque() || isOpaque()) && bgColor != null) {
