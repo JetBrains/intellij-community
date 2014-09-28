@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -34,9 +33,7 @@ import java.util.regex.Pattern;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class TerminalSshModule extends LineCommandAdapter implements CommandRuntimeModule, InteractiveCommandListener {
-
-  private static final Logger LOG = Logger.getInstance(TerminalSshModule.class);
+public class TerminalSshModule extends BaseTerminalModule {
 
   private static final Pattern PASSPHRASE_PROMPT = Pattern.compile("Enter passphrase for key \\'(.*)\\':\\s?");
   private static final Pattern PASSWORD_PROMPT = Pattern.compile("(.*)\\'s password:\\s?");
@@ -46,21 +43,12 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
   private static final Pattern HOST_FINGERPRINT_MESSAGE = Pattern.compile("(\\w+) key fingerprint is (.*)\\.\\s?");
   private static final Pattern ACCEPT_HOST_PROMPT = Pattern.compile("Are you sure you want to continue connecting \\(yes/no\\)\\?\\s?");
 
-  @NotNull private final CommandRuntime myRuntime;
-  @NotNull private final CommandExecutor myExecutor;
-
   private String unknownHost;
   private String fingerprintAlgorithm;
   private String hostFingerprint;
 
-  // TODO: Do not accept executor here and make it as command runtime module
   public TerminalSshModule(@NotNull CommandRuntime runtime, @NotNull CommandExecutor executor) {
-    myExecutor = executor;
-    myRuntime = runtime;
-  }
-
-  @Override
-  public void onStart(@NotNull Command command) throws SvnBindException {
+    super(runtime, executor);
   }
 
   @Override
@@ -120,7 +108,7 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
     fingerprintAlgorithm = null;
     hostFingerprint = null;
 
-    sendAnswer(answer.get() == ISVNAuthenticationProvider.REJECTED ? "no" : "yes");
+    sendData(answer.get() == ISVNAuthenticationProvider.REJECTED ? "no" : "yes");
   }
 
   private boolean handleAuthPrompt(@NotNull final SimpleCredentialsDialog.Mode mode, @NotNull final String key) {
@@ -133,23 +121,11 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
       myRuntime.getAuthenticationService().requestSshCredentials(repositoryUrl != null ? repositoryUrl.toDecodedString() : "", mode, key);
 
     if (!StringUtil.isEmpty(auth)) {
-      sendAnswer(auth);
+      sendData(auth);
     } else {
-      myExecutor.destroyProcess("Authentication canceled for repository: " + repositoryUrl);
+      cancelAuthentication();
     }
 
     return !StringUtil.isEmpty(auth);
-  }
-
-  private boolean sendAnswer(@NotNull String answer) {
-    try {
-      myExecutor.write(answer + "\n");
-      return true;
-    }
-    catch (SvnBindException e) {
-      // TODO: handle this more carefully
-      LOG.info(e);
-    }
-    return false;
   }
 }
