@@ -28,96 +28,50 @@ import git4idea.commands.GitBinaryHandler;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * File utilities for the git
- */
 public class GitFileUtils {
-  private static final Logger LOG = Logger.getInstance(GitFileUtils.class.getName());
 
-  /**
-   * The private constructor for static utility class
-   */
+  private static final Logger LOG = Logger.getInstance(GitFileUtils.class);
+
   private GitFileUtils() {
-    // do nothing
   }
 
-  /**
-   * Delete files
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to delete
-   * @return a result of operation
-   * @throws VcsException in case of git problem
-   */
-
-  public static void delete(Project project, VirtualFile root, Collection<FilePath> files, String... additionalOptions)
-    throws VcsException {
+  public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<FilePath> files,
+                            String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
-      handler.addParameters(additionalOptions);
-      handler.endOptions();
-      handler.addParameters(paths);
-      handler.run();
+      doDelete(project, root, paths, additionalOptions);
     }
   }
 
-  /**
-   * Delete files
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to delete
-   * @return a result of operation
-   * @throws VcsException in case of git problem
-   */
-  public static void deleteFiles(Project project, VirtualFile root, Collection<VirtualFile> files, String... additionalOptions)
-    throws VcsException {
+  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files,
+                                 String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
-      handler.addParameters(additionalOptions);
-      handler.endOptions();
-      handler.addParameters(paths);
-      handler.run();
+      doDelete(project, root, paths, additionalOptions);
     }
   }
 
-  /**
-   * Delete files
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to delete
-   * @return a result of operation
-   * @throws VcsException in case of git problem
-   */
-  public static void deleteFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
+  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, VirtualFile... files) throws VcsException {
     deleteFiles(project, root, Arrays.asList(files));
   }
 
-  /**
-   * Delete files from cache (mark untracked)
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to delete
-   * @return a result of operation
-   * @throws VcsException in case of git problem
-   */
+  private static void doDelete(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<String> paths,
+                               String... additionalOptions) throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
+    handler.addParameters(additionalOptions);
+    handler.endOptions();
+    handler.addParameters(paths);
+    handler.run();
+  }
+
   public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
     throws VcsException {
     deleteFiles(project, root, files, "--cached");
     updateUntrackedFilesHolderOnFileRemove(project, root, files);
   }
 
-  /**
-   * Add files to the Git index.
-   */
   public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
     throws VcsException {
     addPaths(project, root, VcsFileUtil.chunkFiles(root, files));
@@ -126,7 +80,7 @@ public class GitFileUtils {
 
   private static void updateUntrackedFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
                                                           @NotNull Collection<VirtualFile> addedFiles) {
-    final GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root.getPresentableUrl());
       return;
@@ -136,7 +90,7 @@ public class GitFileUtils {
 
   private static void updateUntrackedFilesHolderOnFileRemove(@NotNull Project project, @NotNull VirtualFile root,
                                                              @NotNull Collection<VirtualFile> removedFiles) {
-    final GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root.getPresentableUrl());
       return;
@@ -144,16 +98,10 @@ public class GitFileUtils {
     repository.getUntrackedFilesHolder().add(removedFiles);
   }
 
-  /**
-   * Add files to the Git index.
-   */
   public static void addFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
     addFiles(project, root, Arrays.asList(files));
   }
 
-  /**
-   * Add files to the Git index.
-   */
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
                               @NotNull Collection<FilePath> files) throws VcsException {
     addPaths(project, root, VcsFileUtil.chunkPaths(root, files));
@@ -246,5 +194,4 @@ public class GitFileUtils {
     return one.compareToIgnoreCase(second) == 0;
   }
   
-
 }
