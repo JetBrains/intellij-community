@@ -20,6 +20,7 @@ import com.intellij.dvcs.push.Pusher;
 import com.intellij.dvcs.push.VcsPushOptionValue;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -30,19 +31,23 @@ import java.util.Map;
 class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
 
   @NotNull private final Project myProject;
+  @NotNull private final GitVcsSettings mySettings;
   @NotNull private final GitRepositoryManager myRepositoryManager;
 
-  GitPusher(@NotNull Project project) {
+  GitPusher(@NotNull Project project, @NotNull GitVcsSettings settings) {
     myProject = project;
+    mySettings = settings;
     myRepositoryManager = GitUtil.getRepositoryManager(project);
   }
 
   @Override
   public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                    @Nullable VcsPushOptionValue optionValue, boolean force) {
-    GitPushResult result = new GitPushOperation(myProject, pushSpecs, (GitPushTagMode)optionValue, force).execute();
+    GitPushTagMode pushTagMode = (GitPushTagMode)optionValue;
+    GitPushResult result = new GitPushOperation(myProject, pushSpecs, pushTagMode, force).execute();
     GitPushResultNotification notification = GitPushResultNotification.create(myProject, result, myRepositoryManager.moreThanOneRoot());
     notification.notify(myProject);
+    mySettings.setPushTagMode(pushTagMode);
   }
 
 }

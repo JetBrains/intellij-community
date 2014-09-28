@@ -20,6 +20,7 @@ import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,13 +33,14 @@ class GitPushTagPanel extends VcsPushOptionsPanel {
   private final ComboBox myCombobox;
   private final JBCheckBox myCheckBox;
 
-  GitPushTagPanel(boolean followTagsSupported) {
+  GitPushTagPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported) {
     String checkboxText = "Push Tags";
     if (followTagsSupported) {
       checkboxText += ": ";
     }
     myCheckBox = new JBCheckBox(checkboxText);
     myCheckBox.setMnemonic('T');
+    myCheckBox.setSelected(defaultMode != null);
 
     setLayout(new BorderLayout());
     add(myCheckBox, BorderLayout.WEST);
@@ -51,10 +53,14 @@ class GitPushTagPanel extends VcsPushOptionsPanel {
           setText(value.getTitle());
         }
       });
-      myCombobox.setEnabled(false);
+      myCombobox.setEnabled(myCheckBox.isSelected());
+      if (defaultMode != null) {
+        myCombobox.setSelectedItem(defaultMode);
+      }
+
       myCheckBox.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           myCombobox.setEnabled(myCheckBox.isSelected());
         }
       });
