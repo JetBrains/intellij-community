@@ -52,7 +52,7 @@ public class TerminalSshModule extends BaseTerminalModule {
   }
 
   @Override
-  public boolean handlePrompt(String line, Key outputType) {
+  public boolean doHandlePrompt(String line, Key outputType) {
     return checkPassphrase(line) || checkPassword(line) || checkUnknownHost(line);
   }
 
