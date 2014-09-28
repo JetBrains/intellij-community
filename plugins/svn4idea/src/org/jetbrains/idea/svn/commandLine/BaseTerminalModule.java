@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,7 +41,7 @@ public abstract class BaseTerminalModule extends LineCommandAdapter implements C
 
   protected boolean sendData(@NotNull String data) {
     try {
-      myExecutor.write(data + "\n");
+      myExecutor.write(data + LineSeparator.CRLF.getSeparatorString());
       return true;
     }
     catch (SvnBindException e) {
