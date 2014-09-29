@@ -4048,7 +4048,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // and, in the case of the positive answer, clear selection. Please note that there is a possible case that mouse click
     // is performed inside selection but it triggers context menu. We don't want to drop the selection then.
     if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection
-        && !myMousePressedEvent.isShiftDown() && !myMousePressedEvent.isPopupTrigger()) {
+        && !myMousePressedEvent.isShiftDown() && !myMousePressedEvent.isPopupTrigger()
+        && !isCreateRectangularSelectionEvent(myMousePressedEvent)) {
       getSelectionModel().removeSelection();
     }
   }
@@ -5698,6 +5699,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             getCaretModel().moveToLogicalPosition(pos);
           }
         }
+        else if (myCaretModel.supportsMultipleCarets() && e.getSource() != myGutterComponent && isCreateRectangularSelectionEvent(e)) {
+          mySelectionModel.setBlockSelection(myCaretModel.getLogicalPosition(), pos);
+        }
         else {
           getCaretModel().removeSecondaryCarets();
           getCaretModel().moveToLogicalPosition(pos);
@@ -5797,7 +5801,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static boolean isToggleCaretEvent(MouseEvent e) {
+  private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET);
+  }
+
+  private static boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+  }
+
+  private static boolean isMouseActionEvent(@NotNull MouseEvent e, @NotNull String actionId) {
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null) {
       return false;
@@ -5810,8 +5822,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (actionIds == null) {
       return false;
     }
-    for (String actionId : actionIds) {
-      if (IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET.equals(actionId)) {
+    for (String id : actionIds) {
+      if (actionId.equals(id)) {
         return true;
       }
     }

@@ -2,7 +2,10 @@ package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
-import com.intellij.structuralsearch.plugin.ui.*;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.structuralsearch.plugin.ui.SearchCommand;
+import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
 import com.intellij.usages.Usage;
 
 /**
@@ -21,9 +24,9 @@ public class ReplaceCommand extends SearchCommand {
   }
 
   protected UsageViewContext createUsageViewContext() {
-    final SearchStarter searchStarter = new SearchStarter() {
+    final Runnable searchStarter = new Runnable() {
       @Override
-      public void startSearch() {
+      public void run() {
         new ReplaceCommand(myConfiguration, mySearchContext).startSearching();
       }
     };

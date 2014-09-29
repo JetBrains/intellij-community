@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-public class SearchScope {
+public final class SearchScope {
   public enum ScopeType {
     PROJECT, MODULE, DIRECTORY, CUSTOM
   }
@@ -227,6 +228,35 @@ public class SearchScope {
 
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SearchScope scope = (SearchScope)o;
+    return myRecursive == scope.myRecursive &&
+           Comparing.equal(myCustomScope, scope.myCustomScope) &&
+           Comparing.equal(myModuleName, scope.myModuleName) &&
+           Comparing.equal(myPath, scope.myPath) &&
+           Comparing.equal(myScopeName, scope.myScopeName) &&
+           myScopeType == scope.myScopeType;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myScopeType != null ? myScopeType.hashCode() : 0;
+    result = 31 * result + (myModuleName != null ? myModuleName.hashCode() : 0);
+    result = 31 * result + (myPath != null ? myPath.hashCode() : 0);
+    result = 31 * result + (myRecursive ? 1 : 0);
+    result = 31 * result + (myScopeName != null ? myScopeName.hashCode() : 0);
+    result = 31 * result + (myCustomScope != null ? myCustomScope.hashCode() : 0);
+    return result;
   }
 
   @Nullable
