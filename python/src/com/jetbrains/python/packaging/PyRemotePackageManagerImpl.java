@@ -108,26 +108,21 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
             return quoteIfNeeded(input);
           }
         }));
-        try {
-          if (askForSudo) {
-            askForSudo = !manager.ensureCanWrite(null, remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
-          }
-          ProcessOutput processOutput;
-          do {
-            PathMappingSettings mappings = manager.setupMappings(null, (PyRemoteSdkAdditionalDataBase)sdkData, null);
-            processOutput =
-              manager.runRemoteProcess(null, remoteSdkCredentials, mappings, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
-            if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
-              continue;
-            }
-            break;
-          }
-          while (true);
-          return processOutput;
+        if (askForSudo) {
+          askForSudo = !manager.ensureCanWrite(null, remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
         }
-        catch (ExecutionException e) {
-          throw new PyExecutionException("Error running SDK: " + e.getMessage(), helperPath, args, 0);
+        ProcessOutput processOutput;
+        do {
+          PathMappingSettings mappings = manager.setupMappings(null, (PyRemoteSdkAdditionalDataBase)sdkData, null);
+          processOutput =
+            manager.runRemoteProcess(null, remoteSdkCredentials, mappings, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
+          if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
+            continue;
+          }
+          break;
         }
+        while (true);
+        return processOutput;
       }
       else {
         throw new PyExecutionException(PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED, helperPath, args, 0);

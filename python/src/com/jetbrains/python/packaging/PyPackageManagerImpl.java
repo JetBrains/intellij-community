@@ -502,15 +502,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
       return result;
     }
-    catch (RunCanceledByUserException e) {
-      throw e;
-    }
-    catch (PyExecutionException e) {
-      throw e;
-    }
-    catch (ExecutionException e) {
-      throw new PyExecutionException(e.getMessage(), helperPath, args, 0);
-    }
     catch (IOException e) {
       throw new PyExecutionException(e.getMessage(), helperPath, args, 0);
     }
