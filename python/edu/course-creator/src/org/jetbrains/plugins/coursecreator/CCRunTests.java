@@ -139,7 +139,7 @@ public class CCRunTests extends AnAction {
     }
   }
 
-  private static void clearTestEnvironment(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
+  public static void clearTestEnvironment(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
     try {
       VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
       if (ideaDir == null) {
@@ -147,10 +147,9 @@ public class CCRunTests extends AnAction {
         return;
       }
       VirtualFile courseResourceDir = ideaDir.findChild("course");
-      if (courseResourceDir == null) {
-        return;
+      if (courseResourceDir != null) {
+        courseResourceDir.delete(project);
       }
-      courseResourceDir.delete(project);
       VirtualFile[] taskDirChildren = taskDir.getChildren();
       for (VirtualFile file : taskDirChildren) {
         if (file.getName().contains("_windows")) {
