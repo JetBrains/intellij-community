@@ -23,7 +23,7 @@ public class IpnbPyTargetExpression extends PyTargetExpressionImpl {
     final IpnbCodePanel codePanel = sourcePanel.getIpnbCodePanel();
     final IpnbFileEditor fileEditor = codePanel.getFileEditor();
     final IpnbFilePanel filePanel = fileEditor.getIpnbFilePanel();
-
+    codePanel.setEditing(true);
     filePanel.setSelectedCell(codePanel);
     super.navigate(false);
     UIUtil.requestFocus(editor.getContentComponent());
