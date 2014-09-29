@@ -21,15 +21,14 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.idea.Bombed;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Calendar;
 
 public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
   @NotNull
@@ -170,6 +169,15 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "            return map.entrySet().stream().filter((a) -> (a.getKey() > 0));\n" +
            "        }\n" +
            "    }");
+  }
+
+  public void testHangingFunctionalExpressions() throws Exception {
+    doTest("() -> {}", "new Test().invoke();", "public class Test {\n" +
+                                               "        public void invoke() {\n" +
+                                               "            () -> {\n" +
+                                               "            };\n" +
+                                               "        }\n" +
+                                               "    }");
   }
 
   @Override
