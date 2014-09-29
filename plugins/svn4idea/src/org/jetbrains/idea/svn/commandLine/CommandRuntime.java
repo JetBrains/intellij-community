@@ -23,7 +23,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.SvnProgressCanceller;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.tmatesoft.svn.core.SVNURL;
@@ -99,10 +102,10 @@ public class CommandRuntime {
     return repeat;
   }
 
-  private static void handleSuccess(CommandExecutor executor) {
+  private static void handleSuccess(@NotNull CommandExecutor executor) {
     // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
     // on non-working copy folder
-    if (executor.getErrorOutput().length() > 0) {
+    if (!StringUtil.isEmptyOrSpaces(executor.getErrorOutput())) {
       // here exitCode == 0, but some warnings are in error stream
       LOG.info("Detected warning - " + executor.getErrorOutput());
     }
