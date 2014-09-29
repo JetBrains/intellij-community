@@ -121,6 +121,9 @@
   <action id="EditorAddOrRemoveCaret">
     <mouse-shortcut keystroke="alt shift button1"/>
   </action>
+  <action id="EditorCreateRectangularSelection">
+    <mouse-shortcut keystroke="alt shift button2"/>
+  </action>
   <action id="GotoDeclaration">
     <keyboard-shortcut first-keystroke="control B"/>
     <mouse-shortcut keystroke="ctrl button1"/>

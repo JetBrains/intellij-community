@@ -18,14 +18,15 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.SvnProgressCanceller;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
@@ -99,10 +100,10 @@ public class CommandRuntime {
     return repeat;
   }
 
-  private static void handleSuccess(CommandExecutor executor) {
+  private static void handleSuccess(@NotNull CommandExecutor executor) {
     // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
     // on non-working copy folder
-    if (executor.getErrorOutput().length() > 0) {
+    if (!StringUtil.isEmptyOrSpaces(executor.getErrorOutput())) {
       // here exitCode == 0, but some warnings are in error stream
       LOG.info("Detected warning - " + executor.getErrorOutput());
     }
@@ -202,7 +203,7 @@ public class CommandRuntime {
   private CommandExecutor newExecutor(@NotNull Command command) {
     final CommandExecutor executor;
 
-    if (!(Registry.is("svn.use.terminal") && isForSshRepository(command)) || isLocal(command)) {
+    if (!myVcs.getSvnConfiguration().isRunUnderTerminal() || isLocal(command)) {
       command.putIfNotPresent("--non-interactive");
       executor = new CommandExecutor(exePath, command);
     }
@@ -211,6 +212,8 @@ public class CommandRuntime {
       // running under terminal
       executor = newTerminalExecutor(command);
       ((TerminalExecutor)executor).addInteractiveListener(new TerminalSshModule(this, executor));
+      ((TerminalExecutor)executor).addInteractiveListener(new TerminalSslCertificateModule(this, executor));
+      ((TerminalExecutor)executor).addInteractiveListener(new TerminalUserNamePasswordModule(this, executor));
     }
 
     return executor;
@@ -232,12 +235,6 @@ public class CommandRuntime {
            SvnCommandName.upgrade.equals(command.getName()) ||
            SvnCommandName.changelist.equals(command.getName()) ||
            command.isLocalInfo() || command.isLocalStatus() || command.isLocalProperty() || command.isLocalCat();
-  }
-
-  private static boolean isForSshRepository(@NotNull Command command) {
-    SVNURL url = command.getRepositoryUrl();
-
-    return url != null && StringUtil.equalsIgnoreCase(SvnAuthenticationManager.SVN_SSH, url.getProtocol());
   }
 
   @NotNull

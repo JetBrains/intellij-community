@@ -18,18 +18,33 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class VcsProjectSetProcessor extends ProjectSetProcessor<VcsProjectSetProcessor.State> {
+public class VcsProjectSetProcessor extends ProjectSetProcessor {
 
   private static final Logger LOG = Logger.getInstance(VcsProjectSetProcessor.class);
+
+  public static String[] splitUrl(String s) {
+    String[] split = s.split(" ");
+    if (split.length == 2) return split;
+    int i = s.lastIndexOf('/');
+    String url = s.substring(0, i);
+    String path = s.substring(i + 1);
+    return new String[] { url, path };
+  }
 
   @Override
   public String getId() {
@@ -37,39 +52,48 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor<VcsProjectSetPro
   }
 
   @Override
-  public State interactWithUser() {
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-    descriptor.setTitle("Select Destination Folder");
-    VirtualFile[] files = FileChooser.chooseFiles(descriptor, null, null);
-    if (files.length == 0) return null;
-    return new State(files[0]);
-  }
+  public void processEntries(@NotNull List<Pair<String, String>> entries, @Nullable Object param, @NotNull final Consumer<Object> onFinish) {
 
-  @Override
-  public void processEntry(String key, String value, State state) {
-    if ("url".equals(key)) {
-      try {
-        String protocol = new URI(value).getScheme();
-        VcsCheckoutProcessor processor = VcsCheckoutProcessor.getProcessor(protocol);
-        if (processor == null) {
-          LOG.error("Checkout processor not found for " + protocol);
-        }
-        else {
-          processor.checkout(value, "foo", state.targetDirectory);
-        }
-      }
-      catch (URISyntaxException e) {
-        LOG.error(e);
-      }
+    final VirtualFile directory;
+    if (param instanceof VirtualFile) {
+      directory = (VirtualFile)param;
     }
-  }
+    else {
+      FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+      descriptor.setTitle("Select Destination Folder");
+      descriptor.setDescription("");
+      VirtualFile[] files = FileChooser.chooseFiles(descriptor, null, null);
+      if (files.length == 0) return;
+      directory = files[0];
+    }
+    for (Pair<String, String> pair: entries) {
+      if ("url".equals(pair.getFirst())) {
+        try {
+          String url = pair.getSecond();
+          String[] split = splitUrl(url);
+          String protocol = new URI(url).getScheme();
+          VcsCheckoutProcessor processor = VcsCheckoutProcessor.getProcessor(protocol);
+          if (processor == null) {
+            LOG.error("Checkout processor not found for " + protocol);
+          }
+          else {
+            processor.checkout(split[0], split[1], directory, new CheckoutProvider.Listener() {
+              @Override
+              public void directoryCheckedOut(File directory, VcsKey vcs) {
 
-  public static class State {
-    public final VirtualFile targetDirectory;
+              }
 
-    public State(VirtualFile targetDirectory) {
-
-      this.targetDirectory = targetDirectory;
+              @Override
+              public void checkoutCompleted() {
+                onFinish.consume(directory);
+              }
+            });
+          }
+        }
+        catch (URISyntaxException e) {
+          LOG.error(e);
+        }
+      }
     }
   }
 }

@@ -17,10 +17,10 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,6 +83,12 @@ public class TerminalExecutor extends CommandExecutor {
 
   @NotNull
   @Override
+  protected GeneralCommandLine createCommandLine() {
+    return new PtyCommandLine();
+  }
+
+  @NotNull
+  @Override
   protected Process createProcess() throws ExecutionException {
     List<String> parameters = escapeArguments(buildParameters());
 
@@ -97,8 +103,7 @@ public class TerminalExecutor extends CommandExecutor {
   @NotNull
   protected Process createProcess(@NotNull List<String> parameters) throws ExecutionException {
     try {
-      return PtyProcess.exec(ArrayUtil.toStringArray(parameters), myCommandLine.getEnvironment(),
-                             myCommandLine.getWorkDirectory().getAbsolutePath());
+      return ((PtyCommandLine)myCommandLine).startProcessWithPty(parameters, false);
     }
     catch (IOException e) {
       throw new ExecutionException(e);
