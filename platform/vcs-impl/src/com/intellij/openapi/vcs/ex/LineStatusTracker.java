@@ -554,7 +554,9 @@ public class LineStatusTracker {
 
       // Expand on ranges, that are separated from changes only by empty/whitespaces lines
       // This is needed to reduce amount of confusing cases, when changed blocks are matched wrong due to matched empty lines between them
+      // TODO: try to simplify logic, it's too high change that current one is broken somehow
       CharSequence sequence = myDocument.getCharsSequence();
+      int lineCount = getLineCount(myDocument);
 
       while (true) {
         if (lastBefore == -1) break;
@@ -567,7 +569,7 @@ public class LineStatusTracker {
         }
 
         if (beforeChangedLine1 < 0) break;
-        if (beforeChangedLine1 >= getLineCount(myDocument)) break;
+        if (beforeChangedLine1 >= lineCount) break;
         int offset1 = myDocument.getLineStartOffset(beforeChangedLine1) - 2;
 
         int deltaLines = 0;
@@ -600,7 +602,7 @@ public class LineStatusTracker {
         // TODO: "afterChangedLine2 >= getLineCount(myDocument)" shouldn't ever be true, but it is sometimes for some reason
         int afterChangedLine2 = beforeChangedLine2 + linesShift - 1;
         if (afterChangedLine2 < 0) break;
-        if (afterChangedLine2 >= getLineCount(myDocument)) break;
+        if (afterChangedLine2 >= lineCount) break;
         int offset2 = myDocument.getLineEndOffset(afterChangedLine2) + 1;
 
         int deltaLines = 0;
