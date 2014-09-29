@@ -30,10 +30,7 @@ import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 /**
  * @author traff
@@ -53,6 +50,11 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     add(panel);
   }
 
+  @NotNull
+  public IpnbCodePanel getIpnbCodePanel() {
+    return myParent;
+  }
+
   @Override
   @NotNull
   public Editor getEditor() {
@@ -68,9 +70,8 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
       myEditor = IpnbEditorUtil.createPlainCodeEditor(myProject, mySource);
     }
     else {
-      myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, mySource);
+      myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, this);
     }
-
 
     final JComponent component = myEditor.getComponent();
     final JComponent contentComponent = myEditor.getContentComponent();
@@ -92,6 +93,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     contentComponent.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
+        if (InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) return;
         final Container ipnbFilePanel = myParent.getParent();
         if (ipnbFilePanel instanceof IpnbFilePanel) {
           ((IpnbFilePanel)ipnbFilePanel).setSelectedCell(myParent);

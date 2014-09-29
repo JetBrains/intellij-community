@@ -1,7 +1,10 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,7 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IpnbFilePanel extends JPanel implements Scrollable {
+public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
 
   public static final int INSET_Y = 10;
   public static final int INSET_X = 5;
@@ -74,6 +77,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
     });
 
     UIUtil.requestFocus(this);
+  }
+
+  public List<IpnbEditablePanel> getIpnbPanels() {
+    return myIpnbPanels;
   }
 
   private void layoutFile() {
@@ -348,7 +355,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
     if (mySelectedCell != null)
       mySelectedCell.setEditing(false);
     mySelectedCell = ipnbPanel;
-    requestFocus();
     revalidate();
     repaint();
     myListener.selectionChanged(ipnbPanel);
@@ -401,5 +407,22 @@ public class IpnbFilePanel extends JPanel implements Scrollable {
   @Override
   public boolean getScrollableTracksViewportHeight() {
     return false;
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    final IpnbEditablePanel cell = getSelectedCell();
+    if (CommonDataKeys.EDITOR.is(dataId)) {
+      if (cell instanceof IpnbCodePanel) {
+        return ((IpnbCodePanel)cell).getEditor();
+      }
+    }
+    else if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
+      if (cell instanceof IpnbCodePanel) {
+        return ((IpnbCodePanel)cell).getEditor();
+      }
+    }
+    return null;
   }
 }

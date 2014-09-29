@@ -28,8 +28,9 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodeSourcePanel;
+import org.jetbrains.plugins.ipnb.psi.IpnbPyFragment;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,10 +46,10 @@ public class IpnbEditorUtil {
   public static Dimension PROMPT_SIZE = new Dimension(80, 30);
   public static int PANEL_WIDTH = 900;
 
-  public static Editor createPythonCodeEditor(@NotNull Project project, @NotNull String text) {
+  public static Editor createPythonCodeEditor(@NotNull final Project project, @NotNull final IpnbCodeSourcePanel codeSourcePanel) {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     assert editorFactory != null;
-    final Document document = createPythonCodeDocument(project, text);
+    final Document document = createPythonCodeDocument(project, codeSourcePanel);
     assert document != null;
     EditorEx editor = (EditorEx)editorFactory.createEditor(document, project, PythonFileType.INSTANCE, false);
 
@@ -84,10 +85,9 @@ public class IpnbEditorUtil {
     }
   }
 
-  public static Document createPythonCodeDocument(@NotNull final Project project,
-                                                  @NotNull String text) {
-    text = text.trim();
-    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "code.py", text, true);
+  public static Document createPythonCodeDocument(@NotNull final Project project, @NotNull IpnbCodeSourcePanel codeSourcePanel) {
+    final String text = codeSourcePanel.getCell().getSourceAsString().trim();
+    final IpnbPyFragment fragment = new IpnbPyFragment(project, text, true, codeSourcePanel);
 
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }

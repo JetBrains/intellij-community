@@ -24,7 +24,10 @@
                          nonDefaultProject="true"/>
     <projectService serviceInterface="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"
                    serviceImplementation="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"/>
-
+    <lang.parserDefinition language="IpnbPython" implementationClass="org.jetbrains.plugins.ipnb.psi.IpnbPyParserDefinition"/>
+  </extensions>
+  <extensions defaultExtensionNs="Pythonid">
+    <dialectsTokenSetContributor implementation="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenSetContributor"/>
   </extensions>
   <actions>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction" id="IpnbRunCellAction" text="Run cell">

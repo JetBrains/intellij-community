@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -41,6 +42,10 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   public IpnbFileEditor getFileEditor() {
     assert myParent instanceof IpnbFileEditor;
     return (IpnbFileEditor)myParent;
+  }
+
+  public Editor getEditor() {
+    return myCodeSourcePanel.getEditor();
   }
 
   public void addPromptPanel(@NotNull final JComponent parent, Integer promptNumber,
