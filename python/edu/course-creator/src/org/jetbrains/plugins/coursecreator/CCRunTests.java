@@ -224,8 +224,9 @@ public class CCRunTests extends AnAction {
     VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
     assert ideaDir != null;
     try {
-      VirtualFile taskResourceDir = ideaDir.createChildDirectory(project, "course").createChildDirectory(project, lessonDir.getName())
-        .createChildDirectory(project, taskDir.getName());
+      VirtualFile courseResourceDir = findOrCreateDir(project, ideaDir, "course");
+      VirtualFile lessonResourceDir = findOrCreateDir(project, courseResourceDir, lessonDir.getName());
+      VirtualFile taskResourceDir = findOrCreateDir(project, lessonResourceDir, taskDir.getName());
       if (CCProjectService.indexIsValid(lessonIndex, course.getLessons())) {
         Lesson lesson = course.getLessons().get(lessonIndex);
         if (CCProjectService.indexIsValid(index, lesson.getTaskList())) {
@@ -241,6 +242,14 @@ public class CCRunTests extends AnAction {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private static VirtualFile findOrCreateDir(@NotNull final Project project, @NotNull final VirtualFile dir, String name) throws IOException {
+    VirtualFile targetDir = dir.findChild(name);
+    if (targetDir == null) {
+      targetDir = dir.createChildDirectory(project, name);
+    }
+    return targetDir;
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
