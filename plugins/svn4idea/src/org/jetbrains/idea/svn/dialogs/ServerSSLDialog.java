@@ -35,14 +35,18 @@ import java.security.cert.X509Certificate;
  */
 public class ServerSSLDialog extends DialogWrapper {
 
-  @NotNull private final X509Certificate myCertificate;
+  @NotNull private final String myCertificateInfo;
   private Action myTempAction;
   private int myResult;
   @NonNls public static final String ALGORITHM_SHA1 = "SHA1";
 
   public ServerSSLDialog(final Project project, @NotNull X509Certificate cert, boolean store) {
+    this(project, getServerCertificateInfo(cert), store);
+  }
+
+  public ServerSSLDialog(final Project project, @NotNull String certificateInfo, boolean store) {
     super(project, true);
-    myCertificate = cert;
+    myCertificateInfo = certificateInfo;
     myResult = ISVNAuthenticationProvider.REJECTED;
     setOKButtonText(SvnBundle.message("button.text.ssl.accept"));
     setOKActionEnabled(store);
@@ -95,7 +99,7 @@ public class ServerSSLDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout(5,5));
     panel.add(new JLabel(SvnBundle.message("label.ssl.server.provided.certificate")), BorderLayout.NORTH);
     JTextArea area = new JTextArea(5, 50);
-    area.setText(getServerCertificateInfo(myCertificate));
+    area.setText(myCertificateInfo);
     area.setEditable(false);
     panel.add(ScrollPaneFactory.createScrollPane(area), BorderLayout.CENTER);
 

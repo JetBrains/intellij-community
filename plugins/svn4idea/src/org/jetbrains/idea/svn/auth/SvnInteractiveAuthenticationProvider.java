@@ -200,10 +200,12 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
   public int acceptServerAuthentication(final SVNURL url, String realm, final Object certificate, final boolean resultMayBeStored) {
     final int[] result = new int[1];
     Runnable command;
-    if (certificate instanceof X509Certificate) {
+    if (certificate instanceof X509Certificate || certificate instanceof String) {
       command = new Runnable() {
         public void run() {
-          ServerSSLDialog dialog = new ServerSSLDialog(myProject, (X509Certificate)certificate, resultMayBeStored);
+          ServerSSLDialog dialog = certificate instanceof X509Certificate
+                                   ? new ServerSSLDialog(myProject, (X509Certificate)certificate, resultMayBeStored)
+                                   : new ServerSSLDialog(myProject, (String)certificate, resultMayBeStored);
           dialog.show();
           result[0] = dialog.getResult();
         }

@@ -213,6 +213,7 @@ public class CommandRuntime {
       // running under terminal
       executor = newTerminalExecutor(command);
       ((TerminalExecutor)executor).addInteractiveListener(new TerminalSshModule(this, executor));
+      ((TerminalExecutor)executor).addInteractiveListener(new TerminalSslCertificateModule(this, executor));
       ((TerminalExecutor)executor).addInteractiveListener(new TerminalUserNamePasswordModule(this, executor));
     }
 
