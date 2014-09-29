@@ -15,34 +15,34 @@
  */
 package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.graph.actions.GraphAction;
-import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface LinearGraphController {
+import java.util.Collection;
+
+public interface GraphChanges<NodeId> {
 
   @NotNull
-  LinearGraph getCompiledGraph();
+  Collection<Node<NodeId>> getChangedNodes();
 
   @NotNull
-  PrintElementsManager getPrintElementManager();
+  Collection<Edge<NodeId>> getChangedEdges();
 
-  // Integer = nodeId
-  @NotNull
-  LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphAction action);
+  interface Node<NodeId> {
+    @NotNull
+    NodeId getNodeId();
 
-  interface LinearGraphAction extends GraphAction {
-    @Nullable
-    @Override
-    PrintElementWithGraphElement getAffectedElement();
+    boolean removed();
   }
 
-  interface LinearGraphAnswer extends GraphAnswer<Integer> {
+  interface Edge<NodeId> {
     @Nullable
-    GraphChanges<Integer> getGraphChanges();
+    NodeId upNodeId();
+    @Nullable
+    NodeId downNodeId();
+    @Nullable
+    NodeId additionInfo();
+
+    boolean removed();
   }
 }

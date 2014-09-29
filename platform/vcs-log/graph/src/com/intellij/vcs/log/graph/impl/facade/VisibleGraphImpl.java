@@ -122,7 +122,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Override
     public GraphAnswer<CommitId> performAction(@NotNull GraphAction graphAction) {
       LinearGraphController.LinearGraphAnswer answer = myGraphController.performLinearGraphAction(convert(graphAction));
-      if (answer.graphWasChanged())
+      if (answer.getGraphChanges() != null)
         graphWasChanged();
       return convert(answer);
     }
@@ -145,7 +145,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
         answer = myGraphController.performLinearGraphAction(LinearGraphActionImpl.COLLAPSE);
       else
         answer = myGraphController.performLinearGraphAction(LinearGraphActionImpl.EXPAND);
-      if (answer.graphWasChanged())
+      if (answer.getGraphChanges() != null)
         graphWasChanged();
     }
 
