@@ -76,11 +76,12 @@ class BeanBinding implements Binding {
   @Override
   @Nullable
   public Object serialize(@NotNull Object o, @Nullable Object context, SerializationFilter filter) {
-    return serializeInto(o, context == null ? new Element(myTagName) : null, filter);
+    Element element = new Element(myTagName);
+    serializeInto(o, element, filter);
+    return element;
   }
 
-  @Nullable
-  public Element serializeInto(@NotNull Object o, @Nullable Element element, @NotNull SerializationFilter filter) {
+  public void serializeInto(@NotNull Object o, @NotNull Element element, @NotNull SerializationFilter filter) {
     for (Binding binding : myPropertyBindingsList) {
       Accessor accessor = myPropertyBindings.get(binding);
       if (!filter.accepts(accessor, o)) continue;
@@ -99,22 +100,16 @@ class BeanBinding implements Binding {
         }
       }
 
-      if (element == null) {
-        element = new Element(myTagName);
-      }
-
       Object node = binding.serialize(o, element, filter);
-      if (node != null && node != element) {
+      if (node != null) {
         if (node instanceof org.jdom.Attribute) {
-          org.jdom.Attribute attr = (org.jdom.Attribute)node;
-          element.setAttribute(attr.getName(), attr.getValue());
+          element.setAttribute((org.jdom.Attribute)node);
         }
         else {
           JDOMUtil.addContent(element, node);
         }
       }
     }
-    return element;
   }
 
   public void deserializeInto(final Object bean, @NotNull Element element) {
