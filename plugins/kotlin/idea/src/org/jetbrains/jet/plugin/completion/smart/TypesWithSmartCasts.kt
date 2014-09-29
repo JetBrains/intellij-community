@@ -25,19 +25,19 @@ import org.jetbrains.jet.lang.types.lang.KotlinBuiltIns
 import org.jetbrains.jet.lang.descriptors.ClassDescriptor
 import org.jetbrains.jet.lang.descriptors.ClassKind
 import java.util.Collections
-import org.jetbrains.jet.lang.resolve.calls.autocasts.DataFlowInfo
-import org.jetbrains.jet.lang.resolve.calls.autocasts.DataFlowValue
-import org.jetbrains.jet.lang.resolve.calls.autocasts.DataFlowValueFactory
+import org.jetbrains.jet.lang.resolve.calls.smartcasts.DataFlowInfo
+import org.jetbrains.jet.lang.resolve.calls.smartcasts.DataFlowValue
+import org.jetbrains.jet.lang.resolve.calls.smartcasts.DataFlowValueFactory
 import java.util.HashMap
 import com.google.common.collect.SetMultimap
-import org.jetbrains.jet.lang.resolve.calls.autocasts.Nullability
+import org.jetbrains.jet.lang.resolve.calls.smartcasts.Nullability
 import java.util.HashSet
 import org.jetbrains.jet.lang.resolve.BindingContext
 import org.jetbrains.jet.lang.resolve.scopes.receivers.ThisReceiver
 import org.jetbrains.jet.plugin.util.makeNotNullable
 import org.jetbrains.jet.lang.resolve.bindingContextUtil.getDataFlowInfo
 
-class TypesWithAutoCasts(val bindingContext: BindingContext) {
+class TypesWithSmartCasts(val bindingContext: BindingContext) {
     public fun calculate(expression: JetExpression, receiver: JetExpression?): (DeclarationDescriptor) -> Iterable<JetType> {
         val dataFlowInfo = bindingContext.getDataFlowInfo(expression)
         val (variableToTypes: Map<VariableDescriptor, Collection<JetType>>, notNullVariables: Set<VariableDescriptor>)
@@ -55,9 +55,9 @@ class TypesWithAutoCasts(val bindingContext: BindingContext) {
                         returnType = returnType?.makeNotNullable()
                     }
 
-                    val autoCastTypes = variableToTypes[descriptor]
-                    if (autoCastTypes != null && !autoCastTypes.isEmpty()) {
-                        return autoCastTypes + returnType.toList()
+                    val smartCastTypes = variableToTypes[descriptor]
+                    if (smartCastTypes != null && !smartCastTypes.isEmpty()) {
+                        return smartCastTypes + returnType.toList()
                     }
                 }
                 return returnType.toList()
