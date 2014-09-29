@@ -43,7 +43,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     public boolean myCheckOutgoing = true;
     public Boolean CHECK_INCOMING_OUTGOING = null;
     public boolean myIgnoreWhitespacesInAnnotations = true;
-    public Value SYNC_SETTING = Value.NOT_DECIDED;
+    public Value ROOT_SYNC = Value.NOT_DECIDED;
   }
 
   public State getState() {
@@ -67,11 +67,11 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
 
   @NotNull
   public Value getSyncSetting() {
-    return myState.SYNC_SETTING;
+    return myState.ROOT_SYNC;
   }
 
   public void setSyncSetting(@NotNull Value syncSetting) {
-    myState.SYNC_SETTING = syncSetting;
+    myState.ROOT_SYNC = syncSetting;
   }
 
   public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
