@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -204,7 +203,7 @@ public class CommandRuntime {
   private CommandExecutor newExecutor(@NotNull Command command) {
     final CommandExecutor executor;
 
-    if (!Registry.is("svn.use.terminal") || isLocal(command)) {
+    if (!myVcs.getSvnConfiguration().isRunUnderTerminal() || isLocal(command)) {
       command.putIfNotPresent("--non-interactive");
       executor = new CommandExecutor(exePath, command);
     }
