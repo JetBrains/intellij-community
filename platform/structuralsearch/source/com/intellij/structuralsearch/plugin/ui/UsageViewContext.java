@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
@@ -30,12 +29,12 @@ import java.util.Set;
  */
 public class UsageViewContext {
   protected final SearchContext mySearchContext;
-  private final SearchStarter mySearchStarter;
+  private final Runnable mySearchStarter;
   private UsageView myUsageView;
   protected final Configuration myConfiguration;
   private Set<Usage> myExcludedSet;
 
-  protected UsageViewContext(Configuration configuration, SearchContext searchContext, SearchStarter searchStarter) {
+  protected UsageViewContext(Configuration configuration, SearchContext searchContext, Runnable searchStarter) {
     myConfiguration = configuration;
     mySearchContext = searchContext;
     mySearchStarter = searchStarter;
@@ -102,7 +101,7 @@ public class UsageViewContext {
 
     @Override
     public void findUsages() {
-      mySearchStarter.startSearch();
+      mySearchStarter.run();
     }
 
     @Override
