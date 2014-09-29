@@ -409,7 +409,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Nullable
-  protected String getHelperPath(String helper) {
+  protected String getHelperPath(String helper) throws ExecutionException {
     return PythonHelpersLocator.getHelperPath(helper);
   }
 

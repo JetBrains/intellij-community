@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,7 +55,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
 
   @Nullable
   @Override
-  protected String getHelperPath(String helper) {
+  protected String getHelperPath(String helper) throws ExecutionException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) {
       final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
@@ -67,8 +68,11 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
           return null;
         }
       }
-      catch (Exception e) {
+      catch (InterruptedException e) {
         LOG.error(e);
+      }
+      catch (ExecutionException e) {
+        throw analyzeException(e, helper, Collections.<String>emptyList());
       }
     }
     return null;
@@ -92,36 +96,10 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       }
       catch (InterruptedException e) {
         LOG.error(e);
-        remoteSdkCredentials = null;
-      }
-      catch (final ExecutionException e) {
-        if (e.getCause() instanceof VagrantNotStartedException) {
-          final List<? extends PyExecutionFix> fixes = ImmutableList.of(new PyExecutionFix() {
-            @NotNull
-            @Override
-            public String getName() {
-              return "Launch Vagrant";
-            }
-
-            @Override
-            public void run(@NotNull Sdk sdk) {
-              final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-              if (manager != null) {
-                try {
-                  manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
-                  clearCaches();
-                }
-                catch (ExecutionException e) {
-                  throw new RuntimeException(e);
-                }
-              }
-            }
-          });
-          throw new PyExecutionException(helperPath, args, "Vagrant instance is down", fixes);
+          remoteSdkCredentials = null;
         }
-        else {
-          throw new PyExecutionException(helperPath, args, e.getMessage());
-        }
+      catch (ExecutionException e) {
+        throw analyzeException(e, helperPath, args);
       }
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null && remoteSdkCredentials != null) {
@@ -165,6 +143,15 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
     }
   }
 
+  private ExecutionException analyzeException(ExecutionException exception, String command, List<String> args) {
+    final Throwable cause = exception.getCause();
+    if (cause instanceof VagrantNotStartedException) {
+      final String vagrantFolder = ((VagrantNotStartedException)cause).getVagrantFolder();
+      return new PyExecutionException(command, args, "Vagrant instance is down", ImmutableList.of(new LaunchVagrantFix(vagrantFolder)));
+    }
+    return exception;
+  }
+
   @Override
   protected void subscribeToLocalChanges(Sdk sdk) {
     // Local VFS changes aren't needed
@@ -178,5 +165,33 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
 
   private static String quoteIfNeeded(String arg) {
     return arg.replace("<", "\\<").replace(">", "\\>"); //TODO: move this logic to ParametersListUtil.encode
+  }
+
+  private class LaunchVagrantFix implements PyExecutionFix {
+    @NotNull private final String myVagrantFolder;
+
+    public LaunchVagrantFix(@NotNull String vagrantFolder) {
+      myVagrantFolder = vagrantFolder;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "Launch Vagrant";
+    }
+
+    @Override
+    public void run(@NotNull Sdk sdk) {
+      final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+      if (manager != null) {
+        try {
+          manager.runVagrant(myVagrantFolder);
+          clearCaches();
+        }
+        catch (ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
   }
 }

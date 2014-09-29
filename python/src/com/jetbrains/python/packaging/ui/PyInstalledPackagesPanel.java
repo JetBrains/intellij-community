@@ -134,6 +134,8 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
                         if (sdk != null) {
                           fix.run(sdk);
                           myNotificationArea.removeLinkHandler(key);
+                          updatePackages(new PyPackageManagementService(myProject, sdk));
+                          updateNotifications(sdk);
                         }
                       }
                     });
