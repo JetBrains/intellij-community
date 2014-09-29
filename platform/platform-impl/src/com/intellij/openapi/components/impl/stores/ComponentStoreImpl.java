@@ -279,7 +279,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     return (Class<T>)ReflectionUtil.getRawType(type);
   }
 
-  public static String getComponentName(@NotNull final PersistentStateComponent<?> persistentStateComponent) {
+  @NotNull
+  public static String getComponentName(@NotNull PersistentStateComponent<?> persistentStateComponent) {
     return getStateSpec(persistentStateComponent).name();
   }
 

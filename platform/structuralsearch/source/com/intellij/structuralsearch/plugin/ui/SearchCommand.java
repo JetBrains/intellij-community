@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDocumentManager;
@@ -46,9 +45,9 @@ public class SearchCommand {
   }
 
   protected UsageViewContext createUsageViewContext() {
-    final SearchStarter searchStarter = new SearchStarter() {
+    final Runnable searchStarter = new Runnable() {
       @Override
-      public void startSearch() {
+      public void run() {
         new SearchCommand(myConfiguration, mySearchContext).startSearching();
       }
     };

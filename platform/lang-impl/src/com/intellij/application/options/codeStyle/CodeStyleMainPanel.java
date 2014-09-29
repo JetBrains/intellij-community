@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -201,16 +202,12 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   }
 
   @NonNls
+  @Nullable
   public String getHelpTopic() {
     NewCodeStyleSettingsPanel selectedPanel = ensureCurrentPanel();
-    if (selectedPanel == null) {
-      return "reference.settingsdialog.IDE.globalcodestyle";
-    }
-    String helpTopic = selectedPanel.getHelpTopic();
-    if (helpTopic != null) {
-      return helpTopic;
-    }
-    return "";
+    return selectedPanel != null
+           ? selectedPanel.getHelpTopic()
+           : "reference.settingsdialog.IDE.globalcodestyle";
   }
 
   private NewCodeStyleSettingsPanel ensureCurrentPanel() {

@@ -205,11 +205,6 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     myChangesBrowser.getViewer().setEmptyText("No commits selected");
   }
 
-  public void selectNode(@NotNull DefaultMutableTreeNode node) {
-    TreePath selectionPath = new TreePath(node.getPath());
-    myTree.addSelectionPath(selectionPath);
-  }
-
   // Make changes available for diff action
   @Override
   public void calcData(DataKey key, DataSink sink) {
@@ -275,7 +270,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
       RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
       myValue = panel;
-      return panel.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, true);
+      return panel.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row, true);
     }
 
     @Override
@@ -316,7 +311,6 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
       ColoredTreeCellRenderer renderer = getTextRenderer();
-      renderer.setBorder(null);
       if (value instanceof CustomRenderedTreeNode) {
         ((CustomRenderedTreeNode)value).render(renderer);
       }

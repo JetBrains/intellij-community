@@ -37,7 +37,7 @@ public interface StateStorageManager {
   TrackingPathMacroSubstitutor getMacroSubstitutor();
 
   @Nullable
-  StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
+  StateStorage getStateStorage(@NotNull Storage storageSpec);
 
   @Nullable
   StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
@@ -68,7 +68,7 @@ public interface StateStorageManager {
   void finishSave(@NotNull SaveSession saveSession);
 
   @Nullable
-  StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException;
+  StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
   @NotNull
   String expandMacros(@NotNull String file);
@@ -87,8 +87,9 @@ public interface StateStorageManager {
   void reset();
 
   interface ExternalizationSession {
-    void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, String componentName, @NotNull Object state) throws StateStorageException;
-    void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) throws StateStorageException;
+    void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);
+
+    void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
   }
 
   interface SaveSession {

@@ -286,7 +286,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     }
 
     @Override
-    public void setState(@NotNull final Object component, final String componentName, @NotNull final Object state, final Storage storageSpec) {
+    public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
       assert mySession == this;
       setState(componentName, state, storageSpec);
     }

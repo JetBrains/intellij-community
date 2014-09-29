@@ -19,12 +19,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsCheckoutProcessor;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 /**
  * @author Dmitry Avdeev
@@ -38,18 +35,11 @@ public class GitCheckoutProcessor extends VcsCheckoutProcessor {
   }
 
   @Override
-  public void checkout(@NotNull String url, @NotNull String directoryName, @NotNull VirtualFile parentDirectory) {
+  public void checkout(@NotNull String url,
+                       @NotNull String directoryName,
+                       @NotNull VirtualFile parentDirectory,
+                       @NotNull CheckoutProvider.Listener listener) {
     GitCheckoutProvider.clone(ProjectManager.getInstance().getDefaultProject(), ServiceManager.getService(Git.class),
-                              new CheckoutProvider.Listener() {
-                                @Override
-                                public void directoryCheckedOut(File directory, VcsKey vcs) {
-
-                                }
-
-                                @Override
-                                public void checkoutCompleted() {
-
-                                }
-                              }, parentDirectory, url, directoryName, parentDirectory.getName());
+                              listener, parentDirectory, url, directoryName, parentDirectory.getPath());
   }
 }

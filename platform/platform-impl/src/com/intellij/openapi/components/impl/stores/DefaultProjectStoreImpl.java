@@ -176,8 +176,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @Override
       @Nullable
-      public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation)
-        throws StateStorageException {
+      public StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
         return storage;
       }
 
@@ -223,13 +222,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
+    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state)
     throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
 
     @Override
-    public void setStateInOldStorage(@NotNull final Object component, @NotNull final String componentName, @NotNull final Object state) throws StateStorageException {
+    public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       externalizationSession.setState(component, componentName, state, null);
     }
   }

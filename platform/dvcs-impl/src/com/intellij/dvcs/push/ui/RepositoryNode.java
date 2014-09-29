@@ -34,20 +34,22 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode, Comparable<RepositoryNode> {
 
-  private static final int CHECKBOX_WIDTH = new JCheckBox().getPreferredSize().width;
-
-  @NotNull protected final ImageIcon myLoadingIcon;
+  @NotNull protected final LoadingIcon myLoadingIcon;
   @NotNull protected final AtomicBoolean myLoading = new AtomicBoolean(true);
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   @Nullable private Future<AtomicReference<OutgoingResult>> myFuture;
+  protected final int myLoadingIconWidth;
 
   public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, boolean enabled) {
     super(repositoryPanel);
     setChecked(false);
     setEnabled(enabled);
     myRepositoryPanel = repositoryPanel;
-    myLoadingIcon = LoadingIconProvider.getLoadingIcon();
+
+    Dimension size = new JCheckBox().getPreferredSize();
+    myLoadingIconWidth = size.width;
+    myLoadingIcon = LoadingIcon.create(myLoadingIconWidth, size.height);
   }
 
   public boolean isCheckboxVisible() {
@@ -60,8 +62,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     if (myLoading.get()) {
       renderer.setIcon(myLoadingIcon);
       renderer.setIconOnTheRight(false);
-      renderer.setIconTextGap(CHECKBOX_WIDTH - myLoadingIcon.getIconWidth());
-      repoFixedWidth += CHECKBOX_WIDTH;
+      repoFixedWidth += myLoadingIconWidth;
     }
     renderer.append(getRepoName(renderer, repoFixedWidth), SimpleTextAttributes.GRAY_ATTRIBUTES);
     renderer.appendFixedTextFragmentWidth(repoFixedWidth);
@@ -110,7 +111,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
   public void startLoading(@NotNull JTree tree, @NotNull Future<AtomicReference<OutgoingResult>> future) {
     myFuture = future;
     myLoading.set(true);
-    myLoadingIcon.setImageObserver(LoadingIconProvider.createObserver(tree, this));
+    myLoadingIcon.setObserver(tree, this);
   }
 
   public int compareTo(@NotNull RepositoryNode repositoryNode) {

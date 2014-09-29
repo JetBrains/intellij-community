@@ -54,9 +54,9 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   private GitPushSupport(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
     myRepositoryManager = repositoryManager;
     myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
-    myPusher = new GitPusher(project);
-    myOutgoingCommitsProvider = new GitOutgoingCommitsProvider(project);
     mySettings = GitVcsSettings.getInstance(project);
+    myPusher = new GitPusher(project, mySettings);
+    myOutgoingCommitsProvider = new GitOutgoingCommitsProvider(project);
     mySharedSettings = ServiceManager.getService(project, GitSharedSettings.class);
   }
 
@@ -157,6 +157,6 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Nullable
   @Override
   public VcsPushOptionsPanel createOptionsPanel() {
-    return new GitPushTagPanel(GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs.getVersion()));
+    return new GitPushTagPanel(mySettings.getPushTagMode(), GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs.getVersion()));
   }
 }

@@ -372,8 +372,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       LOG.info("Unable to save plugin settings", e);
     }
     catch (Throwable e) {
-      LOG.info("Error saving project", e);
-      MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(e);
+      }
+      else {
+        LOG.info("Error saving project", e);
+        MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
+      }
     }
     finally {
       mySavingInProgress.set(false);

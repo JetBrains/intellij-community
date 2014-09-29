@@ -19,12 +19,22 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,7 +44,37 @@ public class ProjectSetReader {
 
   private static final Logger LOG = Logger.getInstance(ProjectSetReader.class);
 
-  public void readDescriptor(@Language("JSON") @NotNull String descriptor) {
+  private static void runProcessor(final Map<String, ProjectSetProcessor> processors, Object param, final Iterator<Map.Entry<String, JsonElement>> iterator) {
+    if (!iterator.hasNext()) return;
+    Map.Entry<String, JsonElement> entry = iterator.next();
+    String key = entry.getKey();
+    ProjectSetProcessor processor = processors.get(key);
+    if (processor == null) {
+      LOG.error("Processor not found for " + key);
+      return;
+    }
+
+    JsonObject object = entry.getValue().getAsJsonObject();
+    List<Pair<String, String>> list =
+      ContainerUtil.map(object.entrySet(), new Function<Map.Entry<String, JsonElement>, Pair<String, String>>() {
+        @Override
+        public Pair<String, String> fun(Map.Entry<String, JsonElement> entry) {
+          JsonElement value = entry.getValue();
+          return Pair.create(entry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString());
+        }
+      });
+    processor.processEntries(list, param, new Consumer<Object>() {
+      @Override
+      public void consume(Object o) {
+        runProcessor(processors, o, iterator);
+      }
+    });
+  }
+
+  public void readDescriptor(@Language("JSON") @NotNull String descriptor, @Nullable VirtualFile forTests) {
+
+    Application application = ApplicationManager.getApplication();
+    LOG.assertTrue(application.isUnitTestMode() || !application.isDispatchThread(), "should not be invoked from EDT");
 
     ProjectSetProcessor[] extensions = ProjectSetProcessor.EXTENSION_POINT_NAME.getExtensions();
     Map<String, ProjectSetProcessor> processors = new HashMap<String, ProjectSetProcessor>();
@@ -43,20 +83,7 @@ public class ProjectSetReader {
     }
 
     JsonElement parse = new JsonParser().parse(descriptor);
-    for (Map.Entry<String, JsonElement> entry : parse.getAsJsonObject().entrySet()) {
-      String key = entry.getKey();
-      ProjectSetProcessor processor = processors.get(key);
-      if (processor == null) {
-        LOG.error("Processor not found for " + key);
-        continue;
-      }
-
-      JsonObject object = entry.getValue().getAsJsonObject();
-      for (Map.Entry<String, JsonElement> elementEntry : object.entrySet()) {
-        Object o = processor.interactWithUser();
-        JsonElement value = elementEntry.getValue();
-        processor.processEntry(elementEntry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString(), o);
-      }
-    }
+    Iterator<Map.Entry<String, JsonElement>> iterator = parse.getAsJsonObject().entrySet().iterator();
+    runProcessor(processors, forTests, iterator);
   }
 }

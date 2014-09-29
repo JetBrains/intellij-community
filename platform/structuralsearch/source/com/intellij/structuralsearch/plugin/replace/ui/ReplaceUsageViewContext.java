@@ -10,7 +10,6 @@ import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
-import com.intellij.structuralsearch.plugin.ui.SearchStarter;
 import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -32,7 +31,7 @@ class ReplaceUsageViewContext extends UsageViewContext {
   private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<Usage, ReplacementInfo>();
   private final Replacer replacer = new Replacer(mySearchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getOptions());
 
-  ReplaceUsageViewContext(SearchContext context, Configuration configuration, SearchStarter searchStarter) {
+  ReplaceUsageViewContext(SearchContext context, Configuration configuration, Runnable searchStarter) {
     super(configuration, context, searchStarter);
   }
 

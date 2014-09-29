@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.progress.util;
+package com.intellij.openapi.progress.impl;
 
+import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -113,7 +116,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     assertTrue(averageDelay < ProgressManagerImpl.CHECK_CANCELED_DELAY_MILLIS*3);
   }
 
-  public void testProgressIndicatorUtils() throws Throwable {
+  public void testProgressIndicatorUtilsScheduleWithWriteActionPriority() throws Throwable {
     final AtomicBoolean insideReadAction = new AtomicBoolean();
     final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, new ReadTask() {
@@ -306,6 +309,58 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       }
     };
     ensureCheckCanceledCalled(indicator);
+  }
+
+  public void testNestedIndicatorsAreCanceledRight() {
+    checkCanceledCalled = false;
+    ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+      @Override
+      public void run() {
+        assertFalse(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+        ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+        assertTrue(indicator != null && !indicator.isCanceled());
+        indicator.cancel();
+        assertTrue(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+        assertTrue(indicator.isCanceled());
+        final ProgressIndicatorEx nested = new ProgressIndicatorBase();
+        nested.addStateDelegate(new ProgressIndicatorStub() {
+          @Override
+          public void checkCanceled() throws ProcessCanceledException {
+            checkCanceledCalled = true;
+          }
+        });
+        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+          @Override
+          public void run() {
+            assertFalse(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+            ProgressIndicator indicator2 = ProgressIndicatorProvider.getGlobalProgressIndicator();
+            assertTrue(indicator2 != null && !indicator2.isCanceled());
+            assertSame(indicator2, nested);
+            ProgressManager.checkCanceled();
+          }
+        }, nested);
+
+        ProgressIndicator indicator3 = ProgressIndicatorProvider.getGlobalProgressIndicator();
+        assertSame(indicator, indicator3);
+
+        assertTrue(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+      }
+    }, new EmptyProgressIndicator());
+    assertFalse(checkCanceledCalled);
+  }
+
+  public void testWrappedIndicatorsAreSortedRight() {
+    EmptyProgressIndicator indicator1 = new EmptyProgressIndicator();
+    DelegatingProgressIndicator indicator2 = new DelegatingProgressIndicator(indicator1);
+    final DelegatingProgressIndicator indicator3 = new DelegatingProgressIndicator(indicator2);
+    ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+      @Override
+      public void run() {
+        ProgressIndicator current = ProgressIndicatorProvider.getGlobalProgressIndicator();
+        assertSame(indicator3, current);
+      }
+    }, indicator3);
+    assertFalse(checkCanceledCalled);
   }
 
   private static class ProgressIndicatorStub implements ProgressIndicatorEx {

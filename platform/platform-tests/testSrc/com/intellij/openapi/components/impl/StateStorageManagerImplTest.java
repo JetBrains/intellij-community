@@ -18,12 +18,12 @@ package com.intellij.openapi.components.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.impl.stores.StateStorageManagerImpl;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformLangTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -47,7 +47,7 @@ public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
 
       @Nullable
       @Override
-      protected String getOldStorageSpec(Object component, String componentName, StateStorageOperation operation) throws StateStorageException {
+      protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
         throw new UnsupportedOperationException("Method getOldStorageSpec not implemented in " + getClass());
       }
 

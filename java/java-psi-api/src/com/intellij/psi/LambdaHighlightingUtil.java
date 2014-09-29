@@ -103,7 +103,7 @@ public class LambdaHighlightingUtil {
           return "Incompatible return type " + expressionType.getPresentableText() + " in lambda expression";
         }
       }
-      if (LambdaUtil.getReturnStatements(lambdaExpression).size() > returnExpressions.size() || returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
+      if (LambdaUtil.getReturnStatements(lambdaExpression).length > returnExpressions.size() || returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
         return "Missing return value";
       }
     }

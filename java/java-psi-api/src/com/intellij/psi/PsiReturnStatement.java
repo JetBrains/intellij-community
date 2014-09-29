@@ -22,6 +22,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiReturnStatement extends PsiStatement {
   /**
+   * @since 14
+   */
+  PsiReturnStatement[] EMPTY_ARRAY = new PsiReturnStatement[0];
+  /**
    * Returns the expression representing the value returned by the statement.
    *
    * @return the return value expression, or null if the statement does not return any value. 

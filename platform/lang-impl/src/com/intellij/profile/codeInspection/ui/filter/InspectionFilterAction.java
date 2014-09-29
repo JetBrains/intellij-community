@@ -22,6 +22,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -32,7 +34,7 @@ import java.util.SortedSet;
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionFilterAction extends DefaultActionGroup implements Toggleable {
+public class InspectionFilterAction extends DefaultActionGroup implements Toggleable, DumbAware {
 
   private final SeverityRegistrar mySeverityRegistrar;
   private final InspectionsFilter myInspectionsFilter;
@@ -69,7 +71,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     add(new ShowOnlyCleanupInspectionsAction());
   }
 
-  private class ResetFilterAction extends AnAction {
+  private class ResetFilterAction extends DumbAwareAction {
     public ResetFilterAction() {
       super("Reset Filter");
     }
@@ -86,7 +88,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowOnlyCleanupInspectionsAction extends CheckboxAction {
+  private class ShowOnlyCleanupInspectionsAction extends CheckboxAction implements DumbAware{
     public ShowOnlyCleanupInspectionsAction() {
       super("Show Only Cleanup Inspections");
     }
@@ -102,7 +104,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction {
+  private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction implements DumbAware {
 
     public ShowAvailableOnlyOnAnalyzeInspectionsAction() {
       super("Show Only \"Available only for Analyze | Inspect Code\"");
@@ -119,7 +121,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowWithSpecifiedSeverityInspectionsAction extends CheckboxAction {
+  private class ShowWithSpecifiedSeverityInspectionsAction extends CheckboxAction implements DumbAware {
 
     private final HighlightSeverity mySeverity;
 
@@ -146,7 +148,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowEnabledOrDisabledInspectionsAction extends CheckboxAction {
+  private class ShowEnabledOrDisabledInspectionsAction extends CheckboxAction implements DumbAware{
 
     private final Boolean myShowEnabledActions;
 

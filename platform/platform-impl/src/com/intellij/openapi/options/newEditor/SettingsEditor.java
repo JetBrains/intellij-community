@@ -192,6 +192,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
     };
     myBanner = new Banner(myEditor.getResetAction());
+    myBanner.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
     JPanel panel = new JPanel(new BorderLayout(10, 10));
     panel.add(BorderLayout.WEST, mySearch);

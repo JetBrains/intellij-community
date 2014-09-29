@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -41,6 +42,8 @@ import java.util.*;
  * @author yole
  */
 public abstract class VcsVFSListener implements Disposable {
+  protected static final Logger LOG = Logger.getInstance(VcsVFSListener.class);
+
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final ProjectLevelVcsManager myVcsManager;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
@@ -111,6 +114,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected void executeAdd() {
     final List<VirtualFile> addedFiles = acquireAddedFiles();
+    LOG.debug("executeAdd. addedFiles: " + addedFiles);
     for (Iterator<VirtualFile> iterator = addedFiles.iterator(); iterator.hasNext(); ) {
       VirtualFile file = iterator.next();
       if (myVcsFileListenerContextHelper.isAdditionIgnored(file)) {
@@ -148,6 +152,7 @@ public abstract class VcsVFSListener implements Disposable {
    * @param copyFromMap the copied files
    */
   protected void executeAdd(List<VirtualFile> addedFiles, Map<VirtualFile, VirtualFile> copyFromMap) {
+    LOG.debug("executeAdd. add-option: " + myAddOption.getValue() + ", files to add: " + addedFiles);
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       performAdding(addedFiles, copyFromMap);
@@ -237,6 +242,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected void fileAdded(VirtualFileEvent event, VirtualFile file) {
     if (!isEventIgnored(event, true) && !myChangeListManager.isIgnoredFile(file) &&
         (isDirectoryVersioningSupported() || !file.isDirectory())) {
+      LOG.debug("Adding [" + file.getPresentableUrl() + "] to added files");
       myAddedFiles.add(event.getFile());
     }
   }
@@ -318,6 +324,7 @@ public abstract class VcsVFSListener implements Disposable {
     @Override
     public void fileCreated(@NotNull final VirtualFileEvent event) {
       VirtualFile file = event.getFile();
+      LOG.debug("fileCreated: " + file.getPresentableUrl());
       if (isUnderMyVcs(file)) {
         fileAdded(event, file);
       }
