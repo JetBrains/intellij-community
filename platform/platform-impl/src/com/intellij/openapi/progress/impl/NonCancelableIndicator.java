@@ -23,12 +23,6 @@ import com.intellij.openapi.progress.StandardProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 class NonCancelableIndicator implements NonCancelableSection, StandardProgressIndicator {
-  protected final ProgressIndicator myOld;
-
-  NonCancelableIndicator() {
-    myOld = ProgressManager.getInstance().getProgressIndicator();
-  }
-
   @Override
   public void done() {
     ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
