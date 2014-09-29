@@ -62,29 +62,27 @@ public class InterpreterUtil {
   }
 
   public static byte[] getBytes(ZipFile archive, ZipEntry entry) throws IOException {
-    return readAndClose(archive.getInputStream(entry), entry.getSize());
+    return readAndClose(archive.getInputStream(entry), (int)entry.getSize());
   }
 
   public static byte[] getBytes(File file) throws IOException {
-    return readAndClose(new FileInputStream(file), file.length());
+    return readAndClose(new FileInputStream(file), (int)file.length());
   }
 
-  private static byte[] readAndClose(InputStream stream, long length) throws IOException {
-
+  private static byte[] readAndClose(InputStream stream, int length) throws IOException {
     try {
-      byte[] bytes = new byte[(int) length];
-      DataInputStream dataStream = new DataInputStream(stream);
-
-      try {
-        dataStream.readFully(bytes);
-      } catch (EOFException ex) {
-        throw new IOException("premature end of stream", ex);
-      } finally {
-        dataStream.close();
+      byte[] bytes = new byte[length];
+      int n = 0, off = 0;
+      while (n < length) {
+        int count = stream.read(bytes, off + n, length - n);
+        if (count < 0) {
+          throw new IOException("premature end of stream");
+        }
+        n += count;
       }
-
       return bytes;
-    } finally {
+    }
+    finally {
       stream.close();
     }
   }
