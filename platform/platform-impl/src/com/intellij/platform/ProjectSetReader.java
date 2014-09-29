@@ -44,37 +44,7 @@ public class ProjectSetReader {
 
   private static final Logger LOG = Logger.getInstance(ProjectSetReader.class);
 
-  public void readDescriptor(@Language("JSON") @NotNull String descriptor, @Nullable VirtualFile forTests) {
-
-    Application application = ApplicationManager.getApplication();
-    LOG.assertTrue(application.isUnitTestMode() || !application.isDispatchThread(), "should not be invoked from EDT");
-
-    ProjectSetProcessor[] extensions = ProjectSetProcessor.EXTENSION_POINT_NAME.getExtensions();
-    Map<String, ProjectSetProcessor> processors = new HashMap<String, ProjectSetProcessor>();
-    for (ProjectSetProcessor extension : extensions) {
-      processors.put(extension.getId(), extension);
-    }
-
-    JsonElement parse = new JsonParser().parse(descriptor);
-    Iterator<Map.Entry<String, JsonElement>> iterator = parse.getAsJsonObject().entrySet().iterator();
-    runProcessor(processors, forTests, iterator);
-  }
-
-  public void readDescriptor(@Language("JSON") @NotNull String descriptor, @Nullable VirtualFile forTests) {
-
-    Application application = ApplicationManager.getApplication();
-    LOG.assertTrue(application.isUnitTestMode() || !application.isDispatchThread(), "should not be invoked from EDT");
-
-    ProjectSetProcessor[] extensions = ProjectSetProcessor.EXTENSION_POINT_NAME.getExtensions();
-    Map<String, ProjectSetProcessor> processors = new HashMap<String, ProjectSetProcessor>();
-    for (ProjectSetProcessor extension : extensions) {
-      processors.put(extension.getId(), extension);
-    }
-
-    JsonElement parse = new JsonParser().parse(descriptor);
-    Iterator<Map.Entry<String, JsonElement>> iterator = parse.getAsJsonObject().entrySet().iterator();
-    runProcessor(processors, forTests, iterator);
-  }  private static void runProcessor(final Map<String, ProjectSetProcessor> processors, Object param, final Iterator<Map.Entry<String, JsonElement>> iterator) {
+  private static void runProcessor(final Map<String, ProjectSetProcessor> processors, Object param, final Iterator<Map.Entry<String, JsonElement>> iterator) {
     if (!iterator.hasNext()) return;
     Map.Entry<String, JsonElement> entry = iterator.next();
     String key = entry.getKey();
@@ -99,5 +69,21 @@ public class ProjectSetReader {
         runProcessor(processors, o, iterator);
       }
     });
+  }
+
+  public void readDescriptor(@Language("JSON") @NotNull String descriptor, @Nullable VirtualFile forTests) {
+
+    Application application = ApplicationManager.getApplication();
+    LOG.assertTrue(application.isUnitTestMode() || !application.isDispatchThread(), "should not be invoked from EDT");
+
+    ProjectSetProcessor[] extensions = ProjectSetProcessor.EXTENSION_POINT_NAME.getExtensions();
+    Map<String, ProjectSetProcessor> processors = new HashMap<String, ProjectSetProcessor>();
+    for (ProjectSetProcessor extension : extensions) {
+      processors.put(extension.getId(), extension);
+    }
+
+    JsonElement parse = new JsonParser().parse(descriptor);
+    Iterator<Map.Entry<String, JsonElement>> iterator = parse.getAsJsonObject().entrySet().iterator();
+    runProcessor(processors, forTests, iterator);
   }
 }
