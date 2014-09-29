@@ -24,14 +24,14 @@ public interface EditorSettings {
   boolean isWhitespacesShown();
   void setWhitespacesShown(boolean val);
 
-  boolean isLeadingWhitespacesShown();
-  void setLeadingWhitespacesShown(boolean val);
+  boolean isLeadingWhitespaceShown();
+  void setLeadingWhitespaceShown(boolean val);
 
-  boolean isInnerWhitespacesShown();
-  void setInnerWhitespacesShown(boolean val);
+  boolean isInnerWhitespaceShown();
+  void setInnerWhitespaceShown(boolean val);
 
-  boolean isTrailingWhitespacesShown();
-  void setTrailingWhitespacesShown(boolean val);
+  boolean isTrailingWhitespaceShown();
+  void setTrailingWhitespaceShown(boolean val);
 
   int getRightMargin(Project project);
   void setRightMargin(int myRightMargin);
