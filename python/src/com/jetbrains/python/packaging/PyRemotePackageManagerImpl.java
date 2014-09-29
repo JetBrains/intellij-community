@@ -43,10 +43,6 @@ import java.util.List;
  * @author vlan
  */
 public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
-  private static final String LAUNCH_VAGRANT = "launchVagrant";
-  public static final int ERROR_VAGRANT_NOT_LAUNCHED = 101;
-  public static final int ERROR_REMOTE_ACCESS = 102;
-
   private static final Logger LOG = Logger.getInstance(PyRemotePackageManagerImpl.class);
 
   PyRemotePackageManagerImpl(@NotNull Sdk sdk) {

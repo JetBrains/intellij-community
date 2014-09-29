@@ -70,14 +70,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final String VIRTUALENV_VERSION = "1.11.6";
 
   public static final int OK = 0;
-  public static final int ERROR_NO_PIP = 2;
   public static final int ERROR_NO_SETUPTOOLS = 3;
-  public static final int ERROR_INVALID_SDK = -1;
-  public static final int ERROR_TOOL_NOT_FOUND = -2;
-  public static final int ERROR_TIMEOUT = -3;
-  public static final int ERROR_INVALID_OUTPUT = -4;
-  public static final int ERROR_ACCESS_DENIED = -5;
-  public static final int ERROR_EXECUTION = -6;
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
