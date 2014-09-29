@@ -579,4 +579,14 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doMethodTest(before, "Test.class");
   }
 
+  public void testMultipleFieldDeclaration_InAnonymousClass() {
+    doMethodTest(
+      "new Object() {\n" +
+      "boolean one, two;\n" +
+      "};",
+      "new Object() {\n" +
+      "    boolean one, two;\n" +
+      "};"
+    );
+  }
 }
