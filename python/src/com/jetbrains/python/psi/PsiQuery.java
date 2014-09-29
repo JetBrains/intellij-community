@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+// TODO: Propogate typization to all class like in PsiTypedQuery
+
 /**
  * JQuery-like tool that makes PSI navigation easier.
  * You just "drive" your query filtering results, and no need to check result for null.
@@ -64,7 +66,8 @@ public class PsiQuery {
   /**
    * TODO: Support types?
    * Filter children by function call
-  * @return {@link com.jetbrains.python.psi.PsiQuery} backed by {@link com.jetbrains.python.psi.PyCallExpression}
+   *
+   * @return {@link com.jetbrains.python.psi.PsiQuery} backed by {@link com.jetbrains.python.psi.PyCallExpression}
    */
   @NotNull
   public PsiQuery childrenCall(@NotNull final FQNamesProvider name) {
@@ -155,20 +158,23 @@ public class PsiQuery {
 
 
   /**
-   * Filter siblings by class
+   * Filter siblings by class returning typed result
    */
   @NotNull
-  public PsiQuery siblings(@NotNull final Class<? extends PsiElement> clazz) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+  public <T extends PsiElement> PsiTypedQuery<T> siblings(@NotNull final Class<T> clazz) {
+    // TODO: Rewrite function, get rid of inner class
+    final List<T> result = new ArrayList<T>();
     for (final PsiElement element : myPsiElements) {
       final PsiElement parent = element.getParent();
-      for (final PsiElement sibling : PsiTreeUtil.findChildrenOfType(parent, clazz)) {
+      for (final T sibling : PsiTreeUtil.findChildrenOfType(parent, clazz)) {
         if ((!sibling.equals(element))) {
           result.add(sibling);
         }
       }
     }
-    return new PsiQuery(result.toArray(new PsiElement[result.size()]));
+    @SuppressWarnings("unchecked") // Type is preserved
+    final T[] array = (T[])result.toArray(new PsiElement[result.size()]);
+    return new PsiTypedQuery<T>(clazz, array);
   }
 
 
@@ -327,5 +333,50 @@ public class PsiQuery {
       }
     }
     return new PsiQuery(result.toArray(new PsiElement[result.size()]));
+  }
+
+  /**
+   * Typed class that returns elements of certian type
+   * @param <T> class type
+   */
+  public static class PsiTypedQuery<T extends PsiElement> extends PsiQuery {
+    @NotNull
+    private final Class<T> myClass;
+    @NotNull
+    private final T[] myElements;
+
+    /**
+     * @param clazz type
+     * @param elements elements
+     */
+    private PsiTypedQuery(@NotNull final Class<T> clazz, @NotNull final T... elements) {
+      super(elements);
+      myClass = clazz;
+      myElements = elements.clone();
+    }
+
+    /**
+     * @return First element of certain type
+     */
+    @Nullable
+    public T getFirstElement() {
+      return getFirstElement(myClass);
+    }
+
+    /**
+     * @return Last element of certain type
+     */
+    @Nullable
+    public T getLastElement() {
+      return getLastElement(myClass);
+    }
+
+    /**
+     * @return All elements of certain type
+     */
+    @NotNull
+    public T[] getElements() {
+      return myElements.clone();
+    }
   }
 }

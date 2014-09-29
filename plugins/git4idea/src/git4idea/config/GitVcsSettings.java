@@ -23,6 +23,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import git4idea.push.GitPushTagMode;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +69,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean WARN_ABOUT_DETACHED_HEAD = true;
     public GitResetMode RESET_MODE = null;
     public boolean FORCE_PUSH_ALLOWED = false;
+    public GitPushTagMode PUSH_TAGS = null;
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -207,6 +209,15 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setForcePushAllowed(boolean allowed) {
     myState.FORCE_PUSH_ALLOWED = allowed;
+  }
+
+  @Nullable
+  public GitPushTagMode getPushTagMode() {
+    return myState.PUSH_TAGS;
+  }
+
+  public void setPushTagMode(@Nullable GitPushTagMode mode) {
+    myState.PUSH_TAGS = mode;
   }
 
   /**

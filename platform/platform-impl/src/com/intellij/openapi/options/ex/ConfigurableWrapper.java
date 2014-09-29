@@ -77,25 +77,38 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   }
 
   public static boolean isNoScroll(Configurable configurable) {
-    return configurable instanceof NoScroll ||
-           (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).getConfigurable() instanceof NoScroll);
+    return cast(NoScroll.class, configurable) != null;
   }
 
   public static boolean hasOwnContent(UnnamedConfigurable configurable) {
-    if (configurable instanceof ConfigurableWrapper) {
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-      configurable = wrapper.getConfigurable();
-    }
-    if (configurable instanceof SearchableConfigurable.Parent) {
-      SearchableConfigurable.Parent parent = (SearchableConfigurable.Parent)configurable;
-      return parent.hasOwnContent();
-    }
-    return false;
+    SearchableConfigurable.Parent parent = cast(SearchableConfigurable.Parent.class, configurable);
+    return parent != null && parent.hasOwnContent();
   }
 
   public static boolean isNonDefaultProject(Configurable configurable) {
     return configurable instanceof NonDefaultProjectConfigurable ||
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).myEp.nonDefaultProject);
+  }
+
+  @Nullable
+  public static <T> T cast(@NotNull Class<T> type, UnnamedConfigurable configurable) {
+    if (configurable instanceof ConfigurableWrapper) {
+      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      if (wrapper.myConfigurable == null) {
+        try {
+          String name = wrapper.myEp.instanceClass != null ? wrapper.myEp.instanceClass : wrapper.myEp.implementationClass;
+          if (!type.isAssignableFrom(Class.forName(name, false, wrapper.myEp.getLoaderForClass()))) {
+            return null; // do not create configurable that cannot be cast to the specified type
+          }
+        }
+        catch (Exception ignored) {
+        }
+      }
+      configurable = wrapper.getConfigurable();
+    }
+    return type.isInstance(configurable)
+           ? type.cast(configurable)
+           : null;
   }
 
   private final ConfigurableEP myEp;

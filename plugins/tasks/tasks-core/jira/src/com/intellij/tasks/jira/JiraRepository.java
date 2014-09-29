@@ -186,10 +186,14 @@ public class JiraRepository extends BaseRepositoryImpl {
         throw e;
       }
     }
-    JsonObject object = GSON.fromJson(responseBody, JsonObject.class);
+    JsonObject serverInfo = GSON.fromJson(responseBody, JsonObject.class);
     // when JIRA 4.x support will be dropped 'versionNumber' array in response
     // may be used instead version string parsing
-    myJiraVersion = object.get("version").getAsString();
+    myJiraVersion = serverInfo.get("version").getAsString();
+    LOG.info("JIRA version (from serverInfo): " + myJiraVersion);
+    if (isOnDemand()) {
+      LOG.info("Connecting to JIRA on-Demand. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
+    }
     JiraRestApi restApi = JiraRestApi.fromJiraVersion(myJiraVersion, this);
     if (restApi == null) {
       throw new Exception(TaskBundle.message("jira.failure.no.REST"));
@@ -229,11 +233,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     // See https://confluence.atlassian.com/display/ONDEMANDKB/Getting+randomly+logged+out+of+OnDemand for details
     // IDEA-128824, IDEA-128706 Use cookie authentication only for JIRA on-Demand
     // TODO Make JiraVersion more suitable for such checks
-    final boolean isJiraOnDemand = StringUtil.notNullize(myJiraVersion).contains("OD");
-    if (isJiraOnDemand) {
-      LOG.info("Connecting to JIRA on-Demand. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
-    }
-    if (BASIC_AUTH_ONLY || !isJiraOnDemand) {
+    if (BASIC_AUTH_ONLY || !isOnDemand()) {
       // to override persisted settings
       setUseHttpAuthentication(true);
     }
@@ -282,6 +282,10 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
     String statusText = HttpStatus.getStatusText(method.getStatusCode());
     throw new Exception(TaskBundle.message("failure.http.error", statusCode, statusText));
+  }
+
+  public boolean isOnDemand() {
+    return StringUtil.notNullize(myJiraVersion).contains("OD");
   }
 
   private static boolean containsCookie(@NotNull HttpClient client, @NotNull String cookieName) {

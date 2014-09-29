@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.project.Project;
@@ -172,6 +173,14 @@ public class StorageUtil {
           virtualFileOut.close();
         }
         return virtualFile;
+      }
+      catch (FileNotFoundException e) {
+        if (virtualFile == null) {
+          throw e;
+        }
+        else {
+          throw new ReadOnlyModificationException(virtualFile);
+        }
       }
       finally {
         token.finish();

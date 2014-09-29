@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -38,7 +37,7 @@ public interface StateStorageManager {
   TrackingPathMacroSubstitutor getMacroSubstitutor();
 
   @Nullable
-  StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
+  StateStorage getStateStorage(@NotNull Storage storageSpec);
 
   @Nullable
   StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
@@ -69,7 +68,7 @@ public interface StateStorageManager {
   void finishSave(@NotNull SaveSession saveSession);
 
   @Nullable
-  StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException;
+  StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
   @NotNull
   String expandMacros(@NotNull String file);
@@ -88,8 +87,9 @@ public interface StateStorageManager {
   void reset();
 
   interface ExternalizationSession {
-    void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, String componentName, @NotNull Object state) throws StateStorageException;
-    void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) throws StateStorageException;
+    void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);
+
+    void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
   }
 
   interface SaveSession {
@@ -97,11 +97,7 @@ public interface StateStorageManager {
     @Nullable
     Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files);
 
-    @NotNull
-    List<File> getAllStorageFilesToSave() throws StateStorageException;
-
-    @NotNull
-    List<File> getAllStorageFiles();
+    void collectAllStorageFiles(@NotNull List<VirtualFile> files);
 
     void save() throws StateStorageException;
   }

@@ -53,7 +53,7 @@ public class IdIndexImpl extends IdIndex implements CustomInputsIndexFileBasedIn
     int version = super.getVersion();
     for(FileType fileType:types) {
       if (!isIndexable(fileType)) continue;
-      FileTypeIdIndexer indexer = IdIndexers.INSTANCE.forFileType(fileType);
+      FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(fileType);
       if (indexer == null) continue;
       version = version * 31 + (indexer.getVersion() ^ indexer.getClass().getName().hashCode());
     }

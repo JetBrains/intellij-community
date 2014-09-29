@@ -97,7 +97,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
         if (idx >= 0) {
           final ExistedScopesStatesAndNonExistNames scopeToolState = ((MyTableModel)getModel()).getScopeToolState(idx);
           final List<ScopeToolState> existedStates = scopeToolState.getExistedStates();
-          if (existedStates.size() == 1) {
+          if (existedStates.size() == 1 && scopeToolState.getNonExistNames().isEmpty()) {
             tableSettings.onScopeChosen(existedStates.get(0));
           }
         }
@@ -212,6 +212,12 @@ public class ScopesAndSeveritiesTable extends JBTable {
         return true;
       }
       assert columnIndex == SEVERITY_COLUMN;
+
+      final SeverityState state = getSeverityState(rowIndex);
+      if (state.isDisabled()) {
+        return false;
+      }
+
       final ExistedScopesStatesAndNonExistNames scopeToolState = getScopeToolState(rowIndex);
       return scopeToolState.getNonExistNames().isEmpty();
     }
@@ -273,11 +279,12 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     @NotNull
     private SeverityState getSeverityState(final int rowIndex) {
+      boolean disabled = Boolean.FALSE.equals(isEnabled(rowIndex));
       final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
       if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
-        return new SeverityState(MIXED_FAKE_SEVERITY, false);
+        return new SeverityState(MIXED_FAKE_SEVERITY, false, disabled);
       }
-      return new SeverityState(getSeverity(existedScopesStatesAndNonExistNames.getExistedStates()), true);
+      return new SeverityState(getSeverity(existedScopesStatesAndNonExistNames.getExistedStates()), !disabled, disabled);
     }
 
     @Nullable
@@ -384,6 +391,11 @@ public class ScopesAndSeveritiesTable extends JBTable {
           else {
             myInspectionProfile.disableTools(myKeyNames, scope, myProject);
           }
+        }
+        if (myKeyNames.size() == 1) {
+          final String keyName = ContainerUtil.getFirstItem(myKeyNames);
+          final ScopeToolState state = getScopeToolState(keyName, rowIndex);
+          myTableSettings.onScopeChosen(state);
         }
       }
       myTableSettings.onSettingsChanged();

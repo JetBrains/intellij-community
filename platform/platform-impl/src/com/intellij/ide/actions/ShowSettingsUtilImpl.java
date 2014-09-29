@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.*;
@@ -57,7 +58,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     project = getProject(project);
     final ConfigurableGroup[] filteredGroups = filterEmptyGroups(groups);
     if (Registry.is("ide.new.settings.dialog")) {
-      return Registry.is("ide.new.settings.view")
+      return ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
              ? new SettingsDialog(project, filteredGroups, toSelect, null)
              : new IdeSettingsDialog(project, filteredGroups, toSelect);
     }
@@ -165,7 +166,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     group = filterEmptyGroups(group);
     final Configurable configurable2Select = findConfigurable2Select(id2Select, group);
 
-    if (Registry.is("ide.new.settings.view")) {
+    if (ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")) {
       new SettingsDialog(getProject(project), group, configurable2Select, filter).show();
       return;
     }
@@ -278,12 +279,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                                           boolean showApplyButton) {
     final DialogWrapper editor;
     if (parent == null) {
-      editor = Registry.is("ide.new.settings.view")
+      editor = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
                ? new SettingsDialog(project, dimensionKey, configurable, showApplyButton)
                : new SingleConfigurableEditor(project, configurable, dimensionKey, showApplyButton);
     }
     else {
-      editor = Registry.is("ide.new.settings.view")
+      editor = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
                ? new SettingsDialog(parent, dimensionKey, configurable, showApplyButton)
                : new SingleConfigurableEditor(parent, configurable, dimensionKey, showApplyButton);
     }

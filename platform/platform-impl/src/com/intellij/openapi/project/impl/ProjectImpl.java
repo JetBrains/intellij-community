@@ -327,19 +327,21 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void save() {
-    if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
+    if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) {
+      return; //no need to save
+    }
 
     if (!mySavingInProgress.compareAndSet(false, true)) {
       return;
     }
+
     try {
       if (isToSaveProjectName()) {
-        final IProjectStore stateStore = getStateStore();
-        final VirtualFile baseDir = stateStore.getProjectBaseDir();
+        VirtualFile baseDir = getStateStore().getProjectBaseDir();
         if (baseDir != null && baseDir.isValid()) {
-          final VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
+          VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
           if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-            final File nameFile = new File(ideaDir.getPath(), NAME_FILE);
+            File nameFile = new File(ideaDir.getPath(), NAME_FILE);
             try {
               FileUtil.writeToFile(nameFile, getName().getBytes("UTF-8"), false);
               myOldName = null;
@@ -367,12 +369,18 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
         (ApplicationManagerEx.getApplicationEx().isInternal() ? "<p>" + StringUtil.getThrowableText(e) + "</p>" : ""),
         NotificationType.ERROR);
       Notifications.Bus.notify(notification, this);
-      LOG.info("Unable to save plugin settings",e);
+      LOG.info("Unable to save plugin settings", e);
     }
-    catch (IOException e) {
-      MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
-      LOG.info("Error saving project", e);
-    } finally {
+    catch (Throwable e) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(e);
+      }
+      else {
+        LOG.info("Error saving project", e);
+        MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
+      }
+    }
+    finally {
       mySavingInProgress.set(false);
       ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectSaved.TOPIC).saved(this);
     }

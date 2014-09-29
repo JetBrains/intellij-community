@@ -20,13 +20,13 @@ import com.intellij.psi.xml.*;
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{ return;
-%eof}
+//%debug
 
 %state DOC_TYPE
 %state COMMENT
 %state START_TAG_NAME
 %state END_TAG_NAME
+%state BEFORE_TAG_ATTRIBUTES
 %state TAG_ATTRIBUTES
 %state ATTRIBUTE_VALUE_START
 %state ATTRIBUTE_VALUE_DQ
@@ -46,14 +46,12 @@ WHITE_SPACE_CHARS=[ \n\r\t\f]+
 TAG_NAME=({ALPHA}|"_"|":")({ALPHA}|{DIGIT}|"_"|":"|"."|"-")*
 TAG_NAME_FWT=("#")({ALPHA}|{DIGIT}|"_"|":"|"."|"-")*
 /* see http://www.w3.org/TR/html5/syntax.html#syntax-attribute-name */
-ATTRIBUTE_NAME=({ALPHA}|"_"|":")([^ \n\r\t\f\"\'<>/=])*
+ATTRIBUTE_NAME=([^ \n\r\t\f\"\'<>/=])+
 
 DTD_REF= "\"" [^\"]* "\"" | "'" [^']* "'"
 DOCTYPE= "<!" (D|d)(O|o)(C|c)(T|t)(Y|y)(P|p)(E|e)
 HTML= (H|h)(T|t)(M|m)(L|l)
 PUBLIC= (P|p)(U|u)(B|b)(L|l)(I|i)(C|c)
-EL_EMBEDDMENT="${" [^<\}]* "}"
-
 END_COMMENT="--"[ \n\r\t\f]*">"
 
 CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{WHITE_SPACE_CHARS}|{DIGIT}|"."|"("|")"|"|"|"!"|"&")*
@@ -107,15 +105,16 @@ CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{WHITE_SPACE_CHARS}|{DIGIT}|"."|
   return XmlTokenType.XML_DATA_CHARACTERS;
 }
 
-<START_TAG_NAME, END_TAG_NAME> {TAG_NAME} { yybegin(TAG_ATTRIBUTES); return XmlTokenType.XML_NAME; }
+<START_TAG_NAME, END_TAG_NAME> {TAG_NAME} { yybegin(BEFORE_TAG_ATTRIBUTES); return XmlTokenType.XML_NAME; }
 <END_TAG_NAME2> {TAG_NAME_FWT} { return XmlTokenType.XML_NAME; }
 <START_TAG_NAME2> {TAG_NAME_FWT} { yybegin(TAG_CHARACTERS); return XmlTokenType.XML_NAME; }
 
-<TAG_ATTRIBUTES, END_TAG_NAME2, TAG_CHARACTERS> ">" { yybegin(YYINITIAL); return XmlTokenType.XML_TAG_END; }
-<TAG_ATTRIBUTES, TAG_CHARACTERS> "/>" { yybegin(YYINITIAL); return XmlTokenType.XML_EMPTY_ELEMENT_END; }
+<BEFORE_TAG_ATTRIBUTES, TAG_ATTRIBUTES, END_TAG_NAME2, TAG_CHARACTERS> ">" { yybegin(YYINITIAL); return XmlTokenType.XML_TAG_END; }
+<BEFORE_TAG_ATTRIBUTES, TAG_ATTRIBUTES, TAG_CHARACTERS> "/>" { yybegin(YYINITIAL); return XmlTokenType.XML_EMPTY_ELEMENT_END; }
+<BEFORE_TAG_ATTRIBUTES> {WHITE_SPACE_CHARS} { yybegin(TAG_ATTRIBUTES); return XmlTokenType.XML_WHITE_SPACE;}
 <TAG_ATTRIBUTES> {ATTRIBUTE_NAME} { return XmlTokenType.XML_NAME; }
 <TAG_ATTRIBUTES> "=" { yybegin(ATTRIBUTE_VALUE_START); return XmlTokenType.XML_EQ; }
-<TAG_ATTRIBUTES,START_TAG_NAME, END_TAG_NAME, END_TAG_NAME2> [^] { yybegin(YYINITIAL); yypushback(1); break; }
+<BEFORE_TAG_ATTRIBUTES, TAG_ATTRIBUTES, START_TAG_NAME, END_TAG_NAME, END_TAG_NAME2> [^] { yybegin(YYINITIAL); yypushback(1); break; }
 
 <TAG_CHARACTERS> [^] { return XmlTokenType.XML_TAG_CHARACTERS; }
 

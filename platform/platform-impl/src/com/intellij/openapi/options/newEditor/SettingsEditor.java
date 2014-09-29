@@ -192,6 +192,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
     };
     myBanner = new Banner(myEditor.getResetAction());
+    myBanner.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
     JPanel panel = new JPanel(new BorderLayout(10, 10));
     panel.add(BorderLayout.WEST, mySearch);
@@ -205,11 +206,9 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
     if (configurable == null) {
       String id = myProperties.getValue(SELECTED_CONFIGURABLE);
-      if (id != null) {
-        configurable = new ConfigurableVisitor.ByID(id).find(groups);
-        if (configurable == null) {
-          configurable = ConfigurableVisitor.ALL.find(groups);
-        }
+      configurable = new ConfigurableVisitor.ByID(id != null ? id : "appearance").find(groups);
+      if (configurable == null) {
+        configurable = ConfigurableVisitor.ALL.find(groups);
       }
     }
     myFilter.update(filter, false, true);

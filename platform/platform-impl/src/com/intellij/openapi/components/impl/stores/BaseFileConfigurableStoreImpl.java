@@ -17,31 +17,33 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   @NonNls protected static final String VERSION_OPTION = "version";
   @NonNls public static final String ATTRIBUTE_NAME = "name";
+
+  private static final List<String> ourConversionProblemsStorage = new SmartList<String>();
+
   private final ComponentManager myComponentManager;
-  private static final ArrayList<String> ourConversionProblemsStorage = new ArrayList<String>();
   private final DefaultsStateStorage myDefaultsStateStorage;
   private StateStorageManager myStateStorageManager;
 
-
-  protected BaseFileConfigurableStoreImpl(final ComponentManager componentManager) {
+  protected BaseFileConfigurableStoreImpl(@NotNull ComponentManager componentManager) {
     myComponentManager = componentManager;
-    final PathMacroManager pathMacroManager = PathMacroManager.getInstance(myComponentManager);
-    myDefaultsStateStorage = new DefaultsStateStorage(pathMacroManager);
+    myDefaultsStateStorage = new DefaultsStateStorage(PathMacroManager.getInstance(myComponentManager));
   }
 
-  public synchronized ComponentManager getComponentManager() {
+  @NotNull
+  public ComponentManager getComponentManager() {
     return myComponentManager;
   }
 
@@ -109,7 +111,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   protected abstract XmlElementStorage getMainStorage();
 
   @Nullable
-  static ArrayList<String> getConversionProblemsStorage() {
+  static List<String> getConversionProblemsStorage() {
     return ourConversionProblemsStorage;
   }
 

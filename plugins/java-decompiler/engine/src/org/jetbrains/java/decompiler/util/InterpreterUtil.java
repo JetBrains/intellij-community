@@ -70,14 +70,21 @@ public class InterpreterUtil {
   }
 
   private static byte[] readAndClose(InputStream stream, long length) throws IOException {
+
     try {
-      byte[] bytes = new byte[(int)length];
-      if (stream.read(bytes) != length) {
-        throw new IOException("premature end of stream");
+      byte[] bytes = new byte[(int) length];
+      DataInputStream dataStream = new DataInputStream(stream);
+
+      try {
+        dataStream.readFully(bytes);
+      } catch (EOFException ex) {
+        throw new IOException("premature end of stream", ex);
+      } finally {
+        dataStream.close();
       }
+
       return bytes;
-    }
-    finally {
+    } finally {
       stream.close();
     }
   }

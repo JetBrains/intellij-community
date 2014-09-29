@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
@@ -137,9 +135,6 @@ public class FontInfo {
       // width is not equal to the antialiased one (IDEA-81539).
       final Graphics graphics = UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
       UISettings.setupAntialiasing(graphics);
-      if (UIUtil.isRetina() && SystemInfo.isJavaVersionAtLeast("1.7.0.40")) {
-        GraphicsUtil.setupFractionalMetrics(graphics);
-      }
       graphics.setFont(myFont);
       myFontMetrics = graphics.getFontMetrics();
       for (int i = 0; i < 128; i++) {

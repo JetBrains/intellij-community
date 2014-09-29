@@ -130,7 +130,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     }
   }
 
-  class MyComponentStore extends ComponentStoreImpl implements Disposable {
+  static class MyComponentStore extends ComponentStoreImpl implements Disposable {
     private final StateStorageManager stateStorageManager;
 
     MyComponentStore(@NotNull final String testAppConfigPath) {
@@ -143,7 +143,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
 
         @Nullable
         @Override
-        protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
+        protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
           return null;
         }
 

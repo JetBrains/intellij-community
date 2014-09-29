@@ -124,38 +124,38 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
-  public boolean isLeadingWhitespacesShown() {
+  public boolean isLeadingWhitespaceShown() {
     return myIsLeadingWhitespacesShown != null
            ? myIsLeadingWhitespacesShown.booleanValue()
            : EditorSettingsExternalizable.getInstance().isLeadingWhitespacesShown();
   }
 
   @Override
-  public void setLeadingWhitespacesShown(boolean val) {
+  public void setLeadingWhitespaceShown(boolean val) {
     myIsLeadingWhitespacesShown = Boolean.valueOf(val);
   }
 
   @Override
-  public boolean isInnerWhitespacesShown() {
+  public boolean isInnerWhitespaceShown() {
     return myIsInnerWhitespacesShown != null
            ? myIsInnerWhitespacesShown.booleanValue()
            : EditorSettingsExternalizable.getInstance().isInnerWhitespacesShown();
   }
 
   @Override
-  public void setInnerWhitespacesShown(boolean val) {
+  public void setInnerWhitespaceShown(boolean val) {
     myIsInnerWhitespacesShown = Boolean.valueOf(val);
   }
 
   @Override
-  public boolean isTrailingWhitespacesShown() {
+  public boolean isTrailingWhitespaceShown() {
     return myIsTrailingWhitespacesShown != null
            ? myIsTrailingWhitespacesShown.booleanValue()
            : EditorSettingsExternalizable.getInstance().isTrailingWhitespacesShown();
   }
 
   @Override
-  public void setTrailingWhitespacesShown(boolean val) {
+  public void setTrailingWhitespaceShown(boolean val) {
     myIsTrailingWhitespacesShown = Boolean.valueOf(val);
   }
 

@@ -32,9 +32,9 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
+import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
@@ -56,10 +56,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Element;
@@ -93,10 +93,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private final Set<Project> myTestProjects = new THashSet<Project>();
 
-  private final Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
+  private final Map<VirtualFile, byte[]> mySavedCopies = new THashMap<VirtualFile, byte[]>();
   private final TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
   private final Map<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles =
-    new HashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
+    new THashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
   private final Alarm myChangedFilesAlarm = new Alarm();
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new SmartList<Pair<VirtualFile, StateStorage>>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
@@ -916,10 +916,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           return;
         }
         final String location = projectImpl.getPresentableUrl();
-        final List<File> original;
+        final List<VirtualFile> original = new SmartList<VirtualFile>();
         try {
-          IComponentStore.SaveSession saveSession = projectImpl.getStateStore().startSave();
-          original = saveSession.getAllStorageFiles(true);
+          ComponentSaveSession saveSession = projectImpl.getStateStore().startSave();
+          saveSession.collectAllStorageFiles(true, original);
           saveSession.finishSave();
         }
         catch (Exception e) {
@@ -931,8 +931,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           application.runWriteAction(new Runnable() {
             @Override
             public void run() {
-              for (File originalFile : original) {
-                restoreCopy(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(originalFile));
+              for (VirtualFile originalFile : original) {
+                restoreCopy(originalFile);
               }
             }
           });

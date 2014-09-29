@@ -1390,18 +1390,18 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       try {
         StoreUtil.doSave(getStateStore());
       }
-      catch (final Throwable ex) {
+      catch (final Throwable e) {
         if (isUnitTestMode()) {
           System.out.println("Saving application settings failed");
-          ex.printStackTrace();
+          e.printStackTrace();
         }
         else {
-          LOG.info("Saving application settings failed", ex);
+          LOG.info("Saving application settings failed", e);
           invokeLater(new Runnable() {
             @Override
             public void run() {
-              if (ex instanceof PluginException) {
-                final PluginException pluginException = (PluginException)ex;
+              if (e instanceof PluginException) {
+                final PluginException pluginException = (PluginException)e;
                 PluginManagerCore.disablePlugin(pluginException.getPluginId().getIdString());
                 Messages.showMessageDialog("The plugin " +
                                            pluginException.getPluginId() +
@@ -1410,7 +1410,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                            Messages.getErrorIcon());
               }
               else {
-                Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
+                Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", e.getLocalizedMessage()),
                                            CommonBundle.getErrorTitle(), Messages.getErrorIcon());
 
               }

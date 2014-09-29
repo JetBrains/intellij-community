@@ -106,11 +106,11 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
   public void testSidewaysRecursiveLink() throws Exception {
     File target = createTestDir(myTempDir, "dir_a");
     File link1Home = createTestDir(target, "dir_b");
-    File link1 = createSymLink("../../" + target.getName(), link1Home.getPath() + "/link1");
+    File link1 = createSymLink(SystemInfo.isWindows ? target.getPath() : "../../" + target.getName(), link1Home.getPath() + "/link1");
     File mainDir = createTestDir(myTempDir, "project");
     File subDir = createTestDir(mainDir, "dir_c");
     File link2Home = createTestDir(subDir, "dir_d");
-    File link2 = createSymLink("../../../" + target.getName(), link2Home.getPath() + "/link2");
+    File link2 = createSymLink(SystemInfo.isWindows ? target.getPath() : "../../../" + target.getName(), link2Home.getPath() + "/link2");
     assertVisitedPaths(mainDir,
                        subDir.getPath(), link2Home.getPath(), link2.getPath(), link2.getPath() + "/" + link1Home.getName(),
                        link2.getPath() + "/" + link1Home.getName() + "/" + link1.getName());

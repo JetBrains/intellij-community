@@ -23,10 +23,12 @@ import org.jetbrains.annotations.NotNull;
 public class SingleRepositoryNode extends RepositoryNode {
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
+  private final LoadingIcon myEmptyIcon;
 
   public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
     super(repositoryPanel, true);
     myRepositoryPanel = repositoryPanel;
+    myEmptyIcon = LoadingIcon.createEmpty(myLoadingIcon.getIconWidth(), myLoadingIcon.getIconHeight());
   }
 
   @Override
@@ -36,11 +38,11 @@ public class SingleRepositoryNode extends RepositoryNode {
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    if (myLoading.get()) {
-      renderer.setIcon(myLoadingIcon);
-      renderer.setIconOnTheRight(false);
-    }
+    renderer.setIcon(myLoading.get() ? myLoadingIcon : myEmptyIcon);
+    renderer.setIconOnTheRight(false);
 
+    renderer.append("");
+    renderer.appendFixedTextFragmentWidth(myLoadingIconWidth);
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();

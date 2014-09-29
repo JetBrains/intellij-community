@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -99,16 +98,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
           myProjectManager.setDefaultProjectRootElement(element == null ? null : element);
         }
 
-        @NotNull
         @Override
-        public Collection<File> getStorageFilesToSave() throws StateStorageException {
-          return Collections.emptyList();
-        }
-
-        @NotNull
-        @Override
-        public List<File> getAllStorageFiles() {
-          return Collections.emptyList();
+        public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
         }
       }
     };
@@ -162,7 +153,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @NotNull
       @Override
-      public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
+      public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
         return new MySaveSession(storage, externalizationSession);
       }
 
@@ -185,8 +176,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @Override
       @Nullable
-      public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation)
-        throws StateStorageException {
+      public StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
         return storage;
       }
 
@@ -232,13 +222,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
+    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state)
     throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
 
     @Override
-    public void setStateInOldStorage(@NotNull final Object component, @NotNull final String componentName, @NotNull final Object state) throws StateStorageException {
+    public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       externalizationSession.setState(component, componentName, state, null);
     }
   }
@@ -257,16 +247,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
     }
 
-    @NotNull
     @Override
-    public List<File> getAllStorageFilesToSave() throws StateStorageException {
-      return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public List<File> getAllStorageFiles() {
-      return Collections.emptyList();
+    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
     }
 
     @Override
