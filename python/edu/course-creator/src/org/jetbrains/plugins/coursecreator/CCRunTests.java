@@ -139,7 +139,7 @@ public class CCRunTests extends AnAction {
     }
   }
 
-  private static void clearTestEnvironment(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
+  public static void clearTestEnvironment(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
     try {
       VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
       if (ideaDir == null) {
@@ -147,10 +147,9 @@ public class CCRunTests extends AnAction {
         return;
       }
       VirtualFile courseResourceDir = ideaDir.findChild("course");
-      if (courseResourceDir == null) {
-        return;
+      if (courseResourceDir != null) {
+        courseResourceDir.delete(project);
       }
-      courseResourceDir.delete(project);
       VirtualFile[] taskDirChildren = taskDir.getChildren();
       for (VirtualFile file : taskDirChildren) {
         if (file.getName().contains("_windows")) {
@@ -225,8 +224,9 @@ public class CCRunTests extends AnAction {
     VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
     assert ideaDir != null;
     try {
-      VirtualFile taskResourceDir = ideaDir.createChildDirectory(project, "course").createChildDirectory(project, lessonDir.getName())
-        .createChildDirectory(project, taskDir.getName());
+      VirtualFile courseResourceDir = findOrCreateDir(project, ideaDir, "course");
+      VirtualFile lessonResourceDir = findOrCreateDir(project, courseResourceDir, lessonDir.getName());
+      VirtualFile taskResourceDir = findOrCreateDir(project, lessonResourceDir, taskDir.getName());
       if (CCProjectService.indexIsValid(lessonIndex, course.getLessons())) {
         Lesson lesson = course.getLessons().get(lessonIndex);
         if (CCProjectService.indexIsValid(index, lesson.getTaskList())) {
@@ -242,6 +242,14 @@ public class CCRunTests extends AnAction {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private static VirtualFile findOrCreateDir(@NotNull final Project project, @NotNull final VirtualFile dir, String name) throws IOException {
+    VirtualFile targetDir = dir.findChild(name);
+    if (targetDir == null) {
+      targetDir = dir.createChildDirectory(project, name);
+    }
+    return targetDir;
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")

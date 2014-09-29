@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.keymap.impl;
+package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.IdeActions;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 
-public class ActionShortcutRestrictions {
-  @NotNull
-  public static ShortcutRestrictions getForActionId(String actionId) {
-    if (IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET.equals(actionId) ||
-        IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION.equals(actionId)) {
-      return new ShortcutRestrictions(true, false, false, false);
-    }
-    return ShortcutRestrictions.NO_RESTRICTIONS;
+public class CreateRectangularSelectionAction extends AnAction {
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    // actual logic is implemented in EditorImpl
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(false);
   }
 }

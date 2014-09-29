@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class VcsCheckoutProcessor {
 
-  private static final ExtensionPointName<VcsCheckoutProcessor> EXTENSION_POINT_NAME = new ExtensionPointName<VcsCheckoutProcessor>("com.intellij.vcs.checkoutProcessor");
+  public static final ExtensionPointName<VcsCheckoutProcessor> EXTENSION_POINT_NAME = new ExtensionPointName<VcsCheckoutProcessor>("com.intellij.vcs.checkoutProcessor");
 
   public static VcsCheckoutProcessor getProcessor(final @NotNull String protocol) {
     return ContainerUtil.find(EXTENSION_POINT_NAME.getExtensions(), new Condition<VcsCheckoutProcessor>() {
@@ -40,5 +40,8 @@ public abstract class VcsCheckoutProcessor {
   @NotNull
   public abstract String getProtocol();
 
-  public abstract void checkout(@NotNull String url, @NotNull String directoryName, @NotNull VirtualFile parentDirectory);
+  public abstract void checkout(@NotNull String url,
+                                @NotNull String directoryName,
+                                @NotNull VirtualFile parentDirectory,
+                                @NotNull CheckoutProvider.Listener listener);
 }

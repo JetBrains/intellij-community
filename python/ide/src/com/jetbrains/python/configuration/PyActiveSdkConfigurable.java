@@ -306,16 +306,14 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void setSdk(final Sdk item) {
-    if (myModule == null) {
-      final ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          rootManager.setProjectSdk(item);
-        }
-      });
-    }
-    else {
+    final ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        rootManager.setProjectSdk(item);
+      }
+    });
+    if (myModule != null) {
       ModuleRootModificationUtil.setModuleSdk(myModule, item);
     }
   }

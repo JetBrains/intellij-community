@@ -1123,7 +1123,7 @@ public final class PsiUtil extends PsiUtilCore {
     if (element instanceof PsiReturnStatement) {
       vector.add((PsiReturnStatement)element);
     }
-    else if (!(element instanceof PsiClass)) {
+    else if (!(element instanceof PsiClass) && !(element instanceof PsiLambdaExpression)) {
       PsiElement[] children = element.getChildren();
       for (PsiElement child : children) {
         addReturnStatements(vector, child);

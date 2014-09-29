@@ -220,7 +220,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       ((EditorImpl)myEditor).resetSizes();
 
       SelectionModel selectionModel = myEditor.getSelectionModel();
-      selectionModel.setSelection(0, selectionModel.hasSelection() ? text.length() : 0);
+      selectionModel.setSelection(0, selectionModel.hasSelection() ? myEditor.getDocument().getTextLength() : 0);
 
       if (updatePreferredSize) {
         myPreferredSize = super.getPreferredSize();
