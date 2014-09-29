@@ -16,9 +16,8 @@
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
@@ -40,9 +39,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.wc.ISVNHostOptions;
 
-import javax.swing.*;
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.security.cert.X509Certificate;
 
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
@@ -170,7 +167,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     }
 
     if (command != null) {
-      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
+      showAndWait(command);
       log("3 authentication result: " + result[0]);
     }
 
@@ -227,21 +224,13 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
                                                     MessageType.ERROR);
       return REJECTED;
     }
-    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-    if (pi != null) {
-      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, pi.getModalityState());
-    } else {
-      try {
-        SwingUtilities.invokeAndWait(command);
-      }
-      catch (InterruptedException e) {
-        //
-      }
-      catch (InvocationTargetException e) {
-        //
-      }
-    }
+
+    showAndWait(command);
     return result[0];
+  }
+
+  private static void showAndWait(@NotNull Runnable command) {
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, ModalityState.any());
   }
 
   private void log(final String s) {
