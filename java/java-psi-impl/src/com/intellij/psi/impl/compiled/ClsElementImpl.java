@@ -182,7 +182,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     if (mirror == null) return null;
     PsiElement mirrorAt = mirror.findElementAt(offset);
     while (true) {
-      if (mirrorAt == null) return null;
+      if (mirrorAt == null || mirrorAt instanceof PsiFile) return null;
       PsiElement elementAt = mirrorToElement(mirrorAt);
       if (elementAt != null) return elementAt;
       mirrorAt = mirrorAt.getParent();
