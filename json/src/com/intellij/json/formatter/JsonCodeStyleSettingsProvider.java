@@ -37,7 +37,7 @@ public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
       @Nullable
       @Override
       public String getHelpTopic() {
-        return null;
+        return "reference.settingsdialog.codestyle.json";
       }
     };
   }
