@@ -1024,6 +1024,7 @@ public abstract class ChooseByNameBase {
   }
 
   private void scheduleCalcElements(final CalcElementsThread thread) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myCalcElementsThread = thread;
     ApplicationManager.getApplication().executeOnPooledThread(thread);
   }
@@ -1561,7 +1562,8 @@ public abstract class ChooseByNameBase {
             @Override
             public void run() {
               if (!myCancelled.isCanceled()) {
-                LOG.assertTrue(myCalcElementsThread == CalcElementsThread.this);
+                CalcElementsThread currentBgProcess = myCalcElementsThread;
+                LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
                 myCallback.consume(edt ? filter(elements) : filtered);
               }
             }
@@ -1620,6 +1622,7 @@ public abstract class ChooseByNameBase {
     }
 
     private boolean cancel() {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       if (myCancelled.isCanceled()) {
         return false;
       }
