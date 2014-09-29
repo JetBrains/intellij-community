@@ -135,6 +135,7 @@ public class AllIcons {
     public static final Icon Right = IconLoader.getIcon("/actions/right.png"); // 16x16
     public static final Icon Rollback = IconLoader.getIcon("/actions/rollback.png"); // 16x16
     public static final Icon RunToCursor = IconLoader.getIcon("/actions/runToCursor.png"); // 16x16
+    public static final Icon Scratch = IconLoader.getIcon("/actions/scratch.png"); // 16x16
     public static final Icon Search = IconLoader.getIcon("/actions/search.png"); // 16x16
     public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.png"); // 16x16
     public static final Icon Share = IconLoader.getIcon("/actions/share.png"); // 14x14
