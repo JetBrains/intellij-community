@@ -20,7 +20,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.graph.actions.GraphMouseAction;
+import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
@@ -120,7 +120,8 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   }
 
   @Override
-  public int getVisibleRowIndex(@NotNull CommitId commitId) {
+  @Nullable
+  public Integer getVisibleRowIndex(@NotNull CommitId commitId) {
     return myLinearGraphWithCommitInfo.getNodeIndex(commitId);
   }
 
@@ -217,26 +218,26 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
 
     @NotNull
     @Override
-    public GraphAnswer<CommitId> performMouseAction(@NotNull GraphMouseAction graphMouseAction) {
-      PrintElementWithGraphElement printElement = getPrintElementWithGraphElement(graphMouseAction);
-      switch (graphMouseAction.getType()) {
-        case OVER: {
+    public GraphAnswer<CommitId> performAction(@NotNull GraphAction graphAction) {
+      PrintElementWithGraphElement printElement = getPrintElementWithGraphElement(graphAction);
+      switch (graphAction.getType()) {
+        case MOUSE_OVER: {
           Cursor cursor = myPrintElementsManager.performOverElement(printElement);
           return new GraphAnswerImpl<CommitId>(null, cursor);
         }
-        case CLICK:
+        case MOUSE_CLICK:
           myPrintElementsManager.performOverElement(printElement);
           return AbstractVisibleGraph.this.clickByElement(printElement);
 
         default: {
-          throw new IllegalStateException("Not supported GraphMouseAction type: " + graphMouseAction.getType());
+          throw new IllegalStateException("Not supported GraphMouseAction type: " + graphAction.getType());
         }
       }
     }
 
     @Nullable
-    private PrintElementWithGraphElement getPrintElementWithGraphElement(@NotNull GraphMouseAction graphMouseAction) {
-      PrintElement affectedElement = graphMouseAction.getAffectedElement();
+    private PrintElementWithGraphElement getPrintElementWithGraphElement(@NotNull GraphAction graphAction) {
+      PrintElement affectedElement = graphAction.getAffectedElement();
       if (affectedElement == null)
         return null;
 
