@@ -39,8 +39,8 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.ColorGenerator;
 import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.graph.actions.GraphMouseAction;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PositionUtil;
 import com.intellij.vcs.log.printer.idea.SimpleGraphCellPainter;
@@ -414,7 +414,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
       if (e.getClickCount() == 1) {
         if (expandOrCollapseRoots(e)) return;
-        performAction(e, MyGraphMouseAction.Type.CLICK);
+        performAction(e, MyGraphMouseAction.Type.MOUSE_CLICK);
       }
     }
 
@@ -424,7 +424,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
       else {
-        performAction(e, MyGraphMouseAction.Type.OVER);
+        performAction(e, MyGraphMouseAction.Type.MOUSE_OVER);
       }
     }
 
@@ -437,9 +437,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       Collection<? extends PrintElement> printElements = myDataPack.getVisibleGraph().getRowInfo(row).getPrintElements();
       PrintElement printElement = myGraphCellPainter.mouseOver(printElements, point.x, point.y);
 
-      GraphAnswer<Integer> answer = myDataPack.getVisibleGraph().getActionController().performMouseAction(
+      GraphAnswer<Integer> answer = myDataPack.getVisibleGraph().getActionController().performAction(
         new MyGraphMouseAction(printElement, actionType));
-      myUI.handleAnswer(answer, actionType == MyGraphMouseAction.Type.CLICK && printElement != null);
+      myUI.handleAnswer(answer, actionType == MyGraphMouseAction.Type.MOUSE_CLICK && printElement != null);
     }
 
     private boolean isAboveLink(MouseEvent e) {
@@ -462,7 +462,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       // Do nothing
     }
 
-    private class MyGraphMouseAction implements GraphMouseAction {
+    private class MyGraphMouseAction implements GraphAction {
       private final PrintElement myPrintElement;
       private final Type myActionType;
 
