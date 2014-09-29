@@ -44,7 +44,10 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author irengrig
@@ -563,6 +566,7 @@ public class LineStatusTracker {
           }
         }
 
+        if (beforeChangedLine1 < 0) break;
         if (beforeChangedLine1 >= getLineCount(myDocument)) break;
         int offset1 = myDocument.getLineStartOffset(beforeChangedLine1) - 2;
 
@@ -593,8 +597,11 @@ public class LineStatusTracker {
           }
         }
 
-        if (beforeChangedLine2 + linesShift < 1) break;
-        int offset2 = myDocument.getLineEndOffset(beforeChangedLine2 + linesShift - 1) + 1;
+        // TODO: "afterChangedLine2 >= getLineCount(myDocument)" shouldn't ever be true, but it is sometimes for some reason
+        int afterChangedLine2 = beforeChangedLine2 + linesShift - 1;
+        if (afterChangedLine2 < 0) break;
+        if (afterChangedLine2 >= getLineCount(myDocument)) break;
+        int offset2 = myDocument.getLineEndOffset(afterChangedLine2) + 1;
 
         int deltaLines = 0;
         while (offset2 < sequence.length()) {
