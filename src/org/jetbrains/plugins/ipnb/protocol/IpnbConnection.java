@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ipnb.protocol;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
@@ -9,9 +10,10 @@ import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.format.cells.output.*;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbErrorOutputCell;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutOutputCell;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbStreamOutputCell;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -76,7 +78,7 @@ public class IpnbConnection {
 
     myIOPubClient = new WebSocketClient(getIOPubURI(), draft) {
       private ArrayList<IpnbOutputCell> myOutput = new ArrayList<IpnbOutputCell>();
-
+      private Integer myExecCount = null;
       @Override
       public void onOpen(ServerHandshake handshakeData) {
         send(authMessage);
@@ -103,11 +105,17 @@ public class IpnbConnection {
           final PyStreamContent content = gson.fromJson(msg.getContent(), PyStreamContent.class);
           myOutput.add(createCellOutput(content));
         }
+        else if ("pyin".equals(messageType)) {
+          final JsonElement executionCount = msg.getContent().get("execution_count");
+          if (executionCount != null) {
+            myExecCount = executionCount.getAsInt();
+          }
+        }
         else if ("status".equals(messageType)) {
           final PyStatusContent content = gson.fromJson(msg.getContent(), PyStatusContent.class);
           if (content.getExecutionState().equals("idle")) {
             //noinspection unchecked
-            myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), (List<IpnbOutputCell>)myOutput.clone());
+            myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), (List<IpnbOutputCell>)myOutput.clone(), myExecCount);
             myOutput.clear();
           }
         }

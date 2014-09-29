@@ -49,7 +49,10 @@ public class WebSocketConnectionTest extends TestCase {
       }
 
       @Override
-      public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<IpnbOutputCell> outputs) {
+      public void onOutput(@NotNull IpnbConnection connection,
+                           @NotNull String parentMessageId,
+                           @NotNull List<IpnbOutputCell> outputs,
+                           Integer execCount) {
         if (myMessageId.equals(parentMessageId)) {
           assertEquals(outputs.size(), 1);
           assertEquals(outputs.get(0).getClass(), IpnbOutOutputCell.class);
@@ -82,7 +85,10 @@ public class WebSocketConnectionTest extends TestCase {
       }
 
       @Override
-      public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<IpnbOutputCell> outputs) {
+      public void onOutput(@NotNull IpnbConnection connection,
+                           @NotNull String parentMessageId,
+                           @NotNull List<IpnbOutputCell> outputs,
+                           Integer execCount) {
         if (myMessageId.equals(parentMessageId)) {
           assertEquals(outputs.size(), 1);
           assertEquals(outputs.get(0).getClass(), IpnbOutOutputCell.class);

@@ -10,7 +10,7 @@ import java.util.List;
 
 public class IpnbCodeCell extends IpnbEditableCell {
   @NotNull private final String myLanguage;
-  @Nullable private final Integer myPromptNumber;
+  @Nullable private Integer myPromptNumber;
   @NotNull private final List<IpnbOutputCell> myCellOutputs;
 
   public IpnbCodeCell(@NotNull final String language,
@@ -31,6 +31,10 @@ public class IpnbCodeCell extends IpnbEditableCell {
   @Nullable
   public Integer getPromptNumber() {
     return myPromptNumber;
+  }
+
+  public void setPromptNumber(@Nullable Integer promptNumber) {
+    myPromptNumber = promptNumber;
   }
 
   @NotNull

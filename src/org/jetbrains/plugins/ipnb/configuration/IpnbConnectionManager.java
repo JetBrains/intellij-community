@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
@@ -57,9 +58,13 @@ public final class IpnbConnectionManager implements ProjectComponent {
           }
 
           @Override
-          public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<IpnbOutputCell> outputs) {
+          public void onOutput(@NotNull IpnbConnection connection,
+                               @NotNull String parentMessageId,
+                               @NotNull List<IpnbOutputCell> outputs,
+                               @Nullable Integer execCount) {
             if (!myUpdateMap.containsKey(parentMessageId)) return;
             final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
+            cell.getCell().setPromptNumber(execCount);
             cell.updatePanel(outputs);
           }
         });
