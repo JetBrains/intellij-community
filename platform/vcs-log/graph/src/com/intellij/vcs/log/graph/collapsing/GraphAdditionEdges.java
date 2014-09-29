@@ -29,16 +29,30 @@ import static com.intellij.vcs.log.graph.api.elements.GraphEdgeType.*;
 
 
 public class GraphAdditionEdges {
+  public static GraphAdditionEdges newInstance(@NotNull Function<Integer, Integer> getNodeIndexById,
+                                               @NotNull Function<Integer, Integer> getNodeIdByIndex) {
+    return new GraphAdditionEdges(getNodeIndexById, getNodeIdByIndex, new IntIntMultiMap());
+  }
+
+  public static GraphAdditionEdges updateInstance(@NotNull GraphAdditionEdges prevAdditionEdges,
+                                                  @NotNull Function<Integer, Integer> getNodeIndexById,
+                                                  @NotNull Function<Integer, Integer> getNodeIdByIndex) {
+    return new GraphAdditionEdges(getNodeIndexById, getNodeIdByIndex, prevAdditionEdges.myAdditionEdges);
+  }
+
   @NotNull
   private final Function<Integer, Integer> myGetNodeIndexById;
   @NotNull
   private final Function<Integer, Integer> myGetNodeIdByIndex;
   @NotNull
-  private final IntIntMultiMap myAdditionEdges = new IntIntMultiMap();
+  private final IntIntMultiMap myAdditionEdges;
 
-  public GraphAdditionEdges(@NotNull Function<Integer, Integer> getNodeIndexById, @NotNull Function<Integer, Integer> getNodeIdByIndex) {
+  private GraphAdditionEdges(@NotNull Function<Integer, Integer> getNodeIndexById,
+                             @NotNull Function<Integer, Integer> getNodeIdByIndex,
+                             @NotNull IntIntMultiMap additionEdges) {
     myGetNodeIndexById = getNodeIndexById;
     myGetNodeIdByIndex = getNodeIdByIndex;
+    myAdditionEdges = additionEdges;
   }
 
 

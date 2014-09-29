@@ -20,83 +20,116 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.utils.Flags;
-import com.intellij.vcs.log.graph.utils.IntToIntMap;
-import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
+import com.intellij.vcs.log.graph.utils.*;
 import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 public class CollapsedGraph {
-  @NotNull
-  private final LinearGraph myDelegateGraph;
-  @NotNull
-  private final UnsignedBitSet myVisibleNodesId = new UnsignedBitSet();
-  @NotNull
-  private final GraphAdditionEdges myGraphAdditionEdges;
-  @NotNull
-  private final IntToIntMap myNodesMap;
-  @NotNull
-  private final Flags myDelegateNodesVisibility;
-  @NotNull
-  private final CompiledGraph myCompiledGraph;
 
+  public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph) {
+    UnsignedBitSet visibleNodesId = new UnsignedBitSet();
+    Flags delegateNodesVisibility = createDelegateNodesVisibility(delegateGraph, visibleNodesId);
+    UpdatableIntToIntMap nodesMap = ListIntToIntMap.newInstance(delegateNodesVisibility);
+    GraphAdditionEdges graphAdditionEdges = GraphAdditionEdges.newInstance(createGetNodeIndexById(delegateGraph, visibleNodesId, nodesMap),
+                                                                           createGetNodeIdByIndex(delegateGraph, nodesMap));
+    return new CollapsedGraph(delegateGraph, visibleNodesId, delegateNodesVisibility, nodesMap, graphAdditionEdges);
+  }
 
-  public CollapsedGraph(@NotNull final LinearGraph delegateGraph) {
-    myDelegateGraph = delegateGraph;
-    myDelegateNodesVisibility = createDelegateNodesVisibility();
-    myNodesMap = ListIntToIntMap.newInstance(myDelegateNodesVisibility);
-    myGraphAdditionEdges = createGraphAdditionEdges();
-    myCompiledGraph = new CompiledGraph();
+  public static CollapsedGraph updateInstance(@NotNull CollapsedGraph prevCollapsedGraph, @NotNull LinearGraph delegateGraph) {
+    UnsignedBitSet visibleNodesId = prevCollapsedGraph.myVisibleNodesId;
+    Flags delegateNodesVisibility = createDelegateNodesVisibility(delegateGraph, visibleNodesId);
+    UpdatableIntToIntMap nodesMap = ListIntToIntMap.newInstance(delegateNodesVisibility);
+    GraphAdditionEdges graphAdditionEdges =
+      GraphAdditionEdges.updateInstance(prevCollapsedGraph.myGraphAdditionEdges,
+                                        createGetNodeIndexById(delegateGraph, visibleNodesId, nodesMap),
+                                        createGetNodeIdByIndex(delegateGraph, nodesMap));
+    return new CollapsedGraph(delegateGraph, visibleNodesId, delegateNodesVisibility, nodesMap, graphAdditionEdges);
   }
 
   @NotNull
-  private GraphAdditionEdges createGraphAdditionEdges() {
-    return new GraphAdditionEdges(new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer nodeId) {
-        assert myVisibleNodesId.get(nodeId);
-        Integer delegateIndex = myDelegateGraph.getNodeIndexById(nodeId);
-        assert delegateIndex != null;
-        return myNodesMap.getShortIndex(delegateIndex);
-      }
-    }, new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer nodeIndex) {
-        int delegateIndex = myNodesMap.getLongIndex(nodeIndex);
-        return myDelegateGraph.getGraphNode(delegateIndex).getNodeId();
-      }
-    });
-  }
-
-  private Flags createDelegateNodesVisibility() {
+  private static Flags createDelegateNodesVisibility(@NotNull final LinearGraph delegateGraph,
+                                                     @NotNull final UnsignedBitSet visibleNodesId) {
     return new Flags() {
       @Override
       public int size() {
-        return myDelegateGraph.nodesCount();
+        return delegateGraph.nodesCount();
       }
 
       @Override
       public boolean get(int index) {
-        GraphNode graphNode = myDelegateGraph.getGraphNode(index);
-        return myVisibleNodesId.get(graphNode.getNodeId());
+        GraphNode graphNode = delegateGraph.getGraphNode(index);
+        return visibleNodesId.get(graphNode.getNodeId());
       }
 
       @Override
       public void set(int index, boolean value) {
-        GraphNode graphNode = myDelegateGraph.getGraphNode(index);
-        myVisibleNodesId.set(graphNode.getNodeId(), value);
+        GraphNode graphNode = delegateGraph.getGraphNode(index);
+        visibleNodesId.set(graphNode.getNodeId(), value);
       }
 
       @Override
       public void setAll(boolean value) {
-        for (int i = 0; i < myDelegateGraph.nodesCount(); i++) {
+        for (int i = 0; i < delegateGraph.nodesCount(); i++) {
           set(i, value);
         }
       }
     };
+  }
+
+  private static Function<Integer, Integer> createGetNodeIdByIndex(final LinearGraph delegateGraph, final IntToIntMap nodesMap) {
+    return new Function<Integer, Integer>() {
+      @Override
+      public Integer fun(Integer nodeIndex) {
+        int delegateIndex = nodesMap.getLongIndex(nodeIndex);
+        return delegateGraph.getGraphNode(delegateIndex).getNodeId();
+      }
+    };
+  }
+
+  private static Function<Integer, Integer> createGetNodeIndexById(final LinearGraph delegateGraph,
+                                                            final UnsignedBitSet visibleNodesId,
+                                                            final IntToIntMap nodesMap) {
+    return new Function<Integer, Integer>() {
+      @Override
+      public Integer fun(Integer nodeId) {
+        assert visibleNodesId.get(nodeId);
+        Integer delegateIndex = delegateGraph.getNodeIndexById(nodeId);
+        assert delegateIndex != null;
+        return nodesMap.getShortIndex(delegateIndex);
+      }
+    };
+  }
+
+
+  @NotNull
+  private final LinearGraph myDelegateGraph;
+  @NotNull
+  private final UnsignedBitSet myVisibleNodesId;
+  @NotNull
+  private final Flags myDelegateNodesVisibility;
+  @NotNull
+  private final IntToIntMap myNodesMap;
+  @NotNull
+  private final GraphAdditionEdges myGraphAdditionEdges;
+  @NotNull
+  private final CompiledGraph myCompiledGraph;
+
+
+  private CollapsedGraph(@NotNull LinearGraph delegateGraph,
+                        @NotNull UnsignedBitSet visibleNodesId,
+                        @NotNull Flags delegateNodesVisibility,
+                        @NotNull IntToIntMap nodesMap,
+                        @NotNull GraphAdditionEdges graphAdditionEdges) {
+    myDelegateGraph = delegateGraph;
+    myVisibleNodesId = visibleNodesId;
+    myDelegateNodesVisibility = delegateNodesVisibility;
+    myNodesMap = nodesMap;
+    myGraphAdditionEdges = graphAdditionEdges;
+    myCompiledGraph = new CompiledGraph();
   }
 
   @NotNull
@@ -104,9 +137,18 @@ public class CollapsedGraph {
     return myCompiledGraph;
   }
 
+  public void setNodeVisibility(int nodeId, boolean visible) {
+    myVisibleNodesId.set(nodeId, visible);
+  }
+
   @NotNull
   public UnsignedBitSet getVisibleNodesId() {
     return myVisibleNodesId;
+  }
+
+  @NotNull
+  public LinearGraph getDelegateGraph() {
+    return myDelegateGraph;
   }
 
   private class CompiledGraph implements LinearGraph {
@@ -119,13 +161,13 @@ public class CollapsedGraph {
     @NotNull
     @Override
     public List<Integer> getUpNodes(int nodeIndex) {
-      throw new UnsupportedOperationException();
+      return LinearGraphUtils.getUpNodes(this, nodeIndex);
     }
 
     @NotNull
     @Override
     public List<Integer> getDownNodes(int nodeIndex) {
-      throw new UnsupportedOperationException();
+      return LinearGraphUtils.getDownNodes(this, nodeIndex);
     }
 
     @NotNull
