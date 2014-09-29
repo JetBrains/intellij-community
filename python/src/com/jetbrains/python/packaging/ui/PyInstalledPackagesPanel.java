@@ -101,7 +101,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         try {
           myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement(false);
           if (!myHasManagement) {
-            throw new PyExecutionException("pip", Collections.<String>emptyList(), "Python packaging tools not found",
+            throw new PyExecutionException("Python packaging tools not found", "pip", Collections.<String>emptyList(), 0,
                                            ImmutableList.of(new PyInstallPackageManagementFix()));
           }
         }

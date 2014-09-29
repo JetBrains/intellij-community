@@ -30,20 +30,22 @@ import java.util.regex.Pattern;
 public class PyExecutionException extends ExecutionException {
   private static final Pattern WITH_CR_DELIMITER_PATTERN = Pattern.compile("(?<=\r|\n|\r\n)");
 
-  @NotNull private String myName;
+  @NotNull private String myCommand;
   @NotNull private List<String> myArgs;
+  private final int myReturnCode;
   @NotNull private String myMessage;
   @NotNull private final List<? extends PyExecutionFix> myFixes;
 
-  public PyExecutionException(@NotNull String name, @NotNull List<String> args, @NotNull String message) {
-    this(name, args, message, Collections.<PyExecutionFix>emptyList());
+  public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args, int returnCode) {
+    this(message, command, args, returnCode, Collections.<PyExecutionFix>emptyList());
   }
 
-  public PyExecutionException(@NotNull String name, @NotNull List<String> args, @NotNull String message,
-                              @NotNull List<? extends PyExecutionFix> fixes) {
-    super(String.format("External process error '%s %s':\n%s", name, StringUtil.join(args, " "), message));
-    myName = name;
+  public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args,
+                              int returnCode, @NotNull List<? extends PyExecutionFix> fixes) {
+    super(message);
+    myCommand = command;
     myArgs = args;
+    myReturnCode = returnCode;
     myMessage = stripLinesWithoutLineFeeds(message);
     myFixes = fixes;
   }
@@ -52,7 +54,7 @@ public class PyExecutionException extends ExecutionException {
   public String toString() {
     final StringBuilder b = new StringBuilder();
     b.append("The following command was executed:\n\n");
-    final String command = getName() + " " + StringUtil.join(getArgs(), " ");
+    final String command = getCommand() + " " + StringUtil.join(getArgs(), " ");
     b.append(command);
     b.append("\n\n");
     b.append("The error output of the command:\n\n");
@@ -61,8 +63,8 @@ public class PyExecutionException extends ExecutionException {
   }
 
   @NotNull
-  public String getName() {
-    return myName;
+  public String getCommand() {
+    return myCommand;
   }
 
   @NotNull
@@ -90,5 +92,9 @@ public class PyExecutionException extends ExecutionException {
   @NotNull
   public List<? extends PyExecutionFix> getFixes() {
     return myFixes;
+  }
+
+  public int getReturnCode() {
+    return myReturnCode;
   }
 }

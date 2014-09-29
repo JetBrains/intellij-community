@@ -120,7 +120,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   public void installManagement() throws ExecutionException {
     final boolean pre26 = PythonSdkType.getLanguageLevelForSdk(mySdk).isOlderThan(LanguageLevel.PYTHON26);
-    if (!hasPackage(SETUPTOOLS, false) && !hasPackage(DISTRIBUTE, false)) {
+    if (!hasSetuptools(false)) {
       final String name = SETUPTOOLS + "-" + (pre26 ? SETUPTOOLS_PRE_26_VERSION : SETUPTOOLS_VERSION);
       installManagement(name);
     }
@@ -132,8 +132,19 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
-    return (hasPackage(SETUPTOOLS, cachedOnly) || hasPackage(DISTRIBUTE, cachedOnly)) &&
-           hasPackage(PIP, cachedOnly);
+    return hasSetuptools(cachedOnly) && hasPackage(PIP, cachedOnly);
+  }
+
+  private boolean hasSetuptools(boolean cachedOnly) throws ExecutionException {
+    try {
+      return hasPackage(SETUPTOOLS, cachedOnly) || hasPackage(DISTRIBUTE, cachedOnly);
+    }
+    catch (PyExecutionException e) {
+      if (e.getReturnCode() == ERROR_NO_SETUPTOOLS) {
+        return false;
+      }
+      throw e;
+    }
   }
 
   protected void installManagement(@NotNull String name) throws ExecutionException {
@@ -419,11 +430,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, showProgress, workingDir);
     final int exitCode = output.getExitCode();
     if (output.isTimeout()) {
-      throw new PyExecutionException(path, args, "Timed out");
+      throw new PyExecutionException("Timed out", path, args, exitCode);
     }
     else if (exitCode != 0) {
       final String message = output.getStderr() + "\n" + output.getStdout();
-      throw new PyExecutionException(path, args, message);
+      throw new PyExecutionException(message, path, args, exitCode);
     }
     return output.getStdout();
   }
@@ -494,7 +505,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (StringUtil.isEmptyOrSpaces(message)) {
           message = "Failed to perform action. Permission denied.";
         }
-        throw new PyExecutionException(helperPath, args, message);
+        throw new PyExecutionException(message, helperPath, args, result.getExitCode());
       }
       return result;
     }
@@ -505,10 +516,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw e;
     }
     catch (ExecutionException e) {
-      throw new PyExecutionException(helperPath, args, e.getMessage());
+      throw new PyExecutionException(e.getMessage(), helperPath, args, 0);
     }
     catch (IOException e) {
-      throw new PyExecutionException(helperPath, args, e.getMessage());
+      throw new PyExecutionException(e.getMessage(), helperPath, args, 0);
     }
   }
 
@@ -519,7 +530,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     for (String line : lines) {
       final List<String> fields = StringUtil.split(line, "\t");
       if (fields.size() < 3) {
-        throw new PyExecutionException(PACKAGING_TOOL, Collections.<String>emptyList(), "Invalid output format");
+        throw new PyExecutionException("Invalid output format", PACKAGING_TOOL, Collections.<String>emptyList(), 0);
       }
       final String name = fields.get(0);
       final String version = fields.get(1);
