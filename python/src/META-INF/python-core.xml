@@ -94,6 +94,7 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyVariableNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyDecoratorStubIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassAttributesIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PyModuleNameIndex"/>
 
     <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"

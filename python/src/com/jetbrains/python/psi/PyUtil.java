@@ -51,10 +51,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
@@ -1716,5 +1713,20 @@ public class PyUtil {
     }
     final String symboldName = qualifiedName.getLastComponent();
     return expectedName.equals(symboldName);
+  }
+
+  @NotNull
+  public static List<String> getAllDeclaredAttributeNames(@NotNull PyClass pyClass) {
+    final List<PsiNamedElement> members = ContainerUtil.<PsiNamedElement>concat(pyClass.getInstanceAttributes(),
+                                                                                pyClass.getClassAttributes(),
+                                                                                Arrays.asList(pyClass.getMethods()));
+
+    return ContainerUtil.mapNotNull(members, new Function<PsiNamedElement, String>() {
+      @Override
+      public String fun(PsiNamedElement expression) {
+        final String attrName = expression.getName();
+        return attrName != null ? attrName : null;
+      }
+    });
   }
 }

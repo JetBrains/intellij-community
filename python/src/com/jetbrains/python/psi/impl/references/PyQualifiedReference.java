@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.impl.references;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -31,8 +33,10 @@ import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -43,8 +47,12 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.ResolveResultList;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex;
@@ -260,7 +268,11 @@ public class PyQualifiedReference extends PyReferenceImpl {
     }
     final PyQualifiedExpression element = CompletionUtil.getOriginalOrSelf(myElement);
 
-    PyType qualifierType = TypeEvalContext.userInitiated(element.getContainingFile()).getType(qualifier);
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(element.getContainingFile());
+    PyType qualifierType = typeEvalContext.getType(qualifier);
+    if (qualifierType == null) {
+      qualifierType = suggestTypeFromAttributes(qualifier, typeEvalContext);
+    }
     ProcessingContext ctx = new ProcessingContext();
     final Set<String> namesAlready = new HashSet<String>();
     ctx.put(PyType.CTX_NAMES, namesAlready);
@@ -298,6 +310,42 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return getUntypedVariants();
   }
 
+  @Nullable
+  private PyType suggestTypeFromAttributes(@NotNull PyExpression qualifier, @NotNull final TypeEvalContext context) {
+    final Set<String> seenAttrs = collectSeenMemberNames(qualifier.getText());
+
+    final Set<PyClass> candidates = Sets.newHashSet();
+    for (String attribute : seenAttrs) {
+      candidates.addAll(PyClassAttributesIndex.find(attribute, myElement.getProject()));
+    }
+
+    final Set<PyClass> suitableClasses = Sets.newHashSet();
+    for (PyClass candidate : candidates) {
+      final Set<String> availableAttrs = Sets.newHashSet(PyUtil.getAllDeclaredAttributeNames(candidate));
+      for (PyClass parent : candidate.getAncestorClasses(context)) {
+        availableAttrs.addAll(PyUtil.getAllDeclaredAttributeNames(parent));
+      }
+      if (availableAttrs.containsAll(seenAttrs)) {
+        suitableClasses.add(candidate);
+      }
+    }
+
+    for (PyClass candidate : Lists.newArrayList(suitableClasses)) {
+      for (PyClass ancestor : candidate.getAncestorClasses()) {
+        if (suitableClasses.contains(ancestor)) {
+          suitableClasses.remove(candidate);
+        }
+      }
+    }
+
+    return PyUnionType.union(ContainerUtil.map(suitableClasses, new Function<PyClass, PyType>() {
+      @Override
+      public PyType fun(PyClass cls) {
+        return new PyClassTypeImpl(cls, false);
+      }
+    }));
+  }
+
   private Object[] getVariantFromHasAttr(PyExpression qualifier) {
     Collection<Object> variants = new ArrayList<Object>();
     PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(myElement, PyIfStatement.class);
@@ -328,7 +376,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
           return getTypeCompletionVariants(myElement, classType);
         }
       }
-      return collectSeenMembers(qualifier.getText());
+      return collectSeenMemberVariants(qualifier.getText());
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
@@ -352,7 +400,17 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return result;
   }
 
-  private Object[] collectSeenMembers(final String text) {
+  private Object[] collectSeenMemberVariants(@NotNull String qualifier) {
+    final Set<String> members = collectSeenMemberNames(qualifier);
+    List<LookupElement> results = new ArrayList<LookupElement>(members.size());
+    for (String member : members) {
+      results.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(LookupElementBuilder.create(member)));
+    }
+    return results.toArray(new Object[results.size()]);
+  }
+
+  @NotNull
+  private Set<String> collectSeenMemberNames(@NotNull final String qualifierName) {
     final Set<String> members = new HashSet<String>();
     myElement.getContainingFile().accept(new PyRecursiveElementVisitor() {
       @Override
@@ -360,7 +418,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         super.visitPyReferenceExpression(node);
         if (node != myElement) {
           final PyExpression qualifier = node.getQualifier();
-          if (qualifier != null && qualifier.getText().equals(text)) {
+          if (qualifier != null && qualifier.getText().equals(qualifierName)) {
             final String refName = node.getReferencedName();
             if (refName != null) {
               members.add(refName);
@@ -369,11 +427,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         }
       }
     });
-    List<LookupElement> results = new ArrayList<LookupElement>(members.size());
-    for (String member : members) {
-      results.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(LookupElementBuilder.create(member)));
-    }
-    return results.toArray(new Object[results.size()]);
+    return members;
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
