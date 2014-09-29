@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  */
-public interface GraphMouseAction {
+public interface GraphAction {
 
   @Nullable
   PrintElement getAffectedElement();
@@ -30,8 +30,10 @@ public interface GraphMouseAction {
   Type getType();
 
   enum Type {
-    CLICK,
-    OVER
+    MOUSE_CLICK,
+    MOUSE_OVER,
+    BUTTON_COLLAPSE,
+    BUTTON_EXPAND
   }
 
 }

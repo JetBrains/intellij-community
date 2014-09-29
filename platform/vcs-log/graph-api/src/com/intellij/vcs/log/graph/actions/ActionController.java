@@ -23,12 +23,13 @@ import org.jetbrains.annotations.NotNull;
 public interface ActionController<CommitId> {
 
   @NotNull
-  GraphAnswer<CommitId> performMouseAction(@NotNull GraphMouseAction graphMouseAction);
+  GraphAnswer<CommitId> performAction(@NotNull GraphAction graphAction);
 
   boolean areLongEdgesHidden();
 
   void setLongEdgesHidden(boolean longEdgesHidden);
 
+  @Deprecated
   void setLinearBranchesExpansion(boolean collapse);
 
 }
