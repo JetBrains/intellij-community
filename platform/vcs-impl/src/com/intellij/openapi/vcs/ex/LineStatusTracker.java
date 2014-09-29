@@ -352,7 +352,7 @@ public class LineStatusTracker {
         int linesShift = afterChangedLines - myBeforeChangedLines;
 
         int line1 = myLine1;
-        int line2 = line1 + myBeforeChangedLines; // TODO: optimize some whole-line-changed cases
+        int line2 = line1 + myBeforeChangedLines;
 
         int[] fixed = fixRanges(e, line1, line2);
         line1 = fixed[0];
