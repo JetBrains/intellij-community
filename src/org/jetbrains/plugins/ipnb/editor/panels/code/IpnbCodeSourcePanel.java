@@ -79,13 +79,14 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
       @Override
       public void keyReleased(KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        if (keyCode == KeyEvent.VK_ENTER || keyCode == KeyEvent.VK_BACK_SPACE ||
-            keyCode == KeyEvent.VK_DELETE) {
-          final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1);
-          component.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, height));
-          final Container ipnbFilePanel = myParent.getParent();
-          ipnbFilePanel.revalidate();
-          ipnbFilePanel.repaint();
+        final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1);
+        component.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, height));
+        final Container ipnbFilePanel = myParent.getParent();
+        ipnbFilePanel.revalidate();
+        ipnbFilePanel.repaint();
+        if (keyCode == KeyEvent.VK_ESCAPE) {
+          getIpnbCodePanel().setEditing(false);
+          UIUtil.requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel());
         }
       }
     });
