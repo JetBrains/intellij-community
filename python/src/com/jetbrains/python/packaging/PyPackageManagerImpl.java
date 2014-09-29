@@ -133,7 +133,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       return hasPackage(SETUPTOOLS, cachedOnly) || hasPackage(DISTRIBUTE, cachedOnly);
     }
     catch (PyExecutionException e) {
-      if (e.getReturnCode() == ERROR_NO_SETUPTOOLS) {
+      if (e.getExitCode() == ERROR_NO_SETUPTOOLS) {
         return false;
       }
       throw e;

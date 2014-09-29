@@ -32,20 +32,20 @@ public class PyExecutionException extends ExecutionException {
 
   @NotNull private String myCommand;
   @NotNull private List<String> myArgs;
-  private final int myReturnCode;
+  private final int myExitCode;
   @NotNull private String myMessage;
   @NotNull private final List<? extends PyExecutionFix> myFixes;
 
-  public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args, int returnCode) {
-    this(message, command, args, returnCode, Collections.<PyExecutionFix>emptyList());
+  public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args, int exitCode) {
+    this(message, command, args, exitCode, Collections.<PyExecutionFix>emptyList());
   }
 
   public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args,
-                              int returnCode, @NotNull List<? extends PyExecutionFix> fixes) {
+                              int exitCode, @NotNull List<? extends PyExecutionFix> fixes) {
     super(message);
     myCommand = command;
     myArgs = args;
-    myReturnCode = returnCode;
+    myExitCode = exitCode;
     myMessage = stripLinesWithoutLineFeeds(message);
     myFixes = fixes;
   }
@@ -94,7 +94,7 @@ public class PyExecutionException extends ExecutionException {
     return myFixes;
   }
 
-  public int getReturnCode() {
-    return myReturnCode;
+  public int getExitCode() {
+    return myExitCode;
   }
 }
