@@ -323,7 +323,12 @@ public class PsiScopesUtil {
                   if (refMethods.length > 0) {
                     final PsiClass baseClass = PsiUtil.resolveClassInType(type);
                     if (baseClass != null && !hasCovariantOverriding(baseClass, refMethods)) {
-                      type = initializer.getType();
+                      for (PsiMethod method : refMethods) {
+                        if (method.findSuperMethods(baseClass).length > 0) {
+                          type = initializer.getType();
+                          break;
+                        }
+                      }
                     }
                   }
                 }
