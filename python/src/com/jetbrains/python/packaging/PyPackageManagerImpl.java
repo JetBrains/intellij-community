@@ -423,11 +423,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, showProgress, workingDir);
     final int exitCode = output.getExitCode();
     if (output.isTimeout()) {
-      throw new PyExecutionException("Timed out", path, args, exitCode);
+      throw new PyExecutionException("Timed out", path, args, output);
     }
     else if (exitCode != 0) {
-      final String message = output.getStderr() + "\n" + output.getStdout();
-      throw new PyExecutionException(message, path, args, exitCode);
+      throw new PyExecutionException("Non-zero exit code", path, args, output);
     }
     return output.getStdout();
   }
@@ -498,12 +497,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (StringUtil.isEmptyOrSpaces(message)) {
           message = "Failed to perform action. Permission denied.";
         }
-        throw new PyExecutionException(message, helperPath, args, result.getExitCode());
+        throw new PyExecutionException(message, helperPath, args, result);
       }
       return result;
     }
     catch (IOException e) {
-      throw new PyExecutionException(e.getMessage(), helperPath, args, 0);
+      throw new PyExecutionException(e.getMessage(), helperPath, args);
     }
   }
 
@@ -514,7 +513,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     for (String line : lines) {
       final List<String> fields = StringUtil.split(line, "\t");
       if (fields.size() < 3) {
-        throw new PyExecutionException("Invalid output format", PACKAGING_TOOL, Collections.<String>emptyList(), 0);
+        throw new PyExecutionException("Invalid output format", PACKAGING_TOOL, Collections.<String>emptyList());
       }
       final String name = fields.get(0);
       final String version = fields.get(1);

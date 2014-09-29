@@ -125,11 +125,11 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         return processOutput;
       }
       else {
-        throw new PyExecutionException(PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED, helperPath, args, 0);
+        throw new PyExecutionException(PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED, helperPath, args);
       }
     }
     else {
-      throw new PyExecutionException("Invalid remote SDK", helperPath, args, 0);
+      throw new PyExecutionException("Invalid remote SDK", helperPath, args);
     }
   }
 
@@ -137,7 +137,8 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
     final Throwable cause = exception.getCause();
     if (cause instanceof VagrantNotStartedException) {
       final String vagrantFolder = ((VagrantNotStartedException)cause).getVagrantFolder();
-      return new PyExecutionException("Vagrant instance is down", command, args, 0, ImmutableList.of(new LaunchVagrantFix(vagrantFolder)));
+      return new PyExecutionException("Vagrant instance is down", command, args, "", "", 0,
+                                      ImmutableList.of(new LaunchVagrantFix(vagrantFolder)));
     }
     return exception;
   }

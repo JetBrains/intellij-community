@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,19 +33,28 @@ public class PyExecutionException extends ExecutionException {
 
   @NotNull private String myCommand;
   @NotNull private List<String> myArgs;
+  @NotNull private final String myStdout;
+  @NotNull private final String myStderr;
   private final int myExitCode;
   @NotNull private String myMessage;
   @NotNull private final List<? extends PyExecutionFix> myFixes;
 
-  public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args, int exitCode) {
-    this(message, command, args, exitCode, Collections.<PyExecutionFix>emptyList());
+  public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args) {
+    this(message, command, args, "", "", 0, Collections.<PyExecutionFix>emptyList());
+  }
+
+  public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args, @NotNull ProcessOutput output) {
+    this(message, command, args, output.getStdout(), output.getStderr(), output.getExitCode(), Collections.<PyExecutionFix>emptyList());
   }
 
   public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args,
-                              int exitCode, @NotNull List<? extends PyExecutionFix> fixes) {
+                              @NotNull String stdout, @NotNull String stderr, int exitCode,
+                              @NotNull List<? extends PyExecutionFix> fixes) {
     super(message);
     myCommand = command;
     myArgs = args;
+    myStdout = stdout;
+    myStderr = stderr;
     myExitCode = exitCode;
     myMessage = stripLinesWithoutLineFeeds(message);
     myFixes = fixes;
@@ -58,7 +68,9 @@ public class PyExecutionException extends ExecutionException {
     b.append(command);
     b.append("\n\n");
     b.append("The error output of the command:\n\n");
-    b.append(getMessage());
+    b.append(myStdout);
+    b.append("\n");
+    b.append(myStderr);
     return b.toString();
   }
 
@@ -96,5 +108,15 @@ public class PyExecutionException extends ExecutionException {
 
   public int getExitCode() {
     return myExitCode;
+  }
+
+  @NotNull
+  public String getStdout() {
+    return myStdout;
+  }
+
+  @NotNull
+  public String getStderr() {
+    return myStderr;
   }
 }
