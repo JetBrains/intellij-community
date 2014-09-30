@@ -140,7 +140,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     public void setText(String text) {
-      setText(text, true);
+      setText(text, false);
     }
 
     @Override
@@ -187,7 +187,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
         }
       }
 
-      setText(myDocumentTextBuilder.toString(), false);
+      setText(myDocumentTextBuilder.toString(), true);
     }
 
     private static void appendAbbreviatedLine(StringBuilder to, String line, FontMetrics metrics, int maxWidth) {
@@ -212,8 +212,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       }
     }
 
-    private void setText(String text, boolean updatePreferredSize) {
-      myEditor.getMarkupModel().removeAllHighlighters();
+    private void setText(String text, boolean abbreviationOfCurrentText) {
+      if (!abbreviationOfCurrentText) {
+        myEditor.getMarkupModel().removeAllHighlighters();
+      }
 
       myEditor.getDocument().setText(text);
       myEditor.getHighlighter().setText(text);
@@ -222,7 +224,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       SelectionModel selectionModel = myEditor.getSelectionModel();
       selectionModel.setSelection(0, selectionModel.hasSelection() ? myEditor.getDocument().getTextLength() : 0);
 
-      if (updatePreferredSize) {
+      if (!abbreviationOfCurrentText) {
         myPreferredSize = super.getPreferredSize();
       }
     }

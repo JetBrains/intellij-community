@@ -190,6 +190,14 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     myState.accelerationType = useAcceleration;
   }
 
+  public boolean isRunUnderTerminal() {
+    return myState.runUnderTerminal;
+  }
+
+  public void setRunUnderTerminal(boolean value) {
+    myState.runUnderTerminal = value;
+  }
+
   public boolean isIgnoreExternals() {
     return myState.IGNORE_EXTERNALS;
   }

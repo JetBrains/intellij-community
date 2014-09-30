@@ -544,7 +544,10 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           if (document != null) {
             final XmlTag rootTag = document.getRootTag();
             final String externalName = getExternalName(listOwner, false);
-            if (rootTag != null) {
+            if (externalName == null) {
+              LOG.info("member without external name: " + listOwner);
+            }
+            if (rootTag != null && externalName != null) {
               XmlTag anchor = null;
               for (XmlTag item : rootTag.getSubTags()) {
                 int compare = Comparing.compare(externalName, StringUtil.unescapeXml(item.getAttributeValue("name")));
@@ -573,10 +576,12 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
               text += createAnnotationTag(annotationFQName, values);
               text += "</item>";
               rootTag.addAfter(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(text), anchor);
+              commitChanges(xmlFile);
+              notifyAfterAnnotationChanging(listOwner, annotationFQName, true);
+              return;
             }
           }
-          commitChanges(xmlFile);
-          notifyAfterAnnotationChanging(listOwner, annotationFQName, true);
+          notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

@@ -2,23 +2,30 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +35,6 @@ import org.jdom.Element;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,28 +65,47 @@ public class CompilerTestUtil {
   }
 
   public static void saveApplicationSettings() {
-    try {
-      ProjectJdkTableImpl table = (ProjectJdkTableImpl)ProjectJdkTable.getInstance();
-      Element root = new Element("application");
-      root.addContent(JDomSerializationUtil.createComponentElement(JpsGlobalLoader.SDK_TABLE_COMPONENT_NAME).addContent(table.getState().cloneContent()));
-      saveApplicationComponent(root, ((ProjectJdkTableImpl)ProjectJdkTable.getInstance()).getExportFiles()[0]);
+    saveApplicationComponent(ProjectJdkTable.getInstance());
+    saveApplicationComponent(FileTypeManager.getInstance());
+  }
 
-      FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
-      Element fileTypesComponent = JDomSerializationUtil.createComponentElement(fileTypeManager.getComponentName());
-      fileTypeManager.writeExternal(fileTypesComponent);
-      saveApplicationComponent(new Element("application").addContent(fileTypesComponent), PathManager.getOptionsFile(fileTypeManager));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+  public static void saveApplicationComponent(Object appComponent) {
+    try {
+      final File file;
+      String componentName;
+      State state = appComponent.getClass().getAnnotation(State.class);
+      if (state != null) {
+        componentName = state.name();
+        Storage lastStorage = state.storages()[state.storages().length - 1];
+        StateStorageManager storageManager = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager();
+        file = new File(storageManager.expandMacros(lastStorage.file()));
+      }
+      else if (appComponent instanceof ExportableApplicationComponent && appComponent instanceof NamedJDOMExternalizable) {
+        componentName = ((ExportableApplicationComponent)appComponent).getComponentName();
+        file = PathManager.getOptionsFile((NamedJDOMExternalizable)appComponent);
+      }
+      else {
+        throw new AssertionError( appComponent.getClass() + " doesn't have @State annotation and doesn't implement ExportableApplicationComponent");
+      }
+
+      Element root = new Element("application");
+      Element element = JDomSerializationUtil.createComponentElement(componentName);
+      if (appComponent instanceof JDOMExternalizable) {
+        ((JDOMExternalizable)appComponent).writeExternal(element);
+      }
+      else {
+        element.addContent(((PersistentStateComponent<Element>)appComponent).getState().cloneContent());
+      }
+      root.addContent(element);
+      FileUtil.createParentDirs(file);
+      JDOMUtil.writeDocument(new Document(root), file, SystemProperties.getLineSeparator());
     }
     catch (WriteExternalException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private static void saveApplicationComponent(Element root, final File file) throws IOException {
-    FileUtil.createParentDirs(file);
-    JDOMUtil.writeDocument(new Document(root), file, SystemProperties.getLineSeparator());
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void enableExternalCompiler() {

@@ -415,17 +415,6 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
-    if (SystemInfo.isWindows) {
-      File tempFile = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
-      if (file.renameTo(tempFile)) {
-        file = tempFile;
-      }
-    }
-
-    return doDelete(file);
-  }
-
-  private static boolean doDelete(File file) {
     FileAttributes attributes = FileSystemUtil.getAttributes(file);
     if (attributes == null) return true;
 
@@ -433,7 +422,7 @@ public class FileUtil extends FileUtilRt {
       File[] files = file.listFiles();
       if (files != null) {
         for (File child : files) {
-          if (!doDelete(child)) return false;
+          if (!delete(child)) return false;
         }
       }
     }
@@ -1538,5 +1527,11 @@ public class FileUtil extends FileUtilRt {
 
   public static boolean isRootPath(@NotNull String path) {
     return path.equals("/") || path.matches("[a-zA-Z]:[/\\\\]");
+  }
+
+  public static boolean deleteWithRenaming(File file) {
+    File tempFileNameForDeletion = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
+    boolean success = file.renameTo(tempFileNameForDeletion);
+    return delete(success ? tempFileNameForDeletion:file);
   }
 }

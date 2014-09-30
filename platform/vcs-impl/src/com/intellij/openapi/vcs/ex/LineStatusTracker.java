@@ -212,12 +212,25 @@ public class LineStatusTracker {
 
   public void release() {
     synchronized (myLock) {
+      myReleased = true;
       if (myDocumentListener != null) {
         myDocument.removeDocumentListener(myDocumentListener);
       }
-      removeAnathema();
-      removeHighlightersFromMarkupModel();
-      myReleased = true;
+
+      if (myApplication.isDispatchThread()) {
+        removeAnathema();
+        removeHighlightersFromMarkupModel();
+      }
+      else {
+        invalidateRanges();
+        myApplication.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            removeAnathema();
+            removeHighlightersFromMarkupModel();
+          }
+        });
+      }
     }
   }
 
@@ -259,6 +272,8 @@ public class LineStatusTracker {
   }
 
   private void removeHighlightersFromMarkupModel() {
+    myApplication.assertIsDispatchThread();
+
     synchronized (myLock) {
       for (Range range : myRanges) {
         if (range.getHighlighter() != null) {
@@ -267,6 +282,14 @@ public class LineStatusTracker {
         range.invalidate();
       }
       myRanges.clear();
+    }
+  }
+
+  private void invalidateRanges() {
+    synchronized (myLock) {
+      for (Range range : myRanges) {
+        range.invalidate();
+      }
     }
   }
 

@@ -80,12 +80,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   };
 
-  private final Object lock = new Object();
-
   private volatile Boolean myScript;
   private volatile GroovyScriptClass myScriptClass;
   private volatile GrParameter mySyntheticArgsParameter = null;
-  private PsiElement myContext;
+  private volatile PsiElement myContext;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, GroovyLanguage.INSTANCE);
@@ -119,16 +117,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   private GrParameter getSyntheticArgsParameter() {
-    if (mySyntheticArgsParameter == null) {
+    GrParameter parameter = mySyntheticArgsParameter;
+    if (parameter == null) {
       final PsiType psiType = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText("java.lang.String[]", this);
-      final GrParameter candidate = new GrLightParameter(SYNTHETIC_PARAMETER_NAME, psiType, this);
-      synchronized (lock) {
-        if (mySyntheticArgsParameter == null) {
-          mySyntheticArgsParameter = candidate;
-        }
-      }
+      parameter = new GrLightParameter(SYNTHETIC_PARAMETER_NAME, psiType, this);
+      mySyntheticArgsParameter = parameter;
     }
-    return mySyntheticArgsParameter;
+    return parameter;
   }
 
   @Override
@@ -349,15 +344,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       return ((GrFileStub)stub).isScript();
     }
 
-    if (myScript == null) {
-      synchronized (lock) {
-        boolean isScript = checkIsScript();
-        if (myScript == null) {
-          myScript = isScript;
-        }
-      }
+    Boolean isScript = myScript;
+    if (isScript == null) {
+      isScript = checkIsScript();
+      myScript = isScript;
     }
-    return myScript;
+    return isScript;
   }
 
   private boolean checkIsScript() {
@@ -378,34 +370,28 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Override
   public void subtreeChanged() {
-    synchronized (lock) {
-      myScript = null;
-    }
+    myScript = null;
     super.subtreeChanged();
   }
 
   @Override
   public GroovyScriptClass getScriptClass() {
-    if (isScript()) {
-      if (myScriptClass == null) {
-        GroovyScriptClass candidate = new GroovyScriptClass(this);
-        synchronized (lock) {
-          if (myScriptClass == null) {
-            myScriptClass = candidate;
-          }
-        }
-      }
-      return myScriptClass;
-    }
-    else {
+    if (!isScript()) {
       return null;
     }
+
+    GroovyScriptClass aClass = myScriptClass;
+    if (aClass == null) {
+      aClass = new GroovyScriptClass(this);
+      myScriptClass = aClass;
+    }
+
+    return aClass;
   }
 
   @Override
   public void setPackageName(String packageName) {
     final ASTNode fileNode = getNode();
-    assert fileNode != null;
     final GrPackageDefinition currentPackage = getPackageDefinition();
     if (packageName == null || packageName.isEmpty()) {
       if (currentPackage != null) {
@@ -482,10 +468,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   @Override
   public void clearCaches() {
     super.clearCaches();
-    synchronized (lock) {
-      myScriptClass = null;
-      mySyntheticArgsParameter = null;
-    }
+    myScriptClass = null;
+    mySyntheticArgsParameter = null;
   }
 
   @Override

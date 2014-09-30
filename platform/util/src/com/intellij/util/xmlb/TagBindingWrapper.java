@@ -41,17 +41,17 @@ class TagBindingWrapper implements Binding {
   @Override
   public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
     Element e = new Element(myTagName);
-    Content n = (Content)binding.serialize(o, e, filter);
-    if (n == null) {
-      return null;
-    }
-
-    String value = n.getValue();
-    if (!myAttributeName.isEmpty()) {
-      e.setAttribute(myAttributeName, value);
-    }
-    else {
-      e.addContent(new Text(value));
+    Content content = (Content)binding.serialize(o, e, filter);
+    if (content != null) {
+      if (!myAttributeName.isEmpty()) {
+        e.setAttribute(myAttributeName, content.getValue());
+      }
+      else if (content instanceof Text) {
+        e.addContent(content);
+      }
+      else {
+        e.addContent(content.getValue());
+      }
     }
     return e;
   }
