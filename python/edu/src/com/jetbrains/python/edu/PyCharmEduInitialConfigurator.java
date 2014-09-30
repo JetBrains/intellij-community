@@ -16,7 +16,6 @@
 package com.jetbrains.python.edu;
 
 import com.google.common.collect.Sets;
-import com.intellij.application.options.InitialConfigurationDialog;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -57,7 +56,6 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Set;
 
 /**
@@ -135,7 +133,6 @@ public class PyCharmEduInitialConfigurator {
               if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
                 GeneralSettings.getInstance().setShowTipsOnStartup(false);
                 propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-                showInitialConfigurationDialog();
 
                 patchKeymap();
               }
@@ -238,15 +235,5 @@ public class PyCharmEduInitialConfigurator {
         if (droppedActions.contains(id)) keymapImpl.clearOwnActionsId(id);
       }
     }
-  }
-
-  private static void showInitialConfigurationDialog() {
-    final JFrame frame = WindowManager.getInstance().findVisibleFrame();
-    new InitialConfigurationDialog(frame, "Python") {
-      @Override
-      protected boolean canCreateLauncherScript() {
-        return false;
-      }
-    }.show();
   }
 }
