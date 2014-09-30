@@ -108,7 +108,7 @@
       <action id="GotoPreviousBookmark" class="com.intellij.ide.bookmarks.actions.PreviousBookmarkAction"/>
       <separator/>
 
-      <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="JumpToLastChange"/>
+      <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="JumpToNextChange"/>
     </group>
 
     <group id="GoToCodeGroup">
