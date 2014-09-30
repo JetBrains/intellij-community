@@ -91,8 +91,11 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           setEditing(false);
-          getParent().repaint();
-          requestFocus();
+          final Container parent = getParent();
+          if (parent instanceof IpnbFilePanel) {
+            parent.repaint();
+            UIUtil.requestFocus((IpnbFilePanel)parent);
+          }
         }
       }
     });
