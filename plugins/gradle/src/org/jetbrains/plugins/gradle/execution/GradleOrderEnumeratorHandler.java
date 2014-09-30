@@ -15,6 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.execution;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalProject;
@@ -30,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +114,16 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
 
     if (directorySet.isCompilerOutputPathInherited()) return;
     final String path = directorySet.getOutputDir().getAbsolutePath();
-    ExternalSystemUtil.waitForTheFile(path);
+    VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(path);
+    if (virtualFile == null) {
+      if(!directorySet.getOutputDir().exists()){
+        FileUtil.createDirectory(directorySet.getOutputDir());
+      }
+      ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+      if (app.isDispatchThread() || !app.holdsReadLock()) {
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directorySet.getOutputDir());
+      }
+    }
     result.add(VfsUtilCore.pathToUrl(path));
   }
 }
