@@ -231,7 +231,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   public void calcData(DataKey key, DataSink sink) {
     if (VcsDataKeys.CHANGES.equals(key)) {
       int[] rows = myTree.getSelectionRows();
-      if (rows.length != 0) {
+      if (rows != null && rows.length != 0) {
         Collection<Change> changes = collectAllChanges(rows);
         sink.put(key, ArrayUtil.toObjectArray(changes, Change.class));
       }
