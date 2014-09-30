@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -23,6 +24,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditorPanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
@@ -81,13 +83,21 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         final int keyCode = e.getKeyCode();
         final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1);
         component.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, height));
-        final Container ipnbFilePanel = myParent.getParent();
-        ipnbFilePanel.revalidate();
-        ipnbFilePanel.repaint();
-        if (keyCode == KeyEvent.VK_ESCAPE) {
-          getIpnbCodePanel().setEditing(false);
-          UIUtil.requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel());
+        final Container parent = myParent.getParent();
+        if (parent instanceof IpnbFilePanel) {
+          IpnbFilePanel ipnbFilePanel = (IpnbFilePanel)parent;
+          ipnbFilePanel.revalidate();
+          ipnbFilePanel.repaint();
+          if (keyCode == KeyEvent.VK_ESCAPE) {
+            getIpnbCodePanel().setEditing(false);
+            UIUtil.requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel());
+          }
+          else if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) {
+            final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
+            action.runCell(ipnbFilePanel);
+          }
         }
+
       }
     });
 
