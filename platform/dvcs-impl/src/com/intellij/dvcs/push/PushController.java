@@ -320,8 +320,9 @@ public class PushController implements Disposable {
             node.stopLoading();
             if (shouldBeSelected) { // never remove selection; initially all checkboxes are not selected
               node.setChecked(true);
+              model.setSelected(true);
             }
-            node.fireOnSelectionChange(shouldBeSelected);
+            myDialog.updateButtons();
           }
         });
       }

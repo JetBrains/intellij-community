@@ -547,7 +547,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private final ActionCallback myFocusedCallback;
     private final ActionCallback myTypeAheadDone;
     private final ActionCallback myTypeAheadCallback;
-    private MyComponentListener myComponentListener;
 
     public MyDialog(Window owner,
                     DialogWrapper dialogWrapper,
@@ -579,9 +578,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
-
-      myComponentListener = new MyComponentListener();
-      addComponentListener(myComponentListener);
     }
 
     @Override
@@ -852,11 +848,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         myWindowListener = null;
       }
 
-      if (myComponentListener != null) {
-        removeComponentListener(myComponentListener);
-        myComponentListener = null;
-      }
-
       if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
         myFocusTrackback.dispose();
         myFocusTrackback = null;
@@ -1035,19 +1026,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
     }
 
-    private class MyComponentListener extends ComponentAdapter {
-      @Override
-      @SuppressWarnings({"RefusedBequest"})
-      public void componentResized(ComponentEvent e) {
-        if (getDialogWrapper().isAutoAdjustable()) {
-          UIUtil.adjustWindowToMinimumSize(getWindow());
-        }
-      }
-    }
-
     private class DialogRootPane extends JRootPane implements DataProvider {
 
       private final boolean myGlassPaneIsSet;
+
+      private Dimension myLastMinimumSize;
 
       private DialogRootPane() {
         setGlassPane(new IdeGlassPaneImpl(this));
@@ -1060,6 +1043,31 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         JLayeredPane p = new JBLayeredPane();
         p.setName(this.getName()+".layeredPane");
         return p;
+      }
+
+      @Override
+      public void validate() {
+        super.validate();
+        DialogWrapper wrapper = myDialogWrapper.get();
+        if (wrapper != null && wrapper.isAutoAdjustable()) {
+          Window window = wrapper.getWindow();
+          if (window != null) {
+            Dimension size = getMinimumSize();
+            if (!(size == null ? myLastMinimumSize == null : size.equals(myLastMinimumSize))) {
+              // update window minimum size only if root pane minimum size is changed
+              if (size == null) {
+                myLastMinimumSize = null;
+              }
+              else {
+                myLastMinimumSize = new Dimension(size);
+                Insets insets = window.getInsets();
+                size.width += insets.left + insets.right;
+                size.height += insets.top + insets.bottom;
+              }
+              window.setMinimumSize(size);
+            }
+          }
+        }
       }
 
       @Override
