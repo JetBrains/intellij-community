@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -148,8 +149,12 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         registerMethodCallError(call, aClass);
         return;
       }
-      
-      if (ControlFlowAnalyzer.isPure(method)) {
+
+      PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
+      boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
+      if (anno != null && 
+          (honorInferred || !AnnotationUtil.isInferredAnnotation(anno)) && 
+          Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"))) {
         registerMethodCallError(call, aClass);
         return;
       }
