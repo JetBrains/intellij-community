@@ -488,15 +488,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (result.isCancelled()) {
         throw new RunCanceledByUserException();
       }
-      String message = result.getStderr();
-      if (result.getExitCode() != 0) {
-        final String stdout = result.getStdout();
-        if (StringUtil.isEmptyOrSpaces(message)) {
-          message = stdout;
-        }
-        if (StringUtil.isEmptyOrSpaces(message)) {
-          message = "Failed to perform action. Permission denied.";
-        }
+      final int exitCode = result.getExitCode();
+      if (exitCode != 0) {
+        final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
+                               "Permission denied" : "Non-zero exit code";
         throw new PyExecutionException(message, helperPath, args, result);
       }
       return result;

@@ -33,18 +33,22 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
-import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.packaging.ui.PyPackageNotificationDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
 * @author vlan
 */
 public class PyPackageManagerUI {
-  private static final Logger LOG = Logger.getInstance(PyPackageManagerUI.class);
+  @NotNull private static final Logger LOG = Logger.getInstance(PyPackageManagerUI.class);
+  @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
+
   @Nullable private Listener myListener;
   @NotNull private Project myProject;
   @NotNull private Sdk mySdk;
@@ -53,6 +57,33 @@ public class PyPackageManagerUI {
     void started();
 
     void finished(List<ExecutionException> exceptions);
+  }
+
+  public static class ExecutionFailure {
+    @NotNull private final String myMessage;
+    @Nullable private final String myCommand;
+    @Nullable private final String myOutput;
+
+    public ExecutionFailure(@NotNull String message, @Nullable String command, @Nullable String output) {
+      myMessage = message;
+      myCommand = command;
+      myOutput = output;
+    }
+
+    @NotNull
+    public String getMessage() {
+      return myMessage;
+    }
+
+    @Nullable
+    public String getCommand() {
+      return myCommand;
+    }
+
+    @Nullable
+    public String getOutput() {
+      return myOutput;
+    }
   }
 
   public PyPackageManagerUI(@NotNull Project project, @NotNull Sdk sdk, @Nullable Listener listener) {
@@ -184,8 +215,8 @@ public class PyPackageManagerUI {
                                              NotificationType.INFORMATION));
       }
       else if (!isCancelled(exceptions)) {
+        final ExecutionFailure failure = analyzeException(exceptions.get(0));
         final String firstLine = getTitle() + ": error occurred.";
-        final String description = createDescription(exceptions, firstLine);
         notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(),
                                              firstLine + " <a href=\"xxx\">Details...</a>",
                                              NotificationType.ERROR,
@@ -194,7 +225,9 @@ public class PyPackageManagerUI {
                                                public void hyperlinkUpdate(@NotNull Notification notification,
                                                                            @NotNull HyperlinkEvent event) {
                                                  assert myProject != null;
-                                                 PackagesNotificationPanel.showError(myProject, getFailureTitle(), description);
+                                                 final String title = StringUtil.capitalizeWords(getFailureTitle(), true);
+                                                 final PyPackageNotificationDialog dialog = new PyPackageNotificationDialog(title, failure);
+                                                 dialog.show();
                                                }
                                              }
         ));
@@ -385,5 +418,29 @@ public class PyPackageManagerUI {
       b.append("\n");
     }
     return b.toString();
+  }
+
+  @NotNull
+  private static ExecutionFailure analyzeException(@NotNull ExecutionException e) {
+    if (e instanceof PyExecutionException) {
+      final PyExecutionException ee = (PyExecutionException)e;
+      final String stdoutCause = findErrorCause(ee.getStdout());
+      final String stderrCause = findErrorCause(ee.getStderr());
+      final String message = stdoutCause != null ? stdoutCause : stderrCause != null ? stderrCause : ee.getMessage();
+      return new ExecutionFailure(message, ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " "), ee.getStdout());
+    }
+    else {
+      return new ExecutionFailure(e.getMessage(), null, null);
+    }
+  }
+
+  @Nullable
+  private static String findErrorCause(@NotNull String output) {
+    final Matcher m = PATTERN_ERROR_LINE.matcher(output);
+    if (m.find()) {
+      final String result = m.group();
+      return result != null ? result.trim() : null;
+    }
+    return null;
   }
 }

@@ -20,23 +20,18 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * @author vlan
  */
 public class PyExecutionException extends ExecutionException {
-  private static final Pattern WITH_CR_DELIMITER_PATTERN = Pattern.compile("(?<=\r|\n|\r\n)");
-
   @NotNull private String myCommand;
   @NotNull private List<String> myArgs;
   @NotNull private final String myStdout;
   @NotNull private final String myStderr;
   private final int myExitCode;
-  @NotNull private String myMessage;
   @NotNull private final List<? extends PyExecutionFix> myFixes;
 
   public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args) {
@@ -56,7 +51,6 @@ public class PyExecutionException extends ExecutionException {
     myStdout = stdout;
     myStderr = stderr;
     myExitCode = exitCode;
-    myMessage = stripLinesWithoutLineFeeds(message);
     myFixes = fixes;
   }
 
@@ -82,23 +76,6 @@ public class PyExecutionException extends ExecutionException {
   @NotNull
   public List<String> getArgs() {
     return myArgs;
-  }
-
-  @NotNull
-  public String getMessage() {
-    return myMessage;
-  }
-
-  @NotNull
-  private static String stripLinesWithoutLineFeeds(@NotNull String s) {
-    final String[] lines = WITH_CR_DELIMITER_PATTERN.split(s);
-    final List<String> result = new ArrayList<String>();
-    for (String line : lines) {
-      if (!line.endsWith("\r")) {
-        result.add(line);
-      }
-    }
-    return StringUtil.join(result, "");
   }
 
   @NotNull
