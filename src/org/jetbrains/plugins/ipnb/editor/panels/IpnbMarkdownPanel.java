@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -43,8 +42,6 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JPanel, IpnbMarkdownCel
 
   @Override
   public void updateCellView() {
-    final String text = myEditablePanel.getText();
-    myCell.setSource(text == null ? new String[]{} : StringUtil.splitByLinesKeepSeparators(text));
     updatePanel(myViewPanel);
   }
 

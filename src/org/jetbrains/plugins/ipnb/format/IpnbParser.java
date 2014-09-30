@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.cells.*;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
@@ -48,7 +50,15 @@ public class IpnbParser {
     return parseIpnbFile(fileText, virtualFile.getPath());
   }
 
-  public static void saveIpnbFile(@NotNull final IpnbFile ipnbFile) {
+  public static void saveIpnbFile(@NotNull final IpnbFilePanel ipnbPanel) {
+    final IpnbFile ipnbFile = ipnbPanel.getIpnbFile();
+    if (ipnbFile == null) return;
+    for (IpnbEditablePanel panel : ipnbPanel.getIpnbPanels()) {
+      if (panel.isModified()) {
+        panel.updateCellSource();
+      }
+    }
+
     final IpnbFileRaw fileRaw = ipnbFile.getRawFile();
     final IpnbWorksheet worksheet = new IpnbWorksheet();
     final ArrayList<IpnbCellRaw> cellRaws = new ArrayList<IpnbCellRaw>();
@@ -71,8 +81,8 @@ public class IpnbParser {
       try {
         if (writer != null)
           writer.close();
-      } catch (IOException e1) {
-        LOG.error(e1);
+      } catch (IOException e) {
+        LOG.error(e);
       }
     }
   }

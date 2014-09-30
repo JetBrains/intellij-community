@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
@@ -39,9 +40,10 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
         }
       }
     });
-
+    myViewPanel.setName(VIEW_PANEL);
     add(myViewPanel, VIEW_PANEL);
     myEditablePanel = createEditablePanel();
+    myEditablePanel.setName(EDITABLE_PANEL);
     add(myEditablePanel, EDITABLE_PANEL);
   }
 
@@ -55,11 +57,21 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     }
   }
 
+  public boolean isModified() {
+    final Component[] components = getComponents();
+    for (Component component : components) {
+      final String name = component.getName();
+      if (component.isVisible() && EDITABLE_PANEL.equals(name)) return true;
+    }
+    return false;
+  }
+
   protected String getRawCellText() { return ""; }
 
   public void runCell() {
     final LayoutManager layout = getLayout();
     if (layout instanceof CardLayout) {
+      updateCellSource();
       updateCellView();
       ((CardLayout)layout).show(this, VIEW_PANEL);
       setEditing(false);
@@ -123,6 +135,11 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   }
 
   public void updateCellView() { // TODO: make abstract
+  }
+
+  public void updateCellSource() {
+    final String text = myEditablePanel.getText();
+    myCell.setSource(StringUtil.splitByLinesKeepSeparators(text != null ? text : ""));
   }
 
   @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")

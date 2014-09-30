@@ -136,11 +136,21 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   @Override
   public void runCell() {
     super.runCell();
+    updateCellSource();
+    final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(myProject);
+    connectionManager.executeCell(this);
+  }
+
+  @Override
+  public boolean isModified() {
+    return true;
+  }
+
+  @Override
+  public void updateCellSource() {
     final Document document = myCodeSourcePanel.getEditor().getDocument();
     final String text = document.getText();
     myCell.setSource(StringUtil.splitByLinesKeepSeparators(text));
-    final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(myProject);
-    connectionManager.executeCell(this);
   }
 
   public void updatePanel(@NotNull final List<IpnbOutputCell> outputContent) {

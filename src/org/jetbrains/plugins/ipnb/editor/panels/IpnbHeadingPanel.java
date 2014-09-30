@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -25,8 +24,6 @@ public class IpnbHeadingPanel extends IpnbEditablePanel<JBLabel, IpnbHeadingCell
 
   @Override
   public void updateCellView() {
-    final String text = myEditablePanel.getText();
-    myCell.setSource(StringUtil.splitByLinesKeepSeparators(text != null ? text : ""));
     myViewPanel.setText(renderCellText());
   }
 

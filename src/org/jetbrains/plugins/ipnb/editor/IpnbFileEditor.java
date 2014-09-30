@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.google.common.collect.Lists;
+import com.intellij.AppTopics;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.actions.*;
 import org.jetbrains.plugins.ipnb.editor.panels.*;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
+import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbHeadingCell;
@@ -59,9 +61,27 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private final JScrollPane myScrollPane;
 
 
-  public IpnbFileEditor(Project project, VirtualFile vFile) {
+  public IpnbFileEditor(Project project, final VirtualFile vFile) {
     myProject = project;
+    myProject.getMessageBus().connect(this).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+      @Override
+      public void beforeAllDocumentsSaving() {
+        final IpnbFilePanel filePanel = myIpnbFilePanel;
+        if (filePanel != null) {
+          IpnbParser.saveIpnbFile(filePanel);
+          vFile.refresh(false, false);
+        }
 
+      }
+    });
+
+    myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
+      @Override
+      public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        IpnbParser.saveIpnbFile(myIpnbFilePanel);
+        file.refresh(false, false);
+      }
+    });
     myFile = vFile;
 
     myName = vFile.getName();
