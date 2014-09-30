@@ -31,8 +31,8 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,10 +44,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EventObject;
+import java.util.*;
+import java.util.List;
 
 public class PushLog extends JPanel implements TypeSafeDataProvider {
 
@@ -167,38 +165,61 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private void updateChangesView() {
-    TreePath[] nodes = myTree.getSelectionPaths();
-    if (nodes != null) {
-      ArrayList<Change> changes = new ArrayList<Change>();
-      for (TreePath path : nodes) {
-        if (path.getLastPathComponent() instanceof CommitNode) {
-          CommitNode commitDetailsNode = (CommitNode)path.getLastPathComponent();
-          changes.addAll(commitDetailsNode.getUserObject().getChanges());
-        }
-        else if (path.getLastPathComponent() instanceof RepositoryNode) {
-          changes.addAll(collectAllChanges((RepositoryNode)path.getLastPathComponent()));
-        }
-      }
+    int[] rows = myTree.getSelectionRows();
+    if (rows.length != 0) {
       myChangesBrowser.getViewer().setEmptyText("No differences");
-      myChangesBrowser.setChangesToDisplay(CommittedChangesTreeBrowser.zipChanges(changes));
-      return;
+      myChangesBrowser.setChangesToDisplay(collectAllChanges(rows));
     }
-    setDefaultEmptyText();
-    myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+    else {
+      setDefaultEmptyText();
+      myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+    }
   }
 
   @NotNull
-  private static Collection<Change> collectAllChanges(@NotNull RepositoryNode rootNode) {
-    ArrayList<Change> changes = new ArrayList<Change>();
-    if (rootNode.getChildCount() <= 0) return changes;
-    for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)rootNode.getFirstChild();
-         childNode != null;
-         childNode = (DefaultMutableTreeNode)rootNode.getChildAfter(childNode)) {
-      if (childNode instanceof CommitNode) {
-        changes.addAll(((CommitNode)childNode).getUserObject().getChanges());
+  private List<Change> collectAllChanges(@NotNull int[] selectedRows) {
+    List<DefaultMutableTreeNode> selectedNodes = getNodesForRows(getSortedRows(selectedRows));
+    List<CommitNode> commitNodes = collectSelectedCommitNodes(selectedNodes);
+    return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
+  }
+
+  @NotNull
+  private static List<CommitNode> collectSelectedCommitNodes(@NotNull List<DefaultMutableTreeNode> selectedNodes) {
+    List<CommitNode> nodes = ContainerUtil.newArrayList();
+    for (DefaultMutableTreeNode node : selectedNodes) {
+      if (node instanceof RepositoryNode) {
+        nodes.addAll(getChildNodes((RepositoryNode)node));
+      }
+      else if (node instanceof CommitNode && !nodes.contains(node)) {
+        nodes.add((CommitNode)node);
       }
     }
+    return nodes;
+  }
+
+  @NotNull
+  private static List<Change> collectChanges(@NotNull List<CommitNode> commitNodes) {
+    List<Change> changes = ContainerUtil.newArrayList();
+    for (CommitNode node : commitNodes) {
+      changes.addAll(node.getUserObject().getChanges());
+    }
     return changes;
+  }
+
+  @NotNull
+  private static List<CommitNode> getChildNodes(@NotNull RepositoryNode node) {
+    List<CommitNode> nodes = ContainerUtil.newArrayList();
+    if (node.getChildCount() < 1) {
+      return nodes;
+    }
+    for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)node.getFirstChild();
+         childNode != null;
+         childNode = (DefaultMutableTreeNode)node.getChildAfter(childNode)) {
+      if (childNode instanceof CommitNode) {
+        nodes.add(0, (CommitNode)childNode);
+      }
+    }
+    return nodes;
   }
 
   private void setDefaultEmptyText() {
@@ -209,25 +230,35 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   @Override
   public void calcData(DataKey key, DataSink sink) {
     if (VcsDataKeys.CHANGES.equals(key)) {
-      DefaultMutableTreeNode[] selectedNodes = myTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
-      if (selectedNodes.length == 0) {
-        return;
-      }
-      DefaultMutableTreeNode node = selectedNodes[0];
-      Object object = node.getUserObject();
-
-      Collection<Change> changes = null;
-      if (object instanceof VcsFullCommitDetails) {
-        changes = ((VcsFullCommitDetails)object).getChanges();
-      }
-      else if (node instanceof RepositoryNode) {
-        changes = collectAllChanges((RepositoryNode)node);
-      }
-
-      if (changes != null) {
+      int[] rows = myTree.getSelectionRows();
+      if (rows.length != 0) {
+        Collection<Change> changes = collectAllChanges(rows);
         sink.put(key, ArrayUtil.toObjectArray(changes, Change.class));
       }
     }
+  }
+
+  @NotNull
+  private static List<Integer> getSortedRows(@NotNull int[] rows) {
+    List<Integer> sorted = ContainerUtil.newArrayList();
+    for (int row : rows) {
+      sorted.add(row);
+    }
+    Collections.sort(sorted, Collections.reverseOrder());
+    return sorted;
+  }
+
+  @NotNull
+  private List<DefaultMutableTreeNode> getNodesForRows(@NotNull List<Integer> rows) {
+    List<DefaultMutableTreeNode> nodes = ContainerUtil.newArrayList();
+    for (Integer row : rows) {
+      TreePath path = myTree.getPathForRow(row);
+      Object pathComponent = path == null ? null : path.getLastPathComponent();
+      if (pathComponent instanceof DefaultMutableTreeNode) {
+        nodes.add((DefaultMutableTreeNode)pathComponent);
+      }
+    }
+    return nodes;
   }
 
   @Override
