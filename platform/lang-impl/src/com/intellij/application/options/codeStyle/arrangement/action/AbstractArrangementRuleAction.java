@@ -35,17 +35,6 @@ public abstract class AbstractArrangementRuleAction extends AnAction {
   }
 
   protected void scrollRowToVisible(@NotNull ArrangementMatchingRulesControl control, int row) {
-    final Rectangle rect = control.getCellRect(row, 0, false);
-    if (row != control.getEditingRow() - 1) {
-      control.scrollRectToVisible(rect);
-    }
-    else {
-      final Rectangle editorRect = control.getCellRect(row + 1, 0, false);
-      if(!rect.isEmpty() && !editorRect.isEmpty()) {
-        final int height = (int)(rect.getHeight() + editorRect.getHeight());
-        final Rectangle visibleRect = new Rectangle((int)rect.getX(), (int)rect.getY(), (int)rect.getWidth(), height);
-        control.scrollRectToVisible(visibleRect);
-      }
-    }
+    control.scrollRowToVisible(row);
   }
 }

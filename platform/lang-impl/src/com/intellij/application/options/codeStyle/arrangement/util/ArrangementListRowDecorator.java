@@ -214,6 +214,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
         int row = myControl.getRowByRenderer(this);
         if (row >= 0) {
           myControl.showEditor(row);
+          myControl.scrollRowToVisible(row);
           myBeingEdited = true;
         }
       }

@@ -329,6 +329,21 @@ public class ArrangementMatchingRulesControl extends JBTable {
     showEditor(myEditor, rowToEdit);
   }
 
+  public void scrollRowToVisible(int row) {
+    final Rectangle rect = getCellRect(row, 0, false);
+    if (row != getEditingRow() - 1) {
+      scrollRectToVisible(rect);
+    }
+    else {
+      final Rectangle editorRect = getCellRect(row + 1, 0, false);
+      if(!rect.isEmpty() && !editorRect.isEmpty()) {
+        final int height = (int)(rect.getHeight() + editorRect.getHeight());
+        final Rectangle visibleRect = new Rectangle((int)rect.getX(), (int)rect.getY(), (int)rect.getWidth(), height);
+        scrollRectToVisible(visibleRect);
+      }
+    }
+  }
+
   public void showEditor(@NotNull ArrangementMatchingRuleEditor editor, int rowToEdit) {
     if (myEditorRow == rowToEdit + 1) {
       return;
