@@ -102,8 +102,9 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
             else {
               if (TestNGUtil.containsJunitAnnotions(method)) {
                 convertJunitAnnotions(factory, method);
+              } else {
+                addMethodAnnotations(factory, method);
               }
-              addMethodAnnotations(factory, method);
             }
           }
 
