@@ -8,10 +8,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -23,23 +20,26 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -88,22 +88,33 @@ public class CompilerTestUtil {
         throw new AssertionError( appComponent.getClass() + " doesn't have @State annotation and doesn't implement ExportableApplicationComponent");
       }
 
-      Element root = new Element("application");
+      final Element root = new Element("application");
       Element element = JDomSerializationUtil.createComponentElement(componentName);
       if (appComponent instanceof JDOMExternalizable) {
         ((JDOMExternalizable)appComponent).writeExternal(element);
       }
       else {
+        //noinspection unchecked
         element.addContent(((PersistentStateComponent<Element>)appComponent).getState().cloneContent());
       }
       root.addContent(element);
-      FileUtil.createParentDirs(file);
-      JDOMUtil.writeDocument(new Document(root), file, SystemProperties.getLineSeparator());
+      Assert.assertTrue("Cannot create " + file, FileUtil.createIfDoesntExist(file));
+      new WriteAction() {
+        protected void run(@NotNull final Result result) throws IOException {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          Assert.assertNotNull(file.getAbsolutePath(), virtualFile);
+          //emulate save via 'saveSettings' so file won't be treated as changed externally
+          OutputStream stream = virtualFile.getOutputStream(new SaveSessionRequestor());
+          try {
+            JDOMUtil.writeDocument(new Document(root), stream, SystemProperties.getLineSeparator());
+          }
+          finally {
+            stream.close();
+          }
+        }
+      }.execute().throwException();
     }
     catch (WriteExternalException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
@@ -139,5 +150,22 @@ public class CompilerTestUtil {
         BuildManager.getInstance().clearState(project);
       }
     }.execute();
+  }
+
+  private static class SaveSessionRequestor implements StateStorage.SaveSession {
+    @Override
+    public void save() {
+    }
+
+    @Nullable
+    @Override
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      return null;
+    }
+
+    @Override
+    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
+
+    }
   }
 }
