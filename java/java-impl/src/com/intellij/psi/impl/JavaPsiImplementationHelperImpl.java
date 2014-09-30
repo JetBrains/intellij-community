@@ -67,7 +67,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @Override
   public PsiClass getOriginalClass(PsiClass psiClass) {
     PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
-    if (cls != null) return (PsiClass)cls;
+    if (cls != null && cls.isValid()) return (PsiClass)cls;
 
     VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
     final Project project = psiClass.getProject();
