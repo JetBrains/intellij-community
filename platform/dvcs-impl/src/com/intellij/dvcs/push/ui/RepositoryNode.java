@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode, Comparable<RepositoryNode> {
 
   @NotNull protected final LoadingIcon myLoadingIcon;
-  @NotNull protected final AtomicBoolean myLoading = new AtomicBoolean(true);
+  @NotNull protected final AtomicBoolean myLoading = new AtomicBoolean();
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   @Nullable private Future<AtomicReference<OutgoingResult>> myFuture;

@@ -21,6 +21,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
+import com.intellij.psi.util.ImportsUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -54,13 +55,21 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     final boolean isAccessible = JavaResolveUtil.isAccessible(method, getContainingClass(method), method.getModifierList(),
                                                               myPlace, myAccessClass, myCurrentFileContext, myPlaceFile) &&
                                  !isShadowed(method);
-    if (isAccepted(method)) {
+    if (isAccepted(method) && !(isInterfaceStaticMethodAccessibleThroughInheritance(method) && ImportsUtil.hasStaticImportOn(myPlace, method, true))) {
       add(createCandidateInfo(method, substitutor, staticProblem, isAccessible, false));
       if (acceptVarargs() && method.isVarArgs() && PsiUtil.isLanguageLevel8OrHigher(myPlace)) {
         add(createCandidateInfo(method, substitutor, staticProblem, isAccessible, true));
       }
       myHasAccessibleStaticCorrectCandidate |= isAccessible && !staticProblem;
     }
+  }
+
+  private boolean isInterfaceStaticMethodAccessibleThroughInheritance(PsiMethod method) {
+    if (method.hasModifierProperty(PsiModifier.STATIC) && !(myCurrentFileContext instanceof PsiImportStaticStatement)) {
+      final PsiClass containingClass = method.getContainingClass();
+      return containingClass != null && containingClass.isInterface();
+    }
+    return false;
   }
 
   protected PsiClass getContainingClass(PsiMethod method) {

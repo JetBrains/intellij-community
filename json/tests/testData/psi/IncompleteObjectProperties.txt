@@ -14,14 +14,14 @@ JsonFile: IncompleteObjectProperties.json
     JsonProperty
       JsonStringLiteral
         PsiElement(DOUBLE_QUOTED_STRING)('"bar"')
-    PsiErrorElement:':' expected, got ','
-      <empty list>
+      PsiErrorElement:':' expected, got ','
+        <empty list>
     PsiElement(,)(',')
     PsiWhiteSpace('\n  ')
     JsonProperty
       JsonStringLiteral
         PsiElement(DOUBLE_QUOTED_STRING)('"baz"')
-    PsiErrorElement:':' expected, got '}'
-      <empty list>
+      PsiErrorElement:':' expected, got '}'
+        <empty list>
     PsiWhiteSpace('\n')
     PsiElement(})('}')

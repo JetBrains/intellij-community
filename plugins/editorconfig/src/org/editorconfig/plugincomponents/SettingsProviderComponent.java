@@ -3,6 +3,8 @@ package org.editorconfig.plugincomponents;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.core.EditorConfigException;
@@ -24,14 +26,14 @@ public class SettingsProviderComponent implements ApplicationComponent {
     return ServiceManager.getService(SettingsProviderComponent.class);
   }
 
-  public List<OutPair> getOutPairs(String filePath) {
+  public List<OutPair> getOutPairs(Project project, String filePath) {
     final List<OutPair> outPairs;
     try {
       outPairs = editorConfig.getProperties(filePath);
       return outPairs;
     }
     catch (EditorConfigException error) {
-      LOG.error(error);
+      Utils.invalidConfigMessage(project, error.getMessage(), "", filePath);
       return new ArrayList<OutPair>();
     }
   }

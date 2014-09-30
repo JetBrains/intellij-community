@@ -203,7 +203,7 @@ public class TaskWindow implements Comparable, Stateful {
         File resourceFile = StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
         TaskFile windowTaskFile = new TaskFile();
         TaskFile.copy(answerTaskFile, windowTaskFile);
-        StudyDocumentListener listener = new StudyDocumentListener(windowTaskFile, project);
+        StudyDocumentListener listener = new StudyDocumentListener(windowTaskFile);
         windowDocument.addDocumentListener(listener);
         int start = getRealStartOffset(windowDocument);
         int end = start + getLength();

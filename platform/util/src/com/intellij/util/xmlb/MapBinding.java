@@ -31,7 +31,6 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.util.xmlb.Constants.*;
 
@@ -72,9 +71,7 @@ class MapBinding implements Binding {
     Element m = myMapAnnotation == null || myMapAnnotation.surroundWithTag() ? new Element(MAP) : (Element)context;
     assert m != null;
 
-    final Set keySet = map.keySet();
-    final Object[] keys = ArrayUtil.toObjectArray(keySet);
-
+    final Object[] keys = ArrayUtil.toObjectArray(map.keySet());
     if (myMapAnnotation == null || myMapAnnotation.sortBeforeSave()) {
       Arrays.sort(keys, KEY_COMPARATOR);
     }
@@ -89,7 +86,7 @@ class MapBinding implements Binding {
       if (kNode instanceof Text) {
         entry.setAttribute(getKeyAttributeName(), ((Text)kNode).getText());
       }
-      else {
+      else if (kNode != null) {
         if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
           entry.addContent((Content)kNode);
         }
@@ -104,7 +101,7 @@ class MapBinding implements Binding {
       if (vNode instanceof Text) {
         entry.setAttribute(getValueAttributeName(), ((Text)vNode).getText());
       }
-      else {
+      else if (vNode != null) {
         if (myMapAnnotation != null && !myMapAnnotation.surroundValueWithTag()) {
           entry.addContent((Element)vNode);
         }
@@ -116,7 +113,7 @@ class MapBinding implements Binding {
       }
     }
 
-    return m;
+    return m == context ? null : m;
   }
 
   private String getEntryAttributeName() {
@@ -167,15 +164,12 @@ class MapBinding implements Binding {
       }
       else {
         if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
-          final Object[] children = JDOMUtil.getContent(entry);
-          for (Object child : children) {
+          for (Object child : JDOMUtil.getContent(entry)) {
             if (myKeyBinding.isBoundTo(child)) {
               k = myKeyBinding.deserialize(o, child);
               break;
             }
           }
-
-          assert k != null : "no key found";
         }
         else {
           final Object keyNode = entry.getChildren(getKeyAttributeName()).get(0);
@@ -189,15 +183,12 @@ class MapBinding implements Binding {
       }
       else {
         if (myMapAnnotation != null && !myMapAnnotation.surroundValueWithTag()) {
-          final Object[] children = JDOMUtil.getContent(entry);
-          for (Object child : children) {
+          for (Object child : JDOMUtil.getContent(entry)) {
             if (myValueBinding.isBoundTo(child)) {
               v = myValueBinding.deserialize(o, child);
               break;
             }
           }
-
-          assert v != null : "no value found";
         }
         else {
           final Object valueNode = entry.getChildren(getValueAttributeName()).get(0);

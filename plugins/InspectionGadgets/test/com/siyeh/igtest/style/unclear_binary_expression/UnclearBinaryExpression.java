@@ -21,17 +21,17 @@ import java.util.List;
 public class UnclearBinaryExpression {
 
   void foo() {
-    boolean b2 = "asdf" + "asdf" instanceof String;
-    int i = true ? 1 + 2 * 7 : 2;
+    boolean b2 = <warning descr="Expression could use clarifying parentheses">"asdf" + "asdf" instanceof String</warning>;
+    int i = <warning descr="Expression could use clarifying parentheses">true ? 1 + 2 * 7 : 2</warning>;
     boolean j = true ? false : true;
-    System.out.println(3 + 1 + 2 * 9 * 8 + 1);
+    System.out.println(<warning descr="Expression could use clarifying parentheses">3 + 1 + 2 * 9 * 8 + 1</warning>);
   }
 
   boolean bar(String name, Condition condition, Operation operation) {
     List<String> values = new ArrayList();
-    return name.equals(condition.name)
+    return <warning descr="Expression could use clarifying parentheses">name.equals(condition.name)
            && values.contains(condition.value) == (operation == Operation.equals)
-           && name instanceof String;
+           && name instanceof String</warning>;
   }
 
   class Condition {
@@ -43,12 +43,12 @@ public class UnclearBinaryExpression {
   }
 
   void more(Object o) {
-    String s = true? false ? "one" : "two" : "three";
-    boolean b = true ? o instanceof String : false;
+    String s = <warning descr="Expression could use clarifying parentheses">true? false ? "one" : "two" : "three"</warning>;
+    boolean b = <warning descr="Expression could use clarifying parentheses">true ? o instanceof String : false</warning>;
   }
 
   void more(int i) {
-    i = i += i = 1;
+    <warning descr="Expression could use clarifying parentheses">i = i += i = 1</warning>;
   }
 
   void noMore() {
@@ -57,6 +57,6 @@ public class UnclearBinaryExpression {
   }
 
   int incomplete(String s) {
-    return s == null ?
+    return s == null ?<EOLError descr="Expression expected"></EOLError><EOLError descr="';' expected"></EOLError>
   }
 }

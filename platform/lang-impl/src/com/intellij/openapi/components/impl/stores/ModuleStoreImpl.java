@@ -159,12 +159,12 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
     @Nullable
     @Override
-    public Set<String> getChangedComponentNames(@NotNull StorageData storageData, @Nullable PathMacroSubstitutor substitutor) {
-      final ModuleFileData data = (ModuleFileData)storageData;
+    public Set<String> getChangedComponentNames(@NotNull StorageData newStorageData, @Nullable PathMacroSubstitutor substitutor) {
+      final ModuleFileData data = (ModuleFileData)newStorageData;
       if (!myOptions.equals(data.myOptions)) {
         return null;
       }
-      return super.getChangedComponentNames(storageData, substitutor);
+      return super.getChangedComponentNames(newStorageData, substitutor);
     }
 
     public void setOption(final String optionName, final String optionValue) {

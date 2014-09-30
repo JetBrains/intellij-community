@@ -58,6 +58,11 @@ public abstract class VcsVFSListener implements Disposable {
       myNewPath = newPath;
       myFile = file;
     }
+
+    @Override
+    public String toString() {
+      return "MovedFileInfo{myNewPath=" + myNewPath + ", myFile=" + myFile + '}';
+    }
   }
 
   protected final Project myProject;
@@ -267,6 +272,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
     final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(file);
+    LOG.debug("Checking moved file " + file + "; status=" + status);
     if (status == FileStatus.IGNORED) {
       if (file.getParent() != null) {
         myDirtyFiles.add(file.getParent());
@@ -284,6 +290,7 @@ public abstract class VcsVFSListener implements Disposable {
         }
       }
       if (!foundExistingInfo) {
+        LOG.debug("Registered moved file " + file);
         myMovedFiles.add(new MovedFileInfo(file, newPath));
       }
     }
@@ -291,6 +298,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   private void executeMoveRename() {
     final List<MovedFileInfo> movedFiles = new ArrayList<MovedFileInfo>(myMovedFiles);
+    LOG.debug("executeMoveRename " + movedFiles);
     myMovedFiles.clear();
     performMoveRename(movedFiles);
   }
@@ -373,6 +381,7 @@ public abstract class VcsVFSListener implements Disposable {
       if (isEventIgnored(event, true)) return;
       final VirtualFile file = event.getFile();
       final AbstractVcs newVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getNewParent());
+      LOG.debug("beforeFileMovement " + event + " into " + newVcs);
       if (newVcs == myVcs) {
         addFileToMove(file, event.getNewParent().getPath(), file.getName());
       }
@@ -393,6 +402,7 @@ public abstract class VcsVFSListener implements Disposable {
     @Override
     public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
       if (!isEventIgnored(event, false) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
+        LOG.debug("before file rename " + event);
         String oldName = (String)event.getOldValue();
         String newName = (String)event.getNewValue();
         // in order to force a reparse of a file, the rename event can be fired with old name equal to new name -

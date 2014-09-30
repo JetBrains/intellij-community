@@ -115,11 +115,10 @@ abstract class AbstractCollectionBinding implements Binding {
 
     final String tagName = getTagName(o);
     if (tagName != null) {
-      if (ContainerUtil.isEmpty(collection)) {
-        return context == null ? new Element(tagName) : null;
-      }
-
       Element result = new Element(tagName);
+      if (ContainerUtil.isEmpty(collection)) {
+        return new Element(tagName);
+      }
       for (Object e : collection) {
         if (e == null) {
           throw new XmlSerializationException("Collection " + myAccessor + " contains 'null' object");

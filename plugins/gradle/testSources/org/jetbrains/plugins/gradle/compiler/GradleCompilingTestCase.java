@@ -15,15 +15,14 @@
  */
 package org.jetbrains.plugins.gradle.compiler;
 
-import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.util.io.TestFileSystemItem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGenerator;
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 
@@ -67,23 +66,22 @@ public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
 
   @Override
   protected void assertArtifactOutputPath(String artifactName, String expected) {
-    final String defaultArtifactOutputPath = ArtifactUtil.getDefaultArtifactOutputPath(artifactName, myProject);
-    assert defaultArtifactOutputPath != null;
-    final String basePath = FileUtil.toSystemIndependentName(new File(defaultArtifactOutputPath).getParent());
+    final String basePath = getArtifactBaseOutputPath(myProject);
     super.assertArtifactOutputPath(artifactName, basePath + expected);
   }
 
   protected void assertArtifactOutputFile(String artifactName, String path, String content) {
-    final String defaultArtifactOutputPath = ArtifactUtil.getDefaultArtifactOutputPath(artifactName, myProject);
-    assert defaultArtifactOutputPath != null;
-    final String basePath = FileUtil.toSystemIndependentName(new File(defaultArtifactOutputPath).getParent());
+    final String basePath = getArtifactBaseOutputPath(myProject);
     assertSameLinesWithFile(basePath + path, content);
   }
 
   protected void assertArtifactOutputFile(String artifactName, String path) {
-    final String defaultArtifactOutputPath = ArtifactUtil.getDefaultArtifactOutputPath(artifactName, myProject);
-    assert defaultArtifactOutputPath != null;
-    final String basePath = FileUtil.toSystemIndependentName(new File(defaultArtifactOutputPath).getParent());
+    final String basePath = getArtifactBaseOutputPath(myProject);
     assertExists(new File(basePath + path));
+  }
+
+  private static String getArtifactBaseOutputPath(Project project) {
+    String outputUrl = project.getBaseDir().getUrl() + "/out/artifacts";
+    return FileUtil.toSystemIndependentName(VfsUtilCore.urlToPath(outputUrl));
   }
 }

@@ -30,7 +30,6 @@ import com.intellij.ui.HideableTitledPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.edu.InvalidTaskFileFix;
 import com.jetbrains.python.edu.StudyDocumentListener;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.actions.*;
@@ -58,7 +57,6 @@ import java.util.List;
  */
 public class StudyEditor implements TextEditor {
   private static final String TASK_TEXT_HEADER = "Task Text";
-  private static Map<TaskFile, InvalidTaskFileFix> myFixes = new HashMap<TaskFile, InvalidTaskFileFix>();
   private final FileEditor myDefaultEditor;
   private final JComponent myComponent;
   private final TaskFile myTaskFile;
@@ -118,19 +116,6 @@ public class StudyEditor implements TextEditor {
       studyPanel.add(studyButtonPanel);
       myComponent.add(studyPanel, BorderLayout.NORTH);
     }
-  }
-
-  public static void addFix(@NotNull final TaskFile file, @NotNull final InvalidTaskFileFix fix) {
-    myFixes.put(file, fix);
-  }
-
-  @Nullable
-  public static InvalidTaskFileFix getFix(TaskFile file) {
-    return myFixes.get(file);
-  }
-
-  public static void deleteFix(TaskFile file) {
-    myFixes.remove(file);
   }
 
   class CopyListener extends MouseAdapter {

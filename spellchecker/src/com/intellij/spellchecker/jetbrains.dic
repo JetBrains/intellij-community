@@ -168,8 +168,9 @@ getters
 giud
 globals
 google
-gzip
 gruntfile
+gzip
+gzipped
 hamcrest
 hardcoded
 hardlink
