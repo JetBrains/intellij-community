@@ -134,6 +134,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testSameParametrizationCheckTakesTypeParametersIntoAccount() throws Exception {
+    doTest();
+  }
+
   @Bombed(month = Calendar.OCTOBER, day = 30)
   public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
     doTest();
