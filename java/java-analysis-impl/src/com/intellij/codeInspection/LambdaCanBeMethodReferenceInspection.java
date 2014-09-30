@@ -113,8 +113,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           isConstructor = psiMethod.isConstructor();
         }
         boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
-        if (isReceiverType && psiMethod != null) {
-          PsiMethod nonAmbiguousMethod = ensureNonAmbiguousMethod(parameters, psiMethod);
+        if (psiMethod != null && !isConstructor) {
+          PsiMethod nonAmbiguousMethod = ensureNonAmbiguousMethod(parameters, psiMethod, isReceiverType);
           if (nonAmbiguousMethod == null) return null;
           psiMethod = nonAmbiguousMethod;
           containingClass = nonAmbiguousMethod.getContainingClass();
@@ -237,7 +237,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   @Nullable
-  private static PsiMethod ensureNonAmbiguousMethod(PsiParameter[] parameters, @NotNull PsiMethod psiMethod) {
+  private static PsiMethod ensureNonAmbiguousMethod(PsiParameter[] parameters, @NotNull PsiMethod psiMethod, boolean isReceiverType) {
     String methodName = psiMethod.getName();
     PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass == null) return null;
@@ -245,16 +245,18 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     if (psiMethods.length == 1) return psiMethod;
     for (PsiMethod method : psiMethods) {
       PsiParameter[] candidateParams = method.getParameterList().getParameters();
-      if (candidateParams.length == parameters.length) {
+      if (candidateParams.length == parameters.length && isReceiverType) {
         if (TypeConversionUtil.areTypesConvertible(candidateParams[0].getType(), parameters[0].getType())) {
           final PsiMethod[] deepestSuperMethods = psiMethod.findDeepestSuperMethods();
           if (deepestSuperMethods.length > 0) {
             for (PsiMethod superMethod : deepestSuperMethods) {
-              PsiMethod validSuperMethod = ensureNonAmbiguousMethod(parameters, superMethod);
+              PsiMethod validSuperMethod = ensureNonAmbiguousMethod(parameters, superMethod, true);
               if (validSuperMethod != null) return validSuperMethod;
             }
           }
         }
+        return null;
+      } else if (!isReceiverType && candidateParams.length + 1 == parameters.length && method.hasModifierProperty(PsiModifier.STATIC)) {
         return null;
       }
     }
@@ -338,7 +340,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
                                                      PsiMethod psiMethod,
                                                      PsiClass containingClass,
                                                      @NotNull PsiExpression qualifierExpression) {
-    final PsiMethod nonAmbiguousMethod = ensureNonAmbiguousMethod(parameters, psiMethod);
+    final PsiMethod nonAmbiguousMethod = ensureNonAmbiguousMethod(parameters, psiMethod, true);
     LOG.assertTrue(nonAmbiguousMethod != null);
     final PsiClass nonAmbiguousContainingClass = nonAmbiguousMethod.getContainingClass();
     if (!containingClass.equals(nonAmbiguousContainingClass)) {
