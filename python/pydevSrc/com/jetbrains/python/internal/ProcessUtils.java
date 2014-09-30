@@ -13,12 +13,14 @@ package com.jetbrains.python.internal;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.jetbrains.python.console.pydev.FastStringBuffer;
 import com.jetbrains.python.internal.linux.ProcessListLinux;
 import com.jetbrains.python.internal.macos.ProcessListMac;
 import com.jetbrains.python.internal.win32.ProcessListWin32;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 
 public class ProcessUtils {
@@ -67,5 +69,38 @@ public class ProcessUtils {
         return new PyProcessInfo[0];
       }
     };
+  }
+
+  @NotNull
+  public static char[] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
+    InputStream stream = new FileInputStream(file);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
+    try {
+      return loadText(reader);
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  @NotNull
+  public static char[] loadText(@NotNull Reader reader) throws IOException {
+    //fill a buffer with the contents
+    int BUFFER_SIZE = 2 * 1024;
+
+    char[] readBuffer = new char[BUFFER_SIZE];
+    int n = reader.read(readBuffer);
+
+    int DEFAULT_FILE_SIZE = 8 * BUFFER_SIZE;
+
+    FastStringBuffer buffer = new FastStringBuffer(DEFAULT_FILE_SIZE);
+
+    while (n > 0) {
+      buffer.append(readBuffer, 0, n);
+      n = reader.read(readBuffer);
+    }
+
+    return buffer.toCharArray();
   }
 }

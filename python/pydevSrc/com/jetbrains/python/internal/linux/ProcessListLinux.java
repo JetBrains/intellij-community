@@ -15,6 +15,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.jetbrains.python.internal.ProcessUtils;
 import com.jetbrains.python.internal.PyProcessInfo;
 import com.jetbrains.python.internal.IProcessList;
 import com.jetbrains.python.internal.PyProcessInfo;
@@ -64,7 +65,7 @@ public class ProcessListLinux implements IProcessList {
         File cmdLine = new File(pidFiles[i], "cmdline"); //$NON-NLS-1$
         String name;
         try {
-          name = FileUtil.loadFile(cmdLine).replace('\0', ' ');
+          name = new String(ProcessUtils.loadFileText(cmdLine, null)).replace('\0', ' ');
         }
         catch (IOException e) {
           name = "";
