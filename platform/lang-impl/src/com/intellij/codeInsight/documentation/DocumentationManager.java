@@ -115,17 +115,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Override
   protected String getRestorePopupDescription() {
-    return "Restore documentation popup behavior";
+    return "Restore popup view mode";
   }
 
   @Override
   protected String getAutoUpdateDescription() {
-    return "Show documentation for current element automatically";
+    return "Refresh documentation on selection change automatically";
   }
 
   @Override
   protected String getAutoUpdateTitle() {
-    return "Auto Show Documentation for Selected Element";
+    return "Auto-update from Source";
   }
 
   @NotNull

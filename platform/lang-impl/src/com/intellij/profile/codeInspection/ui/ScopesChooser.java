@@ -17,10 +17,11 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
@@ -31,14 +32,14 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
-public abstract class ScopesChooser extends ComboBoxAction {
+public abstract class ScopesChooser extends ComboBoxAction implements DumbAware {
   public static final String TITLE = "Select a scope to change its settings";
 
   private final List<Descriptor> myDefaultDescriptors;
@@ -82,7 +83,7 @@ public abstract class ScopesChooser extends ComboBoxAction {
     fillActionGroup(group, customScopes, myDefaultDescriptors, myInspectionProfile, myExcludedScopeNames);
 
     group.addSeparator();
-    group.add(new AnAction("Edit Scopes Order...") {
+    group.add(new DumbAwareAction("Edit Scopes Order...") {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         final ScopesOrderDialog dlg = new ScopesOrderDialog(component, myInspectionProfile, myProject);
@@ -110,7 +111,7 @@ public abstract class ScopesChooser extends ComboBoxAction {
       if (excludedScopeNames.contains(scopeName)) {
         continue;
       }
-      group.add(new AnAction(scopeName) {
+      group.add(new DumbAwareAction(scopeName) {
         @Override
         public void actionPerformed(final AnActionEvent e) {
           for (final Descriptor defaultDescriptor : defaultDescriptors) {

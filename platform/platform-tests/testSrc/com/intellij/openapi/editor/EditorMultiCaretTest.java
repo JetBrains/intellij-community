@@ -352,4 +352,19 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "some long prefix <caret>-suffix");
     verifySoftWrapPositions(19);
   }
+
+  public void testCreateRectangularSelectionWithMouseClicks() throws Exception {
+    init("<caret>line\n" +
+         "long line\n" +
+         "very long line\n" +
+         "long line\n" +
+         "line",
+         TestFileType.TEXT);
+    mouse().alt().shift().middle().clickAt(2, 2);
+    checkResultByText("<selection>li<caret></selection>ne\n" +
+                      "<selection>lo<caret></selection>ng line\n" +
+                      "<selection>ve<caret></selection>ry long line\n" +
+                      "long line\n" +
+                      "line");
+  }
 }

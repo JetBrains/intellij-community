@@ -163,6 +163,10 @@ public class RenameDialog extends RefactoringDialog {
 
   }
 
+  protected void preselectExtension(int start, int end) {
+    myNameSuggestionsField.select(start, end);
+  }
+
   protected void processNewNameChanged() {
     validateButtons();
   }

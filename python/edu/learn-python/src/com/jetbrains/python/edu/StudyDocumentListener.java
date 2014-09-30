@@ -113,9 +113,6 @@ public class StudyDocumentListener extends DocumentAdapter {
       if (myTaskWindow != null) {
         int newLength = myTaskWindow.getLength() + change;
         myTaskWindow.setLength(newLength <= 0 ? 0 : newLength);
-        if (e.getNewFragment().equals("\n")) {
-          myTaskWindow.setLength(myTaskWindow.getLength() + 1);
-        }
       }
       int newEnd = offset + event.getNewLength();
       int newLine = document.getLineNumber(newEnd);

@@ -117,7 +117,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertNotNull(classFile.getPath(), vFile);
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
     assertNotNull(psiFile);
-    String testDir = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/mirror/";
+    String testDir = getTestDataDir();
 
     FileUtil.copy(new File(testDir, "pkg/ReuseTestV1.class"), classFile);
     vFile.refresh(false, false);
@@ -138,12 +138,28 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertSame(doc2, PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
   }
 
+  public void testElementAt() {
+    String path = getTestDataDir() + "/pkg/SimpleEnum.class";
+    VirtualFile vFile = StandardFileSystems.local().findFileByPath(path);
+    assertNotNull(path, vFile);
+    PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
+    assertNotNull(path, psiFile);
+    for (int i = 0; i < psiFile.getTextLength(); i++) {
+      PsiElement element = psiFile.findElementAt(i);
+      assertFalse(i + ":" + element, element instanceof PsiFile);
+    }
+  }
+
+  private static String getTestDataDir() {
+    return JavaTestUtil.getJavaTestDataPath() + "/psi/cls/mirror/";
+  }
+
   private void doTest() {
     doTest(getTestName(false));
   }
 
   private static void doTest(String name) {
-    String testDir = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/mirror/";
+    String testDir = getTestDataDir();
     doTest(testDir + "pkg/" + name + ".class", testDir + name + ".txt");
   }
 

@@ -85,6 +85,9 @@ public abstract class AnonymousClassElementBase extends ClassElement {
     else if (i == JavaTokenType.RBRACE) {
       return getChildRole(child, ChildRole.RBRACE);
     }
+    else if (i == JavaTokenType.COMMA) {
+      return ChildRole.COMMA;
+    }
     else {
       return ChildRoleBase.NONE;
     }

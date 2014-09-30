@@ -37,7 +37,15 @@ public class TextBinding implements Binding {
       return null;
     }
     Object node = myBinding.serialize(v, context, filter);
-    return node == null ? null : new Text(((Content)node).getValue());
+    if (node == null) {
+      return null;
+    }
+    else if (node instanceof Text) {
+      return node;
+    }
+    else {
+      return new Text(((Content)node).getValue());
+    }
   }
 
   @Override

@@ -341,13 +341,6 @@ public class InspectionsConfigTreeTable extends TreeTable {
       if (myScopeToAverageSeverityMap.size() == 1) {
         return result;
       }
-      String[] scopesOrder = inspectionProfile.getScopesOrder();
-      if (scopesOrder == null || scopesOrder.length == 0) {
-        final ArrayList<String> scopesList = new ArrayList<String>(myScopeToAverageSeverityMap.keySet());
-        scopesList.remove(myDefaultScopeName);
-        ContainerUtil.sort(scopesList);
-        scopesOrder = ArrayUtil.toStringArray(scopesList);
-      }
 
       final SeverityAndOccurrences defaultSeveritiesAndOccurrences = myScopeToAverageSeverityMap.get(myDefaultScopeName);
       if (defaultSeveritiesAndOccurrences == null) {
@@ -361,15 +354,15 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
       final int allInspectionsCount = defaultSeveritiesAndOccurrences.getOccurrencesSize();
       final Map<String, HighlightSeverity> allScopes = defaultSeveritiesAndOccurrences.getOccurrences();
-      String[] reversedScopesOrder = ArrayUtil.reverseArray(scopesOrder);
-      for (String currentScope : reversedScopesOrder) {
+      for (String currentScope : myScopeToAverageSeverityMap.keySet()) {
         final SeverityAndOccurrences currentSeverityAndOccurrences = myScopeToAverageSeverityMap.get(currentScope);
         if (currentSeverityAndOccurrences == null) {
           continue;
         }
         final HighlightSeverity currentSeverity = currentSeverityAndOccurrences.getPrimarySeverity();
         if (currentSeverity == ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY ||
-            currentSeverityAndOccurrences.getOccurrencesSize() == allInspectionsCount) {
+            currentSeverityAndOccurrences.getOccurrencesSize() == allInspectionsCount ||
+            myDefaultScopeName.equals(currentScope)) {
           result.put(currentScope, currentSeverity);
         }
         else {
