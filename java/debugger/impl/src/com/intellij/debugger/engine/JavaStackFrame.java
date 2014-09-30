@@ -34,15 +34,19 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
@@ -64,29 +68,31 @@ public class JavaStackFrame extends XStackFrame {
   private static final Logger LOG = Logger.getInstance(JavaStackFrame.class);
 
   private final DebugProcessImpl myDebugProcess;
-  private final XSourcePosition myXSourcePosition;
+  @Nullable private final XSourcePosition myXSourcePosition;
   private final NodeManagerImpl myNodeManager;
-  private final StackFrameDescriptorImpl myDescriptor;
+  @NotNull private final StackFrameDescriptorImpl myDescriptor;
   private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
   private JavaDebuggerEvaluator myEvaluator = null;
+  private final String myEqualityObject;
 
   public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy,
-                        @NotNull DebugProcessImpl debugProcess,
-                        @NotNull MethodsTracker tracker,
-                        @NotNull NodeManagerImpl nodeManager) {
-    myDebugProcess = debugProcess;
-    myNodeManager = nodeManager;
-    myDescriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
-    myDescriptor.setContext(null);
-    myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
-    myXSourcePosition = ApplicationManager.getApplication().runReadAction(new Computable<XSourcePosition>() {
-      @Override
-      public XSourcePosition compute() {
-        return myDescriptor.getSourcePosition() != null ? DebuggerUtilsEx.toXSourcePosition(myDescriptor.getSourcePosition()) : null;
-      }
-    });
+                        @NotNull MethodsTracker tracker) {
+    this(new StackFrameDescriptorImpl(stackFrameProxy, tracker), true);
   }
 
+  public JavaStackFrame(@NotNull StackFrameDescriptorImpl descriptor, boolean update) {
+    myDescriptor = descriptor;
+    if (update) {
+      myDescriptor.setContext(null);
+      myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
+    }
+    myEqualityObject = update ? NodeManagerImpl.getContextKeyForFrame(myDescriptor.getFrameProxy()) : null;
+    myDebugProcess = ((DebugProcessImpl)descriptor.getDebugProcess());
+    myNodeManager = myDebugProcess.getXdebugProcess().getNodeManager();
+    myXSourcePosition = myDescriptor.getSourcePosition() != null ? new JavaXSourcePosition(myDescriptor.getSourcePosition()) : null;
+  }
+
+  @NotNull
   public StackFrameDescriptorImpl getDescriptor() {
     return myDescriptor;
   }
@@ -391,6 +397,46 @@ public class JavaStackFrame extends XStackFrame {
   @Nullable
   @Override
   public Object getEqualityObject() {
-    return myDescriptor.getMethod();
+    return myEqualityObject;
+  }
+
+  @Override
+  public String toString() {
+    if (myXSourcePosition != null) {
+      return "JavaFrame " + myXSourcePosition.getFile().getName() + ":" + myXSourcePosition.getLine();
+    }
+    else {
+      return "JavaFrame position unknown";
+    }
+  }
+
+  private static class JavaXSourcePosition implements XSourcePosition {
+    private final SourcePosition mySourcePosition;
+
+    public JavaXSourcePosition(@NotNull SourcePosition sourcePosition) {
+      mySourcePosition = sourcePosition;
+    }
+
+    @Override
+    public int getLine() {
+      return mySourcePosition.getLine();
+    }
+
+    @Override
+    public int getOffset() {
+      return mySourcePosition.getOffset();
+    }
+
+    @NotNull
+    @Override
+    public VirtualFile getFile() {
+      return mySourcePosition.getFile().getVirtualFile();
+    }
+
+    @NotNull
+    @Override
+    public Navigatable createNavigatable(@NotNull Project project) {
+      return XSourcePositionImpl.createOpenFileDescriptor(project, this);
+    }
   }
 }

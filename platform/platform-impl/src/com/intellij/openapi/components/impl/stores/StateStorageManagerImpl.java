@@ -15,16 +15,14 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.CurrentUserHolder;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RoamingTypeDisabled;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -113,7 +111,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Override
   @Nullable
-  public StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorageException {
+  public StateStorage getStateStorage(@NotNull Storage storageSpec) {
     String key = getStorageSpecId(storageSpec);
 
     myStorageLock.lock();
@@ -155,6 +153,37 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @NotNull
   @Override
+  public Couple<Collection<FileBasedStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted) {
+    myStorageLock.lock();
+    try {
+      return Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted));
+    }
+    finally {
+      myStorageLock.unlock();
+    }
+  }
+
+  @NotNull
+  private Collection<FileBasedStorage> getCachedFileStorages(@NotNull Collection<String> fileSpecs) {
+    if (fileSpecs.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<FileBasedStorage> result = null;
+    for (String fileSpec : fileSpecs) {
+      StateStorage storage = myStorages.get(fileSpec);
+      if (storage instanceof FileBasedStorage) {
+        if (result == null) {
+          result = new SmartList<FileBasedStorage>();
+        }
+        result.add((FileBasedStorage)storage);
+      }
+    }
+    return result == null ? Collections.<FileBasedStorage>emptyList() : result;
+  }
+
+  @NotNull
+  @Override
   public Collection<String> getStorageFileNames() {
     myStorageLock.lock();
     try {
@@ -189,7 +218,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Nullable
-  private StateStorage createStateStorage(Storage storageSpec) throws StateStorageException {
+  private StateStorage createStateStorage(Storage storageSpec) {
     if (!storageSpec.storageClass().equals(StateStorage.class)) {
       String key = UUID.randomUUID().toString();
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
@@ -222,14 +251,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Nullable
-  private StateStorage createDirectoryStateStorage(String file, Class<? extends StateSplitter> splitterClass) throws StateStorageException {
-    final StateSplitter splitter;
-    try {
-      splitter = ReflectionUtil.newInstance(splitterClass);
-    }
-    catch (RuntimeException e) {
-      throw new StateStorageException(e);
-    }
+  private StateStorage createDirectoryStateStorage(String file, Class<? extends StateSplitter> splitterClass) {
+    StateSplitter splitter = ReflectionUtil.newInstance(splitterClass);
     return new DirectoryBasedStorage(myPathMacroSubstitutor, expandMacros(file), splitter, this, myPicoContainer);
   }
 
@@ -377,16 +400,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @NotNull
   @Override
-  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
+  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
-    SaveSession session = createSaveSession(externalizationSession);
+    SaveSession session = new MySaveSession((MyExternalizationSession)externalizationSession);
     mySession = session;
     return session;
-  }
-
-  @NotNull
-  protected MySaveSession createSaveSession(final ExternalizationSession externalizationSession) {
-    return new MySaveSession((MyExternalizationSession)externalizationSession);
   }
 
   @Override
@@ -407,96 +425,118 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   protected class MyExternalizationSession implements ExternalizationSession {
-    CompoundExternalizationSession myCompoundExternalizationSession = new CompoundExternalizationSession();
+    final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new SmartHashMap<StateStorage, StateStorage.ExternalizationSession>();
 
     @Override
-    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
-      throws StateStorageException {
+    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       assert mySession == this;
 
       for (Storage storageSpec : storageSpecs) {
         StateStorage stateStorage = getStateStorage(storageSpec);
-        if (stateStorage == null) continue;
+        if (stateStorage == null) {
+          continue;
+        }
 
-        final StateStorage.ExternalizationSession extSession = myCompoundExternalizationSession.getExternalizationSession(stateStorage);
-        extSession.setState(component, componentName, state, storageSpec);
+        getExternalizationSession(stateStorage).setState(component, componentName, state, storageSpec);
       }
     }
 
     @Override
-    public void setStateInOldStorage(@NotNull Object component, @NotNull final String componentName, @NotNull Object state) throws StateStorageException {
+    public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       assert mySession == this;
       StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
       if (stateStorage != null) {
-        myCompoundExternalizationSession.getExternalizationSession(stateStorage).setState(component, componentName, state, null);
+        getExternalizationSession(stateStorage).setState(component, componentName, state, null);
       }
+    }
+
+    @NotNull
+    private StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStore) {
+      StateStorage.ExternalizationSession session = mySessions.get(stateStore);
+      if (session == null) {
+        mySessions.put(stateStore, session = stateStore.startExternalization());
+      }
+      return session;
     }
   }
 
   @Override
   @Nullable
-  public StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException {
+  public StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
     String oldStorageSpec = getOldStorageSpec(component, componentName, operation);
     //noinspection deprecation
     return oldStorageSpec == null ? null : getStateStorage(oldStorageSpec, component instanceof RoamingTypeDisabled ? RoamingType.DISABLED : RoamingType.PER_USER);
   }
 
   @Nullable
-  protected abstract String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation)
-    throws StateStorageException;
+  protected abstract String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
   protected class MySaveSession implements SaveSession {
-    CompoundSaveSession myCompoundSaveSession;
+    private final Map<StateStorage, StateStorage.SaveSession> mySaveSessions = new SmartHashMap<StateStorage, StateStorage.SaveSession>();
 
-    public MySaveSession(final MyExternalizationSession externalizationSession) {
-      myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
+    public MySaveSession(@NotNull MyExternalizationSession externalizationSession) {
+      for (StateStorage stateStorage : externalizationSession.mySessions.keySet()) {
+        mySaveSessions.put(stateStorage, stateStorage.startSave(externalizationSession.getExternalizationSession(stateStorage)));
+      }
     }
 
     @Override
-    @NotNull
-    public List<File> getAllStorageFilesToSave() throws StateStorageException {
-      assert mySession == this;
-      return myCompoundSaveSession.getAllStorageFilesToSave();
-    }
-
-    @Override
-    @NotNull
-    public List<File> getAllStorageFiles() {
-      return myCompoundSaveSession.getAllStorageFiles();
+    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
+      for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
+        saveSession.collectAllStorageFiles(files);
+      }
     }
 
     @Override
     public void save() throws StateStorageException {
       assert mySession == this;
-      myCompoundSaveSession.save();
+      for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
+        saveSession.save();
+      }
     }
 
     public void finishSave() {
+      RuntimeException re = null;
       try {
         LOG.assertTrue(mySession == this);
       }
       finally {
-        myCompoundSaveSession.finishSave();
+        for (StateStorage stateStorage : mySaveSessions.keySet()) {
+          try {
+            stateStorage.finishSave(mySaveSessions.get(stateStorage));
+          }
+          catch (RuntimeException e) {
+            re = e;
+          }
+        }
+      }
+
+      if (re != null) {
+        throw re;
       }
     }
 
-    //returns set of component which were changed, null if changes are much more than just component state.
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      Set<String> result = new THashSet<String>();
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      Set<String> result = null;
       for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        final StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(pair.second);
+        StateStorage.SaveSession saveSession = mySaveSessions.get(pair.second);
         if (saveSession == null) {
           continue;
         }
-        final Set<String> changes = saveSession.analyzeExternalChanges(changedFiles);
+
+        Set<String> changes = saveSession.analyzeExternalChanges(changedFiles);
         if (changes == null) {
           return null;
         }
+
+        if (result == null) {
+          result = new THashSet<String>();
+        }
         result.addAll(changes);
       }
-      return result;
+      return result == null ? Collections.<String>emptySet() : result;
     }
   }
 

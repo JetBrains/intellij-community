@@ -21,7 +21,8 @@ import org.jetbrains.annotations.NotNull;
 public class ActionShortcutRestrictions {
   @NotNull
   public static ShortcutRestrictions getForActionId(String actionId) {
-    if (IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET.equals(actionId)) {
+    if (IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET.equals(actionId) ||
+        IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION.equals(actionId)) {
       return new ShortcutRestrictions(true, false, false, false);
     }
     return ShortcutRestrictions.NO_RESTRICTIONS;

@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -66,7 +67,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @Override
   public PsiClass getOriginalClass(PsiClass psiClass) {
     PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
-    if (cls != null) return (PsiClass)cls;
+    if (cls != null && cls.isValid()) return (PsiClass)cls;
 
     VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
     final Project project = psiClass.getProject();
@@ -177,11 +178,12 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       if (orderEntries.isEmpty()) {
         LOG.error("Inconsistent: " + DirectoryIndex.getInstance(myProject).getInfoForFile(folder).toString());
       }
+      final String className = virtualFile.getNameWithoutExtension();
       final VirtualFile[] files = orderEntries.get(0).getFiles(OrderRootType.CLASSES);
       for (VirtualFile rootFile : files) {
         final VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
         if (classFile != null) {
-          final PsiJavaFile javaFile = getPsiFileInRoot(classFile);
+          final PsiJavaFile javaFile = getPsiFileInRoot(classFile, className);
           if (javaFile != null) {
             return javaFile.getLanguageLevel();
           }
@@ -193,12 +195,24 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   @Nullable
-  private PsiJavaFile getPsiFileInRoot(final VirtualFile dirFile) {
+  private PsiJavaFile getPsiFileInRoot(final VirtualFile dirFile, @Nullable String className) {
+    if (className != null) {
+      final VirtualFile classFile = dirFile.findChild(StringUtil.getQualifiedName(className, StdFileTypes.CLASS.getDefaultExtension()));
+      if (classFile != null) {
+        final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(classFile);
+        if (psiFile instanceof PsiJavaFile) {
+          return (PsiJavaFile)psiFile;
+        }
+      }
+    }
+
     final VirtualFile[] children = dirFile.getChildren();
     for (VirtualFile child : children) {
       if (StdFileTypes.CLASS.equals(child.getFileType())) {
         final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(child);
-        if (psiFile instanceof PsiJavaFile) return (PsiJavaFile)psiFile;
+        if (psiFile instanceof PsiJavaFile) {
+          return (PsiJavaFile)psiFile;
+        }
       }
     }
     return null;

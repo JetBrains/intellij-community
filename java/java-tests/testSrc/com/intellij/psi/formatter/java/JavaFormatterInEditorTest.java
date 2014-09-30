@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -130,6 +131,39 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
              "    static final long j = 2;\n" +
              "}";
     doTest(before, after);
+  }
+
+  public void testKeepIndentsOnBlankLinesCaretPosition() throws IOException {
+    CommonCodeStyleSettings.IndentOptions indentOptions =
+      CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
+    assertNotNull(indentOptions);
+    indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = true;
+    final String initial =
+      "public class Main {\n" +
+      "    public void foo(boolean a, int x, int y, int z) {\n" +
+      "        do {\n" +
+      "            if (x > 0) {\n" +
+      "                <caret>\n" +
+      "            }\n" +
+      "        }\n" +
+      "        while (y > 0);\n" +
+      "    }\n" +
+      "}";
+
+    doTest(
+      initial,
+
+      "public class Main {\n" +
+      "    public void foo(boolean a, int x, int y, int z) {\n" +
+      "        do {\n" +
+      "            if (x > 0) {\n" +
+      "                <caret>\n" +
+      "            }\n" +
+      "        }\n" +
+      "        while (y > 0);\n" +
+      "    }\n" +
+      "}"
+    );
   }
 
   public void doTest(@NotNull String before, @NotNull String after) throws IOException {

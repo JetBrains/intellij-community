@@ -212,7 +212,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
             var = frame.f_globals
             del attrList[0]  # globals are special, and they get a single dummy unused attribute
         else:
-            # for a frame access both locals and globals as Python does
+            # in a frame access both locals and globals as Python does
             var = {}
             var.update(frame.f_globals)
             var.update(frame.f_locals)
@@ -352,7 +352,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
         del updated_globals
         del frame
 
-def changeAttrExpression(thread_id, frame_id, attr, expression):
+def changeAttrExpression(thread_id, frame_id, attr, expression, dbg):
     '''Changes some attribute in a given frame.
     '''
     frame = findFrame(thread_id, frame_id)
@@ -362,10 +362,10 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
     try:
         expression = expression.replace('@LINE@', '\n')
 
-        # if isinstance(frame, DjangoTemplateFrame): # TODO: implemente for plugins
-        #     result = eval(expression, frame.f_globals, frame.f_locals)
-        #     frame.changeVariable(attr, result)
-        #     return result
+        if dbg.plugin:
+            result = dbg.plugin.change_variable(frame, attr, expression)
+            if result:
+                return result
 
         if attr[:7] == "Globals":
             attr = attr[8:]

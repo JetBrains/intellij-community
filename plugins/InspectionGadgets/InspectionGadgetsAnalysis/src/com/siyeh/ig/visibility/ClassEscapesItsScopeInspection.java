@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,13 +68,9 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
       if (!(componentType instanceof PsiClassType)) {
         return;
       }
-      final PsiClass returnClass =
-        ((PsiClassType)componentType).resolve();
-      if (returnClass == null) {
+      final PsiClass returnClass = ((PsiClassType)componentType).resolve();
+      if (returnClass == null || returnClass instanceof PsiTypeParameter) {
         return;
-      }
-      if (returnClass.getParent() instanceof PsiTypeParameterList) {
-        return;//if it's a type parameter, it's okay.  Must be a better way to check this.
       }
       if (!isLessRestrictiveScope(method, returnClass)) {
         return;
@@ -109,9 +105,8 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
       if (!(componentType instanceof PsiClassType)) {
         return;
       }
-      final PsiClass fieldClass =
-        ((PsiClassType)componentType).resolve();
-      if (fieldClass == null) {
+      final PsiClass fieldClass = ((PsiClassType)componentType).resolve();
+      if (fieldClass == null || fieldClass instanceof PsiTypeParameter) {
         return;
       }
       if (!fieldHasLessRestrictiveScope(field, fieldClass)) {

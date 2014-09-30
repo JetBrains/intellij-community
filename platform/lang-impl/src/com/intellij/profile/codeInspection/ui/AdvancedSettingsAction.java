@@ -17,8 +17,9 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -26,9 +27,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -40,7 +39,7 @@ import java.awt.*;
 /**
  * @author Dmitry Batkovich
  */
-public abstract class AdvancedSettingsAction extends AnAction {
+public abstract class AdvancedSettingsAction extends DumbAwareAction {
   private final int myCheckBoxIndent;
   private Project myProject;
   private InspectionConfigTreeNode myRoot;
@@ -97,7 +96,7 @@ public abstract class AdvancedSettingsAction extends AnAction {
 
     @Override
     protected JComponent createBaseComponent() {
-      return installLeftIndentToLabel(new JLabel("Reset to Defaults Settings"));
+      return installLeftIndentToLabel(new JLabel("Reset to Default Settings"));
     }
 
     @Override
@@ -164,11 +163,16 @@ public abstract class AdvancedSettingsAction extends AnAction {
     public JComponent createCustomComponent(final boolean selected) {
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-      panel.add(createBaseComponent());
-      panel.add(installLeftIndentToLabel(new JBLabel(myDescription, UIUtil.ComponentStyle.MINI)));
-      panel.setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
-      panel.setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground());
+      final JComponent baseComponent = createBaseComponent();
+      panel.add(baseComponent);
+      final JLabel descriptionLabel = new JLabel(myDescription);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, descriptionLabel);
+      panel.add(installLeftIndentToLabel(descriptionLabel));
       UIUtil.setEnabled(panel, enabled(), true);
+
+      panel.setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+      descriptionLabel.setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground());
+      baseComponent.setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground());
       return panel;
     }
   }

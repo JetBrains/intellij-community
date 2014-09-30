@@ -51,7 +51,7 @@
 
     <group id="GitRepositoryActions">
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="Git4ideaIcons.Branch"/>
-      <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag Files..."/>
+      <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Vcs.MergeSourcesTree"/>
       <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
@@ -135,12 +135,14 @@
     <search.topHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
+    <vcs.checkoutProcessor implementation="git4idea.checkout.GitCheckoutProcessor"/>
     <vcsRootChecker implementation="git4idea.roots.GitRootChecker"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="git4idea.checkin.UnresolvedMergeCheckFactory"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
+    <pushSupport implementation="git4idea.push.GitPushSupport"/>
     
     <projectService
       serviceInterface="git4idea.history.wholeTree.LogFactoryService"
@@ -166,6 +168,7 @@
     <projectService
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
+    <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
     <projectService
         serviceInterface="git4idea.settings.GitPushSettings"
         serviceImplementation="git4idea.settings.GitPushSettings"/>

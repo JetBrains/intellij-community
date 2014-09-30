@@ -91,6 +91,8 @@
 
     <extensionPoint name="projectOpenProcessor"
                     interface="com.intellij.projectImport.ProjectOpenProcessor"/>
+    <extensionPoint name="projectSetProcessor"
+                    interface="com.intellij.projectImport.ProjectSetProcessor"/>
 
     <extensionPoint name="codeInsight.linkHandler"
                     beanClass="com.intellij.codeInsight.hint.TooltipLinkHandlerEP">

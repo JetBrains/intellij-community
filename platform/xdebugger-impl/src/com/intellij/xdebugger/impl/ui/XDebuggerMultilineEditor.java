@@ -15,8 +15,10 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.intellij.xdebugger.XExpression;
@@ -34,6 +36,7 @@ import javax.swing.*;
  * @author nik
  */
 public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
+  private final JComponent myComponent;
   private final EditorTextField myEditorTextField;
   private XExpression myExpression;
 
@@ -57,16 +60,20 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
       }
     };
     myEditorTextField.setFontInheritedFromLAF(false);
+    myComponent = addChooseFactoryLabel(myEditorTextField, true);
   }
 
   @Override
   public JComponent getComponent() {
-    return myEditorTextField;
+    return myComponent;
   }
 
   @Override
   protected void doSetText(XExpression text) {
-    myEditorTextField.setText(text.getExpression());
+    myExpression = text;
+    Language language = text.getLanguage();
+    FileType fileType = language != null ? language.getAssociatedFileType() : getEditorsProvider().getFileType();
+    myEditorTextField.setNewDocumentAndFileType(fileType, createDocument(text));
   }
 
   @Override

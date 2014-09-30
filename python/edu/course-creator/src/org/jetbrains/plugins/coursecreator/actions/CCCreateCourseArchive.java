@@ -25,7 +25,9 @@ import org.jetbrains.plugins.coursecreator.format.*;
 import org.jetbrains.plugins.coursecreator.ui.CreateCourseArchiveDialog;
 
 import java.io.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipOutputStream;
 
 public class CCCreateCourseArchive extends DumbAwareAction {
@@ -43,6 +45,11 @@ public class CCCreateCourseArchive extends DumbAwareAction {
 
   public CCCreateCourseArchive() {
     super("Generate course archive", "Generate course archive", AllIcons.FileTypes.Archive);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    CCProjectService.setCCActionAvailable(e);
   }
 
   @Override
@@ -186,11 +193,11 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       for (Map.Entry<String, Lesson> entry : lessons.entrySet()) {
         final VirtualFile lessonDir = baseDir.findChild(entry.getKey());
         if (lessonDir == null) continue;
-
         ZipUtil.addFileOrDirRecursively(zos, null, new File(lessonDir.getPath()), lessonDir.getName(), new FileFilter() {
           @Override
           public boolean accept(File pathname) {
-            return !pathname.getName().contains(".answer");
+            String name = pathname.getName();
+            return !name.contains(".answer") && !name.contains("__pycache__") && !name.contains("_windows");
           }
         }, null);
       }

@@ -42,7 +42,7 @@ import java.util.List;
 public abstract class DvcsBranchPopup<Repo extends Repository> {
   @NotNull protected final Project myProject;
   @NotNull protected final AbstractRepositoryManager<Repo> myRepositoryManager;
-  @NotNull protected final DvcsSyncBranchSettings myVcsSettings;
+  @NotNull protected final DvcsSyncSettings myVcsSettings;
   @NotNull protected final AbstractVcs myVcs;
   @NotNull protected final DvcsMultiRootBranchConfig<Repo> myMultiRootBranchConfig;
 
@@ -52,7 +52,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   protected DvcsBranchPopup(@NotNull Repo currentRepository,
                             @NotNull AbstractRepositoryManager<Repo> repositoryManager,
                             @NotNull DvcsMultiRootBranchConfig<Repo> multiRootBranchConfig,
-                            @NotNull DvcsSyncBranchSettings vcsSettings,
+                            @NotNull DvcsSyncSettings vcsSettings,
                             @NotNull Condition<AnAction> preselectActionCondition) {
     myProject = currentRepository.getProject();
     myCurrentRepository = currentRepository;
@@ -73,13 +73,13 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   }
 
   private void initBranchSyncPolicyIfNotInitialized() {
-    if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsBranchSync.NOT_DECIDED) {
+    if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.NOT_DECIDED) {
       if (!myMultiRootBranchConfig.diverged()) {
         notifyAboutSyncedBranches();
-        myVcsSettings.setSyncSetting(DvcsBranchSync.SYNC);
+        myVcsSettings.setSyncSetting(DvcsSyncSettings.Value.SYNC);
       }
       else {
-        myVcsSettings.setSyncSetting(DvcsBranchSync.DONT);
+        myVcsSettings.setSyncSetting(DvcsSyncSettings.Value.DONT_SYNC);
       }
     }
   }
@@ -88,7 +88,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   private String createPopupTitle(@NotNull Repo currentRepository) {
     String title = myVcs.getDisplayName() + " Branches";
     if (myRepositoryManager.moreThanOneRoot() &&
-        (myMultiRootBranchConfig.diverged() || myVcsSettings.getSyncSetting() == DvcsBranchSync.DONT)) {
+        (myMultiRootBranchConfig.diverged() || myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC)) {
       title += " in " + DvcsUtil.getShortRepositoryName(currentRepository);
     }
     return title;
@@ -101,7 +101,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   private void notifyAboutSyncedBranches() {
     String description =
-      "You have several " + myVcs.getDisplayName() + "roots in the project and they all are checked out at the same branch. " +
+      "You have several " + myVcs.getDisplayName() + " roots in the project and they all are checked out at the same branch. " +
       "We've enabled synchronous branch control for the project. <br/>" +
       "If you wish to control branches in different roots separately, " +
       "you may <a href='settings'>disable</a> the setting.";
@@ -110,7 +110,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getConfigurable().getDisplayName());
-          if (myVcsSettings.getSyncSetting() == DvcsBranchSync.DONT) {
+          if (myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC) {
             notification.expire();
           }
         }
@@ -139,7 +139,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   }
 
   private boolean userWantsSyncControl() {
-    return (myVcsSettings.getSyncSetting() != DvcsBranchSync.DONT);
+    return (myVcsSettings.getSyncSetting() != DvcsSyncSettings.Value.DONT_SYNC);
   }
 
   protected abstract void fillWithCommonRepositoryActions(@NotNull DefaultActionGroup popupGroup,

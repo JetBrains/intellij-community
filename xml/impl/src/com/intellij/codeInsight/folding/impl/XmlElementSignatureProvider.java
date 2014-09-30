@@ -48,8 +48,11 @@ public class XmlElementSignatureProvider extends AbstractElementSignatureProvide
       buffer.append(ELEMENT_TOKENS_SEPARATOR);
       buffer.append(getChildIndex(tag, parent, name, XmlTag.class));
 
-      if (parent instanceof XmlTag) {
+      if (!(parent instanceof PsiFile)) {
         String parentSignature = getSignature(parent);
+        if (parentSignature == null) {
+          return null;
+        }
         buffer.append(";");
         buffer.append(parentSignature);
       }

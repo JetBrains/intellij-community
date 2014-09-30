@@ -20,6 +20,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -50,8 +51,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
 
   @Nullable
   @Override
-  protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) throws
-                                                                                                                          StateStorageException {
+  protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
     final ComponentConfig config = myProject.getConfig(component.getClass());
     assert config != null : "Couldn't find old storage for " + component.getClass().getName();
 

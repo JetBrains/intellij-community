@@ -83,7 +83,7 @@ public class MavenModelConverter {
     return result;
   }
 
-  private static void convertBuild(MavenBuild result, Build build, List<String> sources, List<String> testSources) {
+  public static void convertBuild(MavenBuild result, Build build, List<String> sources, List<String> testSources) {
     convertBuildBase(result, build);
     result.setOutputDirectory(build.getOutputDirectory());
     result.setTestOutputDirectory(build.getTestOutputDirectory());
@@ -122,7 +122,7 @@ public class MavenModelConverter {
     return patterns == null ? Collections.<String>emptyList() : patterns;
   }
 
-  private static List<MavenRemoteRepository> convertRepositories(List<Repository> repositories) {
+  public static List<MavenRemoteRepository> convertRepositories(List<Repository> repositories) {
     if (repositories == null) return new ArrayList<MavenRemoteRepository>();
 
     List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(repositories.size());
@@ -191,7 +191,7 @@ public class MavenModelConverter {
     return result;
   }
 
-  private static MavenArtifact convertArtifact(Artifact artifact, Map<Artifact, MavenArtifact> nativeToConvertedMap, File localRepository) {
+  public static MavenArtifact convertArtifact(Artifact artifact, Map<Artifact, MavenArtifact> nativeToConvertedMap, File localRepository) {
     MavenArtifact result = nativeToConvertedMap.get(artifact);
     if (result == null) {
       result = convertArtifact(artifact, localRepository);
@@ -228,7 +228,7 @@ public class MavenModelConverter {
     return result;
   }
 
-  private static List<MavenPlugin> convertPlugins(Model mavenModel) throws RemoteException {
+  public static List<MavenPlugin> convertPlugins(Model mavenModel) throws RemoteException {
     List<MavenPlugin> result = new ArrayList<MavenPlugin>();
     Build build = mavenModel.getBuild();
 

@@ -29,6 +29,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.SearchTopHitProvider;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
@@ -38,6 +42,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -53,6 +58,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
@@ -128,6 +134,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int MAX_SYMBOLS = 6;
   private static final int MAX_SETTINGS = 5;
   private static final int MAX_ACTIONS = 5;
+  private static final int MAX_STRUCTURE = 10;
   private static final int MAX_RECENT_FILES = 10;
   private static final int DEFAULT_MORE_STEP_COUNT = 15;
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
@@ -181,8 +188,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private ChooseByNamePopup myFileChooseByName;
   private ChooseByNamePopup myClassChooseByName;
   private ChooseByNamePopup mySymbolsChooseByName;
+  private StructureViewModel myStructureModel;
+
 
   private Editor myEditor;
+  private FileEditor myFileEditor;
   private PsiFile myFile;
   private HistoryItem myHistoryItem;
 
@@ -607,14 +617,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     assert project != null;
     myRenderer.myProject = project;
-    myCurrentWorker.doWhenProcessed(new Runnable() {
+    final Runnable run = new Runnable() {
       @Override
       public void run() {
         myCalcThread = new CalcThread(project, pattern, false);
         myPopupActualWidth = 0;
         myCurrentWorker = myCalcThread.start();
       }
-    });
+    };
+    if (myCurrentWorker.isDone()) {
+      myCurrentWorker.doWhenDone(run);
+    } else {
+      myCurrentWorker.doWhenRejected(run);
+    }
   }
 
   @Override
@@ -633,6 +648,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myCurrentWorker = ActionCallback.DONE;
     if (e != null) {
       myEditor = e.getData(CommonDataKeys.EDITOR);
+      myFileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
       myFile = e.getData(CommonDataKeys.PSI_FILE);
     }
     if (e == null && myFocusOwner != null) {
@@ -773,6 +789,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private void showSettings() {
     myPopupField.setText("");
     final SearchListModel model = new SearchListModel();
+    model.addElement(new SEOption("Show current file structure elements", "search.everywhere.structure"));
     model.addElement(new SEOption("Show files", "search.everywhere.files"));
     model.addElement(new SEOption("Show symbols", "search.everywhere.symbols"));
     model.addElement(new SEOption("Show tool windows", "search.everywhere.toolwindows"));
@@ -1312,6 +1329,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (!pattern.startsWith("#")) {
           buildRecentFiles(pattern);
           check();
+          runReadAction(new Runnable() {
+                      public void run() {
+                        buildStructure(pattern);
+                      }
+                    }, true);
           updatePopup();
           check();
           buildToolWindows(pattern);
@@ -1356,7 +1378,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       finally {
         if (!isCanceled()) {
-          myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+            }
+          });
           updatePopup();
         }
         if (!myDone.isProcessed()) {
@@ -1490,7 +1518,40 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
+    private synchronized void buildStructure(final String pattern) {
+      if (!Registry.is("search.everywhere.structure") || myStructureModel == null) return;
+      final List<StructureViewTreeElement> elements = new ArrayList<StructureViewTreeElement>();
+      final MinusculeMatcher matcher = new MinusculeMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      fillStructure(myStructureModel.getRoot(), elements, matcher);
+      if (elements.size() > 0) {
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (isCanceled()) return;
+            myListModel.titleIndex.structure = myListModel.size();
+            for (Object element : elements) {
+              myListModel.addElement(element);
+            }
+            myListModel.moreIndex.files = -1;
+          }
+        });
+      }
+    }
 
+    private void fillStructure(StructureViewTreeElement element, List<StructureViewTreeElement> elements, Matcher matcher) {
+      final TreeElement[] children = element.getChildren();
+      check();
+      for (TreeElement child : children) {
+        check();
+        if (child instanceof StructureViewTreeElement) {
+          final String text = child.getPresentation().getPresentableText();
+          if (text != null && matcher.matches(text)) {
+            elements.add((StructureViewTreeElement)child);
+          }
+          fillStructure((StructureViewTreeElement)child, elements, matcher);
+        }
+      }
+    }
 
 
     private synchronized void buildSymbols(final String pattern) {
@@ -1578,15 +1639,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
 
     private synchronized void buildClasses(final String pattern) {
-      if (pattern.indexOf('.') != -1) {
-        //todo[kb] it's not a mistake. If we search for "*.png" or "index.xml" in SearchEverywhere
-        //todo[kb] we don't want to see Java classes started with Png or Xml. This approach should be reworked someday.
-        return;
-      }
-      check();
-
       final SearchResult classes = getClasses(pattern, showAll.get(), MAX_CLASSES, myClassChooseByName);
-
       check();
 
       if (classes.size() > 0) {
@@ -1818,10 +1871,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       };
 
       if (pattern.equals("#")) {
+        final HashSet<String> ids = new HashSet<String>();
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
           check();
           if (provider instanceof OptionsTopHitProvider) {
-            consumer.consume(provider);
+            if (!ids.contains(((OptionsTopHitProvider)provider).getId())) {
+              consumer.consume(provider);
+              ids.add(((OptionsTopHitProvider)provider).getId());
+            }
           }
         }
       } else {
@@ -1833,6 +1890,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
           check();
+          if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) {
+            continue;
+          }
           provider.consumeTopHits(pattern, consumer, project);
         }
       }
@@ -1882,6 +1942,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myActionProvider = createActionProvider();
         myConfigurables.clear();
         fillConfigurablesIds(null, ShowSettingsUtilImpl.getConfigurables(project, true));
+      }
+      if (myStructureModel == null && myFileEditor != null && Registry.is("search.everywhere.structure")) {
+        runReadAction(new Runnable() {
+          public void run() {
+            StructureViewBuilder structureViewBuilder = myFileEditor.getStructureViewBuilder();
+            if (structureViewBuilder == null) return;
+            StructureView structureView = structureViewBuilder.createStructureView(myFileEditor, project);
+            myStructureModel = structureView.getTreeModel();
+          }
+        }, true);
       }
     }
 
@@ -2086,6 +2156,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             myCurrentWorker = ActionCallback.DONE;
             showAll.set(false);
             myCalcThread = null;
+            myEditor = null;
+            myFileEditor = null;
+            myStructureModel = null;
           }
         }
       }
@@ -2197,14 +2270,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     volatile int settings = -1;
     volatile int symbols = -1;
     volatile int runConfigurations = -1;
+    volatile int structure = -1;
 
     public void shift(int index, int shift) {
       if (runConfigurations >= index) runConfigurations += shift;
       if (classes >= index) classes += shift;
       if (files >= index) files += shift;
+      if (symbols >= index) symbols += shift;
       if (actions >= index) actions += shift;
       if (settings >= index) settings += shift;
-      if (symbols >= index) symbols += shift;
+      if (structure >= index) structure += shift;
     }
   }
 
@@ -2213,6 +2288,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     volatile int recentFiles = -1;
     volatile int runConfigurations = -1;
     volatile int classes = -1;
+    volatile int structure = -1;
     volatile int files = -1;
     volatile int actions = -1;
     volatile int settings = -1;
@@ -2226,6 +2302,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final String gotoRecentFilesTitle;
     final String gotoRunConfigurationsTitle;
     final String gotoSymbolTitle;
+    final String gotoStructureTitle;
     static final String toolWindowsTitle = "Tool Windows";
 
     TitleIndex() {
@@ -2246,11 +2323,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         gotoRunConfiguration = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ChooseRunConfiguration"));
       }
       gotoRunConfigurationsTitle = StringUtil.isEmpty(gotoRunConfiguration) ? "Run Configurations" : "Run Configurations (" + gotoRunConfiguration + ")";
+      String gotoStructure = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("FileStructurePopup"));
+      gotoStructureTitle = StringUtil.isEmpty(gotoStructure) ? "File Structure" : "File Structure (" + gotoStructure + ")";
     }
 
     String getTitle(int index) {
       if (index == topHit) return index == 0 ? "Top Hit" : "Top Hits";
       if (index == recentFiles) return gotoRecentFilesTitle;
+      if (index == structure) return gotoStructureTitle;
       if (index == runConfigurations) return gotoRunConfigurationsTitle;
       if (index == classes) return gotoClassTitle;
       if (index == files) return gotoFileTitle;
@@ -2267,6 +2347,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       recentFiles = -1;
       classes = -1;
       files = -1;
+      structure = -1;
       actions = -1;
       settings = -1;
       toolWindows = -1;
@@ -2277,6 +2358,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (settings != - 1 && settings > index) settings += shift;
       if (actions != - 1 && actions > index) actions += shift;
       if (files != - 1 && files > index) files += shift;
+      if (structure != - 1 && structure > index) structure += shift;
       if (classes != - 1 && classes > index) classes += shift;
       if (runConfigurations != - 1 && runConfigurations > index) runConfigurations += shift;
       if (symbols != - 1 && symbols > index) symbols += shift;
@@ -2313,6 +2395,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return new int[]{
         titleIndex.topHit,
         titleIndex.recentFiles,
+        titleIndex.structure,
         titleIndex.runConfigurations,
         titleIndex.classes,
         titleIndex.files,
@@ -2325,7 +2408,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         moreIndex.files,
         moreIndex.settings,
         moreIndex.symbols,
-        moreIndex.runConfigurations
+        moreIndex.runConfigurations,
+        moreIndex.structure
       };
     }
 

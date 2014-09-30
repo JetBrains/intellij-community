@@ -23,13 +23,12 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Arrays;
@@ -79,21 +78,9 @@ public class XmlPerformanceTest extends LightQuickFixTestCase {
     PlatformTestUtil.startPerformanceTest("Fix long indent/unindent "+time, time, new ThrowableRunnable() {
       @Override
       public void run() {
-        EditorActionManager.getInstance().getActionHandler("EditorIndentSelection").execute(myEditor, new DataContext() {
-          @Override
-          @Nullable
-          public Object getData(String dataId) {
-            return null;
-          }
-        });
+        EditorActionManager.getInstance().getActionHandler("EditorIndentSelection").execute(myEditor, DataManager.getInstance().getDataContext());
 
-        EditorActionManager.getInstance().getActionHandler("EditorUnindentSelection").execute(myEditor, new DataContext() {
-          @Override
-          @Nullable
-          public Object getData(String dataId) {
-            return null;
-          }
-        });
+        EditorActionManager.getInstance().getActionHandler("EditorUnindentSelection").execute(myEditor, DataManager.getInstance().getDataContext());
       }
     }).assertTiming();
     final int startOffset = myEditor.getCaretModel().getOffset();

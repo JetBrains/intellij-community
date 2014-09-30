@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
@@ -216,5 +217,10 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
 
   public TextRange getTextRange() {
     return new TextRange(myStart, myEnd);
+  }
+
+  public boolean isEndOfCodeBlock() {
+    ASTNode node = getNode();
+    return node != null && node.getTextLength() == 1 && node.getChars().charAt(0) == '}';
   }
 }

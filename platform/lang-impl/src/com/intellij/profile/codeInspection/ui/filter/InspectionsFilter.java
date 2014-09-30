@@ -76,6 +76,14 @@ public abstract class InspectionsFilter {
     filterChanged();
   }
 
+  public void reset() {
+    mySuitableInspectionsStates = null;
+    myAvailableOnlyForAnalyze = false;
+    myShowOnlyCleanupInspections = false;
+    mySuitableSeverities.clear();
+    filterChanged();
+  }
+
   public boolean isEmptyFilter() {
     return mySuitableInspectionsStates == null
            && !myAvailableOnlyForAnalyze

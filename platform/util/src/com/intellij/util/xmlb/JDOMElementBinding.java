@@ -38,18 +38,19 @@ class JDOMElementBinding implements Binding {
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
-      return context;
+      return null;
     }
+
     if (value instanceof Element) {
-      Element targetElement;
-      targetElement = (Element)((Element)value).clone();
+      Element targetElement = ((Element)value).clone();
+      assert targetElement != null;
       targetElement.setName(myTagName);
       return targetElement;
     }
     if (value instanceof Element[]) {
       ArrayList<Element> result = new ArrayList<Element>();
       for (Element element : ((Element[])value)) {
-        Element target = ((Element)element.clone()).setName(myTagName);
+        Element target = element.clone().setName(myTagName);
         result.add(target);
 
       }

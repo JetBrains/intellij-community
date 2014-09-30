@@ -48,6 +48,7 @@ public class PsiReferenceContributorEP extends CustomLoadingExtensionPointBean i
     }
   };
 
+  @NotNull
   @Override
   public PsiReferenceContributor getInstance() {
     return myHandler.getValue();

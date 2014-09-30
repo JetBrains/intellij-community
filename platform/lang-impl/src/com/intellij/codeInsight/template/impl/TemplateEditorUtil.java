@@ -73,6 +73,7 @@ public class TemplateEditorUtil {
   private static Editor createEditor(boolean isReadOnly, final Document document, final Project project) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Editor editor = (isReadOnly ? editorFactory.createViewer(document, project) : editorFactory.createEditor(document, project));
+    editor.getContentComponent().setFocusable(!isReadOnly);
 
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setVirtualSpace(false);

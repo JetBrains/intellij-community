@@ -31,8 +31,8 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,10 +44,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EventObject;
+import java.util.*;
+import java.util.List;
 
 public class PushLog extends JPanel implements TypeSafeDataProvider {
 
@@ -167,62 +165,100 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private void updateChangesView() {
-    TreePath[] nodes = myTree.getSelectionPaths();
-    if (nodes != null) {
-      ArrayList<Change> changes = new ArrayList<Change>();
-      for (TreePath path : nodes) {
-        if (path.getLastPathComponent() instanceof VcsFullCommitDetailsNode) {
-          VcsFullCommitDetailsNode commitDetailsNode = (VcsFullCommitDetailsNode)path.getLastPathComponent();
-          changes.addAll(commitDetailsNode.getUserObject().getChanges());
-        }
-        else if (path.getLastPathComponent() instanceof RepositoryNode) {
-          changes.addAll(collectAllChanges((RepositoryNode)path.getLastPathComponent()));
-        }
-      }
+    int[] rows = myTree.getSelectionRows();
+    if (rows.length != 0) {
       myChangesBrowser.getViewer().setEmptyText("No differences");
-      myChangesBrowser.setChangesToDisplay(CommittedChangesTreeBrowser.zipChanges(changes));
-      return;
+      myChangesBrowser.setChangesToDisplay(collectAllChanges(rows));
     }
-    setDefaultEmptyText();
-    myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+    else {
+      setDefaultEmptyText();
+      myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+    }
   }
 
   @NotNull
-  private static Collection<? extends Change> collectAllChanges(@NotNull RepositoryNode rootNode) {
-    ArrayList<Change> changes = new ArrayList<Change>();
-    if (rootNode.getChildCount() <= 0) return changes;
-    for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)rootNode.getFirstChild();
-         childNode != null;
-         childNode = (DefaultMutableTreeNode)rootNode.getChildAfter(childNode)) {
-      if (childNode instanceof VcsFullCommitDetailsNode) {
-        changes.addAll(((VcsFullCommitDetailsNode)childNode).getUserObject().getChanges());
+  private List<Change> collectAllChanges(@NotNull int[] selectedRows) {
+    List<DefaultMutableTreeNode> selectedNodes = getNodesForRows(getSortedRows(selectedRows));
+    List<CommitNode> commitNodes = collectSelectedCommitNodes(selectedNodes);
+    return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
+  }
+
+  @NotNull
+  private static List<CommitNode> collectSelectedCommitNodes(@NotNull List<DefaultMutableTreeNode> selectedNodes) {
+    List<CommitNode> nodes = ContainerUtil.newArrayList();
+    for (DefaultMutableTreeNode node : selectedNodes) {
+      if (node instanceof RepositoryNode) {
+        nodes.addAll(getChildNodes((RepositoryNode)node));
+      }
+      else if (node instanceof CommitNode && !nodes.contains(node)) {
+        nodes.add((CommitNode)node);
       }
     }
+    return nodes;
+  }
+
+  @NotNull
+  private static List<Change> collectChanges(@NotNull List<CommitNode> commitNodes) {
+    List<Change> changes = ContainerUtil.newArrayList();
+    for (CommitNode node : commitNodes) {
+      changes.addAll(node.getUserObject().getChanges());
+    }
     return changes;
+  }
+
+  @NotNull
+  private static List<CommitNode> getChildNodes(@NotNull RepositoryNode node) {
+    List<CommitNode> nodes = ContainerUtil.newArrayList();
+    if (node.getChildCount() < 1) {
+      return nodes;
+    }
+    for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)node.getFirstChild();
+         childNode != null;
+         childNode = (DefaultMutableTreeNode)node.getChildAfter(childNode)) {
+      if (childNode instanceof CommitNode) {
+        nodes.add(0, (CommitNode)childNode);
+      }
+    }
+    return nodes;
   }
 
   private void setDefaultEmptyText() {
     myChangesBrowser.getViewer().setEmptyText("No commits selected");
   }
 
-  public void selectNode(@NotNull DefaultMutableTreeNode node) {
-    TreePath selectionPath = new TreePath(node.getPath());
-    myTree.addSelectionPath(selectionPath);
-  }
-
   // Make changes available for diff action
   @Override
   public void calcData(DataKey key, DataSink sink) {
     if (VcsDataKeys.CHANGES.equals(key)) {
-      DefaultMutableTreeNode[] selectedNodes = myTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
-      if (selectedNodes.length == 0) {
-        return;
-      }
-      Object object = selectedNodes[0].getUserObject();
-      if (object instanceof VcsFullCommitDetails) {
-        sink.put(key, ArrayUtil.toObjectArray(((VcsFullCommitDetails)object).getChanges(), Change.class));
+      int[] rows = myTree.getSelectionRows();
+      if (rows.length != 0) {
+        Collection<Change> changes = collectAllChanges(rows);
+        sink.put(key, ArrayUtil.toObjectArray(changes, Change.class));
       }
     }
+  }
+
+  @NotNull
+  private static List<Integer> getSortedRows(@NotNull int[] rows) {
+    List<Integer> sorted = ContainerUtil.newArrayList();
+    for (int row : rows) {
+      sorted.add(row);
+    }
+    Collections.sort(sorted, Collections.reverseOrder());
+    return sorted;
+  }
+
+  @NotNull
+  private List<DefaultMutableTreeNode> getNodesForRows(@NotNull List<Integer> rows) {
+    List<DefaultMutableTreeNode> nodes = ContainerUtil.newArrayList();
+    for (Integer row : rows) {
+      TreePath path = myTree.getPathForRow(row);
+      Object pathComponent = path == null ? null : path.getLastPathComponent();
+      if (pathComponent instanceof DefaultMutableTreeNode) {
+        nodes.add((DefaultMutableTreeNode)pathComponent);
+      }
+    }
+    return nodes;
   }
 
   @Override
@@ -233,21 +269,28 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
       else {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        myTree.startEditingAtPath(TreeUtil.getPathFromRoot(node));
+        if (node != null) {
+          myTree.startEditingAtPath(TreeUtil.getPathFromRoot(node));
+        }
       }
       return true;
     }
     return super.processKeyBinding(ks, e, condition, pressed);
   }
 
-  public void startLoading(DefaultMutableTreeNode parentNode) {
-    LoadingTreeNode loading = new LoadingTreeNode();
-    loading.getIcon().setImageObserver(new NodeImageObserver(myTree, loading));
-    setChildren(parentNode, Collections.singleton(loading));
-  }
-
   public JComponent getPreferredFocusedComponent() {
     return myTree;
+  }
+
+  @NotNull
+  public JTree getTree() {
+    return myTree;
+  }
+
+  public void selectIfNothingSelected(@NotNull TreeNode node) {
+    if (myTree.isSelectionEmpty()) {
+      myTree.setSelectionPath(TreeUtil.getPathFromRoot(node));
+    }
   }
 
   private class MyTreeCellEditor extends AbstractCellEditor implements TreeCellEditor {
@@ -258,7 +301,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
       RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
       myValue = panel;
-      return panel.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, true);
+      return panel.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row, true);
     }
 
     @Override
@@ -299,7 +342,6 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
       ColoredTreeCellRenderer renderer = getTextRenderer();
-      renderer.setBorder(null);
       if (value instanceof CustomRenderedTreeNode) {
         ((CustomRenderedTreeNode)value).render(renderer);
       }
@@ -339,9 +381,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     if (node.getChildCount() <= 0) return;
     if (node instanceof RepositoryNode) {
       TreePath path = TreeUtil.getPathFromRoot(node);
-      if (((RepositoryNode)node).isChecked()) {
-        myTree.expandPath(path);
-      }
+      myTree.expandPath(path);
       return;
     }
     for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)node.getFirstChild();

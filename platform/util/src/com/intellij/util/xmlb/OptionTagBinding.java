@@ -55,9 +55,10 @@ class OptionTagBinding extends BasePrimitiveBinding {
   }
 
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
-    Element targetElement = new Element(myTagName);
+  @Nullable
+  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
     Object value = myAccessor.read(o);
+    Element targetElement = new Element(myTagName);
 
     if (!StringUtil.isEmpty(myNameAttribute)) {
       targetElement.setAttribute(myNameAttribute, myName);
@@ -73,15 +74,16 @@ class OptionTagBinding extends BasePrimitiveBinding {
     else {
       assert myBinding != null;
       Object node = myBinding.serialize(value, targetElement, filter);
-      if (node instanceof Text) {
-        Text text = (Text)node;
-        targetElement.setAttribute(myValueAttribute, text.getText());
-      }
-      else if (targetElement != node) {
-        JDOMUtil.addContent(targetElement, node);
+      if (node != null) {
+        if (node instanceof Text) {
+          Text text = (Text)node;
+          targetElement.setAttribute(myValueAttribute, text.getText());
+        }
+        else if (targetElement != node) {
+          JDOMUtil.addContent(targetElement, node);
+        }
       }
     }
-
     return targetElement;
   }
 
@@ -137,11 +139,6 @@ class OptionTagBinding extends BasePrimitiveBinding {
       return name == null || name.equals(myName);
     }
     return name != null && name.equals(myName);
-  }
-
-  @Override
-  public Class getBoundNodeType() {
-    throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
   }
 
   @NonNls

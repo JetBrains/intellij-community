@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 public class PathUtil {
   private PathUtil() {
@@ -111,5 +114,18 @@ public class PathUtil {
   @Contract("null -> null; !null -> !null")
   public static String toSystemDependentName(@Nullable String path) {
     return path == null ? null : FileUtilRt.toSystemDependentName(path);
+  }
+
+  @NotNull
+  public static String driveLetterToLowerCase(@NotNull String path) {
+    if (!SystemInfo.isWindows) {
+      return path;
+    }
+    File file = new File(path);
+    if (file.isAbsolute() && path.length() >= 2 &&
+        Character.isUpperCase(path.charAt(0)) && path.charAt(1) == ':') {
+      return Character.toLowerCase(path.charAt(0)) + path.substring(1);
+    }
+    return path;
   }
 }

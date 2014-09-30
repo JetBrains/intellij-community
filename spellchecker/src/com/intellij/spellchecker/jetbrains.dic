@@ -111,6 +111,7 @@ dereference
 dereferences
 desc
 deserializable
+deserialize
 deserializer
 deserializers
 devkit
@@ -167,8 +168,9 @@ getters
 giud
 globals
 google
-gzip
 gruntfile
+gzip
+gzipped
 hamcrest
 hardcoded
 hardlink

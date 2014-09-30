@@ -89,7 +89,7 @@ public class GroovyCompilerWrapper {
                                        final boolean forStubs) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
 
-    final String outputPath = targetDirectory.getCanonicalPath().replace(File.separatorChar, '/');
+    final String outputPath = targetDirectory.getAbsolutePath().replace(File.separatorChar, '/');
 
     if (forStubs) {
       compilationUnit.applyToPrimaryClassNodes(new CompilationUnit.PrimaryClassNodeOperation() {

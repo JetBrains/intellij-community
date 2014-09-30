@@ -18,16 +18,17 @@ package com.intellij.dvcs.push.ui;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 public class SingleRepositoryNode extends RepositoryNode {
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
+  private final LoadingIcon myEmptyIcon;
 
   public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
-    super(repositoryPanel);
+    super(repositoryPanel, true);
     myRepositoryPanel = repositoryPanel;
+    myEmptyIcon = LoadingIcon.createEmpty(myLoadingIcon.getIconWidth(), myLoadingIcon.getIconHeight());
   }
 
   @Override
@@ -37,13 +38,14 @@ public class SingleRepositoryNode extends RepositoryNode {
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
+    renderer.setIcon(myLoading.get() ? myLoadingIcon : myEmptyIcon);
+    renderer.setIconOnTheRight(false);
+
+    renderer.append("");
+    renderer.appendFixedTextFragmentWidth(myLoadingIconWidth);
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
     pushTargetPanel.render(renderer);
-
-    // hack to fix vertical size of the editor
-    renderer.setIcon(EmptyIcon.ICON_18);
-    renderer.setIconOnTheRight(true);
   }
 }

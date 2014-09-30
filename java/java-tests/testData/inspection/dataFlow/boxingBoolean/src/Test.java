@@ -52,4 +52,14 @@ public class S {
         if (o) {
         }
     }
+
+  public void flushOriginal(boolean b){
+    boolean o;
+    {
+      Boolean c = Boolean.FALSE;
+      o = !c;
+    }
+    if (o) {
+    }
+  }
 }

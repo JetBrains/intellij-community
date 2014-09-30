@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,8 +27,11 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 1:12 PM
  */
 public interface VcsBaseContentProvider {
+  /*
+   * return pair of base revision number and content
+   *
+   * null is returned if an error occurred
+   */
   @Nullable
-  String getBaseVersionContent(VirtualFile file);
-  @Nullable
-  VcsRevisionNumber getBaseRevision(VirtualFile file);
+  Pair<VcsRevisionNumber, String> getBaseRevision(@NotNull VirtualFile file);
 }

@@ -20,20 +20,21 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.SortedSet;
 
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionFilterAction extends DefaultActionGroup {
+public class InspectionFilterAction extends DefaultActionGroup implements Toggleable, DumbAware {
 
   private final SeverityRegistrar mySeverityRegistrar;
   private final InspectionsFilter myInspectionsFilter;
@@ -46,8 +47,16 @@ public class InspectionFilterAction extends DefaultActionGroup {
     tune();
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, !myInspectionsFilter.isEmptyFilter());
+  }
+
   private void tune() {
-    addAction(new ShowEnabledOrDisabledInspectionsAction(null));
+    addAction(new ResetFilterAction());
+    addSeparator();
+
     addAction(new ShowEnabledOrDisabledInspectionsAction(true));
     addAction(new ShowEnabledOrDisabledInspectionsAction(false));
     addSeparator();
@@ -62,7 +71,24 @@ public class InspectionFilterAction extends DefaultActionGroup {
     add(new ShowOnlyCleanupInspectionsAction());
   }
 
-  private class ShowOnlyCleanupInspectionsAction extends CheckboxAction {
+  private class ResetFilterAction extends DumbAwareAction {
+    public ResetFilterAction() {
+      super("Reset Filter");
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myInspectionsFilter.reset();
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(!myInspectionsFilter.isEmptyFilter());
+    }
+  }
+
+  private class ShowOnlyCleanupInspectionsAction extends CheckboxAction implements DumbAware{
     public ShowOnlyCleanupInspectionsAction() {
       super("Show Only Cleanup Inspections");
     }
@@ -78,7 +104,7 @@ public class InspectionFilterAction extends DefaultActionGroup {
     }
   }
 
-  private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction {
+  private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction implements DumbAware {
 
     public ShowAvailableOnlyOnAnalyzeInspectionsAction() {
       super("Show Only \"Available only for Analyze | Inspect Code\"");
@@ -95,7 +121,7 @@ public class InspectionFilterAction extends DefaultActionGroup {
     }
   }
 
-  private class ShowWithSpecifiedSeverityInspectionsAction extends CheckboxAction {
+  private class ShowWithSpecifiedSeverityInspectionsAction extends CheckboxAction implements DumbAware {
 
     private final HighlightSeverity mySeverity;
 
@@ -122,12 +148,12 @@ public class InspectionFilterAction extends DefaultActionGroup {
     }
   }
 
-  private class ShowEnabledOrDisabledInspectionsAction extends CheckboxAction {
+  private class ShowEnabledOrDisabledInspectionsAction extends CheckboxAction implements DumbAware{
 
     private final Boolean myShowEnabledActions;
 
-    public ShowEnabledOrDisabledInspectionsAction(@Nullable final Boolean showEnabledActions) {
-      super(showEnabledActions == null ? "All Inspections" : (showEnabledActions ? "Enabled" : "Disabled"));
+    public ShowEnabledOrDisabledInspectionsAction(final boolean showEnabledActions) {
+      super("Show Only " + (showEnabledActions ? "Enabled" : "Disabled"));
       myShowEnabledActions = showEnabledActions;
     }
 
@@ -139,7 +165,8 @@ public class InspectionFilterAction extends DefaultActionGroup {
 
     @Override
     public void setSelected(final AnActionEvent e, final boolean state) {
-      myInspectionsFilter.setSuitableInspectionsStates(myShowEnabledActions);
+      final boolean previousState = isSelected(e);
+      myInspectionsFilter.setSuitableInspectionsStates(previousState ? null : myShowEnabledActions);
     }
   }
 }

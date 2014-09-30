@@ -127,6 +127,10 @@ public class Executor {
     FileUtil.writeToFile(file, content.getBytes(), true);
   }
 
+  public static void append(@NotNull String fileName, @NotNull String content) throws IOException {
+    append(child(fileName), content);
+  }
+
   @NotNull
   public static File mkdir(@NotNull String dirName) {
     File file = child(dirName);

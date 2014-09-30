@@ -27,6 +27,7 @@ import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
 import org.jetbrains.jps.maven.model.impl.MavenResourceFileFilter;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
 import java.io.File;
 
@@ -37,7 +38,10 @@ public class MavenEjbArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
 
   @Nullable
   @Override
-  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact, @NotNull File root, @NotNull JpsModel model,
+  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
+                                                @NotNull File root,
+                                                @NotNull JpsPackagingElement contextElement,
+                                                @NotNull JpsModel model,
                                                 @NotNull BuildDataPaths buildDataPaths) {
     JpsMavenExtensionService mavenExtensionService = JpsMavenExtensionService.getInstance();
     if (!mavenExtensionService.hasMavenProjectConfiguration(buildDataPaths)) return null;

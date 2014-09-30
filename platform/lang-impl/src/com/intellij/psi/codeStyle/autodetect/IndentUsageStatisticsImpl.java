@@ -104,7 +104,10 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
 
     myPreviousRelativeIndent = relativeIndent;
     myPreviousLineIndent = currentIndent;
-    myTotalLinesWithWhiteSpaces++;
+
+    if (currentIndent > 0) {
+      myTotalLinesWithWhiteSpaces++;
+    }
   }
 
   private void increaseIndentUsage(int relativeIndent) {

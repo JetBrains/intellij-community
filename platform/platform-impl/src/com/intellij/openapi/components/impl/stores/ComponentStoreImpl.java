@@ -22,6 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.components.store.ComponentSaveSession;
+import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -29,13 +31,12 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -90,44 +91,35 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
   @Override
   @NotNull
-  public SaveSession startSave() throws IOException {
+  public ComponentSaveSession startSave() {
+    SaveSessionImpl session = createSaveSession();
     try {
-      final SaveSessionImpl session = createSaveSession();
+      session.commit();
+    }
+    catch (Throwable e) {
       try {
-        session.commit();
+        session.reset();
       }
-      catch (Throwable e) {
-        try {
-          session.reset();
-        }
-        catch (Exception e1_ignored) {
-          LOG.info(e1_ignored);
-        }
-
-        PluginId pluginId = IdeErrorsDialog.findPluginId(e);
-        if (pluginId != null) {
-          throw new PluginException(e, pluginId);
-        }
-
-        LOG.info(e);
-        IOException ioException = new IOException(e.getMessage());
-        ioException.initCause(e);
-        throw ioException;
+      catch (Exception e1_ignored) {
+        LOG.info(e1_ignored);
       }
-      mySession = session;
-      return mySession;
+
+      PluginId pluginId = IdeErrorsDialog.findPluginId(e);
+      if (pluginId != null) {
+        throw new PluginException(e, pluginId);
+      }
+
+      throw new StateStorageException(e);
     }
-    catch (StateStorageException e) {
-      LOG.info(e);
-      throw new IOException(e.getMessage());
-    }
+    mySession = session;
+    return mySession;
   }
 
   protected SaveSessionImpl createSaveSession() throws StateStorageException {
     return new SaveSessionImpl();
   }
 
-  public void finishSave(@NotNull final SaveSession saveSession) {
+  public void finishSave(@NotNull final ComponentSaveSession saveSession) {
     assert mySession == saveSession;
     mySession.finishSave();
     mySession = null;
@@ -287,7 +279,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     return (Class<T>)ReflectionUtil.getRawType(type);
   }
 
-  public static String getComponentName(@NotNull final PersistentStateComponent<?> persistentStateComponent) {
+  @NotNull
+  public static String getComponentName(@NotNull PersistentStateComponent<?> persistentStateComponent) {
     return getStateSpec(persistentStateComponent).name();
   }
 
@@ -345,7 +338,16 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     return null;
   }
 
-  protected class SaveSessionImpl implements SaveSession {
+  protected static void executeSave(@NotNull StateStorageManager.SaveSession saveSession, @NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+    try {
+      saveSession.save();
+    }
+    catch (ReadOnlyModificationException e) {
+      readonlyFiles.add(Pair.create(saveSession, e.getFile()));
+    }
+  }
+
+  protected class SaveSessionImpl implements ComponentSaveSession {
     protected StateStorageManager.SaveSession myStorageManagerSaveSession;
 
     public SaveSessionImpl() {
@@ -354,42 +356,19 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     @NotNull
     @Override
-    public List<File> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
-      try {
-        return myStorageManagerSaveSession.getAllStorageFilesToSave();
-      }
-      catch (StateStorageException e) {
-        throw new IOException(e.getMessage());
-      }
-    }
-
-    @NotNull
-    @Override
-    public SaveSession save() throws IOException {
-      try {
-        final SettingsSavingComponent[] settingsComponents =
-            mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
-
-        for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {
-          try {
-            settingsSavingComponent.save();
-          }
-          catch (StateStorageException e) {
-            LOG.info(e);
-            throw new IOException(e.getMessage());
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+    public ComponentSaveSession save(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+      SettingsSavingComponent[] settingsComponents =
+        mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
+      for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {
+        try {
+          settingsSavingComponent.save();
         }
-
-        myStorageManagerSaveSession.save();
-      }
-      catch (StateStorageException e) {
-        LOG.info(e);
-        throw new IOException(e.getMessage(), e);
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
 
+      executeSave(myStorageManagerSaveSession, readonlyFiles);
       return this;
     }
 
@@ -417,7 +396,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       }
     }
 
-    protected void commit() throws StateStorageException {
+    protected void commit() {
       final StateStorageManager storageManager = getStateStorageManager();
       final StateStorageManager.ExternalizationSession session = storageManager.startExternalization();
 
@@ -441,10 +420,9 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       return myStorageManagerSaveSession.analyzeExternalChanges(changedFiles);
     }
 
-    @NotNull
     @Override
-    public List<File> getAllStorageFiles(final boolean includingSubStructures) {
-      return myStorageManagerSaveSession.getAllStorageFiles();
+    public void collectAllStorageFiles(boolean includingSubStructures, @NotNull List<VirtualFile> files) {
+      myStorageManagerSaveSession.collectAllStorageFiles(files);
     }
   }
 
@@ -461,6 +439,22 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   @Override
+  @NotNull
+  public final Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames) {
+    Set<String> notReloadableComponents = null;
+    for (String componentName : componentNames) {
+      Object component = myComponents.get(componentName);
+      if (component != null && (!(component instanceof PersistentStateComponent) || !getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
+        if (notReloadableComponents == null) {
+          notReloadableComponents = new LinkedHashSet<String>();
+        }
+        notReloadableComponents.add(componentName);
+      }
+    }
+    return notReloadableComponents == null ? Collections.<String>emptySet() : notReloadableComponents;
+  }
+
+  @Override
   public void reinitComponents(@NotNull final Set<String> componentNames, final boolean reloadData) {
     for (String componentName : componentNames) {
       final PersistentStateComponent component = (PersistentStateComponent)myComponents.get(componentName);
@@ -470,13 +464,55 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull final Set<String> componentNames)
-      throws StateStorageException {
+  protected void doReload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> componentNames) {
     for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
       assert pair != null;
-      final StateStorage storage = pair.second;
+      StateStorage storage = pair.second;
       assert storage != null : "Null storage for: " + pair.first;
       storage.reload(componentNames);
     }
+  }
+
+  @Nullable
+  protected final Collection<String> reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull MessageBus messageBus) {
+    ComponentSaveSession saveSession = startSave();
+    Set<String> componentNames;
+    try {
+      componentNames = saveSession.analyzeExternalChanges(changedFiles);
+      if (componentNames == null) {
+        return Collections.emptyList();
+      }
+
+      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+        if (pair.second == null) {
+          return Collections.emptyList();
+        }
+      }
+
+      Collection<String> currentNotReloadableComponents = getNotReloadableComponents(componentNames);
+
+      StorageUtil.logStateDiffInfo(changedFiles, componentNames);
+
+      if (!currentNotReloadableComponents.isEmpty()) {
+        return currentNotReloadableComponents;
+      }
+    }
+    finally {
+      finishSave(saveSession);
+    }
+
+    if (!componentNames.isEmpty()) {
+      messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
+
+      try {
+        doReload(changedFiles, componentNames);
+        reinitComponents(componentNames, false);
+      }
+      finally {
+        messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
+      }
+    }
+
+    return null;
   }
 }

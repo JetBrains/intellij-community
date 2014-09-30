@@ -96,6 +96,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     @Override
     public void run() {
       updateLookup();
+      myQueue.setMergingTimeSpan(300);
     }
   };
   private final Semaphore myFreezeSemaphore;
@@ -167,7 +168,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     };
     LookupManager.getInstance(getProject()).addPropertyChangeListener(myLookupManagerListener);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 300, true, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 100, true, myEditor.getContentComponent());
     myQueue.setPassThrough(false);
 
     ApplicationManager.getApplication().assertIsDispatchThread();

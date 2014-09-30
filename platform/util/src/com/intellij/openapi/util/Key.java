@@ -98,6 +98,7 @@ public class Key<T> {
     }
   }
 
+  @Nullable("can become null if the key has been gc-ed")
   public static <T> Key<T> getKeyByIndex(int index) {
     //noinspection unchecked
     return (Key<T>)allKeys.get(index);

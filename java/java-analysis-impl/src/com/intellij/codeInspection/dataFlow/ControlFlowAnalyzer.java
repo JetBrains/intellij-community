@@ -92,6 +92,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     addInstruction(new ReturnInstruction(false, null));
 
+    new LiveVariablesAnalyzer(myCurrentFlow, myFactory).flushDeadVariablesOnStatementFinish();
+
     return myCurrentFlow;
   }
 
@@ -124,6 +126,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiElement popped = myElementStack.pop();
     if (element != popped) {
       throw new AssertionError("Expected " + element + ", popped " + popped);
+    }
+    if (element instanceof PsiStatement && !(element instanceof PsiReturnStatement)) {
+      addInstruction(new FinishElementInstruction(element));
     }
   }
 
@@ -1466,7 +1471,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Nullable
   public static PsiAnnotation findContractAnnotation(PsiMethod method) {
-    return AnnotationUtil.findAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    return AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(ORG_JETBRAINS_ANNOTATIONS_CONTRACT));
   }
 
   public static boolean isPure(PsiMethod method) {
@@ -1611,8 +1616,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(expression.resolve() instanceof PsiField ? new FieldReferenceInstruction(expression, null) : new PopInstruction());
     }
 
-    boolean referenceRead = PsiUtil.isAccessedForReading(expression) && !PsiUtil.isAccessedForWriting(expression);
-    addInstruction(new PushInstruction(myFactory.createValue(expression), expression, referenceRead));
+    // complex assignments (e.g. "|=") are both reading and writing
+    boolean writing = PsiUtil.isAccessedForWriting(expression) && !PsiUtil.isAccessedForReading(expression);
+    addInstruction(new PushInstruction(myFactory.createValue(expression), expression, writing));
 
     finishElement(expression);
   }

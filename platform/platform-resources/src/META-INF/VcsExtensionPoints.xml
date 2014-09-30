@@ -2,6 +2,8 @@
   <extensionPoints>
     <extensionPoint name="checkoutProvider"
                     interface="com.intellij.openapi.vcs.CheckoutProvider"/>
+    <extensionPoint name="vcs.checkoutProcessor"
+                    interface="com.intellij.openapi.vcs.VcsCheckoutProcessor"/>
     <extensionPoint name="vcsRootChecker"
                     interface="com.intellij.openapi.vcs.VcsRootChecker"/>
     <extensionPoint name="checkoutListener"

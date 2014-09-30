@@ -746,7 +746,7 @@ public class JavaDocInfoGenerator {
             buffer.append("(");
             boolean first = true;
             for (PsiNameValuePair pair : attributes) {
-              if (!first) buffer.append("&nbsp;");
+              if (!first) buffer.append(",&nbsp;");
               first = false;
               final String name = pair.getName();
               if (name != null) {

@@ -41,6 +41,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.preview.PreviewManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -114,17 +115,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Override
   protected String getRestorePopupDescription() {
-    return "Restore documentation popup behavior";
+    return "Restore popup view mode";
   }
 
   @Override
   protected String getAutoUpdateDescription() {
-    return "Show documentation for current element automatically";
+    return "Refresh documentation on selection change automatically";
   }
 
   @Override
   protected String getAutoUpdateTitle() {
-    return "Auto Show Documentation for Selected Element";
+    return "Auto-update from Source";
   }
 
   @NotNull
@@ -385,6 +386,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
 
     JBPopup _oldHint = getDocInfoHint();
+    PreviewManager previewManager = PreviewManager.SERVICE.getInstance(myProject);
+    if (previewManager != null &&
+        previewManager.preview(DocumentationPreviewPanelProvider.ID, Couple.of(element, originalElement), requestFocus) != null) {
+      return;
+    }
+
     if (myToolWindow == null && PropertiesComponent.getInstance().isTrueValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW)) {
       createToolWindow(element, originalElement);
     }
@@ -524,7 +531,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
-  private static String getTitle(@NotNull final PsiElement element, final boolean _short) {
+  static String getTitle(@NotNull final PsiElement element, final boolean _short) {
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
     return _short ? title != null ? title : element.getText() : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
   }

@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -35,7 +34,6 @@ import org.jdom.filter.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -51,7 +49,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull protected final String myRootElementName;
   private Object mySession;
-  private StorageData myLoadedData;
+  protected StorageData myLoadedData;
   protected final StreamProvider myStreamProvider;
   protected final String myFileSpec;
   protected boolean myBlockSavingTheContent = false;
@@ -145,7 +143,10 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     if (useProvidersData && myStreamProvider != null && myStreamProvider.isEnabled()) {
       try {
-        loadDataFromStreamProvider(result);
+        Element element = loadDataFromStreamProvider();
+        if (element != null) {
+          loadState(result, element);
+        }
 
         //noinspection deprecation
         if (!myStreamProvider.isVersioningRequired() && !(myStreamProvider instanceof OldStreamProviderAdapter || myStreamProvider instanceof CurrentUserHolder)) {
@@ -166,19 +167,20 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return result;
   }
 
-  private void loadDataFromStreamProvider(@NotNull StorageData result) throws IOException, JDOMException {
+  @Nullable
+  protected final Element loadDataFromStreamProvider() throws IOException, JDOMException {
     assert myStreamProvider != null;
     InputStream inputStream = myStreamProvider.loadContent(myFileSpec, myRoamingType);
     if (inputStream == null) {
-      return;
+      return null;
     }
 
     Element element = JDOMUtil.loadDocument(inputStream).getRootElement();
     filterOutOfDate(element);
-    loadState(result, element);
+    return element;
   }
 
-  private void loadState(@NotNull StorageData result, @NotNull Element element) {
+  protected final void loadState(@NotNull StorageData result, @NotNull Element element) {
     result.load(element, myPathMacroSubstitutor, true);
   }
 
@@ -213,7 +215,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private static SaveSession createNullSession() {
     return new SaveSession(){
       @Override
-      public void save() throws StateStorageException {
+      public void save() {
       }
 
       @Override
@@ -221,16 +223,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         return Collections.emptySet();
       }
 
-      @NotNull
       @Override
-      public Collection<File> getStorageFilesToSave() throws StateStorageException {
-        return Collections.emptySet();
-      }
-
-      @NotNull
-      @Override
-      public List<File> getAllStorageFiles() {
-        return Collections.emptyList();
+      public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
       }
     };
   }
@@ -316,17 +310,12 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return element;
   }
 
-  protected abstract class MySaveSession implements SaveSession, SafeWriteRequestor {
+  protected abstract class MySaveSession implements SaveSession {
     final StorageData myStorageData;
     private Element myElementToSave;
 
     public MySaveSession(MyExternalizationSession externalizationSession) {
       myStorageData = externalizationSession.myStorageData;
-    }
-
-    public final boolean needsSave() {
-      assert mySession == this;
-      return _needsSave(calcHash());
     }
 
     private boolean _needsSave(int hash) {
@@ -376,7 +365,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     @Override
-    public final void save() throws StateStorageException {
+    public final void save() {
       assert mySession == this;
 
       if (myBlockSavingTheContent) {
@@ -388,27 +377,17 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         if (myStreamProvider != null && myStreamProvider.isEnabled() && (myProviderUpToDateHash == -1 || myProviderUpToDateHash != hash)) {
           try {
             saveForProvider();
-          }
-          catch (IOException e) {
-            LOG.warn(e);
-          }
-          finally {
             myProviderUpToDateHash = hash;
+          }
+          catch (Throwable e) {
+            LOG.error(e);
           }
         }
       }
       finally {
-        saveLocally(hash);
-      }
-    }
-
-    private void saveLocally(int hash) {
-      try {
         if (!(myUpToDateHash != -1 && myUpToDateHash == hash) && _needsSave(hash)) {
           doSave();
         }
-      }
-      finally {
         myUpToDateHash = hash;
       }
     }
@@ -465,15 +444,28 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      boolean containsSelf = false;
+      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+        if (pair.second == XmlElementStorage.this) {
+          containsSelf = true;
+          break;
+        }
+      }
+
+      if (!containsSelf) {
+        return Collections.emptySet();
+      }
+
       try {
         Element element = loadLocalData();
-        StorageData storageData = createStorageData();
         if (element == null) {
           return Collections.emptySet();
         }
+
+        StorageData storageData = createStorageData();
         loadState(storageData, element);
-        return storageData.getDifference(myStorageData, myPathMacroSubstitutor);
+        return storageData.getChangedComponentNames(myStorageData, myPathMacroSubstitutor);
       }
       catch (StateStorageException e) {
         LOG.info(e);
@@ -507,7 +499,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   @Override
-  public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
+  public void reload(@NotNull final Set<String> changedComponents) {
     final StorageData storageData = loadData(false);
     final StorageData oldLoadedData = myLoadedData;
     if (oldLoadedData != null) {

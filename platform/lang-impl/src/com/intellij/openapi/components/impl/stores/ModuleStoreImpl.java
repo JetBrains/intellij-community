@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ModuleStoreImpl");
+  private static final Logger LOG = Logger.getInstance(ModuleStoreImpl.class);
 
   private final ModuleImpl myModule;
 
@@ -158,12 +157,14 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       return super.computeHash() * 31 + myOptions.hashCode();
     }
 
-    @Override
     @Nullable
-    public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
-      final ModuleFileData data = (ModuleFileData)storageData;
-      if (!myOptions.equals(data.myOptions)) return null;
-      return super.getDifference(storageData, substitutor);
+    @Override
+    public Set<String> getChangedComponentNames(@NotNull StorageData newStorageData, @Nullable PathMacroSubstitutor substitutor) {
+      final ModuleFileData data = (ModuleFileData)newStorageData;
+      if (!myOptions.equals(data.myOptions)) {
+        return null;
+      }
+      return super.getChangedComponentNames(newStorageData, substitutor);
     }
 
     public void setOption(final String optionName, final String optionValue) {
@@ -182,7 +183,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public void setModuleFilePath(@NotNull final String filePath) {
+  public void setModuleFilePath(@NotNull String filePath) {
     final String path = filePath.replace(File.separatorChar, '/');
     LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     final StateStorageManager storageManager = getStateStorageManager();

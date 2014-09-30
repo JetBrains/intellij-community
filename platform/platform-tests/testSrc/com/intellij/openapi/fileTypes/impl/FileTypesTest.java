@@ -303,6 +303,9 @@ public class FileTypesTest extends PlatformTestCase {
       File f = new File(d, "xx.asfdasdfas");
       FileUtil.writeToFile(f, "akjdhfksdjgf");
       VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+      UIUtil.dispatchAllInvocationEvents();
+      myFileTypeManager.drainReDetectQueue();
+      UIUtil.dispatchAllInvocationEvents();
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
 
       VfsUtil.saveText(vFile, "TYPE:IDEA_MODULE");

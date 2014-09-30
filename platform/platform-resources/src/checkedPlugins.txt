@@ -14,3 +14,4 @@ JSTestDriver Plugin
 com.jetbrains.chronon
 AngularJS
 org.jetbrains.plugins.vagrant
+com.jetbrains.plugins.ini4idea

@@ -71,12 +71,9 @@
                         serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
     <exportable serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"/>
 
-    <applicationService serviceInterface="com.intellij.codeEditor.printing.PrintSettings"
-                        serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
-    <exportable serviceInterface="com.intellij.codeEditor.printing.PrintSettings"/>
+    <applicationService serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
-    <exportable serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"/>
 
     <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
                         serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
@@ -111,6 +108,7 @@
 
     <applicationService serviceInterface="com.intellij.find.FindSettings"
                         serviceImplementation="com.intellij.find.impl.FindSettingsImpl"/>
+    <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.CodeInsightSettings"
                         serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
@@ -525,9 +523,6 @@
     <completion.skip implementation="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor$Skipper"
                      id="skipLiveTemplate"/>
 
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInspection.magicConstant.MagicCompletionContributor"
-                            id="magicCompletion" order="first, before liveTemplates"/>
-
     <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings"
                         serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
     <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
@@ -893,6 +888,12 @@
 
     <projectService serviceInterface="com.intellij.execution.ExecutionManager" serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
+    <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
+    <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>
+    <projectService serviceInterface="com.intellij.openapi.preview.PreviewManager"
+                    serviceImplementation="com.intellij.openapi.preview.impl.PreviewManagerImpl"/>
+
+    <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider" order="last"/>
   </extensions>
 </idea-plugin>
 

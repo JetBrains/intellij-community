@@ -12,7 +12,7 @@
 import os
 import sys
 
-from pydevd_constants import IS_PY24, IS_PY3K
+from pydevd_constants import IS_PY24, IS_PY3K, IS_JYTHON
 
 
 if IS_PY24:
@@ -439,6 +439,8 @@ class _ImportHook(ModuleType):
             else:
                 # default value for level parameter in other versions
                 level = -1
+        if IS_JYTHON:
+            import_name = name
         return self._system_import(import_name, globals, locals,
                                    fromlist, level)
 

@@ -404,6 +404,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testParenthesisAroundGeneratorExpression() {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

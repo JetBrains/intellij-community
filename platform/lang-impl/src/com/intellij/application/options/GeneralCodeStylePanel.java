@@ -40,8 +40,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +75,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JBLabel myFormatterOnLabel;
   private JPanel myMarkerOptionsPanel;
   private JPanel myAdditionalSettingsPanel;
+  private JCheckBox myAutodetectIndentsBox;
   private final SmartIndentOptionsEditor myIndentOptionsEditor;
   private final JBScrollPane myScrollPane;
 
@@ -160,6 +159,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     settings.FORMATTER_ON_TAG = getTagText(myFormatterOnTagField, settings.FORMATTER_ON_TAG);
     settings.setFormatterOnPattern(compilePattern(settings, myFormatterOnTagField, settings.FORMATTER_ON_TAG));
 
+    settings.AUTODETECT_INDENTS = myAutodetectIndentsBox.isSelected();
+
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.apply(settings);
     }
@@ -229,6 +230,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       if (option.isModified(settings)) return true;
     }
 
+    if (settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected()) return true;
+
     return myIndentOptionsEditor.isModified(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
@@ -266,6 +269,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myFormatterOffTagField.setText(settings.FORMATTER_OFF_TAG);
 
     setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
+
+    myAutodetectIndentsBox.setSelected(settings.AUTODETECT_INDENTS);
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.reset(settings);

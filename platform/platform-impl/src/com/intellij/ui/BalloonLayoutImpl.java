@@ -93,8 +93,9 @@ public class BalloonLayoutImpl implements BalloonLayout {
     List<Integer> columnWidths = computeWidths(columns);
 
     ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
-    int paneOnScreen = (pane != null ? pane : myParent).getLocationOnScreen().y;
-    int layerOnScreen = myLayeredPane.getLocationOnScreen().y;
+    JComponent component = pane != null ? pane : myParent;
+    int paneOnScreen = component.isShowing() ? component.getLocationOnScreen().y : 0;
+    int layerOnScreen = myLayeredPane.isShowing() ? myLayeredPane.getLocationOnScreen().y : 0;
     int toolbarsOffset = paneOnScreen - layerOnScreen;
     
     JComponent layeredPane = pane != null ? pane.getMyLayeredPane() : null;
@@ -114,7 +115,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
           eachRec.width += 2 * shadowSize;
           eachRec.height += 2 * shadowSize;
         }
-        eachY+=2; //space between two notifications
+        eachY += 2; //space between two notifications
         eachRec.setLocation(eachColumnX + eachWidth.intValue() - eachRec.width, eachY);
         eachBalloon.setBounds(eachRec);
         eachY += eachRec.height;

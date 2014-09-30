@@ -561,16 +561,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   public XmlAttribute[] getAttributes() {
     XmlAttribute[] attributes = myAttributes;
     if (attributes == null) {
-      Map<String, String> attributesValueMap = new THashMap<String, String>();
-      attributes = calculateAttributes(attributesValueMap);
-      myAttributeValueMap = attributesValueMap;
-      myAttributes = attributes;
+      myAttributes = attributes = calculateAttributes();
     }
     return attributes;
   }
 
   @NotNull
-  private XmlAttribute[] calculateAttributes(final Map<String, String> attributesValueMap) {
+  private XmlAttribute[] calculateAttributes() {
     final List<XmlAttribute> result = new ArrayList<XmlAttribute>(10);
     processChildren(new PsiElementProcessor() {
       @Override
@@ -578,7 +575,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
         if (element instanceof XmlAttribute) {
           XmlAttribute attribute = (XmlAttribute)element;
           result.add(attribute);
-          cacheOneAttributeValue(attribute.getName(), attribute.getValue(), attributesValueMap);
           myHasNamespaceDeclarations = myHasNamespaceDeclarations || attribute.isNamespaceDeclaration();
         }
         else if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_TAG_END) {
@@ -600,15 +596,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   @Override
-  public String getAttributeValue(String qname) { //todo ?
+  public String getAttributeValue(String qname) {
     Map<String, String> map = myAttributeValueMap;
-    while (map == null) {
-      getAttributes();
-      map = myAttributeValueMap;
-
-      if (map == null) {
-        myAttributes = null;
+    if (map == null) {
+      map = new THashMap<String, String>();
+      for (XmlAttribute attribute : getAttributes()) {
+        cacheOneAttributeValue(attribute.getName(), attribute.getValue(), map);
       }
+      myAttributeValueMap = map;
     }
     return map.get(qname);
   }

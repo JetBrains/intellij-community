@@ -23,8 +23,6 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -44,23 +42,22 @@ public interface StateStorage {
 
   void finishSave(@NotNull SaveSession saveSession);
 
-  void reload(@NotNull Set<String> changedComponents) throws StateStorageException;
+  void reload(@NotNull Set<String> changedComponents);
 
   interface ExternalizationSession {
-    void setState(@NotNull Object component, final String componentName, @NotNull Object state, @Nullable final Storage storageSpec) throws StateStorageException;
+    void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec);
   }
 
   interface SaveSession {
-    void save() throws StateStorageException;
+    void save();
 
+    /**
+     * Get changed component names
+     */
     @Nullable
     Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
 
-    @NotNull
-    Collection<File> getStorageFilesToSave() throws StateStorageException;
-
-    @NotNull
-    List<File> getAllStorageFiles();
+    void collectAllStorageFiles(@NotNull List<VirtualFile> files);
   }
 
   interface Listener {

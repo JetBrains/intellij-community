@@ -610,6 +610,7 @@ class Test {
   }
 
   public void "test insert boolean literal argument name"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """class Groo {
 
  public void test() {
@@ -667,6 +668,7 @@ class Test {
   }
 
   public void "test do not collapse varargs"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class VarArgTest {
 
@@ -780,6 +782,7 @@ public class CharSymbol {
   }
 
   public void "test inline names if literal expression can be assigned to method parameter"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class CharSymbol {
 
@@ -809,6 +812,7 @@ public class CharSymbol {
   }
 
   public void "test inline negative and positive numbers"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class CharSymbol {
 
@@ -836,6 +840,7 @@ public class CharSymbol {
   }
 
   public void "test inline constructor literal arguments names"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class Test {
 
@@ -866,6 +871,7 @@ public class Test {
   }
 
   public void "test inline anonymous class constructor literal arguments names"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class Test {
 
@@ -913,5 +919,82 @@ public class Test {
     assertSize 2, myFixture.editor.foldingModel.allFoldRegions
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
     assert 'return field;' == myFixture.editor.selectionModel.selectedText
+  }
+
+  public void "test expand and collapse regions in selection"() {
+    def text = """
+class Foo {
+    public static void main() {
+        new Runnable(){
+            public void run() {
+            }
+        }.run();
+    }
+}
+"""
+    configure text
+    assertEquals 3, foldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
+    assertEquals 3, expandedFoldRegionsCount
+
+
+    myFixture.editor.selectionModel.setSelection(text.indexOf("new"), text.indexOf("run();"))
+    myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS)
+    assertEquals 1, expandedFoldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
+    assertEquals 3, expandedFoldRegionsCount
+  }
+
+  public void "test expand and collapse recursively"() {
+    def text = """
+class Foo {
+    public static void main() {
+        new Runnable(){
+            public void run() {
+            }
+        }.run();
+    }
+}
+"""
+    configure text
+    assertEquals 3, foldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
+    assertEquals 3, expandedFoldRegionsCount
+
+
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("new"))
+    myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_REGION_RECURSIVELY)
+    assertEquals 1, expandedFoldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_REGION_RECURSIVELY)
+    assertEquals 3, expandedFoldRegionsCount
+  }
+
+  public void "test expand to level"() {
+    def text = """
+class Foo {
+    public static void main() {
+        new Runnable(){
+            public void run() {
+            }
+        }.run();
+    }
+}
+"""
+    configure text
+    assertEquals 3, foldRegionsCount
+
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("new"))
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_TO_LEVEL_1)
+    assertEquals 2, expandedFoldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_TO_LEVEL_1)
+    assertEquals 1, expandedFoldRegionsCount
+  }
+
+  private int getFoldRegionsCount() {
+    return myFixture.editor.foldingModel.allFoldRegions.length
+  }
+
+  private int getExpandedFoldRegionsCount() {
+    return myFixture.editor.foldingModel.allFoldRegions.count { it.isExpanded() ? 1 : 0}
   }
 }

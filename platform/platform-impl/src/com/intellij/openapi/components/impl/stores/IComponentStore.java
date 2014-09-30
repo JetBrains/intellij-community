@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,32 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.store.ComponentSaveSession;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 public interface IComponentStore {
   void initComponent(@NotNull Object component, boolean service);
+
   void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData);
+
+  @NotNull
+  Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames);
+
   boolean isReloadPossible(@NotNull Set<String> componentNames);
 
   void load() throws IOException, StateStorageException;
+
   boolean isSaving();
 
   @NotNull
   StateStorageManager getStateStorageManager();
 
-
-  class SaveCancelledException extends IOException {
+  class SaveCancelledException extends RuntimeException {
     public SaveCancelledException() {
     }
 
@@ -48,25 +49,6 @@ public interface IComponentStore {
     }
   }
 
-  //todo:remove throws
   @NotNull
-  SaveSession startSave() throws IOException;
-
-  interface SaveSession {
-    @NotNull
-    List<File> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException;
-
-    @NotNull
-    SaveSession save() throws IOException;
-
-    void finishSave();
-
-    void reset();
-
-    @Nullable
-    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
-
-    @NotNull
-    List<File> getAllStorageFiles(final boolean includingSubStructures);
-  }
+  ComponentSaveSession startSave();
 }

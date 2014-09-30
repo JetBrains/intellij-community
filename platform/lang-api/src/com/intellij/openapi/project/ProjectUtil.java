@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class ProjectUtil {
                                                  final boolean includeFilePath,
                                                  final boolean includeUniqueFilePath,
                                                  final boolean keepModuleAlwaysOnTheLeft) {
-    if (file instanceof VirtualFilePathWrapper) {
+    if (file instanceof VirtualFilePathWrapper && ((VirtualFilePathWrapper)file).enforcePresentableName()) {
       return includeFilePath ? ((VirtualFilePathWrapper)file).getPresentablePath() : file.getName();
     }
     String url;

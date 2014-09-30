@@ -89,7 +89,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control ADD",              "ExpandAll", "ExpandRegion"},
     { "control DELETE",           "EditorDeleteToWordEnd", "RemoveFromFavorites"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
-    { "control DOWN",             "EditorScrollDown", "Console.History.Previous", "EditorLookupDown"},
+    { "control DOWN",             "EditorScrollDown", "EditorLookupDown"},
     { "control ENTER",            "EditorSplitLine", "ViewSource", "Console.Jdbc.Execute", "Console.Jpa.Execute", "Groovy.Shell.Execute"},
     { "control EQUALS",           "ExpandAll", "ExpandRegion"},
     { "control F5",               "Refresh", "Rerun"},
@@ -100,7 +100,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control R",                "Replace", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize"},
     { "control U",                "GotoSuperMethod", "CommanderSwapPanels"},
-    { "control UP",               "EditorScrollUp", "Console.History.Next", "EditorLookupUp"},
+    { "control UP",               "EditorScrollUp", "EditorLookupUp"},
     { "control alt A",            "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt E",            "PerforceDirect.Edit", "Console.History.Browse"},
     { "control alt DOWN",         "NextOccurence", "Console.TableResult.NextPage"},
@@ -213,7 +213,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift F2",                 "GotoPreviousError", "GotoDeclaration"},
     { "shift control F7",         "FindUsagesInFile", "HighlightUsagesInFile"},
     { "shift control I",          "ImplementMethods", "QuickImplementations"},
-    { "alt F9",         "ViewBreakpoints", "EditBreakpoint"},
+    { "alt F9",                   "ViewBreakpoints", "EditBreakpoint"},
+    { "alt MULTIPLY",             "ShowExecutionPoint", "Images.Thumbnails.ToggleRecursive"},
     });
     put("Default for XWin", new String[][] {
     });
@@ -277,7 +278,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control 2",                "ActivateProjectToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
     { "control 3",                "ActivateProjectToolWindow", "FileChooser.GotoModule"},
     { "control BACK_SPACE",       "EditorDeleteToWordStart", "ToggleDockMode"},
-    { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
+    { "control DIVIDE",           "CollapseRegionRecursively", "Images.Editor.ActualSize"},
     { "control D",                "EditorDuplicate", "CompareDirs", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control M",                "Vcs.ShowMessageHistory", "Move"},
     { "control R",                "RenameElement", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},

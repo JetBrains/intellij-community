@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import socket
 import struct
@@ -8,29 +9,30 @@ import time
 
 # see com.intellij.idea.SocketLock for the server side of this interface
 
-RUN_PATH = '$RUN_PATH$'
-CONFIG_PATH = '$CONFIG_PATH$'
+RUN_PATH = u'$RUN_PATH$'
+CONFIG_PATH = u'$CONFIG_PATH$'
 
 args = []
 skip_next = False
 for i, arg in enumerate(sys.argv[1:]):
     if arg == '-h' or arg == '-?' or arg == '--help':
-        print(('Usage:\n' + \
-               '  {0} -h |-? | --help\n' + \
-               '  {0} [-l|--line line] file[:line]\n' + \
-               '  {0} diff <left> <right>' + \
+        print(('Usage:\n' +
+               '  {0} -h |-? | --help\n' +
+               '  {0} [-l|--line line] file[:line]\n' +
+               '  {0} diff <left> <right>' +
                '  {0} merge <local> <remote> [base] <merged>').format(sys.argv[0]))
         exit(0)
     elif ':' in arg:
         file_path, line_number = arg.rsplit(':', 1)
         if line_number.isdigit():
-          args.append('-l')
-          args.append(line_number)
-          args.append(file_path)
+            args.append('-l')
+            args.append(line_number)
+            args.append(file_path)
         else:
-          args.append(arg)
+            args.append(arg)
     else:
         args.append(arg)
+
 
 def launch_with_port(port):
     found = False
@@ -57,10 +59,11 @@ def launch_with_port(port):
             cmd = "activate " + os.getcwd() + "\0" + "\0".join(args)
             encoded = struct.pack(">h", len(cmd)) + cmd
             s.send(encoded)
-            time.sleep(0.5)   # don't close socket immediately
+            time.sleep(0.5)  # don't close socket immediately
         return True
 
     return False
+
 
 port = -1
 try:
@@ -73,7 +76,7 @@ except Exception:
 
 if port == -1:
     # SocketLock actually allows up to 50 ports, but the checking takes too long
-    for port in range(6942, 6942+10):
+    for port in range(6942, 6942 + 10):
         if launch_with_port(port): exit()
 else:
     if launch_with_port(port): exit()

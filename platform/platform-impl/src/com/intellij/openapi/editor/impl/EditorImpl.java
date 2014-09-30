@@ -99,7 +99,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
@@ -224,14 +223,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final     ArrayList<CachedFontContent> myFontCache       = new ArrayList<CachedFontContent>();
   @Nullable private FontInfo                     myCurrentFontType = null;
-
-  // Offsets on current line where leading whitespace ends and trailing whitespace starts correspondingly.
-  // Transient fields used during painting.
-  private int myCurrentLeadingEdge;
-  private int myCurrentTrailingEdge;
-  // If this flag is set, whitespace is shown/not shown regardless of edge values above.
-  // Transient field used during painting.
-  private Boolean myShowWhitespace;
 
   private final EditorSizeContainer mySizeContainer = new EditorSizeContainer();
 
@@ -1988,25 +1979,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
   private static final String WHITESPACE_CHARS = " \t" + IDEOGRAPHIC_SPACE;
 
-  private void setWhitespaceEdgeValues(CharSequence chars, LineIterator iterator) {
-    if (mySettings.isWhitespacesShown()
-        && (mySettings.isLeadingWhitespacesShown() || mySettings.isInnerWhitespacesShown() || mySettings.isTrailingWhitespacesShown())
-        && !(mySettings.isLeadingWhitespacesShown() && mySettings.isInnerWhitespacesShown() && mySettings.isTrailingWhitespacesShown())) {
-      int lineStart = iterator.getStart();
-      int lineEnd = iterator.getEnd() - iterator.getSeparatorLength();
-      myCurrentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
-      myCurrentLeadingEdge = CharArrayUtil.shiftForward(chars, lineStart, myCurrentTrailingEdge, WHITESPACE_CHARS);
-    }
-  }
-
-  private boolean showWhitespaceAtOffset(int offset) {
-    return mySettings.isWhitespacesShown()
-           && (myShowWhitespace != null ? myShowWhitespace :
-               offset < myCurrentLeadingEdge ? mySettings.isLeadingWhitespacesShown() :
-               offset >= myCurrentTrailingEdge ? mySettings.isTrailingWhitespacesShown() :
-               mySettings.isInnerWhitespacesShown());
-  }
-
   private void paintCustomRenderers(@NotNull final Graphics2D g, final int clipStartOffset, final int clipEndOffset) {
     myMarkupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
@@ -2100,7 +2072,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlaceholderText = text;
   }
 
-  private Color getBackgroundColor(@NotNull final TextAttributes attributes) {
+  Color getBackgroundColor(@NotNull final TextAttributes attributes) {
     final Color attrColor = attributes.getBackgroundColor();
     return Comparing.equal(attrColor, myScheme.getDefaultBackground()) ? getBackgroundColor() : attrColor;
   }
@@ -2763,7 +2735,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (startLine == 0 && myPrefixText != null) {
       position.x = drawStringWithSoftWraps(g, new CharArrayCharSequence(myPrefixText), 0, myPrefixText.length, position, clip,
                                            myPrefixAttributes.getEffectColor(), myPrefixAttributes.getEffectType(),
-                                           myPrefixAttributes.getFontType(), myPrefixAttributes.getForegroundColor(), logicalPosition);
+                                           myPrefixAttributes.getFontType(), myPrefixAttributes.getForegroundColor(), logicalPosition,
+                                           PAINT_NO_WHITESPACE);
     }
     if (startLine >= myDocument.getLineCount() || startLine < 0) {
       if (position.x > 0) flushCachedChars(g);
@@ -2788,7 +2761,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     g.setColor(currentColor);
 
     CharSequence chars = myDocument.getImmutableCharSequence();
-    setWhitespaceEdgeValues(chars, lIterator);
+    LineWhitespacePaintingStrategy context = new LineWhitespacePaintingStrategy();
+    context.update(chars, lIterator);
 
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
       int hEnd = iterationState.getEndOffset();
@@ -2797,7 +2771,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
           drawStringWithSoftWraps(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
-                                                effectType, fontType, currentColor, logicalPosition);
+                                                effectType, fontType, currentColor, logicalPosition, context);
           final VirtualFile file = getVirtualFile();
           if (myProject != null && file != null && !isOneLineMode()) {
             int offset = position.x;
@@ -2813,7 +2787,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                           info.getEffectType() == null ? effectType : info.getEffectType(),
                                           info.getFontType(),
                                           info.getColor() == null ? currentColor : info.getColor(),
-                                          logicalPosition);
+                                          logicalPosition, context);
                 }
               }
             }
@@ -2834,7 +2808,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         //        myBorderEffect.eolReached(g, this);
         lIterator.advance();
         if (!lIterator.atEnd()) {
-          setWhitespaceEdgeValues(chars, lIterator);
+          context.update(chars, lIterator);
         }
       }
       else {
@@ -2844,21 +2818,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (softWrap != null) {
             position.x = drawStringWithSoftWraps(
               g, chars, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, clip, effectColor, effectType,
-              fontType, currentColor, logicalPosition
+              fontType, currentColor, logicalPosition, context
             );
           }
           int foldingXStart = position.x;
-          myShowWhitespace = Boolean.FALSE;
           position.x = drawString(
-            g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor);
-          myShowWhitespace = null;
+            g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor,
+            PAINT_NO_WHITESPACE);
           //drawStringWithSoftWraps(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType,
           //                        fontType, currentColor, logicalPosition);
           BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, position.x, getLineHeight(), effectColor, effectType);
         }
         else {
           position.x = drawStringWithSoftWraps(g, chars, start, Math.min(hEnd, lEnd - lIterator.getSeparatorLength()), position, clip,
-                                               effectColor, effectType, fontType, currentColor, logicalPosition);
+                                               effectColor, effectType, fontType, currentColor, logicalPosition, context);
         }
 
         iterationState.advance();
@@ -2880,10 +2853,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
     if (collapsedFolderAt != null) {
       int foldingXStart = position.x;
-      myShowWhitespace = Boolean.FALSE;
       int foldingXEnd = drawStringWithSoftWraps(
-        g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor, logicalPosition);
-      myShowWhitespace = null;
+        g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor, logicalPosition,
+        PAINT_NO_WHITESPACE);
       BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, foldingXEnd, getLineHeight(), effectColor, effectType);
       //      myBorderEffect.collapsedFolderReached(g, this);
     }
@@ -2912,13 +2884,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
     else {
-      myShowWhitespace = Boolean.FALSE;
       myLastPaintedPlaceholderWidth = drawString(
         g, hintText, 0, hintText.length(), new Point(0, 0), clip, null, null, Font.PLAIN,
-        myFoldingModel.getPlaceholderAttributes().getForegroundColor()
+        myFoldingModel.getPlaceholderAttributes().getForegroundColor(), PAINT_NO_WHITESPACE
       );
       flushCachedChars(g);
-      myShowWhitespace = null;
       return true;
     }
   }
@@ -3112,9 +3082,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                       EffectType effectType,
                                       @JdkConstants.FontStyle int fontType,
                                       Color fontColor,
-                                      @NotNull Ref<LogicalPosition> startDrawingLogicalPosition) {
+                                      @NotNull Ref<LogicalPosition> startDrawingLogicalPosition,
+                                      WhitespacePaintingStrategy context) {
     return drawStringWithSoftWraps(g, text, 0, text.length(), position, clip, effectColor, effectType,
-                                   fontType, fontColor, startDrawingLogicalPosition);
+                                   fontType, fontColor, startDrawingLogicalPosition, context);
   }
 
   private int drawStringWithSoftWraps(@NotNull Graphics g,
@@ -3127,7 +3098,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                       EffectType effectType,
                                       @JdkConstants.FontStyle int fontType,
                                       Color fontColor,
-                                      @NotNull Ref<LogicalPosition> startDrawingLogicalPosition) {
+                                      @NotNull Ref<LogicalPosition> startDrawingLogicalPosition,
+                                      WhitespacePaintingStrategy context) {
     int startToUse = start;
 
     // There is a possible case that starting logical line is split by soft-wraps and it's part after the split should be drawn.
@@ -3175,7 +3147,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (i < softWrapChars.length - 1) {
           position.x = 0; // Soft wrap starts new visual line
           position.x = drawString(
-            g, softWrapSeq, i + 1, softWrapChars.length, position, clip, null, null, fontType, fontColor
+            g, softWrapSeq, i + 1, softWrapChars.length, position, clip, null, null, fontType, fontColor, context
           );
         }
         position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
@@ -3185,7 +3157,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Draw token text before the wrap.
       if (softWrap.getStart() > startToUse) {
         position.x = drawString(
-          g, text, startToUse, softWrap.getStart(), position, clip, null, null, fontType, fontColor
+          g, text, startToUse, softWrap.getStart(), position, clip, null, null, fontType, fontColor, context
         );
       }
 
@@ -3203,7 +3175,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // Draw soft wrap symbols on current visual line if any.
         if (i - softWrapSegmentStartIndex > 0) {
           drawString(
-            g, softWrapSeq, softWrapSegmentStartIndex, i, position, clip, null, null, fontType, fontColor
+            g, softWrapSeq, softWrapSegmentStartIndex, i, position, clip, null, null, fontType, fontColor, context
           );
         }
         mySoftWrapModel.paint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, position.x, position.y, getLineHeight());
@@ -3222,12 +3194,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Draw remaining soft wrap symbols from its last line if any.
       if (softWrapSegmentStartIndex < softWrapChars.length) {
         position.x += drawString(
-          g, softWrapSeq, softWrapSegmentStartIndex, softWrapChars.length, position, clip, null, null, fontType, fontColor
+          g, softWrapSeq, softWrapSegmentStartIndex, softWrapChars.length, position, clip, null, null, fontType, fontColor, context
         );
       }
       position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
     }
-    return position.x = drawString(g, text, startToUse, end, position, clip, effectColor, effectType, fontType, fontColor);
+    return position.x = drawString(g, text, startToUse, end, position, clip, effectColor, effectType, fontType, fontColor, context);
   }
 
   private int drawString(@NotNull Graphics g,
@@ -3239,7 +3211,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                          @Nullable Color effectColor,
                          @Nullable EffectType effectType,
                          @JdkConstants.FontStyle int fontType,
-                         Color fontColor) {
+                         Color fontColor,
+                         WhitespacePaintingStrategy context) {
     if (start >= end) return position.x;
 
     boolean isInClip = getLineHeight() + position.y >= clip.y && position.y <= clip.y + clip.height;
@@ -3248,7 +3221,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int y = getAscent() + position.y;
     int x = position.x;
-    return drawTabbedString(g, text, start, end, x, y, effectColor, effectType, fontType, fontColor, clip);
+    return drawTabbedString(g, text, start, end, x, y, effectColor, effectType, fontType, fontColor, clip, context);
   }
 
   public int getAscent() {
@@ -3262,7 +3235,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                          Color effectColor,
                          EffectType effectType,
                          @JdkConstants.FontStyle int fontType,
-                         Color fontColor) {
+                         Color fontColor,
+                         WhitespacePaintingStrategy context) {
     boolean isInClip = getLineHeight() + position.y >= clip.y && position.y <= clip.y + clip.height;
 
     if (!isInClip) return position.x;
@@ -3270,7 +3244,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int y = getAscent() + position.y;
     int x = position.x;
 
-    return drawTabbedString(g, text, 0, text.length(), x, y, effectColor, effectType, fontType, fontColor, clip);
+    return drawTabbedString(g, text, 0, text.length(), x, y, effectColor, effectType, fontType, fontColor, clip, context);
   }
 
   private int drawTabbedString(@NotNull Graphics g,
@@ -3283,21 +3257,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                EffectType effectType,
                                @JdkConstants.FontStyle int fontType,
                                Color fontColor,
-                               @NotNull final Rectangle clip) {
+                               @NotNull final Rectangle clip,
+                               WhitespacePaintingStrategy context) {
     int xStart = x;
 
     for (int i = start; i < end; i++) {
       if (text.charAt(i) != '\t') continue;
 
-      x = drawTablessString(text, start, i, g, x, y, fontType, fontColor, clip);
+      x = drawTablessString(text, start, i, g, x, y, fontType, fontColor, clip, context);
 
       int x1 = EditorUtil.nextTabStop(x, this);
-      drawTabPlacer(g, y, x, x1, i);
+      drawTabPlacer(g, y, x, x1, i, context);
       x = x1;
       start = i + 1;
     }
 
-    x = drawTablessString(text, start, end, g, x, y, fontType, fontColor, clip);
+    x = drawTablessString(text, start, end, g, x, y, fontType, fontColor, clip, context);
 
     if (effectColor != null) {
       final Color savedColor = g.getColor();
@@ -3355,7 +3330,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                 final int y,
                                 @JdkConstants.FontStyle final int fontType,
                                 final Color fontColor,
-                                @NotNull final Rectangle clip) {
+                                @NotNull final Rectangle clip,
+                                WhitespacePaintingStrategy context) {
     int endX = x;
     if (start < end) {
       FontInfo font = null;
@@ -3366,7 +3342,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         final char c = text.charAt(j);
         FontInfo newFont = EditorUtil.fontForChar(c, fontType, this);
-        boolean newDrawWhitespace = showWhitespaceAtOffset(j);
+        boolean newDrawWhitespace = context.showWhitespaceAtOffset(j);
         boolean isRtlChar = myDisableRtl && isRtlCharacter(c);
         if (j > start && (endX < clip.x || endX > clip.x + clip.width || newFont != font || newDrawWhitespace != drawWhitespace || isRtlChar)) {
           if (isOverlappingRange(clip, x, endX)) {
@@ -3398,8 +3374,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return !(xStart < clip.x && xEnd < clip.x || xStart > clip.x + clip.width && xEnd > clip.x + clip.width);
   }
 
-  private void drawTabPlacer(Graphics g, int y, int start, int stop, int offset) {
-    if (showWhitespaceAtOffset(offset)) {
+  private void drawTabPlacer(Graphics g, int y, int start, int stop, int offset, WhitespacePaintingStrategy context) {
+    if (context.showWhitespaceAtOffset(offset)) {
       myTabPainter.paint(g, y, start, stop);
     }
   }
@@ -4072,7 +4048,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // and, in the case of the positive answer, clear selection. Please note that there is a possible case that mouse click
     // is performed inside selection but it triggers context menu. We don't want to drop the selection then.
     if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection
-        && !myMousePressedEvent.isShiftDown() && !myMousePressedEvent.isPopupTrigger()) {
+        && !myMousePressedEvent.isShiftDown() && !myMousePressedEvent.isPopupTrigger()
+        && !isCreateRectangularSelectionEvent(myMousePressedEvent)) {
       getSelectionModel().removeSelection();
     }
   }
@@ -5627,7 +5604,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    private boolean processMousePressed(@NotNull MouseEvent e) {
+    private boolean processMousePressed(@NotNull final MouseEvent e) {
       myInitialMouseEvent = e;
 
       if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE &&
@@ -5656,6 +5633,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             public void run() {
               myFoldingModel.flushCaretShift();
               range.setExpanded(expansion);
+              if (e.isAltDown()) {
+                for (FoldRegion region : myFoldingModel.getAllFoldRegions()) {
+                  if (region.getStartOffset() >= range.getStartOffset() && region.getEndOffset() <= range.getEndOffset()) {
+                    region.setExpanded(expansion);
+                  }
+                }
+              }
             }
           };
           getFoldingModel().runBatchFoldingOperation(processor);
@@ -5714,6 +5698,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           else if (e.getClickCount() == 3 && lastPressCreatedCaret) {
             getCaretModel().moveToLogicalPosition(pos);
           }
+        }
+        else if (myCaretModel.supportsMultipleCarets() && e.getSource() != myGutterComponent && isCreateRectangularSelectionEvent(e)) {
+          mySelectionModel.setBlockSelection(myCaretModel.getLogicalPosition(), pos);
         }
         else {
           getCaretModel().removeSecondaryCarets();
@@ -5814,7 +5801,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static boolean isToggleCaretEvent(MouseEvent e) {
+  private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET);
+  }
+
+  private static boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+  }
+
+  private static boolean isMouseActionEvent(@NotNull MouseEvent e, @NotNull String actionId) {
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null) {
       return false;
@@ -5827,8 +5822,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (actionIds == null) {
       return false;
     }
-    for (String actionId : actionIds) {
-      if (IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET.equals(actionId)) {
+    for (String id : actionIds) {
+      if (actionId.equals(id)) {
         return true;
       }
     }
@@ -6713,7 +6708,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyScrollPane extends JBScrollPane {
     private MyScrollPane() {
-      setViewportBorder(new EmptyBorder(0, 0, 0, 0));
+      super(0);
+      setupCorners();
     }
 
     @Override
@@ -6866,6 +6862,44 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                           @NotNull FontInfo fontInfo)
     {
       drawCharsCached(g, new CharArrayCharSequence(data), start, end, x, y, fontInfo, color, false);
+    }
+  }
+
+  private interface WhitespacePaintingStrategy {
+    boolean showWhitespaceAtOffset(int offset);
+  }
+
+  private static final WhitespacePaintingStrategy PAINT_NO_WHITESPACE = new WhitespacePaintingStrategy() {
+    @Override
+    public boolean showWhitespaceAtOffset(int offset) {
+      return false;
+    }
+  };
+
+  // Strategy, controlled by current editor settings. Usable only for the current line.
+  private class LineWhitespacePaintingStrategy implements WhitespacePaintingStrategy {
+    // Offsets on current line where leading whitespace ends and trailing whitespace starts correspondingly.
+    private int currentLeadingEdge;
+    private int currentTrailingEdge;
+
+    // Updates the state, to be used for the line, iterator is currently at.
+    private void update(CharSequence chars, LineIterator iterator) {
+      if (mySettings.isWhitespacesShown()
+          && (mySettings.isLeadingWhitespaceShown() || mySettings.isInnerWhitespaceShown() || mySettings.isTrailingWhitespaceShown())
+          && !(mySettings.isLeadingWhitespaceShown() && mySettings.isInnerWhitespaceShown() && mySettings.isTrailingWhitespaceShown())) {
+        int lineStart = iterator.getStart();
+        int lineEnd = iterator.getEnd() - iterator.getSeparatorLength();
+        currentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
+        currentLeadingEdge = CharArrayUtil.shiftForward(chars, lineStart, currentTrailingEdge, WHITESPACE_CHARS);
+      }
+    }
+
+    @Override
+    public boolean showWhitespaceAtOffset(int offset) {
+      return mySettings.isWhitespacesShown()
+             && (offset < currentLeadingEdge ? mySettings.isLeadingWhitespaceShown() :
+                 offset >= currentTrailingEdge ? mySettings.isTrailingWhitespaceShown() :
+                 mySettings.isInnerWhitespaceShown());
     }
   }
 }

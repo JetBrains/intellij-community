@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
@@ -99,6 +100,7 @@ public class CCRunTests extends AnAction {
         if (task == null) {
           return;
         }
+        clearTestEnvironment(taskDir, project);
         for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
           final String name = entry.getKey();
           createTestEnvironment(taskDir, name, entry.getValue(), project);
@@ -107,7 +109,6 @@ public class CCRunTests extends AnAction {
             return;
           }
           executeTests(project, virtualFile, taskDir, testFile);
-          clearTestEnvironment(taskDir, project);
         }
       }
     });
@@ -138,7 +139,7 @@ public class CCRunTests extends AnAction {
     }
   }
 
-  private static void clearTestEnvironment(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
+  public static void clearTestEnvironment(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
     try {
       VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
       if (ideaDir == null) {
@@ -146,10 +147,9 @@ public class CCRunTests extends AnAction {
         return;
       }
       VirtualFile courseResourceDir = ideaDir.findChild("course");
-      if (courseResourceDir == null) {
-        return;
+      if (courseResourceDir != null) {
+        courseResourceDir.delete(project);
       }
-      courseResourceDir.delete(project);
       VirtualFile[] taskDirChildren = taskDir.getChildren();
       for (VirtualFile file : taskDirChildren) {
         if (file.getName().contains("_windows")) {
@@ -189,7 +189,7 @@ public class CCRunTests extends AnAction {
     if (courseDir == null) {
       return;
     }
-    configuration.setScriptParameters(courseDir.getPath() + " " + userFile.getPath());
+    configuration.setScriptParameters(PathUtil.toSystemDependentName(courseDir.getPath()) + " " + PathUtil.toSystemDependentName(userFile.getPath()));
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     ProgramRunnerUtil.executeConfiguration(project, settings, executor);
   }
@@ -224,8 +224,9 @@ public class CCRunTests extends AnAction {
     VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
     assert ideaDir != null;
     try {
-      VirtualFile taskResourceDir = ideaDir.createChildDirectory(project, "course").createChildDirectory(project, lessonDir.getName())
-        .createChildDirectory(project, taskDir.getName());
+      VirtualFile courseResourceDir = findOrCreateDir(project, ideaDir, "course");
+      VirtualFile lessonResourceDir = findOrCreateDir(project, courseResourceDir, lessonDir.getName());
+      VirtualFile taskResourceDir = findOrCreateDir(project, lessonResourceDir, taskDir.getName());
       if (CCProjectService.indexIsValid(lessonIndex, course.getLessons())) {
         Lesson lesson = course.getLessons().get(lessonIndex);
         if (CCProjectService.indexIsValid(index, lesson.getTaskList())) {
@@ -241,6 +242,14 @@ public class CCRunTests extends AnAction {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private static VirtualFile findOrCreateDir(@NotNull final Project project, @NotNull final VirtualFile dir, String name) throws IOException {
+    VirtualFile targetDir = dir.findChild(name);
+    if (targetDir == null) {
+      targetDir = dir.createChildDirectory(project, name);
+    }
+    return targetDir;
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")

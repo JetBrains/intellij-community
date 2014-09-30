@@ -214,7 +214,7 @@ public class GitPullDialog extends DialogWrapper {
       return trackInfo.getRemote();
     }
     else {
-      GitRemote origin = getOriginRemote(remotes);
+      GitRemote origin = GitUtil.getDefaultRemote(remotes);
       if (origin != null) {
         return origin;
       }
@@ -222,16 +222,6 @@ public class GitPullDialog extends DialogWrapper {
         return remotes.iterator().next();
       }
     }
-  }
-
-  @Nullable
-  private static GitRemote getOriginRemote(@NotNull Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals(GitRemote.ORIGIN_NAME)) {
-        return remote;
-      }
-    }
-    return null;
   }
 
   @Nullable

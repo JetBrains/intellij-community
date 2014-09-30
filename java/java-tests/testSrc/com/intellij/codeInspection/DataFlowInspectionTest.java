@@ -240,6 +240,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testManyDisjunctiveFieldAssignmentsInLoopNotComplex() { doTest(); }
   public void testManyContinuesNotComplex() { doTest(); }
   public void testFinallyNotComplex() { doTest(); }
+  public void testFlushFurtherUnusedVariables() { doTest(); }
 
   public void testVariablesDiverge() { doTest(); }
   public void testMergeByNullability() { doTest(); }

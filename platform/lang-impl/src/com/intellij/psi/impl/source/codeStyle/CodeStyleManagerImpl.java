@@ -30,9 +30,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.CheckUtil;
@@ -188,7 +186,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     CaretPositionKeeper caretKeeper = null;
     if (editor != null) {
-      caretKeeper = new CaretPositionKeeper(editor);
+      caretKeeper = new CaretPositionKeeper(editor, getSettings(), file.getLanguage());
     }
 
     Collection<TextRange> correctedRanges = FormatterUtil.isFormatterCalledExplicitly()
@@ -736,11 +734,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     RangeMarker myBeforeCaretRangeMarker;
     String myCaretIndentToRestore;
     int myVisualColumnToRestore = -1;
+    boolean myBlankLineIndentPreserved = true;
 
-    CaretPositionKeeper(@NotNull Editor editor) {
+    CaretPositionKeeper(@NotNull Editor editor, @NotNull CodeStyleSettings settings, @NotNull Language language) {
       myEditor = editor;
       myCaretModel = editor.getCaretModel();
       myDocument = editor.getDocument();
+      myBlankLineIndentPreserved = isBlankLineIndentPreserved(settings, language);
 
       int caretOffset = getCaretOffset();
       int lineStartOffset = getLineStartOffsetByTotalOffset(caretOffset);
@@ -750,6 +750,15 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       if (shouldFixCaretPosition) {
         initRestoreInfo(caretOffset);
       }
+    }
+
+    private static boolean isBlankLineIndentPreserved(@NotNull CodeStyleSettings settings, @NotNull Language language) {
+      CommonCodeStyleSettings langSettings = settings.getCommonSettings(language);
+      if (langSettings != null) {
+        CommonCodeStyleSettings.IndentOptions indentOptions = langSettings.getIndentOptions();
+        return indentOptions != null && indentOptions.KEEP_INDENTS_ON_EMPTY_LINES;
+      }
+      return false;
     }
 
     private void initRestoreInfo(int caretOffset) {
@@ -770,7 +779,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     private void restorePositionByIndentInsertion() {
-      if (myBeforeCaretRangeMarker == null || !myBeforeCaretRangeMarker.isValid() || myCaretIndentToRestore == null) {
+      if (myBeforeCaretRangeMarker == null ||
+          !myBeforeCaretRangeMarker.isValid() ||
+          myCaretIndentToRestore == null ||
+          myBlankLineIndentPreserved) {
         return;
       }
       int newCaretLineStartOffset = myBeforeCaretRangeMarker.getEndOffset();

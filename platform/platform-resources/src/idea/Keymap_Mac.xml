@@ -453,8 +453,6 @@
       <keyboard-shortcut first-keystroke="alt HOME"/>
     </action>
 
-    <action id="Console.History.Next" /> <!-- Disables meta up -->
-    <action id="Console.History.Previous" /> <!-- Disables meta down -->
     <action id="Console.TableResult.Reload" />
 
 
@@ -556,6 +554,26 @@
 
     <action id="NewScratchFile">
       <keyboard-shortcut first-keystroke="meta shift N"/>
+    </action>
+    <action id="ExpandAllToLevel1">
+      <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="1"/>
+      <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="NUMPAD1"/>
+    </action>
+    <action id="ExpandAllToLevel2">
+      <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="2"/>
+      <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="NUMPAD2"/>
+    </action>
+    <action id="ExpandAllToLevel3">
+      <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="3"/>
+      <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="NUMPAD3"/>
+    </action>
+    <action id="ExpandAllToLevel4">
+      <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="4"/>
+      <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="NUMPAD4"/>
+    </action>
+    <action id="ExpandAllToLevel5">
+      <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="5"/>
+      <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="NUMPAD5"/>
     </action>
   </keymap>
 </component>

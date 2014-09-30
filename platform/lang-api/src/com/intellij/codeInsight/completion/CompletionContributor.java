@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Completion FAQ:<p>
@@ -174,7 +175,6 @@ public abstract class CompletionContributor {
   }
 
   /**
-   * @param parameters
    * @deprecated use {@link com.intellij.codeInsight.completion.CompletionResultSet#addLookupAdvertisement(String)}
    * @return text to be shown at the bottom of lookup list
    */
@@ -254,7 +254,7 @@ public abstract class CompletionContributor {
     @NotNull
     @Override
     protected List<CompletionContributor> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-      final THashSet<String> allowed = new THashSet<String>();
+      Set<String> allowed = new THashSet<String>();
       while (key != null) {
         allowed.add(keyToString(key));
         key = key.getBaseLanguage();

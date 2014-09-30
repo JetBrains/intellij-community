@@ -24,6 +24,8 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.javac.JavacRemoteProto;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -99,7 +101,10 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
     }
     finally {
       try {
-        for (UUID uuid : new ArrayList<UUID>(myHandlers.keySet())) {
+        //invoke 'keySet()' method via 'Map' class because ConcurrentHashMap#keySet() has return type ('KeySetView') which doesn't exist in JDK 1.6/1.7
+        Set<UUID> keys = ((Map<UUID, RequestFuture<T>>)myHandlers).keySet();
+
+        for (UUID uuid : new ArrayList<UUID>(keys)) {
           terminateSession(uuid);
         }
       }

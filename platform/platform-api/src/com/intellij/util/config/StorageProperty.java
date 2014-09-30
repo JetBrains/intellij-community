@@ -27,12 +27,14 @@ public class StorageProperty extends AbstractProperty<Storage> {
     myName = name;
   }
 
+  @Override
   public Storage getDefault(AbstractProperty.AbstractPropertyContainer container) {
     Storage.MapStorage storage = new Storage.MapStorage();
     set(container, storage);
     return storage;
   }
 
+  @Override
   public Storage copy(Storage storage) {
     if (!(storage instanceof Storage.MapStorage))
       throw new UnsupportedOperationException(storage.getClass().getName());
@@ -45,6 +47,7 @@ public class StorageProperty extends AbstractProperty<Storage> {
     return copy;
   }
 
+  @Override
   public String getName() {
     return myName;
   }

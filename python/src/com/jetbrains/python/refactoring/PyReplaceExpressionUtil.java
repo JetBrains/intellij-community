@@ -39,9 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.jetbrains.python.PyTokenTypes.*;
-import static com.jetbrains.python.inspections.PyStringFormatParser.filterSubstitutions;
-import static com.jetbrains.python.inspections.PyStringFormatParser.parseNewStyleFormat;
-import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercentFormat;
+import static com.jetbrains.python.inspections.PyStringFormatParser.*;
 
 /**
  * @author Dennis.Ushakov
@@ -78,15 +76,24 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     final int parentPriority = getExpressionPriority(parentExpr);
     if (parentPriority > newPriority) {
       return true;
-    } else if (parentPriority == newPriority && parentPriority != 0) {
-      if (parentExpr instanceof PyBinaryExpression) {
-        final PyBinaryExpression binaryExpression = (PyBinaryExpression)parentExpr;
-        if (isNotAssociative(binaryExpression) && oldExpr.equals(binaryExpression.getRightExpression())) {
-          return true;
-        }
+    }
+    else if (parentPriority == newPriority && parentPriority != 0 && parentExpr instanceof PyBinaryExpression) {
+      final PyBinaryExpression binaryExpression = (PyBinaryExpression)parentExpr;
+      if (isNotAssociative(binaryExpression) && oldExpr == getLeastPrioritySide(binaryExpression)) {
+        return true;
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static PyExpression getLeastPrioritySide(@NotNull PyBinaryExpression expression) {
+    if (expression.isOperator("**")) {
+      return expression.getLeftExpression();
+    }
+    else {
+      return expression.getRightExpression();
+    }
   }
 
   public static PsiElement replaceExpression(@NotNull final PsiElement oldExpression,
@@ -426,7 +433,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
   private static boolean isNotAssociative(@NotNull final PyBinaryExpression binaryExpression) {
     final IElementType opType = getOperationType(binaryExpression);
     return COMPARISON_OPERATIONS.contains(opType) || binaryExpression instanceof PySliceExpression ||
-           opType == DIV || opType == PERC || opType == EXP;
+           opType == DIV || opType == PERC || opType == EXP || opType == MINUS;
   }
 
   private static int getExpressionPriority(PyElement expr) {

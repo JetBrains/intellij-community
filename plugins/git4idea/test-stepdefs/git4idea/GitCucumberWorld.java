@@ -48,7 +48,6 @@ import git4idea.test.GitTestUtil;
 import git4idea.test.MockVcsHelper;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -133,7 +132,7 @@ public class GitCucumberWorld {
 
     // dynamic overriding is used instead of making it in plugin.xml,
     // because MockVcsHelper is not ready to be a full featured implementation for all tests.
-    myVcsHelper = overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
+    myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
     myChangeListManager = (ChangeListManagerImpl)myPlatformFacade.getChangeListManager(myProject);
     myNotificator = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
     myVcs = GitVcs.getInstance(myProject);
@@ -226,15 +225,6 @@ public class GitCucumberWorld {
 
   public static void executeOnPooledThread(Runnable runnable) {
     myAsyncTasks.add(ApplicationManager.getApplication().executeOnPooledThread(runnable));
-  }
-
-  @SuppressWarnings("unchecked")
-  private static <T> T overrideService(@NotNull Project project, Class<? super T> serviceInterface, Class<T> serviceImplementation) {
-    String key = serviceInterface.getName();
-    MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
-    picoContainer.unregisterComponent(key);
-    picoContainer.registerComponentImplementation(key, serviceImplementation);
-    return (T) ServiceManager.getService(project, serviceInterface);
   }
 
   private static void edt(@NotNull final ThrowableRunnable<Exception> runnable) throws Exception {

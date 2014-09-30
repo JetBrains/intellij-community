@@ -42,6 +42,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.preview.PreviewManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -108,7 +109,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
 
   private volatile JPanel myPanels;
-  private PreviewPanel myPreviewPanel;
   private EditorsSplitters mySplitters;
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<Pair<VirtualFile, EditorWindow>>();
@@ -178,10 +178,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   @NotNull
   public Set<EditorsSplitters> getAllSplitters() {
     Set<EditorsSplitters> all = new LinkedHashSet<EditorsSplitters>();
-    EditorWindow previewWindow = getPreviewWindow();
-    if (previewWindow != null) {
-      all.add(previewWindow.getOwner());
-    }
     all.add(getMainSplitters());
     Set<DockContainer> dockContainers = myDockManager.getContainers();
     for (DockContainer each : dockContainers) {
@@ -255,18 +251,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
     }
-    if (myPreviewPanel == null && PreviewPanel.isAvailable()) {
-      synchronized (myInitLock) {
-        myPreviewPanel = new PreviewPanel(myProject, this, myDockManager);
-      }
-    }
-  }
-
-  @Nullable
-  private EditorWindow getPreviewWindow() {
-    if (!PreviewPanel.isAvailable()) return null;
-    initUI();
-    return myPreviewPanel.getWindow();
   }
 
   private static class MyBorder implements Border {
@@ -651,10 +635,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     if (wndToOpenIn == null || !wndToOpenIn.isFileOpen(file)) {
-      EditorWindow previewWindow = getPreviewWindow();
-      if (previewWindow != null) {
-        wndToOpenIn = previewWindow;
-        focusEditor = true;
+      PreviewManager previewManager = PreviewManager.SERVICE.getInstance(myProject);
+      if (previewManager != null) {
+        Pair<FileEditor[], FileEditorProvider[]> previewResult = previewManager.preview(FilePreviewPanelProvider.ID, file, focusEditor);
+        if (previewResult != null) {
+          return previewResult;
+        }
       }
     }
 

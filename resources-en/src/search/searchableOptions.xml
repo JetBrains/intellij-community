@@ -6280,8 +6280,8 @@
     <option name="editor" path="ActionManager" hit="Compare File with Editor" />
     <option name="file" path="ActionManager" hit="Compare File with Editor" />
     <option name="with" path="ActionManager" hit="Compare File with Editor" />
-    <option name="compare" path="ActionManager" hit="Compare Jars" />
-    <option name="jars" path="ActionManager" hit="Compare Jars" />
+    <option name="compare" path="ActionManager" hit="Compare JARs" />
+    <option name="jars" path="ActionManager" hit="Compare JARs" />
     <option name="compare" path="ActionManager" hit="Compare Local File with Deployed Version" />
     <option name="deployed" path="ActionManager" hit="Compare Local File with Deployed Version" />
     <option name="file" path="ActionManager" hit="Compare Local File with Deployed Version" />

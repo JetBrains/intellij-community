@@ -22,11 +22,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.security.MessageDigest;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 
 /**
@@ -34,14 +35,18 @@ import java.security.cert.X509Certificate;
  */
 public class ServerSSLDialog extends DialogWrapper {
 
-  private final X509Certificate myCertificate;
+  @NotNull private final String myCertificateInfo;
   private Action myTempAction;
   private int myResult;
   @NonNls public static final String ALGORITHM_SHA1 = "SHA1";
 
-  public ServerSSLDialog(final Project project, X509Certificate cert, boolean store) {
+  public ServerSSLDialog(final Project project, @NotNull X509Certificate cert, boolean store) {
+    this(project, getServerCertificateInfo(cert), store);
+  }
+
+  public ServerSSLDialog(final Project project, @NotNull String certificateInfo, boolean store) {
     super(project, true);
-    myCertificate = cert;
+    myCertificateInfo = certificateInfo;
     myResult = ISVNAuthenticationProvider.REJECTED;
     setOKButtonText(SvnBundle.message("button.text.ssl.accept"));
     setOKActionEnabled(store);
@@ -94,50 +99,41 @@ public class ServerSSLDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout(5,5));
     panel.add(new JLabel(SvnBundle.message("label.ssl.server.provided.certificate")), BorderLayout.NORTH);
     JTextArea area = new JTextArea(5, 50);
-    area.setText(getServerCertificateInfo(myCertificate));
+    area.setText(myCertificateInfo);
     area.setEditable(false);
     panel.add(ScrollPaneFactory.createScrollPane(area), BorderLayout.CENTER);
 
     return panel;
   }
 
-  private static String getFingerprint(X509Certificate cert) {
-        StringBuffer s = new StringBuffer();
-        try  {
-           MessageDigest md = MessageDigest.getInstance(ALGORITHM_SHA1);
-           md.update(cert.getEncoded());
-           byte[] digest = md.digest();
-           for (int i= 0; i < digest.length; i++)  {
-              if (i != 0) {
-                  s.append(':');
-              }
-              int b = digest[i] & 0xFF;
-              String hex = Integer.toHexString(b);
-              if (hex.length() == 1) {
-                  s.append('0');
-              }
-              s.append(hex.toLowerCase());
-           }
-        } catch (Exception e)  {
-          //
-        }
-        return s.toString();
-     }
+  @NotNull
+  private static String getFingerprint(@NotNull X509Certificate cert) {
+    byte[] data = null;
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String getServerCertificateInfo(X509Certificate cert) {
-      StringBuffer info = new StringBuffer();
-      info.append(" - Subject: ");
-      info.append(cert.getSubjectDN().getName());
-      info.append('\n');
-      info.append(" - Valid: ");
-      info.append("from ").append(cert.getNotBefore()).append(" until ").append(cert.getNotAfter());
-      info.append('\n');
-      info.append(" - Issuer: ");
-      info.append(cert.getIssuerDN().getName());
-      info.append('\n');
-      info.append(" - Fingerprint: ");
-      info.append(getFingerprint(cert));
-      return info.toString();
+    try {
+      data = cert.getEncoded();
+    }
+    catch (CertificateEncodingException ignore) {
+    }
+
+    return data != null ? SVNSSLUtil.getFingerprint(data, ALGORITHM_SHA1) : "";
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral", "StringBufferReplaceableByString"})
+  @NotNull
+  private static String getServerCertificateInfo(@NotNull X509Certificate cert) {
+    return new StringBuilder()
+      .append(" - Subject: ")
+      .append(cert.getSubjectDN().getName())
+      .append('\n')
+      .append(" - Valid: ")
+      .append("from ").append(cert.getNotBefore()).append(" until ").append(cert.getNotAfter())
+      .append('\n')
+      .append(" - Issuer: ")
+      .append(cert.getIssuerDN().getName())
+      .append('\n')
+      .append(" - Fingerprint: ")
+      .append(getFingerprint(cert))
+      .toString();
   }
 }

@@ -12,8 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.dvcs.branch.DvcsBranchSync;
-import com.intellij.dvcs.branch.DvcsSyncBranchSettings;
+import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -26,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
   name = "hg4idea.settings",
   storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
 )
-public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State>, DvcsSyncBranchSettings {
+public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State>, DvcsSyncSettings {
 
   @NotNull private final HgGlobalSettings myAppSettings;
   @NotNull private final Project myProject;
@@ -44,7 +43,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     public boolean myCheckOutgoing = true;
     public Boolean CHECK_INCOMING_OUTGOING = null;
     public boolean myIgnoreWhitespacesInAnnotations = true;
-    public DvcsBranchSync SYNC_SETTING = DvcsBranchSync.NOT_DECIDED;
+    public Value ROOT_SYNC = Value.NOT_DECIDED;
   }
 
   public State getState() {
@@ -67,12 +66,12 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   @NotNull
-  public DvcsBranchSync getSyncSetting() {
-    return myState.SYNC_SETTING;
+  public Value getSyncSetting() {
+    return myState.ROOT_SYNC;
   }
 
-  public void setSyncSetting(@NotNull DvcsBranchSync syncSetting) {
-    myState.SYNC_SETTING = syncSetting;
+  public void setSyncSetting(@NotNull Value syncSetting) {
+    myState.ROOT_SYNC = syncSetting;
   }
 
   public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {

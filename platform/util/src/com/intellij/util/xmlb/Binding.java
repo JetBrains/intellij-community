@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 interface Binding {
+  @Nullable
   Object serialize(Object o, @Nullable Object context, SerializationFilter filter);
 
   @Nullable

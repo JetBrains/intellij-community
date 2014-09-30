@@ -18,6 +18,10 @@ package com.intellij.dvcs.push.ui;
 import com.intellij.dvcs.push.PushTarget;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.RepositoryNodeListener;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBCheckBox;
@@ -27,13 +31,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePanel implements TreeCellRenderer {
+public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePanel {
 
   private final JBCheckBox myRepositoryCheckbox;
   private final PushTargetPanel<T> myDestPushTargetPanelComponent;
@@ -43,7 +46,7 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
   private final ColoredTreeCellRenderer myTextRenderer;
   @NotNull private final List<RepositoryNodeListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public RepositoryWithBranchPanel(@NotNull String repoName,
+  public RepositoryWithBranchPanel(@NotNull final Project project, @NotNull String repoName,
                                    @NotNull String sourceName, @NotNull PushTargetPanel<T> destPushTargetPanelComponent) {
     super();
     setLayout(new BorderLayout());
@@ -73,6 +76,18 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     };
     myTextRenderer.setOpaque(false);
     layoutComponents();
+
+    setInputVerifier(new InputVerifier() {
+      @Override
+      public boolean verify(JComponent input) {
+        ValidationInfo error = myDestPushTargetPanelComponent.verify();
+        if (error != null) {
+          //noinspection ConstantConditions
+          PopupUtil.showBalloonForComponent(error.component, error.message, MessageType.WARNING, false, project);
+        }
+        return error == null;
+      }
+    });
   }
 
   private void layoutComponents() {
@@ -96,14 +111,14 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     return myArrowLabel.getText();
   }
 
-  @Override
-  public Component getTreeCellRendererComponent(JTree tree,
-                                                Object value,
-                                                boolean selected,
-                                                boolean expanded,
-                                                boolean leaf,
-                                                int row,
-                                                boolean hasFocus) {
+  @NotNull
+  public Component getTreeCellEditorComponent(JTree tree,
+                                              Object value,
+                                              boolean selected,
+                                              boolean expanded,
+                                              boolean leaf,
+                                              int row,
+                                              boolean hasFocus) {
     Rectangle bounds = tree.getPathBounds(tree.getPathForRow(row));
     invalidate();
     if (!(value instanceof SingleRepositoryNode)) {

@@ -17,11 +17,10 @@ package com.intellij.appengine.cloud;
 
 import com.intellij.appengine.actions.AppEngineUploader;
 import com.intellij.appengine.util.AppEngineUtil;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.*;
@@ -30,19 +29,19 @@ import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
-import com.intellij.util.ui.FormBuilder;
 import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 /**
  * @author nik
  */
 public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration> {
+  public static AppEngineCloudType getInstance() {
+    return EP_NAME.findExtension(AppEngineCloudType.class);
+  }
 
   public AppEngineCloudType() {
     super("google-app-engine");
@@ -66,10 +65,11 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     return new AppEngineServerConfiguration();
   }
 
+
   @NotNull
   @Override
-  public UnnamedConfigurable createConfigurable(@NotNull AppEngineServerConfiguration configuration) {
-    return new AppEngineCloudConfigurable(configuration);
+  public RemoteServerConfigurable createServerConfigurable(@NotNull AppEngineServerConfiguration configuration) {
+    return new AppEngineCloudConfigurable(configuration, null);
   }
 
   @NotNull
@@ -81,44 +81,8 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
 
   @NotNull
   @Override
-  public DeploymentConfigurator createDeploymentConfigurator(Project project) {
+  public AppEngineDeploymentConfigurator createDeploymentConfigurator(Project project) {
     return new AppEngineDeploymentConfigurator(project);
-  }
-
-  private static class AppEngineCloudConfigurable implements UnnamedConfigurable {
-    private final JTextField myEmailField;
-    private final AppEngineServerConfiguration myConfiguration;
-
-    public AppEngineCloudConfigurable(AppEngineServerConfiguration configuration) {
-      myConfiguration = configuration;
-      myEmailField = new JTextField();
-      myEmailField.setPreferredSize(new Dimension(250, myEmailField.getPreferredSize().height));
-    }
-
-    @Nullable
-    @Override
-    public JComponent createComponent() {
-      return FormBuilder.createFormBuilder().addLabeledComponent("E-mail:", myEmailField).getPanel();
-    }
-
-    @Override
-    public boolean isModified() {
-      return !myEmailField.getText().equals(myConfiguration.getEmail());
-    }
-
-    @Override
-    public void apply() throws ConfigurationException {
-      myConfiguration.setEmail(myEmailField.getText());
-    }
-
-    @Override
-    public void reset() {
-      myEmailField.setText(myConfiguration.getEmail());
-    }
-
-    @Override
-    public void disposeUIResources() {
-    }
   }
 
   private static class AppEngineDeploymentConfigurator extends DeploymentConfigurator<DummyDeploymentConfiguration, AppEngineServerConfiguration> {

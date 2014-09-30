@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -81,6 +84,7 @@ public abstract class VirtualFileVisitor<T> {
   private boolean mySkipRoot = false;
   private int myDepthLimit = -1;
 
+  private Set<VirtualFile> myVisitedTargets;
   private int myLevel = 0;
   private Stack<T> myValueStack = null;
   private T myValue = null;
@@ -96,6 +100,9 @@ public abstract class VirtualFileVisitor<T> {
       else if (option instanceof Option.LimitOption) {
         myDepthLimit = ((Option.LimitOption)option).limit;
       }
+    }
+    if (myFollowSymLinks) {
+      myVisitedTargets = ContainerUtil.newHashSet();
     }
   }
 
@@ -168,7 +175,20 @@ public abstract class VirtualFileVisitor<T> {
   }
 
   final boolean allowVisitChildren(@NotNull VirtualFile file) {
-    return !file.is(VFileProperty.SYMLINK) || myFollowSymLinks && !VfsUtilCore.isInvalidLink(file);
+    if (!file.is(VFileProperty.SYMLINK)) {
+      return true;
+    }
+
+    if (!myFollowSymLinks || VfsUtilCore.isInvalidLink(file)) {
+      return false;
+    }
+
+    VirtualFile target = file.getCanonicalFile();
+    if (!myVisitedTargets.add(target)) {
+      return false;
+    }
+
+    return true;
   }
 
   final boolean depthLimitReached() {

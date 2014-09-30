@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,11 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ListPopup;
 
 public class NewElementSamePlaceAction extends NewElementAction {
   @Override
@@ -29,5 +33,16 @@ public class NewElementSamePlaceAction extends NewElementAction {
   @Override
   protected boolean isEnabled(AnActionEvent e) {
     return LangDataKeys.IDE_VIEW.getData(e.getDataContext()) != null;
+  }
+
+  protected void showPopup(DataContext context) {
+    ListPopup popup = createPopup(context);
+    Project project = CommonDataKeys.PROJECT.getData(context);
+    if (project != null) {
+      popup.showCenteredInCurrentWindow(project);
+    }
+    else {
+      popup.showInBestPositionFor(context);
+    }
   }
 }

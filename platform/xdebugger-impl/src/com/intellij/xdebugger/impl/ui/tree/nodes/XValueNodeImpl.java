@@ -149,13 +149,14 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
                     if (doc == null) return;
                     int line = sourcePosition.getLine();
                     Pair<VirtualFile, Integer> key = Pair.create(file, line);
-                    Set<XValueNodeImpl> presentations = map.get(key);
-                    if (presentations == null) {
-                      presentations = new LinkedHashSet<XValueNodeImpl>();
-                      map.put(key, presentations);
-                      timestamps.put(file, doc.getModificationStamp());
-                    }
+                    Set<XValueNodeImpl> presentations = new LinkedHashSet<XValueNodeImpl>();
+                    Set<XValueNodeImpl> old = map.get(key);
+                    map.put(key, presentations);
+                    timestamps.put(file, doc.getModificationStamp());
                     presentations.add(XValueNodeImpl.this);
+                    if (old != null) {
+                      presentations.addAll(old);
+                    }
                   }
                 });
         }

@@ -21,6 +21,7 @@ import com.intellij.util.PlatformUtilsCore;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -42,6 +43,7 @@ public class ApplicationNamesInfo {
     private ApplicationNamesInfoHolder() { }
   }
 
+  @NotNull
   public static ApplicationNamesInfo getInstance() {
     return ApplicationNamesInfoHolder.ourInstance;
   }

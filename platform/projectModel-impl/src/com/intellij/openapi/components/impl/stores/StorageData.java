@@ -141,19 +141,27 @@ public class StorageData {
     clearHash();
   }
 
-  void setState(@NotNull final String componentName, final Element element) {
+  void setState(@NotNull String componentName, @NotNull Element element) {
     element.setName(COMPONENT);
 
-    //componentName should be first!
-    final List<Attribute> attributes = new ArrayList<Attribute>(element.getAttributes());
-    for (Attribute attribute : attributes) {
-      element.removeAttribute(attribute);
+    // componentName should be first
+    List<Attribute> elementAttributes = element.getAttributes();
+    if (elementAttributes.isEmpty()) {
+      element.setAttribute(NAME, componentName);
     }
-
-    element.setAttribute(NAME, componentName);
-
-    for (Attribute attribute : attributes) {
-      element.setAttribute(attribute.getName(), attribute.getValue());
+    else {
+      Attribute nameAttribute = element.getAttribute(NAME);
+      if (nameAttribute == null) {
+        nameAttribute = new Attribute(NAME, componentName);
+        elementAttributes.add(0, nameAttribute);
+      }
+      else {
+        nameAttribute.setValue(componentName);
+        if (elementAttributes.get(0) != nameAttribute) {
+          elementAttributes.remove(nameAttribute);
+          elementAttributes.add(0, nameAttribute);
+        }
+      }
     }
 
     myComponentStates.put(componentName, element);
@@ -188,7 +196,7 @@ public class StorageData {
     myHash = -1;
   }
 
-  public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
+  public Set<String> getChangedComponentNames(@NotNull StorageData storageData, @Nullable PathMacroSubstitutor substitutor) {
     Set<String> bothStates = new THashSet<String>(myComponentStates.keySet());
     bothStates.retainAll(storageData.myComponentStates.keySet());
 

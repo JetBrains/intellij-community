@@ -16,6 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider
     appearance("UI: " + messageIde("checkbox.position.cursor.on.default.button"), "MOVE_MOUSE_ON_DEFAULT_BUTTON"),
     appearance("UI: Hide navigation popups on focus loss", "HIDE_NAVIGATION_ON_FOCUS_LOSS"),
     appearance("UI: Drag-n-Drop with ALT pressed only", "DND_WITH_PRESSED_ALT_ONLY"),
+    notifications("UI: Display balloon notifications", "SHOW_BALLOONS"),
     appearance("View: Show Main Toolbar", "SHOW_MAIN_TOOLBAR"),
     appearance("View: Show Status Bar", "SHOW_STATUS_BAR"),
     appearance("View: Show Navigation Bar", "SHOW_NAVIGATION_BAR"),
@@ -44,7 +46,7 @@ public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider
     appearance("Window: " + messageIde("checkbox.show.icons.in.menu.items"), "SHOW_ICONS_IN_MENUS"),
     appearance("Window: " + messageIde("checkbox.left.toolwindow.layout"), "LEFT_HORIZONTAL_SPLIT"),
     appearance("Window: " + messageIde("checkbox.show.editor.preview.popup"), "SHOW_EDITOR_TOOLTIP"),
-    appearance("Window: " + messageIde("checkbox.show.tool.window.bars"), "HIDE_TOOL_STRIPES"),
+    appearance("Window: " + "Hide Tool Window Bars", "HIDE_TOOL_STRIPES"),
     appearance("Window: " + messageIde("checkbox.show.tool.window.numbers"), "SHOW_TOOL_WINDOW_NUMBERS"),
     appearance("Window: Allow merging buttons on dialogs", "ALLOW_MERGE_BUTTONS"),
     appearance("Window: Small labels in editor tabs", "USE_SMALL_LABELS_ON_TABS"),
@@ -77,6 +79,15 @@ public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider
       @Override
       protected void fireUpdated() {
         UISettings.getInstance().fireUISettingsChanged();
+      }
+    };
+  }
+
+  static BooleanOptionDescription notifications(String option, String field) {
+    return new PublicFieldBasedOptionDescription(option, "reference.settings.ide.settings.notifications", field) {
+      @Override
+      public Object getInstance() {
+        return NotificationsConfigurationImpl.getNotificationsConfigurationImpl();
       }
     };
   }

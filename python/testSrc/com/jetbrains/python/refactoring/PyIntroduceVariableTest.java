@@ -224,7 +224,13 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  // PY-11909
   public void testGeneratorParameter() {
+    doTest();
+  }
+
+  // PY-11909
+  public void testNoRedundantParenthesisAroundGeneratorExpression() {
     doTest();
   }
 
@@ -245,7 +251,19 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     }
   }
 
-  public void testSelectionBreaksBinaryOperator() {doTest();}
+  // PY-5475
+  public void testGeneratorExpressionWithCommentNotInlined() {
+    doTest();
+  }
+
+  // PY-5475
+  public void testFunctionCallWithCommentNotInlined() {
+    doTest();
+  }
+
+  public void testSelectionBreaksBinaryOperator() {
+    doTest();
+  }
 
   private void doTestCannotPerform() {
     boolean thrownExpectedException = false;

@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.project.Project;
@@ -127,31 +128,13 @@ public class StorageUtil {
    * Due to historical reasons files in ROOT_CONFIG don’t wrapped into document (xml prolog) opposite to files in APP_CONFIG
    */
   @Nullable
-  static VirtualFile save(@NotNull File file, @Nullable Parent element, Object requestor, boolean wrapAsDocument, @Nullable VirtualFile cachedVirtualFile) throws StateStorageException {
+  static VirtualFile save(@NotNull File file, @Nullable Parent element, @NotNull Object requestor, boolean wrapAsDocument, @Nullable VirtualFile cachedVirtualFile) throws StateStorageException {
     if (isEmpty(element)) {
-      if (!file.exists()) {
-        return null;
+      try {
+        deleteFile(file, requestor, cachedVirtualFile);
       }
-
-      VirtualFile virtualFile = cachedVirtualFile;
-      if (virtualFile == null || !virtualFile.isValid()) {
-        virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-      }
-      if (virtualFile == null) {
-        LOG.info("Cannot find virtual file " + file.getAbsolutePath());
-        FileUtil.delete(file);
-      }
-      else {
-        AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
-        try {
-          virtualFile.delete(requestor);
-        }
-        catch (IOException e) {
-          throw new StateStorageException(e);
-        }
-        finally {
-          token.finish();
-        }
+      catch (IOException e) {
+        throw new StateStorageException(e);
       }
       return null;
     }
@@ -191,12 +174,44 @@ public class StorageUtil {
         }
         return virtualFile;
       }
+      catch (FileNotFoundException e) {
+        if (virtualFile == null) {
+          throw e;
+        }
+        else {
+          throw new ReadOnlyModificationException(virtualFile);
+        }
+      }
       finally {
         token.finish();
       }
     }
     catch (IOException e) {
       throw new StateStorageException(e);
+    }
+  }
+
+  public static void deleteFile(@NotNull File file, @NotNull Object requestor, @Nullable VirtualFile cachedVirtualFile) throws IOException {
+    if (!file.exists()) {
+      return;
+    }
+
+    VirtualFile virtualFile = cachedVirtualFile;
+    if (virtualFile == null || !virtualFile.isValid()) {
+      virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    }
+    if (virtualFile == null) {
+      LOG.info("Cannot find virtual file " + file.getAbsolutePath());
+      FileUtil.delete(file);
+    }
+    else {
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+      try {
+        virtualFile.delete(requestor);
+      }
+      finally {
+        token.finish();
+      }
     }
   }
 

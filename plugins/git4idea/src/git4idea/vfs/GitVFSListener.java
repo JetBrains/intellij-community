@@ -150,6 +150,7 @@ public class GitVFSListener extends VcsVFSListener {
     performBackgroundOperation(filesToAdd, GitBundle.getString("add.adding"), new LongOperationPerRootExecutor() {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
+        LOG.debug("Git: adding files: " + files);
         GitFileUtils.addPaths(myProject, root, files);
         VcsFileUtil.markFilesDirty(myProject, files);
       }

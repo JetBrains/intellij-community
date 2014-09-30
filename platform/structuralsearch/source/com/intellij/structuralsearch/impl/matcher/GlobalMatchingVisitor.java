@@ -188,6 +188,9 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    * @param elements the element for which the sons are looked for match
    */
   public void matchContext(final NodeIterator elements) {
+    if (matchContext == null) {
+      return;
+    }
     final CompiledPattern pattern = matchContext.getPattern();
     final NodeIterator patternNodes = pattern.getNodes().clone();
     final MatchResultImpl saveResult = matchContext.hasResult() ? matchContext.getResult() : null;
