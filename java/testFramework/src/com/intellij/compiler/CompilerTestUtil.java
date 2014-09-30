@@ -1,6 +1,5 @@
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -30,7 +29,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.junit.Assert;
 
@@ -52,9 +50,6 @@ public class CompilerTestUtil {
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     compilerConfiguration.projectOpened();
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
-
-    JpsJavaCompilerOptions javacSettings = JavacConfiguration.getOptions(project, JavacConfiguration.class);
-    javacSettings.setTestsUseExternalCompiler(true);
   }
 
   public static void scanSourceRootsToRecompile(Project project) {
