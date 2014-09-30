@@ -101,11 +101,6 @@ def _find_jinja2_render_frame(frame):
 
     return frame
 
-def _change_variable(plugin, pydb, frame, attr, expression):
-    if isinstance(frame, Jinja2TemplateFrame):
-        result = eval(expression, frame.f_globals, frame.f_locals)
-        frame.changeVariable(attr, result)
-
 
 #=======================================================================================================================
 # Jinja2 Frame
@@ -121,29 +116,46 @@ class Jinja2TemplateFrame:
             self.back_context = frame.f_locals['context']
         self.f_code = FCode('template', file_name)
         self.f_lineno = _get_jinja2_template_line(frame)
-        self.f_back = _find_render_function_frame(frame)
+        self.f_back = frame
         self.f_globals = {}
         self.f_locals = self.collect_context(frame)
         self.f_trace = None
 
     def collect_context(self, frame):
         res = {}
+        for k, v in frame.f_locals.items():
+            if not k.startswith('l_'):
+                res[k] = v
+            elif v and not _is_missing(v):
+                res[k[2:]] = v
         if self.back_context is not None:
             for k, v in self.back_context.items():
                 res[k] = v
-        for k, v in frame.f_locals.items():
-            if not k.startswith('l_'):
-                if not k in res:
-                    #local variables should shadow globals from context
-                    res[k] = v
-            elif v and not _is_missing(v):
-                res[k[2:]] = v
         return res
 
-    def changeVariable(self, name, value):
-        for k, v in self.back_context.items():
-            if k == name:
-                self.back_context.vars[k] = value
+    def changeVariable(self, frame, name, value):
+        in_vars_or_parents = False
+        if name in frame.f_locals['context'].parent:
+            self.back_context.parent[name] = value
+            in_vars_or_parents = True
+        if name in frame.f_locals['context'].vars:
+            self.back_context.vars[name] = value
+            in_vars_or_parents = True
+
+        l_name = 'l_' + name
+        if l_name in frame.f_locals:
+            if in_vars_or_parents:
+                frame.f_locals[l_name] = self.back_context.resolve(name)
+            else:
+                frame.f_locals[l_name] = value
+
+
+def change_variable(plugin, frame, attr, expression):
+    if isinstance(frame, Jinja2TemplateFrame):
+        result = eval(expression, frame.f_globals, frame.f_locals)
+        frame.changeVariable(frame.f_back, attr, result)
+        return result
+    return False
 
 
 def _is_missing(item):
