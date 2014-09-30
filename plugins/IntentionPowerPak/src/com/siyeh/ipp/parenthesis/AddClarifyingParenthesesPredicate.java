@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Bas Leijdekkers
+ * Copyright 2006-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,14 +70,17 @@ class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
     }
     else if (element instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
+      final IElementType tokenType = assignmentExpression.getOperationTokenType();
+      if (parent instanceof PsiVariable && tokenType != JavaTokenType.EQ) {
+        return true;
+      }
       final PsiExpression rhs = assignmentExpression.getRExpression();
-      if (!(mightBeConfusingExpression(rhs))) {
+      if (!mightBeConfusingExpression(rhs)) {
         return false;
       }
       if (rhs instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression nestedAssignment = (PsiAssignmentExpression)rhs;
         final IElementType nestedTokenType = nestedAssignment.getOperationTokenType();
-        final IElementType tokenType = assignmentExpression.getOperationTokenType();
         if (nestedTokenType.equals(tokenType)) {
           return false;
         }
