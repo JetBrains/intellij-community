@@ -37,7 +37,7 @@ public class PythonConfigurationType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(PythonConfigurationType.class);
   }
 
-  private static class PythonConfigurationFactory extends PythonConfigurationFactoryBase {
+  public static class PythonConfigurationFactory extends PythonConfigurationFactoryBase {
     protected PythonConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }
