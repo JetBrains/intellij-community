@@ -45,7 +45,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
         final String url = IpnbSettings.getInstance(myProject).getURL();
         if (StringUtil.isEmptyOrSpaces(url)) {
           BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-                              "Please, specify IPython Notebook URL in Settings->IPython Notebook", null, MessageType.WARNING.getPopupBackground(), null);
+            "Please, specify IPython Notebook URL in Settings->IPython Notebook", null, MessageType.WARNING.getPopupBackground(), null);
           final Balloon balloon = balloonBuilder.createBalloon();
           balloon.showInCenterOf(fileEditor.getRunCellButton());
           return;
@@ -71,10 +71,16 @@ public final class IpnbConnectionManager implements ProjectComponent {
         myKernels.put(path, connection);
       }
       catch (IOException e) {
-        LOG.error(e);
+        BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
+          "Please, check that IPython Notebook is running", null, MessageType.WARNING.getPopupBackground(), null);
+        final Balloon balloon = balloonBuilder.createBalloon();
+        balloon.showInCenterOf(fileEditor.getRunCellButton());
       }
       catch (URISyntaxException e) {
-        LOG.error(e);
+        BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
+          "Please, check IPython Notebook URL in Settings->IPython Notebook", null, MessageType.WARNING.getPopupBackground(), null);
+        final Balloon balloon = balloonBuilder.createBalloon();
+        balloon.showInCenterOf(fileEditor.getRunCellButton());
       }
     }
     else {
