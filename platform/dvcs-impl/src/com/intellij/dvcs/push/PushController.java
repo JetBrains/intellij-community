@@ -102,7 +102,8 @@ public class PushController implements Disposable {
     return ContainerUtil.and(myView2Model.values(), new Condition<MyRepoModel>() {
       @Override
       public boolean value(MyRepoModel model) {
-        return !model.isSelected() || model.getSupport().isForcePushAllowed(model.getRepository(), model.getTarget());
+        return !model.isSelected() ||
+               (model.getTarget() != null && model.getSupport().isForcePushAllowed(model.getRepository(), model.getTarget()));
       }
     });
   }
