@@ -11,4 +11,13 @@ class Foo {
   @Contract(pure=<warning descr="Pure methods must return something, void is not allowed as a return type">true</warning>)
   void voidPureMethod() {}
 
+  @Contract(<warning descr="Method returns void but the contract specifies null">"->null"</warning>)
+  public native void throwMe();
+
+  @Contract(<warning descr="Method returns boolean but the contract specifies null">"->null"</warning>)
+  public native boolean wrongReturnType();
+
+  @Contract(<warning descr="Method returns String but the contract specifies true">"->true"</warning>)
+  public native String wrongReturnType2();
+
 }
