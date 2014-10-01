@@ -364,7 +364,14 @@ public class PsiUtilCore {
       return null;
     }
 
-    return containingFile.getVirtualFile();
+    VirtualFile file = containingFile.getVirtualFile();
+    if (file == null) {
+      PsiFile originalFile = containingFile.getOriginalFile();
+      if (originalFile != containingFile && originalFile.isValid()) {
+        file = originalFile.getVirtualFile();
+      }
+    }
+    return file;
   }
 
   public static int compareElementsByPosition(final PsiElement element1, final PsiElement element2) {

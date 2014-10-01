@@ -375,6 +375,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       }
     }
 
+    ((PsiFileImpl)mirror).setOriginalFile(this);
+
     return mirrorTreeElement;
   }
 
