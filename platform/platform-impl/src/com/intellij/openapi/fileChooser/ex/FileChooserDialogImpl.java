@@ -137,6 +137,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   @NotNull
   @Override
   public VirtualFile[] choose(@Nullable final VirtualFile toSelect, @Nullable final Project project) {
+    if (toSelect == null) {
+      return choose(project);
+    }
     return choose(project, toSelect);
   }
 
