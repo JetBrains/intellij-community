@@ -1,5 +1,5 @@
 {
   "vcs": {
-    "url": "schema://foo.bar/path"
+    "schema": "schema://foo.bar/path"
   }
 }

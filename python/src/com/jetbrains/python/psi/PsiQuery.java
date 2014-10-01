@@ -336,7 +336,15 @@ public class PsiQuery {
   }
 
   /**
+   * @return is result empty or not
+   */
+  public boolean isEmpty() {
+    return myPsiElements.length == 0;
+  }
+
+  /**
    * Typed class that returns elements of certian type
+   *
    * @param <T> class type
    */
   public static class PsiTypedQuery<T extends PsiElement> extends PsiQuery {
@@ -346,7 +354,7 @@ public class PsiQuery {
     private final T[] myElements;
 
     /**
-     * @param clazz type
+     * @param clazz    type
      * @param elements elements
      */
     private PsiTypedQuery(@NotNull final Class<T> clazz, @NotNull final T... elements) {

@@ -23,7 +23,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
 
 public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
   public JavaPairedBraceMatcher() {
@@ -58,12 +57,12 @@ public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
     try {
       while (true) {
         count++;
-        if (iterator.atEnd()) break;
         if (left) {
           iterator.advance();
         } else {
           iterator.retreat();
         }
+        if (iterator.atEnd()) break;
         final IElementType tokenType = iterator.getTokenType();
         if (tokenType == opposite) {
           paired--;

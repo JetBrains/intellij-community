@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Bas Leijdekkers
+ * Copyright 2010-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -49,7 +48,7 @@ public class UiUtils {
   }
 
   public static JPanel createAddRemovePanel(final ListTable table) {
-    return ToolbarDecorator.createDecorator(table)
+    final JPanel panel = ToolbarDecorator.createDecorator(table)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -65,6 +64,8 @@ public class UiUtils {
         }
       }).setRemoveAction(new RemoveAction(table))
       .disableUpDownActions().createPanel();
+    panel.setPreferredSize(new Dimension(150, 100));
+    return panel;
   }
 
   public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, final String chooserTitle,
@@ -76,7 +77,7 @@ public class UiUtils {
     else {
       filter = new SubclassFilter(ancestorClasses);
     }
-    return ToolbarDecorator.createDecorator(table)
+    final JPanel panel = ToolbarDecorator.createDecorator(table)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -111,6 +112,8 @@ public class UiUtils {
         }
       }).setRemoveAction(new RemoveAction(table))
       .disableUpDownActions().createPanel();
+    panel.setPreferredSize(new Dimension(150, 100));
+    return panel;
   }
 
   private static void editTableCell(final ListTable table, final int row, final int column) {
@@ -181,6 +184,7 @@ public class UiUtils {
           ListUtil.removeSelectedItems(list);
         }
       }).createPanel();
+    panel.setPreferredSize(new Dimension(150, 100));
     optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(borderTitle,
                                                                false, new Insets(10, 0, 0, 0)));
     optionsPanel.add(panel);

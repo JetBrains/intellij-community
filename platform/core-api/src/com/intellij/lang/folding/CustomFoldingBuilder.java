@@ -41,22 +41,50 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
   @NotNull
   @Override
   public final FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
-    List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
+    List<FoldingDescriptor> customRegions = new ArrayList<FoldingDescriptor>();
     if (CustomFoldingProvider.getAllProviders().length > 0) {
       myDefaultProvider = null;
       ASTNode rootNode = root.getNode();
       if (rootNode != null) {
-        addCustomFoldingRegionsRecursively(new FoldingStack(rootNode), rootNode, descriptors, 0);
+        addCustomFoldingRegionsRecursively(new FoldingStack(rootNode), rootNode, customRegions, 0);
       }
     }
-    buildLanguageFoldRegions(descriptors, root, document, quick);
-    return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
+    List<FoldingDescriptor> langRegions = new ArrayList<FoldingDescriptor>();
+    buildLanguageFoldRegions(langRegions, root, document, quick);
+    List<FoldingDescriptor> regions = addNonOverlappingRegions(customRegions, langRegions);
+    return regions.toArray(new FoldingDescriptor[regions.size()]);
   }
 
-  @NotNull
-  @Override
-  public final FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
-    return buildFoldRegions(node.getPsi(), document, false);
+  private static List<FoldingDescriptor> addNonOverlappingRegions(List<FoldingDescriptor> customRegions,
+                                                                  List<FoldingDescriptor> otherRegions) {
+    List<FoldingDescriptor> result = new ArrayList<FoldingDescriptor>(customRegions.size() + otherRegions.size());
+    result.addAll(customRegions);
+    outer:
+    for (FoldingDescriptor region : otherRegions) {
+      for (int i = customRegions.size() - 1; i >= 0; i--) {
+        FoldingDescriptor custom = customRegions.get(i);
+        if (custom.getRange().getEndOffset() <= region.getRange().getStartOffset()) {
+          // custom regions are ordered by their end offset (due to AST traversal order in addCustomFoldingRegionsRecursively method)
+          break;
+        }
+        if (intersect(region, custom)) {
+          // Custom regions take preference if they overlap with language regions
+          continue outer;
+        }
+      }
+      result.add(region);
+    }
+    return result;
+  }
+
+  private static boolean intersect(FoldingDescriptor region1, FoldingDescriptor region2) {
+    int start1 = region1.getRange().getStartOffset();
+    int end1 = region1.getRange().getEndOffset();
+    int start2 = region2.getRange().getStartOffset();
+    int end2 = region2.getRange().getEndOffset();
+    return start1 == start2 && end1 == end2
+           || start1 < start2 && start2 < end1 && end1 < end2
+           || start2 < start1 && start1 < end2 && end2 < end1;
   }
 
   /**
@@ -78,6 +106,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
                                                   @NotNull List<FoldingDescriptor> descriptors,
                                                   int currDepth) {
     FoldingStack localFoldingStack = isCustomFoldingRoot(node) ? new FoldingStack(node) : foldingStack;
+    // an optimization in addNonOverlappingRegions method depends on AST traversal order here
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (isCustomRegionStart(child)) {
         localFoldingStack.push(child);

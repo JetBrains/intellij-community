@@ -48,10 +48,7 @@ class TagBinding extends BasePrimitiveBinding {
 
     assert myBinding != null;
     Object node = myBinding.serialize(value, v, filter);
-    if (node != v) {
-      if (node == null) {
-        return context == null ? v : null;
-      }
+    if (node != null && node != v) {
       JDOMUtil.addContent(v, node);
     }
     return v;

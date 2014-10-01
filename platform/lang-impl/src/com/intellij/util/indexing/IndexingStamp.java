@@ -68,7 +68,7 @@ public class IndexingStamp {
   public static synchronized void rewriteVersion(@NotNull final File file, final int version) throws IOException {
     final long prevLastModifiedValue = file.lastModified();
     if (file.exists()) {
-      FileUtil.delete(file);
+      FileUtil.deleteWithRenaming(file);
     }
     file.getParentFile().mkdirs();
     final DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {

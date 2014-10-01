@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -169,7 +170,8 @@ public class NewExprent extends Exprent {
     return 1; // precedence of new
   }
 
-  public String toJava(int indent) {
+  @Override
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     StringBuilder buf = new StringBuilder();
 
     if (anonymous) {
@@ -219,7 +221,7 @@ public class NewExprent extends Exprent {
             }
 
             StringBuilder buff = new StringBuilder();
-            ExprProcessor.getCastedExprent(param, invsuper.getDescriptor().params[i], buff, indent, true);
+            ExprProcessor.getCastedExprent(param, invsuper.getDescriptor().params[i], buff, indent, true, tracer);
 
             buf.append(buff);
             firstpar = false;
@@ -230,7 +232,7 @@ public class NewExprent extends Exprent {
       if (!enumconst) {
         String enclosing = null;
         if (!lambda && constructor != null) {
-          enclosing = getQualifiedNewInstance(child.anonimousClassType.value, constructor.getLstParameters(), indent);
+          enclosing = getQualifiedNewInstance(child.anonimousClassType.value, constructor.getLstParameters(), indent, tracer);
         }
 
         String typename = ExprProcessor.getCastTypeName(child.anonimousClassType);
@@ -277,7 +279,7 @@ public class NewExprent extends Exprent {
         if (i > 0) {
           buf.append(", ");
         }
-        ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buf, indent, false);
+        ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buf, indent, false, tracer);
       }
       buf.append("}");
     }
@@ -316,7 +318,7 @@ public class NewExprent extends Exprent {
                 }
 
                 StringBuilder buff = new StringBuilder();
-                ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buff, indent, true);
+                ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buff, indent, true, tracer);
 
                 buf.append(buff);
                 firstpar = false;
@@ -329,7 +331,7 @@ public class NewExprent extends Exprent {
         if (!enumconst) {
           String enclosing = null;
           if (constructor != null) {
-            enclosing = getQualifiedNewInstance(newtype.value, constructor.getLstParameters(), indent);
+            enclosing = getQualifiedNewInstance(newtype.value, constructor.getLstParameters(), indent, tracer);
           }
 
           String typename = ExprProcessor.getTypeName(newtype);
@@ -355,7 +357,7 @@ public class NewExprent extends Exprent {
 
         if (lstArrayElements.isEmpty()) {
           for (int i = 0; i < newtype.arraydim; i++) {
-            buf.append("[").append(i < lstDims.size() ? lstDims.get(i).toJava(indent) : "").append("]");
+            buf.append("[").append(i < lstDims.size() ? lstDims.get(i).toJava(indent, tracer) : "").append("]");
           }
         }
         else {
@@ -372,7 +374,7 @@ public class NewExprent extends Exprent {
               buf.append(", ");
             }
             StringBuilder buff = new StringBuilder();
-            ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buff, indent, false);
+            ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buff, indent, false, tracer);
 
             buf.append(buff);
           }
@@ -383,7 +385,7 @@ public class NewExprent extends Exprent {
     return buf.toString();
   }
 
-  private static String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent) {
+  private static String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent, BytecodeMappingTracer tracer) {
 
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 
@@ -408,7 +410,7 @@ public class NewExprent extends Exprent {
         }
 
         if (isQualifiedNew) {
-          return enclosing.toJava(indent);
+          return enclosing.toJava(indent, tracer);
         }
       }
     }

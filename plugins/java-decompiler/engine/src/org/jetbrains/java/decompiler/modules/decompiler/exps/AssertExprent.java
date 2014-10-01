@@ -17,6 +17,8 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.List;
 
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+
 public class AssertExprent extends Exprent {
 
   private List<Exprent> parameters;
@@ -29,7 +31,8 @@ public class AssertExprent extends Exprent {
     this.parameters = parameters;
   }
 
-  public String toJava(int indent) {
+  @Override
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
 
     StringBuilder buffer = new StringBuilder();
 
@@ -39,11 +42,11 @@ public class AssertExprent extends Exprent {
       buffer.append("false");
     }
     else {
-      buffer.append(parameters.get(0).toJava(indent));
+      buffer.append(parameters.get(0).toJava(indent, tracer));
     }
     if (parameters.size() > 1) {
       buffer.append(" : ");
-      buffer.append(parameters.get(1).toJava(indent));
+      buffer.append(parameters.get(1).toJava(indent, tracer));
     }
 
     return buffer.toString();

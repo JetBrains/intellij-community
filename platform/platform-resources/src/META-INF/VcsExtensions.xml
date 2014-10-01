@@ -62,6 +62,7 @@
     <search.topHitProvider implementation="com.intellij.openapi.vcs.actions.VcsTopHitProvider"/>
     <actionPromoter implementation="com.intellij.openapi.vcs.actions.VcsActionPromoter"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.VcsProjectSetProcessor"/>
+    <projectSetProcessor implementation="com.intellij.openapi.vcs.OpenProjectSetProcessor"/>
   </extensions>
 </idea-plugin>
 

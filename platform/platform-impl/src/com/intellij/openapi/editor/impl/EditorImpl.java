@@ -693,6 +693,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     reinitDocumentIndentOptions();
 
+    for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
+      if (scheme instanceof MyColorSchemeDelegate) {
+        ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
+        break;
+      }
+    }
+
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
 
     mySettings.reinitSettings();
@@ -709,12 +716,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       validateSize();
     }
 
-    for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
-      if (scheme instanceof MyColorSchemeDelegate) {
-        ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
-        break;
-      }
-    }
     myHighlighter.setColorScheme(myScheme);
     myFoldingModel.refreshSettings();
 

@@ -30,6 +30,18 @@ public class JavaBraceMatcherTest extends LightCodeInsightFixtureTestCase {
     assertTrue(offset == 54);
   }
 
+  public void testBrokenText() {
+    myFixture.configureByText("a.java", "import java.util.ArrayList;" +
+                                        "class A {" +
+                                        "  ArrayList<caret><String");
+    final Editor editor = myFixture.getEditor();
+    final EditorHighlighter editorHighlighter = ((EditorEx)editor).getHighlighter();
+    final HighlighterIterator iterator = editorHighlighter.createIterator(editor.getCaretModel().getOffset());
+    boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), myFixture.getFile().getFileType(), iterator,
+                                                   true);
+    assertFalse(matched);
+  }
+
   public void testBinaryStatement() {
     myFixture.configureByText("a.java", "import java.util.ArrayList;" +
                                         "class A {" +

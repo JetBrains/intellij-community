@@ -1,39 +1,43 @@
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -46,9 +50,6 @@ public class CompilerTestUtil {
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     compilerConfiguration.projectOpened();
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
-
-    JpsJavaCompilerOptions javacSettings = JavacConfiguration.getOptions(project, JavacConfiguration.class);
-    javacSettings.setTestsUseExternalCompiler(true);
   }
 
   public static void scanSourceRootsToRecompile(Project project) {
@@ -59,28 +60,58 @@ public class CompilerTestUtil {
   }
 
   public static void saveApplicationSettings() {
-    try {
-      ProjectJdkTableImpl table = (ProjectJdkTableImpl)ProjectJdkTable.getInstance();
-      Element root = new Element("application");
-      root.addContent(JDomSerializationUtil.createComponentElement(JpsGlobalLoader.SDK_TABLE_COMPONENT_NAME).addContent(table.getState().cloneContent()));
-      saveApplicationComponent(root, ((ProjectJdkTableImpl)ProjectJdkTable.getInstance()).getExportFiles()[0]);
+    saveApplicationComponent(ProjectJdkTable.getInstance());
+    saveApplicationComponent(FileTypeManager.getInstance());
+  }
 
-      FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
-      Element fileTypesComponent = JDomSerializationUtil.createComponentElement(fileTypeManager.getComponentName());
-      fileTypeManager.writeExternal(fileTypesComponent);
-      saveApplicationComponent(new Element("application").addContent(fileTypesComponent), PathManager.getOptionsFile(fileTypeManager));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+  public static void saveApplicationComponent(Object appComponent) {
+    try {
+      final File file;
+      String componentName;
+      State state = appComponent.getClass().getAnnotation(State.class);
+      if (state != null) {
+        componentName = state.name();
+        Storage lastStorage = state.storages()[state.storages().length - 1];
+        StateStorageManager storageManager = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager();
+        file = new File(storageManager.expandMacros(lastStorage.file()));
+      }
+      else if (appComponent instanceof ExportableApplicationComponent && appComponent instanceof NamedJDOMExternalizable) {
+        componentName = ((ExportableApplicationComponent)appComponent).getComponentName();
+        file = PathManager.getOptionsFile((NamedJDOMExternalizable)appComponent);
+      }
+      else {
+        throw new AssertionError( appComponent.getClass() + " doesn't have @State annotation and doesn't implement ExportableApplicationComponent");
+      }
+
+      final Element root = new Element("application");
+      Element element = JDomSerializationUtil.createComponentElement(componentName);
+      if (appComponent instanceof JDOMExternalizable) {
+        ((JDOMExternalizable)appComponent).writeExternal(element);
+      }
+      else {
+        //noinspection unchecked
+        element.addContent(((PersistentStateComponent<Element>)appComponent).getState().cloneContent());
+      }
+      root.addContent(element);
+      Assert.assertTrue("Cannot create " + file, FileUtil.createIfDoesntExist(file));
+      new WriteAction() {
+        protected void run(@NotNull final Result result) throws IOException {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          Assert.assertNotNull(file.getAbsolutePath(), virtualFile);
+          //emulate save via 'saveSettings' so file won't be treated as changed externally
+          OutputStream stream = virtualFile.getOutputStream(new SaveSessionRequestor());
+          try {
+            JDOMUtil.writeDocument(new Document(root), stream, SystemProperties.getLineSeparator());
+          }
+          finally {
+            stream.close();
+          }
+        }
+      }.execute().throwException();
     }
     catch (WriteExternalException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private static void saveApplicationComponent(Element root, final File file) throws IOException {
-    FileUtil.createParentDirs(file);
-    JDOMUtil.writeDocument(new Document(root), file, SystemProperties.getLineSeparator());
   }
 
   public static void enableExternalCompiler() {
@@ -114,5 +145,22 @@ public class CompilerTestUtil {
         BuildManager.getInstance().clearState(project);
       }
     }.execute();
+  }
+
+  private static class SaveSessionRequestor implements StateStorage.SaveSession {
+    @Override
+    public void save() {
+    }
+
+    @Nullable
+    @Override
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      return null;
+    }
+
+    @Override
+    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
+
+    }
   }
 }

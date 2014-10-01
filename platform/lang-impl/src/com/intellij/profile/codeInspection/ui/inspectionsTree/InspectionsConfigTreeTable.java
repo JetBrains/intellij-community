@@ -34,9 +34,8 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.*;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,9 +47,9 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -118,6 +117,23 @@ public class InspectionsConfigTreeTable extends TreeTable {
         return true;
       }
     }.installOn(this);
+
+    setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
+        if (path != null) {
+          return new TextTransferable(path.getLastPathComponent().toString());
+        }
+        return null;
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
 
     registerKeyboardAction(new ActionListener() {
                              public void actionPerformed(ActionEvent e) {
@@ -341,13 +357,6 @@ public class InspectionsConfigTreeTable extends TreeTable {
       if (myScopeToAverageSeverityMap.size() == 1) {
         return result;
       }
-      String[] scopesOrder = inspectionProfile.getScopesOrder();
-      if (scopesOrder == null || scopesOrder.length == 0) {
-        final ArrayList<String> scopesList = new ArrayList<String>(myScopeToAverageSeverityMap.keySet());
-        scopesList.remove(myDefaultScopeName);
-        ContainerUtil.sort(scopesList);
-        scopesOrder = ArrayUtil.toStringArray(scopesList);
-      }
 
       final SeverityAndOccurrences defaultSeveritiesAndOccurrences = myScopeToAverageSeverityMap.get(myDefaultScopeName);
       if (defaultSeveritiesAndOccurrences == null) {
@@ -361,15 +370,15 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
       final int allInspectionsCount = defaultSeveritiesAndOccurrences.getOccurrencesSize();
       final Map<String, HighlightSeverity> allScopes = defaultSeveritiesAndOccurrences.getOccurrences();
-      String[] reversedScopesOrder = ArrayUtil.reverseArray(scopesOrder);
-      for (String currentScope : reversedScopesOrder) {
+      for (String currentScope : myScopeToAverageSeverityMap.keySet()) {
         final SeverityAndOccurrences currentSeverityAndOccurrences = myScopeToAverageSeverityMap.get(currentScope);
         if (currentSeverityAndOccurrences == null) {
           continue;
         }
         final HighlightSeverity currentSeverity = currentSeverityAndOccurrences.getPrimarySeverity();
         if (currentSeverity == ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY ||
-            currentSeverityAndOccurrences.getOccurrencesSize() == allInspectionsCount) {
+            currentSeverityAndOccurrences.getOccurrencesSize() == allInspectionsCount ||
+            myDefaultScopeName.equals(currentScope)) {
           result.put(currentScope, currentSeverity);
         }
         else {

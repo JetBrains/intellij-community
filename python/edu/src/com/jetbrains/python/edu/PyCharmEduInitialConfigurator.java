@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.edu;
 
+import com.google.common.collect.Sets;
 import com.intellij.application.options.InitialConfigurationDialog;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionActionBean;
@@ -25,6 +26,7 @@ import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -67,6 +69,8 @@ public class PyCharmEduInitialConfigurator {
 
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
 
+  private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
+                                                                    "Terminal.html", "ConfiguringTerminal.html");
 
   public static class First {
 
@@ -190,6 +194,13 @@ public class PyCharmEduInitialConfigurator {
     for (DirectoryProjectConfigurator ep : Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
       if (ep instanceof PlatformProjectViewOpener) {
         rootArea.getExtensionPoint(DirectoryProjectConfigurator.EP_NAME).unregisterExtension(ep);
+      }
+    }
+
+    // unregister unrelated tips
+    for (TipAndTrickBean tip : Extensions.getExtensions(TipAndTrickBean.EP_NAME)) {
+      if (UNRELATED_TIPS.contains(tip.fileName)) {
+        rootArea.getExtensionPoint(TipAndTrickBean.EP_NAME).unregisterExtension(tip);
       }
     }
 

@@ -103,12 +103,6 @@ public class StudyCheckAction extends DumbAwareAction {
             Task task = studyState.getTask();
             StudyStatus oldStatus = task.getStatus();
             Map<String, TaskFile> taskFiles = task.getTaskFiles();
-            for (TaskFile taskFile : taskFiles.values()) {
-              if (!taskFile.isValid()) {
-                createTestResultPopUp("It's not possible to check invalid files", MessageType.WARNING.getPopupBackground(), project);
-                return;
-              }
-            }
             VirtualFile taskDir = studyState.getTaskDir();
             flushWindows(task, taskDir);
             StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
@@ -210,7 +204,7 @@ public class StudyCheckAction extends DumbAwareAction {
     if (virtualFile == null) {
       return;
     }
-    VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile, project);
+    VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile);
     for (TaskWindow taskWindow : answerTaskFile.getTaskWindows()) {
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) {
@@ -227,8 +221,7 @@ public class StudyCheckAction extends DumbAwareAction {
   private VirtualFile getCopyWithAnswers(@NotNull final VirtualFile taskDir,
                                          @NotNull final VirtualFile file,
                                          @NotNull final TaskFile source,
-                                         @NotNull final TaskFile target,
-                                         @NotNull final Project project) {
+                                         @NotNull final TaskFile target) {
     VirtualFile copy = null;
     try {
 
@@ -237,7 +230,7 @@ public class StudyCheckAction extends DumbAwareAction {
       final Document document = documentManager.getDocument(copy);
       if (document != null) {
         TaskFile.copy(source, target);
-        StudyDocumentListener listener = new StudyDocumentListener(target, project);
+        StudyDocumentListener listener = new StudyDocumentListener(target);
         document.addDocumentListener(listener);
         for (TaskWindow taskWindow : target.getTaskWindows()) {
           if (!taskWindow.isValid(document)) {
@@ -274,7 +267,7 @@ public class StudyCheckAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       check(project);

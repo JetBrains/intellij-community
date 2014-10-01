@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.CommandLineTokenizer;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -349,6 +351,11 @@ public class GradleExecutionHelper {
     }
 
     if (ttl > 0 && connector instanceof DefaultGradleConnector) {
+
+      // do not spawn gradle daemons during test execution
+      final Application app = ApplicationManager.getApplication();
+      ttl = (app != null && app.isUnitTestMode()) ? 10000 : ttl;
+
       ((DefaultGradleConnector)connector).daemonMaxIdleTime(ttl, TimeUnit.MILLISECONDS);
     }
     connector.forProjectDirectory(projectDir);

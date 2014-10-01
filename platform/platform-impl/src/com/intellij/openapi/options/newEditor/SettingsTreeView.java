@@ -136,6 +136,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
     myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
     myBuilder.setFilteringMerge(300, null);
+    setMinimumSize(new Dimension(200, 100));
     Disposer.register(this, myBuilder);
   }
 

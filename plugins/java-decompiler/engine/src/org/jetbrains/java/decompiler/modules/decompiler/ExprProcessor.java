@@ -20,6 +20,7 @@ import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
@@ -753,8 +754,8 @@ public class ExprProcessor implements CodeConstants {
                .isClassdef()));
   }
 
-  public static String jmpWrapper(Statement stat, int indent, boolean semicolon) {
-    StringBuilder buf = new StringBuilder(stat.toJava(indent));
+  public static String jmpWrapper(Statement stat, int indent, boolean semicolon, BytecodeMappingTracer tracer) {
+    StringBuilder buf = new StringBuilder(stat.toJava(indent, tracer));
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
@@ -776,11 +777,13 @@ public class ExprProcessor implements CodeConstants {
           buf.append(" label").append(edge.closure.id);
         }
         buf.append(";").append(new_line_separator);
+        tracer.incrementSourceLine();
       }
     }
 
     if (buf.length() == 0 && semicolon) {
       buf.append(InterpreterUtil.getIndentString(indent)).append(";").append(new_line_separator);
+      tracer.incrementSourceLine();
     }
 
     return buf.toString();
@@ -800,7 +803,7 @@ public class ExprProcessor implements CodeConstants {
     return res;
   }
 
-  public static String listToJava(List<Exprent> lst, int indent) {
+  public static String listToJava(List<Exprent> lst, int indent, BytecodeMappingTracer tracer) {
     if (lst == null || lst.isEmpty()) {
       return "";
     }
@@ -811,7 +814,7 @@ public class ExprProcessor implements CodeConstants {
     StringBuilder buf = new StringBuilder();
 
     for (Exprent expr : lst) {
-      String content = expr.toJava(indent);
+      String content = expr.toJava(indent, tracer);
       if (content.length() > 0) {
         if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent)expr).isClassdef()) {
           buf.append(indstr);
@@ -824,6 +827,7 @@ public class ExprProcessor implements CodeConstants {
           buf.append(";");
         }
         buf.append(new_line_separator);
+        tracer.incrementSourceLine();
       }
     }
 
@@ -852,8 +856,9 @@ public class ExprProcessor implements CodeConstants {
     return defaultval;
   }
 
-  public static boolean getCastedExprent(Exprent exprent, VarType leftType, StringBuilder buffer, int indent, boolean castNull) {
-    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false);
+  public static boolean getCastedExprent(Exprent exprent, VarType leftType, StringBuilder buffer, int indent,
+                                                               boolean castNull, BytecodeMappingTracer tracer) {
+    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, tracer);
   }
 
   public static boolean getCastedExprent(Exprent exprent,
@@ -861,12 +866,12 @@ public class ExprProcessor implements CodeConstants {
                                          StringBuilder buffer,
                                          int indent,
                                          boolean castNull,
-                                         boolean castAlways) {
+                                         boolean castAlways, BytecodeMappingTracer tracer) {
 
     boolean ret = false;
     VarType rightType = exprent.getExprType();
 
-    String res = exprent.toJava(indent);
+    String res = exprent.toJava(indent, tracer);
 
     boolean cast =
       !leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT);

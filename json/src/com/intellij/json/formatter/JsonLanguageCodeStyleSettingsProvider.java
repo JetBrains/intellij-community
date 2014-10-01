@@ -2,11 +2,11 @@ package com.intellij.json.formatter;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.json.JsonLanguage;
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.json.JsonLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,10 +38,14 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_BEFORE_COLON", "Before ':'", SPACES_OTHER);
       consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_AFTER_COLON", "After ':'", SPACES_OTHER);
     }
-    if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
+    else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showStandardOptions("KEEP_BLANK_LINES_IN_CODE");
     }
-    super.customizeSettings(consumer, settingsType);
+    else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
+      consumer.showStandardOptions("RIGHT_MARGIN",
+                                   "KEEP_LINE_BREAKS",
+                                   "WRAP_LONG_LINES");
+    }
   }
 
   @NotNull
@@ -53,7 +57,6 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @Nullable
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
-    // TODO: read sources of this one carefully
     return new SmartIndentOptionsEditor();
   }
 

@@ -970,7 +970,7 @@ class InternalChangeVariable(InternalThreadCommand):
     def doIt(self, dbg):
         """ Converts request into python variable """
         try:
-            result = pydevd_vars.changeAttrExpression(self.thread_id, self.frame_id, self.attr, self.expression)
+            result = pydevd_vars.changeAttrExpression(self.thread_id, self.frame_id, self.attr, self.expression, dbg)
             xml = "<xml>"
             xml += pydevd_vars.varToXML(result, "")
             xml += "</xml>"

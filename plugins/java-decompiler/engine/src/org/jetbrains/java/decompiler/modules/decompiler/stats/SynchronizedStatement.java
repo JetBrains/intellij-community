@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.SequenceHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
@@ -68,22 +69,28 @@ public class SynchronizedStatement extends Statement {
   // public methods
   // *****************************************************************************
 
-  public String toJava(int indent) {
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     String indstr = InterpreterUtil.getIndentString(indent);
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
     StringBuilder buf = new StringBuilder();
-    buf.append(ExprProcessor.listToJava(varDefinitions, indent));
-    buf.append(first.toJava(indent));
+    buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
+    buf.append(first.toJava(indent, tracer));
 
     if (isLabeled()) {
       buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
+      tracer.incrementSourceLine();
     }
 
-    buf.append(indstr).append(headexprent.get(0).toJava(indent)).append(" {").append(new_line_separator);
-    buf.append(ExprProcessor.jmpWrapper(body, indent + 1, true));
+    buf.append(indstr).append(headexprent.get(0).toJava(indent, tracer)).append(" {").append(new_line_separator);
+    tracer.incrementSourceLine();
+
+    buf.append(ExprProcessor.jmpWrapper(body, indent + 1, true, tracer));
+    tracer.incrementSourceLine();
+
     buf.append(indstr).append("}").append(new_line_separator);
+    tracer.incrementSourceLine();
 
     return buf.toString();
   }

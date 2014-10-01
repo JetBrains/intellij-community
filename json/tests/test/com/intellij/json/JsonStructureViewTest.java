@@ -35,6 +35,28 @@ public class JsonStructureViewTest extends JsonTestCase {
            "  ccc\n");
   }
 
+  // IDEA-127119
+  public void testObjectsInsideArraysAreShown() {
+    // maximum expansion depth is determined by 'ide.tree.autoExpandMaxDepth' registry value
+    doTest("-ObjectsInsideArraysAreShown.json\n" +
+           " aProp\n" +
+           " -node1\n" +
+           "  anotherProp\n" +
+           "  subNode1\n" +
+           "  subNode2\n" +
+           " -node2\n" +
+           "  -object\n" +
+           "   -subNode2\n" +
+           "    +object\n" +
+           " -node3\n" +
+           "  -object\n" +
+           "   prop1\n" +
+           "   prop2\n" +
+           "   someFlag\n" +
+           "   -array\n" +
+           "    +object\n");
+  }
+
   // Moved from JavaScript
 
   public void testJsonStructure() {

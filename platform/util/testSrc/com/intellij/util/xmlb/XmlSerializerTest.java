@@ -126,6 +126,9 @@ public class XmlSerializerTest extends TestCase {
     BeanWithSubBean bean = new BeanWithSubBean();
     doSerializerTest(
       "<BeanWithSubBean>\n" +
+      "  <option name=\"BEAN1\">\n" +
+      "    <Bean />\n" +
+      "  </option>\n" +
       "  <option name=\"BEAN2\">\n" +
       "    <BeanWithPublicFields>\n" +
       "      <option name=\"INT_V\" value=\"1\" />\n" +
@@ -139,6 +142,9 @@ public class XmlSerializerTest extends TestCase {
 
     doSerializerTest(
       "<BeanWithSubBean>\n" +
+      "  <option name=\"BEAN1\">\n" +
+      "    <Bean />\n" +
+      "  </option>\n" +
       "  <option name=\"BEAN2\">\n" +
       "    <BeanWithPublicFields>\n" +
       "      <option name=\"INT_V\" value=\"2\" />\n" +
@@ -783,7 +789,11 @@ public class XmlSerializerTest extends TestCase {
     final BeanWithPolymorphicArray bean = new BeanWithPolymorphicArray();
 
     doSerializerTest(
-      "<BeanWithPolymorphicArray />", bean);
+      "<BeanWithPolymorphicArray>\n" +
+      "  <option name=\"V\">\n" +
+      "    <array />\n" +
+      "  </option>\n" +
+      "</BeanWithPolymorphicArray>", bean);
 
     bean.V = new BeanWithPublicFields[] {new BeanWithPublicFields(), new BeanWithPublicFieldsDescendant(), new BeanWithPublicFields()};
 

@@ -256,6 +256,14 @@ class DjangoTemplateFrame:
                     d[k] = value
 
 
+def change_variable(plugin, frame, attr, expression):
+    if isinstance(frame, DjangoTemplateFrame):
+        result = eval(expression, frame.f_globals, frame.f_locals)
+        frame.changeVariable(attr, result)
+        return result
+    return False
+
+
 def _is_django_exception_break_context(frame):
     try:
         name = frame.f_code.co_name

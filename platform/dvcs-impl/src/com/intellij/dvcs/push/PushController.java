@@ -99,10 +99,10 @@ public class PushController implements Disposable {
   }
 
   public boolean isForcePushAllowed() {
-    return ContainerUtil.exists(myView2Model.values(), new Condition<MyRepoModel>() {
+    return ContainerUtil.and(myView2Model.values(), new Condition<MyRepoModel>() {
       @Override
       public boolean value(MyRepoModel model) {
-        return model.isSelected() && model.getSupport().isForcePushAllowed(model.getRepository(), model.getTarget());
+        return !model.isSelected() || model.getSupport().isForcePushAllowed(model.getRepository(), model.getTarget());
       }
     });
   }
@@ -320,8 +320,9 @@ public class PushController implements Disposable {
             node.stopLoading();
             if (shouldBeSelected) { // never remove selection; initially all checkboxes are not selected
               node.setChecked(true);
+              model.setSelected(true);
             }
-            node.fireOnSelectionChange(shouldBeSelected);
+            myDialog.updateButtons();
           }
         });
       }

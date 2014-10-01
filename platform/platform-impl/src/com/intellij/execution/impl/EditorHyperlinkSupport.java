@@ -19,6 +19,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -59,6 +60,7 @@ import java.util.Map;
  * @author peter
  */
 public class EditorHyperlinkSupport {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.EditorHyperlinkSupport");
   public static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
   private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("HYPERLINK");
   private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
@@ -266,11 +268,19 @@ public class EditorHyperlinkSupport {
       Filter.Result result = customFilter.applyFilter(text, endOffset);
       if (result != null) {
         for (Filter.ResultItem resultItem : result.getResultItems()) {
-          if (resultItem.getHyperlinkInfo() != null) {
-            createHyperlink(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHighlightAttributes(), resultItem.getHyperlinkInfo());
+          int start = resultItem.getHighlightStartOffset();
+          int end = resultItem.getHighlightEndOffset();
+          if (end < start || end > document.getTextLength()) {
+            LOG.error("Filter returned wrong range: start=" + start + "; end=" + end + "; length=" + document.getTextLength() + "; filter=" + customFilter);
+            continue;
           }
-          else if (resultItem.getHighlightAttributes() != null) {
-            addHighlighter(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHighlightAttributes());
+
+          TextAttributes attributes = resultItem.getHighlightAttributes();
+          if (resultItem.getHyperlinkInfo() != null) {
+            createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo());
+          }
+          else if (attributes != null) {
+            addHighlighter(start, end, attributes);
           }
         }
       }
