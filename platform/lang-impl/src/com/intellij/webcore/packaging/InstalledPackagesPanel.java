@@ -152,7 +152,7 @@ public class InstalledPackagesPanel extends JPanel {
 
                                       @Override
                                       public void operationFinished(String packageName,
-                                                                    @Nullable String errorDescription) {
+                                                                    @Nullable PackageManagementService.ErrorDescription errorDescription) {
                                         myNotificationArea.showResult(packageName, errorDescription);
                                         myPackagesTable.clearSelection();
                                         doUpdatePackages(myPackageManagementService);
@@ -230,7 +230,8 @@ public class InstalledPackagesPanel extends JPanel {
               }
 
               @Override
-              public void operationFinished(final String packageName, @Nullable final String errorDescription) {
+              public void operationFinished(final String packageName,
+                                            @Nullable final PackageManagementService.ErrorDescription errorDescription) {
                 UIUtil.invokeLaterIfNeeded(new Runnable() {
                   @Override
                   public void run() {
@@ -244,7 +245,7 @@ public class InstalledPackagesPanel extends JPanel {
                     else {
                       myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
                                                    "Upgrade Packages Failed",
-                                                   "Upgrade packages failed.\n" + errorDescription);
+                                                   "Upgrade packages failed.\n" + errorDescription.getMessage());
                     }
 
                     if (myCurrentlyInstalling.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
@@ -340,7 +341,8 @@ public class InstalledPackagesPanel extends JPanel {
         }
 
         @Override
-        public void operationFinished(final String packageName, @Nullable final String errorDescription) {
+        public void operationFinished(final String packageName,
+                                      @Nullable final PackageManagementService.ErrorDescription errorDescription) {
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {

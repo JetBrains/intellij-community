@@ -247,7 +247,8 @@ public class ManagePackagesDialog extends DialogWrapper {
             }
 
             @Override
-            public void operationFinished(final String packageName, @Nullable final String errorDescription) {
+            public void operationFinished(final String packageName,
+                                          @Nullable final PackageManagementService.ErrorDescription errorDescription) {
               if (!ApplicationManager.getApplication().isDispatchThread()) {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   @Override
@@ -277,7 +278,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     myPackages.repaint();
   }
 
-  private void handleInstallationFinished(String packageName, String errorDescription) {
+  private void handleInstallationFinished(String packageName, PackageManagementService.ErrorDescription errorDescription) {
     if (myPackageListener != null) {
       myPackageListener.operationFinished(packageName, errorDescription);
     }

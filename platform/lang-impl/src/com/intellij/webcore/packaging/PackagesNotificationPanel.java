@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
@@ -74,8 +73,8 @@ public class PackagesNotificationPanel {
     builder.show();
   }
 
-  public void showResult(String packageName, @Nullable String errorDescription) {
-    if (StringUtil.isEmpty(errorDescription)) {
+  public void showResult(String packageName, @Nullable PackageManagementService.ErrorDescription errorDescription) {
+    if (errorDescription == null) {
       String message = "Package installed successfully";
       if (packageName != null) {
         message = "Package '" + packageName + "' installed successfully";
@@ -90,7 +89,7 @@ public class PackagesNotificationPanel {
       String firstLine = "Error occurred when installing package '" + packageName + "'. ";
       showError(firstLine + "<a href=\"xxx\">Details...</a>",
                 title,
-                firstLine + errorDescription);
+                firstLine + errorDescription.getMessage());
     }
   }
 
