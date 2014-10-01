@@ -1,19 +1,14 @@
 package org.jetbrains.plugins.ipnb.protocol;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
+import com.intellij.openapi.util.text.StringUtil;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.format.cells.output.IpnbErrorOutputCell;
-import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutOutputCell;
-import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
-import org.jetbrains.plugins.ipnb.format.cells.output.IpnbStreamOutputCell;
+import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -93,17 +88,17 @@ public class IpnbConnection {
         final Header header = msg.getHeader();
         final Header parentHeader = gson.fromJson(msg.getParentHeader(), Header.class);
         final String messageType = header.getMessageType();
-        if ("pyout".equals(messageType)) {
+        if ("pyout".equals(messageType) || "display_data".equals(messageType)) {
           final PyOutContent content = gson.fromJson(msg.getContent(), PyOutContent.class);
-          myOutput.add(createCellOutput(content));
+          addCellOutput(content, myOutput);
         }
         else if ("pyerr".equals(messageType)) {
           final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
-          myOutput.add(createCellOutput(content));
+          addCellOutput(content, myOutput);
         }
         else if ("stream".equals(messageType)) {
           final PyStreamContent content = gson.fromJson(msg.getContent(), PyStreamContent.class);
-          myOutput.add(createCellOutput(content));
+          addCellOutput(content, myOutput);
         }
         else if ("pyin".equals(messageType)) {
           final JsonElement executionCount = msg.getContent().get("execution_count");
@@ -223,6 +218,7 @@ public class IpnbConnection {
     content.addProperty("code", code);
     content.addProperty("silent", false);
     content.add("user_variables", new JsonArray());
+    content.add("output_type", new JsonPrimitive(""));
     content.add("user_expressions", new JsonObject());
     content.addProperty("allow_stdin", false);
 
@@ -315,20 +311,32 @@ public class IpnbConnection {
     }
   }
 
-  private IpnbOutputCell createCellOutput(@NotNull final PyContent content) {
+  private void addCellOutput(@NotNull final PyContent content, ArrayList<IpnbOutputCell> output) {
     if (content instanceof PyErrContent) {
-      return new IpnbErrorOutputCell(((PyErrContent)content).getEvalue(),
-                                 ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback(), null);
+      output.add(new IpnbErrorOutputCell(((PyErrContent)content).getEvalue(),
+                                 ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback(), null));
     }
     else if (content instanceof PyStreamContent) {
       final String data = ((PyStreamContent)content).getData();
-      return new IpnbStreamOutputCell(data, new String[]{data}, null);
+      output.add(new IpnbStreamOutputCell(data, new String[]{data}, null));
     }
     else if (content instanceof PyOutContent) {
-      final Collection<String> values = ((PyOutContent)content).getData().values();
-      return new IpnbOutOutputCell(values.toArray(new String[values.size()]), null);
+      final Map<String, String> data = ((PyOutContent)content).getData();
+      if (data.containsKey("text/latex")) {
+        final String text = data.get("text/latex");
+        final String plainText = data.get("text/plain");
+        output.add(new IpnbLatexOutputCell(new String[]{text}, null, new String[]{plainText}));
+      }
+      else if (data.containsKey("text/html")) {
+        final String html = data.get("text/html");
+        output.add(new IpnbHtmlOutputCell(StringUtil.splitByLinesKeepSeparators(html), StringUtil.splitByLinesKeepSeparators(html), null));
+      }
+      else {
+        for (Map.Entry<String, String> entry : data.entrySet()) {
+          output.add(new IpnbOutOutputCell(new String[]{entry.getValue()}, null));
+        }
+      }
     }
-    return null;
   }
 
   private interface PyContent {}

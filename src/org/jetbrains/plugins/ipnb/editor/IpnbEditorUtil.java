@@ -108,9 +108,9 @@ public class IpnbEditorUtil {
 
   protected static String prompt(Integer promptNumber, @NotNull final PromptType type) {
     if (type == PromptType.In)
-      return promptNumber == null ? type + "[ ]:" : String.format(type + " [%d]:", promptNumber);
+      return promptNumber == null ? type + " [ ]:" : promptNumber > 0 ? String.format(type + " [%d]:", promptNumber) : type + " [*]:";
     else if (type == PromptType.Out)
-      return promptNumber == null ? type + "[ ]:" : String.format(type + "[%d]:", promptNumber);
+      return promptNumber == null ? type + "[ ]:" : promptNumber > 0 ? String.format(type + "[%d]:", promptNumber) : type + "[*]:";
     return "";
   }
 

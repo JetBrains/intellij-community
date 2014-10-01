@@ -192,7 +192,7 @@ public class IpnbParser {
       }
       else if (outputCell instanceof IpnbLatexOutputCell) {
         raw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
-        raw.prompt_number = ((IpnbLatexOutputCell)outputCell).getPromptNumber();
+        raw.prompt_number = outputCell.getPromptNumber();
         raw.text = outputCell.getText();
       }
       else if (outputCell instanceof IpnbStreamOutputCell) {
