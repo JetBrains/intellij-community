@@ -69,8 +69,12 @@ public abstract class SettingsConnectionService {
   private Map<String, String> readSettings(String... attributes) {
     Map<String, String> settings = ContainerUtil.newLinkedHashMap();
     try {
-      URL url = new URL(getSettingsUrl());
-      String text = FileUtil.loadTextAndClose(getStream(url));
+      String url = getSettingsUrl();
+      String text = FileUtil.loadTextAndClose(getStream(new URL(url)));
+      if (text.startsWith("<html>") || text.startsWith("<!DOCTYPE html>")) {
+        LOG.info("HTML text obtained from " + url + ": " + StringUtil.first(text, 300, true));
+        return settings;
+      }
       try {
         Document document = JDOMUtil.loadDocument(text);
         Element root = document.getRootElement();
