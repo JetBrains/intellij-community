@@ -198,9 +198,11 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
       final List<VirtualFile> sourceRoots = rootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
       final ProjectFileIndex fileIndex = rootManager.getFileIndex();
       for (final VirtualFile sourceRoot : sourceRoots) {
-        final String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
-        if (packageName != null && !packageName.isEmpty()) {
-          names.add(packageName);
+        if (sourceRoot.isDirectory()) {
+          final String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
+          if (packageName != null && !packageName.isEmpty()) {
+            names.add(packageName);
+          }
         }
       }
       myNontrivialPackagePrefixes = names;
