@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   private final ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
-  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, final ProjectManagerImpl projectManager) {
+  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, @NotNull ProjectManagerImpl projectManager) {
     super(project);
 
     myProjectManager = projectManager;
@@ -59,12 +59,9 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       _d = myElement;
     }
 
-    final ComponentManager componentManager = getComponentManager();
-    final PathMacroManager pathMacroManager = PathMacroManager.getInstance(componentManager);
-
+    ComponentManager componentManager = getComponentManager();
     final Element element = _d;
-
-    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, pathMacroManager.createTrackingSubstitutor(), componentManager,
+    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(), componentManager,
                                                             ROOT_TAG_NAME, null,
                                                             ComponentVersionProvider.EMPTY) {
       @Override
@@ -78,7 +75,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return new MySaveSession(storageData) {
           @Override
           protected void doSave(@Nullable Element element) {
-            myProjectManager.setDefaultProjectRootElement(element == null ? null : element);
+            // we must set empty element instead of null as indicator - ProjectManager state is ready to save
+            myProjectManager.setDefaultProjectRootElement(element == null ? new Element("empty") : element);
           }
 
           // we must not collapse paths here, because our solution is just a big hack

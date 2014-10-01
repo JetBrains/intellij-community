@@ -28,10 +28,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
@@ -74,13 +71,19 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
+@State(
+  name = "ProjectManager",
+  storages = {
+    @Storage(
+      file = StoragePathMacros.APP_CONFIG + "/project.default.xml"
+    )}
+)
+public class ProjectManagerImpl extends ProjectManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
+  private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
 
   public static final int CURRENT_FORMAT_VERSION = 4;
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
-  private static final String ELEMENT_DEFAULT_PROJECT = "defaultProject";
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
@@ -1118,33 +1121,35 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
                                Messages.getWarningIcon()) == 0;
   }
 
+
+  @Nullable
   @Override
-  public void writeExternal(Element parentNode) {
+  public Element getState() {
     if (myDefaultProject != null) {
       myDefaultProject.save();
     }
 
+    if (myDefaultProjectRootElement == null) {
+      // we are not ready to save
+      return null;
+    }
+
+    Element element = new Element("state");
+    myDefaultProjectRootElement.detach();
+    element.addContent(myDefaultProjectRootElement);
+    return element;
+  }
+
+  @Override
+  public void loadState(Element state) {
+    myDefaultProjectRootElement = state.getChild("defaultProject");
     if (myDefaultProjectRootElement != null) {
       myDefaultProjectRootElement.detach();
-      parentNode.addContent(myDefaultProjectRootElement);
     }
   }
 
-  public void setDefaultProjectRootElement(@Nullable Element defaultProjectRootElement) {
+  public void setDefaultProjectRootElement(@NotNull Element defaultProjectRootElement) {
     myDefaultProjectRootElement = defaultProjectRootElement;
-  }
-
-  @Override
-  public void readExternal(Element parentNode)  {
-    myDefaultProjectRootElement = parentNode.getChild(ELEMENT_DEFAULT_PROJECT);
-    if (myDefaultProjectRootElement != null) {
-      myDefaultProjectRootElement.detach();
-    }
-  }
-
-  @Override
-  public String getExternalFileName() {
-    return "project.default";
   }
 
   @Override
@@ -1156,7 +1161,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @Override
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
+    return new File[]{PathManager.getOptionsFile("project.default")};
   }
 
   @Override
