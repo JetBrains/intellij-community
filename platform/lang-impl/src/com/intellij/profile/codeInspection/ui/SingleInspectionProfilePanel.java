@@ -625,6 +625,11 @@ public class SingleInspectionProfilePanel extends JPanel {
         public void actionPerformed(AnActionEvent e) {
           setNewHighlightingLevel(level);
         }
+
+        @Override
+        public boolean isDumbAware() {
+          return true;
+        }
       });
     }
     group.add(Separator.getInstance());
