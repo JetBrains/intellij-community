@@ -8,7 +8,7 @@
     </component>
   </application-components>
 
-  <xi:include href="/META-INF/pycharm-community.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <xi:include href="/META-INF/python-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 

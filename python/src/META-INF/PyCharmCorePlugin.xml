@@ -7,5 +7,9 @@
       <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
       <implementation-class>com.jetbrains.python.console.PythonToolWindowConsoleRunnerFactory</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.jetbrains.python.PyCharmInitialConfigurator</implementation-class>
+      <headless-implementation-class/>
+    </component>
   </application-components>
 </idea-plugin>

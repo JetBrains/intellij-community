@@ -15,12 +15,6 @@
     <xi:fallback/>
   </xi:include>
 
-  <application-components>
-    <component>
-      <implementation-class>com.jetbrains.python.PyCharmInitialConfigurator</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </application-components>
   <project-components>
     <component>
       <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsProjectComponent</implementation-class>
