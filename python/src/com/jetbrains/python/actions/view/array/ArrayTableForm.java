@@ -61,6 +61,8 @@ public class ArrayTableForm {
 
   private static final String NOT_APPLICABLE = "View not applicable for ";
   private static final Pattern EDITABLE_IN_SLICE_PATTERN = Pattern.compile("(\\[[0-9]*\\])|(\\[[0-9:]*)|([0-9:]*\\])");
+  private NumpyArrayValueProvider myValueProvider;
+  private Runnable myCallback;
 
   public ArrayTableForm(PyViewArrayAction.MyDialog dialog, Project project) {
     myParentDialog = dialog;
@@ -171,11 +173,24 @@ public class ArrayTableForm {
     ((JBTableWithRows)myTable).setRowNumberTable((RowNumberTable)rowTable);
     ((JBTableWithRows)myTable).setSliceField(mySliceTextField);
 
+    FixSizeTableAdjustmentListener tableAdjustmentListener =
+      new FixSizeTableAdjustmentListener<NumpyArraySlice>(myTable, 50, 50, 40, 40, 2, 2) {
+        @Override
+        NumpyArraySlice createChunk(String baseSlice, int rows, int columns, int rOffset, int cOffset) {
+          return new NumpyArraySlice(baseSlice, rows, columns, rOffset, cOffset, myValueProvider, myCallback);
+        }
+
+        @Override
+        String getBaseSlice() {
+          return NumpyArraySlice.getUpperSlice(mySliceTextField.getText(), 2);
+        }
+      };
+
     myScrollPane.getHorizontalScrollBar()
-      .addAdjustmentListener(new TableAdjustmentListener(myTable, 41, 53, TableAdjustmentListener.HORIZONTAL_MODE, 30, 40, 2, 3));
+      .addAdjustmentListener(tableAdjustmentListener);
 
     myScrollPane.getVerticalScrollBar()
-      .addAdjustmentListener(new TableAdjustmentListener(myTable, 41, 53, TableAdjustmentListener.VERTICAL_MODE, 30, 40, 2, 3));
+      .addAdjustmentListener(tableAdjustmentListener);
   }
 
   public EditorTextField getSliceTextField() {
@@ -215,5 +230,13 @@ public class ArrayTableForm {
 
   public JComponent getMainPanel() {
     return myMainPanel;
+  }
+
+  public void setArrayValueProvider(NumpyArrayValueProvider provider) {
+    myValueProvider = provider;
+  }
+
+  public void setCallback(Runnable callback) {
+    myCallback = callback;
   }
 }
