@@ -97,6 +97,9 @@ public class ExtractLightMethodObjectHandler {
       CodeInsightUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
     //todo before this or super, not found etc
     final PsiElement anchor = RefactoringUtil.getParentStatement(originalAnchor, false);
+    if (anchor == null) {
+      return null;
+    }
     final PsiElement container = anchor.getParent();
     final PsiElement firstElementCopy = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);
     final PsiElement[] elementsCopy = CodeInsightUtil.findStatementsInRange(copy,

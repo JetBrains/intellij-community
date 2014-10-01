@@ -230,13 +230,14 @@ public class RefactoringUtil {
   }
 
 
-  public static PsiElement getParentStatement(PsiElement place, boolean skipScopingStatements) {
+  @Nullable
+  public static PsiElement getParentStatement(@Nullable PsiElement place, boolean skipScopingStatements) {
     PsiElement parent = place;
     while (true) {
+      if (parent == null) return null;
       if (parent instanceof PsiStatement) break;
       if (parent instanceof PsiExpression && parent.getParent() instanceof PsiLambdaExpression) return parent;
       parent = parent.getParent();
-      if (parent == null) return null;
     }
     PsiElement parentStatement = parent;
     parent = parentStatement instanceof PsiStatement ? parentStatement : parentStatement.getParent();

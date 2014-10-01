@@ -369,10 +369,6 @@ public class StorageData {
     return diffs;
   }
 
-  public boolean isEmpty() {
-    return myComponentStates.isEmpty();
-  }
-
   public boolean hasState(@NotNull String componentName) {
     return myComponentStates.get(componentName) instanceof Element;
   }
