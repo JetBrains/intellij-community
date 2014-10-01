@@ -265,7 +265,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public List<PyPackage> getPackages(boolean cachedOnly) throws ExecutionException {
     synchronized (myCacheLock) {
       if (myPackagesCache != null) {
-        return myPackagesCache;
+        return new ArrayList<PyPackage>(myPackagesCache);
       }
       if (myExceptionCache != null) {
         throw myExceptionCache;
@@ -279,8 +279,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
       final List<PyPackage> packages = parsePackagingToolOutput(output);
       synchronized (myCacheLock) {
         myPackagesCache = packages;
+        return new ArrayList<PyPackage>(myPackagesCache);
       }
-      return packages;
     }
     catch (ExecutionException e) {
       synchronized (myCacheLock) {
