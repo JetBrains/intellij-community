@@ -193,27 +193,61 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
+  private void loadDescriptorsConfigs(boolean onlyModified) {
+    for (ToolDescriptors toolDescriptors : myInitialToolDescriptors) {
+      loadDescriptorConfig(toolDescriptors.getDefaultDescriptor(), onlyModified);
+      for (Descriptor descriptor : toolDescriptors.getNonDefaultDescriptors()) {
+        loadDescriptorConfig(descriptor, onlyModified);
+      }
+    }
+  }
+
+  private void loadDescriptorConfig(Descriptor descriptor, boolean ifModifier) {
+    if (!ifModifier || mySelectedProfile.isProperSetting(descriptor.getKey().toString())) {
+      descriptor.loadConfig();
+    }
+  }
 
   private void wereToolSettingsModified() {
     for (final ToolDescriptors toolDescriptor : myInitialToolDescriptors) {
       Descriptor desc = toolDescriptor.getDefaultDescriptor();
-      if (wereToolSettingsModified(desc)) return;
+      if (wereToolSettingsModified(desc, true)) return;
       List<Descriptor> descriptors = toolDescriptor.getNonDefaultDescriptors();
       for (Descriptor descriptor : descriptors) {
-        if (wereToolSettingsModified(descriptor)) return;
+        if (wereToolSettingsModified(descriptor, false)) return;
       }
     }
     myModified = false;
   }
 
-  private boolean wereToolSettingsModified(Descriptor descriptor) {
-    InspectionToolWrapper toolWrapper = descriptor.getToolWrapper();
+  private boolean wereToolSettingsModified(Descriptor descriptor, boolean isDefault) {
     if (!mySelectedProfile.isToolEnabled(descriptor.getKey(), descriptor.getScope(), myProjectProfileManager.getProject())) {
       return false;
     }
     Element oldConfig = descriptor.getConfig();
     if (oldConfig == null) return false;
-    Element newConfig = Descriptor.createConfigElement(toolWrapper);
+
+    ScopeToolState state = null;
+    if (isDefault) {
+      state =
+        mySelectedProfile.getToolDefaultState(descriptor.getKey().toString(), myProjectProfileManager.getProject());
+    } else {
+      for (ScopeToolState candidate : mySelectedProfile
+        .getNonDefaultTools(descriptor.getKey().toString(), myProjectProfileManager.getProject())) {
+        final NamedScope scope = descriptor.getScope();
+        LOG.assertTrue(scope != null);
+        if (Comparing.equal(candidate.getScopeName(), scope.getName())) {
+          state = candidate;
+          break;
+        }
+      }
+    }
+
+    if (state == null) {
+      return true;
+    }
+
+    Element newConfig = Descriptor.createConfigElement(state.getTool());
     if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(new Runnable() {
@@ -376,7 +410,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       @Override
       public void actionPerformed(AnActionEvent e) {
         mySelectedProfile.resetToEmpty(e.getProject());
-        initToolStates();
+        loadDescriptorsConfigs(false);
         postProcessModification();
       }
     });
@@ -389,7 +423,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       @Override
       protected void postProcessModification() {
-        initToolStates();
+        loadDescriptorsConfigs(true);
         SingleInspectionProfilePanel.this.postProcessModification();
       }
     });
