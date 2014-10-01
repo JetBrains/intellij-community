@@ -44,6 +44,21 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showStandardOptions("RIGHT_MARGIN",
                                    "KEEP_LINE_BREAKS",
                                    "WRAP_LONG_LINES");
+
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "ARRAY_WRAPPING",
+                                "Arrays",
+                                null,
+                                CodeStyleSettingsCustomizable.WRAP_OPTIONS,
+                                CodeStyleSettingsCustomizable.WRAP_VALUES);
+
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "OBJECT_WRAPPING",
+                                "Objects",
+                                null,
+                                CodeStyleSettingsCustomizable.WRAP_OPTIONS,
+                                CodeStyleSettingsCustomizable.WRAP_VALUES);
+
     }
   }
 
