@@ -15,11 +15,15 @@
  */
 package org.jetbrains.java.decompiler;
 
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -28,15 +32,13 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
-  private static final String BANNER = IdeaDecompiler.BANNER;
-
   public void testSimple() {
     String path = PlatformTestUtil.getRtJarPath() + "!/java/lang/String.class";
     VirtualFile file = StandardFileSystems.jar().findFileByPath(path);
     assertNotNull(path, file);
 
     String decompiled = new IdeaDecompiler().getText(file).toString();
-    assertTrue(decompiled.startsWith(BANNER + "package java.lang;\n"));
+    assertTrue(decompiled.startsWith(IdeaDecompiler.BANNER + "package java.lang;\n"));
     assertTrue(decompiled, decompiled.contains("public final class String"));
     assertTrue(decompiled, decompiled.contains("@deprecated"));
     assertTrue(decompiled, decompiled.contains("private static class CaseInsensitiveComparator"));
@@ -68,5 +70,29 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
         return true;
       }
     });
+  }
+
+  public void testNavigation() {
+    String path = PluginPathManager.getPluginHomePath("java-decompiler") + "/testData/Navigation.class";
+    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
+    assertNotNull(path, file);
+    myFixture.configureFromExistingVirtualFile(file);
+
+    String text = myFixture.getEditor().getDocument().getText();
+    assertTrue(text, text.startsWith(IdeaDecompiler.BANNER));
+
+    doTestNavigation(11, 14, 14, 10);  // to "m2()"
+    doTestNavigation(15, 21, 14, 17);  // to "int i"
+    doTestNavigation(16, 28, 15, 13);  // to "int r"
+  }
+
+  private void doTestNavigation(int line, int column, int expLine, int expColumn) {
+    Editor editor = myFixture.getEditor();
+    int offset = editor.getDocument().getLineStartOffset(line - 1) + column - 1;
+    PsiElement target = GotoDeclarationAction.findTargetElement(getProject(), editor, offset);
+    assertTrue(String.valueOf(target), target instanceof Navigatable);
+    ((Navigatable)target).navigate(true);
+    int expected = editor.getDocument().getLineStartOffset(expLine - 1) + expColumn - 1;
+    assertEquals(expected, editor.getCaretModel().getOffset());
   }
 }
