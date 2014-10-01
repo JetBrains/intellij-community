@@ -21,19 +21,75 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Dmitry Avdeev
  */
 public class VcsProjectSetProcessor extends ProjectSetProcessor {
+
+  @Override
+  public String getId() {
+    return "vcs";
+  }
+
+  @Override
+  public boolean processEntries(@NotNull List<Pair<String, String>> entries, @NotNull final Context context) {
+
+    final VirtualFile directory;
+    if (context.directory != null) {
+      directory = context.directory;
+    }
+    else {
+      FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+      descriptor.setTitle("Select Destination Folder");
+      descriptor.setDescription("");
+      VirtualFile[] files = FileChooser.chooseFiles(descriptor, null, null);
+      if (files.length == 0) return false;
+      directory = files[0];
+    }
+    for (Pair<String, String> pair: entries) {
+      String vcs = pair.getFirst();
+      VcsCheckoutProcessor processor = VcsCheckoutProcessor.getProcessor(vcs);
+      if (processor == null) {
+        LOG.error("Checkout processor not found for " + vcs);
+        continue;
+      }
+
+      String url = pair.getSecond();
+      String[] split = splitUrl(url);
+      synchronized (myLock) {
+        final AtomicBoolean done = new AtomicBoolean();
+        try {
+          processor.checkout(split[0], split[1], directory, new CheckoutProvider.Listener() {
+            @Override
+            public void directoryCheckedOut(File directory, VcsKey vcs) {
+
+            }
+
+            @Override
+            public void checkoutCompleted() {
+              done.set(true);
+              myLock.notifyAll();
+            }
+          });
+          if (!done.get()) {
+            myLock.wait();
+          }
+        }
+        catch (InterruptedException e) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private final Object myLock = new Object();
 
   private static final Logger LOG = Logger.getInstance(VcsProjectSetProcessor.class);
 
@@ -44,56 +100,5 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
     String url = s.substring(0, i);
     String path = s.substring(i + 1);
     return new String[] { url, path };
-  }
-
-  @Override
-  public String getId() {
-    return "vcs";
-  }
-
-  @Override
-  public void processEntries(@NotNull List<Pair<String, String>> entries, @Nullable Object param, @NotNull final Consumer<Object> onFinish) {
-
-    final VirtualFile directory;
-    if (param instanceof VirtualFile) {
-      directory = (VirtualFile)param;
-    }
-    else {
-      FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-      descriptor.setTitle("Select Destination Folder");
-      descriptor.setDescription("");
-      VirtualFile[] files = FileChooser.chooseFiles(descriptor, null, null);
-      if (files.length == 0) return;
-      directory = files[0];
-    }
-    for (Pair<String, String> pair: entries) {
-      if ("url".equals(pair.getFirst())) {
-        try {
-          String url = pair.getSecond();
-          String[] split = splitUrl(url);
-          String protocol = new URI(url).getScheme();
-          VcsCheckoutProcessor processor = VcsCheckoutProcessor.getProcessor(protocol);
-          if (processor == null) {
-            LOG.error("Checkout processor not found for " + protocol);
-          }
-          else {
-            processor.checkout(split[0], split[1], directory, new CheckoutProvider.Listener() {
-              @Override
-              public void directoryCheckedOut(File directory, VcsKey vcs) {
-
-              }
-
-              @Override
-              public void checkoutCompleted() {
-                onFinish.consume(directory);
-              }
-            });
-          }
-        }
-        catch (URISyntaxException e) {
-          LOG.error(e);
-        }
-      }
-    }
   }
 }
