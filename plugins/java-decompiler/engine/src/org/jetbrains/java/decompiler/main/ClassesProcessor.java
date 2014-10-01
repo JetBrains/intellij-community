@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -243,6 +244,7 @@ public class ClassesProcessor {
       ImportCollector importCollector = new ImportCollector(root);
       DecompilerContext.setImportCollector(importCollector);
       DecompilerContext.setCounterContainer(new CounterContainer());
+      DecompilerContext.setBytecodeSourceMapper(new BytecodeSourceMapper());
 
       new LambdaProcessor().processClass(root);
 
@@ -276,6 +278,11 @@ public class ClassesProcessor {
       }
 
       buffer.append(classBuffer);
+
+      if(DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
+        buffer.append(lineSeparator);
+        DecompilerContext.getBytecodeSourceMapper().dumpMapping(classBuffer);
+      }
     }
     finally {
       destroyWrappers(root);

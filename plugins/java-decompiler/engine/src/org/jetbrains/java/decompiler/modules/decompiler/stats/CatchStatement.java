@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -149,20 +150,23 @@ public class CatchStatement extends Statement {
     return null;
   }
 
-  public String toJava(int indent) {
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     String indstr = InterpreterUtil.getIndentString(indent);
     StringBuilder buf = new StringBuilder();
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    buf.append(ExprProcessor.listToJava(varDefinitions, indent));
+    buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
 
     if (isLabeled()) {
       buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
+      tracer.incrementSourceLine();
     }
 
     buf.append(indstr).append("try {").append(new_line_separator);
-    buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true));
+    tracer.incrementSourceLine();
+
+    buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
     buf.append(indstr).append("}");
 
     for (int i = 1; i < stats.size(); i++) {
@@ -177,12 +181,16 @@ public class CatchStatement extends Statement {
           buf.append(exc_type_name).append(" | ");
         }
       }
-      buf.append(vars.get(i - 1).toJava(indent));
-      buf.append(") {").append(new_line_separator).append(ExprProcessor.jmpWrapper(stats.get(i), indent + 1, true)).append(indstr)
+      buf.append(vars.get(i - 1).toJava(indent, tracer));
+      buf.append(") {").append(new_line_separator);
+      tracer.incrementSourceLine();
+      buf.append(ExprProcessor.jmpWrapper(stats.get(i), indent + 1, true, tracer)).append(indstr)
         .append("}");
+      tracer.incrementSourceLine();
     }
     buf.append(new_line_separator);
 
+    tracer.incrementSourceLine();
     return buf.toString();
   }
 

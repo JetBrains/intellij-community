@@ -44,6 +44,8 @@ public interface IFernflowerPreferences {
   String IDEA_NOT_NULL_ANNOTATION = "inn";
   String LAMBDA_TO_ANONYMOUS_CLASS = "lac";
 
+  String BYTECODE_SOURCE_MAPPING = "bsm";
+
   String LOG_LEVEL = "log";
   String MAX_PROCESSING_METHOD = "mpm";
   String RENAME_ENTITIES = "ren";
@@ -76,6 +78,8 @@ public interface IFernflowerPreferences {
     put(FINALLY_DEINLINE, "1");
     put(IDEA_NOT_NULL_ANNOTATION, "1");
     put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
+
+    put(BYTECODE_SOURCE_MAPPING, "0");
 
     put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     put(MAX_PROCESSING_METHOD, "0");

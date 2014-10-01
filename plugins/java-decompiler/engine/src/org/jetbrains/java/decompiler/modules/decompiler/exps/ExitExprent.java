@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -74,13 +75,14 @@ public class ExitExprent extends Exprent {
     return lst;
   }
 
-  public String toJava(int indent) {
+  @Override
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     if (exittype == EXIT_RETURN) {
       StringBuilder buffer = new StringBuilder();
 
       if (rettype.type != CodeConstants.TYPE_VOID) {
         buffer.append(" ");
-        ExprProcessor.getCastedExprent(value, rettype, buffer, indent, false);
+        ExprProcessor.getCastedExprent(value, rettype, buffer, indent, false, tracer);
       }
 
       return "return" + buffer.toString();
@@ -111,14 +113,14 @@ public class ExitExprent extends Exprent {
             VarType exctype = new VarType(classname, true);
 
             StringBuilder buffer = new StringBuilder();
-            ExprProcessor.getCastedExprent(value, exctype, buffer, indent, false);
+            ExprProcessor.getCastedExprent(value, exctype, buffer, indent, false, tracer);
 
             return "throw " + buffer.toString();
           }
         }
       }
 
-      return "throw " + value.toJava(indent);
+      return "throw " + value.toJava(indent, tracer);
     }
   }
 
