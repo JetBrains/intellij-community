@@ -76,30 +76,6 @@ fun getPluginSystemDir(): File {
   }
 }
 
-private fun askToRestart(notReloadableComponents: Collection<String>): Boolean {
-  var message = StringBuilder("Application components were changed externally and cannot be reloaded:\n")
-  for (component in notReloadableComponents) {
-    message.append(component).append('\n')
-  }
-
-  val application = ApplicationManager.getApplication()!! as ApplicationImpl
-  val canRestart = application.isRestartCapable()
-  message.append("\nWould you like to ").append(if (canRestart) "restart" else "shutdown").append(' ')
-  message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?')
-  return Messages.showYesNoDialog(message.toString(), "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES
-}
-
-private fun updateStateStorage(changedComponentNames: Set<String>, stateStorages: Collection<FileBasedStorage>, deleted: Boolean) {
-  for (stateStorage in stateStorages) {
-    try {
-      stateStorage.updatedFromStreamProvider(changedComponentNames, deleted)
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
-  }
-}
-
 public class IcsManager : ApplicationLoadListener {
   class object {
     fun getInstance() = ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())!!
@@ -365,8 +341,8 @@ private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResul
         }
 
         notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
+        store.reinitComponents(changedComponentNames, notReloadableComponents, false)
         if (notReloadableComponents.isEmpty()) {
-          store.reinitComponents(changedComponentNames, false)
           return false
         }
       }
@@ -377,4 +353,28 @@ private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResul
       return askToRestart(notReloadableComponents)
     }
   })!!
+}
+
+private fun updateStateStorage(changedComponentNames: Set<String>, stateStorages: Collection<FileBasedStorage>, deleted: Boolean) {
+  for (stateStorage in stateStorages) {
+    try {
+      stateStorage.updatedFromStreamProvider(changedComponentNames, deleted)
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
+  }
+}
+
+private fun askToRestart(notReloadableComponents: Collection<String>): Boolean {
+  var message = StringBuilder("Application components were changed externally and cannot be reloaded:\n")
+  for (component in notReloadableComponents) {
+    message.append(component).append('\n')
+  }
+
+  val application = ApplicationManager.getApplication()!! as ApplicationImpl
+  val canRestart = application.isRestartCapable()
+  message.append("\nWould you like to ").append(if (canRestart) "restart" else "shutdown").append(' ')
+  message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?')
+  return Messages.showYesNoDialog(message.toString(), "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES
 }
