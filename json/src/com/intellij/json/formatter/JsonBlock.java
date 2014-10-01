@@ -5,6 +5,7 @@ import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonLanguage;
 import com.intellij.json.JsonParserDefinition;
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonPsiUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -23,10 +24,10 @@ import java.util.List;
 
 import static com.intellij.json.JsonParserDefinition.JSON_BRACES;
 import static com.intellij.json.JsonParserDefinition.JSON_BRACKETS;
+import static com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment.ALIGN_ON_COLON;
+import static com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment.ALIGN_ON_VALUE;
 
 /**
- * Mostly based on PyBlock implementation.
- *
  * @author Mikhail Golubev
  */
 public class JsonBlock implements ASTBlock {
@@ -47,6 +48,8 @@ public class JsonBlock implements ASTBlock {
   private List<Block> mySubBlocks = null;
 
   private Alignment myChildAlignment = Alignment.createAlignment();
+
+  private Alignment myPropertyValueAlignment = Alignment.createAlignment(true);
 
   public JsonBlock(@Nullable JsonBlock parent,
                    @NotNull ASTNode node,
@@ -94,18 +97,29 @@ public class JsonBlock implements ASTBlock {
   }
 
   private Block makeSubBlock(@NotNull ASTNode childNode) {
-    IElementType childNodeType = childNode.getElementType();
+    final IElementType childNodeType = childNode.getElementType();
 
     Indent indent = Indent.getNoneIndent();
     Alignment alignment = null;
     Wrap wrap = null;
 
     if (isContainer() && childNodeType != JsonElementTypes.COMMA && !BRACES.contains(childNodeType)) {
+      // TODO Add different wrapping options for objects and arrays
       if (!FormatterUtil.isPrecededBy(childNode, OPEN_BRACES)) {
         wrap = Wrap.createWrap(WrapType.ALWAYS, true);
       }
       alignment = myChildAlignment;
       indent = Indent.getNormalIndent();
+    }
+    // Handle properties alignment
+    else if (myNode.getElementType() == JsonElementTypes.PROPERTY) {
+      assert myParent.myNode.getElementType() == JsonElementTypes.OBJECT;
+      if (childNode.getElementType() == JsonElementTypes.COLON && getCustomSettings().PROPERTY_ALIGNMENT == ALIGN_ON_COLON) {
+        alignment = myParent.myPropertyValueAlignment;
+      }
+      else if (JsonPsiUtil.isPropertyValue(childNode.getPsi()) && getCustomSettings().PROPERTY_ALIGNMENT == ALIGN_ON_VALUE) {
+        alignment = myParent.myPropertyValueAlignment;
+      }
     }
     return new JsonBlock(this, childNode, mySettings, alignment, indent, wrap);
   }
@@ -131,8 +145,8 @@ public class JsonBlock implements ASTBlock {
   @Nullable
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
-    final CommonCodeStyleSettings commonSettings = mySettings.getCommonSettings(JsonLanguage.INSTANCE);
-    final JsonCodeStyleSettings customSettings = mySettings.getCustomSettings(JsonCodeStyleSettings.class);
+    final CommonCodeStyleSettings commonSettings = getCommonSettings();
+    final JsonCodeStyleSettings customSettings = getCustomSettings();
     final IElementType leftChildType = child1 instanceof JsonBlock ? ((JsonBlock)child1).myNode.getElementType() : null;
     final IElementType rightChildType = child2 instanceof JsonBlock ? ((JsonBlock)child2).myNode.getElementType() : null;
     if (leftChildType != null && rightChildType != null) {
@@ -156,7 +170,7 @@ public class JsonBlock implements ASTBlock {
   @Override
   public ChildAttributes getChildAttributes(int newChildIndex) {
     JsonBlock prevChildBlock = newChildIndex > 0 ? (JsonBlock)mySubBlocks.get(newChildIndex - 1) : null;
-    ASTNode prevChildNode = prevChildBlock != null? prevChildBlock.myNode : null;
+    ASTNode prevChildNode = prevChildBlock != null ? prevChildBlock.myNode : null;
     if (myNode.getElementType() == JsonParserDefinition.FILE) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
@@ -166,10 +180,6 @@ public class JsonBlock implements ASTBlock {
         return new ChildAttributes(Indent.getNormalIndent(), myChildAlignment);
       }
     }
-//    // TODO find out why inside object then cursor is after '"a": []<cursor>', myNode is instance of JsonArray
-//    if (isContainer() && prevChildBlock != null) {
-//      return ChildAttributes.DELEGATE_TO_PREV_CHILD;
-//    }
     return new ChildAttributes(Indent.getNormalIndent(), null);
   }
 
@@ -202,4 +212,11 @@ public class JsonBlock implements ASTBlock {
     return JsonParserDefinition.JSON_CONTAINERS.contains(myNode.getElementType());
   }
 
+  private JsonCodeStyleSettings getCustomSettings() {
+    return mySettings.getCustomSettings(JsonCodeStyleSettings.class);
+  }
+
+  private CommonCodeStyleSettings getCommonSettings() {
+    return mySettings.getCommonSettings(JsonLanguage.INSTANCE);
+  }
 }

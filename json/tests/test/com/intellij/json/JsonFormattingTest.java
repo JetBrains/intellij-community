@@ -1,5 +1,7 @@
 package com.intellij.json;
 
+import com.intellij.json.formatter.JsonCodeStyleSettings;
+import com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -8,6 +10,7 @@ import com.intellij.psi.formatter.FormatterTestCase;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestLoggerFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
@@ -60,6 +63,28 @@ public class JsonFormattingTest extends FormatterTestCase {
     final CodeStyleSettings settings = getSettings();
     settings.setRightMargin(JsonLanguage.INSTANCE, 20);
     doTest();
+  }
+
+  // WEB-13587
+  public void testAlignPropertiesOnColon() throws Exception {
+    checkPropertyAlignment(PropertyAlignment.ALIGN_ON_COLON);
+  }
+
+  // WEB-13587
+  public void testAlignPropertiesOnValue() throws Exception {
+    checkPropertyAlignment(PropertyAlignment.ALIGN_ON_VALUE);
+  }
+
+  private void checkPropertyAlignment(@NotNull PropertyAlignment alignmentType) throws Exception {
+    final JsonCodeStyleSettings settings = getSettings().getCustomSettings(JsonCodeStyleSettings.class);
+    final PropertyAlignment oldAlignment = settings.PROPERTY_ALIGNMENT;
+    settings.PROPERTY_ALIGNMENT = alignmentType;
+    try {
+      doTest();
+    }
+    finally {
+      settings.PROPERTY_ALIGNMENT = oldAlignment;
+    }
   }
 
   // Moved from JavaScript
