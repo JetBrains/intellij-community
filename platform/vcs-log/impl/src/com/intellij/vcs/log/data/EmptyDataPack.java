@@ -30,7 +30,7 @@ public class EmptyDataPack {
   @NotNull
   public static DataPack getInstance() {
     RefsModel emptyModel = new RefsModel(Collections.<VirtualFile, Set<VcsRef>>emptyMap(), new ConstantFunction<Hash, Integer>(0));
-    return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), new EmptyGraphFacade(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
+    return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
   }
 
 }

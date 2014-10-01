@@ -33,13 +33,13 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.printer.idea.PrintParameters;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RefPainter;
-import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
+import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,10 +71,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final JBLoadingPanel myLoadingPanel;
 
-  @NotNull private DataPack myDataPack;
+  @NotNull private VisiblePack myDataPack;
 
   DetailsPanel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogGraphTable graphTable, @NotNull VcsLogColorManager colorManager,
-               @NotNull DataPack initialDataPack) {
+               @NotNull VisiblePack initialDataPack) {
     super(new CardLayout());
     myLogDataHolder = logDataHolder;
     myGraphTable = graphTable;
@@ -111,7 +111,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     showMessage("No commits selected");
   }
 
-  void updateDataPack(@NotNull DataPack dataPack) {
+  void updateDataPack(@NotNull VisiblePack dataPack) {
     myDataPack = dataPack;
   }
 
@@ -127,7 +127,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     else {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       int row = rows[0];
-      AbstractVcsLogTableModel<?> tableModel = (AbstractVcsLogTableModel)myGraphTable.getModel();
+      GraphTableModel tableModel = (GraphTableModel)myGraphTable.getModel();
       Hash hash = tableModel.getHashAtRow(row);
       VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, tableModel);
       if (commitData == null || hash == null) {

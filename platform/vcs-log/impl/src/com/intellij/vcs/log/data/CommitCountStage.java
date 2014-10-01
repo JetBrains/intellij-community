@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,27 @@
  */
 package com.intellij.vcs.log.data;
 
-public enum LoadMoreStage {
-  /**
-   * Initial table view; "load more" was not requested yet.
-   */
-  INITIAL,
+import org.jetbrains.annotations.NotNull;
 
-  /**
-   * "Load more" was once requested with a limited number of commits.
-   */
-  LOADED_MORE,
+enum CommitCountStage {
 
-  /**
-   * All commits matching the given filters were requested from the VCS, requesting more won't cause any effect.
-   */
-  ALL_REQUESTED
+  INITIAL(5),
+  FIRST_STEP(2000),
+  ALL(Integer.MAX_VALUE);
+
+  private final int myCount;
+
+  CommitCountStage(int count) {
+    myCount = count;
+  }
+
+  @NotNull
+  CommitCountStage next() {
+    CommitCountStage[] values = values();
+    return ordinal() == values.length - 1 ? this : values[ordinal() + 1];
+  }
+
+  public int getCount() {
+    return myCount;
+  }
 }

@@ -92,6 +92,23 @@ public class VcsLogHashMap implements Disposable {
     }
   }
 
+  @Nullable
+  public Hash findHashByString(@NotNull String string) {
+    final String pHash = string.toLowerCase();
+    try {
+      return findHash(new Condition<Hash>() {
+        @Override
+        public boolean value(@NotNull Hash hash) {
+          return hash.toString().toLowerCase().startsWith(pHash);
+        }
+      });
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
   @NotNull
   public NotNullFunction<Hash, Integer> asIndexGetter() {
     return new NotNullFunction<Hash, Integer>() {
