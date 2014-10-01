@@ -25,6 +25,14 @@ class Foo {
       failNatively();
     }
   }
+
+  @Contract("null->fail")
+  public Object assertNotNull(Object o) {
+    if (o == null) {
+      failNatively();
+    }
+    return o;
+  }
   
   native void failNatively();
 
