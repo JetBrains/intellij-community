@@ -17,6 +17,7 @@ public class IpnbHtmlPanel extends IpnbCodeOutputPanel<IpnbHtmlOutputCell> {
 
   @Override
   protected JComponent createViewPanel() {
+    Platform.setImplicitExit(false);
     final JFXPanel javafxPanel = new JFXPanel();
     final StringBuilder text = new StringBuilder("<html>");
     for (String html : myCell.getHtmls()) {
