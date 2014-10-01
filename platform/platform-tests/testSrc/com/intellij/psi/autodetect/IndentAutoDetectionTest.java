@@ -77,6 +77,13 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
     doTestIndentSize(4);
   }
 
+  public void testNoIndentsUseLanguageSpecificSettings() {
+    CommonCodeStyleSettings.IndentOptions options = new CommonCodeStyleSettings.IndentOptions();
+    options.USE_TAB_CHARACTER = true;
+
+    doTestTabsUsed(options);
+  }
+
   public void testManyZeroIndents() { doTestIndentSize(2); }
 
   public void testSpacesToNumbers() throws Exception {
