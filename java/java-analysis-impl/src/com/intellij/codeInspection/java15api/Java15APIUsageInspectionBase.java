@@ -18,6 +18,7 @@ package com.intellij.codeInspection.java15api;
 import com.intellij.ToolExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -25,6 +26,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -48,6 +51,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.Reference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -79,6 +84,11 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     ourGenerifiedClasses.add("javax.swing.JComboBox");
     ourGenerifiedClasses.add("javax.swing.ListModel");
     ourGenerifiedClasses.add("javax.swing.JList");
+  }
+  
+  private static final Set<String> ourDefaultMethods = new HashSet<String>();
+  static {
+    ourDefaultMethods.add("java.util.Iterator#remove()");
   }
 
   protected LanguageLevel myEffectiveLanguageLevel = null;
@@ -192,6 +202,30 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
 
     @Override public void visitClass(PsiClass aClass) {
       // Don't go into classes (anonymous, locals).
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        final LanguageLevel effectiveLanguageLevel = getEffectiveLanguageLevel(ModuleUtilCore.findModuleForPsiElement(aClass));
+        if (!effectiveLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) && 
+            JavaVersionService.getInstance().getJavaSdkVersion(aClass).isAtLeast(JavaSdkVersion.JDK_1_8)) {
+          final List<PsiMethod> methods = new ArrayList<PsiMethod>();
+          for (HierarchicalMethodSignature methodSignature : aClass.getVisibleSignatures()) {
+            final PsiMethod method = methodSignature.getMethod();
+            if (ourDefaultMethods.contains(getSignature(method))) {
+              methods.add(method);
+            }
+          }
+
+          if (!methods.isEmpty()) {
+            PsiElement element2Highlight = aClass.getNameIdentifier();
+            if (element2Highlight == null) {
+              element2Highlight = aClass;
+            }
+            myHolder.registerProblem(element2Highlight,
+                                     methods.size() == 1 ? InspectionsBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel)) 
+                                                         : InspectionsBundle.message("inspection.1.8.problem.descriptor", methods.size(), getJdkName(effectiveLanguageLevel)),
+                                     QuickFixFactory.getInstance().createImplementMethodsFix(aClass));
+          }
+        }
+      }
     }
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {

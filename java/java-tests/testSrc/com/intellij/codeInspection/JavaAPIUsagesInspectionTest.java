@@ -23,6 +23,7 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestCase;
@@ -58,6 +59,20 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
         doTest();
       }
     });
+  }
+
+  public void testDefaultMethods() throws Exception {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
+  @Override
+  protected Sdk getTestProjectSdk() {
+    return IdeaTestUtil.getMockJdk18();
   }
 
   //generate apiXXX.txt
