@@ -336,6 +336,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
         return result;
       }
 
+      @NotNull
       private LeakingParameters leakingParametersAndFrames(Method method, MethodNode methodNode, Type[] argumentTypes, boolean jsr)
         throws AnalyzerException {
         return argumentTypes.length < 32 ?
