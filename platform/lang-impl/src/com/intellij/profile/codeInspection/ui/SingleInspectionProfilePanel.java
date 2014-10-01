@@ -395,7 +395,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     DefaultActionGroup actions = new DefaultActionGroup();
 
-    actions.add(new InspectionFilterAction(mySelectedProfile, myInspectionsFilter));
+    actions.add(new InspectionFilterAction(mySelectedProfile, myInspectionsFilter, myProjectProfileManager.getProject()));
     actions.addSeparator();
 
     actions.add(actionManager.createExpandAllAction(myTreeExpander, myTreeTable));

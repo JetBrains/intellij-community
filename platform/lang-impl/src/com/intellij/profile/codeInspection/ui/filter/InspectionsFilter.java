@@ -31,6 +31,7 @@ import java.util.Set;
 public abstract class InspectionsFilter {
 
   private final Set<HighlightSeverity> mySuitableSeverities = new HashSet<HighlightSeverity>();
+  private final Set<String> mySuitableLanguageIds = new HashSet<String>();
   private Boolean mySuitableInspectionsStates;
   private boolean myAvailableOnlyForAnalyze;
   private boolean myShowOnlyCleanupInspections;
@@ -51,6 +52,10 @@ public abstract class InspectionsFilter {
     return mySuitableSeverities.contains(severity);
   }
 
+  public boolean containsLanguageId(final String languageId) {
+    return mySuitableLanguageIds.contains(languageId);
+  }
+
   public void setShowOnlyCleanupInspections(final boolean showOnlyCleanupInspections) {
     myShowOnlyCleanupInspections = showOnlyCleanupInspections;
     filterChanged();
@@ -66,13 +71,23 @@ public abstract class InspectionsFilter {
     filterChanged();
   }
 
-  public void add(final HighlightSeverity severity) {
+  public void addSeverity(final HighlightSeverity severity) {
     mySuitableSeverities.add(severity);
     filterChanged();
   }
 
-  public void remove(final HighlightSeverity severity) {
+  public void removeSeverity(final HighlightSeverity severity) {
     mySuitableSeverities.remove(severity);
+    filterChanged();
+  }
+
+  public void addLanguageId(String languageId) {
+    mySuitableLanguageIds.add(languageId);
+    filterChanged();
+  }
+
+  public void removeLanguageId(String languageId) {
+    mySuitableLanguageIds.remove(languageId);
     filterChanged();
   }
 
@@ -81,6 +96,7 @@ public abstract class InspectionsFilter {
     myAvailableOnlyForAnalyze = false;
     myShowOnlyCleanupInspections = false;
     mySuitableSeverities.clear();
+    mySuitableLanguageIds.clear();
     filterChanged();
   }
 
@@ -88,7 +104,8 @@ public abstract class InspectionsFilter {
     return mySuitableInspectionsStates == null
            && !myAvailableOnlyForAnalyze
            && !myShowOnlyCleanupInspections
-           && mySuitableSeverities.isEmpty();
+           && mySuitableSeverities.isEmpty()
+           && mySuitableLanguageIds.isEmpty();
   }
 
   public boolean matches(final Tools tools) {
@@ -104,18 +121,24 @@ public abstract class InspectionsFilter {
       return false;
     }
 
-    if (mySuitableSeverities.isEmpty()) {
-      return true;
-    }
-    for (final ScopeToolState state : tools.getTools()) {
-      if (mySuitableInspectionsStates != null && mySuitableInspectionsStates != state.isEnabled()) {
-        continue;
+    if (!mySuitableSeverities.isEmpty()) {
+      boolean suitable = false;
+      for (final ScopeToolState state : tools.getTools()) {
+        if (mySuitableInspectionsStates != null && mySuitableInspectionsStates != state.isEnabled()) {
+          continue;
+        }
+        if (mySuitableSeverities.contains(tools.getDefaultState().getLevel().getSeverity())) {
+          suitable = true;
+          break;
+        }
       }
-      if (mySuitableSeverities.contains(tools.getDefaultState().getLevel().getSeverity())) {
-        return true;
+      if (!suitable) {
+        return false;
       }
     }
-    return false;
+
+    final String languageId = tools.getDefaultState().getTool().getLanguage();
+    return mySuitableLanguageIds.isEmpty() || mySuitableLanguageIds.contains(languageId);
   }
 
   protected abstract void filterChanged();
