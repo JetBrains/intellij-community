@@ -18,23 +18,16 @@ package com.jetbrains.python.actions.view.array;
 /**
  * @author amarch
  */
-public class ArrayChunk {
-  private String fullSlice;
-  private int columns;
-  private int rows;
-  private int cOffset;
-  private int rOffset;
-  private Object[][] data;
+public abstract class ArrayChunk {
+  protected String baseSlice;
+  protected int columns;
+  protected int rows;
+  protected int cOffset;
+  protected int rOffset;
+  protected Object[][] data;
 
-  public static final int DEFAULT_CHUNK_HEIGHT = 10;
-  public static final int DEFAULT_CHUNK_WIDTH = 10;
-
-  public ArrayChunk(String slice, int cOffset, int rOffset) {
-    this(slice, DEFAULT_CHUNK_HEIGHT, DEFAULT_CHUNK_WIDTH, cOffset, rOffset);
-  }
-
-  public ArrayChunk(String slice, int rows, int columns, int cOffset, int rOffset) {
-    fullSlice = slice;
+  public ArrayChunk(String baseSlice, int rows, int columns, int rOffset, int cOffset) {
+    this.baseSlice = baseSlice;
     this.columns = columns;
     this.rows = rows;
     this.rOffset = rOffset;
@@ -42,38 +35,13 @@ public class ArrayChunk {
     data = new Object[rows][columns];
   }
 
-  public void loadData() {
-    String command = getDataCommand();
-    fillData(command);
-  }
+    abstract int getRows();
 
-  private void fillData(String command) {
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < columns; j++) {
-        data[i][j] = "(" + (i+rOffset) + "," + (j+cOffset) + ")";
-      }
-    }
-    try {
-      Thread.sleep(400);
-    }
-    catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-  }
+    abstract int getColumns();
 
-  public String getDataCommand() {
-    return fullSlice + "[" + rOffset + ":" + (rOffset + rows) + ", " + cOffset + ":" + (cOffset + columns) + "]";
-  }
+    abstract Object[][] getData();
 
-  public int getRows() {
-    return rows;
-  }
+    abstract String getChunkPresentation();
 
-  public int getColumns() {
-    return columns;
-  }
-
-  public Object[][] getData() {
-    return data;
-  }
+    abstract void fillData(Runnable callback);
 }

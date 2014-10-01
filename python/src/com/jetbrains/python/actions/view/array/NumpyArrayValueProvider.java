@@ -53,9 +53,10 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   private Numpy2DArraySlice myLastPresentation;
   private String myDtypeKind;
   private int[] myShape;
+  boolean myOneRow = false;
 
-  private final static int COLUMNS_IN_DEFAULT_SLICE = 50;
-  private final static int ROWS_IN_DEFAULT_SLICE = 50;
+  private final static int COLUMNS_IN_DEFAULT_SLICE = 40;
+  private final static int ROWS_IN_DEFAULT_SLICE = 40;
 
   public NumpyArrayValueProvider(@NotNull XValueNode node, @NotNull ArrayTableForm component, @NotNull Project project) {
     super(node);
@@ -63,6 +64,15 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     myProject = project;
     myTable = component.getTable();
     myEvaluator = new PyDebuggerEvaluator(project, ((PyDebugValue)((XValueNodeImpl)node).getValueContainer()).getFrameAccessor());
+
+
+    myComponent.setArrayValueProvider(this);
+    myComponent.setCallback(new Runnable() {
+      @Override
+      public void run() {
+
+      }
+    });
 
     initSliceTextFieldAction();
     initFormatTextFieldAction();
@@ -88,8 +98,8 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     }
 
     List<Pair<Integer, Integer>> defaultSlice = getDefaultSlice();
-    //startFillTable(new Numpy2DArraySlice(getNodeName(), defaultSlice, this, getShape(), getDtypeKind(), getDefaultFormat()));
-    falseFill();
+    startFillTable(new Numpy2DArraySlice(getNodeName(), defaultSlice, this, getShape(), getDtypeKind(), getDefaultFormat()));
+    //falseFill();
   }
 
 
@@ -347,6 +357,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
 
   public void setShape(int[] shape) {
     this.myShape = shape;
+    myOneRow = shape.length == 1;
   }
 
   public void showError(String message) {

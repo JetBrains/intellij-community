@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author amarch
  */
-class Numpy2DArraySlice {
+class Numpy2DArraySlice extends ArrayChunk{
   private String myValueName;
   private List<Pair<Integer, Integer>> myFullSlice;
   private int[] myShape;
@@ -53,6 +53,7 @@ class Numpy2DArraySlice {
                            @NotNull int[] shape,
                            @Nullable String dtype,
                            @NotNull String format) {
+    super(valueName, 0, 0, 0, 0);
     myValueName = valueName;
     myFullSlice = fullSlice;
     myValueProvider = valueProvider;
@@ -60,7 +61,6 @@ class Numpy2DArraySlice {
     myDtype = dtype;
     myDataEvaluator = new DataEvaluator();
     myFormat = format;
-
     checkShapeConsistency();
   }
 
@@ -136,7 +136,6 @@ class Numpy2DArraySlice {
     public boolean dataFilled() {
       return myRows > 0 && myFilledRows == myRows;
     }
-
 
     public void evaluateData(final Runnable callback) {
       final XDebuggerEvaluator.XEvaluationCallback computeChildrenCallback = new XDebuggerEvaluator.XEvaluationCallback() {
@@ -254,8 +253,28 @@ class Numpy2DArraySlice {
     myDtype = dtype;
   }
 
+  @Override
+  int getRows() {
+    return myRows;
+  }
+
+  @Override
+  int getColumns() {
+    return myColumns;
+  }
+
   public Object[][] getData() {
     return myDataEvaluator.getData();
+  }
+
+  @Override
+  String getChunkPresentation() {
+    return getPresentation();
+  }
+
+  @Override
+  void fillData(Runnable callback) {
+    startFillData(callback);
   }
 }
 
