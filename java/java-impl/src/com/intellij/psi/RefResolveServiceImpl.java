@@ -50,7 +50,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.PersistentIntList;
-import com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
@@ -105,7 +104,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     ((FutureTask)resolveProcess).run();
     myApplication = application;
     myProjectFileIndex = projectFileIndex;
-    if (ResolveScopeManagerImpl.ENABLED_REF_BACK) {
+    if (ENABLED) {
       File indexFile = new File(getStorageDirectory(), "index");
       File dataFile = new File(getStorageDirectory(), "data");
       fileIsResolved = ConcurrentBitSet.readFrom(new File(getStorageDirectory(), "bitSet"));
@@ -392,8 +391,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   }
 
   private volatile Future<?> resolveProcess = new FutureTask<Object>(EmptyRunnable.getInstance(), null); // write from EDT only
-  private volatile ProgressIndicator resolveIndicator = new EmptyProgressIndicator();
-  
+
   @Override
   public void run() {
     while (!myDisposed) {
@@ -443,7 +441,6 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
           else {
             indicator = new MyProgress();
           }
-          resolveIndicator = indicator;
           resolveProcess = ProgressManagerImpl.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
         }
       }, myProject.getDisposed());
@@ -809,7 +806,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   @Override
   @Nullable
   public int[] getBackwardIds(@NotNull VirtualFileWithId file) {
-    if (!upToDate) return null;
+    if (!isUpToDate()) return null;
     int fileId = getAbsId((VirtualFile)file);
     return storage.get(fileId);
   }
@@ -877,6 +874,11 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       flushLog();
     }
     return queued;
+  }
+
+  @Override
+  public boolean isUpToDate() {
+    return ENABLED && !myDisposed && upToDate;
   }
 
   private static class MyProgress extends ProgressIndicatorBase implements Disposable{

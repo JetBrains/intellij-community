@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -45,7 +44,7 @@ public class RefQueueIndex extends FileBasedIndexExtension<Void,Void> {
       @NotNull
       @Override
       public Map<Void, Void> map(@NotNull FileContent inputData) {
-        if (ResolveScopeManagerImpl.ENABLED_REF_BACK) {
+        if (RefResolveService.ENABLED) {
           Project project = inputData.getProject();
           RefResolveService.getInstance(project).queue(Collections.singletonList(inputData.getFile()), "Cache updater");
         }
@@ -102,7 +101,7 @@ public class RefQueueIndex extends FileBasedIndexExtension<Void,Void> {
     return new FileBasedIndex.InputFilter() {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
-        return ResolveScopeManagerImpl.ENABLED_REF_BACK && !file.isDirectory() && RefResolveServiceImpl.isSupportedFileType(file);
+        return RefResolveService.ENABLED && !file.isDirectory() && RefResolveServiceImpl.isSupportedFileType(file);
       }
     };
   }
@@ -114,6 +113,6 @@ public class RefQueueIndex extends FileBasedIndexExtension<Void,Void> {
 
   @Override
   public int getVersion() {
-    return ResolveScopeManagerImpl.ENABLED_REF_BACK ? 0xFF : 0;
+    return RefResolveService.ENABLED ? 0xFF : 0;
   }
 }
