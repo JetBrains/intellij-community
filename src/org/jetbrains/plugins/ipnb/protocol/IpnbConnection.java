@@ -331,6 +331,11 @@ public class IpnbConnection {
         final String html = data.get("text/html");
         output.add(new IpnbHtmlOutputCell(StringUtil.splitByLinesKeepSeparators(html), StringUtil.splitByLinesKeepSeparators(html), null));
       }
+      else if (data.containsKey("image/png")) {
+        final String png = data.get("image/png");
+        final String plainText = data.get("text/plain");
+        output.add(new IpnbPngOutputCell(png, StringUtil.splitByLinesKeepSeparators(plainText), null));
+      }
       else {
         for (Map.Entry<String, String> entry : data.entrySet()) {
           output.add(new IpnbOutOutputCell(new String[]{entry.getValue()}, null));
