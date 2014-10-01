@@ -126,11 +126,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
 
     @Override
-    public boolean isEmpty() {
-      return super.isEmpty() && myOptions.isEmpty();
-    }
-
-    @Override
     @NotNull
     protected Element save(@NotNull Map<String, Element> newLiveStates) {
       Element root = super.save(newLiveStates);

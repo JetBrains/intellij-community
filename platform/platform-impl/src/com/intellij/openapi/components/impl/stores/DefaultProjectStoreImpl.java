@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
@@ -147,7 +148,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       @Nullable
       @Override
       public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-        StateStorage.SaveSession saveSession = storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
+        SaveSession saveSession = storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
         return saveSession == null ? null : new MySaveSession(saveSession);
       }
 
@@ -222,10 +223,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     }
   }
 
-  private static class MySaveSession implements StateStorageManager.SaveSession {
-    @NotNull private final StateStorage.SaveSession saveSession;
+  private static class MySaveSession implements SaveSession {
+    @NotNull private final SaveSession saveSession;
 
-    public MySaveSession(@NotNull StateStorage.SaveSession saveSession) {
+    public MySaveSession(@NotNull SaveSession saveSession) {
       this.saveSession = saveSession;
     }
 

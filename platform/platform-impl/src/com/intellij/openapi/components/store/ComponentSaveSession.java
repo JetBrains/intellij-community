@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.components.store;
 
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ import java.util.List;
 
 public interface ComponentSaveSession {
   @NotNull
-  ComponentSaveSession save(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles);
+  ComponentSaveSession save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
 
   void finishSave();
 }

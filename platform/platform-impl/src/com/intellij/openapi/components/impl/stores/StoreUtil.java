@@ -17,6 +17,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.extensions.PluginId;
@@ -43,7 +44,7 @@ public class StoreUtil {
 
     ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
     try {
-      List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles = new SmartList<Pair<StateStorageManager.SaveSession, VirtualFile>>();
+      List<Pair<SaveSession, VirtualFile>> readonlyFiles = new SmartList<Pair<SaveSession, VirtualFile>>();
       session.save(readonlyFiles);
     }
     catch (Throwable e) {

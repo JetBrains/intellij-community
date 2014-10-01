@@ -62,9 +62,9 @@ public interface StateStorageManager {
    * return null if nothing to save
    */
   @Nullable
-  SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
+  StateStorage.SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
 
-  void finishSave(@NotNull SaveSession saveSession);
+  void finishSave(@NotNull StateStorage.SaveSession saveSession);
 
   @Nullable
   StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
@@ -87,9 +87,5 @@ public interface StateStorageManager {
     void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);
 
     void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
-  }
-
-  interface SaveSession {
-    void save();
   }
 }

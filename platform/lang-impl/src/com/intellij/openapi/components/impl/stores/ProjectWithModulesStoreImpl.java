@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.module.Module;
@@ -124,7 +125,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    protected void beforeSave(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+    protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
       super.beforeSave(readonlyFiles);
 
       for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
