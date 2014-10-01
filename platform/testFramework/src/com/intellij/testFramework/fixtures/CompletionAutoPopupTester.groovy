@@ -61,9 +61,13 @@ class CompletionAutoPopupTester {
       if (condition(phase)) {
         return
       }
+      if (j >= 400 && j % 100 == 0) {
+        println "Free memory: " + Runtime.runtime.freeMemory() + " of " + Runtime.runtime.totalMemory() + "\n"
+        UsefulTestCase.printThreadDump()
+        println "\n\n----------------------------\n\n"
+      }
       Thread.sleep(10)
     }
-    UsefulTestCase.printThreadDump()
     UsefulTestCase.fail("Too long completion: " + CompletionServiceImpl.phaseRaw)
   }
 
