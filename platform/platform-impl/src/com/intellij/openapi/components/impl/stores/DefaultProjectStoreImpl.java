@@ -146,8 +146,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       @Nullable
       @Override
       public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-        SaveSession saveSession = storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
-        return saveSession == null ? null : new MySaveSession(saveSession);
+        return storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
       }
 
       @Override
@@ -210,27 +209,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state)
-    throws StateStorageException {
+    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       externalizationSession.setState(component, componentName, state, null);
     }
 
     @Override
     public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       externalizationSession.setState(component, componentName, state, null);
-    }
-  }
-
-  private static class MySaveSession implements SaveSession {
-    @NotNull private final SaveSession saveSession;
-
-    public MySaveSession(@NotNull SaveSession saveSession) {
-      this.saveSession = saveSession;
-    }
-
-    @Override
-    public void save() {
-      saveSession.save();
     }
   }
 }
