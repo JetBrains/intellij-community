@@ -1,0 +1,5 @@
+{
+  "vcs": {
+    "schema": "schema://foo.bar/path"
+  }<caret>
+}

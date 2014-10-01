@@ -169,18 +169,11 @@ public class JsonBlock implements ASTBlock {
   @NotNull
   @Override
   public ChildAttributes getChildAttributes(int newChildIndex) {
-    JsonBlock prevChildBlock = newChildIndex > 0 ? (JsonBlock)mySubBlocks.get(newChildIndex - 1) : null;
-    ASTNode prevChildNode = prevChildBlock != null ? prevChildBlock.myNode : null;
-    if (myNode.getElementType() == JsonParserDefinition.FILE) {
-      return new ChildAttributes(Indent.getNoneIndent(), null);
+    if (isContainer()) {
+      return new ChildAttributes(Indent.getNormalIndent(), myChildAlignment);
     }
-    if (isContainer() && prevChildNode != null) {
-      // correctly indent first element after opening brace
-      if (OPEN_BRACES.contains(prevChildNode.getElementType()) || prevChildNode.getElementType() == JsonElementTypes.COMMA) {
-        return new ChildAttributes(Indent.getNormalIndent(), myChildAlignment);
-      }
-    }
-    return new ChildAttributes(Indent.getNormalIndent(), null);
+    // Will use continuation indent for cases like { "foo"<caret>  }
+    return new ChildAttributes(null, null);
   }
 
   @Override
@@ -188,13 +181,13 @@ public class JsonBlock implements ASTBlock {
     IElementType nodeType = myNode.getElementType();
     ASTNode lastChildNode = myNode.getLastChildNode();
     if (nodeType == JsonElementTypes.OBJECT) {
-      return lastChildNode != null && lastChildNode.getElementType() == JsonElementTypes.R_CURLY;
+      return lastChildNode != null && lastChildNode.getElementType() != JsonElementTypes.R_CURLY;
     }
     else if (nodeType == JsonElementTypes.ARRAY) {
-      return lastChildNode != null && lastChildNode.getElementType() == JsonElementTypes.R_BRACKET;
+      return lastChildNode != null && lastChildNode.getElementType() != JsonElementTypes.R_BRACKET;
     }
     else if (myPsiElement instanceof JsonProperty) {
-      return ((JsonProperty)myPsiElement).getValue() != null;
+      return ((JsonProperty)myPsiElement).getValue() == null;
     }
     return false;
   }
