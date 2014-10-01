@@ -1,6 +1,7 @@
 package com.jetbrains.python.edu;
 
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.edu.course.StudyStatus;
 import com.jetbrains.python.edu.course.TaskFile;
@@ -76,7 +76,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                 TaskFile taskFile = taskManager.getTaskFile(openedFile);
                 if (taskFile != null) {
                   EditorActionManager.getInstance()
-                    .setReadonlyFragmentModificationHandler(document, new InvalidTaskFileModificationHandler());
+                    .setReadonlyFragmentModificationHandler(document, new TaskWindowDeleteHandler(editor));
                   taskFile.navigateToFirstTaskWindow(editor);
                   editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                   StudyDocumentListener listener = new StudyDocumentListener(taskFile);
@@ -107,11 +107,17 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
     editor.getSelectionModel().removeSelection();
   }
 
-  private static class InvalidTaskFileModificationHandler implements ReadonlyFragmentModificationHandler {
+  private static class TaskWindowDeleteHandler implements ReadonlyFragmentModificationHandler {
+
+    private final Editor myEditor;
+
+    public TaskWindowDeleteHandler(@NotNull final Editor editor) {
+      myEditor = editor;
+    }
 
     @Override
     public void handle(ReadOnlyFragmentModificationException e) {
-      Messages.showErrorDialog("It's not allowed to delete task windows", "Invalid Task File Modification");
+      HintManager.getInstance().showErrorHint(myEditor, "It's not allowed to delete task windows");
     }
   }
 }
