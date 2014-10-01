@@ -30,6 +30,7 @@ import java.util.*;
    -- eliminating unnecessary fields
    -- using one of 256 ReentrantLock for Segment statically pre-allocated in {@link StripedReentrantLocks}
  made not Serializable
+ @deprecated use com.intellij.util.containers.ContainerUtil#createConcurrentIntObjectMap() instead
  */
 public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntObjectMap<V> {
   /* ---------------- Constants -------------- */
