@@ -17,9 +17,10 @@ package git4idea.checkout;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsCheckoutProcessor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,11 +36,12 @@ public class GitCheckoutProcessor extends VcsCheckoutProcessor {
   }
 
   @Override
-  public void checkout(@NotNull String url,
-                       @NotNull String directoryName,
-                       @NotNull VirtualFile parentDirectory,
-                       @NotNull CheckoutProvider.Listener listener) {
-    GitCheckoutProvider.clone(ProjectManager.getInstance().getDefaultProject(), ServiceManager.getService(Git.class),
-                              listener, parentDirectory, url, directoryName, parentDirectory.getPath());
+  public boolean checkout(@NotNull final String url,
+                          @NotNull final VirtualFile parentDirectory, @NotNull final String directoryName) {
+
+    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+    return GitCheckoutProvider.doClone(frame == null || frame.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : frame.getProject(),
+                                       ServiceManager.getService(Git.class),
+                                       directoryName, parentDirectory.getPath(), url);
   }
 }

@@ -40,8 +40,5 @@ public abstract class VcsCheckoutProcessor {
   @NotNull
   public abstract String getProtocol();
 
-  public abstract void checkout(@NotNull String url,
-                                @NotNull String directoryName,
-                                @NotNull VirtualFile parentDirectory,
-                                @NotNull CheckoutProvider.Listener listener);
+  public abstract boolean checkout(@NotNull String url, @NotNull VirtualFile parentDirectory, @NotNull String directoryName);
 }
