@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,5 +79,30 @@ public class ImportsUtil {
     else {
       refExpr.replace(elementFactory.createReferenceFromText(referenceExpression.getText() + "." + refExpr.getText(), refExpr));
     }
+  }
+
+  public static boolean hasStaticImportOn(final PsiElement expr, final PsiMember member, boolean acceptOnDemand) {
+    if (expr.getContainingFile() instanceof PsiJavaFile) {
+      final PsiImportList importList = ((PsiJavaFile)expr.getContainingFile()).getImportList();
+      if (importList != null) {
+        final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
+        for (PsiImportStaticStatement stmt : importStaticStatements) {
+          final PsiClass containingClass = member.getContainingClass();
+          final String referenceName = stmt.getReferenceName();
+          if (containingClass != null && stmt.resolveTargetClass() == containingClass) {
+            if (!stmt.isOnDemand() && Comparing.strEqual(referenceName, member.getName())) {
+              if (member instanceof PsiMethod) {
+                return containingClass.findMethodsByName(referenceName, false).length == 1;
+              }
+              return true;
+            }
+            if (acceptOnDemand && stmt.isOnDemand()) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }

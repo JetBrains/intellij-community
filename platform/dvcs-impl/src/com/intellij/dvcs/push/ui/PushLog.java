@@ -16,6 +16,9 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushTargetPanel;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -44,7 +47,9 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EventObject;
 import java.util.List;
 
 public class PushLog extends JPanel implements TypeSafeDataProvider {
@@ -154,6 +159,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
                          null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
+    myChangesBrowser.addToolbarAction(createEditSourceAction());
     setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
@@ -162,6 +168,16 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
     setLayout(new BorderLayout());
     add(splitter);
+  }
+
+  @NotNull
+  private EditSourceAction createEditSourceAction() {
+    final EditSourceAction editAction = new EditSourceAction();
+    editAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser.getViewer());
+    editAction.getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
+    editAction.getTemplatePresentation().setText("Edit Source");
+    editAction.getTemplatePresentation().setDescription(ActionsBundle.actionText("EditSource"));
+    return editAction;
   }
 
   private void updateChangesView() {
@@ -231,7 +247,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   public void calcData(DataKey key, DataSink sink) {
     if (VcsDataKeys.CHANGES.equals(key)) {
       int[] rows = myTree.getSelectionRows();
-      if (rows.length != 0) {
+      if (rows != null && rows.length != 0) {
         Collection<Change> changes = collectAllChanges(rows);
         sink.put(key, ArrayUtil.toObjectArray(changes, Change.class));
       }

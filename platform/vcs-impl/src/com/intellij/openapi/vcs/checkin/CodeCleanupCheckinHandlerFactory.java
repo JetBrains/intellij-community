@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
 
     @Override
     public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-      final JCheckBox cleanupCodeCb = new JCheckBox("Cleanup code");
+      final JCheckBox cleanupCodeCb = new NonFocusableCheckBox("&Cleanup code");
       return new RefreshableOnComponent() {
         @Override
         public JComponent getComponent() {

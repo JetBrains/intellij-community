@@ -25,7 +25,6 @@ import com.intellij.projectImport.ProjectSetProcessor;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,8 +57,9 @@ public class ProjectSetTest extends LightPlatformTestCase {
       }
 
       @Override
-      public void processEntries(@NotNull List<Pair<String, String>> entries, Object param, @NotNull Consumer<Object> onFinish) {
+      public boolean processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context) {
         ref.set(entries);
+        return true;
       }
     }, myTestRootDisposable);
 

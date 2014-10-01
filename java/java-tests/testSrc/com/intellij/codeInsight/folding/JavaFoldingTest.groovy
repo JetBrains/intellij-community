@@ -426,6 +426,26 @@ public class Test {
     }  
     assert count == 2 : "Not all custom regions are found";
   }
+
+  public void "test custom foldings intersecting with language ones"() {
+    def text = """\
+class Foo {
+//*********************************************
+// region Some
+//*********************************************
+
+  int t = 1;
+
+//*********************************************
+// endregion
+//*********************************************
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    assertEquals 1, foldRegionsCount
+    assertEquals "Some", foldingModel.allFoldRegions[0].placeholderText
+  }
   
   public void "test custom folding collapsed by default"() {
     def text = """\

@@ -328,23 +328,15 @@ class FindInProjectTask {
       }
     }
     else if (myPsiDirectory != null) {
-      VirtualFile dir = myPsiDirectory.getVirtualFile();
-      if (myFindModel.isWithSubdirectories()) {
-        VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
-          @Override
-          public boolean visitFile(@NotNull VirtualFile file) {
-            if (myProjectFileIndex.isExcluded(file)) return false;
-            iterator.processFile(file);
-            return true;
-          }
-        });
-      } else {
-        for (VirtualFile file : dir.getChildren()) {
-          if (!myProjectFileIndex.isExcluded(file)) {
-            iterator.processFile(file);
-          }
+      VirtualFileVisitor.Option limit = VirtualFileVisitor.limit(myFindModel.isWithSubdirectories() ? -1 : 1);
+      VfsUtilCore.visitChildrenRecursively(myPsiDirectory.getVirtualFile(), new VirtualFileVisitor(limit) {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          if (myProjectFileIndex.isExcluded(file)) return false;
+          iterator.processFile(file);
+          return true;
         }
-      }
+      });
     }
     else {
       boolean success = myFileIndex.iterateContent(iterator);

@@ -34,9 +34,8 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.*;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,9 +47,9 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -118,6 +117,23 @@ public class InspectionsConfigTreeTable extends TreeTable {
         return true;
       }
     }.installOn(this);
+
+    setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
+        if (path != null) {
+          return new TextTransferable(path.getLastPathComponent().toString());
+        }
+        return null;
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
 
     registerKeyboardAction(new ActionListener() {
                              public void actionPerformed(ActionEvent e) {

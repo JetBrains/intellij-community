@@ -61,7 +61,7 @@ public class VcsPushDialog extends DialogWrapper {
     updateButtons();
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
-    setTitle("Push Dialog");
+    setTitle("Push Commits");
   }
 
   @Override

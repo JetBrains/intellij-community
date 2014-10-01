@@ -436,7 +436,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
     for (JpsModule module : pd.getProject().getModules()) {
       for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
-        if (state.hasWorkToDo(target)) {
+        if (!pd.getBuildTargetIndex().isDummy(target) && state.hasWorkToDo(target)) {
           return true;
         }
       }

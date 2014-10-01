@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<technologies>
+   <technology class="org.springframework.integration.channel.DirectChannel" name="spring-integration" />
+</technologies>

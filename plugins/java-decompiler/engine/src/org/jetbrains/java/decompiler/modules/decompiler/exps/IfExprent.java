@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
@@ -111,8 +112,9 @@ public class IfExprent extends Exprent {
     return lst;
   }
 
-  public String toJava(int indent) {
-    return "if(" + condition.toJava(indent) + ")";
+  @Override
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
+    return "if(" + condition.toJava(indent, tracer) + ")";
   }
 
   public boolean equals(Object o) {

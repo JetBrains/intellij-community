@@ -81,7 +81,7 @@ class ContractInferenceInterpreter {
     return ContainerUtil.filter(doInferContracts(), new Condition<MethodContract>() {
       @Override
       public boolean value(MethodContract contract) {
-        if (notNull && contract.returnValue == NOT_NULL_VALUE && Arrays.equals(contract.arguments, myEmptyConstraints)) {
+        if (notNull && contract.returnValue == NOT_NULL_VALUE) {
           return false;
         }
         return true;

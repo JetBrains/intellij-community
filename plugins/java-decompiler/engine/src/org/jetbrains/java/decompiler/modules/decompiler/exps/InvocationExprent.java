@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -186,7 +187,8 @@ public class InvocationExprent extends Exprent {
     return new InvocationExprent(this);
   }
 
-  public String toJava(int indent) {
+  @Override
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     StringBuilder buf = new StringBuilder("");
 
     String super_qualifier = null;
@@ -271,7 +273,7 @@ public class InvocationExprent extends Exprent {
           buf.append("super");
         }
         else {
-          String res = instance.toJava(indent);
+          String res = instance.toJava(indent, tracer);
 
           VarType rightType = instance.getExprType();
           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
@@ -321,7 +323,7 @@ public class InvocationExprent extends Exprent {
           buf.append("this(");
         }
         else {
-          buf.append(instance.toJava(indent));
+          buf.append(instance.toJava(indent, tracer));
           buf.append(".<init>(");
           //				throw new RuntimeException("Unrecognized invocation of <init>"); // FIXME: activate
         }
@@ -357,7 +359,7 @@ public class InvocationExprent extends Exprent {
         }
 
         StringBuilder buff = new StringBuilder();
-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, setAmbiguousParameters.contains(i));
+        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, setAmbiguousParameters.contains(i), tracer);
 
         buf.append(buff);
         firstpar = false;

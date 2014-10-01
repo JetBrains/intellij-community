@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -37,6 +38,7 @@ class ContractChecker extends DataFlowRunner {
   private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
+  private final Set<PsiElement> myCalls = ContainerUtil.newHashSet();
 
   ContractChecker(PsiMethod method, PsiCodeBlock body, MethodContract contract, final boolean onTheFly) {
     super(body);
@@ -102,7 +104,12 @@ class ContractChecker extends DataFlowRunner {
       }
     }
 
-    return super.acceptInstruction(visitor, instructionState);
+    if (instruction instanceof MethodCallInstruction &&
+        ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL) {
+      ContainerUtil.addIfNotNull(myCalls, ((MethodCallInstruction)instruction).getCallExpression());
+    }
+
+      return super.acceptInstruction(visitor, instructionState);
   }
 
 
@@ -118,7 +125,7 @@ class ContractChecker extends DataFlowRunner {
       for (PsiElement element : myFailures) {
         errors.put(element, "Contract clause '" + myContract + "' is violated: exception might be thrown instead of returning " + myContract.returnValue);
       }
-    } else if (myFailures.isEmpty() && errors.isEmpty()) {
+    } else if (myFailures.isEmpty() && errors.isEmpty() && myCalls.isEmpty()) {
       PsiIdentifier nameIdentifier = myMethod.getNameIdentifier();
       errors.put(nameIdentifier != null ? nameIdentifier : myMethod,
                  "Contract clause '" + myContract + "' is violated: no exception is thrown");

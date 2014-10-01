@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -63,7 +64,8 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
   }
 
   protected void complete(final int time) {
-    new CodeCompletionHandlerBase(myType).invokeCompletion(myProject, myEditor, time);
+    new CodeCompletionHandlerBase(myType).invokeCompletion(myProject, InjectedLanguageUtil
+      .getEditorForInjectedLanguageNoCommit(myEditor, getFile()), time);
 
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     myItems = lookup == null ? null : lookup.getItems().toArray(new LookupElement[lookup.getItems().size()]);

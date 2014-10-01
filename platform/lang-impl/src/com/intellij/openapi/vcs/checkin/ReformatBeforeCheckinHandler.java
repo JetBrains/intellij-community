@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,7 +47,7 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
   @Override
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-    final JCheckBox reformatBox = new JCheckBox(VcsBundle.message("checkbox.checkin.options.reformat.code"));
+    final JCheckBox reformatBox = new NonFocusableCheckBox(VcsBundle.message("checkbox.checkin.options.reformat.code"));
 
     return new RefreshableOnComponent() {
       @Override
