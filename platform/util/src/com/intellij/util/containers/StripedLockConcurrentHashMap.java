@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentMap;
  * -- using one of 256 ReentrantLock for Segment statically preallocated in {@link StripedReentrantLocks}
  * added hashing strategy argument
  * made not Serializable
- * @deprecated use com.intellij.util.containers.ConcurrentHashMap instead
+ * @deprecated use com.intellij.util.containers.ContainerUtil#newConcurrentMap() instead
  */
 public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implements ConcurrentMap<K, V> {
   /* ---------------- Constants -------------- */
