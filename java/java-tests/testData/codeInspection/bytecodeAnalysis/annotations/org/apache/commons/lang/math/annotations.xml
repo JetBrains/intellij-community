@@ -90,7 +90,7 @@
   </item>
   <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction addSub(org.apache.commons.lang.math.Fraction, boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;_,false-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction divideBy(org.apache.commons.lang.math.Fraction) 0">

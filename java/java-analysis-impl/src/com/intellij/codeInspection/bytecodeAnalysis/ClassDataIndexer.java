@@ -179,10 +179,11 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                                                 final boolean stable,
                                                                 boolean jsr) throws AnalyzerException {
 
+        // 4 = @NotNull parameter, @Nullable parameter, null -> ..., !null -> ...
         List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 2);
         boolean maybeLeakingParameter = isInterestingResult;
         for (Type argType : argumentTypes) {
-          if (ASMUtils.isReferenceType(argType) || (isReferenceResult && ASMUtils.isBooleanType(argType))) {
+          if (ASMUtils.isReferenceType(argType)) {
             maybeLeakingParameter = true;
             break;
           }
@@ -212,10 +213,9 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
         }
 
         for (int i = 0; i < argumentTypes.length; i++) {
-          boolean isReferenceArg = ASMUtils.isReferenceType(argumentTypes[i]);
           boolean notNullParam = false;
 
-          if (isReferenceArg) {
+          if (ASMUtils.isReferenceType(argumentTypes[i])) {
             boolean possibleNPE = false;
             if (leakingParameters[i]) {
               NonNullInAnalysis notNullInAnalysis = new NonNullInAnalysis(richControlFlow, new In(i, In.NOT_NULL), stable);
@@ -228,6 +228,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
               // parameter is not leaking, so it is definitely NOT @NotNull
               result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NOT_NULL), stable), FINAL_TOP));
             }
+
             if (leakingNullableParameters[i]) {
               if (notNullParam || possibleNPE) {
                 result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NULLABLE), stable), FINAL_TOP));
@@ -239,34 +240,24 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
             else {
               result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NULLABLE), stable), FINAL_NULL));
             }
-          }
-          if (isReferenceArg && isInterestingResult) {
-            if (leakingParameters[i]) {
-              if (!notNullParam) {
-                // may be null on some branch, running "null->..." analysis
-                result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.Null), origins, stable).analyze());
+
+            if (isInterestingResult) {
+              if (leakingParameters[i]) {
+                if (notNullParam) {
+                  // @NotNull, so "null->fail"
+                  result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_BOT));
+                }
+                else {
+                  // may be null on some branch, running "null->..." analysis
+                  result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.Null), origins, stable).analyze());
+                }
+                result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.NotNull), origins, stable).analyze());
               }
               else {
-                // @NotNull, so "null->fail"
-                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_BOT));
+                // parameter is not leaking, so a contract is the same as for the whole method
+                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), outEquation.rhs));
+                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), outEquation.rhs));
               }
-              result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.NotNull), origins, stable).analyze());
-            }
-            else {
-              // parameter is not leaking, so a contract is the same as for the whole method
-              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), outEquation.rhs));
-              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), outEquation.rhs));
-            }
-          }
-          if (ASMUtils.isBooleanType(argumentTypes[i]) && isInterestingResult) {
-            if (leakingParameters[i]) {
-              result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.False), origins, stable).analyze());
-              result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.True), origins, stable).analyze());
-            }
-            else {
-              // parameter is not leaking, so a contract is the same as for the whole method
-              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), outEquation.rhs));
-              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), outEquation.rhs));
             }
           }
         }
@@ -279,6 +270,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                                                    boolean isReferenceResult,
                                                                    boolean isBooleanResult,
                                                                    boolean stable) throws AnalyzerException {
+        // 4 = @NotNull parameter, @Nullable parameter, null -> ..., !null -> ...
         List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 2);
         CombinedAnalysis analyzer = new CombinedAnalysis(method, graph);
         analyzer.analyze();
@@ -288,18 +280,13 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
         }
         for (int i = 0; i < argumentTypes.length; i++) {
           Type argType = argumentTypes[i];
-          boolean isRefArg = ASMUtils.isReferenceType(argType);
-          if (isRefArg) {
+          if (ASMUtils.isReferenceType(argType)) {
             result.add(analyzer.notNullParamEquation(i, stable));
             result.add(analyzer.nullableParamEquation(i, stable));
-          }
-          if (isRefArg && (isReferenceResult || isBooleanResult)) {
-            result.add(analyzer.contractEquation(i, Value.Null, stable));
-            result.add(analyzer.contractEquation(i, Value.NotNull, stable));
-          }
-          if (ASMUtils.isBooleanType(argType) && (isReferenceResult || isBooleanResult)) {
-            result.add(analyzer.contractEquation(i, Value.True, stable));
-            result.add(analyzer.contractEquation(i, Value.False, stable));
+            if (isReferenceResult || isBooleanResult) {
+              result.add(analyzer.contractEquation(i, Value.Null, stable));
+              result.add(analyzer.contractEquation(i, Value.NotNull, stable));
+            }
           }
         }
         return result;
@@ -310,27 +297,20 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                                       boolean isReferenceResult,
                                                       boolean isInterestingResult,
                                                       boolean stable) {
+        // 4 = @NotNull parameter, @Nullable parameter, null -> ..., !null -> ...
         List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 2);
         if (isReferenceResult) {
           result.add(new Equation<Key, Value>(new Key(method, Out, stable), FINAL_TOP));
           result.add(new Equation<Key, Value>(new Key(method, NullableOut, stable), FINAL_BOT));
         }
         for (int i = 0; i < argumentTypes.length; i++) {
-          Type argType = argumentTypes[i];
-          boolean isReferenceArg = ASMUtils.isReferenceType(argType);
-          boolean isBooleanArg = ASMUtils.isBooleanType(argType);
-
-          if (isReferenceArg) {
+          if (ASMUtils.isReferenceType(argumentTypes[i])) {
             result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NOT_NULL), stable), FINAL_TOP));
             result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NULLABLE), stable), FINAL_TOP));
-          }
-          if (isReferenceArg && isInterestingResult) {
-            result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
-            result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
-          }
-          if (isBooleanArg && isInterestingResult) {
-            result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
-            result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
+            if (isInterestingResult) {
+              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
+              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
+            }
           }
         }
         return result;

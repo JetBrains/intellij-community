@@ -102,7 +102,7 @@
   </item>
   <item name="org.apache.velocity.runtime.VelocimacroManager boolean addVM(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_,_,_-&gt;true;_,!null,_,_,_-&gt;true;_,_,!null,_,_-&gt;true;_,_,_,!null,_-&gt;true;_,_,_,_,false-&gt;true;_,_,_,_,true-&gt;true;_,_,_,null,_-&gt;true;_,_,null,_,_-&gt;true;null,_,_,_,_-&gt;true&quot;"/>
+      <val val="&quot;!null,_,_,_,_-&gt;true;_,!null,_,_,_-&gt;true;_,_,!null,_,_-&gt;true;_,_,_,!null,_-&gt;true;_,_,_,null,_-&gt;true;_,_,null,_,_-&gt;true;null,_,_,_,_-&gt;true&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.runtime.VelocimacroManager boolean usingNamespaces(java.lang.String) 0">
