@@ -822,6 +822,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
  * subclasses from ReentrantLock opportunistically, just to
  * simplify some locking and avoid separate construction.
  */
+@Deprecated
 class _CHMSegment<K, V> {
   private static final StripedReentrantLocks STRIPED_REENTRANT_LOCKS = StripedReentrantLocks.getInstance();
   private final byte lockIndex = (byte)STRIPED_REENTRANT_LOCKS.allocateLockIndex();
