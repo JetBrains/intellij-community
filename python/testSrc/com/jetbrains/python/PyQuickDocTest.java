@@ -240,12 +240,18 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testHoverOverMethod() {
     checkHover();
   }
-  
+
   public void testHoverOverParameter() {
     checkHover();
   }
 
   public void testHoverOverControlFlowUnion() {
+    checkHover();
+  }
+
+  // PY-13422
+  public void testNumPyOnesDoc() {
+    myFixture.copyDirectoryToProject("/quickdoc/" + getTestName(false), "");
     checkHover();
   }
 }

@@ -18,7 +18,6 @@ package com.intellij.platform;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsCheckoutProcessor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
@@ -57,7 +56,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
       }
 
       @Override
-      public boolean processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context) {
+      public boolean processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
         ref.set(entries);
         return true;
       }
@@ -83,13 +82,11 @@ public class ProjectSetTest extends LightPlatformTestCase {
       }
 
       @Override
-      public void checkout(@NotNull String url,
-                           @NotNull String directoryName,
-                           @NotNull VirtualFile parentDirectory,
-                           @NotNull CheckoutProvider.Listener listener) {
+      public boolean checkout(@NotNull String url,
+                              @NotNull VirtualFile parentDirectory, @NotNull String directoryName) {
         assertEquals("schema://foo.bar", url);
         assertEquals("path", directoryName);
-        listener.checkoutCompleted();
+        return true;
       }
     }, myTestRootDisposable);
 

@@ -686,4 +686,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   public JTextField getModuleNameField() {
     return null;
   }
+
+  @Override
+  public String getHelpId() {
+    return "Project_Category_and_Options";
+  }
 }

@@ -81,7 +81,7 @@ public abstract class EmmetParser {
 
     ZenCodingToken operationToken = getToken();
     if (operationToken == ZenCodingTokens.OPENING_R_BRACKET) {
-      mul = new MoreOperationNode(notNullNode(mul), parseExpression());
+      mul = new MoreOperationNode(notNullNode(mul), notNullNode(parseExpression()));
       operationToken = getToken();
     }
     if (!(operationToken instanceof OperationToken)) {

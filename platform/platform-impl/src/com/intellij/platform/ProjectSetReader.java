@@ -19,8 +19,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,17 +29,17 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 public class ProjectSetReader {
 
-  public boolean readDescriptor(@Language("JSON") @NotNull String descriptor, @Nullable VirtualFile forTests) {
-
-    Application application = ApplicationManager.getApplication();
-    LOG.assertTrue(application.isUnitTestMode() || !application.isDispatchThread(), "should not be invoked from EDT");
+  public void readDescriptor(@Language("JSON") @NotNull String descriptor, @Nullable VirtualFile forTests) {
 
     ProjectSetProcessor[] extensions = ProjectSetProcessor.EXTENSION_POINT_NAME.getExtensions();
     Map<String, ProjectSetProcessor> processors = new HashMap<String, ProjectSetProcessor>();
@@ -50,29 +48,37 @@ public class ProjectSetReader {
     }
 
     JsonElement parse = new JsonParser().parse(descriptor);
-
+    Iterator<Map.Entry<String, JsonElement>> iterator = parse.getAsJsonObject().entrySet().iterator();
     ProjectSetProcessor.Context context = new ProjectSetProcessor.Context();
     context.directory = forTests;
-    for (Map.Entry<String, JsonElement> entry : parse.getAsJsonObject().entrySet()) {
-      String key = entry.getKey();
-      ProjectSetProcessor processor = processors.get(key);
-      if (processor == null) {
-        LOG.error("Processor not found for " + key);
-        return false;
-      }
+    runProcessor(processors, context, iterator);
+  }
 
-      JsonObject object = entry.getValue().getAsJsonObject();
-      List<Pair<String, String>> list =
-        ContainerUtil.map(object.entrySet(), new Function<Map.Entry<String, JsonElement>, Pair<String, String>>() {
-          @Override
-          public Pair<String, String> fun(Map.Entry<String, JsonElement> entry) {
-            JsonElement value = entry.getValue();
-            return Pair.create(entry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString());
-          }
-        });
-      if (!processor.processEntries(list, context)) return false;
+  private static void runProcessor(final Map<String, ProjectSetProcessor> processors, final ProjectSetProcessor.Context context, final Iterator<Map.Entry<String, JsonElement>> iterator) {
+    if (!iterator.hasNext()) return;
+    Map.Entry<String, JsonElement> entry = iterator.next();
+    String key = entry.getKey();
+    ProjectSetProcessor processor = processors.get(key);
+    if (processor == null) {
+      LOG.error("Processor not found for " + key);
+      return;
     }
-    return true;
+
+    JsonObject object = entry.getValue().getAsJsonObject();
+    List<Pair<String, String>> list =
+      ContainerUtil.map(object.entrySet(), new Function<Map.Entry<String, JsonElement>, Pair<String, String>>() {
+        @Override
+        public Pair<String, String> fun(Map.Entry<String, JsonElement> entry) {
+          JsonElement value = entry.getValue();
+          return Pair.create(entry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString());
+        }
+      });
+    processor.processEntries(list, context, new Runnable() {
+      @Override
+      public void run() {
+        runProcessor(processors, context, iterator);
+      }
+    });
   }
 
   private static final Logger LOG = Logger.getInstance(ProjectSetReader.class);

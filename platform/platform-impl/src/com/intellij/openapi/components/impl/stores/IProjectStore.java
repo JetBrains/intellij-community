@@ -55,7 +55,7 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   String getPresentableUrl();
 
-  boolean reload(@NotNull Set<Pair<VirtualFile,StateStorage>> changedFiles) throws IOException;
+  boolean reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
 
   //------ This methods should be got rid of
   /** @deprecated to remove in IDEA 14 */

@@ -247,15 +247,15 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIsInstance() {
-      doTest("str",
-             "def f(c):\n" +
-             "    def g():\n" +
-             "        '''\n" +
-             "        :rtype: int or str\n" +
-             "        '''\n" +
-             "    x = g()\n" +
-             "    if isinstance(x, str):\n" +
-             "        expr = x");
+    doTest("str",
+           "def f(c):\n" +
+           "    def g():\n" +
+           "        '''\n" +
+           "        :rtype: int or str\n" +
+           "        '''\n" +
+           "    x = g()\n" +
+           "    if isinstance(x, str):\n" +
+           "        expr = x");
   }
 
   // PY-2140
@@ -866,6 +866,13 @@ public class PyTypeTest extends PyTestCase {
            "expr = C(10).foo()\n");
   }
 
+  // PY-8836
+  public void testNumpyArrayIntMultiplicationType() {
+    doMultiFileTest("ndarray",
+                    "import numpy as np\n" +
+                    "expr = np.ones(10) * 2\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
@@ -876,6 +883,17 @@ public class PyTypeTest extends PyTestCase {
   }
 
   private void doTest(final String expectedType, final String text) {
+    PyExpression expr = parseExpr(text);
+    TypeEvalContext context = getTypeEvalContext(expr);
+    PyType actual = context.getType(expr);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    assertEquals(expectedType, actualType);
+  }
+
+  public static final String TEST_DIRECTORY = "/types/";
+
+  private void doMultiFileTest(final String expectedType, final String text) {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
     PyExpression expr = parseExpr(text);
     TypeEvalContext context = getTypeEvalContext(expr);
     PyType actual = context.getType(expr);

@@ -139,7 +139,6 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getWidth() - bounds.x, bounds.height));
     }
-    myDestPushTargetPanelComponent.grabFocus();
     myDestPushTargetPanelComponent.requestFocus();
     revalidate();
     return this;

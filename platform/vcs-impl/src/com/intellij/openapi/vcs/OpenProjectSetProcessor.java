@@ -35,7 +35,7 @@ public class OpenProjectSetProcessor extends ProjectSetProcessor {
   }
 
   @Override
-  public boolean processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context) {
+  public boolean processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
     for (Pair<String, String> entry : entries) {
       if ("project".equals(entry.getFirst())) {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();

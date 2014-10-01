@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +52,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       private boolean myConfigDirectoryRefreshed;
 
       @Override
-      protected StorageData createStorageData(String storageSpec) {
+      protected StorageData createStorageData(@NotNull String storageSpec) {
         return new FileBasedStorage.FileStorageData(ROOT_ELEMENT_NAME);
       }
 
@@ -75,6 +76,11 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
         if (fileSpec.equals(StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + XML_EXTENSION)) return null;
         return super.getMacroSubstitutor(fileSpec);
+      }
+
+      @Override
+      protected boolean isUseXmlProlog() {
+        return false;
       }
 
       @Override
@@ -132,8 +138,14 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   }
 
   @Override
-  public Collection<String> reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException {
-    return reload(changedFiles, myApplication.getMessageBus());
+  public Collection<String> reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+    return doReload(changedFiles);
+  }
+
+  @Override
+  @NotNull
+  protected MessageBus getMessageBus() {
+    return myApplication.getMessageBus();
   }
 
   @NotNull

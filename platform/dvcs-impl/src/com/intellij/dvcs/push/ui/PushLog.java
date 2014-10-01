@@ -126,6 +126,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         if (node != null && node instanceof EditableTreeNode) {
           ((EditableTreeNode)node).fireOnChange();
         }
+        myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, true, false);
       }
 
       @Override
@@ -134,6 +135,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         if (node != null && node instanceof EditableTreeNode) {
           ((EditableTreeNode)node).fireOnCancel();
         }
+        myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, true, false);
       }
     });
     myTree.setRootVisible(false);
@@ -182,7 +184,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
   private void updateChangesView() {
     int[] rows = myTree.getSelectionRows();
-    if (rows.length != 0) {
+    if (rows != null && rows.length != 0) {
       myChangesBrowser.getViewer().setEmptyText("No differences");
       myChangesBrowser.setChangesToDisplay(collectAllChanges(rows));
     }
@@ -317,6 +319,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
       RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
       myValue = panel;
+      myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, false, true);
       return panel.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row, true);
     }
 

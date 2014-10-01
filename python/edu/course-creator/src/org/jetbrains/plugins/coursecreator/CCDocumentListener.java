@@ -43,21 +43,21 @@ public abstract class CCDocumentListener extends DocumentAdapter {
   @Override
   public void documentChanged(DocumentEvent e) {
     if (e instanceof DocumentEventImpl) {
-      DocumentEventImpl event = (DocumentEventImpl)e;
-      Document document = e.getDocument();
-      int offset = e.getOffset();
-      int change = event.getNewLength() - event.getOldLength();
-      if (myTaskWindow != null) {
-        updateTaskWindowLength(e.getNewFragment(), myTaskWindow, change);
+        DocumentEventImpl event = (DocumentEventImpl)e;
+        Document document = e.getDocument();
+        int offset = e.getOffset();
+        int change = event.getNewLength() - event.getOldLength();
+        if (myTaskWindow != null) {
+          updateTaskWindowLength(e.getNewFragment(), myTaskWindow, change);
+        }
+        int newEnd = offset + event.getNewLength();
+        int newLine = document.getLineNumber(newEnd);
+        int lineChange = newLine - myOldLine;
+        myTaskFile.incrementLines(myOldLine + 1, lineChange);
+        int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
+        int oldEndOffsetInLine = offset + e.getOldLength() - myOldLineStartOffset;
+        myTaskFile.updateLine(lineChange, myOldLine, newEndOffsetInLine, oldEndOffsetInLine);
       }
-      int newEnd = offset + event.getNewLength();
-      int newLine = document.getLineNumber(newEnd);
-      int lineChange = newLine - myOldLine;
-      myTaskFile.incrementLines(myOldLine + 1, lineChange);
-      int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
-      int oldEndOffsetInLine = offset + e.getOldLength() - myOldLineStartOffset;
-      myTaskFile.updateLine(lineChange, myOldLine, newEndOffsetInLine, oldEndOffsetInLine);
-    }
   }
 
   protected abstract void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change);

@@ -18,6 +18,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.store.ComponentSaveSession;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -28,14 +29,14 @@ public interface IComponentStore {
 
   void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData);
 
+  void reinitComponents(@NotNull Set<String> componentNames, @NotNull Collection<String> notReloadableComponents, boolean reloadData);
+
   @NotNull
   Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames);
 
   boolean isReloadPossible(@NotNull Set<String> componentNames);
 
   void load() throws IOException, StateStorageException;
-
-  boolean isSaving();
 
   @NotNull
   StateStorageManager getStateStorageManager();
@@ -49,6 +50,6 @@ public interface IComponentStore {
     }
   }
 
-  @NotNull
+  @Nullable
   ComponentSaveSession startSave();
 }

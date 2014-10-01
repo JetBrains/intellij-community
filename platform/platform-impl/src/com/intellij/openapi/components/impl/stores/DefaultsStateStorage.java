@@ -20,6 +20,8 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -43,7 +45,9 @@ class DefaultsStateStorage implements StateStorage {
   @Nullable
   public Element getState(final Object component, final String componentName) throws StateStorageException {
     final URL url = DecodeDefaultsUtil.getDefaults(component, componentName);
-    if (url == null) return null;
+    if (url == null) {
+      return null;
+    }
 
     try {
       Document document = JDOMUtil.loadDocument(url);
@@ -64,33 +68,29 @@ class DefaultsStateStorage implements StateStorage {
     }
   }
 
+  @Override
   @Nullable
-  public <T> T getState(final Object component, @NotNull final String componentName, final Class<T> stateClass, @Nullable final T mergeInto) throws
-                                                                                                                                    StateStorageException {
+  public <T> T getState(final Object component, @NotNull final String componentName, @NotNull final Class<T> stateClass, @Nullable final T mergeInto) {
     return DefaultStateSerializer.deserializeState(getState(component, componentName), stateClass, mergeInto);
   }
 
-  public boolean hasState(final Object component, @NotNull final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
-    final URL url = DecodeDefaultsUtil.getDefaults(component, componentName);
-    return url != null;
+  @Override
+  public boolean hasState(@Nullable final Object component, @NotNull final String componentName, final Class<?> aClass, final boolean reloadData) {
+    return DecodeDefaultsUtil.getDefaults(component, componentName) != null;
   }
 
+  @Override
   @NotNull
   public ExternalizationSession startExternalization() {
     throw new UnsupportedOperationException("Method startExternalization not implemented in " + getClass());
   }
 
-  @NotNull
+  @Override
   public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-    throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
+    return null;
   }
 
-  public void finishSave(@NotNull SaveSession saveSession) {
-    throw new UnsupportedOperationException("Method finishSave not implemented in " + getClass());
+  @Override
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
   }
-
-  public void reload(@NotNull Set<String> changedComponents) {
-    throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
-  }
-
 }

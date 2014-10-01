@@ -37,6 +37,15 @@ public class SingleRepositoryNode extends RepositoryNode {
   }
 
   @Override
+  public boolean isChecked() {
+    return true;
+  }
+
+  @Override
+  public void fireOnSelectionChange(boolean isSelected) {
+  }
+
+  @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     renderer.setIcon(myLoading.get() ? myLoadingIcon : myEmptyIcon);
     renderer.setIconOnTheRight(false);

@@ -58,7 +58,7 @@ public class VcsPushDialog extends DialogWrapper {
     myListPanel = myController.getPushPanelLog();
 
     init();
-    updateButtons();
+    enableOkActions(myController.isPushAllowed());
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
     setTitle("Push Commits");
@@ -117,11 +117,10 @@ public class VcsPushDialog extends DialogWrapper {
     return ID;
   }
 
-  public void updateButtons() {
-    boolean pushAllowed = myController.isPushAllowed();
-    myPushAction.setEnabled(pushAllowed);
+  public void enableOkActions(boolean isEnabled) {
+    myPushAction.setEnabled(isEnabled);
     if (myForcePushAction != null) {
-      myForcePushAction.setEnabled(pushAllowed && myController.isForcePushAllowed());
+      myForcePushAction.setEnabled(isEnabled && myController.isForcePushAllowed());
     }
   }
 

@@ -158,7 +158,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
                     @Override
                     public void contextAction() throws Exception {
-                      final String valueAsString = DebuggerUtilsEx.getValueOrErrorAsString(myEvaluationContext, myValueDescriptor.getValue());
+                      final String valueAsString = myValueDescriptor.getValueText();
                       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
                         @Override
                         public void run() {

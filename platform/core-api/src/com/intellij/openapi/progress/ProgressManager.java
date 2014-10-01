@@ -39,7 +39,14 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract boolean hasModalProgressIndicator();
   public abstract boolean hasUnsafeProgressIndicator();
 
+  /**
+   * Runs given process synchronously (in calling thread).
+   */
   public abstract void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
+
+  /**
+   * Runs given process synchronously (in calling thread).
+   */
   public abstract <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException;
 
   @Override

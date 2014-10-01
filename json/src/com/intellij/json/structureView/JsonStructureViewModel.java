@@ -3,7 +3,6 @@ package com.intellij.json.structureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewModelBase;
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
@@ -19,7 +18,6 @@ public class JsonStructureViewModel extends StructureViewModelBase implements St
 
   public JsonStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {
     super(psiFile, editor, new JsonStructureViewElement((JsonFile)psiFile));
-    withSorters(Sorter.ALPHA_SORTER);
     withSuitableClasses(JsonFile.class, JsonProperty.class, JsonObject.class);
   }
 

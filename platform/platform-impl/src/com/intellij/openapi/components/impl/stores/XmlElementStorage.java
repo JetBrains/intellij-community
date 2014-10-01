@@ -23,9 +23,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -33,10 +33,14 @@ import org.jdom.JDOMException;
 import org.jdom.filter.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class XmlElementStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance(XmlElementStorage.class);
@@ -48,28 +52,16 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull protected final String myRootElementName;
-  private Object mySession;
   protected StorageData myLoadedData;
   protected final StreamProvider myStreamProvider;
   protected final String myFileSpec;
   protected boolean myBlockSavingTheContent = false;
-  protected int myUpToDateHash = -1;
-  private int myProviderUpToDateHash = -1;
   private boolean mySavingDisabled = false;
-
-  private final Map<String, Object> myStorageComponentStates = new THashMap<String, Object>(); // at load we store Element, on setState Integer of hash
 
   private final ComponentVersionProvider myLocalVersionProvider;
   protected final RemoteComponentVersionProvider myRemoteVersionProvider;
 
   private final RoamingType myRoamingType;
-
-  protected ComponentVersionListener myListener = new ComponentVersionListener(){
-    @Override
-    public void componentStateChanged(String componentName) {
-      myLocalVersionProvider.changeVersion(componentName,  System.currentTimeMillis());
-    }
-  };
 
   private boolean myDisposed;
 
@@ -98,28 +90,16 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   @Nullable
   protected abstract Element loadLocalData();
 
-  @Nullable
-  public synchronized Element getState(@NotNull String componentName) {
-    final StorageData storageData = getStorageData(false);
-    final Element state = storageData.getState(componentName);
-    if (state != null) {
-      if (!myStorageComponentStates.containsKey(componentName)) {
-        myStorageComponentStates.put(componentName, state);
-      }
-      storageData.removeState(componentName);
-    }
-    return state;
-  }
-
   @Override
-  public boolean hasState(final Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
+  public boolean hasState(@Nullable Object component, @NotNull String componentName, Class<?> aClass, boolean reloadData) throws StateStorageException {
     return getStorageData(reloadData).hasState(componentName);
   }
 
   @Override
   @Nullable
-  public <T> T getState(final Object component, @NotNull String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException {
-    return DefaultStateSerializer.deserializeState(getState(componentName), stateClass, mergeInto);
+  public <T> T getState(Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException {
+    Element state = getStorageData(false).getStateAndArchive(componentName);
+    return DefaultStateSerializer.deserializeState(state, stateClass, mergeInto);
   }
 
   @NotNull
@@ -196,109 +176,36 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @Override
   @NotNull
-  public ExternalizationSession startExternalization() {
-    ExternalizationSession session = new MyExternalizationSession(getStorageData().clone(), myListener);
-    mySession = session;
-    return session;
+  public final ExternalizationSession startExternalization() {
+    return createSaveSession(getStorageData());
   }
 
+  @Nullable
   @Override
-  @NotNull
-  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
-    LOG.assertTrue(mySession == externalizationSession);
-
-    final SaveSession saveSession = mySavingDisabled ? createNullSession() : createSaveSession((MyExternalizationSession)externalizationSession);
-    mySession = saveSession;
-    return saveSession;
-  }
-
-  private static SaveSession createNullSession() {
-    return new SaveSession(){
-      @Override
-      public void save() {
-      }
-
-      @Override
-      public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-        return Collections.emptySet();
-      }
-
-      @Override
-      public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
-      }
-    };
-  }
-
-  protected abstract MySaveSession createSaveSession(MyExternalizationSession externalizationSession);
-
-  @Override
-  public void finishSave(@NotNull final SaveSession saveSession) {
-    try {
-      if (mySession != saveSession) {
-        LOG.error("mySession=" + mySession + " saveSession=" + saveSession);
-      }
-    } finally {
-      mySession = null;
+  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
+    if (mySavingDisabled) {
+      return null;
+    }
+    else {
+      MySaveSession session = (MySaveSession)externalizationSession;
+      return session.myCopiedStorageData == null ? null : session;
     }
   }
+
+  protected abstract MySaveSession createSaveSession(@NotNull StorageData storageData);
 
   public void disableSaving() {
     mySavingDisabled = true;
   }
 
-  protected class MyExternalizationSession implements ExternalizationSession {
-    private final StorageData myStorageData;
-    private final ComponentVersionListener myListener;
-
-    public MyExternalizationSession(final StorageData storageData, ComponentVersionListener listener) {
-      myStorageData = storageData;
-      myListener = listener;
-    }
-
-    @Override
-    public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec) {
-      assert mySession == this;
-
-      Element element;
-      try {
-        element = DefaultStateSerializer.serializeState(state, storageSpec);
-      }
-      catch (WriteExternalException e) {
-        LOG.debug(e);
-        return;
-      }
-
-      if (element == null || JDOMUtil.isEmpty(element)) {
-        return;
-      }
-
-      setState(componentName, element);
-    }
-
-    private synchronized void setState(@NotNull String componentName, @NotNull Element element)  {
-      myStorageData.setState(componentName, element);
-      int hash = JDOMUtil.getTreeHash(element);
-      try {
-        Object oldElementState = myStorageComponentStates.get(componentName);
-        if (oldElementState instanceof Element && !JDOMUtil.areElementsEqual((Element)oldElementState, element) ||
-            oldElementState instanceof Integer && hash != (Integer)oldElementState) {
-          myListener.componentStateChanged(componentName);
-        }
-      }
-      finally {
-        myStorageComponentStates.put(componentName, hash);
-      }
-    }
-  }
-
   @Nullable
-  protected Element getElement(@NotNull StorageData data) {
-    Element element = data.save();
+  protected final Element getElement(@NotNull StorageData data, boolean collapsePaths, @NotNull Map<String, Element> newLiveStates) {
+    Element element = data.save(newLiveStates);
     if (element == null || JDOMUtil.isEmpty(element)) {
       return null;
     }
 
-    if (myPathMacroSubstitutor != null) {
+    if (collapsePaths && myPathMacroSubstitutor != null) {
       try {
         myPathMacroSubstitutor.collapsePaths(element);
       }
@@ -310,95 +217,84 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return element;
   }
 
-  protected abstract class MySaveSession implements SaveSession {
-    final StorageData myStorageData;
-    private Element myElementToSave;
-
-    public MySaveSession(MyExternalizationSession externalizationSession) {
-      myStorageData = externalizationSession.myStorageData;
+  @Override
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
+    StorageData oldData = myLoadedData;
+    StorageData newData = getStorageData(true);
+    if (oldData == null) {
+      result.addAll(newData.getComponentNames());
     }
-
-    private boolean _needsSave(int hash) {
-      if (myBlockSavingTheContent) {
-        return false;
-      }
-
-      if (myUpToDateHash == -1) {
-        if (hash != -1) {
-          if (!physicalContentNeedsSave()) {
-            myUpToDateHash = hash;
-            return false;
-          }
-          else {
-            return true;
-          }
-        }
-        else {
-          return true;
-        }
-      }
-      else if (hash != -1) {
-        if (hash == myUpToDateHash) {
-          return false;
-        }
-        if (!physicalContentNeedsSave()) {
-          myUpToDateHash = hash;
-          return false;
-        }
-        else {
-          return true;
-        }
-      }
-      else {
-        return physicalContentNeedsSave();
+    else {
+      Set<String> changedComponentNames = oldData.getChangedComponentNames(newData, myPathMacroSubstitutor);
+      if (changedComponentNames != null) {
+        result.addAll(changedComponentNames);
       }
     }
+  }
 
-    protected boolean physicalContentNeedsSave() {
-      return true;
+  protected abstract class MySaveSession implements SaveSession, ExternalizationSession {
+    private final StorageData myOriginalStorageData;
+    private StorageData myCopiedStorageData;
+
+    private final Map<String, Element> myNewLiveStates = new THashMap<String, Element>();
+
+    public MySaveSession(@NotNull StorageData storageData) {
+      myOriginalStorageData = storageData;
     }
 
-    protected abstract void doSave() throws StateStorageException;
+    @Override
+    public final void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec) {
+      Element element;
+      try {
+        element = DefaultStateSerializer.serializeState(state, storageSpec);
+      }
+      catch (WriteExternalException e) {
+        LOG.debug(e);
+        return;
+      }
+      catch (Throwable e) {
+        LOG.info("Unable to serialize component state!", e);
+        return;
+      }
 
-    protected int calcHash() {
-      return -1;
+      if (myCopiedStorageData == null) {
+        myCopiedStorageData = StorageData.setStateAndCloneIfNeed(componentName, element, myOriginalStorageData, myNewLiveStates);
+        if (myCopiedStorageData != null) {
+          myLocalVersionProvider.changeVersion(componentName, System.currentTimeMillis());
+        }
+      }
+      else if (myCopiedStorageData.setState(componentName, element, myNewLiveStates) != null) {
+        myLocalVersionProvider.changeVersion(componentName, System.currentTimeMillis());
+      }
     }
 
     @Override
     public final void save() {
-      assert mySession == this;
-
       if (myBlockSavingTheContent) {
         return;
       }
 
-      int hash = calcHash();
       try {
-        if (myStreamProvider != null && myStreamProvider.isEnabled() && (myProviderUpToDateHash == -1 || myProviderUpToDateHash != hash)) {
-          try {
-            saveForProvider();
-            myProviderUpToDateHash = hash;
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-        }
+        doSave(getElement(myCopiedStorageData, isCollapsePathsOnSave(), myNewLiveStates));
       }
-      finally {
-        if (!(myUpToDateHash != -1 && myUpToDateHash == hash) && _needsSave(hash)) {
-          doSave();
-        }
-        myUpToDateHash = hash;
+      catch (IOException e) {
+        throw new StateStorageException(e);
       }
     }
 
-    private void saveForProvider() throws IOException {
+    // only because default project store hack
+    protected boolean isCollapsePathsOnSave() {
+      return true;
+    }
+
+    protected abstract void doSave(@Nullable Element element) throws IOException;
+
+    protected void saveForProvider(@Nullable BufferExposingByteArrayOutputStream content, @Nullable Element element) throws IOException {
       if (!myStreamProvider.isApplicable(myFileSpec, myRoamingType)) {
         return;
       }
 
-      Element element = getElementToSave();
-      if (element == null || element.getChildren().isEmpty()) {
+      if (element == null) {
         myStreamProvider.delete(myFileSpec, myRoamingType);
         return;
       }
@@ -411,67 +307,29 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       if (myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
         Element copiedElement = JDOMUtil.cloneElement(element, DISABLED_ROAMING_ELEMENT_FILTER);
         if (copiedElement != null) {
-          doSaveForProvider(copiedElement, DISABLED_ROAMING_ELEMENT_FILTER.myRoamingType, myStreamProvider);
+          doSaveForProvider(copiedElement, DISABLED_ROAMING_ELEMENT_FILTER.myRoamingType, content);
         }
       }
       else {
-        doSaveForProvider(element, myRoamingType, myStreamProvider);
+        doSaveForProvider(element, myRoamingType, content);
       }
     }
 
-    private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @NotNull StreamProvider streamProvider) throws IOException {
-      StorageUtil.doSendContent(streamProvider, myFileSpec, element, roamingType, true);
-      if (streamProvider.isVersioningRequired()) {
+    private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @Nullable BufferExposingByteArrayOutputStream content) throws IOException {
+      if (content == null) {
+        StorageUtil.doSendContent(myStreamProvider, myFileSpec, element, roamingType, true);
+      }
+      else {
+        myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType, true);
+      }
+
+      if (myStreamProvider.isVersioningRequired()) {
         TObjectLongHashMap<String> versions = loadVersions(element.getChildren(StorageData.COMPONENT));
         if (!versions.isEmpty()) {
           Element versionDoc = StateStorageManagerImpl.createComponentVersionsXml(versions);
-          StorageUtil.doSendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
+          StorageUtil.doSendContent(myStreamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
         }
       }
-    }
-
-    @Nullable
-    protected Element getElementToSave()  {
-      if (myElementToSave == null) {
-        myElementToSave = getElement(myStorageData);
-      }
-      return myElementToSave;
-    }
-
-    public StorageData getData() {
-      return myStorageData;
-    }
-
-    @Override
-    @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      boolean containsSelf = false;
-      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        if (pair.second == XmlElementStorage.this) {
-          containsSelf = true;
-          break;
-        }
-      }
-
-      if (!containsSelf) {
-        return Collections.emptySet();
-      }
-
-      try {
-        Element element = loadLocalData();
-        if (element == null) {
-          return Collections.emptySet();
-        }
-
-        StorageData storageData = createStorageData();
-        loadState(storageData, element);
-        return storageData.getChangedComponentNames(myStorageData, myPathMacroSubstitutor);
-      }
-      catch (StateStorageException e) {
-        LOG.info(e);
-      }
-
-      return null;
     }
   }
 
@@ -494,32 +352,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myDisposed = true;
   }
 
-  public void resetData(){
+  @TestOnly
+  public void resetData() {
     myLoadedData = null;
-  }
-
-  @Override
-  public void reload(@NotNull final Set<String> changedComponents) {
-    final StorageData storageData = loadData(false);
-    final StorageData oldLoadedData = myLoadedData;
-    if (oldLoadedData != null) {
-      Set<String> componentsToRetain = new THashSet<String>(oldLoadedData.myComponentStates.keySet());
-      componentsToRetain.addAll(changedComponents);
-
-      // add empty configuration tags for removed components
-      for (String componentToRetain : componentsToRetain) {
-        if (!storageData.myComponentStates.containsKey(componentToRetain) && myStorageComponentStates.containsKey(componentToRetain)) {
-          Element emptyElement = new Element("component");
-          LOG.info("Create empty component element for " + componentsToRetain);
-          emptyElement.setAttribute(StorageData.NAME, componentToRetain);
-          storageData.myComponentStates.put(componentToRetain, emptyElement);
-        }
-      }
-
-      storageData.myComponentStates.keySet().retainAll(componentsToRetain);
-    }
-
-    myLoadedData = storageData;
   }
 
   private void filterOutOfDate(@NotNull Element element) {
@@ -540,13 +375,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
   }
 
-  @Nullable
-  Element logComponents() {
-    return mySession instanceof MySaveSession ? getElement(((MySaveSession)mySession).myStorageData) : null;
-  }
-
   public void resetProviderCache() {
-    myProviderUpToDateHash = -1;
     if (myRemoteVersionProvider != null) {
       myRemoteVersionProvider.myProviderVersions = null;
     }

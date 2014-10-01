@@ -28,7 +28,7 @@ public class CCDeleteTaskWindow extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
@@ -55,6 +55,7 @@ public class CCDeleteTaskWindow extends DumbAwareAction {
       taskWindows.remove(myTaskWindow);
       editor.getMarkupModel().removeAllHighlighters();
       CCProjectService.drawTaskWindows(file.getVirtualFile(), editor, course);
+      taskFile.createGuardedBlocks(editor);
       DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
     }
   }

@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
@@ -39,5 +38,5 @@ public interface IApplicationStore extends IComponentStore {
    * list of not reloadable components (reload is not performed)
    */
   @Nullable
-  Collection<String> reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException;
+  Collection<String> reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
 }
