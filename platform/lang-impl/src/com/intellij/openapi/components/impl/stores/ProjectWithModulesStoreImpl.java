@@ -46,11 +46,10 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     }
 
     for (Module module : getPersistentModules()) {
-      if (((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponent(componentName, reloadData)) {
-        return true;
-      }
+      // we have to reinit all modules for component because we don't know affected module
+      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponent(componentName, reloadData);
     }
-    return false;
+    return true;
   }
 
   @Override
