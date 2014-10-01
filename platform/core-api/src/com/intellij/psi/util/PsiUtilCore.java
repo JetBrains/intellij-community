@@ -351,13 +351,15 @@ public class PsiUtilCore {
 
   @Nullable
   public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
-    if (element == null) {
+    if (element == null || !element.isValid()) {
       return null;
     }
+
     if (element instanceof PsiFileSystemItem) {
-      return element.isValid() ? ((PsiFileSystemItem)element).getVirtualFile() : null;
+      return ((PsiFileSystemItem)element).getVirtualFile();
     }
-    final PsiFile containingFile = element.getContainingFile();
+
+    PsiFile containingFile = element.getContainingFile();
     if (containingFile == null || !containingFile.isValid()) {
       return null;
     }
