@@ -262,7 +262,7 @@
     <applicationConfigurable groupId="build" instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
                              key="title.path.variables" bundle="messages.ApplicationBundle"/>
 
-    <applicationConfigurable parentId="editor" instance="com.intellij.execution.console.ConsoleFoldingConfigurable" id="Console Folding"
+    <applicationConfigurable parentId="preferences.editor" instance="com.intellij.execution.console.ConsoleFoldingConfigurable" id="Console Folding"
                              displayName="Console Folding"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>

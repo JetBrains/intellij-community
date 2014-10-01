@@ -19,7 +19,10 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +30,6 @@ import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.junit.Assert;
@@ -37,7 +39,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author nik
@@ -150,17 +151,6 @@ public class CompilerTestUtil {
   private static class SaveSessionRequestor implements StateStorage.SaveSession {
     @Override
     public void save() {
-    }
-
-    @Nullable
-    @Override
-    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      return null;
-    }
-
-    @Override
-    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
-
     }
   }
 }

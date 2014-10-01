@@ -28,11 +28,13 @@ public class JsonStructureViewTest extends JsonTestCase {
     });
   }
 
-  public void testSimpleStructure() {
-    doTest("-SimpleStructure.json\n" +
-           " aaa\n" +
-           " -bbb\n" +
-           "  ccc\n");
+  public void testPropertyOrderPreserved() {
+    doTest("-PropertyOrderPreserved.json\n" +
+           " ccc\n" +
+           " bbb\n" +
+           " -aaa\n" +
+           "  eee\n" +
+           "  ddd\n");
   }
 
   // IDEA-127119
@@ -59,8 +61,8 @@ public class JsonStructureViewTest extends JsonTestCase {
 
   // Moved from JavaScript
 
-  public void testJsonStructure() {
-    myFixture.configureByFile("structureView/SimpleStructure.json");
+  public void testSimpleStructure() {
+    myFixture.configureByFile("structureView/" + getTestName(false) + ".json");
 
     final StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(myFixture.getFile());
     assertNotNull(builder);

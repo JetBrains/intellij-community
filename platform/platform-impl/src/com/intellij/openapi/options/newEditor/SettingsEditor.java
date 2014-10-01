@@ -206,7 +206,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
     if (configurable == null) {
       String id = myProperties.getValue(SELECTED_CONFIGURABLE);
-      configurable = new ConfigurableVisitor.ByID(id != null ? id : "appearance").find(groups);
+      configurable = new ConfigurableVisitor.ByID(id != null ? id : "preferences.lookFeel").find(groups);
       if (configurable == null) {
         configurable = ConfigurableVisitor.ALL.find(groups);
       }

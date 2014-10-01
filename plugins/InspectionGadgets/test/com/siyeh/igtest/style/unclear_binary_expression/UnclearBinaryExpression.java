@@ -17,6 +17,7 @@ package com.siyeh.igtest.style.unclear_binary_expression;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Calendar;
 
 public class UnclearBinaryExpression {
 
@@ -49,6 +50,8 @@ public class UnclearBinaryExpression {
 
   void more(int i) {
     <warning descr="Expression could use clarifying parentheses">i = i += i = 1</warning>;
+    int j;
+    int k = <warning descr="Expression could use clarifying parentheses">j = 3 / 9 + 5 * 4</warning>;
   }
 
   void noMore() {
@@ -58,5 +61,28 @@ public class UnclearBinaryExpression {
 
   int incomplete(String s) {
     return s == null ?<EOLError descr="Expression expected"></EOLError><EOLError descr="';' expected"></EOLError>
+  }
+}
+class NoWarnings {
+  String targetClass;
+  String targetBeanName;
+
+  @Override
+  public int hashCode() {
+    int result = targetClass.hashCode();
+    result = (31 * result) + ((targetBeanName != null) ? targetBeanName.hashCode() : 0);
+    return result;
+  }
+
+  void f(int finalKey) {
+    String result = "???" + finalKey + "???";
+  }
+
+  private static final int YEAR_MONTHS = 12;
+  private static final int YEAR_DAYS = 365;
+  void g(Calendar startCalendar, Calendar endCalendar) {
+    double result = endCalendar.get(Calendar.YEAR) - startCalendar.get(Calendar.YEAR);
+    result += (endCalendar.get(Calendar.MONTH) - startCalendar.get(Calendar.MONTH)) / YEAR_MONTHS;
+    result += (endCalendar.get(Calendar.DAY_OF_MONTH) - startCalendar.get(Calendar.DAY_OF_MONTH)) / YEAR_DAYS;
   }
 }

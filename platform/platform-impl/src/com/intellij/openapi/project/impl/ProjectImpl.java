@@ -477,55 +477,53 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public void checkUnknownMacros(final boolean showDialog) {
     final IProjectStore stateStore = getStateStore();
-
-    final TrackingPathMacroSubstitutor[] substitutors = stateStore.getSubstitutors();
-    final Set<String> unknownMacros = new HashSet<String>();
-    for (final TrackingPathMacroSubstitutor substitutor : substitutors) {
+    TrackingPathMacroSubstitutor[] substitutors = stateStore.getSubstitutors();
+    Set<String> unknownMacros = new THashSet<String>();
+    for (TrackingPathMacroSubstitutor substitutor : substitutors) {
       unknownMacros.addAll(substitutor.getUnknownMacros(null));
     }
 
-    if (!unknownMacros.isEmpty()) {
-      if (!showDialog || ProjectMacrosUtil.checkMacros(this, new HashSet<String>(unknownMacros))) {
-        final PathMacros pathMacros = PathMacros.getInstance();
-        final Set<String> macros2invalidate = new HashSet<String>(unknownMacros);
-        for (Iterator it = macros2invalidate.iterator(); it.hasNext();) {
-          final String macro = (String)it.next();
-          final String value = pathMacros.getValue(macro);
-          if ((value == null || value.trim().isEmpty()) && !pathMacros.isIgnoredMacroName(macro)) {
-            it.remove();
+    if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(this, new THashSet<String>(unknownMacros)))) {
+      return;
+    }
+
+    final PathMacros pathMacros = PathMacros.getInstance();
+    final Set<String> macrosToInvalidate = new THashSet<String>(unknownMacros);
+    for (Iterator<String> it = macrosToInvalidate.iterator(); it.hasNext(); ) {
+      String macro = it.next();
+      if (StringUtil.isEmptyOrSpaces(pathMacros.getValue(macro)) && !pathMacros.isIgnoredMacroName(macro)) {
+        it.remove();
+      }
+    }
+
+    if (!macrosToInvalidate.isEmpty()) {
+      final Set<String> components = new THashSet<String>();
+      for (TrackingPathMacroSubstitutor substitutor : substitutors) {
+        components.addAll(substitutor.getComponents(macrosToInvalidate));
+      }
+
+      if (stateStore.isReloadPossible(components)) {
+        for (TrackingPathMacroSubstitutor substitutor : substitutors) {
+          substitutor.invalidateUnknownMacros(macrosToInvalidate);
+        }
+
+        for (UnknownMacroNotification notification : NotificationsManager.getNotificationsManager().getNotificationsOfType(UnknownMacroNotification.class, this)) {
+          if (macrosToInvalidate.containsAll(notification.getMacros())) {
+            notification.expire();
           }
         }
 
-        if (!macros2invalidate.isEmpty()) {
-          final Set<String> components = new THashSet<String>();
-          for (TrackingPathMacroSubstitutor substitutor : substitutors) {
-            components.addAll(substitutor.getComponents(macros2invalidate));
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            stateStore.reinitComponents(components, true);
           }
-
-          if (stateStore.isReloadPossible(components)) {
-            for (final TrackingPathMacroSubstitutor substitutor : substitutors) {
-              substitutor.invalidateUnknownMacros(macros2invalidate);
-            }
-
-            final UnknownMacroNotification[] notifications =
-              NotificationsManager.getNotificationsManager().getNotificationsOfType(UnknownMacroNotification.class, this);
-            for (final UnknownMacroNotification notification : notifications) {
-              if (macros2invalidate.containsAll(notification.getMacros())) notification.expire();
-            }
-
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                stateStore.reinitComponents(components, true);
-              }
-            });
-          }
-          else {
-            if (Messages.showYesNoDialog(this, "Component could not be reloaded. Reload project?", "Configuration Changed",
-                                         Messages.getQuestionIcon()) == Messages.YES) {
-              ProjectManagerEx.getInstanceEx().reloadProject(this);
-            }
-          }
+        });
+      }
+      else {
+        if (Messages.showYesNoDialog(this, "Component could not be reloaded. Reload project?", "Configuration Changed",
+                                     Messages.getQuestionIcon()) == Messages.YES) {
+          ProjectManagerEx.getInstanceEx().reloadProject(this);
         }
       }
     }

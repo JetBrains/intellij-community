@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
@@ -93,6 +94,7 @@ public class OriginsAnalysis {
    * @return array, array[i] == true means that the result of a method execution may originate at an i-th instruction
    * @throws AnalyzerException
    */
+  @NotNull
   public static boolean[] resultOrigins(Frame<Value>[] frames, InsnList instructions, ControlFlowGraph graph) throws AnalyzerException {
 
     TIntArrayList[] backTransitions = new TIntArrayList[instructions.size()];
@@ -178,7 +180,8 @@ public class OriginsAnalysis {
     return null;
   }
 
-  private static Frame<SourceValue> makePreFrame(Frame<Value> frame) {
+  @NotNull
+  private static Frame<SourceValue> makePreFrame(@NotNull Frame<Value> frame) {
     Frame<SourceValue> preFrame = new Frame<SourceValue>(frame.getLocals(), frame.getMaxStackSize());
     for (int i = 0; i < frame.getLocals(); i++) {
       preFrame.setLocal(i, new PreValue(true, i, frame.getLocal(i).getSize()));

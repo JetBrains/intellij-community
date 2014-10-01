@@ -21,9 +21,9 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.ComponentVersionProvider;
+import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformLangTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.JDOMBuilder.attr;
@@ -98,16 +97,11 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
-      return new MySaveSession(externalizationSession) {
+    protected MySaveSession createSaveSession(@NotNull StorageData storageData) {
+      return new MySaveSession(storageData) {
         @Override
-        protected void doSave() throws StateStorageException {
-          Element elementToSave = getElementToSave();
-          mySavedElement = elementToSave == null ? null : elementToSave.clone();
-        }
-
-        @Override
-        public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
+        protected void doSave(@Nullable Element element) {
+          mySavedElement = element == null ? null : element.clone();
         }
       };
     }

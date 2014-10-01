@@ -182,7 +182,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
   private void updateChangesView() {
     int[] rows = myTree.getSelectionRows();
-    if (rows.length != 0) {
+    if (rows != null && rows.length != 0) {
       myChangesBrowser.getViewer().setEmptyText("No differences");
       myChangesBrowser.setChangesToDisplay(collectAllChanges(rows));
     }
