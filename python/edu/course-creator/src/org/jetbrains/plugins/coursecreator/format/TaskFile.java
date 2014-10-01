@@ -2,6 +2,7 @@ package org.jetbrains.plugins.coursecreator.format;
 
 import com.google.gson.annotations.Expose;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +15,8 @@ public class TaskFile {
   @Expose public List<TaskWindow> task_windows = new ArrayList<TaskWindow>();
   public int myIndex;
 
-  public TaskFile() {}
+  public TaskFile() {
+  }
 
   public void addTaskWindow(@NotNull final TaskWindow taskWindow, int index) {
     taskWindow.setIndex(index);
@@ -79,14 +81,14 @@ public class TaskFile {
    */
   public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine) {
     for (TaskWindow w : task_windows) {
-      if ((w.getLine() == line) && (w.getStart() >= oldEndOffsetInLine)) {
+      if ((w.getLine() == line) && (w.getStart() > oldEndOffsetInLine)) {
         int distance = w.getStart() - oldEndOffsetInLine;
         boolean coveredByPrevTW = false;
         int prevIndex = w.getIndex() - 1;
         if (CCProjectService.indexIsValid(prevIndex, task_windows)) {
           TaskWindow prevTW = task_windows.get(prevIndex);
           if (prevTW.getLine() == line) {
-            int endOffset = prevTW.getStart() + prevTW.getLength();
+            int endOffset = prevTW.getStart() + prevTW.getReplacementLength();
             if (endOffset >= newEndOffsetInLine) {
               coveredByPrevTW = true;
             }
@@ -104,7 +106,7 @@ public class TaskFile {
     target.setIndex(myIndex);
     for (TaskWindow taskWindow : task_windows) {
       TaskWindow savedWindow = new TaskWindow(taskWindow.getLine(), taskWindow.getStart(),
-                                    taskWindow.getLength(), "");
+                                              taskWindow.getLength(), "");
       target.getTaskWindows().add(savedWindow);
       savedWindow.setIndex(taskWindow.getIndex());
     }
@@ -115,6 +117,15 @@ public class TaskFile {
       TaskWindow taskWindowUpdated = task_windows.get(taskWindow.getIndex() - 1);
       taskWindowUpdated.setLine(taskWindow.getLine());
       taskWindowUpdated.setStart(taskWindow.getStart());
+    }
+  }
+
+  /**
+   * Marks symbols adjacent to task windows as read-only fragments
+   */
+  public void createGuardedBlocks(@NotNull final Editor editor) {
+    for (TaskWindow taskWindow : task_windows) {
+      taskWindow.createGuardedBlocks(editor);
     }
   }
 }
