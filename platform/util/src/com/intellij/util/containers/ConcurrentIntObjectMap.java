@@ -17,6 +17,8 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Enumeration;
+
 /**
  * Base interface for concurrent int key -> value:V map
  * Null values are NOT allowed
@@ -53,4 +55,8 @@ public interface ConcurrentIntObjectMap<V> {
    *         rather than alive values because otherwise it would be too expensive
    */
   int size();
+  boolean isEmpty();
+  @NotNull
+  Enumeration<V> elements();
+  V putIfAbsent(int key, @NotNull V value);
 }

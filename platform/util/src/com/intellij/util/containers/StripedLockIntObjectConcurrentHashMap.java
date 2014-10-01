@@ -121,6 +121,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
 
   // inherit Map javadoc
 
+  @Override
   public boolean isEmpty() {
     return count == 0;
   }
@@ -211,6 +212,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
    *
    * @return an enumeration of the values in this table.
    */
+  @Override
   @NotNull
   public Enumeration<V> elements() {
     return new ValueIterator();
