@@ -29,7 +29,7 @@ import java.util.NoSuchElementException;
  * Null values are NOT allowed
  */
 abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
-  private final ConcurrentIntObjectMap<IntReference<V>> myMap = new StripedLockIntObjectConcurrentHashMap<IntReference<V>>();
+  private final ConcurrentIntObjectMap<IntReference<V>> myMap = ContainerUtil.createConcurrentIntObjectMap();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   protected abstract IntReference<V> createReference(int key, @NotNull V value, ReferenceQueue<V> queue);

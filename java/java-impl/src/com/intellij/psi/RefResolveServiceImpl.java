@@ -458,7 +458,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     assert !myApplication.isDispatchThread();
     final int resolvedInPreviousBatch = this.resolvedInPreviousBatch;
     final int totalSize = files.size() + resolvedInPreviousBatch;
-    final ConcurrentIntObjectMap<int[]> fileToForwardIds = new StripedLockIntObjectConcurrentHashMap<int[]>();
+    final ConcurrentIntObjectMap<int[]> fileToForwardIds = ContainerUtil.createConcurrentIntObjectMap();
     final Set<VirtualFile> toProcess = Collections.synchronizedSet(files);
     indicator.setIndeterminate(false);
     ProgressIndicatorUtils.forceWriteActionPriority(indicator, (Disposable)indicator);

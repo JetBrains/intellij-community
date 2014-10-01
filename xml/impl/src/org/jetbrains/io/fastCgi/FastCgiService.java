@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -40,7 +39,7 @@ public abstract class FastCgiService extends SingleConnectionNetService {
   static final Logger LOG = Logger.getInstance(FastCgiService.class);
 
   private final AtomicInteger requestIdCounter = new AtomicInteger();
-  protected final ConcurrentIntObjectMap<Channel> requests = new StripedLockIntObjectConcurrentHashMap<Channel>();
+  protected final ConcurrentIntObjectMap<Channel> requests = ContainerUtil.createConcurrentIntObjectMap();
 
   public FastCgiService(@NotNull Project project) {
     super(project);
