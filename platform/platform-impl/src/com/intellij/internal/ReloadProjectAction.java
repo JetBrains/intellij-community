@@ -33,7 +33,7 @@ public class ReloadProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null) {
-      ((ProjectManagerImpl)ProjectManager.getInstance()).reloadProjectImpl(project, false);
+      ((ProjectManagerImpl)ProjectManager.getInstance()).reloadProjectImpl(project, null);
     }
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.LightPlatformLangTestCase;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +138,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
       TrackingPathMacroSubstitutor macroSubstitutor = new ApplicationPathMacroManager().createTrackingSubstitutor();
       stateStorageManager = new StateStorageManagerImpl(macroSubstitutor, "application", this, ApplicationManager.getApplication().getPicoContainer()) {
         @Override
-        protected StorageData createStorageData(String storageSpec) {
+        protected StorageData createStorageData(@NotNull String storageSpec) {
           return new FileBasedStorage.FileStorageData("application");
         }
 
@@ -182,6 +183,12 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     @Override
     protected StateStorage getDefaultsStorage() {
       return null;
+    }
+
+    @NotNull
+    @Override
+    protected MessageBus getMessageBus() {
+      return ApplicationManager.getApplication().getMessageBus();
     }
   }
 

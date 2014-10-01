@@ -39,6 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -460,7 +461,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  protected SaveSessionImpl createSaveSession() throws StateStorageException {
+  protected SaveSessionImpl createSaveSession() {
     return new ProjectSaveSession();
   }
 
@@ -630,7 +631,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  public boolean reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException {
-    return reload(changedFiles, myProject.getMessageBus()) == null;
+  public boolean reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+    return doReload(changedFiles) == null;
+  }
+
+  @NotNull
+  @Override
+  protected MessageBus getMessageBus() {
+    return myProject.getMessageBus();
   }
 }

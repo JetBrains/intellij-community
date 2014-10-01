@@ -18,13 +18,14 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>Identifies a line separator:
  * either Unix ({@code \n}), Windows (@{code \r\n}) or (possible not actual anymore) Classic Mac ({@code \r}).</p>
- *
+ * <p/>
  * <p>The intention is to use this class everywhere, where a line separator is needed, instead of just Strings.</p>
  *
  * @author Kirill Likhodedov
@@ -36,9 +37,11 @@ public enum LineSeparator {
 
   private static final Logger LOG = Logger.getInstance(LineSeparator.class);
   private final String mySeparatorString;
+  private final byte[] myBytes;
 
   LineSeparator(@NotNull String separatorString) {
     mySeparatorString = separatorString;
+    myBytes = separatorString.getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
   @NotNull
@@ -55,6 +58,11 @@ public enum LineSeparator {
   @NotNull
   public String getSeparatorString() {
     return mySeparatorString;
+  }
+
+  @NotNull
+  public byte[] getSeparatorBytes() {
+    return myBytes;
   }
 
   public static boolean knownAndDifferent(@Nullable LineSeparator separator1, @Nullable LineSeparator separator2) {

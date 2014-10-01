@@ -72,4 +72,10 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
   private static boolean isWorkspace(final Map options) {
     return options != null && Boolean.parseBoolean((String)options.get(ProjectStoreImpl.OPTION_WORKSPACE));
   }
+
+  @NotNull
+  @Override
+  protected StateStorage.Listener createStorageTopicListener() {
+    return myProject.getMessageBus().syncPublisher(StateStorage.PROJECT_STORAGE_TOPIC);
+  }
 }

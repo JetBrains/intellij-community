@@ -159,9 +159,4 @@ public class MockProjectStore implements IProjectStore {
   public StateStorageManager getStateStorageManager() {
     throw new UnsupportedOperationException("Method getStateStorageManager not implemented in " + getClass());
   }
-
-  @Override
-  public boolean isSaving() {
-    return false;
-  }
 }

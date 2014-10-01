@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtilRt;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -131,8 +132,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
     @Override
     @NotNull
-    protected Element save() {
-      Element root = super.save();
+    protected Element save(@NotNull Map<String, Element> newLiveStates) {
+      Element root = super.save(newLiveStates);
       myOptions.put(VERSION_OPTION, Integer.toString(myVersion));
       String[] options = ArrayUtil.toStringArray(myOptions.keySet());
       Arrays.sort(options);
@@ -152,11 +153,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       return new ModuleFileData(this);
     }
 
-    @Override
-    protected int computeHash() {
-      return super.computeHash() * 31 + myOptions.hashCode();
-    }
-
     @Nullable
     @Override
     public Set<String> getChangedComponentNames(@NotNull StorageData newStorageData, @Nullable PathMacroSubstitutor substitutor) {
@@ -168,12 +164,10 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
 
     public void setOption(final String optionName, final String optionValue) {
-      clearHash();
       myOptions.put(optionName, optionValue);
     }
 
     public void clearOption(final String optionName) {
-      clearHash();
       myOptions.remove(optionName);
     }
 
@@ -243,6 +237,12 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   @Override
   protected boolean optimizeTestLoading() {
     return ((ProjectEx)myModule.getProject()).isOptimiseTestLoadSpeed();
+  }
+
+  @NotNull
+  @Override
+  protected MessageBus getMessageBus() {
+    return myModule.getMessageBus();
   }
 
   @NotNull
