@@ -35,7 +35,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
   }
 
   @Override
-  protected StorageData createStorageData(String storageSpec) {
+  protected StorageData createStorageData(@NotNull String storageSpec) {
     if (storageSpec.equals(StoragePathMacros.PROJECT_FILE)) return createIprStorageData();
     if (storageSpec.equals(StoragePathMacros.WORKSPACE_FILE)) return createWsStorageData();
     return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
@@ -57,7 +57,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
 
     final boolean workspace = isWorkspace(config.options);
     String fileSpec = workspace ? StoragePathMacros.WORKSPACE_FILE : StoragePathMacros.PROJECT_FILE;
-    StateStorage storage = getStateStorage(fileSpec, workspace ? RoamingType.DISABLED :  RoamingType.PER_USER);
+    StateStorage storage = getStateStorage(fileSpec, workspace ? RoamingType.DISABLED : RoamingType.PER_USER);
     if (operation == StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, Element.class, false)) {
       fileSpec = StoragePathMacros.PROJECT_FILE;
     }
