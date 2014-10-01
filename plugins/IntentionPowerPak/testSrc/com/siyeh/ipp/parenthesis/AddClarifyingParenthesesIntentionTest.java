@@ -23,11 +23,13 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class AddClarifyingParenthesesIntentionTest extends IPPTestCase {
 
-  public void testCommentsInParentheses() { doTest(); }
-  public void testCommentsInInstanceof() { doTest(); }
-  public void testCommentsInConditional() { doTest(); }
   public void testCommentsInAssignment() { doTest(); }
+  public void testCommentsInConditional() { doTest(); }
+  public void testCommentsInInstanceof() { doTest(); }
+  public void testCommentsInParentheses() { doTest(); }
   public void testCommentsInPolyadicExpression() { doTest(); }
+  public void testNotTooManyParentheses() { doTest(); }
+  public void testSimpleAssignment() { assertIntentionNotAvailable(); }
   public void testUnclearAssignment() { doTest(); }
 
   @Override
