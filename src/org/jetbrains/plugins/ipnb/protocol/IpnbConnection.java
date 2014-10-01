@@ -336,6 +336,16 @@ public class IpnbConnection {
         final String plainText = data.get("text/plain");
         output.add(new IpnbPngOutputCell(png, StringUtil.splitByLinesKeepSeparators(plainText), null));
       }
+      else if (data.containsKey("image/jpeg")) {
+        final String jpeg = data.get("image/jpeg");
+        final String plainText = data.get("text/plain");
+        output.add(new IpnbJpegOutputCell(jpeg, StringUtil.splitByLinesKeepSeparators(plainText), null));
+      }
+      else if (data.containsKey("image/svg")) {
+        final String svg = data.get("image/svg");
+        final String plainText = data.get("text/plain");
+        output.add(new IpnbSvgOutputCell(StringUtil.splitByLinesKeepSeparators(svg), StringUtil.splitByLinesKeepSeparators(plainText), null));
+      }
       else {
         for (Map.Entry<String, String> entry : data.entrySet()) {
           output.add(new IpnbOutOutputCell(new String[]{entry.getValue()}, null));
