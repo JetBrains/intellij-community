@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.SPACES_OTHER;
-import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.SPACES_WITHIN;
 
 /**
  * @author Mikhail Golubev
@@ -31,10 +30,10 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showStandardOptions("SPACE_WITHIN_BRACKETS",
+                                   "SPACE_WITHIN_BRACES",
                                    "SPACE_AFTER_COMMA",
-                                   "SPACE_BEFORE_COMMA"
-      );
-      consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_WITHIN_BRACES", "Braces", SPACES_WITHIN);
+                                   "SPACE_BEFORE_COMMA");
+      consumer.renameStandardOption("SPACE_WITHIN_BRACES", "Braces");
       consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_BEFORE_COLON", "Before ':'", SPACES_OTHER);
       consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_AFTER_COLON", "After ':'", SPACES_OTHER);
     }

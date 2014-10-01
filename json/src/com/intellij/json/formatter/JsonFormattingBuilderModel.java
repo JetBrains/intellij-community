@@ -20,7 +20,7 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
   @NotNull
   @Override
   public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
-    JsonBlock block = new JsonBlock(null, element.getNode(), settings, null, Indent.getNoneIndent(), null);
+    final JsonBlock block = new JsonBlock(null, element.getNode(), settings, null, Indent.getNoneIndent(), null);
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
   }
 
@@ -31,19 +31,18 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
   }
 
   static SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
-    JsonCodeStyleSettings jsonSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
-    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JsonLanguage.INSTANCE);
+    final JsonCodeStyleSettings jsonSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
+    final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JsonLanguage.INSTANCE);
 
-
-    int spacesBeforeComma = commonSettings.SPACE_BEFORE_COMMA ? 1 : 0;
-    int spacesBeforeColon = jsonSettings.SPACE_BEFORE_COLON ? 1 : 0;
-    int spacesAfterColon = jsonSettings.SPACE_AFTER_COLON ? 1 : 0;
+    final int spacesBeforeComma = commonSettings.SPACE_BEFORE_COMMA ? 1 : 0;
+    final int spacesBeforeColon = jsonSettings.SPACE_BEFORE_COLON ? 1 : 0;
+    final int spacesAfterColon = jsonSettings.SPACE_AFTER_COLON ? 1 : 0;
 
     return new SpacingBuilder(settings, JsonLanguage.INSTANCE)
       .before(COLON).spacing(spacesBeforeColon, spacesBeforeColon, 0, false, 0)
       .after(COLON).spacing(spacesAfterColon, spacesAfterColon, 0, false, 0)
       .withinPair(L_BRACKET, R_BRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS)
-      .withinPair(L_CURLY, R_CURLY).spaceIf(jsonSettings.SPACE_WITHIN_BRACES)
+      .withinPair(L_CURLY, R_CURLY).spaceIf(commonSettings.SPACE_WITHIN_BRACES)
       .before(COMMA).spacing(spacesBeforeComma, spacesBeforeComma, 0, false, 0)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA);
   }

@@ -146,12 +146,11 @@ public class JsonBlock implements ASTBlock {
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     final CommonCodeStyleSettings commonSettings = getCommonSettings();
-    final JsonCodeStyleSettings customSettings = getCustomSettings();
     final IElementType leftChildType = child1 instanceof JsonBlock ? ((JsonBlock)child1).myNode.getElementType() : null;
     final IElementType rightChildType = child2 instanceof JsonBlock ? ((JsonBlock)child2).myNode.getElementType() : null;
     if (leftChildType != null && rightChildType != null) {
       if (JSON_BRACES.contains(leftChildType) ^ JSON_BRACES.contains(rightChildType)) {
-        final int numSpaces = customSettings.SPACE_WITHIN_BRACES ? 1 : 0;
+        final int numSpaces = commonSettings.SPACE_WITHIN_BRACES ? 1 : 0;
         return Spacing.createDependentLFSpacing(numSpaces, numSpaces, myNode.getTextRange(),
                                                 commonSettings.KEEP_LINE_BREAKS,
                                                 commonSettings.KEEP_BLANK_LINES_IN_CODE);
