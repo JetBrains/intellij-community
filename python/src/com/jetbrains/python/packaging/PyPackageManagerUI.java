@@ -63,11 +63,13 @@ public class PyPackageManagerUI {
     @NotNull private final String myMessage;
     @Nullable private final String myCommand;
     @Nullable private final String myOutput;
+    @Nullable private final String mySolution;
 
-    public ExecutionFailure(@NotNull String message, @Nullable String command, @Nullable String output) {
+    public ExecutionFailure(@NotNull String message, @Nullable String command, @Nullable String output, @Nullable String solution) {
       myMessage = message;
       myCommand = command;
       myOutput = output;
+      mySolution = solution;
     }
 
     @NotNull
@@ -83,6 +85,11 @@ public class PyPackageManagerUI {
     @Nullable
     public String getOutput() {
       return myOutput;
+    }
+
+    @Nullable
+    public String getSolution() {
+      return mySolution;
     }
   }
 
@@ -171,10 +178,12 @@ public class PyPackageManagerUI {
   private abstract static class PackagingTask extends Task.Backgroundable {
     private static final String PACKAGING_GROUP_ID = "Packaging";
 
+    @NotNull protected final Sdk mySdk;
     @Nullable protected final Listener myListener;
 
-    public PackagingTask(@Nullable Project project, @NotNull String title, @Nullable Listener listener) {
+    public PackagingTask(@Nullable Project project, @NotNull Sdk sdk, @NotNull String title, @Nullable Listener listener) {
       super(project, title);
+      mySdk = sdk;
       myListener = listener;
     }
 
@@ -215,7 +224,7 @@ public class PyPackageManagerUI {
                                              NotificationType.INFORMATION));
       }
       else if (!isCancelled(exceptions)) {
-        final ExecutionFailure failure = analyzeException(exceptions.get(0));
+        final ExecutionFailure failure = analyzeException(exceptions.get(0), mySdk);
         final String firstLine = getTitle() + ": error occurred.";
         notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(),
                                              firstLine + " <a href=\"xxx\">Details...</a>",
@@ -257,7 +266,6 @@ public class PyPackageManagerUI {
   }
 
   private static class InstallTask extends PackagingTask {
-    @NotNull protected final Sdk mySdk;
     @NotNull private final List<PyRequirement> myRequirements;
     @NotNull private final List<String> myExtraArgs;
 
@@ -266,8 +274,7 @@ public class PyPackageManagerUI {
                        @NotNull List<PyRequirement> requirements,
                        @NotNull List<String> extraArgs,
                        @Nullable Listener listener) {
-      super(project, "Installing packages", listener);
-      mySdk = sdk;
+      super(project, sdk, "Installing packages", listener);
       myRequirements = requirements;
       myExtraArgs = extraArgs;
     }
@@ -355,15 +362,13 @@ public class PyPackageManagerUI {
   }
 
   private static class UninstallTask extends PackagingTask {
-    @NotNull private final Sdk mySdk;
     @NotNull private final List<PyPackage> myPackages;
 
     public UninstallTask(@Nullable Project project,
                          @NotNull Sdk sdk,
                          @Nullable Listener listener,
                          @NotNull List<PyPackage> packages) {
-      super(project, "Uninstalling packages", listener);
-      mySdk = sdk;
+      super(project, sdk, "Uninstalling packages", listener);
       myPackages = packages;
     }
 
@@ -421,16 +426,24 @@ public class PyPackageManagerUI {
   }
 
   @NotNull
-  private static ExecutionFailure analyzeException(@NotNull ExecutionException e) {
+  private static ExecutionFailure analyzeException(@NotNull ExecutionException e, @NotNull Sdk sdk) {
     if (e instanceof PyExecutionException) {
       final PyExecutionException ee = (PyExecutionException)e;
       final String stdoutCause = findErrorCause(ee.getStdout());
       final String stderrCause = findErrorCause(ee.getStderr());
       final String message = stdoutCause != null ? stdoutCause : stderrCause != null ? stderrCause : ee.getMessage();
-      return new ExecutionFailure(message, ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " "), ee.getStdout());
+      final String solution;
+      if ("pip".equals(ee.getCommand())) {
+        solution = "Try to run this command from the system terminal. Make sure that you use the correct version of 'pip' " +
+                   "installed for your Python interpreter located at '" + sdk.getHomePath() + "'.";
+      }
+      else {
+        solution = null;
+      }
+      return new ExecutionFailure(message, ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " "), ee.getStdout(), solution);
     }
     else {
-      return new ExecutionFailure(e.getMessage(), null, null);
+      return new ExecutionFailure(e.getMessage(), null, null, null);
     }
   }
 

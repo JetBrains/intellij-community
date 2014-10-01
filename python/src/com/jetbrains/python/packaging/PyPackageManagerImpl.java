@@ -218,6 +218,19 @@ public class PyPackageManagerImpl extends PyPackageManager {
     try {
       getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, null);
     }
+    catch (PyExecutionException e) {
+      final List<String> simplifiedArgs = new ArrayList<String>();
+      simplifiedArgs.add("install");
+      if (proxyString != null) {
+        simplifiedArgs.add("--proxy");
+        simplifiedArgs.add(proxyString);
+      }
+      simplifiedArgs.addAll(extraArgs);
+      for (PyRequirement req : requirements) {
+        simplifiedArgs.addAll(req.toOptions());
+      }
+      throw new PyExecutionException(e.getMessage(), "pip", simplifiedArgs, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
+    }
     finally {
       clearCaches();
       FileUtil.delete(buildDir);
@@ -225,8 +238,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   public void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException {
+    final List<String> args = new ArrayList<String>();
     try {
-      final List<String> args = new ArrayList<String>();
       args.add(UNINSTALL);
       boolean canModify = true;
       for (PyPackage pkg : packages) {
@@ -239,6 +252,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
         args.add(pkg.getName());
       }
       getHelperResult(PACKAGING_TOOL, args, !canModify, true, null);
+    }
+    catch (PyExecutionException e) {
+      throw new PyExecutionException(e.getMessage(), "pip", args, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
       clearCaches();

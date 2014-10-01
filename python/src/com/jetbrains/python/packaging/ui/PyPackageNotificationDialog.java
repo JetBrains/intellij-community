@@ -29,10 +29,12 @@ import javax.swing.*;
 public class PyPackageNotificationDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private JBLabel myErrorMessage;
-  private JTextArea myCommand;
   private JTextArea myCommandOutput;
   private JPanel myCommandOutputPanel;
   private JPanel myCommandPanel;
+  private JTextPane myCommand;
+  private JPanel mySolutionPanel;
+  private JTextPane mySolution;
 
   public PyPackageNotificationDialog(@NotNull String title, @NotNull PyPackageManagerUI.ExecutionFailure failure) {
     super(false);
@@ -42,9 +44,11 @@ public class PyPackageNotificationDialog extends DialogWrapper {
     final String command = failure.getCommand();
     final String output = failure.getOutput();
     final String message = failure.getMessage();
+    final String solution = failure.getSolution();
 
     myCommandPanel.setVisible(command != null);
     myCommandOutputPanel.setVisible(output != null);
+    mySolutionPanel.setVisible(solution != null);
 
     myErrorMessage.setText(message);
     if (command != null) {
@@ -52,6 +56,9 @@ public class PyPackageNotificationDialog extends DialogWrapper {
     }
     if (output != null) {
       myCommandOutput.setText(output);
+    }
+    if (solution != null) {
+      mySolution.setText(solution);
     }
   }
 

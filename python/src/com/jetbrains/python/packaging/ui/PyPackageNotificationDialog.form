@@ -1,49 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.jetbrains.python.packaging.ui.PyPackageNotificationDialog">
-  <grid id="27dc6" binding="myMainPanel" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myMainPanel" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="604" height="929"/>
+      <xy x="20" y="20" width="748" height="929"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <vspacer id="de4c">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <grid id="a16a8" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <component id="294" class="com.intellij.ui.components.JBLabel">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Error occurred:"/>
-            </properties>
-          </component>
-          <component id="23f72" class="com.intellij.ui.components.JBLabel" binding="myErrorMessage">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <foreground color="-4511744"/>
-              <text value="Unknown error"/>
-            </properties>
-          </component>
-        </children>
-      </grid>
       <grid id="8cad" binding="myCommandOutputPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -81,7 +54,7 @@
       <grid id="4cbff" binding="myCommandPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -94,27 +67,76 @@
               <text value="Executed command:"/>
             </properties>
           </component>
-          <scrollpane id="c24f2" class="com.intellij.ui.components.JBScrollPane">
+          <component id="be75f" class="javax.swing.JTextPane" binding="myCommand" default-binding="true">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="9" fill="0" indent="2" use-parent-layout="false">
-                <preferred-size width="700" height="60"/>
-                <maximum-size width="700" height="60"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="8" fill="2" indent="2" use-parent-layout="false">
+                <preferred-size width="700" height="20"/>
+                <maximum-size width="700" height="100"/>
               </grid>
             </constraints>
             <properties>
-              <verticalScrollBarPolicy value="21"/>
+              <editable value="false"/>
+              <font swing-font="TextArea.font"/>
+              <text value="None"/>
             </properties>
-            <border type="none"/>
-            <children>
-              <component id="fb0fa" class="javax.swing.JTextArea" binding="myCommand">
-                <constraints/>
-                <properties>
-                  <editable value="false"/>
-                  <text value="None"/>
-                </properties>
-              </component>
-            </children>
-          </scrollpane>
+          </component>
+        </children>
+      </grid>
+      <grid id="a16a8" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="294" class="com.intellij.ui.components.JBLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Error occurred:"/>
+            </properties>
+          </component>
+          <component id="23f72" class="com.intellij.ui.components.JBLabel" binding="myErrorMessage">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <foreground color="-4511744"/>
+              <text value="Unknown error"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="293b0" binding="mySolutionPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="afe8d" class="com.intellij.ui.components.JBLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Proposed solution:"/>
+            </properties>
+          </component>
+          <component id="e8f2a" class="javax.swing.JTextPane" binding="mySolution">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="2" use-parent-layout="false">
+                <preferred-size width="150" height="20"/>
+              </grid>
+            </constraints>
+            <properties>
+              <contentType value="text/plain"/>
+              <editable value="false"/>
+              <font swing-font="Label.font"/>
+            </properties>
+          </component>
         </children>
       </grid>
     </children>
