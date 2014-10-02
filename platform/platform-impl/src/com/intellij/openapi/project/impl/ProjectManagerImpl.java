@@ -49,10 +49,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
@@ -97,7 +94,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   private final Set<Project> myTestProjects = new THashSet<Project>();
 
   private final MultiMap<Project, ChangedFileEntry> myChangedProjectFiles = MultiMap.createSet();
-  private final Alarm myChangedFilesAlarm = new Alarm();
+  private final SingleAlarm myChangedFilesAlarm;
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new SmartList<Pair<VirtualFile, StateStorage>>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
   private final ProgressManager myProgressManager;
@@ -172,9 +169,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     );
 
     registerExternalProjectFileListener(virtualFileManager);
+    myChangedFilesAlarm = new SingleAlarm(new Runnable() {
+      @Override
+      public void run() {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("[RELOAD] Scheduling reload application & project, myReloadBlockCount = " + myReloadBlockCount.get());
+        }
+        if (myReloadBlockCount.get() == 0) {
+          scheduleReloadApplicationAndProject();
+        }
+      }
+    }, 444);
   }
 
-  static class ChangedFileEntry {
+  static final class ChangedFileEntry {
     public VirtualFile file;
     public StateStorage storage;
     public long timestamp;
@@ -185,6 +193,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       this.storage = storage;
       timestamp = file.getTimeStamp();
       savedContent =  file.contentsToByteArray();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || !(o instanceof ChangedFileEntry)) {
+        return false;
+      }
+      return file.equals(((ChangedFileEntry)o).file);
+    }
+
+    @Override
+    public int hashCode() {
+      return file.hashCode();
     }
   }
 
@@ -617,7 +641,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     WelcomeFrame.showIfNoProjectOpened();
   }
 
-  private void registerExternalProjectFileListener(VirtualFileManager virtualFileManager) {
+  private void registerExternalProjectFileListener(@NotNull VirtualFileManager virtualFileManager) {
     virtualFileManager.addVirtualFileManagerListener(new VirtualFileManagerListener() {
       @Override
       public void beforeRefreshStart(boolean asynchronous) {
@@ -631,7 +655,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   private void askToReloadProjectIfConfigFilesChangedExternally() {
-    LOG.debug("[RELOAD] myReloadBlockCount = " + myReloadBlockCount.get());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("[RELOAD] myReloadBlockCount = " + myReloadBlockCount.get());
+    }
     if (myReloadBlockCount.get() == 0) {
       Set<Project> projects;
       synchronized (myChangedProjectFiles) {
@@ -869,16 +895,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       }
     }
 
-    myChangedFilesAlarm.cancelAllRequests();
-    myChangedFilesAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        LOG.debug("[RELOAD] Scheduling reload application & project, myReloadBlockCount = " + myReloadBlockCount);
-        if (myReloadBlockCount.get() == 0) {
-          scheduleReloadApplicationAndProject();
-        }
-      }
-    }, 444);
+    myChangedFilesAlarm.cancelAndRequest();
   }
 
   @Override
