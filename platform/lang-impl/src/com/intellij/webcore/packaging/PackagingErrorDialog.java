@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.packaging.ui;
+package com.intellij.webcore.packaging;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.webcore.packaging.PackageManagementService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +25,7 @@ import javax.swing.*;
 /**
  * @author vlan
  */
-public class PyPackageNotificationDialog extends DialogWrapper {
+public class PackagingErrorDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private JBLabel myErrorMessage;
   private JTextArea myCommandOutput;
@@ -36,7 +35,7 @@ public class PyPackageNotificationDialog extends DialogWrapper {
   private JPanel mySolutionPanel;
   private JTextPane mySolution;
 
-  public PyPackageNotificationDialog(@NotNull String title, @NotNull PackageManagementService.ErrorDescription errorDescription) {
+  public PackagingErrorDialog(@NotNull String title, @NotNull PackageManagementService.ErrorDescription errorDescription) {
     super(false);
     init();
     setResizable(false);

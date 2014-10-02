@@ -56,23 +56,30 @@ public class PackagesNotificationPanel {
     doShowError(title, description, new DialogBuilder(owner));
   }
 
-  private static void doShowError(String title, @NotNull PackageManagementService.ErrorDescription description, DialogBuilder builder) {
-    builder.setTitle(title);
-    final JTextArea textArea = new JTextArea();
-    textArea.setEditable(false);
-    textArea.setText(description.getMessage());
-    textArea.setWrapStyleWord(false);
-    textArea.setLineWrap(true);
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    final JPanel panel = new JPanel(new BorderLayout(10, 0));
-    panel.setPreferredSize(new Dimension(600, 400));
-    panel.add(scrollPane, BorderLayout.CENTER);
-    panel.add(new JBLabel("Details:", Messages.getErrorIcon(), SwingConstants.LEFT), BorderLayout.NORTH);
-    builder.setCenterPanel(panel);
-    builder.setButtonsAlignment(SwingConstants.CENTER);
-    builder.addOkAction();
-    builder.show();
+  private static void doShowError(@NotNull String title, @NotNull PackageManagementService.ErrorDescription description,
+                                  @NotNull DialogBuilder builder) {
+    if (description.getCommand() != null || description.getOutput() != null || description.getSolution() != null) {
+      final PackagingErrorDialog dialog = new PackagingErrorDialog(title, description);
+      dialog.show();
+    }
+    else {
+      builder.setTitle(title);
+      final JTextArea textArea = new JTextArea();
+      textArea.setEditable(false);
+      textArea.setText(description.getMessage());
+      textArea.setWrapStyleWord(false);
+      textArea.setLineWrap(true);
+      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
+      scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      final JPanel panel = new JPanel(new BorderLayout(10, 0));
+      panel.setPreferredSize(new Dimension(600, 400));
+      panel.add(scrollPane, BorderLayout.CENTER);
+      panel.add(new JBLabel("Details:", Messages.getErrorIcon(), SwingConstants.LEFT), BorderLayout.NORTH);
+      builder.setCenterPanel(panel);
+      builder.setButtonsAlignment(SwingConstants.CENTER);
+      builder.addOkAction();
+      builder.show();
+    }
   }
 
   public void showResult(String packageName, @Nullable PackageManagementService.ErrorDescription errorDescription) {

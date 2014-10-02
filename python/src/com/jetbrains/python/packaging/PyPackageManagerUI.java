@@ -33,9 +33,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.webcore.packaging.PackagingErrorDialog;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
-import com.jetbrains.python.packaging.ui.PyPackageNotificationDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -198,7 +198,7 @@ public class PyPackageManagerUI {
                                         @NotNull HyperlinkEvent event) {
               assert myProject != null;
               final String title = StringUtil.capitalizeWords(getFailureTitle(), true);
-              final PyPackageNotificationDialog dialog = new PyPackageNotificationDialog(title, description);
+              final PackagingErrorDialog dialog = new PackagingErrorDialog(title, description);
               dialog.show();
             }
           };
