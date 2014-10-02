@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.Messages
 import javax.swing.SwingUtilities
 import com.intellij.util.ui.UIUtil
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.components.impl.stores.ComponentStoreImpl
 
 val PLUGIN_NAME: String = "Settings Repository"
 
@@ -319,7 +320,7 @@ fun invokeAndWaitIfNeed(runnable: ()->Unit) {
   if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)
 }
 
-private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResult: UpdateResult): Boolean {
+private fun updateStoragesFromStreamProvider(store: IComponentStore.Reloadable, updateResult: UpdateResult): Boolean {
   val changedComponentNames = LinkedHashSet<String>()
   val stateStorages = store.getStateStorageManager().getCachedFileStateStorages(updateResult.changed, updateResult.deleted)
   val changed = stateStorages.first!!
@@ -342,15 +343,15 @@ private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResul
 
         notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
         store.reinitComponents(changedComponentNames, notReloadableComponents, false)
-        if (notReloadableComponents.isEmpty()) {
-          return false
-        }
       }
       finally {
         token.finish()
       }
 
-      return askToRestart(notReloadableComponents)
+      if (notReloadableComponents.isEmpty()) {
+        return false
+      }
+      return ComponentStoreImpl.askToRestart(store, notReloadableComponents, null)
     }
   })!!
 }
@@ -364,17 +365,4 @@ private fun updateStateStorage(changedComponentNames: Set<String>, stateStorages
       LOG.error(e)
     }
   }
-}
-
-private fun askToRestart(notReloadableComponents: Collection<String>): Boolean {
-  var message = StringBuilder("Application components were changed externally and cannot be reloaded:\n")
-  for (component in notReloadableComponents) {
-    message.append(component).append('\n')
-  }
-
-  val application = ApplicationManager.getApplication()!! as ApplicationImpl
-  val canRestart = application.isRestartCapable()
-  message.append("\nWould you like to ").append(if (canRestart) "restart" else "shutdown").append(' ')
-  message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?')
-  return Messages.showYesNoDialog(message.toString(), "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES
 }
