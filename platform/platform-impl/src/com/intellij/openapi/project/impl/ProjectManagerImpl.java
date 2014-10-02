@@ -656,60 +656,54 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   private boolean tryToReloadApplication() {
+    if (ApplicationManager.getApplication().isDisposed()) {
+      return false;
+    }
+    if (myChangedApplicationFiles.isEmpty()) {
+      return true;
+    }
+
+    Set<Pair<VirtualFile, StateStorage>> causes = new THashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
+    myChangedApplicationFiles.clear();
+
+    Collection<String> reloadResult;
+    AccessToken token = WriteAction.start();
     try {
-      final Application app = ApplicationManager.getApplication();
-      if (app.isDisposed()) {
-        return false;
-      }
-      final Set<Pair<VirtualFile, StateStorage>> causes = new THashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
-      if (causes.isEmpty()) {
-        return true;
-      }
-
-      final Ref<Collection<String>> reloadResult = Ref.create();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            reloadResult.set(((ApplicationImpl)app).getStateStore().reload(causes));
-          }
-          catch (Exception e) {
-            Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                       ProjectBundle.message("project.reload.failed.title"));
-          }
-        }
-      });
-
-      if (reloadResult.isNull()) {
-        return true;
-      }
-
-      if (!reloadResult.get().isEmpty()) {
-        String message = "Application components were changed externally and cannot be reloaded:\n";
-        for (String component : reloadResult.get()) {
-          message += component + "\n";
-        }
-
-        final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
-        message += "Would you like to " + (canRestart ? "restart " : "shutdown ");
-        message += ApplicationNamesInfo.getInstance().getProductName() + "?";
-
-        if (Messages.showYesNoDialog(message,
-                                     "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES) {
-          for (Pair<VirtualFile, StateStorage> cause : causes) {
-            StateStorage stateStorage = cause.getSecond();
-            if (stateStorage instanceof XmlElementStorage) {
-              ((XmlElementStorage)stateStorage).disableSaving();
-            }
-          }
-          ApplicationManagerEx.getApplicationEx().restart(true);
-        }
-      }
+      reloadResult = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().reload(causes);
+    }
+    catch (Exception e) {
+      Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
+                                 ProjectBundle.message("project.reload.failed.title"));
       return false;
     }
     finally {
-      myChangedApplicationFiles.clear();
+      token.finish();
     }
+
+    if (ContainerUtil.isEmpty(reloadResult)) {
+      return true;
+    }
+
+    StringBuilder message = new StringBuilder("Application components were changed externally and cannot be reloaded:\n");
+    for (String component : reloadResult) {
+      message.append(component).append('\n');
+    }
+
+    final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+    message.append("Would you like to ").append(canRestart ? "restart" : "shutdown").append(' ');
+    message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?');
+
+    if (Messages.showYesNoDialog(message.toString(),
+                                 "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES) {
+      for (Pair<VirtualFile, StateStorage> cause : causes) {
+        StateStorage stateStorage = cause.getSecond();
+        if (stateStorage instanceof XmlElementStorage) {
+          ((XmlElementStorage)stateStorage).disableSaving();
+        }
+      }
+      ApplicationManagerEx.getApplicationEx().restart(true);
+    }
+    return false;
   }
 
   @Nullable
