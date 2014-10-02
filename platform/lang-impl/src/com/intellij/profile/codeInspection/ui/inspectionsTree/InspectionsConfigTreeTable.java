@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.DoubleClickListener;
@@ -37,7 +38,8 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +54,7 @@ import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -64,8 +67,12 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private final static int SEVERITIES_COLUMN = 1;
   private final static int IS_ENABLED_COLUMN = 2;
 
-  public InspectionsConfigTreeTable(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
-    super(new InspectionsConfigTreeTableModel(settings, parentDisposable));
+  public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
+    return new InspectionsConfigTreeTable(new InspectionsConfigTreeTableModel(settings, parentDisposable));
+  }
+
+  public InspectionsConfigTreeTable(final InspectionsConfigTreeTableModel model) {
+    super(model);
 
     final TableColumn severitiesColumn = getColumnModel().getColumn(SEVERITIES_COLUMN);
     severitiesColumn.setMaxWidth(20);
@@ -113,7 +120,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
         if (path != null) {
           final InspectionConfigTreeNode node = (InspectionConfigTreeNode)path.getLastPathComponent();
           if (node.isLeaf()) {
-            swapInspectionEnableState();
+            model.swapInspectionEnableState();
           }
         }
         return true;
@@ -139,31 +146,12 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     registerKeyboardAction(new ActionListener() {
                              public void actionPerformed(ActionEvent e) {
-                               swapInspectionEnableState();
+                               model.swapInspectionEnableState();
                                updateUI();
                              }
                            }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
     getEmptyText().setText("No enabled inspections available");
-  }
-
-  private void swapInspectionEnableState() {
-    Boolean state = null;
-    final int[] selectedRows = getSelectedRows();
-    for (int selectedRow : selectedRows) {
-      final Boolean value = (Boolean) getValueAt(selectedRow, IS_ENABLED_COLUMN);
-      if (state == null) {
-        state = value;
-      } else if (!state.equals(value)) {
-        state = null;
-        break;
-      }
-    }
-    final boolean newState = !Boolean.TRUE.equals(state);
-
-    for (int selectedRow : selectedRows) {
-      setValueAt(newState, selectedRow, IS_ENABLED_COLUMN);
-    }
   }
 
   public abstract static class InspectionsConfigTreeTableSettings {
@@ -286,24 +274,90 @@ public class InspectionsConfigTreeTable extends TreeTable {
       LOG.assertTrue(aValue != null, "node = " + node);
       final boolean doEnable = (Boolean) aValue;
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
-      for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode) node)) {
-        final String toolId = aNode.getKey().toString();
-        if (doEnable) {
-          profile.enableTool(toolId, mySettings.getProject());
-        } else {
-          profile.disableTool(toolId, mySettings.getProject());
-        }
-        for (ScopeToolState state : profile.getTools(toolId, mySettings.getProject()).getTools()) {
-          state.setEnabled(doEnable);
-        }
+      for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
+        setToolEnabled(doEnable, profile, aNode.getKey());
         aNode.dropCache();
         mySettings.onChanged(aNode);
       }
+      updateRightPanel();
+    }
+
+    public void swapInspectionEnableState() {
+      LOG.assertTrue(myTreeTable != null);
+
+      Boolean state = null;
+      final HashSet<HighlightDisplayKey> tools = new HashSet<HighlightDisplayKey>();
+      final List<InspectionConfigTreeNode> nodes = new ArrayList<InspectionConfigTreeNode>();
+
+      for (TreePath selectionPath : myTreeTable.getTree().getSelectionPaths()) {
+        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
+        collectInspectionFromNodes(node, tools, nodes);
+      }
+
+      final int[] selectedRows = myTreeTable.getSelectedRows();
+      for (int selectedRow : selectedRows) {
+        final Boolean value = (Boolean)myTreeTable.getValueAt(selectedRow, IS_ENABLED_COLUMN);
+        if (state == null) {
+          state = value;
+        }
+        else if (!state.equals(value)) {
+          state = null;
+          break;
+        }
+      }
+      final boolean newState = !Boolean.TRUE.equals(state);
+
+      final InspectionProfileImpl profile = mySettings.getInspectionProfile();
+      for (HighlightDisplayKey tool : tools) {
+        setToolEnabled(newState, profile, tool);
+      }
+
+      for (InspectionConfigTreeNode node : nodes) {
+        node.dropCache();
+        mySettings.onChanged(node);
+      }
+
+      updateRightPanel();
+    }
+
+    private void updateRightPanel() {
       if (myTreeTable != null) {
         if (!myUpdateAlarm.isDisposed()) {
           myUpdateAlarm.cancelAllRequests();
           myUpdateAlarm.addRequest(myUpdateRunnable, 10, ModalityState.stateForComponent(myTreeTable));
         }
+      }
+    }
+
+    private void setToolEnabled(boolean newState, InspectionProfileImpl profile, HighlightDisplayKey tool) {
+      final String toolId = tool.toString();
+      if (newState) {
+        profile.enableTool(toolId, mySettings.getProject());
+      }
+      else {
+        profile.disableTool(toolId, mySettings.getProject());
+      }
+      for (ScopeToolState scopeToolState : profile.getTools(toolId, mySettings.getProject()).getTools()) {
+        scopeToolState.setEnabled(newState);
+      }
+    }
+
+    private static void collectInspectionFromNodes(final InspectionConfigTreeNode node,
+                                                   final Set<HighlightDisplayKey> tools,
+                                                   final List<InspectionConfigTreeNode> nodes) {
+      if (node == null) {
+        return;
+      }
+      nodes.add(node);
+
+      final ToolDescriptors descriptors = node.getDescriptors();
+      if (descriptors == null) {
+        for (int i = 0; i < node.getChildCount(); i++) {
+          collectInspectionFromNodes((InspectionConfigTreeNode)node.getChildAt(i), tools, nodes);
+        }
+      } else {
+        final HighlightDisplayKey key = descriptors.getDefaultDescriptor().getKey();
+        tools.add(key);
       }
     }
 
