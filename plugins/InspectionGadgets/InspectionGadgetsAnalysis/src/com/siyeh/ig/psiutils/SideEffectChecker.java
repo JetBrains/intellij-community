@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class SideEffectChecker {
@@ -60,14 +60,11 @@ public class SideEffectChecker {
         return;
       }
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if ((methodName.startsWith("is") || methodName.startsWith("get")) && expression.getArgumentList().getExpressions().length == 0) {
-        final PsiMethod method = expression.resolveMethod();
-        if (PropertyUtil.isSimpleGetter(method)) {
-          return;
-        }
+      final PsiMethod method = expression.resolveMethod();
+      if (method != null && ControlFlowAnalyzer.isPure(method)) {
+        return;
       }
+      
       mayHaveSideEffects = true;
     }
 

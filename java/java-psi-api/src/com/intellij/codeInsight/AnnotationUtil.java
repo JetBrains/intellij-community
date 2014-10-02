@@ -192,7 +192,7 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotationInHierarchy(final PsiModifierListOwner listOwner, @NotNull Set<String> annotationNames) {
+  public static PsiAnnotation findAnnotationInHierarchy(@NotNull final PsiModifierListOwner listOwner, @NotNull Set<String> annotationNames) {
     PsiAnnotation directAnnotation = findAnnotation(listOwner, annotationNames);
     if (directAnnotation != null) return directAnnotation;
 

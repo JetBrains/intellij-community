@@ -36,6 +36,7 @@ public abstract class ProjectSetProcessor {
 
   public static class Context {
     public VirtualFile directory;
+    public String directoryName;
     public Project project;
   }
 }

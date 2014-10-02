@@ -1510,11 +1510,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Nullable
-  public static PsiAnnotation findContractAnnotation(PsiMethod method) {
+  public static PsiAnnotation findContractAnnotation(@NotNull PsiMethod method) {
     return AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(ORG_JETBRAINS_ANNOTATIONS_CONTRACT));
   }
 
-  public static boolean isPure(PsiMethod method) {
+  public static boolean isPure(@NotNull PsiMethod method) {
     PsiAnnotation anno = findContractAnnotation(method);
     return anno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"));
   }

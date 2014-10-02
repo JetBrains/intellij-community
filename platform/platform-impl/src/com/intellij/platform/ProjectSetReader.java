@@ -41,7 +41,7 @@ public class ProjectSetReader {
       processors.put(extension.getId(), extension);
     }
 
-    JsonElement parse = null;
+    JsonElement parse;
     try {
       parse = new JsonParser().parse(descriptor);
     }
@@ -51,6 +51,7 @@ public class ProjectSetReader {
     }
     Iterator<Map.Entry<String, JsonElement>> iterator = parse.getAsJsonObject().entrySet().iterator();
     ProjectSetProcessor.Context context = new ProjectSetProcessor.Context();
+    context.directoryName = "";
     context.directory = forTests;
     runProcessor(processors, context, iterator);
   }

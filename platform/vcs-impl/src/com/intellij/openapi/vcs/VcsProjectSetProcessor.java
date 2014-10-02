@@ -44,13 +44,9 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
                              @NotNull final Context context,
                              @NotNull final Runnable runNext) {
 
-    final VirtualFile directory;
-    if (context.directory != null) {
-      directory = context.directory;
-    }
-    else {
-      directory = getDirectory();
-      if (directory == null) return;
+    if (context.directory == null) {
+      context.directory = getDirectory();
+      if (context.directory == null) return;
     }
 
     ProgressManager.getInstance().run(new Task.Backgroundable(null, "Hey", true) {
@@ -66,7 +62,8 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
 
           String url = pair.getSecond();
           final String[] split = splitUrl(url);
-          if (!processor.checkout(split[0], directory, split[1])) return;
+          context.directoryName = split[1];
+          if (!processor.checkout(split[0], context.directory, context.directoryName)) return;
         }
         runNext.run();
       }
