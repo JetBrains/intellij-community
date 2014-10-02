@@ -56,10 +56,12 @@ public abstract class CCDocumentListener extends DocumentAdapter {
         myTaskFile.incrementLines(myOldLine + 1, lineChange);
         int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
         int oldEndOffsetInLine = offset + e.getOldLength() - myOldLineStartOffset;
-        myTaskFile.updateLine(lineChange, myOldLine, newEndOffsetInLine, oldEndOffsetInLine);
+        myTaskFile.updateLine(lineChange, myOldLine, newEndOffsetInLine, oldEndOffsetInLine, useLength());
       }
   }
 
   protected abstract void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change);
+
+  protected abstract  boolean useLength();
 }
 
