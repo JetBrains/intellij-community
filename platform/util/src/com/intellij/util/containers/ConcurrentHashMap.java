@@ -1469,7 +1469,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    */
 // TODO no method in JDK6
 //  @Override
-  @Override
   public V getOrDefault(@NotNull Object key, V defaultValue) {
     V v;
     return (v = get(key)) == null ? defaultValue : v;
