@@ -6,6 +6,10 @@
       <implementation-class>com.jetbrains.python.edu.PyCharmEduInitialConfigurator$First</implementation-class>
       <headless-implementation-class/>
     </component>
+    <component>
+      <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
+      <implementation-class>com.jetbrains.python.console.PythonToolWindowConsoleRunnerFactory</implementation-class>
+    </component>
   </application-components>
 
   <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
