@@ -34,21 +34,19 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.webcore.packaging.PackageManagementService;
+import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageNotificationDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
 * @author vlan
 */
 public class PyPackageManagerUI {
   @NotNull private static final Logger LOG = Logger.getInstance(PyPackageManagerUI.class);
-  @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
 
   @Nullable private Listener myListener;
   @NotNull private Project myProject;
@@ -58,40 +56,6 @@ public class PyPackageManagerUI {
     void started();
 
     void finished(List<ExecutionException> exceptions);
-  }
-
-  public static class ExecutionFailure {
-    @NotNull private final String myMessage;
-    @Nullable private final String myCommand;
-    @Nullable private final String myOutput;
-    @Nullable private final String mySolution;
-
-    public ExecutionFailure(@NotNull String message, @Nullable String command, @Nullable String output, @Nullable String solution) {
-      myMessage = message;
-      myCommand = command;
-      myOutput = output;
-      mySolution = solution;
-    }
-
-    @NotNull
-    public String getMessage() {
-      return myMessage;
-    }
-
-    @Nullable
-    public String getCommand() {
-      return myCommand;
-    }
-
-    @Nullable
-    public String getOutput() {
-      return myOutput;
-    }
-
-    @Nullable
-    public String getSolution() {
-      return mySolution;
-    }
   }
 
   public PyPackageManagerUI(@NotNull Project project, @NotNull Sdk sdk, @Nullable Listener listener) {
@@ -224,45 +188,39 @@ public class PyPackageManagerUI {
         notificationRef.set(new Notification(PACKAGING_GROUP_ID, getSuccessTitle(), getSuccessDescription(),
                                              NotificationType.INFORMATION));
       }
-      else if (!isCancelled(exceptions)) {
-        final ExecutionFailure failure = analyzeException(exceptions.get(0), mySdk);
-        final String firstLine = getTitle() + ": error occurred.";
-        notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(),
-                                             firstLine + " <a href=\"xxx\">Details...</a>",
-                                             NotificationType.ERROR,
-                                             new NotificationListener() {
-                                               @Override
-                                               public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                           @NotNull HyperlinkEvent event) {
-                                                 assert myProject != null;
-                                                 final String title = StringUtil.capitalizeWords(getFailureTitle(), true);
-                                                 final PyPackageNotificationDialog dialog = new PyPackageNotificationDialog(title, failure);
-                                                 dialog.show();
-                                               }
-                                             }
-        ));
-      }
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myListener != null) {
-            myListener.finished(exceptions);
-          }
-          final Notification notification = notificationRef.get();
-          if (notification != null) {
-            notification.notify(myProject);
-          }
+      else {
+        final PackageManagementService.ErrorDescription description = PyPackageManagementService.toErrorDescription(exceptions, mySdk);
+        if (description != null) {
+          final String firstLine = getTitle() + ": error occurred.";
+          final NotificationListener listener = new NotificationListener() {
+            @Override
+            public void hyperlinkUpdate(@NotNull Notification notification,
+                                        @NotNull HyperlinkEvent event) {
+              assert myProject != null;
+              final String title = StringUtil.capitalizeWords(getFailureTitle(), true);
+              final PyPackageNotificationDialog dialog = new PyPackageNotificationDialog(title, description);
+              dialog.show();
+            }
+          };
+          notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(), firstLine + " <a href=\"xxx\">Details...</a>",
+                                               NotificationType.ERROR, listener));
         }
-      });
-    }
+        else {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (myListener != null) {
+                myListener.finished(exceptions);
+              }
+              final Notification notification = notificationRef.get();
+              if (notification != null) {
+                notification.notify(myProject);
+              }
+            }
+          });
 
-    private static boolean isCancelled(@NotNull List<ExecutionException> exceptions) {
-      for (ExecutionException e : exceptions) {
-        if (e instanceof RunCanceledByUserException) {
-          return true;
         }
       }
-      return false;
     }
   }
 
@@ -425,37 +383,5 @@ public class PyPackageManagerUI {
       b.append("\n");
     }
     return PackageManagementService.ErrorDescription.fromMessage(b.toString());
-  }
-
-  @NotNull
-  private static ExecutionFailure analyzeException(@NotNull ExecutionException e, @NotNull Sdk sdk) {
-    if (e instanceof PyExecutionException) {
-      final PyExecutionException ee = (PyExecutionException)e;
-      final String stdoutCause = findErrorCause(ee.getStdout());
-      final String stderrCause = findErrorCause(ee.getStderr());
-      final String message = stdoutCause != null ? stdoutCause : stderrCause != null ? stderrCause : ee.getMessage();
-      final String solution;
-      if ("pip".equals(ee.getCommand())) {
-        solution = "Try to run this command from the system terminal. Make sure that you use the correct version of 'pip' " +
-                   "installed for your Python interpreter located at '" + sdk.getHomePath() + "'.";
-      }
-      else {
-        solution = null;
-      }
-      return new ExecutionFailure(message, ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " "), ee.getStdout(), solution);
-    }
-    else {
-      return new ExecutionFailure(e.getMessage(), null, null, null);
-    }
-  }
-
-  @Nullable
-  private static String findErrorCause(@NotNull String output) {
-    final Matcher m = PATTERN_ERROR_LINE.matcher(output);
-    if (m.find()) {
-      final String result = m.group();
-      return result != null ? result.trim() : null;
-    }
-    return null;
   }
 }

@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging.ui;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,11 +35,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class PyPackageManagementService extends PackageManagementService {
+  @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
+
   private final Project myProject;
   private final Sdk mySdk;
 
@@ -85,7 +90,7 @@ public class PyPackageManagementService extends PackageManagementService {
 
   private static List<RepoPackage> versionMapToPackageList(Map<String, String> packageToVersionMap) {
     final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
-    String url = customRepoConfigured? PyPIPackageUtil.PYPI_URL : "";
+    String url = customRepoConfigured ? PyPIPackageUtil.PYPI_URL : "";
     List<RepoPackage> packages = new ArrayList<RepoPackage>();
     for (Map.Entry<String, String> entry : packageToVersionMap.entrySet()) {
       packages.add(new RepoPackage(entry.getKey(), url, entry.getValue()));
@@ -150,7 +155,7 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Override
-  public void installPackage(final RepoPackage repoPackage,String version, boolean forceUpgrade, String extraOptions,
+  public void installPackage(final RepoPackage repoPackage, String version, boolean forceUpgrade, String extraOptions,
                              final Listener listener, boolean installToUser) {
     final String packageName = repoPackage.getName();
     final String repository = PyPIPackageUtil.PYPI_URL.equals(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
@@ -185,16 +190,16 @@ public class PyPackageManagementService extends PackageManagementService {
 
       @Override
       public void finished(@Nullable List<ExecutionException> exceptions) {
-        listener.operationFinished(packageName, toErrorDescription(exceptions));
+        listener.operationFinished(packageName, toErrorDescription(exceptions, mySdk));
       }
     });
     ui.install(Collections.singletonList(req), extraArgs);
   }
 
   @Nullable
-  private static ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions) {
-    if (exceptions != null && exceptions.size() > 0) {
-      return PyPackageManagerUI.createDescription(exceptions, "");
+  public static ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions, @NotNull Sdk sdk) {
+    if (exceptions != null && !exceptions.isEmpty() && !isCancelled(exceptions)) {
+      return createDescription(exceptions.get(0), sdk);
     }
     return null;
   }
@@ -210,14 +215,14 @@ public class PyPackageManagementService extends PackageManagementService {
 
       @Override
       public void finished(final List<ExecutionException> exceptions) {
-        listener.operationFinished(packageName, toErrorDescription(exceptions));
+        listener.operationFinished(packageName, toErrorDescription(exceptions, mySdk));
       }
     });
 
     List<PyPackage> pyPackages = new ArrayList<PyPackage>();
     for (InstalledPackage aPackage : installedPackages) {
       if (aPackage instanceof PyPackage) {
-       pyPackages.add((PyPackage) aPackage);
+        pyPackages.add((PyPackage)aPackage);
       }
     }
     ui.uninstall(pyPackages);
@@ -301,5 +306,47 @@ public class PyPackageManagementService extends PackageManagementService {
 
   private static String composeHref(String vendorUrl) {
     return HTML_PREFIX + vendorUrl + "\">" + vendorUrl + HTML_SUFFIX;
+  }
+
+  private static boolean isCancelled(@NotNull List<ExecutionException> exceptions) {
+    for (ExecutionException e : exceptions) {
+      if (e instanceof RunCanceledByUserException) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  private static ErrorDescription createDescription(@NotNull ExecutionException e, @NotNull Sdk sdk) {
+    if (e instanceof PyExecutionException) {
+      final PyExecutionException ee = (PyExecutionException)e;
+      final String stdoutCause = findErrorCause(ee.getStdout());
+      final String stderrCause = findErrorCause(ee.getStderr());
+      final String message = stdoutCause != null ? stdoutCause : stderrCause != null ? stderrCause : ee.getMessage();
+      final String solution;
+      if ("pip".equals(ee.getCommand())) {
+        solution = "Try to run this command from the system terminal. Make sure that you use the correct version of 'pip' " +
+                   "installed for your Python interpreter located at '" + sdk.getHomePath() + "'.";
+      }
+      else {
+        solution = null;
+      }
+      final String command = ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " ");
+      return new ErrorDescription(message, command, ee.getStdout(), solution);
+    }
+    else {
+      return ErrorDescription.fromMessage(e.getMessage());
+    }
+  }
+
+  @Nullable
+  private static String findErrorCause(@NotNull String output) {
+    final Matcher m = PATTERN_ERROR_LINE.matcher(output);
+    if (m.find()) {
+      final String result = m.group();
+      return result != null ? result.trim() : null;
+    }
+    return null;
   }
 }

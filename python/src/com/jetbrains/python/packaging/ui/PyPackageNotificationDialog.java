@@ -17,7 +17,7 @@ package com.jetbrains.python.packaging.ui;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
-import com.jetbrains.python.packaging.PyPackageManagerUI;
+import com.intellij.webcore.packaging.PackageManagementService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,15 +36,15 @@ public class PyPackageNotificationDialog extends DialogWrapper {
   private JPanel mySolutionPanel;
   private JTextPane mySolution;
 
-  public PyPackageNotificationDialog(@NotNull String title, @NotNull PyPackageManagerUI.ExecutionFailure failure) {
+  public PyPackageNotificationDialog(@NotNull String title, @NotNull PackageManagementService.ErrorDescription errorDescription) {
     super(false);
     init();
     setResizable(false);
     setTitle(title);
-    final String command = failure.getCommand();
-    final String output = failure.getOutput();
-    final String message = failure.getMessage();
-    final String solution = failure.getSolution();
+    final String command = errorDescription.getCommand();
+    final String output = errorDescription.getOutput();
+    final String message = errorDescription.getMessage();
+    final String solution = errorDescription.getSolution();
 
     myCommandPanel.setVisible(command != null);
     myCommandOutputPanel.setVisible(output != null);
