@@ -46,6 +46,13 @@ public class PrintElementGeneratorTest extends AbstractTestWithTextFile {
   }
 
   private static class TestPrintElementManager implements PrintElementsManager {
+    @NotNull
+    private final Comparator<GraphElement> myGraphElementComparator;
+
+    private TestPrintElementManager(@NotNull Comparator<GraphElement> graphElementComparator) {
+      myGraphElementComparator = graphElementComparator;
+    }
+
     @Override
     public boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement) {
       return false;
@@ -73,6 +80,12 @@ public class PrintElementGeneratorTest extends AbstractTestWithTextFile {
 
       throw new IllegalStateException("Incorrect graph element type: " + element);
     }
+
+    @NotNull
+    @Override
+    public Comparator<GraphElement> getGraphElementComparator() {
+      return myGraphElementComparator;
+    }
   }
 
   @Override
@@ -91,9 +104,9 @@ public class PrintElementGeneratorTest extends AbstractTestWithTextFile {
         return graphLayout.getLayoutIndex(nodeIndex);
       }
     });
-    TestPrintElementManager elementManager = new TestPrintElementManager();
+    TestPrintElementManager elementManager = new TestPrintElementManager(graphElementComparator);
     PrintElementGeneratorImpl printElementGenerator =
-      new PrintElementGeneratorImpl(graph, elementManager, graphElementComparator, 7, 2, 10);
+      new PrintElementGeneratorImpl(graph, elementManager, 7, 2, 10);
     String actual = GraphPackage.asString(printElementGenerator, graph.nodesCount());
     assertEquals(out, actual);
   }

@@ -16,11 +16,10 @@
 
 package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.ActionController;
-import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphAction;
+import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
@@ -29,7 +28,6 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
-import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
 import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
 import com.intellij.vcs.log.graph.impl.visible.CurrentBranches;
 import com.intellij.vcs.log.graph.impl.visible.adapters.LinearGraphAsGraphWithHiddenNodes;
@@ -39,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Set;
 
 public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<CommitId> {
@@ -63,8 +60,6 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   @NotNull
   protected final LinearGraphWithCommitInfo<CommitId> myLinearGraphWithCommitInfo;
   @NotNull
-  private final Comparator<GraphElement> myGraphElementComparator;
-  @NotNull
   protected PrintElementGenerator myPrintElementGenerator;
   @NotNull
   protected final PrintElementsManager myPrintElementsManager;
@@ -72,14 +67,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   protected AbstractVisibleGraph(@NotNull final LinearGraphWithCommitInfo<CommitId> linearGraphWithCommitInfo, @NotNull PrintElementsManager printElementsManager) {
     myLinearGraphWithCommitInfo = linearGraphWithCommitInfo;
     myPrintElementsManager = printElementsManager;
-    myGraphElementComparator = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(Integer nodeIndex) {
-        return linearGraphWithCommitInfo.getLayoutIndex(nodeIndex);
-      }
-    });
-    myPrintElementGenerator = new PrintElementGeneratorImpl(linearGraphWithCommitInfo, printElementsManager, myGraphElementComparator, false);
+    myPrintElementGenerator = new PrintElementGeneratorImpl(linearGraphWithCommitInfo, printElementsManager, false);
   }
 
   @Override
@@ -253,7 +241,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
     public void setLongEdgesHidden(boolean longEdgesHidden) {
       myAreLongEdgesHidden = longEdgesHidden;
       myPrintElementGenerator =
-        new PrintElementGeneratorImpl(myLinearGraphWithCommitInfo, myPrintElementsManager, myGraphElementComparator, longEdgesHidden);
+        new PrintElementGeneratorImpl(myLinearGraphWithCommitInfo, myPrintElementsManager, longEdgesHidden);
     }
 
     @Override

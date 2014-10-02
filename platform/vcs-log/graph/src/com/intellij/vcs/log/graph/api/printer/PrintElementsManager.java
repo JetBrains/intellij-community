@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Comparator;
 
 public interface PrintElementsManager {
 
@@ -32,4 +33,6 @@ public interface PrintElementsManager {
 
   int getColorId(@NotNull GraphElement element);
 
+  @NotNull
+  Comparator<GraphElement> getGraphElementComparator();
 }

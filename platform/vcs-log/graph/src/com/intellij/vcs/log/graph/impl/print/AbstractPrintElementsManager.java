@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.graph.impl.print;
 
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.SimplePrintElement;
@@ -33,9 +34,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Set;
 
 public abstract class AbstractPrintElementsManager<CommitId> implements PrintElementsManager {
+
 
   @Nullable
   public static GraphEdge containedCollapsedEdge(@NotNull GraphElement element, @NotNull LinearGraphWithElementInfo graphWithElementsInfo) {
@@ -68,6 +71,8 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
   @NotNull
   protected final GraphColorManager<CommitId> myColorManager;
 
+  private Comparator<GraphElement> myGraphElementComparator;
+
   @Nullable
   private PrintElementWithGraphElement mySpecialSelectedPrintElement = null;
 
@@ -77,6 +82,13 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
   protected AbstractPrintElementsManager(@NotNull LinearGraphWithCommitInfo<CommitId> printedLinearGraph, @NotNull GraphColorManager<CommitId> colorManager) {
     myPrintedLinearGraph = printedLinearGraph;
     myColorManager = colorManager;
+    myGraphElementComparator = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(Integer nodeIndex) {
+        return myPrintedLinearGraph.getLayoutIndex(nodeIndex);
+      }
+    });
   }
 
   @Override
@@ -147,6 +159,12 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
       return myColorManager.getColorOfBranch(headCommitId);
     else
       return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex);
+  }
+
+  @NotNull
+  @Override
+  public Comparator<GraphElement> getGraphElementComparator() {
+    return myGraphElementComparator;
   }
 
   @NotNull

@@ -58,11 +58,10 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
 
   public PrintElementGeneratorImpl(@NotNull LinearGraph graph,
                                    @NotNull PrintElementsManager printElementsManager,
-                                   @NotNull Comparator<GraphElement> graphElementComparator,
                                    boolean showLongEdges) {
     super(graph, printElementsManager);
     myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
-    myGraphElementComparator = graphElementComparator;
+    myGraphElementComparator = printElementsManager.getGraphElementComparator();
     if (showLongEdges) {
       myLongSize = VERY_LONG_EDGE_SIZE;
       myShowingPartSize = VERY_LONG_EDGE_PART_SIZE;
@@ -80,13 +79,12 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   @TestOnly
   public PrintElementGeneratorImpl(@NotNull LinearGraph graph,
                                    @NotNull PrintElementsManager printElementsManager,
-                                   @NotNull Comparator<GraphElement> graphElementComparator,
                                    int longSize,
                                    int showingPartSize,
                                    int addNearArrowSize) {
     super(graph, printElementsManager);
     myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
-    myGraphElementComparator = graphElementComparator;
+    myGraphElementComparator = printElementsManager.getGraphElementComparator();
     myLongSize = longSize;
     myShowingPartSize = showingPartSize;
     myAddNearArrowSize = addNearArrowSize;
