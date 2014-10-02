@@ -22,7 +22,6 @@ import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
@@ -32,29 +31,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
-import java.util.Comparator;
 
 public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @NotNull
   private final LinearGraphController myGraphController;
   @NotNull
   private final PermanentGraphInfo<CommitId> myPermanentGraph;
-  @NotNull
-  private final Comparator<GraphElement> myGraphElementComparator;
 
   @NotNull
   private PrintElementGenerator myPrintElementGenerator;
   private boolean myShowLongEdges = false;
 
   public VisibleGraphImpl(@NotNull LinearGraphController graphController,
-                          @NotNull PermanentGraphInfo<CommitId> permanentGraph,
-                          @NotNull Comparator<GraphElement> graphElementComparator) {
+                          @NotNull PermanentGraphInfo<CommitId> permanentGraph) {
     myGraphController = graphController;
     myPermanentGraph = permanentGraph;
-    myGraphElementComparator = graphElementComparator;
     myPrintElementGenerator = new PrintElementGeneratorImpl(graphController.getCompiledGraph(),
                                                             graphController.getPrintElementManager(),
-                                                            graphElementComparator,
                                                             myShowLongEdges);
   }
 
@@ -112,7 +105,6 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   private void graphWasChanged() {
     myPrintElementGenerator = new PrintElementGeneratorImpl(myGraphController.getCompiledGraph(),
                                                             myGraphController.getPrintElementManager(),
-                                                            myGraphElementComparator,
                                                             myShowLongEdges);
   }
 
