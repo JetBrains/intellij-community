@@ -1914,6 +1914,7 @@ public abstract class DialogWrapper {
 
   private void updateHeightForErrorText() {
     Dimension errorSize = myErrorText.getPreferredSize();
+    myErrorText.setMinimumSize(new Dimension(0, errorSize.height));
     resizeWithAnimation(new Dimension(Math.max(myActualSize.width, errorSize.width + 40), myActualSize.height + errorSize.height + 10));
   }
 
