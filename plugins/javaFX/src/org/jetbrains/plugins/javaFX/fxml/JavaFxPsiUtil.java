@@ -405,7 +405,10 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static String getDefaultPropertyName(PsiClass aClass) {
+  public static String getDefaultPropertyName(@Nullable PsiClass aClass) {
+    if (aClass == null) {
+      return null;
+    }
     final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(aClass,
                                                                               Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
     if (annotation != null) {
