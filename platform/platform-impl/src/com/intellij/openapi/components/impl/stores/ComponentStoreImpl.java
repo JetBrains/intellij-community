@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
@@ -107,7 +108,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       }
     }
 
-    StateStorageManager.SaveSession storageManagerSaveSession = storageManager.startSave(externalizationSession);
+    SaveSession storageManagerSaveSession = storageManager.startSave(externalizationSession);
     if (storageManagerSaveSession == null) {
       return null;
     }
@@ -340,7 +341,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     return null;
   }
 
-  protected static void executeSave(@NotNull StateStorageManager.SaveSession saveSession, @NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+  protected static void executeSave(@NotNull SaveSession saveSession, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
     try {
       saveSession.save();
     }
@@ -350,14 +351,14 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   protected class SaveSessionImpl implements ComponentSaveSession {
-    protected StateStorageManager.SaveSession myStorageManagerSaveSession;
+    protected SaveSession myStorageManagerSaveSession;
 
     public SaveSessionImpl() {
     }
 
     @NotNull
     @Override
-    public ComponentSaveSession save(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+    public ComponentSaveSession save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
       SettingsSavingComponent[] settingsComponents =
         mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
       for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {

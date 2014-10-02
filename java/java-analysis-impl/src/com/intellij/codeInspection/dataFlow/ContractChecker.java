@@ -38,7 +38,6 @@ class ContractChecker extends DataFlowRunner {
   private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
-  private final Set<PsiElement> myCalls = ContainerUtil.newHashSet();
 
   ContractChecker(PsiMethod method, PsiCodeBlock body, MethodContract contract, final boolean onTheFly) {
     super(body);
@@ -105,11 +104,13 @@ class ContractChecker extends DataFlowRunner {
     }
 
     if (instruction instanceof MethodCallInstruction &&
-        ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL) {
-      ContainerUtil.addIfNotNull(myCalls, ((MethodCallInstruction)instruction).getCallExpression());
+        ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL &&
+        myContract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION) {
+      ContainerUtil.addIfNotNull(myFailures, ((MethodCallInstruction)instruction).getCallExpression());
+      return DfaInstructionState.EMPTY_ARRAY;
     }
 
-      return super.acceptInstruction(visitor, instructionState);
+    return super.acceptInstruction(visitor, instructionState);
   }
 
 
@@ -125,7 +126,7 @@ class ContractChecker extends DataFlowRunner {
       for (PsiElement element : myFailures) {
         errors.put(element, "Contract clause '" + myContract + "' is violated: exception might be thrown instead of returning " + myContract.returnValue);
       }
-    } else if (myFailures.isEmpty() && errors.isEmpty() && myCalls.isEmpty()) {
+    } else if (myFailures.isEmpty() && errors.isEmpty()) {
       PsiIdentifier nameIdentifier = myMethod.getNameIdentifier();
       errors.put(nameIdentifier != null ? nameIdentifier : myMethod,
                  "Contract clause '" + myContract + "' is violated: no exception is thrown");

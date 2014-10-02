@@ -17,7 +17,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,6 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class RevealFileAction extends DumbAwareAction {
+
+  public RevealFileAction() {
+    getTemplatePresentation().setText(getActionName());
+  }
+
   @Override
   public void update(AnActionEvent e) {
     VirtualFile file = ShowFilePathAction.findLocalFile(CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()));

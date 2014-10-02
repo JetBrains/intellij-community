@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.Couple;
@@ -413,12 +414,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
     StateStorageManagerExternalizationSession myExternalizationSession = (StateStorageManagerExternalizationSession)externalizationSession;
-    Map<StateStorage, StateStorage.SaveSession> saveSessions = null;
+    Map<StateStorage, SaveSession> saveSessions = null;
     for (StateStorage stateStorage : myExternalizationSession.mySessions.keySet()) {
-      StateStorage.SaveSession saveSession = stateStorage.startSave(myExternalizationSession.getExternalizationSession(stateStorage));
+      SaveSession saveSession = stateStorage.startSave(myExternalizationSession.getExternalizationSession(stateStorage));
       if (saveSession != null) {
         if (saveSessions == null) {
-          saveSessions = new SmartHashMap<StateStorage, StateStorage.SaveSession>();
+          saveSessions = new SmartHashMap<StateStorage, SaveSession>();
         }
         saveSessions.put(stateStorage, saveSession);
       }
@@ -496,15 +497,15 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   protected abstract String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
   private final static class StateStorageSaveSession implements SaveSession {
-    private final Map<StateStorage, StateStorage.SaveSession> mySaveSessions;
+    private final Map<StateStorage, SaveSession> mySaveSessions;
 
-    public StateStorageSaveSession(@NotNull Map<StateStorage, StateStorage.SaveSession> saveSessions) {
+    public StateStorageSaveSession(@NotNull Map<StateStorage, SaveSession> saveSessions) {
       mySaveSessions = saveSessions;
     }
 
     @Override
     public void save() {
-      for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
+      for (SaveSession saveSession : mySaveSessions.values()) {
         saveSession.save();
       }
     }

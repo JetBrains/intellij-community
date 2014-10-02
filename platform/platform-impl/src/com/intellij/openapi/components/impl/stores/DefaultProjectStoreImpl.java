@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
@@ -35,7 +36,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   private final ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
-  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, final ProjectManagerImpl projectManager) {
+  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, @NotNull ProjectManagerImpl projectManager) {
     super(project);
 
     myProjectManager = projectManager;
@@ -58,12 +59,9 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       _d = myElement;
     }
 
-    final ComponentManager componentManager = getComponentManager();
-    final PathMacroManager pathMacroManager = PathMacroManager.getInstance(componentManager);
-
+    ComponentManager componentManager = getComponentManager();
     final Element element = _d;
-
-    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, pathMacroManager.createTrackingSubstitutor(), componentManager,
+    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(), componentManager,
                                                             ROOT_TAG_NAME, null,
                                                             ComponentVersionProvider.EMPTY) {
       @Override
@@ -77,7 +75,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return new MySaveSession(storageData) {
           @Override
           protected void doSave(@Nullable Element element) {
-            myProjectManager.setDefaultProjectRootElement(element == null ? null : element);
+            // we must set empty element instead of null as indicator - ProjectManager state is ready to save
+            myProjectManager.setDefaultProjectRootElement(element == null ? new Element("empty") : element);
           }
 
           // we must not collapse paths here, because our solution is just a big hack
@@ -147,8 +146,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       @Nullable
       @Override
       public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-        StateStorage.SaveSession saveSession = storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
-        return saveSession == null ? null : new MySaveSession(saveSession);
+        return storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
       }
 
       @Override
@@ -211,27 +209,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state)
-    throws StateStorageException {
+    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       externalizationSession.setState(component, componentName, state, null);
     }
 
     @Override
     public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       externalizationSession.setState(component, componentName, state, null);
-    }
-  }
-
-  private static class MySaveSession implements StateStorageManager.SaveSession {
-    @NotNull private final StateStorage.SaveSession saveSession;
-
-    public MySaveSession(@NotNull StateStorage.SaveSession saveSession) {
-      this.saveSession = saveSession;
-    }
-
-    @Override
-    public void save() {
-      saveSession.save();
     }
   }
 }

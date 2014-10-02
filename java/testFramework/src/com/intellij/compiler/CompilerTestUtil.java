@@ -27,7 +27,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -102,7 +101,7 @@ public class CompilerTestUtil {
           //emulate save via 'saveSettings' so file won't be treated as changed externally
           OutputStream stream = virtualFile.getOutputStream(new SaveSessionRequestor());
           try {
-            JDOMUtil.writeDocument(new Document(root), stream, SystemProperties.getLineSeparator());
+            JDOMUtil.writeParent(root, stream, SystemProperties.getLineSeparator());
           }
           finally {
             stream.close();

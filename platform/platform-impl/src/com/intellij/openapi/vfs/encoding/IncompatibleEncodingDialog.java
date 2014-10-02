@@ -126,7 +126,9 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
       convertAction.putValue(Action.SMALL_ICON, AllIcons.General.Warning);
     }
     convertAction.putValue(Action.MNEMONIC_KEY, (int)'C');
-    return new Action[]{reloadAction, convertAction, getCancelAction()};
+    Action cancelAction = getCancelAction();
+    cancelAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
+    return new Action[]{reloadAction, convertAction, cancelAction};
   }
 
   public static final int RELOAD_EXIT_CODE = 10;

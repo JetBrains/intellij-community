@@ -21,6 +21,7 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -468,7 +469,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   protected class ProjectSaveSession extends SaveSessionImpl {
     @NotNull
     @Override
-    public ComponentSaveSession save(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+    public ComponentSaveSession save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
       ProjectImpl.UnableToSaveProjectNotification[] notifications =
         NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
       if (notifications.length > 0) {
@@ -495,7 +496,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         }
         else {
           readonlyFiles.clear();
-          for (Pair<StateStorageManager.SaveSession, VirtualFile> entry : readonlyFiles) {
+          for (Pair<SaveSession, VirtualFile> entry : readonlyFiles) {
             executeSave(entry.first, readonlyFiles);
           }
 
@@ -510,7 +511,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     @NotNull
-    private VirtualFile[] getFilesList(List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+    private VirtualFile[] getFilesList(List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
       final VirtualFile[] files = new VirtualFile[readonlyFiles.size()];
       for (int i = 0, size = readonlyFiles.size(); i < size; i++) {
         files[i] = readonlyFiles.get(i).second;
@@ -518,7 +519,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return files;
     }
 
-    protected void beforeSave(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+    protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
     }
   }
 
