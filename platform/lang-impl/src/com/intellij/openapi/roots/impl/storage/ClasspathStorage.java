@@ -48,6 +48,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -175,7 +176,7 @@ public class ClasspathStorage implements StateStorage {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
   }
 
   public void save() throws StateStorageException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
+
 public abstract class ProjectReloadState {
-  public static ProjectReloadState getInstance(Project project){
-    return project.getComponent(ProjectReloadState.class);
+  public static ProjectReloadState getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, ProjectReloadState.class);
   }
 
   public abstract boolean isAfterAutomaticReload();

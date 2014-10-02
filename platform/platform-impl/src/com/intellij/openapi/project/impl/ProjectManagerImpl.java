@@ -29,10 +29,11 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.stores.ComponentStoreImpl;
+import com.intellij.openapi.components.impl.stores.ComponentStoreImpl.ReloadComponentStoreStatus;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
-import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
@@ -49,10 +50,12 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SingleAlarm;
+import com.intellij.util.SmartList;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -214,7 +217,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   private void projectStorageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage, @Nullable Project project) {
     VirtualFile file = event.getFile();
-    if (!StorageUtil.isChangedByStorageOrSaveSession(event) && !file.isDirectory()) {
+    if (!StorageUtil.isChangedByStorageOrSaveSession(event) && !file.isDirectory() && !(event.getRequestor() instanceof ProjectManagerImpl)) {
       registerProjectToReload(project, file, storage);
     }
   }
@@ -655,29 +658,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   private void askToReloadProjectIfConfigFilesChangedExternally() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("[RELOAD] myReloadBlockCount = " + myReloadBlockCount.get());
+    Set<Project> projects;
+    synchronized (myChangedProjectFiles) {
+      if (myChangedProjectFiles.isEmpty()) {
+        return;
+      }
+      projects = new THashSet<Project>(myChangedProjectFiles.keySet());
     }
-    if (myReloadBlockCount.get() == 0) {
-      Set<Project> projects;
-      synchronized (myChangedProjectFiles) {
-        if (myChangedProjectFiles.isEmpty()) {
-          return;
-        }
-        projects = new THashSet<Project>(myChangedProjectFiles.keySet());
-      }
 
-      List<Pair<Project, Collection<ChangedFileEntry>>> projectsToReload = new SmartList<Pair<Project, Collection<ChangedFileEntry>>>();
-      for (Project project : projects) {
-        Collection<ChangedFileEntry> changedFileEntries = shouldReloadProject(project);
-        if (changedFileEntries != null) {
-          projectsToReload.add(Pair.create(project, changedFileEntries));
-        }
+    List<Pair<Project, Collection<ChangedFileEntry>>> projectsToReload = new SmartList<Pair<Project, Collection<ChangedFileEntry>>>();
+    for (Project project : projects) {
+      Collection<ChangedFileEntry> changedFileEntries = shouldReloadProject(project);
+      if (changedFileEntries != null) {
+        projectsToReload.add(Pair.create(project, changedFileEntries));
       }
+    }
 
-      for (Pair<Project, Collection<ChangedFileEntry>> projectToReload : projectsToReload) {
-        reloadProjectImpl(projectToReload.first, projectToReload.second);
-      }
+    for (Pair<Project, Collection<ChangedFileEntry>> projectToReload : projectsToReload) {
+      reloadProjectImpl(projectToReload.first, projectToReload.second);
     }
   }
 
@@ -692,44 +690,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     Set<Pair<VirtualFile, StateStorage>> causes = new THashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
     myChangedApplicationFiles.clear();
 
-    Collection<String> reloadResult;
-    AccessToken token = WriteAction.start();
-    try {
-      reloadResult = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().reload(causes);
-    }
-    catch (Exception e) {
-      Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                 ProjectBundle.message("project.reload.failed.title"));
+    ReloadComponentStoreStatus status = ComponentStoreImpl.reloadStore(causes, ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore());
+    if (status == ReloadComponentStoreStatus.RESTART_REQUIRED) {
+      ApplicationManagerEx.getApplicationEx().restart(true);
       return false;
     }
-    finally {
-      token.finish();
+    else {
+      return status == ReloadComponentStoreStatus.SUCCESS;
     }
-
-    if (ContainerUtil.isEmpty(reloadResult)) {
-      return true;
-    }
-
-    StringBuilder message = new StringBuilder("Application components were changed externally and cannot be reloaded:\n");
-    for (String component : reloadResult) {
-      message.append(component).append('\n');
-    }
-
-    final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
-    message.append("Would you like to ").append(canRestart ? "restart" : "shutdown").append(' ');
-    message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?');
-
-    if (Messages.showYesNoDialog(message.toString(),
-                                 "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES) {
-      for (Pair<VirtualFile, StateStorage> cause : causes) {
-        StateStorage stateStorage = cause.getSecond();
-        if (stateStorage instanceof XmlElementStorage) {
-          ((XmlElementStorage)stateStorage).disableSaving();
-        }
-      }
-      ApplicationManagerEx.getApplicationEx().restart(true);
-    }
-    return false;
   }
 
   @Nullable
@@ -738,7 +706,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       return null;
     }
 
-    final Set<Pair<VirtualFile, StateStorage>> causes = new SmartHashSet<Pair<VirtualFile, StateStorage>>();
+    Collection<Pair<VirtualFile, StateStorage>> causes = new SmartList<Pair<VirtualFile, StateStorage>>();
     Collection<ChangedFileEntry> changes;
     synchronized (myChangedProjectFiles) {
       changes = myChangedProjectFiles.remove(project);
@@ -753,55 +721,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       return null;
     }
 
-    AccessToken token = WriteAction.start();
-    try {
-      LOG.debug("[RELOAD] Reloading project/components...");
-      if (((ProjectEx)project).getStateStore().reload(causes)) {
-        return null;
-      }
-    }
-    catch (StateStorageException e) {
-      Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                 ProjectBundle.message("project.reload.failed.title"));
-    }
-    finally {
-      token.finish();
-    }
-
-    String message;
-    if (causes.size() == 1) {
-      message = ProjectBundle.message("project.reload.external.change.single", causes.iterator().next().first.getPresentableUrl());
-    }
-    else {
-      StringBuilder filesBuilder = new StringBuilder();
-      boolean first = true;
-      Set<String> alreadyShown = new HashSet<String>();
-      for (Pair<VirtualFile, StateStorage> cause : causes) {
-        String url = cause.first.getPresentableUrl();
-        if (!alreadyShown.contains(url)) {
-          if (alreadyShown.size() > 10) {
-            filesBuilder.append("\n" + "and ").append(causes.size() - alreadyShown.size()).append(" more");
-            break;
-          }
-          if (!first) filesBuilder.append("\n");
-          first = false;
-          filesBuilder.append(url);
-          alreadyShown.add(url);
-        }
-      }
-      message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
-    }
-
-    if (Messages.showDialog(message,
-                            ProjectBundle.message("project.reload.external.change.title"),
-                            new String[]{"&Reload Project", "&Discard Changes"},
-                            -1,
-                            Messages.getQuestionIcon()) == 0) {
-      return changes;
-    }
-    else {
-      return null;
-    }
+    ReloadComponentStoreStatus status = ComponentStoreImpl.reloadStore(causes, ((ProjectEx)project).getStateStore());
+    return status == ReloadComponentStoreStatus.RESTART_REQUIRED ? changes : null;
   }
 
   @Override
@@ -837,8 +758,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (tryToReloadApplication()) {
-          askToReloadProjectIfConfigFilesChangedExternally();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("[RELOAD] myReloadBlockCount = " + myReloadBlockCount.get());
+        }
+        if (myReloadBlockCount.get() == 0) {
+          if (tryToReloadApplication()) {
+            askToReloadProjectIfConfigFilesChangedExternally();
+          }
         }
       }
     }, ModalityState.NON_MODAL);
@@ -899,9 +825,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   @Override
-  public void reloadProject(@NotNull Project p) {
-    myChangedProjectFiles.remove(p);
-    reloadProjectImpl(p, Collections.<ChangedFileEntry>emptyList());
+  public void reloadProject(@NotNull Project project) {
+    myChangedProjectFiles.remove(project);
+    reloadProjectImpl(project, Collections.<ChangedFileEntry>emptyList());
   }
 
   public void reloadProjectImpl(@NotNull Project p, @Nullable Collection<ChangedFileEntry> changedFileEntries) {
@@ -914,44 +840,49 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       filesToRestore = changedFileEntries;
     }
     
-    final Project[] project = {p};
+    final Ref<Project> projectRef = Ref.create(p);
     ProjectReloadState.getInstance(p).onBeforeAutomaticProjectReload();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         LOG.debug("Reloading project.");
-        ProjectImpl projectImpl = (ProjectImpl)project[0];
-        if (projectImpl.isDisposed()) {
+        Project project = projectRef.get();
+        // Let it go
+        projectRef.set(null);
+
+        if (project.isDisposed()) {
           return;
         }
-        final String location = projectImpl.getPresentableUrl();
-        if (project[0].isDisposed() || ProjectUtil.closeAndDispose(project[0])) {
-          if (!ContainerUtil.isEmpty(filesToRestore)) {
-            AccessToken token = WriteAction.start();
-            try {
-              for (ChangedFileEntry entry : filesToRestore) {
-                if (!entry.file.isWritable()) {
-                  continue; // IDEA was unable to save it as well. So no need to restore.
-                }
 
-                try {
-                  entry.file.setBinaryContent(entry.savedContent, -1, entry.timestamp);
-                }
-                catch (IOException e) {
-                  Messages.showWarningDialog(ProjectBundle.message("project.reload.write.failed", entry.file.getPresentableUrl()),
-                                             ProjectBundle.message("project.reload.write.failed.title"));
-                }
+        // must compute here, before project dispose
+        String presentableUrl = project.getPresentableUrl();
+        if (!ProjectUtil.closeAndDispose(project)) {
+          return;
+        }
+
+        if (!ContainerUtil.isEmpty(filesToRestore)) {
+          AccessToken token = WriteAction.start();
+          try {
+            for (ChangedFileEntry entry : filesToRestore) {
+              if (!entry.file.isWritable()) {
+                // IDEA was unable to save it as well. So no need to restore
+                continue;
+              }
+
+              try {
+                entry.file.setBinaryContent(entry.savedContent, -1, entry.timestamp, ProjectManagerImpl.this);
+              }
+              catch (IOException e) {
+                Messages.showWarningDialog(ProjectBundle.message("project.reload.write.failed", entry.file.getPresentableUrl()),
+                                           ProjectBundle.message("project.reload.write.failed.title"));
               }
             }
-            finally {
-              token.finish();
-            }
           }
-
-          project[0] = null; // Let it go.
-
-          ProjectUtil.openProject(location, null, true);
+          finally {
+            token.finish();
+          }
         }
+        ProjectUtil.openProject(presentableUrl, null, true);
       }
     }, ModalityState.NON_MODAL);
   }
