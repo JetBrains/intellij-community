@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -19,6 +20,7 @@ import java.util.List;
 
 @SuppressWarnings("ComponentNotRegistered")
 public class CCDeleteTaskWindow extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(CCDeleteTaskWindow.class);
   @NotNull
   private final TaskWindow myTaskWindow;
 
@@ -49,6 +51,10 @@ public class CCDeleteTaskWindow extends DumbAwareAction {
     final Lesson lesson = course.getLesson(lessonDir.getName());
     final Task task = lesson.getTask(taskDir.getName());
     final TaskFile taskFile = task.getTaskFile(file.getName());
+    if (taskFile == null) {
+      LOG.info("could not find task file");
+      return;
+    }
     final List<TaskWindow> taskWindows = taskFile.getTaskWindows();
     if (taskWindows.contains(myTaskWindow)) {
       myTaskWindow.removeResources(project);
