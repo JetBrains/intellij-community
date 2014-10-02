@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler;
 
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -110,5 +111,23 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
 
   private int offset(int line, int column) {
     return myFixture.getEditor().getDocument().getLineStartOffset(line - 1) + column - 1;
+  }
+
+  public void testHighlighting() {
+    String path = PluginPathManager.getPluginHomePath("java-decompiler") + "/testData/Navigation.class";
+    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
+    assertNotNull(path, file);
+    myFixture.openFileInEditor(file);
+
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(new Runnable() {
+      public void run() {
+        myFixture.getEditor().getCaretModel().moveToOffset(offset(11, 14));  // m2(): usage, declaration
+        assertEquals(2, myFixture.doHighlighting().size());
+        myFixture.getEditor().getCaretModel().moveToOffset(offset(15, 21));  // int i: usage, declaration
+        assertEquals(2, myFixture.doHighlighting().size());
+        myFixture.getEditor().getCaretModel().moveToOffset(offset(16, 28));  // int r: usage, declaration
+        assertEquals(2, myFixture.doHighlighting().size());
+      }
+    });
   }
 }
