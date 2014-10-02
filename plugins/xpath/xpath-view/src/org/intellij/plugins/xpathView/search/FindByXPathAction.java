@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usages.*;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.XPathAppComponent;
@@ -78,13 +79,13 @@ public class FindByXPathAction extends AnAction {
         }
 
         final UsageViewPresentation presentation = new UsageViewPresentation();
-        presentation.setTargetsNodeText(settings.MATCH_RECURSIVELY ? "Pattern" : "Expression");
+        presentation.setTargetsNodeText(settings.MATCH_RECURSIVELY ? "XPath Pattern" : "XPath Expression");
         presentation.setCodeUsages(false);
-        presentation.setCodeUsagesString("Result");
+        presentation.setCodeUsagesString("Found Matches in " + scope.getName());
         presentation.setNonCodeUsagesString("Result");
-        presentation.setUsagesString("XPath Result");
+        presentation.setUsagesString("results matching '" + expression + '\'');
         presentation.setUsagesWord("match");
-        presentation.setTabText("XPath");
+        presentation.setTabText(StringUtil.shortenTextWithEllipsis("XPath '" + expression + '\'', 60, 0, true));
         presentation.setScopeText(scope.getName());
 
         presentation.setOpenInNewTab(settings.OPEN_NEW_TAB);

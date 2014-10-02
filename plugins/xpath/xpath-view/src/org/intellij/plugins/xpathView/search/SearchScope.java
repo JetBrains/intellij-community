@@ -92,7 +92,7 @@ public final class SearchScope {
       case DIRECTORY:
         return "Directory '" + getPath() + "'";
       case CUSTOM:
-        return "Scope '" + getScopeName() + "'";
+        return getScopeName();
     }
     assert false;
     return null;

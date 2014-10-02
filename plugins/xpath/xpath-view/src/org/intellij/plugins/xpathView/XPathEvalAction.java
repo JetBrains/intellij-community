@@ -299,13 +299,20 @@ public class XPathEvalAction extends XPathAction {
 
     public static void showUsageView(@NotNull final Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
         final UsageViewPresentation presentation = new UsageViewPresentation();
-        presentation.setTargetsNodeText("Expression");
+        presentation.setTargetsNodeText("XPath Expression");
         presentation.setCodeUsages(false);
-        presentation.setCodeUsagesString("Result");
+        presentation.setCodeUsagesString("Found Matches");
         presentation.setNonCodeUsagesString("Result");
         presentation.setUsagesString("XPath Result");
         presentation.setUsagesWord("match");
-        presentation.setTabText("XPath");
+        final ItemPresentation targetPresentation = usageTarget.getPresentation();
+        if (targetPresentation != null) {
+          presentation
+            .setTabText(StringUtil.shortenTextWithEllipsis("XPath '" + targetPresentation.getPresentableText() + '\'', 60, 0, true));
+        }
+        else {
+          presentation.setTabText("XPath");
+        }
         presentation.setScopeText("XML Files");
 
         presentation.setOpenInNewTab(XPathAppComponent.getInstance().getConfig().OPEN_NEW_TAB);
