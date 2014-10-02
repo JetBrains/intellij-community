@@ -1,12 +1,7 @@
 package com.intellij.webcore.packaging;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,14 +17,12 @@ import java.util.Map;
  * @author yole
  */
 public class PackagesNotificationPanel {
-  private final Project myProject;
   private final JEditorPane myHtmlViewer;
   private final Map<String, Runnable> myLinkHandlers = new HashMap<String, Runnable>();
   private String myErrorTitle;
   private PackageManagementService.ErrorDescription myErrorDescription;
 
-  public PackagesNotificationPanel(@NotNull Project project) {
-    myProject = project;
+  public PackagesNotificationPanel() {
     myHtmlViewer = SwingHelper.createHtmlViewer(true, null, null, null);
     myHtmlViewer.setVisible(false);
     myHtmlViewer.addHyperlinkListener(new HyperlinkAdapter() {
@@ -40,46 +33,15 @@ public class PackagesNotificationPanel {
           handler.run();
         }
         else if (myErrorTitle != null && myErrorDescription != null) {
-          showError(myProject, myErrorTitle, myErrorDescription);
+          showError(myErrorTitle, myErrorDescription);
         }
       }
     });
   }
 
-  public static void showError(@NotNull Project project, @NotNull String title,
-                               @NotNull PackageManagementService.ErrorDescription description) {
-    doShowError(title, description, new DialogBuilder(project));
-  }
-
-  public static void showError(@NotNull Component owner, @NotNull String title,
-                               @NotNull PackageManagementService.ErrorDescription description) {
-    doShowError(title, description, new DialogBuilder(owner));
-  }
-
-  private static void doShowError(@NotNull String title, @NotNull PackageManagementService.ErrorDescription description,
-                                  @NotNull DialogBuilder builder) {
-    if (description.getCommand() != null || description.getOutput() != null || description.getSolution() != null) {
-      final PackagingErrorDialog dialog = new PackagingErrorDialog(title, description);
-      dialog.show();
-    }
-    else {
-      builder.setTitle(title);
-      final JTextArea textArea = new JTextArea();
-      textArea.setEditable(false);
-      textArea.setText(description.getMessage());
-      textArea.setWrapStyleWord(false);
-      textArea.setLineWrap(true);
-      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
-      scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-      final JPanel panel = new JPanel(new BorderLayout(10, 0));
-      panel.setPreferredSize(new Dimension(600, 400));
-      panel.add(scrollPane, BorderLayout.CENTER);
-      panel.add(new JBLabel("Details:", Messages.getErrorIcon(), SwingConstants.LEFT), BorderLayout.NORTH);
-      builder.setCenterPanel(panel);
-      builder.setButtonsAlignment(SwingConstants.CENTER);
-      builder.addOkAction();
-      builder.show();
-    }
+  public static void showError(@NotNull String title, @NotNull PackageManagementService.ErrorDescription description) {
+    final PackagingErrorDialog dialog = new PackagingErrorDialog(title, description);
+    dialog.show();
   }
 
   public void showResult(String packageName, @Nullable PackageManagementService.ErrorDescription errorDescription) {

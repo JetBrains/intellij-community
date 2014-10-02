@@ -16,6 +16,7 @@
 package com.intellij.webcore.packaging;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +28,18 @@ import javax.swing.*;
  */
 public class PackagingErrorDialog extends DialogWrapper {
   private JPanel myMainPanel;
-  private JBLabel myErrorMessage;
   private JTextArea myCommandOutput;
   private JPanel myCommandOutputPanel;
   private JPanel myCommandPanel;
   private JTextPane myCommand;
   private JPanel mySolutionPanel;
   private JTextPane mySolution;
+  private JPanel myDetailsPanel;
+  private JTextArea myDetails;
+  private JPanel myMessagePanel;
+  private JBLabel myDetailsLabel;
+  private JTextPane myMessage;
+  private JBLabel myMessageIcon;
 
   public PackagingErrorDialog(@NotNull String title, @NotNull PackageManagementService.ErrorDescription errorDescription) {
     super(false);
@@ -45,11 +51,23 @@ public class PackagingErrorDialog extends DialogWrapper {
     final String message = errorDescription.getMessage();
     final String solution = errorDescription.getSolution();
 
+    final boolean extendedInfo = command != null || output != null || solution != null;
+
+    myDetailsPanel.setVisible(!extendedInfo);
+    myMessagePanel.setVisible(extendedInfo);
     myCommandPanel.setVisible(command != null);
     myCommandOutputPanel.setVisible(output != null);
     mySolutionPanel.setVisible(solution != null);
 
-    myErrorMessage.setText(message);
+    if (extendedInfo) {
+      myMessage.setText(message);
+      myMessageIcon.setIcon(Messages.getErrorIcon());
+    }
+    else {
+      myDetails.setText(message);
+      myDetailsLabel.setIcon(Messages.getErrorIcon());
+    }
+
     if (command != null) {
       myCommand.setText(command);
     }

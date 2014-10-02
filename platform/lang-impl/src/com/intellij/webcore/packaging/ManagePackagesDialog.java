@@ -95,7 +95,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     init();
     setTitle("Available Packages");
     myPackages = new JBList();
-    myNotificationArea = new PackagesNotificationPanel(project);
+    myNotificationArea = new PackagesNotificationPanel();
     myNotificationsAreaPlaceholder.add(myNotificationArea.getComponent(), BorderLayout.CENTER);
 
     final AnActionButton reloadButton = new AnActionButton("Reload List of Packages", AllIcons.Actions.Refresh) {

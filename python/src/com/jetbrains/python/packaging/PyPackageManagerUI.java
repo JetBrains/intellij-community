@@ -33,8 +33,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
-import com.intellij.webcore.packaging.PackagingErrorDialog;
 import com.intellij.webcore.packaging.PackageManagementService;
+import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,8 +198,7 @@ public class PyPackageManagerUI {
                                         @NotNull HyperlinkEvent event) {
               assert myProject != null;
               final String title = StringUtil.capitalizeWords(getFailureTitle(), true);
-              final PackagingErrorDialog dialog = new PackagingErrorDialog(title, description);
-              dialog.show();
+              PackagesNotificationPanel.showError(title, description);
             }
           };
           notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(), firstLine + " <a href=\"xxx\">Details...</a>",

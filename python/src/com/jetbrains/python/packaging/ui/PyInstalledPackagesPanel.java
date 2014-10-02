@@ -74,7 +74,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
           PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
           final PackageManagementService.ErrorDescription description = PyPackageManagementService.toErrorDescription(exceptions, sdk);
           if (description != null) {
-            PackagesNotificationPanel.showError(myProject, "Failed to install Python packaging tools", description);
+            PackagesNotificationPanel.showError("Failed to install Python packaging tools", description);
           }
           packageManager.refresh();
           updatePackages(new PyPackageManagementService(myProject, sdk));
