@@ -22,12 +22,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Dmitry Avdeev
@@ -40,7 +40,9 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
   }
 
   @Override
-  public boolean processEntries(@NotNull final List<Pair<String, String>> entries, @NotNull final Context context, @NotNull final Runnable runNext) {
+  public void processEntries(@NotNull final List<Pair<String, String>> entries,
+                             @NotNull final Context context,
+                             @NotNull final Runnable runNext) {
 
     final VirtualFile directory;
     if (context.directory != null) {
@@ -48,10 +50,9 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
     }
     else {
       directory = getDirectory();
-      if (directory == null) return false;
+      if (directory == null) return;
     }
 
-    final AtomicBoolean result = new AtomicBoolean();
     ProgressManager.getInstance().run(new Task.Backgroundable(null, "Hey", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -67,10 +68,9 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
           final String[] split = splitUrl(url);
           if (!processor.checkout(split[0], directory, split[1])) return;
         }
-        result.set(true);
+        runNext.run();
       }
     });
-    return result.get();
   }
 
   public VirtualFile getDirectory() {
@@ -83,12 +83,11 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
 
   private static final Logger LOG = Logger.getInstance(VcsProjectSetProcessor.class);
 
-  public static String[] splitUrl(String s) {
-    String[] split = s.split(" ");
+  public static String[] splitUrl(String url) {
+    String[] split = url.split(" ");
     if (split.length == 2) return split;
-    int i = s.lastIndexOf('/');
-    String url = s.substring(0, i);
-    String path = s.substring(i + 1);
+    int i = url.lastIndexOf('/');
+    String path = i < 0 ? "" : FileUtil.getNameWithoutExtension(url.substring(i + 1));
     return new String[] { url, path };
   }
 }

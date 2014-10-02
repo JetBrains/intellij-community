@@ -35,15 +35,15 @@ public class OpenProjectSetProcessor extends ProjectSetProcessor {
   }
 
   @Override
-  public boolean processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
+  public void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
     for (Pair<String, String> entry : entries) {
       if ("project".equals(entry.getFirst())) {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        Project project = ProjectUtil.openProject(entry.getSecond(), ArrayUtil.getFirstElement(projects), false);
-        if (project == null) return false;
+        Project project = ProjectUtil.openProject(context.directory.getPath() + entry.getSecond(), ArrayUtil.getFirstElement(projects), false);
+        if (project == null) return;
         context.project = project;
+        runNext.run();
       }
     }
-    return true;
   }
 }
