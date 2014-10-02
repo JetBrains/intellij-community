@@ -197,6 +197,27 @@ public class UIUtil {
   @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
 
   public static Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
+  private static Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+  private static final AbstractAction REDO_ACTION = new AbstractAction() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      Object source = e.getSource();
+      UndoManager manager = source instanceof JComponent ? getClientProperty((JComponent)source, UNDO_MANAGER) : null;
+      if (manager != null && manager.canRedo()) {
+        manager.redo();
+      }
+    }
+  };
+  private static final AbstractAction UNDO_ACTION = new AbstractAction() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      Object source = e.getSource();
+      UndoManager manager = source instanceof JComponent ? getClientProperty((JComponent)source, UNDO_MANAGER) : null;
+      if (manager != null && manager.canUndo()) {
+        manager.undo();
+      }
+    }
+  };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
 
@@ -318,6 +339,10 @@ public class UIUtil {
     for (PropertyChangeListener each : toolkit.getPropertyChangeListeners(name)) {
       toolkit.removePropertyChangeListener(name, each);
     }
+  }
+
+  public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
+    return (T)component.getClientProperty(key);
   }
 
   public static String getHtmlBody(String text) {
@@ -1978,7 +2003,7 @@ public class UIUtil {
         if (component instanceof JScrollPane) {
           if (!hasNonPrimitiveParents(c, component)) {
             final JScrollPane scrollPane = (JScrollPane)component;
-            Integer keepBorderSides = (Integer)scrollPane.getClientProperty(KEEP_BORDER_SIDES);
+            Integer keepBorderSides = getClientProperty(scrollPane, KEEP_BORDER_SIDES);
             if (keepBorderSides != null) {
               if (scrollPane.getBorder() instanceof LineBorder) {
                 Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
@@ -2867,28 +2892,21 @@ public class UIUtil {
     return false;
   }
 
-  public static void addUndoRedoActions(JTextComponent textComponent) {
-    final UndoManager undoManager = new UndoManager();
+  public static void resetUndoRedoActions(@NotNull JTextComponent textComponent) {
+    UndoManager undoManager = getClientProperty(textComponent, UNDO_MANAGER);
+    if (undoManager != null) {
+      undoManager.discardAllEdits();
+    }
+  }
+
+  public static void addUndoRedoActions(@NotNull final JTextComponent textComponent) {
+    UndoManager undoManager = new UndoManager();
+    textComponent.putClientProperty(UNDO_MANAGER, undoManager);
     textComponent.getDocument().addUndoableEditListener(undoManager);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK), "undoKeystroke");
-    textComponent.getActionMap().put("undoKeystroke", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (undoManager.canUndo()) {
-          undoManager.undo();
-        }
-      }
-    });
-    textComponent.getInputMap().put(
-      KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
-    textComponent.getActionMap().put("redoKeystroke", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-         if (undoManager.canRedo()) {
-           undoManager.redo();
-         }
-      }
-    });
+    textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
+    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
+    textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
   }
 
   public static void playSoundFromResource(final String resourceName) {

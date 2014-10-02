@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -387,10 +388,6 @@ public class GuiUtils {
   }
 
   public static JTextField createUndoableTextField() {
-    JTextField field = new JTextField();
-    if (ApplicationManager.getApplication() != null) {
-      new TextComponentUndoProvider(field);
-    }
-    return field;
+    return new JBTextField();
   }
 }
