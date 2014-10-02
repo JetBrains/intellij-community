@@ -24,6 +24,7 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -36,7 +37,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
-import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
@@ -175,23 +175,28 @@ public class InspectionsConfigTreeTable extends TreeTable {
     protected abstract InspectionProfileImpl getInspectionProfile();
 
     protected abstract void onChanged(InspectionConfigTreeNode node);
+
+    public abstract void updateRightPanel();
   }
 
   private static class InspectionsConfigTreeTableModel extends DefaultTreeModel implements TreeTableModel {
 
     private final InspectionsConfigTreeTableSettings mySettings;
+    private final Runnable myUpdateRunnable;
     private TreeTable myTreeTable;
 
-    private SingleAlarm myUpdateAlarm;
+    private Alarm myUpdateAlarm;
 
     public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
       super(settings.getRoot());
       mySettings = settings;
-      myUpdateAlarm = new SingleAlarm(new Runnable() {
+      myUpdateRunnable = new Runnable() {
         public void run() {
+          settings.updateRightPanel();
           ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
         }
-      }, 10, Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
+      };
+      myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
     }
 
     @Override
@@ -284,7 +289,10 @@ public class InspectionsConfigTreeTable extends TreeTable {
         mySettings.onChanged(aNode);
       }
       if (myTreeTable != null) {
-        myUpdateAlarm.cancelAndRequest();
+        if (!myUpdateAlarm.isDisposed()) {
+          myUpdateAlarm.cancelAllRequests();
+          myUpdateAlarm.addRequest(myUpdateRunnable, 10, ModalityState.stateForComponent(myTreeTable));
+        }
       }
     }
 

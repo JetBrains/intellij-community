@@ -499,8 +499,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTreeTable = new InspectionsConfigTreeTable(new InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings(myRoot, myProjectProfileManager.getProject()) {
       @Override
       protected void onChanged(final InspectionConfigTreeNode node) {
-        updateOptionsAndDescriptionPanel();
         updateUpHierarchy(node, (InspectionConfigTreeNode)node.getParent());
+      }
+
+      @Override
+      public void updateRightPanel() {
+        updateOptionsAndDescriptionPanel();
       }
 
       @Override
