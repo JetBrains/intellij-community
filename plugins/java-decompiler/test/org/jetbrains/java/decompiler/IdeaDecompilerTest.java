@@ -42,7 +42,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(path, file);
 
     String decompiled = new IdeaDecompiler().getText(file).toString();
-    assertTrue(decompiled.startsWith(IdeaDecompiler.BANNER + "package java.lang;\n"));
+    assertTrue(decompiled, decompiled.startsWith(IdeaDecompiler.BANNER + "package java.lang;\n"));
     assertTrue(decompiled, decompiled.contains("public final class String"));
     assertTrue(decompiled, decompiled.contains("@deprecated"));
     assertTrue(decompiled, decompiled.contains("private static class CaseInsensitiveComparator"));
