@@ -49,12 +49,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"deprecation"})
 public abstract class ComponentStoreImpl implements IComponentStore {
   private static final Logger LOG = Logger.getInstance(ComponentStoreImpl.class);
   private final Map<String, Object> myComponents = Collections.synchronizedMap(new THashMap<String, Object>());
-  private final List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
+  private final List<SettingsSavingComponent> mySettingsSavingComponents = new CopyOnWriteArrayList<SettingsSavingComponent>();
 
   @Nullable
   protected abstract StateStorage getDefaultsStorage();
@@ -62,8 +63,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   @Override
   public void initComponent(@NotNull final Object component, final boolean service) {
     if (component instanceof SettingsSavingComponent) {
-      SettingsSavingComponent settingsSavingComponent = (SettingsSavingComponent)component;
-      mySettingsSavingComponents.add(settingsSavingComponent);
+      mySettingsSavingComponents.add((SettingsSavingComponent)component);
     }
 
     boolean isSerializable = component instanceof JDOMExternalizable ||
@@ -359,15 +359,10 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   protected class SaveSessionImpl implements ComponentSaveSession {
     protected SaveSession myStorageManagerSaveSession;
 
-    public SaveSessionImpl() {
-    }
-
     @NotNull
     @Override
     public ComponentSaveSession save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-      SettingsSavingComponent[] settingsComponents =
-        mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
-      for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {
+      for (SettingsSavingComponent settingsSavingComponent : mySettingsSavingComponents) {
         try {
           settingsSavingComponent.save();
         }
