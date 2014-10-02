@@ -91,10 +91,27 @@ public class GeneralCommandLine implements UserDataHolder {
     return myWorkDirectory;
   }
 
-  public void setWorkDirectory(@Nullable @NonNls final String path) {
-    setWorkDirectory(path != null ? new File(path) : null);
+  @NotNull
+  public GeneralCommandLine withWorkDirectory(@Nullable final String path) {
+    return withWorkDirectory(path != null ? new File(path) : null);
   }
 
+  @NotNull
+  public GeneralCommandLine withWorkDirectory(@Nullable final File workDirectory) {
+    myWorkDirectory = workDirectory;
+    return this;
+  }
+
+  /**
+   * @deprecated Use {@link #withWorkDirectory(String)} instead.
+   */
+  public void setWorkDirectory(@Nullable @NonNls final String path) {
+    withWorkDirectory(path);
+  }
+
+  /**
+   * @deprecated Use {@link #withWorkDirectory(java.io.File)} instead.
+   */
   public void setWorkDirectory(@Nullable final File workDirectory) {
     myWorkDirectory = workDirectory;
   }
@@ -105,6 +122,14 @@ public class GeneralCommandLine implements UserDataHolder {
   @NotNull
   public Map<String, String> getEnvironment() {
     return myEnvParams;
+  }
+
+  @NotNull
+  public GeneralCommandLine withEnvironment(@Nullable Map<String, String> environment) {
+    if (environment != null) {
+      getEnvironment().putAll(environment);
+    }
+    return this;
   }
 
   /**
@@ -167,6 +192,14 @@ public class GeneralCommandLine implements UserDataHolder {
     return myCharset;
   }
 
+  public GeneralCommandLine withCharset(@NotNull final Charset charset) {
+    myCharset = charset;
+    return this;
+  }
+
+  /**
+   * @deprecated Use {@link #withCharset} instead.
+   */
   public void setCharset(@NotNull final Charset charset) {
     myCharset = charset;
   }

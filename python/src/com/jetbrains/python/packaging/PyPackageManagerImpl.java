@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.Application;
@@ -473,7 +474,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         process = ExecUtil.sudo(cmdline, "Please enter your password to make changes in system packages: ", workingDir, environment);
       }
       else {
-        process = ExecUtil.exec(cmdline, workingDir, environment);
+        process = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment).createProcess();
       }
       final CapturingProcessHandler handler = new CapturingProcessHandler(process);
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
