@@ -465,12 +465,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
   /**
-   * The default concurrency level for this table. Unused but
-   * defined for compatibility with previous versions of this class.
-   */
-  private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
-
-  /**
    * The load factor for this table. Overrides of this value in
    * constructors affect only the initial table capacity.  The
    * actual floating point value isn't normally used -- it is
@@ -1467,8 +1461,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @return the mapping for the key, if present; else the default value
    * @throws NullPointerException if the specified key is null
    */
-// TODO no method in JDK6
-//  @Override
+  @SuppressWarnings("override") //no method in JDK6
   public V getOrDefault(@NotNull Object key, V defaultValue) {
     V v;
     return (v = get(key)) == null ? defaultValue : v;
