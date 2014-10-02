@@ -37,7 +37,7 @@ public interface StateStorage {
 
   boolean hasState(@Nullable Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException;
 
-  @NotNull
+  @Nullable
   ExternalizationSession startExternalization();
 
   /**

@@ -414,22 +414,17 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
     StateStorageManagerExternalizationSession myExternalizationSession = (StateStorageManagerExternalizationSession)externalizationSession;
-    Map<StateStorage, SaveSession> saveSessions = null;
+    List<SaveSession> saveSessions = null;
     for (StateStorage stateStorage : myExternalizationSession.mySessions.keySet()) {
-      SaveSession saveSession = stateStorage.startSave(myExternalizationSession.getExternalizationSession(stateStorage));
+      SaveSession saveSession = stateStorage.startSave(myExternalizationSession.mySessions.get(stateStorage));
       if (saveSession != null) {
         if (saveSessions == null) {
-          saveSessions = new SmartHashMap<StateStorage, SaveSession>();
+          saveSessions = new SmartList<SaveSession>();
         }
-        saveSessions.put(stateStorage, saveSession);
+        saveSessions.add(saveSession);
       }
     }
-
-    if (saveSessions == null) {
-      return null;
-    }
-
-    return new StateStorageSaveSession(saveSessions);
+    return saveSessions == null ? null : new StateStorageSaveSession(saveSessions);
   }
 
   @Override
@@ -463,7 +458,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
           continue;
         }
 
-        getExternalizationSession(stateStorage).setState(component, componentName, state, storageSpec);
+        StateStorage.ExternalizationSession session = getExternalizationSession(stateStorage);
+        if (session != null) {
+          session.setState(component, componentName, state, storageSpec);
+        }
       }
     }
 
@@ -471,15 +469,21 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
       if (stateStorage != null) {
-        getExternalizationSession(stateStorage).setState(component, componentName, state, null);
+        StateStorage.ExternalizationSession session = getExternalizationSession(stateStorage);
+        if (session != null) {
+          session.setState(component, componentName, state, null);
+        }
       }
     }
 
-    @NotNull
-    private StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStore) {
-      StateStorage.ExternalizationSession session = mySessions.get(stateStore);
+    @Nullable
+    private StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStorage) {
+      StateStorage.ExternalizationSession session = mySessions.get(stateStorage);
       if (session == null) {
-        mySessions.put(stateStore, session = stateStore.startExternalization());
+        session = stateStorage.startExternalization();
+        if (session != null) {
+          mySessions.put(stateStorage, session);
+        }
       }
       return session;
     }
@@ -497,15 +501,15 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   protected abstract String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
   private final static class StateStorageSaveSession implements SaveSession {
-    private final Map<StateStorage, SaveSession> mySaveSessions;
+    private final List<SaveSession> mySaveSessions;
 
-    public StateStorageSaveSession(@NotNull Map<StateStorage, SaveSession> saveSessions) {
+    public StateStorageSaveSession(@NotNull List<SaveSession> saveSessions) {
       mySaveSessions = saveSessions;
     }
 
     @Override
     public void save() {
-      for (SaveSession saveSession : mySaveSessions.values()) {
+      for (SaveSession saveSession : mySaveSessions) {
         saveSession.save();
       }
     }

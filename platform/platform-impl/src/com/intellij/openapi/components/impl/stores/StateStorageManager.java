@@ -55,7 +55,7 @@ public interface StateStorageManager {
 
   void clearStateStorage(@NotNull String file);
 
-  @NotNull
+  @Nullable
   ExternalizationSession startExternalization();
 
   /**

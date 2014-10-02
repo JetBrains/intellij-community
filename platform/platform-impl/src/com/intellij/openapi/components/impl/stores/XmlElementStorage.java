@@ -172,9 +172,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public final ExternalizationSession startExternalization() {
-    return createSaveSession(getStorageData());
+    return mySavingDisabled ? null : createSaveSession(getStorageData());
   }
 
   @Nullable
@@ -193,6 +193,10 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   public void disableSaving() {
     mySavingDisabled = true;
+  }
+
+  public void enableSaving() {
+    mySavingDisabled = false;
   }
 
   @Nullable

@@ -52,7 +52,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"deprecation"})
-public abstract class ComponentStoreImpl implements IComponentStore {
+public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   private static final Logger LOG = Logger.getInstance(ComponentStoreImpl.class);
   private final Map<String, Object> myComponents = Collections.synchronizedMap(new THashMap<String, Object>());
   private final List<SettingsSavingComponent> mySettingsSavingComponents = new CopyOnWriteArrayList<SettingsSavingComponent>();
@@ -101,6 +101,9 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     StateStorageManager storageManager = getStateStorageManager();
     StateStorageManager.ExternalizationSession externalizationSession = storageManager.startExternalization();
+    if (externalizationSession == null) {
+      return null;
+    }
 
     String[] names = ArrayUtilRt.toStringArray(myComponents.keySet());
     Arrays.sort(names);
@@ -429,6 +432,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   @NotNull
   protected abstract MessageBus getMessageBus();
 
+  @Override
   @Nullable
   public final Collection<String> reload(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles) {
     Set<String> componentNames = new SmartHashSet<String>();
@@ -470,7 +474,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   public enum ReloadComponentStoreStatus {
-    RESTART_REQUIRED,
+    RESTART_AGREED,
     RESTART_CANCELLED,
     ERROR,
     SUCCESS,
@@ -479,24 +483,37 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   @NotNull
   public static ReloadComponentStoreStatus reloadStore(@NotNull Collection<Pair<VirtualFile, StateStorage>> causes, @NotNull IComponentStore.Reloadable store) {
     Collection<String> notReloadableComponents;
-    AccessToken token = WriteAction.start();
+    boolean willBeReloaded = false;
     try {
-      notReloadableComponents = store.reload(causes);
-    }
-    catch (Throwable e) {
-      Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                 ProjectBundle.message("project.reload.failed.title"));
-      return ReloadComponentStoreStatus.ERROR;
+      AccessToken token = WriteAction.start();
+      try {
+        notReloadableComponents = store.reload(causes);
+      }
+      catch (Throwable e) {
+        Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
+                                   ProjectBundle.message("project.reload.failed.title"));
+        return ReloadComponentStoreStatus.ERROR;
+      }
+      finally {
+        token.finish();
+      }
+
+      if (ContainerUtil.isEmpty(notReloadableComponents)) {
+        return ReloadComponentStoreStatus.SUCCESS;
+      }
+
+      willBeReloaded = askToRestart(store, notReloadableComponents, causes);
+      return willBeReloaded ? ReloadComponentStoreStatus.RESTART_AGREED : ReloadComponentStoreStatus.RESTART_CANCELLED;
     }
     finally {
-      token.finish();
+      if (!willBeReloaded) {
+        for (Pair<VirtualFile, StateStorage> cause : causes) {
+          if (cause.second instanceof XmlElementStorage) {
+            ((XmlElementStorage)cause.second).enableSaving();
+          }
+        }
+      }
     }
-
-    if (ContainerUtil.isEmpty(notReloadableComponents)) {
-      return ReloadComponentStoreStatus.SUCCESS;
-    }
-
-    return askToRestart(store, notReloadableComponents, causes) ? ReloadComponentStoreStatus.RESTART_REQUIRED : ReloadComponentStoreStatus.RESTART_CANCELLED;
   }
 
   // used in settings repository plugin
