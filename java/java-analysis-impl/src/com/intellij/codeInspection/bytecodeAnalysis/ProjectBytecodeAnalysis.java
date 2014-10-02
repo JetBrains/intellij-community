@@ -17,6 +17,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -48,9 +49,11 @@ import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 public class ProjectBytecodeAnalysis {
   public static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis");
   public static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
+  public static final String NULLABLE_METHOD = "java.annotations.inference.nullable.method";
   public static final String NULLABLE_METHOD_TRANSITIVITY = "java.annotations.inference.nullable.method.transitivity";
   public static final int EQUATIONS_LIMIT = 1000;
   private final Project myProject;
+  private final boolean nullableMethod;
   private final boolean nullableMethodTransitivity;
 
   public static ProjectBytecodeAnalysis getInstance(@NotNull Project project) {
@@ -59,6 +62,7 @@ public class ProjectBytecodeAnalysis {
 
   public ProjectBytecodeAnalysis(Project project) {
     myProject = project;
+    nullableMethod = Registry.is(NULLABLE_METHOD) || ApplicationManager.getApplication().isUnitTestMode();
     nullableMethodTransitivity = Registry.is(NULLABLE_METHOD_TRANSITIVITY);
   }
 
@@ -243,18 +247,20 @@ public class ProjectBytecodeAnalysis {
     int arity = owner.getParameterList().getParameters().length;
     BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
 
-    final Solver nullableMethodSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Null), Value.Bot);
-    HKey nullableKey = key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(NullableOut));
-    if (nullableMethodTransitivity) {
-      collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver, equationsCache);
-    }
-    else {
-      collectSingleEquation(nullableKey, nullableMethodSolver, equationsCache);
-    }
+    if (nullableMethod) {
+      final Solver nullableMethodSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Null), Value.Bot);
+      HKey nullableKey = key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(NullableOut));
+      if (nullableMethodTransitivity) {
+        collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver, equationsCache);
+      }
+      else {
+        collectSingleEquation(nullableKey, nullableMethodSolver, equationsCache);
+      }
 
-    HashMap<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
-    if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.negate()) == Value.Null) {
-      result.nullables.add(key);
+      HashMap<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
+      if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.negate()) == Value.Null) {
+        result.nullables.add(key);
+      }
     }
     return result;
   }
