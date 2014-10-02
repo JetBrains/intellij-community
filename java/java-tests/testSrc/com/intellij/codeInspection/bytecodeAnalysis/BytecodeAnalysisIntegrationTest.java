@@ -28,6 +28,8 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -58,11 +60,21 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
 
   private MessageDigest myMessageDigest;
   private List<String> diffs = new ArrayList<String>();
+  private boolean nullableMethodRegistryValue;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myMessageDigest = BytecodeAnalysisConverter.getMessageDigest();
+    RegistryValue registryValue = Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD);
+    nullableMethodRegistryValue = registryValue.asBoolean();
+    registryValue.setValue(true);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD).setValue(nullableMethodRegistryValue);
+    super.tearDown();
   }
 
   @NotNull
