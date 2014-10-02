@@ -205,22 +205,19 @@ public class PyPackageManagerUI {
           notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(), firstLine + " <a href=\"xxx\">Details...</a>",
                                                NotificationType.ERROR, listener));
         }
-        else {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (myListener != null) {
-                myListener.finished(exceptions);
-              }
-              final Notification notification = notificationRef.get();
-              if (notification != null) {
-                notification.notify(myProject);
-              }
-            }
-          });
-
-        }
       }
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (myListener != null) {
+            myListener.finished(exceptions);
+          }
+          final Notification notification = notificationRef.get();
+          if (notification != null) {
+            notification.notify(myProject);
+          }
+        }
+      });
     }
   }
 
