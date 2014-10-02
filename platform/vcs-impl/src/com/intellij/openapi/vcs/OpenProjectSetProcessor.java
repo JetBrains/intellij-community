@@ -18,9 +18,11 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.projectImport.ProjectSetProcessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,13 +37,17 @@ public class OpenProjectSetProcessor extends ProjectSetProcessor {
   }
 
   @Override
-  public void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
-    for (Pair<String, String> entry : entries) {
+  public void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull final Context context, @NotNull Runnable runNext) {
+    for (final Pair<String, String> entry : entries) {
       if ("project".equals(entry.getFirst())) {
-        Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        Project project = ProjectUtil.openProject(context.directory.getPath() + entry.getSecond(), ArrayUtil.getFirstElement(projects), false);
-        if (project == null) return;
-        context.project = project;
+        final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        context.project = UIUtil.invokeAndWaitIfNeeded(new Computable<Project>() {
+          @Override
+          public Project compute() {
+            return ProjectUtil.openProject(context.directory.getPath() + "/" + context.directoryName + "/" + entry.getSecond(), ArrayUtil.getFirstElement(projects), false);
+          }
+        });
+        if (context.project == null) return;
         runNext.run();
       }
     }
