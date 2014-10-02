@@ -833,9 +833,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                   return psiParameter.getName();
                 }
               }, ", ");
-              //Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-              //String arrow = FontUtil.rightArrow(font);
-              String arrow = "->";
+              String arrow = rightArrow();
               @NonNls final String lambdas = type + methodName + "(" + params + ") " + arrow + " {";
 
               final int closureStart = expression.getTextRange().getStartOffset();
@@ -865,6 +863,11 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
     }
     return isClosure;
+  }
+
+  @NotNull
+  protected String rightArrow() {
+    return "->";
   }
 
   private boolean fitsRightMargin(PsiElement element, Document document, int foldingStart, int foldingEnd, int collapsedLength) {
