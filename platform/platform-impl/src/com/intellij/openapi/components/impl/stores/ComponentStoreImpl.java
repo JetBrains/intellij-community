@@ -17,7 +17,10 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
@@ -27,6 +30,8 @@ import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
@@ -34,6 +39,7 @@ import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
@@ -429,7 +435,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   protected abstract MessageBus getMessageBus();
 
   @Nullable
-  protected final Collection<String> doReload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+  public final Collection<String> reload(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles) {
     Set<String> componentNames = new SmartHashSet<String>();
     for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
       StateStorage storage = pair.second;
@@ -466,5 +472,78 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     finally {
       messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
     }
+  }
+
+  public enum ReloadComponentStoreStatus {
+    RESTART_REQUIRED,
+    RESTART_CANCELLED,
+    ERROR,
+    SUCCESS,
+  }
+
+  @NotNull
+  public static ReloadComponentStoreStatus reloadStore(@NotNull Collection<Pair<VirtualFile, StateStorage>> causes, @NotNull IComponentStore.Reloadable store) {
+    Collection<String> notReloadableComponents;
+    AccessToken token = WriteAction.start();
+    try {
+      notReloadableComponents = store.reload(causes);
+    }
+    catch (Throwable e) {
+      Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
+                                 ProjectBundle.message("project.reload.failed.title"));
+      return ReloadComponentStoreStatus.ERROR;
+    }
+    finally {
+      token.finish();
+    }
+
+    if (ContainerUtil.isEmpty(notReloadableComponents)) {
+      return ReloadComponentStoreStatus.SUCCESS;
+    }
+
+    return askToRestart(store, notReloadableComponents, causes) ? ReloadComponentStoreStatus.RESTART_REQUIRED : ReloadComponentStoreStatus.RESTART_CANCELLED;
+  }
+
+  // used in settings repository plugin
+  public static boolean askToRestart(@NotNull Reloadable store,
+                                     @NotNull Collection<String> notReloadableComponents,
+                                     @Nullable Collection<Pair<VirtualFile, StateStorage>> causes) {
+    StringBuilder message = new StringBuilder();
+    String storeName = store instanceof IApplicationStore ? "Application" : "Project";
+    message.append(storeName).append(' ');
+    message.append("components were changed externally and cannot be reloaded:\n\n");
+    int count = 0;
+    for (String component : notReloadableComponents) {
+      if (count == 10) {
+        message.append('\n').append("and ").append(notReloadableComponents.size() - count).append(" more").append('\n');
+      }
+      else {
+        message.append(component).append('\n');
+        count++;
+      }
+    }
+
+    message.append("\nWould you like to ");
+    if (store instanceof IApplicationStore) {
+      message.append(ApplicationManager.getApplication().isRestartCapable() ? "restart" : "shutdown").append(' ');
+      message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?');
+    }
+    else {
+      message.append("reload project?");
+    }
+
+    if (Messages.showYesNoDialog(message.toString(),
+                                 storeName + " Files Changed", Messages.getQuestionIcon()) == Messages.YES) {
+      if (causes != null) {
+        for (Pair<VirtualFile, StateStorage> cause : causes) {
+          StateStorage stateStorage = cause.getSecond();
+          if (stateStorage instanceof XmlElementStorage) {
+            ((XmlElementStorage)stateStorage).disableSaving();
+          }
+        }
+      }
+      return true;
+    }
+    return false;
   }
 }

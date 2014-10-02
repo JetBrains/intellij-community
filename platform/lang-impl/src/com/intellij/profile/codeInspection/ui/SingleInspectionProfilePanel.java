@@ -33,6 +33,7 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -43,6 +44,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ApplicationProfileManager;
@@ -130,6 +132,10 @@ public class SingleInspectionProfilePanel extends JPanel {
   private Splitter myMainSplitter;
 
   private String[] myInitialScopesOrder;
+  private Disposable myDisposable = new Disposable() {
+    @Override
+    public void dispose() {}
+  };
 
   public SingleInspectionProfilePanel(@NotNull InspectionProjectProfileManager projectProfileManager,
                                       @NotNull String inspectionProfileName,
@@ -501,7 +507,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       public InspectionProfileImpl getInspectionProfile() {
         return mySelectedProfile;
       }
-    });
+    }, myDisposable);
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
     UIUtil.setLineStyleAngled(myTreeTable.getTree());
@@ -1020,6 +1026,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     }
     mySelectedProfile = null;
+    Disposer.dispose(myDisposable);
+    myDisposable = null;
   }
 
   private JPanel createInspectionProfileSettingsPanel() {

@@ -380,6 +380,9 @@
   <item name="javax.swing.JTable void sorterChanged(javax.swing.event.RowSorterEvent) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='javax.swing.JTree int[] getSelectionRows()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name="javax.swing.JTree java.awt.Rectangle getPathBounds(javax.swing.tree.TreePath)">
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>

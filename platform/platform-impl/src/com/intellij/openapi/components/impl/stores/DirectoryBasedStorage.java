@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 //todo: support missing plugins
@@ -93,7 +94,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
     boolean containsSelf = false;
     for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
       if (pair.second == this && StringUtilRt.endsWithIgnoreCase(pair.first.getNameSequence(), ".xml")) {

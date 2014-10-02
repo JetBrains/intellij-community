@@ -50,7 +50,7 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
     myFileType = new FileTypeIdentifiableByVirtualFile() {
 
       @Override
-      public boolean isMyFileType(VirtualFile file) {
+      public boolean isMyFileType(@NotNull VirtualFile file) {
         if (isMarkedAsPlainText(file)) {
           return true;
         }

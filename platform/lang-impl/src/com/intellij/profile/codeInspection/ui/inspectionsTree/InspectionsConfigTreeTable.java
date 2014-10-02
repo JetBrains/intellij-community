@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -34,9 +35,10 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,8 +64,8 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private final static int SEVERITIES_COLUMN = 1;
   private final static int IS_ENABLED_COLUMN = 2;
 
-  public InspectionsConfigTreeTable(final InspectionsConfigTreeTableSettings settings) {
-    super(new InspectionsConfigTreeTableModel(settings));
+  public InspectionsConfigTreeTable(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
+    super(new InspectionsConfigTreeTableModel(settings, parentDisposable));
 
     final TableColumn severitiesColumn = getColumnModel().getColumn(SEVERITIES_COLUMN);
     severitiesColumn.setMaxWidth(20);
@@ -180,9 +182,16 @@ public class InspectionsConfigTreeTable extends TreeTable {
     private final InspectionsConfigTreeTableSettings mySettings;
     private TreeTable myTreeTable;
 
-    public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings) {
+    private SingleAlarm myUpdateAlarm;
+
+    public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
       super(settings.getRoot());
       mySettings = settings;
+      myUpdateAlarm = new SingleAlarm(new Runnable() {
+        public void run() {
+          ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
+        }
+      }, 10, Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
     }
 
     @Override
@@ -275,11 +284,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
         mySettings.onChanged(aNode);
       }
       if (myTreeTable != null) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          public void run() {
-            ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
-          }
-        });
+        myUpdateAlarm.cancelAndRequest();
       }
     }
 

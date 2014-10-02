@@ -202,6 +202,9 @@
     <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
                     serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
 
+    <projectService serviceInterface="com.intellij.openapi.project.ProjectReloadState"
+                    serviceImplementation="com.intellij.openapi.project.impl.ProjectReloadStateImpl"/>
+
     <!-- General -->
     <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general" instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 

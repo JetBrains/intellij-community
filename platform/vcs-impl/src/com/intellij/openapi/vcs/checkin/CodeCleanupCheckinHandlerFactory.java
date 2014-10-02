@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -51,7 +52,7 @@ public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
 
     @Override
     public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-      final JCheckBox cleanupCodeCb = new NonFocusableCheckBox("&Cleanup code");
+      final JCheckBox cleanupCodeCb = new NonFocusableCheckBox(VcsBundle.message("before.checkin.cleanup.code"));
       return new RefreshableOnComponent() {
         @Override
         public JComponent getComponent() {
