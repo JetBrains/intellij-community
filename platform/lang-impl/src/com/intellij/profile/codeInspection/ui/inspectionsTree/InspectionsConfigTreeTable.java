@@ -148,10 +148,21 @@ public class InspectionsConfigTreeTable extends TreeTable {
   }
 
   private void swapInspectionEnableState() {
-    for (int selectedRow : getSelectedRows()) {
-      final Object value = getValueAt(selectedRow, IS_ENABLED_COLUMN);
-      final boolean newValue = !Boolean.TRUE.equals(value);
-      setValueAt(newValue, selectedRow, IS_ENABLED_COLUMN);
+    Boolean state = null;
+    final int[] selectedRows = getSelectedRows();
+    for (int selectedRow : selectedRows) {
+      final Boolean value = (Boolean) getValueAt(selectedRow, IS_ENABLED_COLUMN);
+      if (state == null) {
+        state = value;
+      } else if (!state.equals(value)) {
+        state = null;
+        break;
+      }
+    }
+    final boolean newState = !Boolean.TRUE.equals(state);
+
+    for (int selectedRow : selectedRows) {
+      setValueAt(newState, selectedRow, IS_ENABLED_COLUMN);
     }
   }
 

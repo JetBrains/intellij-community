@@ -15,9 +15,9 @@
  */
 package org.jetbrains.java.decompiler;
 
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -81,7 +81,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
         return p > 0 && knowProblems.contains(path.substring(p + 2));
       }
 
-      // todo[r.sh] drop when IDEA129734 get fixed
+      // todo[r.sh] drop when IDEA-129734 get fixed
       private final Set<String> knowProblems = ContainerUtil.newHashSet(
         "java/lang/reflect/AnnotatedElement.class", "java/util/stream/Nodes.class", "java/util/stream/FindOps.class",
         "java/util/stream/Collectors.class", "java/util/stream/DistinctOps.class", "java/util/stream/IntPipeline.class",
@@ -94,23 +94,40 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
     String path = PluginPathManager.getPluginHomePath("java-decompiler") + "/testData/Navigation.class";
     VirtualFile file = StandardFileSystems.local().findFileByPath(path);
     assertNotNull(path, file);
-    myFixture.configureFromExistingVirtualFile(file);
-
-    String text = myFixture.getEditor().getDocument().getText();
-    assertTrue(text, text.startsWith(IdeaDecompiler.BANNER));
+    myFixture.openFileInEditor(file);
 
     doTestNavigation(11, 14, 14, 10);  // to "m2()"
     doTestNavigation(15, 21, 14, 17);  // to "int i"
     doTestNavigation(16, 28, 15, 13);  // to "int r"
   }
 
-  private void doTestNavigation(int line, int column, int expLine, int expColumn) {
-    Editor editor = myFixture.getEditor();
-    int offset = editor.getDocument().getLineStartOffset(line - 1) + column - 1;
-    PsiElement target = GotoDeclarationAction.findTargetElement(getProject(), editor, offset);
+  private void doTestNavigation(int line, int column, int expectedLine, int expectedColumn) {
+    PsiElement target = GotoDeclarationAction.findTargetElement(getProject(), myFixture.getEditor(), offset(line, column));
     assertTrue(String.valueOf(target), target instanceof Navigatable);
     ((Navigatable)target).navigate(true);
-    int expected = editor.getDocument().getLineStartOffset(expLine - 1) + expColumn - 1;
-    assertEquals(expected, editor.getCaretModel().getOffset());
+    int expected = offset(expectedLine, expectedColumn);
+    assertEquals(expected, myFixture.getCaretOffset());
+  }
+
+  private int offset(int line, int column) {
+    return myFixture.getEditor().getDocument().getLineStartOffset(line - 1) + column - 1;
+  }
+
+  public void testHighlighting() {
+    String path = PluginPathManager.getPluginHomePath("java-decompiler") + "/testData/Navigation.class";
+    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
+    assertNotNull(path, file);
+    myFixture.openFileInEditor(file);
+
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(new Runnable() {
+      public void run() {
+        myFixture.getEditor().getCaretModel().moveToOffset(offset(11, 14));  // m2(): usage, declaration
+        assertEquals(2, myFixture.doHighlighting().size());
+        myFixture.getEditor().getCaretModel().moveToOffset(offset(15, 21));  // int i: usage, declaration
+        assertEquals(2, myFixture.doHighlighting().size());
+        myFixture.getEditor().getCaretModel().moveToOffset(offset(16, 28));  // int r: usage, declaration
+        assertEquals(2, myFixture.doHighlighting().size());
+      }
+    });
   }
 }
