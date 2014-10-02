@@ -450,7 +450,7 @@ public class JavaCompletionUtil {
             PsiType returnType = method.getReturnType();
             if (method.getSignature(plainSub).equals(method.getSignature(castSub)) &&
                 returnType != null &&
-                castSub.substitute(returnType).isAssignableFrom(plainSub.substitute(returnType)) &&
+                toRaw(castSub.substitute(returnType)).isAssignableFrom(toRaw(plainSub.substitute(returnType))) &&
                 processor.isAccessible(plainClass.findMethodBySignature(method, true))
               ) {
               return item;
@@ -493,6 +493,10 @@ public class JavaCompletionUtil {
         item.getDelegate().handleInsert(context);
       }
     });
+  }
+  
+  private static PsiType toRaw(@NotNull PsiType type) {
+    return type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
   }
 
   public static LookupElement highlightIfNeeded(PsiType qualifierType, LookupElement item, Object object) {
