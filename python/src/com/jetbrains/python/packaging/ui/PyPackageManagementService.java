@@ -19,12 +19,14 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.apache.xmlrpc.AsyncCallback;
@@ -323,21 +325,40 @@ public class PyPackageManagementService extends PackageManagementService {
       final PyExecutionException ee = (PyExecutionException)e;
       final String stdoutCause = findErrorCause(ee.getStdout());
       final String stderrCause = findErrorCause(ee.getStderr());
-      final String message = stdoutCause != null ? stdoutCause : stderrCause != null ? stderrCause : ee.getMessage();
-      final String solution;
-      if ("pip".equals(ee.getCommand())) {
-        solution = "Try to run this command from the system terminal. Make sure that you use the correct version of 'pip' " +
-                   "installed for your Python interpreter located at '" + sdk.getHomePath() + "'.";
-      }
-      else {
-        solution = null;
-      }
+      final String cause = stdoutCause != null ? stdoutCause : stderrCause;
+      final String message =  cause != null ? cause : ee.getMessage();
       final String command = ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " ");
-      return new ErrorDescription(message, command, ee.getStdout(), solution);
+      return new ErrorDescription(message, command, ee.getStdout(), findErrorSolution(ee, cause, sdk));
     }
     else {
       return ErrorDescription.fromMessage(e.getMessage());
     }
+  }
+
+  @Nullable
+  private static String findErrorSolution(@NotNull PyExecutionException e, @Nullable String cause, @NotNull Sdk sdk) {
+    if (cause != null) {
+      if (StringUtil.containsIgnoreCase(cause, "SyntaxError")) {
+        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+        return "Make sure that you use a version of Python supported by this package. Currently you are using Python " +
+               languageLevel + ".";
+      }
+    }
+
+    if (SystemInfo.isLinux && (containsInOutput(e, "pyconfig.h") || containsInOutput(e, "Python.h"))) {
+      return "Make sure that you have installed Python development packages for your operating system.";
+    }
+
+    if ("pip".equals(e.getCommand())) {
+      return "Try to run this command from the system terminal. Make sure that you use the correct version of 'pip' " +
+             "installed for your Python interpreter located at '" + sdk.getHomePath() + "'.";
+    }
+
+    return null;
+  }
+
+  private static boolean containsInOutput(@NotNull PyExecutionException e, @NotNull String text) {
+    return StringUtil.containsIgnoreCase(e.getStdout(), text) || StringUtil.containsIgnoreCase(e.getStderr(), text);
   }
 
   @Nullable
