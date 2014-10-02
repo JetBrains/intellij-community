@@ -2,7 +2,7 @@
   <id>hg4idea</id>
   <name>hg4idea</name>
   <description>
-      <![CDATA[
+    <![CDATA[
       Allows working with <a href="http://mercurial.selenic.com/">Mercurial version control system</a>.
       The following features are available:
         <ul>
@@ -11,10 +11,12 @@
         <li>When Mercurial is enabled, the Mercurial node appears on the VCS menu, and on the context menu of the editor.
         </ul>
       ]]>
-   </description>
+  </description>
   <category>VCS Integration</category>
   <version>10.0</version>
-  <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and Willem Verstraeten</vendor>
+  <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and
+    Willem Verstraeten
+  </vendor>
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -36,7 +38,7 @@
     <projectService serviceInterface="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"
                     serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgRootsHandler"
-                    serviceImplementation="org.zmlx.hg4idea.HgRootsHandler" />
+                    serviceImplementation="org.zmlx.hg4idea.HgRootsHandler"/>
   </extensions>
 
   <project-components>
@@ -67,7 +69,7 @@
       <reference ref="Annotate"/>
       <separator/>
 
-      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction" />
+      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction"/>
       <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction">
         <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
       </action>
@@ -97,11 +99,14 @@
     </group>
 
     <action class="org.zmlx.hg4idea.action.HgUpdateToFromLogAction" id="hg4idea.UpdateToRevision" text="Update to Revision"/>
-    <action class="org.zmlx.hg4idea.action.HgCreateTagFromLogAction" id="hg4idea.CreateNewTag" text="New Tag"
+    <action class="org.zmlx.hg4idea.action.HgCreateTagFromLogAction" id="hg4idea.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
+    <action class="org.zmlx.hg4idea.action.HgCreateNewBranchFromLogAction" id="hg4idea.CreateNewBranch" text="New Branch..."
+            description="Create new branch starting from the selected commit"/>
 
     <group id="Hg.Log.ContextMenu">
       <reference id="hg4idea.UpdateToRevision"/>
+      <reference id="hg4idea.CreateNewBranch"/>
       <reference id="hg4idea.CreateNewTag"/>
       <add-to-group group-id="Vcs.Log.ContextMenu"/>
     </group>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,35 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.branch.HgBranchPopupActions;
 import org.zmlx.hg4idea.repo.HgRepository;
 
-public class HgUpdateToFromLogAction extends HgLogSingleCommitAction {
+import java.util.Collections;
+
+import static org.zmlx.hg4idea.util.HgUtil.getNewBranchNameFromUser;
+
+public class HgCreateNewBranchFromLogAction extends HgLogSingleCommitAction {
   @Override
   protected void actionPerformed(@NotNull final HgRepository repository, @NotNull VcsFullCommitDetails commit) {
     final Hash revisionHash = commit.getId();
     final Project project = repository.getProject();
-    final VirtualFile root = repository.getRoot();
     FileDocumentManager.getInstance().saveAllDocuments();
-    new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.progress.updatingTo", revisionHash.toShortString())) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        HgUpdateToAction.updateTo(project, root, revisionHash.asString(), false);
-      }
-    }.queue();
+    String shortHash = revisionHash.toShortString();
+    final String name = getNewBranchNameFromUser(repository, "Create New Branch From " + shortHash);
+    if (name != null) {
+      new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.progress.updatingTo", shortHash)) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          if (HgUpdateToAction.updateTo(project, repository.getRoot(), revisionHash.asString(), false)) {
+            new HgBranchPopupActions.HgNewBranchAction(project, Collections.singletonList(repository), repository)
+              .createNewBranch(name);
+          }
+        }
+      }.queue();
+    }
   }
 }
