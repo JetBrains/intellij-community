@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.application.Application;
@@ -48,10 +49,11 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
-import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageService;
+import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.ui.IdeaDialog;
 import org.jetbrains.annotations.NotNull;
@@ -421,11 +423,15 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
           indicator.setText("Creating virtual environment for " + basicSdk.getName());
           myPath = packageManager.createVirtualEnv(getDestination(), useGlobalSitePackages());
         }
-        catch (final PyExternalProcessException e) {
+        catch (final ExecutionException e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              PackagesNotificationPanel.showError(getOwner(), "Failed to Create Virtual Environment", e.toString());
+              final PackageManagementService.ErrorDescription description =
+                PyPackageManagementService.toErrorDescription(Collections.singletonList(e), basicSdk);
+              if (description != null) {
+                PackagesNotificationPanel.showError("Failed to Create Virtual Environment", description);
+              }
             }
           }, ModalityState.any());
         }

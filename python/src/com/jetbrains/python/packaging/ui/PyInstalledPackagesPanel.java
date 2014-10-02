@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.packaging.ui;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -24,15 +26,15 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.Consumer;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.InstalledPackagesPanel;
+import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -40,9 +42,6 @@ import java.util.Set;
  * @author yole
  */
 public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
-  public static final String INSTALL_MANAGEMENT = "installManagement";
-  public static final String CREATE_VENV = "createVEnv";
-
   private boolean myHasManagement = false;
 
   public PyInstalledPackagesPanel(Project project, PackagesNotificationPanel area) {
@@ -54,6 +53,41 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     return service != null ? service.getSdk() : null;
   }
 
+  class PyInstallPackageManagementFix implements PyExecutionFix {
+    @NotNull
+    @Override
+    public String getName() {
+      return "Install packaging tools";
+    }
+
+    @Override
+    public void run(@NotNull final Sdk sdk) {
+      final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, sdk, new PyPackageManagerUI.Listener() {
+        @Override
+        public void started() {
+          myPackagesTable.setPaintBusy(true);
+        }
+
+        @Override
+        public void finished(List<ExecutionException> exceptions) {
+          myPackagesTable.setPaintBusy(false);
+          PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+          final PackageManagementService.ErrorDescription description = PyPackageManagementService.toErrorDescription(exceptions, sdk);
+          if (description != null) {
+            PackagesNotificationPanel.showError("Failed to install Python packaging tools", description);
+          }
+          packageManager.refresh();
+          updatePackages(new PyPackageManagementService(myProject, sdk));
+          for (Consumer<Sdk> listener : myPathChangedListeners) {
+            listener.consume(sdk);
+          }
+          updateNotifications(sdk);
+        }
+      });
+      ui.installManagement();
+    }
+  }
+
   public void updateNotifications(@Nullable final Sdk selectedSdk) {
     if (selectedSdk == null) {
       myNotificationArea.hide();
@@ -63,50 +97,53 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        PyPackageManager packageManager = PyPackageManager.getInstance(selectedSdk);
-        myHasManagement = packageManager.hasManagement(false);
+        PyExecutionException exception = null;
+        try {
+          myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement(false);
+          if (!myHasManagement) {
+            throw new PyExecutionException("Python packaging tools not found", "pip", Collections.<String>emptyList(), "", "", 0,
+                                           ImmutableList.of(new PyInstallPackageManagementFix()));
+          }
+        }
+        catch (PyExecutionException e) {
+          exception = e;
+        }
+        catch (ExecutionException e) {
+          return;
+        }
+        final PyExecutionException problem = exception;
         application.invokeLater(new Runnable() {
           @Override
           public void run() {
             if (selectedSdk == getSelectedSdk()) {
-              final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(selectedSdk);
-              final boolean invalid = PythonSdkType.isInvalid(selectedSdk);
-              boolean allowCreateVirtualEnv =
-                !(PythonSdkType.isRemote(selectedSdk) || flavor instanceof IronPythonSdkFlavor) &&
-                !PythonSdkType.isVirtualEnv(selectedSdk) &&
-                myNotificationArea.hasLinkHandler(CREATE_VENV);
-              final String createVirtualEnvLink = "<a href=\"" + CREATE_VENV + "\">create new VirtualEnv</a>";
               myNotificationArea.hide();
-              if (!invalid) {
-                String text = null;
-                if (!myHasManagement) {
-                  myNotificationArea.addLinkHandler(INSTALL_MANAGEMENT,
-                                                    new Runnable() {
-                                                      @Override
-                                                      public void run() {
-                                                        final Sdk sdk = getSelectedSdk();
-                                                        if (sdk != null) {
-                                                          installManagementTools(sdk);
-                                                        }
-                                                        myNotificationArea.removeLinkHandler(INSTALL_MANAGEMENT);
-                                                        updateNotifications(selectedSdk);
-                                                      }
-                                                    }
-                  );
-                }
-
-                if (!myHasManagement) {
-                  text = "Python packaging tools not found. <a href=\"" + INSTALL_MANAGEMENT + "\">Install packaging tools</a>";
-                }
-                if (text != null) {
-                  if (allowCreateVirtualEnv) {
-                    text += " or " + createVirtualEnvLink;
+              if (problem != null) {
+                final boolean invalid = PythonSdkType.isInvalid(selectedSdk);
+                if (!invalid) {
+                  final StringBuilder builder = new StringBuilder(problem.getMessage());
+                  builder.append(". ");
+                  for (final PyExecutionFix fix : problem.getFixes()) {
+                    final String key = "id" + fix.hashCode();
+                    final String link = "<a href=\"" + key + "\">" + fix.getName() + "</a>";
+                    builder.append(link);
+                    builder.append(" ");
+                    myNotificationArea.addLinkHandler(key, new Runnable() {
+                      @Override
+                      public void run() {
+                        final Sdk sdk = getSelectedSdk();
+                        if (sdk != null) {
+                          fix.run(sdk);
+                          myNotificationArea.removeLinkHandler(key);
+                          updatePackages(new PyPackageManagementService(myProject, sdk));
+                          updateNotifications(sdk);
+                        }
+                      }
+                    });
                   }
-                  myNotificationArea.showWarning(text);
+                  myNotificationArea.showWarning(builder.toString());
                 }
+                myInstallButton.setEnabled(!invalid && myHasManagement);
               }
-
-              myInstallButton.setEnabled(!invalid && myHasManagement);
             }
           }
         }, ModalityState.any());
@@ -117,33 +154,6 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   @Override
   protected Set<String> getPackagesToPostpone() {
     return Sets.newHashSet("pip", "distutils", "setuptools");
-  }
-
-  private void installManagementTools(@NotNull final Sdk sdk) {
-    final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, sdk, new PyPackageManagerUI.Listener() {
-      @Override
-      public void started() {
-        myPackagesTable.setPaintBusy(true);
-      }
-
-      @Override
-      public void finished(List<PyExternalProcessException> exceptions) {
-        myPackagesTable.setPaintBusy(false);
-        PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-        if (!exceptions.isEmpty()) {
-          final String firstLine = "Install Python packaging tools failed. ";
-          final String description = PyPackageManagerUI.createDescription(exceptions, firstLine);
-          PackagesNotificationPanel.showError(myProject, "Failed to install Python packaging tools", description);
-        }
-        packageManager.refresh();
-        updatePackages(new PyPackageManagementService(myProject, sdk));
-        for (Consumer<Sdk> listener : myPathChangedListeners) {
-          listener.consume(sdk);
-        }
-        updateNotifications(sdk);
-      }
-    });
-    ui.installManagement();
   }
 
   @Override

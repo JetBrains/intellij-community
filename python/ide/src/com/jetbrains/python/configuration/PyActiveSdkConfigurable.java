@@ -187,7 +187,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     mySdkCombo.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
     mySdkCombo.setRenderer(new PySdkListCellRenderer(false));
 
-    final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel(myProject);
+    final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel();
     final JComponent notificationsComponent = notificationsArea.getComponent();
     final Dimension preferredSize = mySdkCombo.getPreferredSize();
     mySdkCombo.setPreferredSize(preferredSize);

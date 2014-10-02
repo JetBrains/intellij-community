@@ -1,13 +1,7 @@
 package com.intellij.webcore.packaging;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,14 +17,12 @@ import java.util.Map;
  * @author yole
  */
 public class PackagesNotificationPanel {
-  private final Project myProject;
   private final JEditorPane myHtmlViewer;
   private final Map<String, Runnable> myLinkHandlers = new HashMap<String, Runnable>();
   private String myErrorTitle;
-  private String myErrorDescription;
+  private PackageManagementService.ErrorDescription myErrorDescription;
 
-  public PackagesNotificationPanel(@NotNull Project project) {
-    myProject = project;
+  public PackagesNotificationPanel() {
     myHtmlViewer = SwingHelper.createHtmlViewer(true, null, null, null);
     myHtmlViewer.setVisible(false);
     myHtmlViewer.addHyperlinkListener(new HyperlinkAdapter() {
@@ -41,41 +33,19 @@ public class PackagesNotificationPanel {
           handler.run();
         }
         else if (myErrorTitle != null && myErrorDescription != null) {
-          showError(myProject, myErrorTitle, myErrorDescription);
+          showError(myErrorTitle, myErrorDescription);
         }
       }
     });
   }
 
-  public static void showError(@NotNull Project project, @NotNull String title, @NotNull String description) {
-    doShowError(title, description, new DialogBuilder(project));
+  public static void showError(@NotNull String title, @NotNull PackageManagementService.ErrorDescription description) {
+    final PackagingErrorDialog dialog = new PackagingErrorDialog(title, description);
+    dialog.show();
   }
 
-  public static void showError(@NotNull Component owner, @NotNull String title, @NotNull String description) {
-    doShowError(title, description, new DialogBuilder(owner));
-  }
-
-  private static void doShowError(String title, String description, DialogBuilder builder) {
-    builder.setTitle(title);
-    final JTextArea textArea = new JTextArea();
-    textArea.setEditable(false);
-    textArea.setText(description);
-    textArea.setWrapStyleWord(false);
-    textArea.setLineWrap(true);
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    final JPanel panel = new JPanel(new BorderLayout(10, 0));
-    panel.setPreferredSize(new Dimension(600, 400));
-    panel.add(scrollPane, BorderLayout.CENTER);
-    panel.add(new JBLabel("Details:", Messages.getErrorIcon(), SwingConstants.LEFT), BorderLayout.NORTH);
-    builder.setCenterPanel(panel);
-    builder.setButtonsAlignment(SwingConstants.CENTER);
-    builder.addOkAction();
-    builder.show();
-  }
-
-  public void showResult(String packageName, @Nullable String errorDescription) {
-    if (StringUtil.isEmpty(errorDescription)) {
+  public void showResult(String packageName, @Nullable PackageManagementService.ErrorDescription errorDescription) {
+    if (errorDescription == null) {
       String message = "Package installed successfully";
       if (packageName != null) {
         message = "Package '" + packageName + "' installed successfully";
@@ -88,9 +58,7 @@ public class PackagesNotificationPanel {
         title = "Failed to install package '" + packageName + "'";
       }
       String firstLine = "Error occurred when installing package '" + packageName + "'. ";
-      showError(firstLine + "<a href=\"xxx\">Details...</a>",
-                title,
-                firstLine + errorDescription);
+      showError(firstLine + "<a href=\"xxx\">Details...</a>", title, errorDescription);
     }
   }
 
@@ -119,10 +87,10 @@ public class PackagesNotificationPanel {
     myErrorDescription = null;
   }
 
-  public void showError(String text, final String detailsTitle, final String detailsDescription) {
+  public void showError(String text, final String detailsTitle, final PackageManagementService.ErrorDescription errorDescription) {
     showContent(text, MessageType.ERROR.getPopupBackground());
     myErrorTitle = detailsTitle;
-    myErrorDescription = detailsDescription;
+    myErrorDescription = errorDescription;
   }
 
   public void showWarning(String text) {
