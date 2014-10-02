@@ -26,8 +26,6 @@ import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -47,7 +45,6 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.FontUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
@@ -55,7 +52,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -837,8 +833,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                   return psiParameter.getName();
                 }
               }, ", ");
-              Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-              String arrow = FontUtil.rightArrow(font);
+              //Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+              //String arrow = FontUtil.rightArrow(font);
+              String arrow = "->";
               @NonNls final String lambdas = type + methodName + "(" + params + ") " + arrow + " {";
 
               final int closureStart = expression.getTextRange().getStartOffset();
