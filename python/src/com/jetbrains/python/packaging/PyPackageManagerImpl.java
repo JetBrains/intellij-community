@@ -470,11 +470,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
     try {
       final Process process;
       final Map<String, String> environment = PySdkUtil.mergeEnvVariables(System.getenv(), ImmutableMap.of("PYTHONUNBUFFERED", "1"));
+      final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment);
       if (useSudo) {
-        process = ExecUtil.sudo(cmdline, "Please enter your password to make changes in system packages: ", workingDir, environment);
+        process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
       }
       else {
-        process = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment).createProcess();
+        process = commandLine.createProcess();
       }
       final CapturingProcessHandler handler = new CapturingProcessHandler(process);
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();

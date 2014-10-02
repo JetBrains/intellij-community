@@ -221,15 +221,19 @@ public class ExecUtil {
    *
    * No shell substitutions, input/output redirects, etc. in the command are applied.
    *
-   * @param command the command and its arguments, can contain any characters
+   * @param commandLine the command line to execute
    * @param prompt the prompt string for the users
-   * @param workDir working directory
-   * @param environment environment variables
    * @return the results of running the process
    */
   @NotNull
-  public static Process sudo(@NotNull final List<String> command, @NotNull final String prompt, @Nullable final String workDir,
-                             @Nullable final Map<String, String> environment) throws ExecutionException, IOException {
+  public static Process sudo(@NotNull final GeneralCommandLine commandLine,
+                             @NotNull final String prompt) throws ExecutionException,IOException {
+    final File workDir = commandLine.getWorkDirectory();
+    final List<String> command = new ArrayList<String>();
+    command.add(commandLine.getExePath());
+    command.addAll(commandLine.getParametersList().getList());
+
+    final Map<String, String> environment = commandLine.getEnvironment();
     if (SystemInfo.isMac) {
       final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
         @Override
@@ -291,9 +295,21 @@ public class ExecUtil {
   }
 
   @NotNull
+  public static ProcessOutput sudoAndGetOutput(@NotNull final GeneralCommandLine commandLine,
+                                               @NotNull final String prompt) throws IOException, ExecutionException {
+    final Process process = sudo(commandLine, prompt);
+    final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+    return processHandler.runProcess();
+  }
+
+  /**
+   * @deprecated Use {@link #sudoAndGetOutput(com.intellij.execution.configurations.GeneralCommandLine, String)} instead.
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  @NotNull
   public static ProcessOutput sudoAndGetOutput(@NotNull List<String> command, @NotNull String prompt,
                                                @Nullable String workDir) throws IOException, ExecutionException {
-    final Process process = sudo(command, prompt, workDir, null);
+    final Process process = sudo(new GeneralCommandLine(command).withWorkDirectory(workDir), prompt);
     final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
     return processHandler.runProcess();
   }
