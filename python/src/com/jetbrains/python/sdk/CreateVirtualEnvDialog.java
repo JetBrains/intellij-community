@@ -53,6 +53,7 @@ import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageService;
+import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.ui.IdeaDialog;
 import org.jetbrains.annotations.NotNull;
@@ -426,8 +427,11 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              PackagesNotificationPanel.showError("Failed to Create Virtual Environment",
-                                                  PackageManagementService.ErrorDescription.fromMessage(e.toString()));
+              final PackageManagementService.ErrorDescription description =
+                PyPackageManagementService.toErrorDescription(Collections.singletonList(e), basicSdk);
+              if (description != null) {
+                PackagesNotificationPanel.showError("Failed to Create Virtual Environment", description);
+              }
             }
           }, ModalityState.any());
         }
