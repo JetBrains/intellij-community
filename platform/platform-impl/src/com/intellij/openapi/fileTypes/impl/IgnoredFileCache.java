@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,7 @@ import java.util.List;
  */
 class IgnoredFileCache {
   private final ConcurrentBitSet myCheckedIds = new ConcurrentBitSet();
-  private final ConcurrentIntObjectMap<Object> myIgnoredIds = new StripedLockIntObjectConcurrentHashMap<Object>();
+  private final ConcurrentIntObjectMap<Object> myIgnoredIds = ContainerUtil.createConcurrentIntObjectMap();
   private final IgnoredPatternSet myIgnoredPatterns;
   private volatile int myVfsEventNesting = 0;
 

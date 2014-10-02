@@ -38,10 +38,6 @@ import java.util.List;
 import java.util.Map;
 
 public class ResolveScopeManagerImpl extends ResolveScopeManager {
-  /**
-   * if true then getUseScope() returns scope restricted to only relevant files which are stored in {@link RefResolveService}
-   */
-  public static final boolean ENABLED_REF_BACK = /*ApplicationManager.getApplication().isUnitTestMode() ||*/ Boolean.getBoolean("ref.back");
   private final Project myProject;
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
@@ -212,8 +208,9 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     GlobalSearchScope scope = isTest
                               ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
                               : GlobalSearchScope.moduleWithDependentsScope(module);
-    if (virtualFile instanceof VirtualFileWithId && ENABLED_REF_BACK) {
-      return RefResolveService.getInstance(myProject).restrictByBackwardIds(virtualFile, scope);
+    RefResolveService resolveService = RefResolveService.getInstance(myProject);
+    if (virtualFile instanceof VirtualFileWithId && resolveService.isUpToDate()) {
+      return resolveService.restrictByBackwardIds(virtualFile, scope);
     }
     return scope;
   }

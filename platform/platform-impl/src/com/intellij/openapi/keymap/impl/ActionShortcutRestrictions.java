@@ -15,16 +15,14 @@
  */
 package com.intellij.openapi.keymap.impl;
 
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ActionShortcutRestrictions {
-  @NotNull
-  public static ShortcutRestrictions getForActionId(String actionId) {
-    if (IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET.equals(actionId) ||
-        IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION.equals(actionId)) {
-      return new ShortcutRestrictions(true, false, false, false);
-    }
-    return ShortcutRestrictions.NO_RESTRICTIONS;
+public abstract class ActionShortcutRestrictions {
+  public static ActionShortcutRestrictions getInstance() {
+    return ServiceManager.getService(ActionShortcutRestrictions.class);
   }
+
+  @NotNull
+  public abstract ShortcutRestrictions getForActionId(String actionId);
 }

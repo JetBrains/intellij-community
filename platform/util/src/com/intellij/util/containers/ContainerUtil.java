@@ -2195,6 +2195,18 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap() {
+    return new ConcurrentIntObjectHashMap<V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap() {
+    return new ConcurrentLongObjectHashMap<V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <T> ConcurrentList<T> createConcurrentList() {
     return new LockFreeCopyOnWriteArrayList<T>();
   }

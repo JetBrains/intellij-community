@@ -17,18 +17,18 @@
 package com.intellij.util.containers;
 
 
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * Base class for concurrent int key -> (weak/soft) value:V map
  * Null values are NOT allowed
  */
 abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
-  private final StripedLockIntObjectConcurrentHashMap<IntReference<V>> myMap = new StripedLockIntObjectConcurrentHashMap<IntReference<V>>();
+  private final ConcurrentIntObjectMap<IntReference<V>> myMap = ContainerUtil.createConcurrentIntObjectMap();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   protected abstract IntReference<V> createReference(int key, @NotNull V value, ReferenceQueue<V> queue);
@@ -120,35 +120,35 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
 
   @NotNull
   @Override
-  public Iterable<StripedLockIntObjectConcurrentHashMap.IntEntry<V>> entries() {
-    final Iterator<StripedLockIntObjectConcurrentHashMap.IntEntry<IntReference<V>>> entryIterator = myMap.entries().iterator();
-    return new Iterable<StripedLockIntObjectConcurrentHashMap.IntEntry<V>>() {
+  public Iterable<IntEntry<V>> entries() {
+    final Iterator<IntEntry<IntReference<V>>> entryIterator = myMap.entries().iterator();
+    return new Iterable<ConcurrentIntObjectMap.IntEntry<V>>() {
       @Override
-      public Iterator<StripedLockIntObjectConcurrentHashMap.IntEntry<V>> iterator() {
-        return new Iterator<StripedLockIntObjectConcurrentHashMap.IntEntry<V>>() {
-          StripedLockIntObjectConcurrentHashMap.IntEntry<V> next = nextAliveEntry();
+      public Iterator<ConcurrentIntObjectMap.IntEntry<V>> iterator() {
+        return new Iterator<IntEntry<V>>() {
+          IntEntry<V> next = nextAliveEntry();
           @Override
           public boolean hasNext() {
             return next != null;
           }
 
           @Override
-          public StripedLockIntObjectConcurrentHashMap.IntEntry<V> next() {
+          public IntEntry<V> next() {
             if (!hasNext()) throw new NoSuchElementException();
-            StripedLockIntObjectConcurrentHashMap.IntEntry<V> result = next;
+            IntEntry<V> result = next;
             next = nextAliveEntry();
             return result;
           }
 
-          private StripedLockIntObjectConcurrentHashMap.IntEntry<V> nextAliveEntry() {
+          private IntEntry<V> nextAliveEntry() {
             while (entryIterator.hasNext()) {
-              StripedLockIntObjectConcurrentHashMap.IntEntry<IntReference<V>> entry = entryIterator.next();
+              IntEntry<IntReference<V>> entry = entryIterator.next();
               final V v = entry.getValue().get();
               if (v == null) {
                 continue;
               }
               final int key = entry.getKey();
-              return new StripedLockIntObjectConcurrentHashMap.IntEntry<V>() {
+              return new IntEntry<V>() {
                 @Override
                 public int getKey() {
                   return key;
@@ -176,5 +176,65 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
   @Override
   public int size() {
     return myMap.size();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return myMap.isEmpty();
+  }
+
+  @NotNull
+  @Override
+  public Enumeration<V> elements() {
+    final Enumeration<IntReference<V>> elementRefs = myMap.elements();
+    return new Enumeration<V>() {
+      private V findNextRef() {
+        while (elementRefs.hasMoreElements()) {
+          IntReference<V> result = elementRefs.nextElement();
+          V v = result.get();
+          if (v != null) return v;
+        }
+        return null;
+      }
+
+      V next = findNextRef();
+
+      @Override
+      public boolean hasMoreElements() {
+        return next != null;
+      }
+
+      @Override
+      public V nextElement() {
+        if (next == null) throw new NoSuchElementException();
+        V v = next;
+        next = findNextRef();
+        return v;
+      }
+    };
+  }
+
+
+  @Override
+  public V putIfAbsent(int key, @NotNull V value) {
+    IntReference<V> prev = myMap.putIfAbsent(key, createReference(key, value, myQueue));
+    return prev == null ? null : prev.get();
+  }
+
+  @Override
+  public Collection<V> values() {
+    Set<V> result = new THashSet<V>();
+    ContainerUtil.addAll(result, elements());
+    return result;
+  }
+
+  @Override
+  public boolean containsValue(@NotNull V value) {
+    for (IntEntry<IntReference<V>> entry : myMap.entries()) {
+      if (value.equals(entry.getValue().get())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 
+@Deprecated
 public class BlockReloadingUtil {
   private BlockReloadingUtil() {
   }

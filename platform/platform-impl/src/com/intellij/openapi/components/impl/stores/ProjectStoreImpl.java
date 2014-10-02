@@ -51,7 +51,6 @@ import java.io.*;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
   private static final Logger LOG = Logger.getInstance(ProjectStoreImpl.class);
@@ -629,11 +628,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     public Class<? extends Annotation> annotationType() {
       throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
     }
-  }
-
-  @Override
-  public boolean reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-    return doReload(changedFiles) == null;
   }
 
   @NotNull

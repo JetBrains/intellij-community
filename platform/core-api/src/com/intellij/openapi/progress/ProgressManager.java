@@ -177,7 +177,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   public abstract void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task, @NotNull ProgressIndicator progressIndicator);
 
-  public static volatile boolean ALWAYS_CHECK_CANCELED = false;
   protected void indicatorCanceled(@NotNull ProgressIndicator indicator) {
   }
 

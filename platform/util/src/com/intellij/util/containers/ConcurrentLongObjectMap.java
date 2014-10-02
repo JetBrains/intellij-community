@@ -18,7 +18,6 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Enumeration;
 
 /**
  * Base interface for concurrent int key -> value:V map
@@ -27,26 +26,29 @@ import java.util.Enumeration;
  * Methods are adapted from {@link java.util.concurrent.ConcurrentMap} to integer keys
  * @see java.util.concurrent.ConcurrentMap
  */
-public interface ConcurrentIntObjectMap<V> {
+public interface ConcurrentLongObjectMap<V> {
   /**
    * @return written value
    */
   @NotNull
-  V cacheOrGet(int key, @NotNull V value);
-  boolean remove(int key, @NotNull V value);
-  boolean replace(int key, @NotNull V oldValue, @NotNull  V newValue);
+  V cacheOrGet(long key, @NotNull V value);
+  boolean remove(long key, @NotNull V value);
+  boolean replace(long key, @NotNull V oldValue, @NotNull V newValue);
+  V replace(long key, @NotNull V value);
 
   // regular Map methods
-  V put(int key, @NotNull V value);
-  V get(int key);
-  V remove(int key);
-  boolean containsKey(int key);
+  V put(long key, @NotNull V value);
+  V get(long key);
+  V remove(long key);
+  boolean containsKey(long key);
   void clear();
   @NotNull
-  Iterable<IntEntry<V>> entries();
+  Iterable<LongEntry<V>> entries();
+  @NotNull
+  Collection<V> values();
 
   @NotNull
-  int[] keys();
+  long[] keys();
 
   /**
    * @return Approximate number of elements in the map.
@@ -56,16 +58,14 @@ public interface ConcurrentIntObjectMap<V> {
    *         rather than alive values because otherwise it would be too expensive
    */
   int size();
-  boolean isEmpty();
-  @NotNull
-  Enumeration<V> elements();
-  @NotNull
-  Collection<V> values();
-  V putIfAbsent(int key, @NotNull V value);
-  boolean containsValue(@NotNull V value);
 
-  public interface IntEntry<V> {
-    int getKey();
-    @NotNull V getValue();
+  boolean isEmpty();
+  boolean containsValue(@NotNull V value);
+  V putIfAbsent(long key, @NotNull V value);
+
+  interface LongEntry<V> {
+    long getKey();
+    @NotNull
+    V getValue();
   }
 }

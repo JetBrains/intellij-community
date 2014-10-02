@@ -41,7 +41,10 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
@@ -830,7 +833,8 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                   return psiParameter.getName();
                 }
               }, ", ");
-              @NonNls final String lambdas = type + methodName + "(" + params + ") -> {";
+              String arrow = rightArrow();
+              @NonNls final String lambdas = type + methodName + "(" + params + ") " + arrow + " {";
 
               final int closureStart = expression.getTextRange().getStartOffset();
               final int closureEnd = expression.getTextRange().getEndOffset();
@@ -859,6 +863,11 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
     }
     return isClosure;
+  }
+
+  @NotNull
+  protected String rightArrow() {
+    return "->";
   }
 
   private boolean fitsRightMargin(PsiElement element, Document document, int foldingStart, int foldingEnd, int collapsedLength) {

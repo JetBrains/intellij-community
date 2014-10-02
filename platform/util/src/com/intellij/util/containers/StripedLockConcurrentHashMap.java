@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentMap;
  * -- using one of 256 ReentrantLock for Segment statically preallocated in {@link StripedReentrantLocks}
  * added hashing strategy argument
  * made not Serializable
+ * @deprecated use com.intellij.util.containers.ContainerUtil#newConcurrentMap() instead
  */
 public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implements ConcurrentMap<K, V> {
   /* ---------------- Constants -------------- */
@@ -821,6 +822,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
  * subclasses from ReentrantLock opportunistically, just to
  * simplify some locking and avoid separate construction.
  */
+@Deprecated
 class _CHMSegment<K, V> {
   private static final StripedReentrantLocks STRIPED_REENTRANT_LOCKS = StripedReentrantLocks.getInstance();
   private final byte lockIndex = (byte)STRIPED_REENTRANT_LOCKS.allocateLockIndex();

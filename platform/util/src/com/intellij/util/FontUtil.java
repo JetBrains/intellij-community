@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.project;
+package com.intellij.util;
 
-import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ProjectReloadState {
-  public static ProjectReloadState getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ProjectReloadState.class);
+import java.awt.*;
+
+public class FontUtil {
+  @NotNull
+  public static String rightArrow(@NotNull Font font) {
+    char rightArrow = '\u2192';
+    return font.canDisplay(rightArrow) ? String.valueOf(rightArrow) : "->";
   }
-
-  public abstract boolean isAfterAutomaticReload();
-
-  public abstract void onBeforeAutomaticProjectReload();
 }
