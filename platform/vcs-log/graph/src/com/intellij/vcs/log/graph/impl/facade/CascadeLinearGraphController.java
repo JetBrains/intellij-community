@@ -22,6 +22,7 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.ColorGetterByLayoutIndex;
 import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.sun.xml.internal.ws.server.UnsupportedMediaException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,14 +31,14 @@ import java.awt.*;
 import java.util.Comparator;
 
 public abstract class CascadeLinearGraphController implements LinearGraphController {
-  @NotNull
-  protected final CascadeLinearGraphController myDelegateLinearGraphController;
+  @Nullable
+  private final CascadeLinearGraphController myDelegateLinearGraphController;
   @NotNull
   protected final PermanentGraphInfo myPermanentGraphInfo;
   @NotNull
   private PrintElementManagerImpl myPrintElementManager;
 
-  protected CascadeLinearGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
+  protected CascadeLinearGraphController(@Nullable CascadeLinearGraphController delegateLinearGraphController,
                                          @NotNull PermanentGraphInfo permanentGraphInfo) {
     myDelegateLinearGraphController = delegateLinearGraphController;
     myPermanentGraphInfo = permanentGraphInfo;
@@ -48,18 +49,26 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   @Override
   public LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphAction action) {
     LinearGraphAnswer answer = performAction(action);
-    if (answer == null) {
+    if (answer == null && myDelegateLinearGraphController != null) {
       answer = myDelegateLinearGraphController.performLinearGraphAction(action);
       answer = performDelegateUpdate(answer);
       myPrintElementManager = createPrintElementManager(myPermanentGraphInfo);
     }
-    return answer;
+    if (answer != null)
+      return answer;
+    return LinearGraphUtils.DEFAULT_GRAPH_ANSWER;
   }
 
   @NotNull
   @Override
   public PrintElementsManager getPrintElementManager() {
     return myPrintElementManager;
+  }
+
+  @NotNull
+  protected CascadeLinearGraphController getDelegateLinearGraphController() {
+    assert myDelegateLinearGraphController != null;
+    return myDelegateLinearGraphController;
   }
 
   protected abstract boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement);
@@ -69,7 +78,7 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
 
   // null mean that this action must be performed by delegateGraphController
   @Nullable
-  protected abstract LinearGraphAnswer performAction(@NotNull LinearGraphAction mouseAction);
+  protected abstract LinearGraphAnswer performAction(@NotNull LinearGraphAction action);
 
   private <CommitId> PrintElementManagerImpl createPrintElementManager(final PermanentGraphInfo<CommitId> permanentGraphInfo) {
     Comparator<GraphElement> graphElementComparator = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
