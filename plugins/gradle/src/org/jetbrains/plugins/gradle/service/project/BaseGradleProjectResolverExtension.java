@@ -46,6 +46,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
+import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.*;
@@ -228,90 +229,55 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                                   @NotNull DataNode<ModuleData> ideModule) {
     IdeaCompilerOutput moduleCompilerOutput = gradleModule.getCompilerOutput();
 
-    File sourceCompileOutputPath = null;
-    File testCompileOutputPath = null;
-    File resourceCompileOutputPath = null;
-    File testResourceCompileOutputPath = null;
+    File buildDir = null;
+    try {
+      buildDir = gradleModule.getGradleProject().getBuildDirectory();
+    }
+    catch (UnsupportedMethodException ignore) {
+      // see org.gradle.tooling.model.GradleProject.getBuildDirectory method supported only since Gradle 2.0
+      // will use com.intellij.openapi.externalSystem.model.ExternalProject.getBuildDir() instead
+    }
+
+    Map<ExternalSystemSourceType, File> compileOutputPaths = ContainerUtil.newHashMap();
+
     boolean inheritOutputDirs = false;
 
     ModuleData moduleData = ideModule.getData();
     if (moduleCompilerOutput != null) {
-      sourceCompileOutputPath = moduleCompilerOutput.getOutputDir();
-      testCompileOutputPath = moduleCompilerOutput.getTestOutputDir();
+      compileOutputPaths.put(ExternalSystemSourceType.SOURCE, moduleCompilerOutput.getOutputDir());
+      compileOutputPaths.put(ExternalSystemSourceType.RESOURCE, moduleCompilerOutput.getOutputDir());
+      compileOutputPaths.put(ExternalSystemSourceType.TEST, moduleCompilerOutput.getTestOutputDir());
+      compileOutputPaths.put(ExternalSystemSourceType.TEST_RESOURCE, moduleCompilerOutput.getOutputDir());
+
       inheritOutputDirs = moduleCompilerOutput.getInheritOutputDirs();
     }
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (externalProject != null) {
       externalProject = new DefaultExternalProject(externalProject);
+      buildDir = buildDir == null ? externalProject.getBuildDir() : buildDir;
 
-      if (!inheritOutputDirs && (sourceCompileOutputPath == null || testCompileOutputPath == null)) {
-        sourceCompileOutputPath = getCompileOutputPath(externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.SOURCE);
-        resourceCompileOutputPath = getCompileOutputPath(externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.RESOURCE);
-        testCompileOutputPath = getCompileOutputPath(externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST);
-        testResourceCompileOutputPath = getCompileOutputPath(externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST_RESOURCE);
-      }
-      else if (!inheritOutputDirs) {
-        resourceCompileOutputPath = sourceCompileOutputPath;
-        testResourceCompileOutputPath = testCompileOutputPath;
-        final ExternalSourceSet mainSourceSet = externalProject.getSourceSets().get(MAIN_SOURCE_SET);
-        if (mainSourceSet != null) {
-          final ExternalSourceDirectorySet sourceDirectories = mainSourceSet.getSources().get(ExternalSystemSourceType.SOURCE);
-          if (sourceDirectories instanceof DefaultExternalSourceDirectorySet) {
-            ((DefaultExternalSourceDirectorySet)sourceDirectories).setOutputDir(sourceCompileOutputPath);
-          }
-          final ExternalSourceDirectorySet resourceDirectories = mainSourceSet.getSources().get(ExternalSystemSourceType.RESOURCE);
-          if (resourceDirectories instanceof DefaultExternalSourceDirectorySet) {
-            ((DefaultExternalSourceDirectorySet)resourceDirectories).setOutputDir(sourceCompileOutputPath);
-          }
+      if (!inheritOutputDirs) {
+        boolean isInitialProjectDataModified = fixCompileOutputPaths(compileOutputPaths, externalProject);
+        if (isInitialProjectDataModified) {
+          final DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(ideModule, ProjectKeys.PROJECT);
+          assert projectDataNode != null;
+          projectDataNode.createOrReplaceChild(ExternalProjectDataService.KEY, externalProject);
         }
-        final ExternalSourceSet testSourceSet = externalProject.getSourceSets().get(TEST_SOURCE_SET);
-        if (testSourceSet != null) {
-          final ExternalSourceDirectorySet testDirectories = testSourceSet.getSources().get(ExternalSystemSourceType.TEST);
-          if (testDirectories instanceof DefaultExternalSourceDirectorySet) {
-            ((DefaultExternalSourceDirectorySet)testDirectories).setOutputDir(testCompileOutputPath);
-          }
-          final ExternalSourceDirectorySet testResourceDirectories = testSourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE);
-          if (testResourceDirectories instanceof DefaultExternalSourceDirectorySet) {
-            ((DefaultExternalSourceDirectorySet)testResourceDirectories).setOutputDir(testCompileOutputPath);
-          }
-        }
-
-        final DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(ideModule, ProjectKeys.PROJECT);
-        assert projectDataNode != null;
-        projectDataNode.createOrReplaceChild(ExternalProjectDataService.KEY, externalProject);
       }
     }
     else {
       LOG.warn(String.format("Unable to get ExternalProject model for '%s'", gradleModule.getName()));
     }
 
-    if (sourceCompileOutputPath != null) {
-      moduleData.setCompileOutputPath(ExternalSystemSourceType.SOURCE, sourceCompileOutputPath.getAbsolutePath());
-    }
-    if (resourceCompileOutputPath != null) {
-      moduleData.setCompileOutputPath(ExternalSystemSourceType.RESOURCE, resourceCompileOutputPath.getAbsolutePath());
-    }
-    if (testCompileOutputPath != null) {
-      moduleData.setCompileOutputPath(ExternalSystemSourceType.TEST, testCompileOutputPath.getAbsolutePath());
-    }
-    if (testResourceCompileOutputPath != null) {
-      moduleData.setCompileOutputPath(ExternalSystemSourceType.TEST_RESOURCE, testResourceCompileOutputPath.getAbsolutePath());
+    for (Map.Entry<ExternalSystemSourceType, File> sourceTypeFileEntry : compileOutputPaths.entrySet()) {
+      final File outputPath = ObjectUtils.chooseNotNull(sourceTypeFileEntry.getValue(), buildDir);
+      if (outputPath != null) {
+        moduleData.setCompileOutputPath(sourceTypeFileEntry.getKey(), outputPath.getAbsolutePath());
+      }
     }
 
-    moduleData.setInheritProjectCompileOutputPath(inheritOutputDirs || sourceCompileOutputPath == null);
-  }
-
-  @Nullable
-  private static File getCompileOutputPath(@Nullable ExternalProject externalProject,
-                                           @NotNull String sourceSetName,
-                                           @NotNull ExternalSystemSourceType sourceType) {
-    if (externalProject == null) return null;
-    final ExternalSourceSet sourceSet = externalProject.getSourceSets().get(sourceSetName);
-    if(sourceSet == null) return null;
-
-    final ExternalSourceDirectorySet directorySet = sourceSet.getSources().get(sourceType);
-    return directorySet != null ? directorySet.getOutputDir() : null;
+    moduleData.setInheritProjectCompileOutputPath(inheritOutputDirs);
   }
 
   @Override
@@ -746,5 +712,67 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   private static boolean isIdeaTask(final String taskName) {
     return taskName.toLowerCase(Locale.ENGLISH).contains("idea");
+  }
+
+  private static boolean fixCompileOutputPaths(@NotNull Map<ExternalSystemSourceType, File> compileOutputPaths,
+                                               @NotNull ExternalProject externalProject) {
+    boolean isInitialProjectDataModified = false;
+    final File sourceCompileOutputPath = compileOutputPaths.get(ExternalSystemSourceType.SOURCE);
+    if (sourceCompileOutputPath == null) {
+      addCompileOutputPath(compileOutputPaths, externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.SOURCE);
+      addCompileOutputPath(compileOutputPaths, externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.RESOURCE);
+    }
+    else {
+      final ExternalSourceSet mainSourceSet = externalProject.getSourceSets().get(MAIN_SOURCE_SET);
+      if (mainSourceSet != null) {
+        final ExternalSourceDirectorySet sourceDirectories = mainSourceSet.getSources().get(ExternalSystemSourceType.SOURCE);
+        if (sourceDirectories instanceof DefaultExternalSourceDirectorySet) {
+          ((DefaultExternalSourceDirectorySet)sourceDirectories).setOutputDir(sourceCompileOutputPath);
+          isInitialProjectDataModified = true;
+        }
+        final ExternalSourceDirectorySet resourceDirectories = mainSourceSet.getSources().get(ExternalSystemSourceType.RESOURCE);
+        if (resourceDirectories instanceof DefaultExternalSourceDirectorySet) {
+          ((DefaultExternalSourceDirectorySet)resourceDirectories).setOutputDir(sourceCompileOutputPath);
+          isInitialProjectDataModified = true;
+        }
+      }
+    }
+
+    final File testCompileOutputPath = compileOutputPaths.get(ExternalSystemSourceType.TEST);
+    if (testCompileOutputPath == null) {
+      addCompileOutputPath(compileOutputPaths, externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST);
+      addCompileOutputPath(compileOutputPaths, externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST_RESOURCE);
+    }
+    else {
+      final ExternalSourceSet testSourceSet = externalProject.getSourceSets().get(TEST_SOURCE_SET);
+      if (testSourceSet != null) {
+        final ExternalSourceDirectorySet testDirectories = testSourceSet.getSources().get(ExternalSystemSourceType.TEST);
+        if (testDirectories instanceof DefaultExternalSourceDirectorySet) {
+          ((DefaultExternalSourceDirectorySet)testDirectories).setOutputDir(testCompileOutputPath);
+          isInitialProjectDataModified = true;
+        }
+        final ExternalSourceDirectorySet testResourceDirectories =
+          testSourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE);
+        if (testResourceDirectories instanceof DefaultExternalSourceDirectorySet) {
+          ((DefaultExternalSourceDirectorySet)testResourceDirectories).setOutputDir(testCompileOutputPath);
+          isInitialProjectDataModified = true;
+        }
+      }
+    }
+
+    return isInitialProjectDataModified;
+  }
+
+  private static void addCompileOutputPath(@NotNull Map<ExternalSystemSourceType, File> compileOutputPaths,
+                                           @NotNull ExternalProject externalProject,
+                                           @NotNull String sourceSetName,
+                                           @NotNull ExternalSystemSourceType sourceType) {
+    final ExternalSourceSet sourceSet = externalProject.getSourceSets().get(sourceSetName);
+    if (sourceSet == null) return;
+
+    final ExternalSourceDirectorySet directorySet = sourceSet.getSources().get(sourceType);
+    if (directorySet != null) {
+      compileOutputPaths.put(sourceType, directorySet.getOutputDir());
+    }
   }
 }
