@@ -2973,8 +2973,7 @@ public class UIUtil {
 
   @NotNull
   public static String rightArrow() {
-    char rightArrow = '\u2192';
-    return getLabelFont().canDisplay(rightArrow) ? String.valueOf(rightArrow) : "->";
+    return FontUtil.rightArrow(getLabelFont());
   }
 
   public static EmptyBorder getTextAlignBorder(@NotNull JToggleButton alignSource) {
