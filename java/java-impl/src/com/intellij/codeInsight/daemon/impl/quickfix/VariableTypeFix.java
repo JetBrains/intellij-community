@@ -20,11 +20,11 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -32,7 +32,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +67,11 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public boolean isAvailable(@NotNull Project project,
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
@@ -83,25 +87,31 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+  public void invoke(@NotNull final Project project,
+                     @NotNull final PsiFile file,
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
     if (changeMethodSignatureIfNeeded(myVariable)) return;
     if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
-    try {
-      myVariable.normalizeDeclaration();
-      final PsiTypeElement typeElement = myVariable.getTypeElement();
-      LOG.assertTrue(typeElement != null, myVariable.getClass());
-      final PsiTypeElement newTypeElement = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(getReturnType());
-      typeElement.replace(newTypeElement);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
-      UndoUtil.markPsiFileForUndo(file);
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    new WriteCommandAction.Simple(project, getText(), file) {
+
+      @Override
+      protected void run() throws Throwable {
+        try {
+          myVariable.normalizeDeclaration();
+          final PsiTypeElement typeElement = myVariable.getTypeElement();
+          LOG.assertTrue(typeElement != null, myVariable.getClass());
+          final PsiTypeElement newTypeElement = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(getReturnType());
+          typeElement.replace(newTypeElement);
+          JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
+          UndoUtil.markPsiFileForUndo(file);
+        } catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    }.execute();
   }
 
   private boolean changeMethodSignatureIfNeeded(PsiVariable myVariable) {
