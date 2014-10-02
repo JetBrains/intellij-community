@@ -34,7 +34,7 @@ class ResourceBundleFileType extends FakeFileType {
     return PropertiesBundle.message("resourcebundle.fake.file.type.description");
   }
 
-  public boolean isMyFileType(VirtualFile file) {
+  public boolean isMyFileType(@NotNull VirtualFile file) {
     return file instanceof ResourceBundleAsVirtualFile;
   }
 
