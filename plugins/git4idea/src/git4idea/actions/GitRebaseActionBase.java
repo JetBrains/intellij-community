@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
@@ -64,7 +65,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     task.executeInBackground(false, new GitTaskResultHandlerAdapter() {
       @Override
       protected void run(GitTaskResult taskResult) {
-        GitUtil.workingTreeChangeStarted(project);
+        DvcsUtil.workingTreeChangeStarted(project);
         try {
           editor.close();
           GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
@@ -73,7 +74,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
           notifyAboutErrorResult(taskResult, resultListener, exceptions, project);
         }
         finally {
-          GitUtil.workingTreeChangeFinished(project);
+          DvcsUtil.workingTreeChangeFinished(project);
         }
       }
     });
