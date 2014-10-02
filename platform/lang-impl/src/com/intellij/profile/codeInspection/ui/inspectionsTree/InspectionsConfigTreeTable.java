@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
@@ -38,6 +39,8 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.TextTransferable;
@@ -133,7 +136,13 @@ public class InspectionsConfigTreeTable extends TreeTable {
       protected Transferable createTransferable(JComponent c) {
         final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
         if (path != null) {
-          return new TextTransferable(path.getLastPathComponent().toString());
+          return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(), new NullableFunction<Object, String>() {
+            @Nullable
+            @Override
+            public String fun(Object o) {
+              return o == path.getPath()[0] ? null : o.toString();
+            }
+          }), " | "));
         }
         return null;
       }
