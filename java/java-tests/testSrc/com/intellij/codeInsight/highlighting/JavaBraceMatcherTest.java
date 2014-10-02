@@ -24,10 +24,10 @@ public class JavaBraceMatcherTest extends LightCodeInsightFixtureTestCase {
   public void testGenerics() {
     myFixture.configureByText("a.java", "import java.util.ArrayList;" +
                                         "class A {" +
-                                        "  ArrayList<caret><String> f;" +
+                                        "  ArrayList<caret><? extends String[]> f;" +
                                         "}");
     final int offset = BraceMatchingUtil.getMatchedBraceOffset(myFixture.getEditor(), true, myFixture.getFile());
-    assertTrue(offset == 54);
+    assertEquals(66, offset);
   }
 
   public void testBrokenText() {
