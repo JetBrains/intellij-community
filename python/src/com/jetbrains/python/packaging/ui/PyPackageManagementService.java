@@ -193,11 +193,10 @@ public class PyPackageManagementService extends PackageManagementService {
 
   @Nullable
   private static ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions) {
-    String message = null;
     if (exceptions != null && exceptions.size() > 0) {
-      message = PyPackageManagerUI.createDescription(exceptions, "");
+      return PyPackageManagerUI.createDescription(exceptions, "");
     }
-    return ErrorDescription.fromMessage(message);
+    return null;
   }
 
   @Override

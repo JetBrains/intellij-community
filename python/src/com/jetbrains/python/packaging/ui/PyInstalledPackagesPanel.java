@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.Consumer;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.InstalledPackagesPanel;
+import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -73,7 +74,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
           PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
           if (!exceptions.isEmpty()) {
             final String firstLine = "Install Python packaging tools failed. ";
-            final String description = PyPackageManagerUI.createDescription(exceptions, firstLine);
+            final PackageManagementService.ErrorDescription description = PyPackageManagerUI.createDescription(exceptions, firstLine);
             PackagesNotificationPanel.showError(myProject, "Failed to install Python packaging tools", description);
           }
           packageManager.refresh();

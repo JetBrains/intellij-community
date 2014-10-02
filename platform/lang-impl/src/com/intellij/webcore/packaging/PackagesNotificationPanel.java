@@ -26,7 +26,7 @@ public class PackagesNotificationPanel {
   private final JEditorPane myHtmlViewer;
   private final Map<String, Runnable> myLinkHandlers = new HashMap<String, Runnable>();
   private String myErrorTitle;
-  private String myErrorDescription;
+  private PackageManagementService.ErrorDescription myErrorDescription;
 
   public PackagesNotificationPanel(@NotNull Project project) {
     myProject = project;
@@ -46,19 +46,21 @@ public class PackagesNotificationPanel {
     });
   }
 
-  public static void showError(@NotNull Project project, @NotNull String title, @NotNull String description) {
+  public static void showError(@NotNull Project project, @NotNull String title,
+                               @NotNull PackageManagementService.ErrorDescription description) {
     doShowError(title, description, new DialogBuilder(project));
   }
 
-  public static void showError(@NotNull Component owner, @NotNull String title, @NotNull String description) {
+  public static void showError(@NotNull Component owner, @NotNull String title,
+                               @NotNull PackageManagementService.ErrorDescription description) {
     doShowError(title, description, new DialogBuilder(owner));
   }
 
-  private static void doShowError(String title, String description, DialogBuilder builder) {
+  private static void doShowError(String title, @NotNull PackageManagementService.ErrorDescription description, DialogBuilder builder) {
     builder.setTitle(title);
     final JTextArea textArea = new JTextArea();
     textArea.setEditable(false);
-    textArea.setText(description);
+    textArea.setText(description.getMessage());
     textArea.setWrapStyleWord(false);
     textArea.setLineWrap(true);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
@@ -87,9 +89,7 @@ public class PackagesNotificationPanel {
         title = "Failed to install package '" + packageName + "'";
       }
       String firstLine = "Error occurred when installing package '" + packageName + "'. ";
-      showError(firstLine + "<a href=\"xxx\">Details...</a>",
-                title,
-                firstLine + errorDescription.getMessage());
+      showError(firstLine + "<a href=\"xxx\">Details...</a>", title, errorDescription);
     }
   }
 
@@ -118,10 +118,10 @@ public class PackagesNotificationPanel {
     myErrorDescription = null;
   }
 
-  public void showError(String text, final String detailsTitle, final String detailsDescription) {
+  public void showError(String text, final String detailsTitle, final PackageManagementService.ErrorDescription errorDescription) {
     showContent(text, MessageType.ERROR.getPopupBackground());
     myErrorTitle = detailsTitle;
-    myErrorDescription = detailsDescription;
+    myErrorDescription = errorDescription;
   }
 
   public void showWarning(String text) {

@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.webcore.packaging.PackageManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageNotificationDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -414,7 +415,8 @@ public class PyPackageManagerUI {
     }
   }
 
-  public static String createDescription(List<ExecutionException> exceptions, String firstLine) {
+  @NotNull
+  public static PackageManagementService.ErrorDescription createDescription(List<ExecutionException> exceptions, String firstLine) {
     final StringBuilder b = new StringBuilder();
     b.append(firstLine);
     b.append("\n\n");
@@ -422,7 +424,7 @@ public class PyPackageManagerUI {
       b.append(exception.toString());
       b.append("\n");
     }
-    return b.toString();
+    return PackageManagementService.ErrorDescription.fromMessage(b.toString());
   }
 
   @NotNull

@@ -243,9 +243,8 @@ public class InstalledPackagesPanel extends JPanel {
                       myNotificationArea.showSuccess("Package " + packageName + " successfully upgraded");
                     }
                     else {
-                      myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
-                                                   "Upgrade Packages Failed",
-                                                   "Upgrade packages failed.\n" + errorDescription.getMessage());
+                      myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>", "Upgrade Packages Failed",
+                                                   errorDescription);
                     }
 
                     if (myCurrentlyInstalling.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
@@ -358,9 +357,8 @@ public class InstalledPackagesPanel extends JPanel {
                 }
               }
               else {
-                myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>",
-                                             "Uninstall Packages Failed",
-                                             "Uninstall packages failed.\n" + errorDescription);
+                myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>", "Uninstall Packages Failed",
+                                             errorDescription);
               }
             }
           });
