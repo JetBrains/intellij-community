@@ -69,175 +69,179 @@ public class GeneratedParserUtilBase {
     }
   };
 
-  public static boolean eof(PsiBuilder builder_, int level_) {
-    return builder_.eof();
+  public static boolean eof(PsiBuilder builder, int level) {
+    return builder.eof();
   }
 
-  public static int current_position_(PsiBuilder builder_) {
-    return builder_.rawTokenIndex();
+  public static int current_position_(PsiBuilder builder) {
+    return builder.rawTokenIndex();
   }
 
-  public static boolean recursion_guard_(PsiBuilder builder_, int level_, String funcName_) {
-    if (level_ > MAX_RECURSION_LEVEL) {
-      builder_.error("Maximum recursion level (" + MAX_RECURSION_LEVEL + ") reached in '" + funcName_ + "'");
+  public static boolean recursion_guard_(PsiBuilder builder, int level, String funcName) {
+    if (level > MAX_RECURSION_LEVEL) {
+      builder.error("Maximum recursion level (" + MAX_RECURSION_LEVEL + ") reached in '" + funcName + "'");
       return false;
     }
     return true;
   }
 
   @Deprecated
-  public static void empty_element_parsed_guard_(PsiBuilder builder_, int offset_, String funcName_) {
-    builder_.error("Empty element parsed in '" + funcName_ + "' at offset " + offset_);
+  public static void empty_element_parsed_guard_(PsiBuilder builder, int offset_, String funcName_) {
+    builder.error("Empty element parsed in '" + funcName_ + "' at offset " + offset_);
   }
 
-  public static boolean empty_element_parsed_guard_(PsiBuilder builder_, String funcName_, int prev_position_) {
-    if (prev_position_ == current_position_(builder_)) {
-      builder_.error("Empty element parsed in '" + funcName_ + "' at offset " + builder_.getCurrentOffset());
+  public static boolean empty_element_parsed_guard_(PsiBuilder builder, String funcName, int pos) {
+    if (pos == current_position_(builder)) {
+      builder.error("Empty element parsed in '" + funcName + "' at offset " + builder.getCurrentOffset());
       return false;
     }
     return true;
   }
 
-  public static boolean invalid_left_marker_guard_(PsiBuilder builder_, PsiBuilder.Marker marker_, String funcName_) {
-    //builder_.error("Invalid left marker encountered in " + funcName_ +" at offset " + builder_.getCurrentOffset());
-    boolean goodMarker = marker_ != null; // && ((LighterASTNode)marker_).getTokenType() != TokenType.ERROR_ELEMENT;
+  public static boolean invalid_left_marker_guard_(PsiBuilder builder, PsiBuilder.Marker marker, String funcName) {
+    //builder.error("Invalid left marker encountered in " + funcName_ +" at offset " + builder.getCurrentOffset());
+    boolean goodMarker = marker != null; // && ((LighterASTNode)marker).getTokenType() != TokenType.ERROR_ELEMENT;
     if (!goodMarker) return false;
-    ErrorState state = ErrorState.get(builder_);
+    ErrorState state = ErrorState.get(builder);
 
-    Frame frame = state.frameStack.peekLast();
-    return frame == null || frame.errorReportedAt <= builder_.rawTokenIndex();
+    return !state.frameStack.isEmpty();
   }
 
-  public static TokenSet create_token_set_(IElementType... tokenTypes_) {
-    return TokenSet.create(tokenTypes_);
+  public static TokenSet create_token_set_(IElementType... tokenTypes) {
+    return TokenSet.create(tokenTypes);
   }
 
-  private static boolean consumeTokens(PsiBuilder builder_, boolean smart, int pin, IElementType... tokens) {
-    ErrorState state = ErrorState.get(builder_);
+  public static boolean leftMarkerIs(PsiBuilder builder, IElementType type) {
+    LighterASTNode marker = builder.getLatestDoneMarker();
+    return marker != null && marker.getTokenType() == type;
+  }
+
+  private static boolean consumeTokens(PsiBuilder builder, boolean smart, int pin, IElementType... tokens) {
+    ErrorState state = ErrorState.get(builder);
     if (state.completionState != null && state.predicateCount == 0) {
-      addCompletionVariant(builder_, state.completionState, tokens);
+      addCompletionVariant(builder, state.completionState, tokens);
     }
     // suppress single token completion
     CompletionState completionState = state.completionState;
     state.completionState = null;
-    boolean result_ = true;
-    boolean pinned_ = false;
+    boolean result = true;
+    boolean pinned = false;
     for (int i = 0, tokensLength = tokens.length; i < tokensLength; i++) {
-      if (pin > 0 && i == pin) pinned_ = result_;
-      if (result_ || pinned_) {
+      if (pin > 0 && i == pin) pinned = result;
+      if (result || pinned) {
         boolean fast = smart && i == 0;
-        if (!(fast ? consumeTokenFast(builder_, tokens[i]) : consumeToken(builder_, tokens[i]))) {
-          result_ = false;
-          if (pin < 0 || pinned_) report_error_(builder_, state, false);
+        if (!(fast ? consumeTokenFast(builder, tokens[i]) : consumeToken(builder, tokens[i]))) {
+          result = false;
+          if (pin < 0 || pinned) report_error_(builder, state, false);
         }
       }
     }
     state.completionState = completionState;
-    return pinned_ || result_;
+    return pinned || result;
   }
 
-  public static boolean consumeTokens(PsiBuilder builder_, int pin_, IElementType... token) {
-    return consumeTokens(builder_, false, pin_, token);
+  public static boolean consumeTokens(PsiBuilder builder, int pin, IElementType... token) {
+    return consumeTokens(builder, false, pin, token);
   }
 
-  public static boolean consumeTokensSmart(PsiBuilder builder_, int pin_, IElementType... token) {
-    return consumeTokens(builder_, true, pin_, token);
+  public static boolean consumeTokensSmart(PsiBuilder builder, int pin, IElementType... token) {
+    return consumeTokens(builder, true, pin, token);
   }
 
-  public static boolean parseTokens(PsiBuilder builder_, int pin_, IElementType... tokens) {
-    return parseTokens(builder_, false, pin_, tokens);
+  public static boolean parseTokens(PsiBuilder builder, int pin, IElementType... tokens) {
+    return parseTokens(builder, false, pin, tokens);
   }
 
-  public static boolean parseTokensSmart(PsiBuilder builder_, int pin_, IElementType... tokens) {
-    return parseTokens(builder_, true, pin_, tokens);
+  public static boolean parseTokensSmart(PsiBuilder builder, int pin, IElementType... tokens) {
+    return parseTokens(builder, true, pin, tokens);
   }
 
-  public static boolean parseTokens(PsiBuilder builder_, boolean smart, int pin_, IElementType... tokens) {
-    PsiBuilder.Marker marker_ = builder_.mark();
-    boolean result_ = consumeTokens(builder_, smart, pin_, tokens);
-    if (!result_) {
-      marker_.rollbackTo();
+  public static boolean parseTokens(PsiBuilder builder, boolean smart, int pin, IElementType... tokens) {
+    PsiBuilder.Marker marker = builder.mark();
+    boolean result = consumeTokens(builder, smart, pin, tokens);
+    if (!result) {
+      marker.rollbackTo();
     }
     else {
-      marker_.drop();
+      marker.drop();
     }
-    return result_;
+    return result;
   }
 
-  public static boolean consumeTokenSmart(PsiBuilder builder_, IElementType token) {
-    addCompletionVariantSmart(builder_, token);
-    return consumeTokenFast(builder_, token);
+  public static boolean consumeTokenSmart(PsiBuilder builder, IElementType token) {
+    addCompletionVariantSmart(builder, token);
+    return consumeTokenFast(builder, token);
   }
 
-  public static boolean consumeTokenSmart(PsiBuilder builder_, String token) {
-    addCompletionVariantSmart(builder_, token);
-    return consumeTokenFast(builder_, token);
+  public static boolean consumeTokenSmart(PsiBuilder builder, String token) {
+    addCompletionVariantSmart(builder, token);
+    return consumeTokenFast(builder, token);
   }
 
-  public static boolean consumeToken(PsiBuilder builder_, IElementType token) {
-    addVariantSmart(builder_, token, true);
-    if (nextTokenIsFast(builder_, token)) {
-      builder_.advanceLexer();
+  public static boolean consumeToken(PsiBuilder builder, IElementType token) {
+    addVariantSmart(builder, token, true);
+    if (nextTokenIsFast(builder, token)) {
+      builder.advanceLexer();
       return true;
     }
     return false;
   }
 
-  public static boolean consumeTokenFast(PsiBuilder builder_, IElementType token) {
-    if (nextTokenIsFast(builder_, token)) {
-      builder_.advanceLexer();
+  public static boolean consumeTokenFast(PsiBuilder builder, IElementType token) {
+    if (nextTokenIsFast(builder, token)) {
+      builder.advanceLexer();
       return true;
     }
     return false;
   }
 
-  public static boolean consumeToken(PsiBuilder builder_, String text) {
-    return consumeToken(builder_, text, ErrorState.get(builder_).caseSensitive);
+  public static boolean consumeToken(PsiBuilder builder, String text) {
+    return consumeToken(builder, text, ErrorState.get(builder).caseSensitive);
   }
 
-  public static boolean consumeToken(PsiBuilder builder_, String text, boolean caseSensitive) {
-    addVariantSmart(builder_, text, true);
-    int count = nextTokenIsFast(builder_, text, caseSensitive);
+  public static boolean consumeToken(PsiBuilder builder, String text, boolean caseSensitive) {
+    addVariantSmart(builder, text, true);
+    int count = nextTokenIsFast(builder, text, caseSensitive);
     if (count > 0) {
-      while (count-- > 0) builder_.advanceLexer();
+      while (count-- > 0) builder.advanceLexer();
       return true;
     }
     return false;
   }
 
-  public static boolean consumeTokenFast(PsiBuilder builder_, String text) {
-    int count = nextTokenIsFast(builder_, text, ErrorState.get(builder_).caseSensitive);
+  public static boolean consumeTokenFast(PsiBuilder builder, String text) {
+    int count = nextTokenIsFast(builder, text, ErrorState.get(builder).caseSensitive);
     if (count > 0) {
-      while (count-- > 0) builder_.advanceLexer();
+      while (count-- > 0) builder.advanceLexer();
       return true;
     }
     return false;
   }
 
-  public static boolean nextTokenIsFast(PsiBuilder builder_, IElementType token) {
-    return builder_.getTokenType() == token;
+  public static boolean nextTokenIsFast(PsiBuilder builder, IElementType token) {
+    return builder.getTokenType() == token;
   }
 
-  public static boolean nextTokenIsFast(PsiBuilder builder_, IElementType... tokens) {
-    IElementType tokenType = builder_.getTokenType();
+  public static boolean nextTokenIsFast(PsiBuilder builder, IElementType... tokens) {
+    IElementType tokenType = builder.getTokenType();
     for (IElementType token : tokens) {
       if (token == tokenType) return true;
     }
     return false;
   }
 
-  public static boolean nextTokenIs(PsiBuilder builder_, String frameName, IElementType... tokens) {
-    ErrorState state = ErrorState.get(builder_);
+  public static boolean nextTokenIs(PsiBuilder builder, String frameName, IElementType... tokens) {
+    ErrorState state = ErrorState.get(builder);
     if (state.completionState != null) return true;
     boolean track = !state.suppressErrors && state.predicateCount < 2 && state.predicateSign;
-    if (!track) return nextTokenIsFast(builder_, tokens);
-    IElementType tokenType = builder_.getTokenType();
+    if (!track) return nextTokenIsFast(builder, tokens);
+    IElementType tokenType = builder.getTokenType();
     if (StringUtil.isNotEmpty(frameName)) {
-      addVariantInner(state, builder_.rawTokenIndex(), frameName);
+      addVariantInner(state, builder.rawTokenIndex(), frameName);
     }
     else {
       for (IElementType token : tokens) {
-        addVariant(builder_, state, token);
+        addVariant(builder, state, token);
       }
     }
     if (tokenType == null) return false;
@@ -247,23 +251,23 @@ public class GeneratedParserUtilBase {
     return false;
   }
 
-  public static boolean nextTokenIs(PsiBuilder builder_, IElementType token) {
-    if (!addVariantSmart(builder_, token, false)) return true;
-    return nextTokenIsFast(builder_, token);
+  public static boolean nextTokenIs(PsiBuilder builder, IElementType token) {
+    if (!addVariantSmart(builder, token, false)) return true;
+    return nextTokenIsFast(builder, token);
   }
 
-  public static boolean nextTokenIs(PsiBuilder builder_, String tokenText) {
-    if (!addVariantSmart(builder_, tokenText, false)) return true;
-    return nextTokenIsFast(builder_, tokenText, ErrorState.get(builder_).caseSensitive) > 0;
+  public static boolean nextTokenIs(PsiBuilder builder, String tokenText) {
+    if (!addVariantSmart(builder, tokenText, false)) return true;
+    return nextTokenIsFast(builder, tokenText, ErrorState.get(builder).caseSensitive) > 0;
   }
 
-  public static boolean nextTokenIsFast(PsiBuilder builder_, String tokenText) {
-    return nextTokenIsFast(builder_, tokenText, ErrorState.get(builder_).caseSensitive) > 0;
+  public static boolean nextTokenIsFast(PsiBuilder builder, String tokenText) {
+    return nextTokenIsFast(builder, tokenText, ErrorState.get(builder).caseSensitive) > 0;
   }
 
-  public static int nextTokenIsFast(PsiBuilder builder_, String tokenText, boolean caseSensitive) {
-    CharSequence sequence = builder_.getOriginalText();
-    int offset = builder_.getCurrentOffset();
+  public static int nextTokenIsFast(PsiBuilder builder, String tokenText, boolean caseSensitive) {
+    CharSequence sequence = builder.getOriginalText();
+    int offset = builder.getCurrentOffset();
     int endOffset = offset + tokenText.length();
     CharSequence subSequence = sequence.subSequence(offset, Math.min(endOffset, sequence.length()));
 
@@ -271,7 +275,7 @@ public class GeneratedParserUtilBase {
 
     int count = 0;
     while (true) {
-      int nextOffset = builder_.rawTokenTypeStart(++count);
+      int nextOffset = builder.rawTokenTypeStart(++count);
       if (nextOffset > endOffset) {
         return -count;
       }
@@ -282,46 +286,46 @@ public class GeneratedParserUtilBase {
     return count;
   }
 
-  private static void addCompletionVariantSmart(PsiBuilder builder_, Object token) {
-    ErrorState state = ErrorState.get(builder_);
+  private static void addCompletionVariantSmart(PsiBuilder builder, Object token) {
+    ErrorState state = ErrorState.get(builder);
     CompletionState completionState = state.completionState;
     if (completionState != null && state.predicateCount == 0) {
-      addCompletionVariant(builder_, completionState, token);
+      addCompletionVariant(builder, completionState, token);
     }
   }
 
-  private static boolean addVariantSmart(PsiBuilder builder_, Object token, boolean force) {
-    ErrorState state = ErrorState.get(builder_);
+  private static boolean addVariantSmart(PsiBuilder builder, Object token, boolean force) {
+    ErrorState state = ErrorState.get(builder);
     // skip FIRST check in completion mode
     if (state.completionState != null && !force) return false;
-    builder_.eof();
+    builder.eof();
     if (!state.suppressErrors && state.predicateCount < 2) {
-      addVariant(builder_, state, token);
+      addVariant(builder, state, token);
     }
     return true;
   }
 
   @Deprecated
-  public static boolean replaceVariants(PsiBuilder builder_, int variantCount, String frameName) {
-    ErrorState state = ErrorState.get(builder_);
+  public static boolean replaceVariants(PsiBuilder builder, int variantCount, String frameName) {
+    ErrorState state = ErrorState.get(builder);
     if (!state.suppressErrors && state.predicateCount < 2 && state.predicateSign) {
       state.clearVariants(true, state.variants.size() - variantCount);
-      addVariantInner(state, builder_.rawTokenIndex(), frameName);
+      addVariantInner(state, builder.rawTokenIndex(), frameName);
     }
     return true;
   }
 
-  public static void addVariant(PsiBuilder builder_, String text) {
-    addVariant(builder_, ErrorState.get(builder_), text);
+  public static void addVariant(PsiBuilder builder, String text) {
+    addVariant(builder, ErrorState.get(builder), text);
   }
 
-  private static void addVariant(PsiBuilder builder_, ErrorState state, Object o) {
-    builder_.eof(); // skip whitespaces
-    addVariantInner(state, builder_.rawTokenIndex(), o);
+  private static void addVariant(PsiBuilder builder, ErrorState state, Object o) {
+    builder.eof(); // skip whitespaces
+    addVariantInner(state, builder.rawTokenIndex(), o);
 
     CompletionState completionState = state.completionState;
     if (completionState != null && state.predicateSign) {
-      addCompletionVariant(builder_, completionState, o);
+      addCompletionVariant(builder, completionState, o);
     }
   }
 
@@ -339,13 +343,13 @@ public class GeneratedParserUtilBase {
   }
 
   @Deprecated
-  public static boolean consumeTokenInner(PsiBuilder builder_, String text, boolean caseSensitive) {
-    return consumeToken(builder_, text, caseSensitive);
+  public static boolean consumeTokenInner(PsiBuilder builder, String text, boolean caseSensitive) {
+    return consumeToken(builder, text, caseSensitive);
   }
 
-  private static void addCompletionVariant(@NotNull PsiBuilder builder_, @NotNull CompletionState completionState, Object o) {
-    int offset = builder_.getCurrentOffset();
-    if (!builder_.eof() && offset == builder_.rawTokenTypeStart(1)) return; // suppress for zero-length tokens
+  private static void addCompletionVariant(@NotNull PsiBuilder builder, @NotNull CompletionState completionState, Object o) {
+    int offset = builder.getCurrentOffset();
+    if (!builder.eof() && offset == builder.rawTokenTypeStart(1)) return; // suppress for zero-length tokens
 
     boolean add = false;
     int diff = completionState.offset - offset;
@@ -356,18 +360,18 @@ public class GeneratedParserUtilBase {
       add = true;
     }
     else if (diff > 0 && diff <= length) {
-      CharSequence fragment = builder_.getOriginalText().subSequence(offset, completionState.offset);
-      add = StringUtil.startsWithIgnoreCase(text, fragment.toString());
+      CharSequence fragment = builder.getOriginalText().subSequence(offset, completionState.offset);
+      add = completionState.prefixMatches(fragment.toString(), text);
     }
     else if (diff < 0) {
       for (int i=-1; ; i--) {
-        IElementType type = builder_.rawLookup(i);
-        int tokenStart = builder_.rawTokenTypeStart(i);
-        if (((PsiBuilderImpl)((Builder)builder_).getDelegate()).whitespaceOrComment(type)) {
+        IElementType type = builder.rawLookup(i);
+        int tokenStart = builder.rawTokenTypeStart(i);
+        if (isWhitespaceOrComment(builder, type)) {
           diff = completionState.offset - tokenStart;
         }
         else if (type != null && tokenStart < completionState.offset) {
-          CharSequence fragment = builder_.getOriginalText().subSequence(tokenStart, completionState.offset);
+          CharSequence fragment = builder.getOriginalText().subSequence(tokenStart, completionState.offset);
           if (StringUtil.startsWithIgnoreCase(text, fragment.toString())) {
             diff = completionState.offset - tokenStart;
           }
@@ -380,8 +384,12 @@ public class GeneratedParserUtilBase {
     add = add && length > 1 && !(text.charAt(0) == '<' && text.charAt(length - 1) == '>') &&
           !(text.charAt(0) == '\'' && text.charAt(length - 1) == '\'' && length < 5);
     if (add) {
-      completionState.items.add(text);
+      completionState.addItem(builder, text);
     }
+  }
+
+  public static boolean isWhitespaceOrComment(@NotNull PsiBuilder builder, @Nullable IElementType type) {
+    return ((PsiBuilderImpl)((Builder)builder).getDelegate()).whitespaceOrComment(type);
   }
 
   // keep the old section API for compatibility
@@ -392,21 +400,21 @@ public class GeneratedParserUtilBase {
 
   @SuppressWarnings("StringEquality")
   @Deprecated
-  public static void enterErrorRecordingSection(PsiBuilder builder_, int level, @NotNull String sectionType, @Nullable String frameName) {
+  public static void enterErrorRecordingSection(PsiBuilder builder, int level, @NotNull String sectionType, @Nullable String frameName) {
     int modifiers = sectionType == _SECTION_GENERAL_ ? _NONE_ :
                     sectionType == _SECTION_NOT_ ? _NOT_ :
                     sectionType == _SECTION_AND_ ? _AND_ : _NONE_;
-    enter_section_impl_(builder_, level, modifiers, frameName);
+    enter_section_impl_(builder, level, modifiers, frameName);
   }
 
   @Deprecated
-  public static boolean exitErrorRecordingSection(PsiBuilder builder_,
+  public static boolean exitErrorRecordingSection(PsiBuilder builder,
                                                   int level,
                                                   boolean result,
                                                   boolean pinned,
                                                   @NotNull String sectionType,
                                                   @Nullable Parser eatMore) {
-    exit_section_(builder_, level, null, null, result, pinned, eatMore);
+    exit_section_(builder, level, null, null, result, pinned, eatMore);
     return result;
   }
 
@@ -419,30 +427,35 @@ public class GeneratedParserUtilBase {
   public static final int _NOT_        = 0x10;
 
   // simple enter/exit methods pair that doesn't require frame object
-  public static PsiBuilder.Marker enter_section_(PsiBuilder builder_) {
-    return builder_.mark();
+  public static PsiBuilder.Marker enter_section_(PsiBuilder builder) {
+    return builder.mark();
   }
 
-  public static void exit_section_(PsiBuilder builder_,
+  public static void exit_section_(PsiBuilder builder,
                                    PsiBuilder.Marker marker,
                                    @Nullable IElementType elementType,
                                    boolean result) {
-    close_marker_impl_(ErrorState.get(builder_).frameStack.peekLast(), marker, elementType, result);
+    close_marker_impl_(ErrorState.get(builder).frameStack.peekLast(), marker, elementType, result);
   }
 
   // complex enter/exit methods pair with frame object
-  public static PsiBuilder.Marker enter_section_(PsiBuilder builder_, int level, int modifiers, @Nullable String frameName) {
-    PsiBuilder.Marker marker = builder_.mark();
-    enter_section_impl_(builder_, level, modifiers, frameName);
+  public static PsiBuilder.Marker enter_section_(PsiBuilder builder, int level, int modifiers, @Nullable String frameName) {
+    PsiBuilder.Marker marker = builder.mark();
+    enter_section_impl_(builder, level, modifiers, frameName);
     return marker;
   }
 
-  private static void enter_section_impl_(PsiBuilder builder_, int level, int modifiers, @Nullable String frameName) {
-    ErrorState state = ErrorState.get(builder_);
-    Frame frame = state.FRAMES.alloc().init(builder_, state, level, modifiers, frameName);
+  private static void enter_section_impl_(PsiBuilder builder, int level, int modifiers, @Nullable String frameName) {
+    ErrorState state = ErrorState.get(builder);
+    Frame frame = state.FRAMES.alloc().init(builder, state, level, modifiers, frameName);
+    //Frame prevFrame = state.frameStack.peekLast();
+    //if (prevFrame != null && prevFrame.errorReportedAt > frame.position) {
+    //  // report error for previous unsuccessful frame
+    //  reportError(builder, state, frame, null, true, false);
+    //}
     if (((frame.modifiers & _LEFT_) | (frame.modifiers & _LEFT_INNER_)) != 0) {
-      PsiBuilder.Marker left = (PsiBuilder.Marker)builder_.getLatestDoneMarker();
-      if (invalid_left_marker_guard_(builder_, left, frameName)) {
+      PsiBuilder.Marker left = (PsiBuilder.Marker)builder.getLatestDoneMarker();
+      if (invalid_left_marker_guard_(builder, left, frameName)) {
         frame.leftMarker = left;
       }
     }
@@ -464,14 +477,14 @@ public class GeneratedParserUtilBase {
     }
   }
 
-  public static void exit_section_(PsiBuilder builder_,
+  public static void exit_section_(PsiBuilder builder,
                                    int level,
                                    PsiBuilder.Marker marker,
                                    @Nullable IElementType elementType,
                                    boolean result,
                                    boolean pinned,
                                    @Nullable Parser eatMore) {
-    ErrorState state = ErrorState.get(builder_);
+    ErrorState state = ErrorState.get(builder);
 
     Frame frame = state.frameStack.pollLast();
     if (frame == null || level != frame.level) {
@@ -488,28 +501,38 @@ public class GeneratedParserUtilBase {
       state.FRAMES.recycle(frame);
       return;
     }
-    exit_section_impl_(state, frame, builder_, marker, elementType, result, pinned);
+    close_frame_impl_(state, frame, builder, marker, elementType, result, pinned);
+    exit_section_impl_(state, frame, builder, elementType, result, pinned, eatMore);
+    state.FRAMES.recycle(frame);
+  }
 
-    int initialPos = builder_.rawTokenIndex();
+  private static void exit_section_impl_(ErrorState state,
+                                         Frame frame,
+                                         PsiBuilder builder,
+                                         @Nullable IElementType elementType,
+                                         boolean result,
+                                         boolean pinned,
+                                         @Nullable Parser eatMore) {
+    int initialPos = builder.rawTokenIndex();
     boolean willFail = !result && !pinned;
     if (willFail && initialPos == frame.position && state.lastExpectedVariantPos == frame.position &&
         frame.name != null && state.variants.size() - frame.variantCount > 1) {
       state.clearVariants(true, frame.variantCount);
       addVariantInner(state, initialPos, frame.name);
     }
+    int lastErrorPos = getLastVariantPos(state, initialPos);
     if (!state.suppressErrors && eatMore != null) {
       state.suppressErrors = true;
-      final boolean eatMoreFlagOnce = !builder_.eof() && eatMore.parse(builder_, frame.level + 1);
-      final int lastErrorPos = getLastVariantPos(state, initialPos);
+      final boolean eatMoreFlagOnce = !builder.eof() && eatMore.parse(builder, frame.level + 1);
       boolean eatMoreFlag = eatMoreFlagOnce || !result && frame.position == initialPos && lastErrorPos > frame.position;
 
       PsiBuilderImpl.ProductionMarker latestDoneMarker =
         (pinned || result) && (state.altMode || elementType != null) &&
-        eatMoreFlagOnce ? (PsiBuilderImpl.ProductionMarker)builder_.getLatestDoneMarker() : null;
+        eatMoreFlagOnce ? (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker() : null;
       PsiBuilder.Marker extensionMarker = null;
       IElementType extensionTokenType = null;
       // whitespace prefix makes the very first frame offset bigger than marker start offset which is always 0
-      if (latestDoneMarker instanceof PsiBuilder.Marker &&
+      if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
           frame.position <= latestDoneMarker.getEndIndex()) {
         extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
@@ -519,27 +542,27 @@ public class GeneratedParserUtilBase {
       // advance to the last error pos
       // skip tokens until lastErrorPos. parseAsTree might look better here...
       int parenCount = 0;
-      while ((eatMoreFlag || parenCount > 0) && builder_.rawTokenIndex() < lastErrorPos) {
+      while ((eatMoreFlag || parenCount > 0) && builder.rawTokenIndex() < lastErrorPos) {
         if (state.braces != null) {
-          if (builder_.getTokenType() == state.braces[0].getLeftBraceType()) parenCount ++;
-          else if (builder_.getTokenType() == state.braces[0].getRightBraceType()) parenCount --;
+          if (builder.getTokenType() == state.braces[0].getLeftBraceType()) parenCount ++;
+          else if (builder.getTokenType() == state.braces[0].getRightBraceType()) parenCount --;
         }
-        builder_.advanceLexer();
-        eatMoreFlag = eatMore.parse(builder_, frame.level + 1);
+        builder.advanceLexer();
+        eatMoreFlag = eatMore.parse(builder, frame.level + 1);
       }
       boolean errorReported = frame.errorReportedAt == initialPos || !result && frame.errorReportedAt >= frame.position;
       if (errorReported) {
         if (eatMoreFlag) {
-          builder_.advanceLexer();
-          parseAsTree(state, builder_, frame.level + 1, DUMMY_BLOCK, true, TOKEN_ADVANCER, eatMore);
+          builder.advanceLexer();
+          parseAsTree(state, builder, frame.level + 1, DUMMY_BLOCK, true, TOKEN_ADVANCER, eatMore);
         }
       }
       else if (eatMoreFlag) {
-        errorReported = reportError(builder_, state, frame, true, true);
-        parseAsTree(state, builder_, frame.level + 1, DUMMY_BLOCK, true, TOKEN_ADVANCER, eatMore);
+        errorReported = reportError(builder, state, frame, null, true, true);
+        parseAsTree(state, builder, frame.level + 1, DUMMY_BLOCK, true, TOKEN_ADVANCER, eatMore);
       }
-      else if (eatMoreFlagOnce || (!result && frame.position != builder_.rawTokenIndex())) {
-        errorReported = reportError(builder_, state, frame, true, false);
+      else if (eatMoreFlagOnce || (!result && frame.position != builder.rawTokenIndex())/* || frame.errorReportedAt > initialPos*/) {
+        errorReported = reportError(builder, state, frame, null, true, false);
       }
       if (extensionMarker != null) {
         extensionMarker.done(extensionTokenType);
@@ -553,27 +576,32 @@ public class GeneratedParserUtilBase {
     }
     else if (!result && pinned && frame.errorReportedAt < 0) {
       // do not report if there are errors beyond current position
-      if (getLastVariantPos(state, initialPos) == initialPos) {
+      if (lastErrorPos == initialPos) {
         // do not force, inner recoverRoot might have skipped some tokens
-        reportError(builder_, state, frame, false, false);
+        reportError(builder, state, frame, elementType, false, false);
       }
+      //else if (lastErrorPos > initialPos) {
+      //  // set error pos here as if it is reported for future reference
+      //  frame.errorReportedAt = lastErrorPos;
+      //}
     }
     // propagate errorReportedAt up the stack to avoid duplicate reporting
     Frame prevFrame = willFail && eatMore == null ? null : state.frameStack.peekLast();
-    if (prevFrame != null && prevFrame.errorReportedAt < frame.errorReportedAt) prevFrame.errorReportedAt = frame.errorReportedAt;
-    state.FRAMES.recycle(frame);
+    if (prevFrame != null && prevFrame.errorReportedAt < frame.errorReportedAt) {
+      prevFrame.errorReportedAt = frame.errorReportedAt;
+    }
   }
 
-  private static void exit_section_impl_(ErrorState state,
-                                         Frame frame,
-                                         PsiBuilder builder_,
-                                         PsiBuilder.Marker marker,
-                                         IElementType elementType,
-                                         boolean result,
-                                         boolean pinned) {
+  private static void close_frame_impl_(ErrorState state,
+                                        Frame frame,
+                                        PsiBuilder builder,
+                                        PsiBuilder.Marker marker,
+                                        IElementType elementType,
+                                        boolean result,
+                                        boolean pinned) {
     if (elementType != null && marker != null) {
       if ((frame.modifiers & _COLLAPSE_) != 0) {
-        PsiBuilderImpl.ProductionMarker last = result || pinned? (PsiBuilderImpl.ProductionMarker)builder_.getLatestDoneMarker() : null;
+        PsiBuilderImpl.ProductionMarker last = result || pinned? (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker() : null;
         if (last != null && last.getStartIndex() == frame.position &&
             state.typeExtends(last.getTokenType(), elementType)) {
           IElementType resultType = last.getTokenType();
@@ -593,7 +621,7 @@ public class GeneratedParserUtilBase {
           frame.leftMarker.precede().done(elementType);
         }
         else {
-          if (frame.level == 0) builder_.eof(); // skip whitespaces
+          if (frame.level == 0) builder.eof(); // skip whitespaces
           marker.done(elementType);
         }
       }
@@ -634,20 +662,20 @@ public class GeneratedParserUtilBase {
     }
   }
 
-  public static boolean report_error_(PsiBuilder builder_, boolean result_) {
-    if (!result_) report_error_(builder_, ErrorState.get(builder_), false);
-    return result_;
+  public static boolean report_error_(PsiBuilder builder, boolean result) {
+    if (!result) report_error_(builder, ErrorState.get(builder), false);
+    return result;
   }
 
-  public static void report_error_(PsiBuilder builder_, ErrorState state, boolean advance) {
+  public static void report_error_(PsiBuilder builder, ErrorState state, boolean advance) {
     Frame frame = state.frameStack.isEmpty()? null : state.frameStack.getLast();
     if (frame == null) {
       LOG.error("unbalanced enter/exit section call: got null");
       return;
     }
-    int position = builder_.rawTokenIndex();
-    if (frame.errorReportedAt < position && getLastVariantPos(state, position) <= position) {
-      reportError(builder_, state, frame, true, advance);
+    int position = builder.rawTokenIndex();
+    if (frame.errorReportedAt < position && getLastVariantPos(state, position/* + 1*/) <= position) {
+      reportError(builder, state, frame, null, true, advance);
     }
   }
 
@@ -655,28 +683,43 @@ public class GeneratedParserUtilBase {
     return state.lastExpectedVariantPos < 0? defValue : state.lastExpectedVariantPos;
   }
 
-  private static boolean reportError(PsiBuilder builder_,
+  private static boolean reportError(PsiBuilder builder,
                                      ErrorState state,
                                      Frame frame,
+                                     IElementType elementType,
                                      boolean force,
                                      boolean advance) {
-    String expectedText = state.getExpectedText(builder_);
+    String expectedText = state.getExpectedText(builder);
     boolean notEmpty = StringUtil.isNotEmpty(expectedText);
     if (force || notEmpty || advance) {
-      String gotText = builder_.eof()? "unexpected end of file" :
-                             notEmpty? "got '" + builder_.getTokenText() +"'" :
-                             "'" + builder_.getTokenText() +"' unexpected";
+      String gotText = builder.eof()? "unexpected end of file" :
+                             notEmpty? "got '" + builder.getTokenText() +"'" :
+                             "'" + builder.getTokenText() +"' unexpected";
       String message = expectedText + gotText;
       if (advance) {
-        PsiBuilder.Marker mark = builder_.mark();
-        builder_.advanceLexer();
+        PsiBuilder.Marker mark = builder.mark();
+        builder.advanceLexer();
         mark.error(message);
       }
+      //else if (!force) {
+      //  PsiBuilder.Marker extensionMarker = null;
+      //  IElementType extensionTokenType = null;
+      //  PsiBuilderImpl.ProductionMarker latestDoneMarker = elementType == null ? null : (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker();
+      //  if (latestDoneMarker != null &&
+      //      frame.position >= latestDoneMarker.getStartIndex() &&
+      //      frame.position <= latestDoneMarker.getEndIndex()) {
+      //    extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
+      //    extensionTokenType = latestDoneMarker.getTokenType();
+      //    ((PsiBuilder.Marker)latestDoneMarker).drop();
+      //  }
+      //  builder.error(message);
+      //  if (extensionMarker != null) extensionMarker.done(extensionTokenType);
+      //}
       else {
-        builder_.error(message);
+        builder.error(message);
       }
-      builder_.eof(); // skip whitespaces
-      frame.errorReportedAt = builder_.rawTokenIndex();
+      builder.eof(); // skip whitespaces
+      frame.errorReportedAt = builder.rawTokenIndex();
       return true;
     }
     return false;
@@ -702,14 +745,22 @@ public class GeneratedParserUtilBase {
     public String fun(Object o) {
       return o.toString();
     }
+
+    public void addItem(@NotNull PsiBuilder builder, @NotNull String text) {
+      items.add(text);
+    }
+
+    public boolean prefixMatches(@NotNull String prefix, @NotNull String variant) {
+      return StringUtil.startsWithIgnoreCase(variant, prefix);
+    }
   }
 
   public static class Builder extends PsiBuilderAdapter {
     public final ErrorState state;
     public final PsiParser parser;
 
-    public Builder(PsiBuilder builder_, ErrorState state_, PsiParser parser_) {
-      super(builder_);
+    public Builder(PsiBuilder builder, ErrorState state_, PsiParser parser_) {
+      super(builder);
       state = state_;
       parser = parser_;
     }
@@ -783,8 +834,8 @@ public class GeneratedParserUtilBase {
       if (state.braces != null && state.braces.length == 0) state.braces = null;
     }
 
-    public String getExpectedText(PsiBuilder builder_) {
-      int position = builder_.rawTokenIndex();
+    public String getExpectedText(PsiBuilder builder) {
+      int position = builder.rawTokenIndex();
       StringBuilder sb = new StringBuilder();
       if (addExpected(sb, position, true)) {
         sb.append(" expected, ");
@@ -844,14 +895,14 @@ public class GeneratedParserUtilBase {
       list.setSize(start);
     }
 
-    boolean typeExtends(IElementType child_, IElementType parent_) {
-      if (child_ == parent_) return true;
+    boolean typeExtends(IElementType child, IElementType parent) {
+      if (child == parent) return true;
       if (extendsSets != null) {
         for (TokenSet set : extendsSets) {
-          if (set.contains(child_) && set.contains(parent_)) return true;
+          if (set.contains(child) && set.contains(parent)) return true;
         }
       }
-      return altExtendsChecker != null && altExtendsChecker.process(child_, parent_);
+      return altExtendsChecker != null && altExtendsChecker.process(child, parent);
     }
   }
 
@@ -869,9 +920,9 @@ public class GeneratedParserUtilBase {
     public Frame() {
     }
 
-    public Frame init(PsiBuilder builder_, ErrorState state, int level_, int modifiers_, String name_) {
-      offset = builder_.getCurrentOffset();
-      position = builder_.rawTokenIndex();
+    public Frame init(PsiBuilder builder, ErrorState state, int level_, int modifiers_, String name_) {
+      offset = builder.getCurrentOffset();
+      position = builder.rawTokenIndex();
       level = level_;
       modifiers = modifiers_;
       name = name_;
@@ -892,7 +943,7 @@ public class GeneratedParserUtilBase {
         ((modifiers & _LEFT_INNER_) != 0? "_LEFT_INNER_, ": "") +
         ((modifiers & _AND_) != 0? "_AND_, ": "") +
         ((modifiers & _NOT_) != 0? "_NOT_, ": "");
-      return "<" + offset + ", " + mod + level + (errorReportedAt > -1 ? ", [" + errorReportedAt + "]" : "") + ">";
+      return String.format("{%s:%s:%d, %d, %s%s}", offset, position, level, errorReportedAt, mod, name);
     }
   }
 
@@ -935,7 +986,7 @@ public class GeneratedParserUtilBase {
 
 
   private static final int MAX_CHILDREN_IN_TREE = 10;
-  public static boolean parseAsTree(ErrorState state, final PsiBuilder builder_, int level, final IElementType chunkType,
+  public static boolean parseAsTree(ErrorState state, final PsiBuilder builder, int level, final IElementType chunkType,
                                     boolean checkBraces, final Parser parser, final Parser eatMoreCondition) {
     final LinkedList<Pair<PsiBuilder.Marker, PsiBuilder.Marker>> parenList = new LinkedList<Pair<PsiBuilder.Marker, PsiBuilder.Marker>>();
     final LinkedList<Pair<PsiBuilder.Marker, Integer>> siblingList = new LinkedList<Pair<PsiBuilder.Marker, Integer>>();
@@ -952,7 +1003,8 @@ public class GeneratedParserUtilBase {
           for (Pair<PsiBuilder.Marker, Integer> pair : siblingList) {
             if (pair.second != rating || parenPair != null && pair.first == parenPair.second) break main;
             if (++count >= MAX_CHILDREN_IN_TREE) {
-              final PsiBuilder.Marker parentMarker = pair.first.precede();
+              PsiBuilder.Marker parentMarker = pair.first.precede();
+              //parentMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
               while (count-- > 0) {
                 siblingList.removeFirst();
               }
@@ -970,14 +1022,14 @@ public class GeneratedParserUtilBase {
     int tokenCount = 0;
     if (checkParens) {
       int tokenIdx = -1;
-      while (builder_.rawLookup(tokenIdx) == TokenType.WHITE_SPACE) tokenIdx --;
-      LighterASTNode doneMarker = builder_.rawLookup(tokenIdx) == state.braces[0].getLeftBraceType() ? builder_.getLatestDoneMarker() : null;
-      if (doneMarker != null && doneMarker.getStartOffset() == builder_.rawTokenTypeStart(tokenIdx) && doneMarker.getTokenType() == TokenType.ERROR_ELEMENT) {
+      while (builder.rawLookup(tokenIdx) == TokenType.WHITE_SPACE) tokenIdx --;
+      LighterASTNode doneMarker = builder.rawLookup(tokenIdx) == state.braces[0].getLeftBraceType() ? builder.getLatestDoneMarker() : null;
+      if (doneMarker != null && doneMarker.getStartOffset() == builder.rawTokenTypeStart(tokenIdx) && doneMarker.getTokenType() == TokenType.ERROR_ELEMENT) {
         parenList.add(Pair.create(((PsiBuilder.Marker)doneMarker).precede(), (PsiBuilder.Marker)null));
       }
     }
     while (true) {
-      final IElementType tokenType = builder_.getTokenType();
+      final IElementType tokenType = builder.getTokenType();
       if (checkParens && (tokenType == state.braces[0].getLeftBraceType() || tokenType == state.braces[0].getRightBraceType() && !parenList.isEmpty())) {
         if (marker != null) {
           marker.done(chunkType);
@@ -987,10 +1039,10 @@ public class GeneratedParserUtilBase {
         }
         if (tokenType == state.braces[0].getLeftBraceType()) {
           final Pair<PsiBuilder.Marker, Integer> prev = siblingList.peek();
-          parenList.addFirst(Pair.create(builder_.mark(), prev == null ? null : prev.first));
+          parenList.addFirst(Pair.create(builder.mark(), prev == null ? null : prev.first));
         }
         checkSiblingsRunnable.run();
-        builder_.advanceLexer();
+        builder.advanceLexer();
         if (tokenType == state.braces[0].getRightBraceType()) {
           final Pair<PsiBuilder.Marker, PsiBuilder.Marker> pair = parenList.removeFirst();
           pair.first.done(chunkType);
@@ -1004,9 +1056,10 @@ public class GeneratedParserUtilBase {
       }
       else {
         if (marker == null) {
-          marker = builder_.mark();
+          marker = builder.mark();
+          //marker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
         }
-        final boolean result = (!parenList.isEmpty() || eatMoreCondition.parse(builder_, level + 1)) && parser.parse(builder_, level + 1);
+        final boolean result = (!parenList.isEmpty() || eatMoreCondition.parse(builder, level + 1)) && parser.parse(builder, level + 1);
         if (result) {
           tokenCount++;
           totalCount++;
@@ -1033,7 +1086,7 @@ public class GeneratedParserUtilBase {
     return totalCount != 0;
   }
 
-  private static class DummyBlockElementType extends IElementType implements ICompositeElementType{
+  private static class DummyBlockElementType extends IElementType implements ICompositeElementType {
     DummyBlockElementType() {
       super("DUMMY_BLOCK", Language.ANY);
     }
