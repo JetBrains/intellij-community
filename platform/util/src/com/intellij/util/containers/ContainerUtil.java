@@ -2196,7 +2196,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap() {
-    return new StripedLockIntObjectConcurrentHashMap<V>();
+    return new ConcurrentIntObjectHashMap<V>();
   }
 
   @NotNull
