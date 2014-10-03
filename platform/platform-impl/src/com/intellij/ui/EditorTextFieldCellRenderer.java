@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
@@ -28,6 +29,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.LineSet;
 import com.intellij.openapi.editor.impl.RangeMarkerTree;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -67,9 +69,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     MyPanel panel = getEditorPanel(table);
     EditorEx editor = panel.myEditor;
-    int tableFontSize = table.getFont().getSize();
-    if (editor.getColorsScheme().getEditorFontSize() != tableFontSize) {
-      editor.getColorsScheme().setEditorFontSize(tableFontSize);
+    Font font = table.getFont();
+    Font editorFont = editor.getColorsScheme().getFont(EditorFontType.PLAIN);
+    if (!Comparing.equal(font, editorFont)) {
+      editor.getColorsScheme().setEditorFontSize(font.getSize());
     }
     panel.setText(getText(((EditorImpl)editor).getFontMetrics(Font.PLAIN), table, value, row, column));
 
@@ -154,7 +157,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       Color oldColor = g.getColor();
       Rectangle clip = g.getClipBounds();
       g.setColor(myEditor.getBackgroundColor());
-      g.fillRect(clip.x, clip.y, clip.width, clip.height);
+      Insets insets = getInsets();
+      g.fillRect(0, 0, insets.left, clip.height);
+      g.fillRect(clip.width - insets.left - insets.right, 0, clip.width, clip.height);
       g.setColor(oldColor);
     }
 
