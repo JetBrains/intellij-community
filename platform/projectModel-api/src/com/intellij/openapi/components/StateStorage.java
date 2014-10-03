@@ -22,6 +22,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Set;
 
 public interface StateStorage {
@@ -36,7 +37,7 @@ public interface StateStorage {
 
   boolean hasState(@Nullable Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException;
 
-  @NotNull
+  @Nullable
   ExternalizationSession startExternalization();
 
   /**
@@ -48,7 +49,7 @@ public interface StateStorage {
   /**
    * Get changed component names
    */
-  void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result);
+  void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result);
 
   interface ExternalizationSession {
     void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec);

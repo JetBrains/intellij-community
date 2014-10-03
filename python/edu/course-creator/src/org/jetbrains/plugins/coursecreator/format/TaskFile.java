@@ -79,7 +79,7 @@ public class TaskFile {
    * @param newEndOffsetInLine distance from line start to end of inserted fragment
    * @param oldEndOffsetInLine distance from line start to end of changed fragment
    */
-  public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine) {
+  public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine, boolean useLength) {
     for (TaskWindow w : task_windows) {
       if ((w.getLine() == line) && (w.getStart() > oldEndOffsetInLine)) {
         int distance = w.getStart() - oldEndOffsetInLine;
@@ -88,7 +88,8 @@ public class TaskFile {
         if (CCProjectService.indexIsValid(prevIndex, task_windows)) {
           TaskWindow prevTW = task_windows.get(prevIndex);
           if (prevTW.getLine() == line) {
-            int endOffset = prevTW.getStart() + prevTW.getReplacementLength();
+            int prevLength = useLength ? prevTW.getLength() : prevTW.getReplacementLength();
+            int endOffset = prevTW.getStart() + prevLength;
             if (endOffset >= newEndOffsetInLine) {
               coveredByPrevTW = true;
             }

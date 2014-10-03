@@ -15,15 +15,21 @@
  */
 package com.intellij.platform;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsCheckoutProcessor;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,9 +62,8 @@ public class ProjectSetTest extends LightPlatformTestCase {
       }
 
       @Override
-      public boolean processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
+      public void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
         ref.set(entries);
-        return true;
       }
     }, myTestRootDisposable);
 
@@ -72,25 +77,39 @@ public class ProjectSetTest extends LightPlatformTestCase {
   }
 
   public void testVcsCheckoutProcessor() throws IOException {
-    ProjectSetReader reader = new ProjectSetReader();
 
     PlatformTestUtil.registerExtension(VcsCheckoutProcessor.EXTENSION_POINT_NAME, new VcsCheckoutProcessor() {
       @NotNull
       @Override
-      public String getProtocol() {
+      public String getId() {
         return "schema";
       }
 
       @Override
       public boolean checkout(@NotNull String url,
                               @NotNull VirtualFile parentDirectory, @NotNull String directoryName) {
-        assertEquals("schema://foo.bar", url);
+        assertEquals("schema://foo.bar/path", url);
         assertEquals("path", directoryName);
         return true;
       }
     }, myTestRootDisposable);
 
     @Language("JSON") String descriptor = FileUtil.loadFile(new File(getTestDataPath() + "vcs.json"));
-    reader.readDescriptor(descriptor, getSourceRoot());
+    new ProjectSetReader().readDescriptor(descriptor, getSourceRoot());
+  }
+
+  public void testOpenProject() throws IOException {
+    @Language("JSON") String descriptor = FileUtil.loadFile(new File(getTestDataPath() + "project.json"));
+    VirtualFile directory = VfsUtil.findFileByIoFile(new File(getTestDataPath()), true);
+    new ProjectSetReader().readDescriptor(descriptor, directory);
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    Project project = ContainerUtil.find(projects, new Condition<Project>() {
+      @Override
+      public boolean value(Project project) {
+        return "untitled".equals(project.getName());
+      }
+    });
+    assertNotNull(project);
+    ((ProjectManagerEx)ProjectManager.getInstance()).closeAndDispose(project);
   }
 }

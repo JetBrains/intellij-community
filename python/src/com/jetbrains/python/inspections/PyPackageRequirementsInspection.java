@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -212,7 +213,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     try {
       packages = PyPackageManager.getInstance(sdk).getPackages(PySdkUtil.isRemote(sdk));
     }
-    catch (PyExternalProcessException e) {
+    catch (ExecutionException e) {
       return null;
     }
     if (packages == null) return null;
@@ -248,7 +249,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       try {
         packages = manager.getPackages(PySdkUtil.isRemote(sdk));
       }
-      catch (PyExternalProcessException e) {
+      catch (ExecutionException e) {
         return null;
       }
       if (packages == null) return null;
@@ -303,7 +304,13 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       boolean installManagement = false;
       final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
-      if (!manager.hasManagement(false)) {
+      boolean hasManagement = false;
+      try {
+        hasManagement = manager.hasManagement(false);
+      }
+      catch (ExecutionException ignored) {
+      }
+      if (!hasManagement) {
         final int result = Messages.showYesNoDialog(project,
                                                     "Python packaging tools are required for installing packages. Do you want to " +
                                                     "install 'pip' and 'setuptools' for your interpreter?",
@@ -330,7 +337,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (installManagement) {
         final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule) {
           @Override
-          public void finished(List<PyExternalProcessException> exceptions) {
+          public void finished(List<ExecutionException> exceptions) {
             super.finished(exceptions);
             if (exceptions.isEmpty()) {
               installRequirements(project, chosen);
@@ -363,7 +370,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void finished(List<PyExternalProcessException> exceptions) {
+    public void finished(List<ExecutionException> exceptions) {
       setRunningPackagingTasks(myModule, false);
     }
   }

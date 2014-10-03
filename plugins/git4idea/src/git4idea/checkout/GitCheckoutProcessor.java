@@ -15,7 +15,10 @@
  */
 package git4idea.checkout;
 
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.VcsCheckoutProcessor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +34,7 @@ public class GitCheckoutProcessor extends VcsCheckoutProcessor {
 
   @NotNull
   @Override
-  public String getProtocol() {
+  public String getId() {
     return "git";
   }
 
@@ -39,8 +42,10 @@ public class GitCheckoutProcessor extends VcsCheckoutProcessor {
   public boolean checkout(@NotNull final String url,
                           @NotNull final VirtualFile parentDirectory, @NotNull final String directoryName) {
 
+    ProgressManager.getInstance().getProgressIndicator().setText(DvcsBundle.message("cloning.repository", url));
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-    return GitCheckoutProvider.doClone(frame == null || frame.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : frame.getProject(),
+    Project project = frame == null || frame.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : frame.getProject();
+    return GitCheckoutProvider.doClone(project,
                                        ServiceManager.getService(Git.class),
                                        directoryName, parentDirectory.getPath(), url);
   }

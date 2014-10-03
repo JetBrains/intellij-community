@@ -276,6 +276,17 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   @NotNull
+  public static <K, V> MultiMap<K, V> createLinkedSet() {
+    return new LinkedMultiMap<K, V>() {
+      @NotNull
+      @Override
+      protected Collection<V> createCollection() {
+        return ContainerUtil.newLinkedHashSet();
+      }
+    };
+  }
+
+  @NotNull
   public static <K, V> MultiMap<K, V> createSmartList() {
     return new MultiMap<K, V>() {
       @NotNull

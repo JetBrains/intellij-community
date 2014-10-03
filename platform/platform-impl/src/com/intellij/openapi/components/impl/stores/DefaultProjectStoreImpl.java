@@ -137,10 +137,11 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public void clearStateStorage(@NotNull String file) {
       }
 
-      @NotNull
+      @Nullable
       @Override
       public ExternalizationSession startExternalization() {
-        return new MyExternalizationSession(storage);
+        StateStorage.ExternalizationSession externalizationSession = storage.startExternalization();
+        return externalizationSession == null ? null : new MyExternalizationSession(externalizationSession);
       }
 
       @Nullable
@@ -204,8 +205,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   private static class MyExternalizationSession implements StateStorageManager.ExternalizationSession {
     @NotNull final StateStorage.ExternalizationSession externalizationSession;
 
-    public MyExternalizationSession(@NotNull XmlElementStorage storage) {
-      externalizationSession = storage.startExternalization();
+    public MyExternalizationSession(@NotNull StateStorage.ExternalizationSession externalizationSession) {
+      this.externalizationSession = externalizationSession;
     }
 
     @Override

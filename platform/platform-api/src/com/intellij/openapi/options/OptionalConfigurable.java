@@ -16,8 +16,13 @@
 package com.intellij.openapi.options;
 
 /**
+ * @deprecated use {@link ConfigurableProvider#canCreateConfigurable()} instead
+ *             to specify configurables which should not be visible
+ *             (a provider usually does not instantiate a configurable and related classes)
+ *
  * @author yole
  */
+@Deprecated
 public interface OptionalConfigurable {
   boolean needDisplay();
 }

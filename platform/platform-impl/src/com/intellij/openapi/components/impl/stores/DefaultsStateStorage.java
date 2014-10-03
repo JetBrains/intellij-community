@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Set;
 
 
@@ -91,6 +92,6 @@ class DefaultsStateStorage implements StateStorage {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
   }
 }

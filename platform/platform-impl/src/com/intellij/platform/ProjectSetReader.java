@@ -15,10 +15,7 @@
  */
 package com.intellij.platform;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,10 +26,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -47,9 +41,17 @@ public class ProjectSetReader {
       processors.put(extension.getId(), extension);
     }
 
-    JsonElement parse = new JsonParser().parse(descriptor);
+    JsonElement parse;
+    try {
+      parse = new JsonParser().parse(descriptor);
+    }
+    catch (JsonSyntaxException e) {
+      LOG.error(e);
+      return;
+    }
     Iterator<Map.Entry<String, JsonElement>> iterator = parse.getAsJsonObject().entrySet().iterator();
     ProjectSetProcessor.Context context = new ProjectSetProcessor.Context();
+    context.directoryName = "";
     context.directory = forTests;
     runProcessor(processors, context, iterator);
   }
@@ -64,15 +66,20 @@ public class ProjectSetReader {
       return;
     }
 
-    JsonObject object = entry.getValue().getAsJsonObject();
-    List<Pair<String, String>> list =
-      ContainerUtil.map(object.entrySet(), new Function<Map.Entry<String, JsonElement>, Pair<String, String>>() {
+    List<Pair<String, String>> list;
+    if (entry.getValue().isJsonObject()) {
+      JsonObject object = entry.getValue().getAsJsonObject();
+      list = ContainerUtil.map(object.entrySet(), new Function<Map.Entry<String, JsonElement>, Pair<String, String>>() {
         @Override
         public Pair<String, String> fun(Map.Entry<String, JsonElement> entry) {
           JsonElement value = entry.getValue();
           return Pair.create(entry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString());
         }
       });
+    }
+    else {
+      list = Collections.singletonList(Pair.create(entry.getKey(), entry.getValue().getAsString()));
+    }
     processor.processEntries(list, context, new Runnable() {
       @Override
       public void run() {

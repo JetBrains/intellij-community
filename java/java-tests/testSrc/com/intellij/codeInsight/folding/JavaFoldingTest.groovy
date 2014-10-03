@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.folding;
-
+package com.intellij.codeInsight.folding
 
 import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
+import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder
 import com.intellij.find.FindManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -279,12 +279,16 @@ class Test {
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() → { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2(")).placeholderText == '(Runnable2) () → { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable3(")).placeholderText == '(Runnable3) () → { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable4(")).placeholderText == '() → { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction(")).placeholderText == '(MyAction) () → { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction2(")).placeholderText == '(MyAction2) () → { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2(")).placeholderText == '(Runnable2) () ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable3(")).placeholderText == '(Runnable3) () ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable4(")).placeholderText == '() ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction(")).placeholderText == '(MyAction) () ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction2(")).placeholderText == '(MyAction2) () ' + rightArrow() + ' { '
+  }
+
+  private static String rightArrow() {
+    return JavaFoldingBuilder.rightArrow
   }
 
   public void "test closure folding after paste"() {
@@ -306,7 +310,7 @@ class Test {
 
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() → { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() ' + rightArrow() + ' { '
   }
 
   public void "test closure folding when overriding one method of many"() {
@@ -333,8 +337,8 @@ class Test {
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable("))?.placeholderText == 'run() → { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2("))?.placeholderText == '(Runnable2) run2() → { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable("))?.placeholderText == 'run() ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2("))?.placeholderText == '(Runnable2) run2() ' + rightArrow() + ' { '
   }
 
   public void "test no closure folding when the method throws an unresolved exception"() {

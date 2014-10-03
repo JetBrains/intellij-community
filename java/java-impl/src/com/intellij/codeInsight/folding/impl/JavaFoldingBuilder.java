@@ -50,6 +50,11 @@ public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
   @Override
   @NotNull
   protected String rightArrow() {
+    return getRightArrow();
+  }
+
+  @NotNull
+  public static String getRightArrow() {
     Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
     return FontUtil.rightArrow(font);
   }

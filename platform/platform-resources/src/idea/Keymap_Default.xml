@@ -707,6 +707,9 @@
   <action id="EditorTab">
     <keyboard-shortcut first-keystroke="TAB"/>
   </action>
+  <action id="ExpandLiveTemplateByTab">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
   <action id="IntroduceParameter">
     <keyboard-shortcut first-keystroke="control alt P"/>
   </action>

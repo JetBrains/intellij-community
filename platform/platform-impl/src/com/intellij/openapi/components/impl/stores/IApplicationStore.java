@@ -15,28 +15,13 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Set;
-
-public interface IApplicationStore extends IComponentStore {
+public interface IApplicationStore extends IComponentStore.Reloadable {
   void setOptionsPath(@NotNull String path);
 
   @NotNull
   String getConfigPath();
 
   void setConfigPath(@NotNull String configPath);
-
-  /**
-   * null if reloaded
-   * empty list if nothing to reload
-   * list of not reloadable components (reload is not performed)
-   */
-  @Nullable
-  Collection<String> reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
 }

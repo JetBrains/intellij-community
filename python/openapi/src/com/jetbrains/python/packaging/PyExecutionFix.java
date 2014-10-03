@@ -15,15 +15,13 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author vlan
  */
-public class PyProcessCancelledException extends PyExternalProcessException {
-  public PyProcessCancelledException(@NotNull String name, @NotNull List<String> args) {
-    super(255, name, args, "Process cancelled");
-  }
+public interface PyExecutionFix {
+  @NotNull String getName();
+  void run(@NotNull Sdk sdk);
 }

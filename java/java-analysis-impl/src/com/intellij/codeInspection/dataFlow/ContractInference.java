@@ -55,7 +55,14 @@ public class ContractInference {
       @Nullable
       @Override
       public Result<List<MethodContract>> compute() {
-        return Result.create(new ContractInferenceInterpreter(method).inferContracts(), method);
+        List<MethodContract> result = RecursionManager.doPreventingRecursion(method, true, new Computable<List<MethodContract>>() {
+          @Override
+          public List<MethodContract> compute() {
+            return new ContractInferenceInterpreter(method).inferContracts();
+          }
+        });
+        if (result == null) result = Collections.emptyList();
+        return Result.create(result, method);
       }
     });
   }
@@ -134,47 +141,42 @@ class ContractInferenceInterpreter {
     if (targetMethod == null) return Collections.emptyList();
     
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-    return RecursionManager.doPreventingRecursion(myMethod, true, new Computable<List<MethodContract>>() {
+    final boolean notNull = NullableNotNullManager.isNotNull(targetMethod);
+    List<MethodContract> fromDelegate = ContainerUtil.mapNotNull(ControlFlowAnalyzer.getMethodContracts(targetMethod), new NullableFunction<MethodContract, MethodContract>() {
+      @Nullable
       @Override
-      public List<MethodContract> compute() {
-        final boolean notNull = NullableNotNullManager.isNotNull(targetMethod);
-        List<MethodContract> fromDelegate = ContainerUtil.mapNotNull(ControlFlowAnalyzer.getMethodContracts(targetMethod), new NullableFunction<MethodContract, MethodContract>() {
-          @Nullable
-          @Override
-          public MethodContract fun(MethodContract delegateContract) {
-            ValueConstraint[] answer = myEmptyConstraints;
-            for (int i = 0; i < delegateContract.arguments.length; i++) {
-              if (i >= arguments.length) return null;
+      public MethodContract fun(MethodContract delegateContract) {
+        ValueConstraint[] answer = myEmptyConstraints;
+        for (int i = 0; i < delegateContract.arguments.length; i++) {
+          if (i >= arguments.length) return null;
 
-              ValueConstraint argConstraint = delegateContract.arguments[i];
-              if (argConstraint != ANY_VALUE) {
-                int paramIndex = resolveParameter(arguments[i]);
-                if (paramIndex < 0) {
-                  if (argConstraint != getLiteralConstraint(arguments[i])) {
-                    return null;
-                  }
-                }
-                else {
-                  answer = withConstraint(answer, paramIndex, argConstraint);
-                  if (answer == null) {
-                    return null;
-                  }
-                }
+          ValueConstraint argConstraint = delegateContract.arguments[i];
+          if (argConstraint != ANY_VALUE) {
+            int paramIndex = resolveParameter(arguments[i]);
+            if (paramIndex < 0) {
+              if (argConstraint != getLiteralConstraint(arguments[i])) {
+                return null;
               }
             }
-            ValueConstraint returnValue = negated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue;
-            if (notNull && returnValue != THROW_EXCEPTION) {
-              returnValue = NOT_NULL_VALUE;
+            else {
+              answer = withConstraint(answer, paramIndex, argConstraint);
+              if (answer == null) {
+                return null;
+              }
             }
-            return answer == null ? null : new MethodContract(answer, returnValue);
           }
-        });
-        if (notNull) {
-          return ContainerUtil.concat(fromDelegate, Arrays.asList(new MethodContract(myEmptyConstraints, NOT_NULL_VALUE)));
         }
-        return fromDelegate;
+        ValueConstraint returnValue = negated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue;
+        if (notNull && returnValue != THROW_EXCEPTION) {
+          returnValue = NOT_NULL_VALUE;
+        }
+        return answer == null ? null : new MethodContract(answer, returnValue);
       }
     });
+    if (notNull) {
+      return ContainerUtil.concat(fromDelegate, Arrays.asList(new MethodContract(myEmptyConstraints, NOT_NULL_VALUE)));
+    }
+    return fromDelegate;
   }
 
   @NotNull

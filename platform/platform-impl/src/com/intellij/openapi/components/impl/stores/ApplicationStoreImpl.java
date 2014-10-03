@@ -21,15 +21,12 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
 
 class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
   private static final Logger LOG = Logger.getInstance(ApplicationStoreImpl.class);
@@ -135,11 +132,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       configPath = PathManager.getConfigPath();
     }
     return configPath;
-  }
-
-  @Override
-  public Collection<String> reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-    return doReload(changedFiles);
   }
 
   @Override

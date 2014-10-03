@@ -32,10 +32,11 @@ public abstract class ProjectSetProcessor {
 
   public abstract String getId();
 
-  public abstract boolean processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext);
+  public abstract void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext);
 
   public static class Context {
     public VirtualFile directory;
+    public String directoryName;
     public Project project;
   }
 }

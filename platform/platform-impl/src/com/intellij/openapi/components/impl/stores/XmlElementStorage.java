@@ -37,10 +37,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class XmlElementStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance(XmlElementStorage.class);
@@ -175,9 +172,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public final ExternalizationSession startExternalization() {
-    return createSaveSession(getStorageData());
+    return mySavingDisabled ? null : createSaveSession(getStorageData());
   }
 
   @Nullable
@@ -196,6 +193,10 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   public void disableSaving() {
     mySavingDisabled = true;
+  }
+
+  public void enableSaving() {
+    mySavingDisabled = false;
   }
 
   @Nullable
@@ -218,7 +219,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
     StorageData oldData = myLoadedData;
     StorageData newData = getStorageData(true);
     if (oldData == null) {

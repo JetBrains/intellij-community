@@ -18,6 +18,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 
 import javax.swing.event.UndoableEditEvent;
@@ -26,6 +27,7 @@ import javax.swing.text.JTextComponent;
 import javax.swing.undo.UndoManager;
 
 /**
+ * @deprecated use {@link com.intellij.util.ui.UIUtil#addUndoRedoActions(javax.swing.text.JTextComponent)}
  * @author yole
  */
 public class TextComponentUndoProvider implements Disposable {
@@ -43,7 +45,7 @@ public class TextComponentUndoProvider implements Disposable {
       }
     };
     myTextComponent.getDocument().addUndoableEditListener(myUndoableEditListener);
-    com.intellij.openapi.keymap.Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
+    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] undoShortcuts = activeKeymap.getShortcuts(IdeActions.ACTION_UNDO);
     Shortcut[] redoShortcuts = activeKeymap.getShortcuts(IdeActions.ACTION_REDO);
 
