@@ -40,7 +40,6 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
   }
 
   protected class MyDialog extends DialogWrapper {
-    public JTable myTable;
     private Project myProject;
     private ArrayTableForm myComponent;
 
@@ -51,9 +50,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
       setCrossClosesWindow(true);
 
       myProject = project;
-
-      myComponent = new ArrayTableForm(this, myProject);
-      myTable = myComponent.getTable();
+      myComponent = new ArrayTableForm(project);
 
       init();
     }
@@ -62,14 +59,15 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
       if (node.getValueContainer() instanceof PyDebugValue) {
         PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
+
         if ("ndarray".equals(debugValue.getType())) {
           myComponent.setDefaultStatus();
-          final NumpyArrayValueProvider valueProvider = new NumpyArrayValueProvider(node, myComponent, myProject);
+          final NumpyArrayValueProvider valueProvider = new NumpyArrayValueProvider(node, this, myProject);
           try {
             valueProvider.startFillTable();
           }
           catch (Exception e) {
-            myComponent.setErrorText(e);
+            setErrorText(e.getMessage());
           }
         }
         else {
@@ -78,7 +76,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
       }
     }
 
-    public void setError(String text){
+    public void setError(String text) {
       //todo: think about this usage
       setErrorText(text);
     }
@@ -97,6 +95,10 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
     @Override
     protected JComponent createCenterPanel() {
       return myComponent.getMainPanel();
+    }
+
+    public ArrayTableForm getComponent() {
+      return myComponent;
     }
   }
 }

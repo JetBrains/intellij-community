@@ -41,7 +41,7 @@ public abstract class ArrayChunk {
 
     abstract Object[][] getData();
 
-    abstract String getChunkPresentation();
+    abstract String getPresentation();
 
     abstract void fillData(Runnable callback);
 }
