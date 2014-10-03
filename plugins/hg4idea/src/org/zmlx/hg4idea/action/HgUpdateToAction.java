@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,15 +57,19 @@ public class HgUpdateToAction extends HgAbstractGlobalSingleRepoAction {
                                  @NotNull final VirtualFile root,
                                  @NotNull final String updateToValue,
                                  final boolean clean) {
-    boolean success = true;
     final HgUpdateCommand command = new HgUpdateCommand(project, root);
     command.setRevision(updateToValue);
     command.setClean(clean);
     HgCommandResult result = command.execute();
     new HgConflictResolver(project).resolve(root);
-    if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+    boolean success = !HgErrorUtil.isCommandExecutionFailed(result);
+    boolean hasUnresolvedConflicts = !HgConflictResolver.findConflicts(project, root).isEmpty();
+    if (!success) {
       new HgCommandResultNotifier(project).notifyError(result, "", "Update failed");
-      success = false;
+    }
+    else if (hasUnresolvedConflicts) {
+      new VcsNotifier(project)
+        .notifyImportantWarning("Unresolved conflicts.", HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", root.getPath()));
     }
     markDirtyAndHandleErrors(project, root);
     return success;
