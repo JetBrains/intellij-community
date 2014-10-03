@@ -35,7 +35,7 @@ import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
@@ -721,8 +721,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                                                       PsiReference reference,
                                                       @NotNull final String name) {
       for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-        final Collection<PyDynamicMember> resolveResult = provider.getMembers(type, reference.getElement());
-        for (PyDynamicMember member : resolveResult) {
+        final Collection<PyCustomMember> resolveResult = provider.getMembers(type, reference.getElement());
+        for (PyCustomMember member : resolveResult) {
           if (member.getName().equals(name)) return true;
         }
       }

@@ -33,7 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.ResolveResultList;
@@ -415,7 +415,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     // from providers
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      for (PyDynamicMember member : provider.getMembers(this, location)) {
+      for (PyCustomMember member : provider.getMembers(this, location)) {
         final String name = member.getName();
         if (!namesAlready.contains(name)) {
           LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(getName());
