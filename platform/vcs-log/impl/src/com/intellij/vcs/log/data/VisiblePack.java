@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class VisiblePack implements VcsLogDataPack {
 
-  public static final VisiblePack EMPTY = new VisiblePack(EmptyDataPack.getInstance(), EmptyVisibleGraph.getInstance(), false);
+  public static final VisiblePack EMPTY = new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false);
 
   @NotNull private final DataPack myDataPack;
   @NotNull private final VisibleGraph<Integer> myVisibleGraph;

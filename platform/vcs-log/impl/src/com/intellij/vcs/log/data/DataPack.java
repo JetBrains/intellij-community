@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -12,14 +13,25 @@ import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.List;
 
 public class DataPack {
+
+  public static final DataPack EMPTY = createEmptyInstance();
 
   @NotNull private final RefsModel myRefsModel;
   @NotNull private final PermanentGraph<Integer> myPermanentGraph;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   private boolean myFull;
+
+  DataPack(@NotNull RefsModel refsModel,
+           @NotNull PermanentGraph<Integer> permanentGraph,
+           @NotNull Map<VirtualFile, VcsLogProvider> providers,
+           boolean full) {
+    myRefsModel = refsModel;
+    myPermanentGraph = permanentGraph;
+    myLogProviders = providers;
+    myFull = full;
+  }
 
   @NotNull
   static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
@@ -69,14 +81,10 @@ public class DataPack {
     return map;
   }
 
-  DataPack(@NotNull RefsModel refsModel,
-           @NotNull PermanentGraph<Integer> permanentGraph,
-           @NotNull Map<VirtualFile, VcsLogProvider> providers,
-           boolean full) {
-    myRefsModel = refsModel;
-    myPermanentGraph = permanentGraph;
-    myLogProviders = providers;
-    myFull = full;
+  @NotNull
+  private static DataPack createEmptyInstance() {
+    RefsModel emptyModel = new RefsModel(Collections.<VirtualFile, Set<VcsRef>>emptyMap(), new ConstantFunction<Hash, Integer>(0));
+    return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
   }
 
   @NotNull
