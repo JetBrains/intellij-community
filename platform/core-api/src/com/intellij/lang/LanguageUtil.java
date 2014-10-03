@@ -17,7 +17,9 @@
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -74,7 +77,7 @@ public final class LanguageUtil {
     return language instanceof TemplateLanguage;
   }
 
-  public static boolean isInjectableLanguage(Language language) {
+  public static boolean isInjectableLanguage(@NotNull Language language) {
     if (language == Language.ANY) {
       return false;
     }
@@ -91,6 +94,26 @@ public final class LanguageUtil {
       return false;
     }
     return true;
+  }
+
+  public static boolean isFileLanguage(@NotNull Language language) {
+    if (language instanceof DependentLanguage || language instanceof InjectableLanguage) return false;
+    LanguageFileType type = language.getAssociatedFileType();
+    if (type == null || StringUtil.isEmpty(type.getDefaultExtension())) return false;
+    String name = language.getDisplayName();
+    if (StringUtil.isEmpty(name) || name.startsWith("<") || name.startsWith("[")) return false;
+    return !StringUtil.isEmpty(type.getDefaultExtension());
+  }
+
+  @NotNull
+  public static List<Language> getFileLanguages() {
+    List<Language> result = ContainerUtil.newArrayList();
+    for (Language language : Language.getRegisteredLanguages()) {
+      if (!isFileLanguage(language)) continue;
+      result.add(language);
+    }
+    Collections.sort(result, LANGUAGE_COMPARATOR);
+    return result;
   }
 
   @NotNull
