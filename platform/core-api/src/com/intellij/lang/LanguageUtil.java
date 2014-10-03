@@ -98,11 +98,12 @@ public final class LanguageUtil {
 
   public static boolean isFileLanguage(@NotNull Language language) {
     if (language instanceof DependentLanguage || language instanceof InjectableLanguage) return false;
+    if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) return false;
     LanguageFileType type = language.getAssociatedFileType();
     if (type == null || StringUtil.isEmpty(type.getDefaultExtension())) return false;
     String name = language.getDisplayName();
     if (StringUtil.isEmpty(name) || name.startsWith("<") || name.startsWith("[")) return false;
-    return !StringUtil.isEmpty(type.getDefaultExtension());
+    return StringUtil.isNotEmpty(type.getDefaultExtension());
   }
 
   @NotNull
