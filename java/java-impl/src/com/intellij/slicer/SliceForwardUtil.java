@@ -63,7 +63,7 @@ public class SliceForwardUtil {
               if (parameters.length <= parameterIndex) return true;
               PsiParameter actualParam = parameters[parameterIndex];
 
-              SliceUsage usage = SliceUtil.createSliceUsage(actualParam, parent, superSubstitutor,parent.indexNesting, "");
+              SliceUsage usage = SliceUtil.createSliceUsage(actualParam, parent, superSubstitutor, SliceUtil.getIndexNesting(parent), "");
               return processor.process(usage);
             }
           };
@@ -72,7 +72,7 @@ public class SliceForwardUtil {
         }
       }
 
-      SliceUsage usage = SliceUtil.createSliceUsage(target, parent, parent.getSubstitutor(),parent.indexNesting, "");
+      SliceUsage usage = SliceUtil.createSliceUsage(target, parent, SliceUtil.getSubstitutor(parent), SliceUtil.getIndexNesting(parent), "");
       return processor.process(usage);
     }
 
@@ -197,11 +197,12 @@ public class SliceForwardUtil {
     if (element instanceof PsiCompiledElement) element = element.getNavigationElement();
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
-      SliceUsage usage = SliceUtil.createSliceUsage(element, parent, pair.getSecond(),parent.indexNesting, "");
+      SliceUsage usage = SliceUtil.createSliceUsage(element, parent, pair.getSecond(), SliceUtil.getIndexNesting(parent), "");
       return processor.process(usage);
     }
     if (parent.params.showInstanceDereferences && isDereferenced(element)) {
-      SliceUsage usage = new SliceDereferenceUsage(element.getParent(), parent, parent.getSubstitutor());
+      final SliceUsage usage = new SliceDereferenceUsage(element.getParent(), parent);
+      usage.putUserData(SliceUtil.KEY_SUBSTITUTOR, SliceUtil.getSubstitutor(parent));
       return processor.process(usage);
     }
     return true;
@@ -217,7 +218,7 @@ public class SliceForwardUtil {
   private static Pair<PsiElement,PsiSubstitutor> getAssignmentTarget(PsiElement element, SliceUsage parentUsage) {
     element = complexify(element);
     PsiElement target = null;
-    PsiSubstitutor substitutor = parentUsage.getSubstitutor();
+    PsiSubstitutor substitutor = SliceUtil.getSubstitutor(parentUsage);
     //assignment
     PsiElement parent = element.getParent();
     if (parent instanceof PsiAssignmentExpression) {

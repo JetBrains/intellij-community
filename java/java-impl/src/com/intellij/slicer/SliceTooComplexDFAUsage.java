@@ -18,7 +18,6 @@ package com.intellij.slicer;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.ui.JBColor;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsagePresentation;
@@ -32,8 +31,8 @@ import java.awt.*;
  * User: cdr
  */
 public class SliceTooComplexDFAUsage extends SliceUsage {
-  public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
-    super(element, parent, substitutor,0,"");
+  public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
+    super(element, parent);
   }
 
   @Override

@@ -77,7 +77,7 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
         return true;
       }
     });
-    boolean isInsideContainer = sliceUsage.indexNesting != 0;
+    boolean isInsideContainer = SliceUtil.getIndexNesting(sliceUsage) != 0;
     for (TextChunk textChunk : text) {
       SimpleTextAttributes attributes = textChunk.getSimpleAttributesIgnoreBackground();
       if (isForcedLeaf) {
@@ -93,8 +93,8 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
       append(textChunk.getText(), attributes);
     }
 
-    for (int i=0; i<sliceUsage.indexNesting;i++) {
-      append(" (Tracking container contents"+(sliceUsage.syntheticField.isEmpty() ? "" : " '"+sliceUsage.syntheticField+"'")+")",SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    for (int i=0; i<SliceUtil.getIndexNesting(sliceUsage);i++) {
+      append(" (Tracking container contents"+(SliceUtil.getSyntheticField(sliceUsage).isEmpty() ? "" : " '"+SliceUtil.getSyntheticField(sliceUsage)+"'")+")",SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
     PsiElement element = sliceUsage.getElement();

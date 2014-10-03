@@ -20,6 +20,8 @@ import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
@@ -50,11 +52,54 @@ import java.util.Set;
  * @author cdr
  */
 public class SliceUtil {
+  public static final Key<PsiSubstitutor> KEY_SUBSTITUTOR = new KeyWithDefaultValue<PsiSubstitutor>("substitutor") {
+    @Override
+    public PsiSubstitutor getDefaultValue() {
+      return PsiSubstitutor.EMPTY;
+    }
+  };
+
+  // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
+  public static final KeyWithDefaultValue<Integer> KEY_INDEX_NESTING = new KeyWithDefaultValue<Integer>("indexNesting") {
+    @Override
+    public Integer getDefaultValue() {
+      return 0;
+    }
+  };
+
+  // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
+  public static final KeyWithDefaultValue<String> KEY_SYNTHETIC_FIELD = new KeyWithDefaultValue<String>("syntheticField") {
+    @Override
+    public String getDefaultValue() {
+      return "";
+    }
+  };
+
   public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
                                                  @NotNull Processor<SliceUsage> processor,
                                                  @NotNull SliceUsage parent) {
-    return processUsagesFlownDownTo(expression, processor, parent, parent.getSubstitutor(), parent.getIndexNesting(),
-                                    parent.getSyntheticField());
+    return processUsagesFlownDownTo(expression, processor, parent, getSubstitutor(parent), getIndexNesting(parent),
+                                    getSyntheticField(parent));
+  }
+
+  @NotNull
+  public static String getSyntheticField(@NotNull SliceUsage parent) {
+    final String syntheticField = parent.getUserData(KEY_SYNTHETIC_FIELD);
+    assert syntheticField != null;
+    return syntheticField;
+  }
+
+  public static int getIndexNesting(@NotNull SliceUsage parent) {
+    final Integer indexNesting = parent.getUserData(KEY_INDEX_NESTING);
+    assert indexNesting != null;
+    return indexNesting;
+  }
+
+  @NotNull
+  public static PsiSubstitutor getSubstitutor(@NotNull SliceUsage parent) {
+    final PsiSubstitutor substitutor = parent.getUserData(KEY_SUBSTITUTOR);
+    assert substitutor != null;
+    return substitutor;
   }
 
   public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
@@ -287,7 +332,7 @@ public class SliceUtil {
           if (returnValue == null) return;
           PsiType right = superSubstitutor.substitute(superSubstitutor.substitute(returnValue.getType()));
           if (right == null || !TypeConversionUtil.isAssignable(parentType, right)) return;
-          if (!handToProcessor(returnValue, processor, parent, substitutor, parent.indexNesting, "")) {
+          if (!handToProcessor(returnValue, processor, parent, substitutor, getIndexNesting(parent), "")) {
             stopWalking();
             result[0] = false;
           }
@@ -305,7 +350,7 @@ public class SliceUtil {
     if (field.hasInitializer()) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null && !(field instanceof PsiCompiledElement)) {
-        if (!handToProcessor(initializer, processor, parent, parentSubstitutor, parent.indexNesting, "")) return false;
+        if (!handToProcessor(initializer, processor, parent, parentSubstitutor, getIndexNesting(parent), "")) return false;
       }
     }
     SearchScope searchScope = parent.getScope().toSearchScope();
@@ -326,16 +371,16 @@ public class SliceUtil {
           PsiType rtype = rExpression.getType();
           PsiType ftype = field.getType();
           if (TypeConversionUtil.isAssignable(parentSubstitutor.substitute(ftype), parentSubstitutor.substitute(rtype))) {
-            return handToProcessor(rExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
+            return handToProcessor(rExpression, processor, parent, parentSubstitutor, getIndexNesting(parent), "");
           }
         }
         if (parentExpr instanceof PsiPrefixExpression && ((PsiPrefixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
           PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parentExpr;
-          return handToProcessor(prefixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
+          return handToProcessor(prefixExpression, processor, parent, parentSubstitutor, getIndexNesting(parent), "");
         }
         if (parentExpr instanceof PsiPostfixExpression && ((PsiPostfixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
           PsiPostfixExpression postfixExpression = (PsiPostfixExpression)parentExpr;
-          return handToProcessor(postfixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
+          return handToProcessor(postfixExpression, processor, parent, parentSubstitutor, getIndexNesting(parent), "");
         }
         return true;
       }
@@ -348,12 +393,18 @@ public class SliceUtil {
                                             @NotNull PsiSubstitutor substitutor,
                                             int indexNesting,
                                             @NotNull String syntheticField) {
-    return new SliceUsage(simplify(element), parent, substitutor,indexNesting, syntheticField);
+    final SliceUsage usage = new SliceUsage(simplify(element), parent);
+    usage.putUserData(KEY_SUBSTITUTOR, substitutor);
+    usage.putUserData(KEY_INDEX_NESTING, indexNesting);
+    usage.putUserData(KEY_SYNTHETIC_FIELD, syntheticField);
+    return usage;
   }
 
   @NotNull
   public static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
-    return new SliceTooComplexDFAUsage(simplify(element), parent, substitutor);
+    final SliceTooComplexDFAUsage usage = new SliceTooComplexDFAUsage(simplify(element), parent);
+    usage.putUserData(KEY_SUBSTITUTOR, substitutor);
+    return usage;
   }
 
   private static boolean processParameterUsages(@NotNull final PsiParameter parameter,

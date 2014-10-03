@@ -259,7 +259,7 @@ public class SliceLeafAnalyzer {
 
               Collection<? extends AbstractTreeNode> children = element.getChildren();
               if (children.isEmpty()) {
-                PsiElement value = sliceUsage.indexNesting == 0 ? sliceUsage.getElement() : null;
+                PsiElement value = SliceUtil.getIndexNesting(sliceUsage) == 0 ? sliceUsage.getElement() : null;
                 if (value != null) {
                   node(element, map).addAll(ContainerUtil.singleton(value, LEAF_ELEMENT_EQUALITY));
                 }
