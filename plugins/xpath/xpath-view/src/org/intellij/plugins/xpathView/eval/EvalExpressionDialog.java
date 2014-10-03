@@ -33,6 +33,7 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
     public EvalExpressionDialog(Project project, Config settings, HistoryElement[] history) {
         super(project, settings, history, new EvalFormPanel());
         setTitle("Evaluate XPath Expression");
+        setOKButtonText("Evaluate");
     }
 
     protected void init() {
