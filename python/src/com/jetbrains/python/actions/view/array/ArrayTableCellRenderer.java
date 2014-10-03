@@ -15,26 +15,35 @@
  */
 package com.jetbrains.python.actions.view.array;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
-* @author amarch
-*/
+ * @author amarch
+ */
 class ArrayTableCellRenderer extends DefaultTableCellRenderer {
 
-  double min;
-  double max;
-  Color minColor;
-  Color maxColor;
-  boolean colored = true;
+  private double myMin = Double.MIN_VALUE;
+  private double myMax = Double.MIN_VALUE;
+  private String myComplexMin;
+  private String myComplexMax;
+  private boolean colored = true;
+  private String myType;
 
-  public ArrayTableCellRenderer(double min, double max) {
-    this.min = min;
-    this.max = max;
-    minColor = new Color(100, 0, 0, 200);
-    maxColor = new Color(254, 0, 0, 200);
+  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d^j]*)([+-]?[.\\d]*j)?");
+
+  public ArrayTableCellRenderer(double min, double max, String type) {
+    setHorizontalAlignment(SwingConstants.CENTER);
+    myMin = min;
+    myMax = max;
+    myType = type;
   }
 
   public void setColored(boolean colored) {
@@ -43,35 +52,101 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
 
   public Component getTableCellRendererComponent(JTable table, Object value,
                                                  boolean isSelected, boolean hasFocus, int rowIndex, int vColIndex) {
-    if (isSelected) {
-      // cell (and perhaps other cells) are selected
-    }
-
-    if (hasFocus) {
-      // this cell is the anchor and the table has the focus
-    }
-
     if (value != null) {
       setText(value.toString());
     }
 
-
-    if (max != min) {
-      if (colored) {
+    if (myMax != myMin) {
+      if (colored && value != null) {
         try {
-          double med = Double.parseDouble(value.toString());
-          int r = (int)(minColor.getRed() + Math.round((maxColor.getRed() - minColor.getRed()) / (max - min) * (med - min)));
-          this.setBackground(new Color(r % 256, 0, 0, 200));
+          double rangedValue = getRangedValue(value.toString());
+          this.setBackground(
+            new JBColor(new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130),
+                        new Color(0, 0, 0, 0)));
         }
-        catch (NumberFormatException e) {
+        catch (NumberFormatException ignored) {
         }
       }
       else {
-        this.setBackground(new Color(255, 255, 255));
+        this.setBackground(new JBColor(new Color(255, 255, 255, 0), new Color(255, 255, 255, 0)));
       }
     }
 
-
     return this;
+  }
+
+  /**
+   * @return double presentation from [0:1] range
+   */
+  private double getRangedValue(String value) {
+    if ("iuf".contains(myType)) {
+      return (Double.parseDouble(value) - myMin) / (myMax - myMin);
+    }
+    else if ("b".equals(myType)) {
+      return value.equals("True") ? 1 : 0;
+    }
+    else if ("c".equals(myType)) {
+      return getComplexRangedValue(value);
+    }
+    return 0;
+  }
+
+  /**
+   * type complex128 in numpy is compared by next rule:
+   * A + Bj > C +Dj if A > C or A == C and B > D
+   */
+  private double getComplexRangedValue(String value) {
+    Pair<Double, Double> med = parsePyComplex(value);
+    Pair<Double, Double> max = parsePyComplex(myComplexMax);
+    Pair<Double, Double> min = parsePyComplex(myComplexMin);
+    double range = (med.first - min.first) / (max.first - min.first);
+    if (max.first.equals(min.first)) {
+      range = (med.second - min.second) / (max.second - min.second);
+    }
+    return range;
+  }
+
+  private static Pair<Double, Double> parsePyComplex(@NotNull String pyComplexValue) {
+    if (pyComplexValue.startsWith("(") && pyComplexValue.endsWith(")")) {
+      pyComplexValue = pyComplexValue.substring(1, pyComplexValue.length() - 1);
+    }
+    Matcher matcher = PY_COMPLEX_NUMBER.matcher(pyComplexValue);
+    if (matcher.matches()) {
+      String real = matcher.group(1);
+      String imag = matcher.group(2);
+      if (real.contains("j") && imag == null) {
+        return new Pair(new Double(0.0), Double.parseDouble(real.substring(0, real.length() - 1)));
+      }
+      else {
+        return new Pair(Double.parseDouble(real), Double.parseDouble(imag.substring(0, imag.length() - 1)));
+      }
+    }
+    else {
+      throw new IllegalArgumentException("Not a valid python complex value: " + pyComplexValue);
+    }
+  }
+
+  public void setMin(double min) {
+    myMin = min;
+  }
+
+  public void setMax(double max) {
+    myMax = max;
+  }
+
+  public double getMin() {
+    return myMin;
+  }
+
+  public double getMax() {
+    return myMax;
+  }
+
+  public void setComplexMin(String complexMin) {
+    myComplexMin = complexMin;
+  }
+
+  public void setComplexMax(String complexMax) {
+    myComplexMax = complexMax;
   }
 }

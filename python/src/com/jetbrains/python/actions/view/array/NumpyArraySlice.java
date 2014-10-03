@@ -20,21 +20,30 @@ import java.util.List;
 class NumpyArraySlice extends ArrayChunk {
   private NumpyArrayValueProvider myValueProvider;
   private DataEvaluator myDataEvaluator;
+  private String myFormat;
 
   public NumpyArraySlice(String baseSlice,
                          int rows,
                          int columns,
                          int rOffset,
                          int cOffset,
-                         @NotNull NumpyArrayValueProvider valueProvider,
-                         @NotNull Runnable callback) {
+                         String format,
+                         @NotNull NumpyArrayValueProvider valueProvider) {
     super(baseSlice, rows, columns, rOffset, cOffset);
     myValueProvider = valueProvider;
     myDataEvaluator = new DataEvaluator();
+    myFormat = format;
   }
 
-  public String getChunkPresentation() {
-    return baseSlice + "[" + rOffset + ":" + (rOffset + rows) + ", " + cOffset + ":" + (cOffset + columns) + "]";
+  public String getPresentation() {
+    String onlyChunkSlice = "[" + rOffset + ":" + (rOffset + rows) + ", " + cOffset + ":" + (cOffset + columns) + "]";
+    if (isOneRow()) {
+      onlyChunkSlice = "[" + cOffset + ":" + (cOffset + columns) + "]";
+    }
+    if (baseSlice.endsWith(onlyChunkSlice)) {
+      return baseSlice;
+    }
+    return baseSlice + onlyChunkSlice;
   }
 
   @Override
@@ -95,21 +104,26 @@ class NumpyArraySlice extends ArrayChunk {
         @Override
         public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
           String fullName = ((XValueNodeImpl)node).getName();
-          if (fullName != null && fullName.contains("[")) {
-            fullName = fullName.substring(0, fullName.lastIndexOf(","));
-          }
           int row = -1;
-          if (fullName != null && fullName.contains("[")) {
-            row = Integer.parseInt(fullName.substring(fullName.lastIndexOf('[') + 1, fullName.length()));
-          }
-          else if (fullName != null && !fullName.contains("[")) {
+          if (isOneRow()) {
             row = 0;
           }
+          else {
+            if (fullName != null && fullName.contains("[")) {
+              fullName = fullName.substring(0, fullName.lastIndexOf(","));
+            }
+            if (fullName != null && fullName.contains("[")) {
+              row = Integer.parseInt(fullName.substring(fullName.lastIndexOf('[') + 1, fullName.length()));
+            }
+            else if (fullName != null && !fullName.contains("[")) {
+              row = 0;
+            }
+          }
+
           if (row != -1 && myData[row][0] == null) {
             for (int i = 0; i < node.getChildCount() - 1; i++) {
               myData[row][i] = ((XValueNodeImpl)node.getChildAt(i + 1)).getRawValue();
             }
-            System.out.println("Add filled row " + myFilledRows);
             myFilledRows += 1;
           }
           if (myFilledRows == rows) {
@@ -132,18 +146,11 @@ class NumpyArraySlice extends ArrayChunk {
     }
 
     private void startEvalNextRow(XDebuggerEvaluator.XEvaluationCallback callback) {
-      //String evalRowCommand = "map(lambda l: " + evalTypeFunc() + ", list(" + getUpperSlice(getPresentation());
-      //String evalRowCommand = "list(" + getUpperSlice(getChunkPresentation());
-      //if (!isOneDimensional()) {
-      //  evalRowCommand += "[" + nextRow + "]";
-      //}
-      //evalRowCommand +=
-      //  "[" + (40 - getRows() + nextRow) + ", " + cOffset + ":" + (cOffset + columns) + "])";
-
-      String evalRowCommand = "list(" + getChunkPresentation() + "[" + nextRow + ", 0:" + columns + "])";
-
-      System.out.println(rOffset + " " + getRows() + " " + nextRow);
-      System.out.println(evalRowCommand);
+      String evalRowCommand = "map(lambda l: " + myValueProvider.evalTypeFunc(myFormat) + ", list(" + getPresentation();
+      if (!isOneRow()) {
+        evalRowCommand += "[" + nextRow + ", 0:" + columns + "]";
+      }
+      evalRowCommand += "))";
       myValueProvider.getEvaluator().evaluate(evalRowCommand, callback, null);
     }
   }
@@ -156,17 +163,17 @@ class NumpyArraySlice extends ArrayChunk {
     for (int i = 0; i < up; i++) {
       if (upperSlice.contains("[")) {
         upperSlice = upperSlice.substring(0, upperSlice.lastIndexOf('['));
-      } else {
+      }
+      else {
         return upperSlice;
       }
     }
     return upperSlice;
   }
 
-  private boolean isOneDimensional() {
-    return !baseSlice.contains(",");
+  private boolean isOneRow() {
+    return rows == 1;
   }
-
 
   @Override
   int getRows() {
@@ -180,6 +187,14 @@ class NumpyArraySlice extends ArrayChunk {
 
   public Object[][] getData() {
     return myDataEvaluator.getData();
+  }
+
+  public void applyFormat(@NotNull String newFormat, Runnable callback) {
+    if (newFormat.equals(myFormat)) {
+      return;
+    }
+    myFormat = newFormat;
+    myDataEvaluator.evaluateData(callback);
   }
 }
 

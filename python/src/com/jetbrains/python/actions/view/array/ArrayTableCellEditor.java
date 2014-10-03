@@ -54,11 +54,8 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
 
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
                                                int rowIndex, int vColIndex) {
-
-
     myEditor = new MyTableEditor(myProject, new PyDebuggerEditorsProvider(), "arrayTableView", null,
                                  new XExpressionImpl(value.toString(), PythonLanguage.getInstance(), "", EvaluationMode.CODE_FRAGMENT));
-
     lastValue = value;
     JComponent editorComponent = myEditor.getComponent();
 
@@ -127,7 +124,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
 
         @Override
         protected boolean isOneLineMode() {
-          return false;
+          return true;
         }
       };
       myEditorTextField.setFontInheritedFromLAF(false);
