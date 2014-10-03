@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.DetailsComponent;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.util.Alarm;
@@ -96,7 +97,11 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
 
     addWaitCard();
 
-    add(mySchemesPanel.getPanel(), BorderLayout.NORTH);
+    JComponent schemes = mySchemesPanel.getPanel();
+    if (ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")) {
+      schemes.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    }
+    add(schemes, BorderLayout.NORTH);
 
     myDetailsComponent = new DetailsComponent();
     myDetailsComponent.setPaintBorder(false);
