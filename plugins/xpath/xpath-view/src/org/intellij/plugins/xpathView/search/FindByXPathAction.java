@@ -126,7 +126,6 @@ public class FindByXPathAction extends AnAction {
     private class MyEditExpressionAction extends XPathEvalAction.EditExpressionAction {
         private final Project myProject;
         private final Module myModule;
-        private final Config myConfig = XPathAppComponent.getInstance().getConfig();
 
         public MyEditExpressionAction(Project project, Module module) {
             myProject = project;
@@ -134,16 +133,7 @@ public class FindByXPathAction extends AnAction {
         }
 
         protected void execute() {
-            myConfig.OPEN_NEW_TAB = false;
             executeSearch(myProject, myModule);
-        }
-
-        protected Object saveState() {
-            return myConfig.OPEN_NEW_TAB;
-        }
-
-        protected void restoreState(Object o) {
-            if (!myConfig.OPEN_NEW_TAB) myConfig.OPEN_NEW_TAB = Boolean.TRUE.equals(o);
         }
     }
 
