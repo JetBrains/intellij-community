@@ -1,42 +1,57 @@
 package org.jetbrains.plugins.ipnb;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MarkdownUtil;
 import com.petebevin.markdown.MarkdownProcessor;
-import net.sourceforge.jeuclid.MathMLParserSupport;
-import net.sourceforge.jeuclid.context.LayoutContextImpl;
-import net.sourceforge.jeuclid.context.Parameter;
-import net.sourceforge.jeuclid.converter.Converter;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
+import netscape.javascript.JSException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbTexPackageDefinitions;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
-import uk.ac.ed.ph.snuggletex.SnuggleEngine;
-import uk.ac.ed.ph.snuggletex.SnuggleInput;
-import uk.ac.ed.ph.snuggletex.SnuggleSession;
-import uk.ac.ed.ph.snuggletex.XMLStringOutputOptions;
 
 import javax.swing.*;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
-import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class IpnbUtils {
   private static final Logger LOG = Logger.getInstance(IpnbUtils.class);
   private static MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
+
+  private static final String ourPrefix = "<html><head><script type=\"text/x-mathjax-config\">\n" +
+                                          "            MathJax.Hub.Config({\n" +
+                                          "                tex2jax: {\n" +
+                                          "                    inlineMath: [ ['$','$'], [\"\\\\(\",\"\\\\)\"] ],\n" +
+                                          "                    displayMath: [ ['$$','$$'], [\"\\\\[\",\"\\\\]\"] ],\n" +
+                                          "                    processEscapes: true,\n" +
+                                          "                    processEnvironments: true\n" +
+                                          "                },\n" +
+                                          "                displayAlign: 'center',\n" +
+                                          "                \"HTML-CSS\": {\n" +
+                                          "                    styles: {'.MathJax_Display': {\"margin\": 0}},\n" +
+                                          "                    webFont: null,\n" +
+                                          "                    preferredFont: null,\n" +
+                                          "                    linebreaks: { automatic: true }\n" +
+                                          "                }\n" +
+                                          "            });\n" +
+                                          "</script><script type=\"text/javascript\"\n" +
+                                          "  src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\">\n" +
+                                          "</script></head><body style='width: " + IpnbEditorUtil.PANEL_WIDTH + "px'><div id=\"mydiv\">";
 
   public static String markdown2Html(@NotNull final String description) {
     // TODO: add links to the dependant notebook pages (see: index.ipynb)
@@ -50,28 +65,10 @@ public class IpnbUtils {
         processedLine = line.substring(1);
       }
 
-      final StringBuilder builder = new StringBuilder();
-      for (char s : processedLine.toCharArray()) {
-        if (s == '`') {
-          isInCode = !isInCode;
-          if (isInCode) {
-            builder.append("<code>");
-          }
-          else {
-            builder.append("</code>");
-          }
-        }
-        else {
-          builder.append(s);
-        }
-      }
-      processedLine = builder.toString();
       if (processedLine.contains("```")) isInCode = !isInCode;
       if (isInCode) {
         processedLine = processedLine
-          .replace("&", "&amp;")
-          .replace("<", "&lt;")
-          .replace(">", "&gt;");
+          .replace("&", "&amp;");
       }
       else {
         processedLine = processedLine
@@ -95,175 +92,140 @@ public class IpnbUtils {
     return html;
   }
 
-  public static void addLatexToPanel(@NotNull final String[] source, @NotNull final JPanel panel) {
-    StringBuilder formula = new StringBuilder();
-    List<String> markdown = new ArrayList<String>();
-    boolean hasFormula = false;
-    boolean isEscaped = false;
-    boolean inFormula = false;
-    boolean isMultiline = false;
-    if (isStyleOrScript(StringUtil.join(source))) return;
-    for (String string : source) {
-      string = StringUtil.replace(string, "\\(", "(");
-      string = StringUtil.replace(string, "\\)", ")");
-      if (string.startsWith("```") && !isEscaped) {
-        isEscaped = true;
-      }
-      else if (StringUtil.trimTrailing(string).endsWith("```") && isEscaped) {
-        isEscaped = false;
-      }
+  public static void addLatexToPanel(@NotNull final String source, @NotNull final JPanel panel) {
+    final StringBuilder result = convertToHtml(source);
+    addToPanel(result.toString(), panel);
 
-      if (inFormula && !markdown.isEmpty()) {
-        addMarkdown(panel, markdown);
-        markdown.clear();
-      }
-      if ((StringUtil.trimTrailing(string).endsWith("$$")) && inFormula) {
-        inFormula = false;
-        string = StringUtil.trimTrailing(string);
-        if (isMultiline)
-          string = StringUtil.trimEnd(string, "$$");
-        string = prepareLatex(string);
-        formula.append(string);
-        addFormula(panel, formula.toString());
-        hasFormula = false;
-        formula = new StringBuilder();
-      }
-      else if (string.trim().startsWith("$$") && !isEscaped) {
-        if (string.contains("\\begin")) {
-          string = string.substring(2);
-          isMultiline = true;
-        }
-        string = prepareLatex(string);
-        formula.append(string);
-        hasFormula = true;
-        inFormula = true;
-      }
-      else if (string.startsWith("\\") && !isEscaped || inFormula) {
-        inFormula = true;
-        hasFormula = true;
-        string = prepareLatex(string);
-        formula.append(string);
-      }
-      else {
-        if (hasFormula) {
-          addFormula(panel, formula.toString());
-          hasFormula = false;
-          formula = new StringBuilder();
-        }
-        else {
-          if (!StringUtil.isEmptyOrSpaces(string)) {
-            markdown.add(string);
-          }
-        }
-      }
-    }
-    if (hasFormula) {
-      addFormula(panel, formula.toString());
-    }
-    if (!markdown.isEmpty()) {
-      addMarkdown(panel, markdown);
-    }
   }
 
-  private static String prepareLatex(@NotNull String string) {
-    string = string.replace("\n", " \n");
-    string = string.replace("\\cr", "\\\\");
-    return string;
-  }
-
-
-  private static void addFormula(@NotNull final JPanel panel, @NotNull final String formulaText) {
-    final SnuggleEngine engine = new SnuggleEngine();
-    engine.getPackages().add(0, IpnbTexPackageDefinitions.getPackage());
-
-    final SnuggleSession session = engine.createSession();
-
-    final SnuggleInput input = new SnuggleInput(formulaText);
-
-    try {
-      session.parseInput(input);
-      XMLStringOutputOptions options = new XMLStringOutputOptions();
-      options.setIndenting(true);
-      options.setAddingMathSourceAnnotations(false);
-      final String xmlString = session.buildXMLString(options);
-      if (xmlString == null) return;
-      final LayoutContextImpl context = (LayoutContextImpl)LayoutContextImpl.getDefaultLayoutContext();
-      context.setParameter(Parameter.MATHSIZE, 18);
-
-      final Document document = MathMLParserSupport.parseString(xmlString);
-
-      final BufferedImage image = Converter.getInstance().render(document, context);
-      final JLabel label = new JLabel();
-      label.setIcon(new ImageIcon(image));
-      panel.add(label);
-
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    catch (SAXException e) {
-      LOG.error(e);
-    }
-    catch (ParserConfigurationException e) {
-      LOG.error(e);
-    }
-  }
-
-  private static void addMarkdown(@NotNull final JPanel panel, List<String> strings) {
-    StringBuilder stringBuilder = new StringBuilder();
+  private static StringBuilder convertToHtml(@NotNull final String source) {
+    final StringBuilder result = new StringBuilder();
+    StringBuilder markdown = new StringBuilder();
     boolean inCode = false;
-    for (String string : strings) {
-      if (string.startsWith("```") && !inCode) {
-        inCode = true;
-        string = StringUtil.trimStart(string, "```");
-        stringBuilder.append("<code>").append(string).append("<br>");
+    int inMultiStringCode = 0;
+    boolean inEnd = false;
+    boolean escaped = false;
+    boolean backQuoted = false;
+
+    for (int i = 0; i != source.length(); ++i) {
+      final char charAt = source.charAt(i);
+
+      if (charAt == '`') {
+        backQuoted = !backQuoted;
+        if (source.length() > i + 2 && source.charAt(i + 1) == '`' && source.charAt(i + 2) == '`') {
+          markdown.append(escaped ? "</pre>" : "<pre>");
+          escaped = !escaped;
+          i = i + 2;
+          continue;
+        }
       }
-      else if (StringUtil.trimTrailing(string).endsWith("```") && inCode) {
-        inCode = false;
-        string = StringUtil.trimTrailing(string);
-        string = StringUtil.trimEnd(string, "```");
-        stringBuilder.append(string).append("</code>").append("\n");
+
+      if (!escaped && !backQuoted) {
+        if (charAt == '$' && source.length() > i + 1 && source.charAt(i+1) != '$') {
+          inCode = !inCode;
+        }
+
+        if (charAt == '\\' && source.substring(i).startsWith("\\begin")) {
+          inMultiStringCode += 1;
+        }
+        if (charAt == '\\' && source.substring(i).startsWith("\\end")) {
+          inEnd = true;
+        }
       }
-      else if (inCode) {
-        stringBuilder.append(string).append("<br>");
+
+      final boolean doubleDollar = charAt == '$' && ((source.length() > i + 1 && source.charAt(i + 1) == '$')
+                                                     || (i >= 1  && source.charAt(i - 1) == '$'));
+      if (inCode || inMultiStringCode != 0 || (!backQuoted && doubleDollar)) {
+        if (markdown.length() != 0) {
+          result.append(markdown2Html(markdown.toString()));
+          markdown = new StringBuilder();
+        }
+
+        result.append(charAt);
       }
       else {
-        stringBuilder.append(string).append("\n");
+        markdown.append(charAt);
+      }
+
+      if (inEnd && charAt == '}') {
+        inMultiStringCode -= 1;
       }
 
     }
-    final String string = IpnbUtils.markdown2Html(stringBuilder.toString());
+    if (markdown.length() != 0) {
+      result.append(markdown2Html(markdown.toString()));
+    }
+    return result;
+  }
 
-    final JEditorPane editorPane = new JEditorPane();
-    editorPane.setContentType(new HTMLEditorKit().getContentType());
-    editorPane.setText("<html><body>" + string + "</body></html>");
-    
-    final Font font = new Font(Font.SERIF, Font.PLAIN, 16);
-    String bodyRule = "body { font-family: \"Helvetica Neue\",Helvetica,Arial,sans-serif;; " +
-                             "font-size: " + font.getSize() + "pt; " +
-                             "width: " + IpnbEditorUtil.PANEL_WIDTH + "px;}";
+  public static void addToPanel(@NotNull final String source, @NotNull final JPanel panel) {
+    Platform.setImplicitExit(false);
 
-    String codeRule = "code { font-family: \"Helvetica Neue\",Helvetica,Arial,sans-serif; " +
-                             "font-size: " + font.getSize() + "pt;}";
-    final StyleSheet sheet = ((HTMLDocument)editorPane.getDocument()).getStyleSheet();
-    sheet.addRule(bodyRule);
-    sheet.addRule(codeRule);
+    final String text = ourPrefix + source + "</div></body></html>";
 
-    editorPane.setEditable(false);
-    editorPane.addMouseListener(new MouseAdapter() {
+    final JFXPanel javafxPanel = new JFXPanel();
+    javafxPanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(editorPane, e, panel);
+        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(javafxPanel, e, panel);
         panel.dispatchEvent(parentEvent);
       }
     });
-    editorPane.addHyperlinkListener(new BrowserHyperlinkListener());
-
-    panel.add(editorPane);
+    Platform.runLater(new Runnable() {
+      @Override
+      public void run() {
+        final BorderPane borderPane = new BorderPane();
+        final WebView webComponent = new WebView();
+        webComponent.setPrefWidth(IpnbEditorUtil.PANEL_WIDTH + 100);
+        webComponent.setPrefHeight(5);
+        final WebEngine engine = webComponent.getEngine();
+        engine.locationProperty().addListener(new ChangeListener<String>() {
+          @Override
+          public void changed(ObservableValue<? extends String> value, String newValue, String t1) {
+            try {
+              final URI address = new URI(value.getValue());
+              BrowserUtil.browse(address);
+            }
+            catch (URISyntaxException e) {
+              LOG.warn(e);
+            }
+          }
+        });
+        engine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
+          @Override
+          public void changed(ObservableValue<? extends Worker.State> arg0, Worker.State oldState, Worker.State newState) {
+            if (newState == Worker.State.SUCCEEDED) {
+              adjustHeight(webComponent, javafxPanel, panel);
+            }
+          }
+        });
+        engine.loadContent(text);
+        borderPane.setCenter(webComponent);
+        final Scene scene = new Scene(borderPane);
+        javafxPanel.setScene(scene);
+      }
+    });
+    panel.add(javafxPanel);
   }
 
-  public static boolean isStyleOrScript(@NotNull final String string) {
-    return string.contains("<style>") || string.contains("<script>");
-  }
+  private static void adjustHeight(final WebView webComponent, final JFXPanel javafxPanel, final JPanel panel) {
+    Platform.runLater(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          Object result = webComponent.getEngine().executeScript("document.getElementById(\"mydiv\").offsetHeight");
+          if (result instanceof Integer) {
+            final double value = ((Integer)result + 150);
 
+            javafxPanel.setPreferredSize(new Dimension((int)webComponent.getPrefWidth(), (int)value));
+            panel.revalidate();
+            panel.repaint();
+          }
+        }
+        catch (JSException e) {
+          LOG.warn(e.getMessage());
+        }
+      }
+    });
+  }
 }

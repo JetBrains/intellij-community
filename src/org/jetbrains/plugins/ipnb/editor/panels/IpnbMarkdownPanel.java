@@ -18,11 +18,7 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JPanel, IpnbMarkdownCel
 
   @Override
   protected String getRawCellText() {
-    final String string = myCell.getSourceAsString();
-    if (IpnbUtils.isStyleOrScript(string)) {
-      return "";
-    }
-    return string;
+    return myCell.getSourceAsString();
   }
 
   @Override
@@ -36,7 +32,7 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JPanel, IpnbMarkdownCel
 
   private void updatePanel(@NotNull final JPanel panel) {
     panel.removeAll();
-    IpnbUtils.addLatexToPanel(myCell.getSource(), panel);
+    IpnbUtils.addLatexToPanel(myCell.getSourceAsString(), panel);
   }
 
 
