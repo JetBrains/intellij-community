@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView.eval;
 
+import com.intellij.find.FindSettings;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
@@ -37,10 +38,9 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
     protected void init() {
         final ToolWindow findWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
         final boolean available = findWindow != null && findWindow.isAvailable();
-        final boolean enabled = mySettings.OPEN_NEW_TAB && available;
 
         myForm.getNewTabCheckbox().setEnabled(available);
-        myForm.getNewTabCheckbox().setSelected(enabled);
+        myForm.getNewTabCheckbox().setSelected(FindSettings.getInstance().isShowResultsInSeparateView());
 
         myForm.getHighlightCheckbox().setSelected(mySettings.HIGHLIGHT_RESULTS);
         myForm.getHighlightCheckbox().addItemListener(new ItemListener() {
@@ -68,7 +68,7 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
     protected void doOKAction() {
         final EvalFormPanel form = getForm();
         if (form.getNewTabCheckbox().isEnabled()) {
-            mySettings.OPEN_NEW_TAB = form.getNewTabCheckbox().isSelected();
+            FindSettings.getInstance().setShowResultsInSeparateView(form.getNewTabCheckbox().isSelected());
         }
 
         mySettings.HIGHLIGHT_RESULTS = form.getHighlightCheckbox().isSelected();

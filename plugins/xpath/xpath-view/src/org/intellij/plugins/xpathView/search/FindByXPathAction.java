@@ -17,6 +17,7 @@
 package org.intellij.plugins.xpathView.search;
 
 import com.intellij.find.FindProgressIndicator;
+import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -88,7 +89,7 @@ public class FindByXPathAction extends AnAction {
         presentation.setTabText(StringUtil.shortenTextWithEllipsis("XPath '" + expression + '\'', 60, 0, true));
         presentation.setScopeText(scope.getName());
 
-        presentation.setOpenInNewTab(settings.OPEN_NEW_TAB);
+        presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
 
         final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
         processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
