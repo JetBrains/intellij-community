@@ -44,8 +44,23 @@ class CoreProgressManager extends ProgressManager {
   }
 
   @Override
-  public void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    executeProcessUnderProgress(process, progress);
+  public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) throws ProcessCanceledException {
+    executeProcessUnderProgress(new Runnable(){
+      @Override
+      public void run() {
+        try {
+          if (progress != null && !progress.isRunning()) {
+            progress.start();
+          }
+          process.run();
+        }
+        finally {
+          if (progress != null && progress.isRunning()) {
+            progress.stop();
+          }
+        }
+      }
+    },progress);
   }
 
   @Override
