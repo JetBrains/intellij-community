@@ -43,15 +43,27 @@ public class DeleteAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File toFile) throws IOException {
-    Utils.delete(toFile);
+    try {
+      Utils.delete(toFile);
+    } catch (IOException e) {
+      if (Utils.isWindows() && toFile.exists()) {
+        throw new RetryException(e);
+      } else {
+        throw e;
+      }
+    }
   }
 
+  @Override
   protected void doBackup(File toFile, File backupFile) throws IOException {
     Utils.copy(toFile, backupFile);
   }
 
+  @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
-    Utils.delete(toFile); // make sure there is no directory remained on this path (may remain from previous 'create' actions
-    Utils.copy(backupFile, toFile);
+    if (!toFile.exists() || isModified(toFile)) {
+      Utils.delete(toFile); // make sure there is no directory remained on this path (may remain from previous 'create' actions
+      Utils.copy(backupFile, toFile);
+    }
   }
 }
