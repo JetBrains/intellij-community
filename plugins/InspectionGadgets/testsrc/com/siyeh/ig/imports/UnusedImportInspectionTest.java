@@ -54,6 +54,15 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "}");
   }
 
+  public void testExactStaticImport() {
+    doTest("package a;\n" +
+           "import static java.lang.Math.abs;\n" +
+           "/*Unused import 'import static java.lang.Math.max;'*/import static java.lang.Math.max;/**/\n" +
+           "class Main {{\n" +
+           "  abs(1);\n" +
+           "}}");
+  }
+
   public void testStaticImportOnDemandConflict1() {
     addEnvironmentClass("package a;" +
                         "public class Parent {" +
@@ -177,6 +186,15 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
     addEnvironmentClass("package a; public class List {}");
     doTest("package a;" +
            "import java.util.List;" +
+           "import java.util.*;" +
+           "class X {{" +
+           "  List list = new ArrayList();" +
+           "}}");
+  }
+
+  public void testNoConflictInSamePackage() {
+    doTest("package a;" +
+           "/*Unused import 'import java.util.List;'*/import java.util.List;/**/" +
            "import java.util.*;" +
            "class X {{" +
            "  List list = new ArrayList();" +

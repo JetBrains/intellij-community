@@ -103,8 +103,15 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
     final boolean hasOnDemandImportConflict = ImportUtils.hasOnDemandImportConflict(qualifiedName, myFile);
     for (PsiImportStatementBase importStatement : importStatements) {
       if (!importStatement.isOnDemand()) {
-        if (member.equals(importStatement.resolve())) {
-          return importStatement;
+        final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
+        if (reference == null) {
+          continue;
+        }
+        final JavaResolveResult[] targets = reference.multiResolve(false);
+        for (JavaResolveResult target : targets) {
+          if (member.equals(target.getElement())) {
+            return importStatement;
+          }
         }
       }
       else {
