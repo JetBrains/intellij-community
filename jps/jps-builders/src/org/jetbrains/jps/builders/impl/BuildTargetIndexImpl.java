@@ -138,7 +138,8 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     return realDependencies;
   }
 
-  private boolean isDummy(@NotNull BuildTarget<?> target) {
+  @Override
+  public boolean isDummy(@NotNull BuildTarget<?> target) {
     return (target instanceof ModuleBuildTarget) //todo[nik] introduce method in BuildTarget instead
          && myBuildRootIndex.getTargetRoots(target, null).isEmpty();
   }

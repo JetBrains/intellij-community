@@ -15,6 +15,7 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -145,6 +146,11 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected boolean wasObjectStored(Object editableObject) {
     return true;
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return ObjectUtils.notNull(super.getHelpTopic(), "reference.settings.clouds");
   }
 
   @Override

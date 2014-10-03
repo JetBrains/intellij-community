@@ -28,13 +28,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
-import com.intellij.openapi.components.impl.stores.XmlElementStorage;
-import com.intellij.openapi.components.store.ComponentSaveSession;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.stores.*;
+import com.intellij.openapi.components.impl.stores.ComponentStoreImpl.ReloadComponentStoreStatus;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
@@ -47,21 +43,23 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectLongHashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -74,13 +72,19 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
+@State(
+  name = "ProjectManager",
+  storages = {
+    @Storage(
+      file = StoragePathMacros.APP_CONFIG + "/project.default.xml"
+    )}
+)
+public class ProjectManagerImpl extends ProjectManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
+  private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
 
   public static final int CURRENT_FORMAT_VERSION = 4;
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
-  private static final String ELEMENT_DEFAULT_PROJECT = "defaultProject";
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
@@ -93,15 +97,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private final Set<Project> myTestProjects = new THashSet<Project>();
 
-  private final Map<VirtualFile, byte[]> mySavedCopies = new THashMap<VirtualFile, byte[]>();
-  private final TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
-  private final Map<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles =
-    new THashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
-  private final Alarm myChangedFilesAlarm = new Alarm();
+  private final MultiMap<Project, Pair<VirtualFile, StateStorage>> myChangedProjectFiles = MultiMap.createSet();
+  private final SingleAlarm myChangedFilesAlarm;
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new SmartList<Pair<VirtualFile, StateStorage>>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
+
   private final ProgressManager myProgressManager;
   private volatile boolean myDefaultProjectWasDisposed = false;
+
+  private final Runnable restartApplicationOrReloadProjectTask = new Runnable() {
+    @Override
+    public void run() {
+      if (isReloadUnblocked() && tryToReloadApplication()) {
+        askToReloadProjectIfConfigFilesChangedExternally();
+      }
+    }
+  };
 
   @NotNull
   private static List<ProjectManagerListener> getListeners(Project project) {
@@ -111,7 +122,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   /** @noinspection UnusedParameters*/
-  public ProjectManagerImpl(VirtualFileManager virtualFileManager,
+  public ProjectManagerImpl(@NotNull VirtualFileManager virtualFileManager,
                             RecentProjectsManagerBase recentProjectsManager,
                             ProgressManager progressManager) {
     myProgressManager = progressManager;
@@ -130,11 +141,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       new ProjectManagerListener() {
         @Override
         public void projectOpened(final Project project) {
-          MessageBus messageBus = project.getMessageBus();
-          MessageBusConnection connection = messageBus.connect(project);
-          connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
+          project.getMessageBus().connect(project).subscribe(StateStorage.PROJECT_STORAGE_TOPIC, new StateStorage.Listener() {
             @Override
-            public void storageFileChanged(@NotNull final VirtualFileEvent event, @NotNull final StateStorage storage) {
+            public void storageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage) {
               projectStorageFileChanged(event, storage, project);
             }
           });
@@ -173,12 +182,23 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     );
 
-    registerExternalProjectFileListener(virtualFileManager);
+    virtualFileManager.addVirtualFileManagerListener(new VirtualFileManagerAdapter() {
+      @Override
+      public void beforeRefreshStart(boolean asynchronous) {
+        blockReloadingProjectOnExternalChanges();
+      }
+
+      @Override
+      public void afterRefreshFinish(boolean asynchronous) {
+        unblockReloadingProjectOnExternalChanges();
+      }
+    });
+    myChangedFilesAlarm = new SingleAlarm(restartApplicationOrReloadProjectTask, 300);
   }
 
   private void projectStorageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage, @Nullable Project project) {
     VirtualFile file = event.getFile();
-    if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
+    if (!StorageUtil.isChangedByStorageOrSaveSession(event) && !file.isDirectory() && !(event.getRequestor() instanceof ProjectManagerImpl)) {
       registerProjectToReload(project, file, storage);
     }
   }
@@ -605,168 +625,80 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     WelcomeFrame.showIfNoProjectOpened();
   }
 
-  private void registerExternalProjectFileListener(VirtualFileManager virtualFileManager) {
-    virtualFileManager.addVirtualFileManagerListener(new VirtualFileManagerListener() {
-      @Override
-      public void beforeRefreshStart(boolean asynchronous) {
-      }
-
-      @Override
-      public void afterRefreshFinish(boolean asynchronous) {
-        scheduleReloadApplicationAndProject();
-      }
-    });
-  }
-
   private void askToReloadProjectIfConfigFilesChangedExternally() {
-    LOG.debug("[RELOAD] myReloadBlockCount = " + myReloadBlockCount.get());
-    if (myReloadBlockCount.get() == 0) {
-      Set<Project> projects;
-
-      synchronized (myChangedProjectFiles) {
-        if (myChangedProjectFiles.isEmpty()) return;
-        projects = new HashSet<Project>(myChangedProjectFiles.keySet());
+    Set<Project> projects;
+    synchronized (myChangedProjectFiles) {
+      if (myChangedProjectFiles.isEmpty()) {
+        return;
       }
+      projects = new THashSet<Project>(myChangedProjectFiles.keySet());
+    }
 
-      List<Project> projectsToReload = new ArrayList<Project>();
-
-      for (Project project : projects) {
-        if (shouldReloadProject(project)) {
-          projectsToReload.add(project);
-        }
+    List<Project> projectsToReload = new SmartList<Project>();
+    for (Project project : projects) {
+      if (shouldReloadProject(project)) {
+        projectsToReload.add(project);
       }
+    }
 
-      for (final Project projectToReload : projectsToReload) {
-        reloadProjectImpl(projectToReload, false);
-      }
+    for (Project project : projectsToReload) {
+      doReloadProject(project);
     }
   }
 
   private boolean tryToReloadApplication() {
-    try {
-      final Application app = ApplicationManager.getApplication();
-      if (app.isDisposed()) {
-        return false;
-      }
-      final Set<Pair<VirtualFile, StateStorage>> causes = new THashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
-      if (causes.isEmpty()) {
-        return true;
-      }
-
-      final Ref<Collection<String>> reloadResult = Ref.create();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            reloadResult.set(((ApplicationImpl)app).getStateStore().reload(causes));
-          }
-          catch (Exception e) {
-            Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                       ProjectBundle.message("project.reload.failed.title"));
-          }
-        }
-      });
-
-      if (reloadResult.isNull()) {
-        return true;
-      }
-
-      if (!reloadResult.get().isEmpty()) {
-        String message = "Application components were changed externally and cannot be reloaded:\n";
-        for (String component : reloadResult.get()) {
-          message += component + "\n";
-        }
-
-        final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
-        message += "Would you like to " + (canRestart ? "restart " : "shutdown ");
-        message += ApplicationNamesInfo.getInstance().getProductName() + "?";
-
-        if (Messages.showYesNoDialog(message,
-                                     "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES) {
-          for (Pair<VirtualFile, StateStorage> cause : causes) {
-            StateStorage stateStorage = cause.getSecond();
-            if (stateStorage instanceof XmlElementStorage) {
-              ((XmlElementStorage)stateStorage).disableSaving();
-            }
-          }
-          ApplicationManagerEx.getApplicationEx().restart(true);
-        }
-      }
+    if (ApplicationManager.getApplication().isDisposed()) {
       return false;
     }
-    finally {
-      myChangedApplicationFiles.clear();
+    if (myChangedApplicationFiles.isEmpty()) {
+      return true;
+    }
+
+    Set<Pair<VirtualFile, StateStorage>> causes = new THashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
+    myChangedApplicationFiles.clear();
+
+    ReloadComponentStoreStatus status = ComponentStoreImpl.reloadStore(causes, ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore());
+    if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
+      ApplicationManagerEx.getApplicationEx().restart(true);
+      return false;
+    }
+    else {
+      return status == ReloadComponentStoreStatus.SUCCESS || status == ReloadComponentStoreStatus.RESTART_CANCELLED;
     }
   }
 
-  private boolean shouldReloadProject(final Project project) {
-    if (project.isDisposed()) return false;
-    final HashSet<Pair<VirtualFile, StateStorage>> causes = new HashSet<Pair<VirtualFile, StateStorage>>();
+  private boolean shouldReloadProject(@NotNull Project project) {
+    if (project.isDisposed()) {
+      return false;
+    }
 
+    Collection<Pair<VirtualFile, StateStorage>> causes = new SmartList<Pair<VirtualFile, StateStorage>>();
+    Collection<Pair<VirtualFile, StateStorage>> changes;
     synchronized (myChangedProjectFiles) {
-      final List<Pair<VirtualFile, StateStorage>> changes = myChangedProjectFiles.remove(project);
-      if (changes != null) {
-        causes.addAll(changes);
-      }
-
-      if (causes.isEmpty()) return false;
-    }
-
-    final boolean[] reloadOk = {false};
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          LOG.debug("[RELOAD] Reloading project/components...");
-          reloadOk[0] = ((ProjectEx)project).getStateStore().reload(causes);
-        }
-        catch (StateStorageException e) {
-          Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                     ProjectBundle.message("project.reload.failed.title"));
-        }
-        catch (IOException e) {
-          Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                     ProjectBundle.message("project.reload.failed.title"));
+      changes = myChangedProjectFiles.remove(project);
+      if (!ContainerUtil.isEmpty(changes)) {
+        for (Pair<VirtualFile, StateStorage> change : changes) {
+          causes.add(change);
         }
       }
-    });
-    if (reloadOk[0]) return false;
-
-    String message;
-    if (causes.size() == 1) {
-      message = ProjectBundle.message("project.reload.external.change.single", causes.iterator().next().first.getPresentableUrl());
-    }
-    else {
-      StringBuilder filesBuilder = new StringBuilder();
-      boolean first = true;
-      Set<String> alreadyShown = new HashSet<String>();
-      for (Pair<VirtualFile, StateStorage> cause : causes) {
-        String url = cause.first.getPresentableUrl();
-        if (!alreadyShown.contains(url)) {
-          if (alreadyShown.size() > 10) {
-            filesBuilder.append("\n" + "and ").append(causes.size() - alreadyShown.size()).append(" more");
-            break;
-          }
-          if (!first) filesBuilder.append("\n");
-          first = false;
-          filesBuilder.append(url);
-          alreadyShown.add(url);
-        }
-      }
-      message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
     }
 
-    return Messages.showDialog(message,
-                               ProjectBundle.message("project.reload.external.change.title"),
-                               new String[]{"&Reload Project", "&Discard Changes"},
-                               -1,
-                               Messages.getQuestionIcon()) == 0;
+    if (causes.isEmpty()) {
+      return false;
+    }
+
+    ReloadComponentStoreStatus status = ComponentStoreImpl.reloadStore(causes, ((ProjectEx)project).getStateStore());
+    return status == ReloadComponentStoreStatus.RESTART_AGREED;
   }
 
   @Override
   public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
-    return mySavedCopies.containsKey(candidate);
+    for (Pair<VirtualFile, StateStorage> entry : myChangedProjectFiles.values()) {
+      if (entry.first.equals(candidate)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -776,31 +708,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   public void unblockReloadingProjectOnExternalChanges() {
-    if (myReloadBlockCount.decrementAndGet() == 0) scheduleReloadApplicationAndProject();
+    if (myReloadBlockCount.decrementAndGet() == 0 && myChangedFilesAlarm.isEmpty()) {
+      ApplicationManager.getApplication().invokeLater(restartApplicationOrReloadProjectTask, ModalityState.NON_MODAL);
+    }
   }
 
-  private void scheduleReloadApplicationAndProject() {
-    // todo: commented due to "IDEA-61938 Libraries configuration is kept if switching branches"
-    // because of save which may happen _before_ project reload ;(
-
-    //ApplicationManager.getApplication().invokeLater(new Runnable() {
-    //  public void run() {
-    //IdeEventQueue.getInstance().addIdleListener(new Runnable() {
-    //  @Override
-    //  public void run() {
-    //    IdeEventQueue.getInstance().removeIdleListener(this);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (tryToReloadApplication()) {
-          askToReloadProjectIfConfigFilesChangedExternally();
-        }
-      }
-    }, ModalityState.NON_MODAL);
-    //}
-    //}, 2000);
-    //}
-    //}, ModalityState.NON_MODAL);
+  private boolean isReloadUnblocked() {
+    int count = myReloadBlockCount.get();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("[RELOAD] myReloadBlockCount = " + count);
+    }
+    return count == 0;
   }
 
   @Override
@@ -822,125 +740,66 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Override
-  public void saveChangedProjectFile(@NotNull VirtualFile file, @Nullable Project project) {
-    registerProjectToReload(project, file, null);
+  public void saveChangedProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
+    StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
+    String fileSpec = storageManager.collapseMacros(file.getPath());
+    Couple<Collection<FileBasedStorage>> storages = storageManager.getCachedFileStateStorages(Collections.singletonList(fileSpec), Collections.<String>emptyList());
+    FileBasedStorage storage = ContainerUtil.getFirstItem(storages.first);
+    // if empty, so, storage is not yet loaded, so, we don't have to reload
+    if (storage != null) {
+      registerProjectToReload(project, file, storage);
+    }
   }
 
-  private void registerProjectToReload(@Nullable Project project, VirtualFile cause, @Nullable StateStorage storage) {
-    if (cause.exists()) {
-      try {
-        byte[] bytes = cause.contentsToByteArray();
-        mySavedCopies.put(cause, bytes);
-        mySavedTimestamps.put(cause, cause.getTimeStamp());
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-
+  private void registerProjectToReload(@Nullable Project project, @NotNull VirtualFile cause, @NotNull StateStorage storage) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("[RELOAD] Registering project to reload: " + cause, new Exception());
     }
 
-    if (project != null) {
-      synchronized (myChangedProjectFiles) {
-        List<Pair<VirtualFile, StateStorage>> changedProjectFiles = myChangedProjectFiles.get(project);
-        if (changedProjectFiles == null) {
-          changedProjectFiles = new SmartList<Pair<VirtualFile, StateStorage>>();
-          myChangedProjectFiles.put(project, changedProjectFiles);
-        }
-
-        changedProjectFiles.add(Pair.create(cause, storage));
-      }
-    }
-    else {
+    if (project == null) {
       myChangedApplicationFiles.add(Pair.create(cause, storage));
     }
-
-    myChangedFilesAlarm.cancelAllRequests();
-    myChangedFilesAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        LOG.debug("[RELOAD] Scheduling reload application & project, myReloadBlockCount = " + myReloadBlockCount);
-        if (myReloadBlockCount.get() == 0) {
-          scheduleReloadApplicationAndProject();
-        }
-      }
-    }, 444);
-  }
-
-  private void restoreCopy(VirtualFile file) {
-    try {
-      if (file == null) return; // Externally deleted actually.
-      if (!file.isWritable()) return; // IDEA was unable to save it as well. So no need to restore.
-
-      final byte[] bytes = mySavedCopies.get(file);
-      if (bytes != null) {
-        try {
-          file.setBinaryContent(bytes, -1, mySavedTimestamps.get(file));
-        }
-        catch (IOException e) {
-          Messages.showWarningDialog(ProjectBundle.message("project.reload.write.failed", file.getPresentableUrl()),
-                                     ProjectBundle.message("project.reload.write.failed.title"));
-        }
-      }
+    else if (cause.exists()) {
+      myChangedProjectFiles.putValue(project, Pair.create(cause, storage));
     }
-    finally {
-      mySavedCopies.remove(file);
-      mySavedTimestamps.remove(file);
+
+    if (storage instanceof XmlElementStorage) {
+      ((XmlElementStorage)storage).disableSaving();
+    }
+
+    if (isReloadUnblocked()) {
+      myChangedFilesAlarm.cancelAndRequest();
     }
   }
 
   @Override
-  public void reloadProject(@NotNull final Project p) {
-    reloadProjectImpl(p, true);
+  public void reloadProject(@NotNull Project project) {
+    myChangedProjectFiles.remove(project);
+    doReloadProject(project);
   }
 
-  public void reloadProjectImpl(@NotNull final Project p, final boolean clearCopyToRestore) {
-    if (clearCopyToRestore) {
-      mySavedCopies.clear();
-      mySavedTimestamps.clear();
-    }
-
-    final Project[] project = {p};
-
-    ProjectReloadState.getInstance(project[0]).onBeforeAutomaticProjectReload();
-    final Application application = ApplicationManager.getApplication();
-
-    application.invokeLater(new Runnable() {
+  private static void doReloadProject(@NotNull Project project) {
+    final Ref<Project> projectRef = Ref.create(project);
+    ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         LOG.debug("Reloading project.");
-        ProjectImpl projectImpl = (ProjectImpl)project[0];
-        if (projectImpl.isDisposed()) {
-          return;
-        }
-        final String location = projectImpl.getPresentableUrl();
-        final List<VirtualFile> original = new SmartList<VirtualFile>();
-        try {
-          ComponentSaveSession saveSession = projectImpl.getStateStore().startSave();
-          saveSession.collectAllStorageFiles(true, original);
-          saveSession.finishSave();
-        }
-        catch (Exception e) {
-          LOG.error(e);
+        Project project = projectRef.get();
+        // Let it go
+        projectRef.set(null);
+
+        if (project.isDisposed()) {
           return;
         }
 
-        if (project[0].isDisposed() || ProjectUtil.closeAndDispose(project[0])) {
-          application.runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              for (VirtualFile originalFile : original) {
-                restoreCopy(originalFile);
-              }
-            }
-          });
-
-          project[0] = null; // Let it go.
-
-          ProjectUtil.openProject(location, null, true);
+        // must compute here, before project dispose
+        String presentableUrl = project.getPresentableUrl();
+        if (!ProjectUtil.closeAndDispose(project)) {
+          return;
         }
+
+        ProjectUtil.openProject(presentableUrl, null, true);
       }
     }, ModalityState.NON_MODAL);
   }
@@ -1121,33 +980,35 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
                                Messages.getWarningIcon()) == 0;
   }
 
+
+  @Nullable
   @Override
-  public void writeExternal(Element parentNode) {
+  public Element getState() {
     if (myDefaultProject != null) {
       myDefaultProject.save();
     }
 
+    if (myDefaultProjectRootElement == null) {
+      // we are not ready to save
+      return null;
+    }
+
+    Element element = new Element("state");
+    myDefaultProjectRootElement.detach();
+    element.addContent(myDefaultProjectRootElement);
+    return element;
+  }
+
+  @Override
+  public void loadState(Element state) {
+    myDefaultProjectRootElement = state.getChild("defaultProject");
     if (myDefaultProjectRootElement != null) {
       myDefaultProjectRootElement.detach();
-      parentNode.addContent(myDefaultProjectRootElement);
     }
   }
 
-  public void setDefaultProjectRootElement(final Element defaultProjectRootElement) {
+  public void setDefaultProjectRootElement(@NotNull Element defaultProjectRootElement) {
     myDefaultProjectRootElement = defaultProjectRootElement;
-  }
-
-  @Override
-  public void readExternal(Element parentNode)  {
-    myDefaultProjectRootElement = parentNode.getChild(ELEMENT_DEFAULT_PROJECT);
-    if (myDefaultProjectRootElement != null) {
-      myDefaultProjectRootElement.detach();
-    }
-  }
-
-  @Override
-  public String getExternalFileName() {
-    return "project.default";
   }
 
   @Override
@@ -1159,7 +1020,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @Override
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
+    return new File[]{PathManager.getOptionsFile("project.default")};
   }
 
   @Override

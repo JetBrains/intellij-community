@@ -61,8 +61,7 @@ public class PasswordPromptComponent {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myUserTextField.isShowing() && StringUtil.isEmpty(myUserTextField.getText()) ?
-           myUserTextField : myPasswordField;
+    return StringUtil.isEmpty(myUserTextField.getText()) ? myUserTextField : myPasswordField;
   }
 
   private void setUserInputVisible(boolean visible) {

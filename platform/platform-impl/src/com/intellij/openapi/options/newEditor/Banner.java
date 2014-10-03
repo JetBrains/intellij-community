@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.labels.SwingActionLink;
 
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -27,23 +28,29 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Font;
 
 /**
  * @author Sergey.Malenkov
  */
 final class Banner extends JPanel {
-  private final JPanel myLeftPanel = new JPanel();
+  private final JPanel myLeftPanel = new JPanel(null);
   private final JLabel myProjectIcon = new JLabel();
 
   Banner(Action action) {
     super(new BorderLayout(10, 0));
+    SwingActionLink link = new SwingActionLink(action);
     myLeftPanel.setLayout(new BoxLayout(myLeftPanel, BoxLayout.X_AXIS));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurableBanner);
     myProjectIcon.setForeground(JBColor.GRAY);
     myProjectIcon.setVisible(false);
     add(BorderLayout.WEST, myLeftPanel);
     add(BorderLayout.CENTER, myProjectIcon);
-    add(BorderLayout.EAST, new ActionLink(action));
+    add(BorderLayout.EAST, link);
+    Font font = link.getFont();
+    if (font != null) {
+      link.setFont(font.deriveFont(Font.BOLD));
+    }
   }
 
   void setText(String... text) {

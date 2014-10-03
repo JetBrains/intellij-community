@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -107,17 +108,10 @@ public abstract class HgUtil {
     return tempFile;
   }
 
-  public static void markDirectoryDirty(final Project project, final VirtualFile file) throws InvocationTargetException, InterruptedException {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
-      }
-    });
-    runWriteActionAndWait(new Runnable() {
-      public void run() {
-        file.refresh(true, true);
-      }
-    });
+  public static void markDirectoryDirty(final Project project, final VirtualFile file)
+    throws InvocationTargetException, InterruptedException {
+    VfsUtil.markDirtyAndRefresh(true, true, false, file);
+    VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
   }
 
   public static void markFileDirty( final Project project, final VirtualFile file ) throws InvocationTargetException, InterruptedException {

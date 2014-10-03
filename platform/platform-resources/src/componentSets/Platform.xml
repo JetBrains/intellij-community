@@ -160,12 +160,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.project.ProjectReloadState</interface-class>
-      <implementation-class>com.intellij.openapi.project.impl.ProjectReloadStateImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.vcs.FileStatusManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.FileStatusManagerImpl</implementation-class>
       <loadForDefaultProject/>

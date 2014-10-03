@@ -17,6 +17,8 @@ package com.intellij.dvcs;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -39,6 +41,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsLog;
@@ -202,4 +205,15 @@ public class DvcsUtil {
   public static String getDateString(@NotNull TimedVcsCommit commit) {
     return DateFormatUtil.formatPrettyDateTime(commit.getTimestamp()) + " ";
   }
+
+  public static void workingTreeChangeStarted(@NotNull Project project) {
+    HeavyProcessLatch.INSTANCE.processStarted();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
+  }
+
+  public static void workingTreeChangeFinished(@NotNull Project project) {
+    HeavyProcessLatch.INSTANCE.processFinished();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
+  }
+
 }

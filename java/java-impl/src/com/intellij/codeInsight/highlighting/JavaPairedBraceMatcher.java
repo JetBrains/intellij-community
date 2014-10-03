@@ -23,9 +23,15 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.tree.TokenSet;
 
 public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
+  private static final TokenSet TYPE_TOKENS = 
+    TokenSet.orSet(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET, 
+                   TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, 
+                                   JavaTokenType.RBRACKET, JavaTokenType.LBRACKET, //arrays
+                                   JavaTokenType.QUEST, JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD));//wildcards
+  
   public JavaPairedBraceMatcher() {
     super(new JavaBraceMatcher(), JavaLanguage.INSTANCE);
   }
@@ -58,12 +64,12 @@ public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
     try {
       while (true) {
         count++;
-        if (iterator.atEnd()) break;
         if (left) {
           iterator.advance();
         } else {
           iterator.retreat();
         }
+        if (iterator.atEnd()) break;
         final IElementType tokenType = iterator.getTokenType();
         if (tokenType == opposite) {
           paired--;
@@ -76,9 +82,7 @@ public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
           continue;
         }
 
-        if (!StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType) &&
-            tokenType != JavaTokenType.IDENTIFIER &&
-            tokenType != JavaTokenType.COMMA) {
+        if (!TYPE_TOKENS.contains(tokenType)) {
           return false;
         }
       }

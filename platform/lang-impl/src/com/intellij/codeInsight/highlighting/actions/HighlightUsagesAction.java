@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class HighlightUsagesAction extends AnAction implements DumbAware {
   public HighlightUsagesAction() {
@@ -33,18 +34,17 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent event) {
-    final Presentation presentation = event.getPresentation();
-    final DataContext dataContext = event.getDataContext();
-    presentation.setEnabled(CommonDataKeys.PROJECT.getData(dataContext) != null &&
-                            CommonDataKeys.EDITOR.getData(dataContext) != null);
+  public void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(e.getProject() != null && CommonDataKeys.EDITOR.getData(e.getDataContext()) != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     if (editor == null || project == null) return;
+
     String commandName = getTemplatePresentation().getText();
     if (commandName == null) commandName = "";
 

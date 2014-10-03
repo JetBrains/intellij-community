@@ -275,6 +275,8 @@ public class CompilingEvaluator implements ExpressionEvaluator {
       options.add(cp.getPathsString());
     }
     if (!StringUtil.isEmpty(target)) {
+      options.add("-source");
+      options.add(target);
       options.add("-target");
       options.add(target);
     }

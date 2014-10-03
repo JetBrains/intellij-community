@@ -63,8 +63,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
   @Override
   public CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
                                                                      @NotNull FormatTextRanges ranges,
-                                                                     @NotNull CodeStyleSettings settings)
-  {
+                                                                     @NotNull CodeStyleSettings settings) {
     return null;
   }
 

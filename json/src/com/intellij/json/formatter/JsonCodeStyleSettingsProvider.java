@@ -30,6 +30,8 @@ public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
             addIndentOptionsTab(settings);
             addSpacesTab(settings);
             addBlankLinesTab(settings);
+            addWrappingAndBracesTab(settings);
+            addTab(new JsonCodeStylePanel(settings));
           }
         };
       }

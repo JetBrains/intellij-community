@@ -162,6 +162,8 @@ public class PythonUnitTestUtil {
         String[] names = new String[0];
         if (clsName != null)
           names = clsName.split("\\.");
+        if (names.length == 0) return false;
+
         clsName = names[names.length - 1];
         if (TEST_MATCH_PATTERN.matcher(clsName).find()) {
           return true;

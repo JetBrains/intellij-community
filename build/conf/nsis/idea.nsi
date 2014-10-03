@@ -848,9 +848,11 @@ Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 1" "Text" "$(create_desktop_shortcut)"
   call winVersion
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
   ${If} $0 == "1"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Flags" "DISABLED"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Type" "Label"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" ""
+  ${Else}
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
   ${EndIf}
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 3

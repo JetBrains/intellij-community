@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.http.Header;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
@@ -37,11 +38,13 @@ public class StatisticsHttpClientSender implements StatisticsDataSender {
         add("content", content).
         add("uuid", UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())).
         add("ide", ApplicationNamesInfo.getInstance().getProductName()).build()).execute();
-      if (response.returnResponse().getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        throw new StatServiceException("Error during data sending... Code: " + response.returnResponse().getStatusLine().getStatusCode());
+
+      final HttpResponse httpResponse = response.returnResponse();
+      if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        throw new StatServiceException("Error during data sending... Code: " + httpResponse.getStatusLine().getStatusCode());
       }
 
-      final Header errors = response.returnResponse().getFirstHeader("errors");
+      final Header errors = httpResponse.getFirstHeader("errors");
       if (errors != null) {
         String value = errors.getValue();
         throw new StatServiceException("Error during updating statistics " + (!StringUtil.isEmptyOrSpaces(value) ? " : " + value : ""));

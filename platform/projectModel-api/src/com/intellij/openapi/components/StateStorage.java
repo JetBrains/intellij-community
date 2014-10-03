@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.Pair;
@@ -23,26 +22,34 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 public interface StateStorage {
-  Topic<Listener> STORAGE_TOPIC = new Topic<Listener>("STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.TO_PARENT);
+  // app storage files changed
+  Topic<Listener> STORAGE_TOPIC = new Topic<Listener>("STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.NONE);
+  // project storage files changes (project or modules, it is reason why we use broadcast TO_PARENT - to be notified when some module storage file changed
+  //  even if listen only project message bus)
+  Topic<Listener> PROJECT_STORAGE_TOPIC = new Topic<Listener>("PROJECT_STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.NONE);
 
   @Nullable
-  <T> T getState(final Object component, @NotNull String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
+  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
 
-  boolean hasState(final Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException;
+  boolean hasState(@Nullable Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException;
 
-  @NotNull
+  @Nullable
   ExternalizationSession startExternalization();
 
-  @NotNull
+  /**
+   * return null if nothing to save
+   */
+  @Nullable
   SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
 
-  void finishSave(@NotNull SaveSession saveSession);
-
-  void reload(@NotNull Set<String> changedComponents);
+  /**
+   * Get changed component names
+   */
+  void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result);
 
   interface ExternalizationSession {
     void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec);
@@ -50,14 +57,6 @@ public interface StateStorage {
 
   interface SaveSession {
     void save();
-
-    /**
-     * Get changed component names
-     */
-    @Nullable
-    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
-
-    void collectAllStorageFiles(@NotNull List<VirtualFile> files);
   }
 
   interface Listener {

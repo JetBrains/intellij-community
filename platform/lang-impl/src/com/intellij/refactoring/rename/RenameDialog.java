@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -143,7 +144,7 @@ public class RenameDialog extends RefactoringDialog {
 
   protected void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
-    myOldName = suggestedNames.length > 0 ? suggestedNames[0] : null;
+    myOldName = UsageViewUtil.getShortName(myPsiElement);
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
       @Override
       protected boolean shouldSelectAll() {
@@ -173,6 +174,10 @@ public class RenameDialog extends RefactoringDialog {
 
   public String[] getSuggestedNames() {
     final LinkedHashSet<String> result = new LinkedHashSet<String>();
+    final String initialName = VariableInplaceRenameHandler.getInitialName();
+    if (initialName != null) {
+      result.add(initialName);
+    }
     result.add(UsageViewUtil.getShortName(myPsiElement));
     final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
     for(NameSuggestionProvider provider: providers) {

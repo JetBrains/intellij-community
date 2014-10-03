@@ -20,21 +20,15 @@ import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
-import com.intellij.util.CharTable;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class LightStubBuilder implements StubBuilder {
@@ -42,30 +36,19 @@ public class LightStubBuilder implements StubBuilder {
 
   @Override
   public StubElement buildStubTree(@NotNull PsiFile file) {
-    final FileType fileType = file.getFileType();
+    FileType fileType = file.getFileType();
     if (!(fileType instanceof LanguageFileType)) {
       LOG.error("File is not of LanguageFileType: " + fileType + ", " + file);
       return null;
     }
-
-    final Language language = ((LanguageFileType)fileType).getLanguage();
+    Language language = ((LanguageFileType)fileType).getLanguage();
     final IFileElementType contentType = LanguageParserDefinitions.INSTANCE.forLanguage(language).getFileNodeType();
     if (!(contentType instanceof ILightStubFileElementType)) {
       LOG.error("File is not of ILightStubFileElementType: " + contentType + ", " + file);
       return null;
     }
-
-    final FileASTNode node = file.getNode();
-    assert node != null : file;
-
-    final LighterAST tree;
-    if (!node.isParsed()) {
-      final ILightStubFileElementType<?> type = (ILightStubFileElementType)contentType;
-      tree = new FCTSBackedLighterAST(node.getCharTable(), type.parseContentsLight(node));
-    }
-    else {
-      tree = new TreeBackedLighterAST(node);
-    }
+    final LighterAST tree = LighterAST.getLighterASTFromFileAST(file.getNode(), language);
+    if (tree == null) return null;
 
     final StubElement rootStub = createStubForFile(file, tree);
     buildStubTree(tree, tree.getRoot(), rootStub);
@@ -170,141 +153,5 @@ public class LightStubBuilder implements StubBuilder {
    */
   protected boolean skipChildProcessingWhenBuildingStubs(@NotNull LighterAST tree, @NotNull LighterASTNode parent, @NotNull LighterASTNode node) {
     return false;
-  }
-
-  private static class FCTSBackedLighterAST extends LighterAST {
-    private final FlyweightCapableTreeStructure<LighterASTNode> myTreeStructure;
-
-    public FCTSBackedLighterAST(final CharTable charTable, final FlyweightCapableTreeStructure<LighterASTNode> treeStructure) {
-      super(charTable);
-      myTreeStructure = treeStructure;
-    }
-
-    @NotNull
-    @Override
-    public LighterASTNode getRoot() {
-      return myTreeStructure.getRoot();
-    }
-
-    @Override
-    public LighterASTNode getParent(@NotNull final LighterASTNode node) {
-      return myTreeStructure.getParent(node);
-    }
-
-    @NotNull
-    @Override
-    public List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent) {
-      final Ref<LighterASTNode[]> into = new Ref<LighterASTNode[]>();
-      final int numKids = myTreeStructure.getChildren(myTreeStructure.prepareForGetChildren(parent), into);
-      return numKids > 0 ? ContainerUtil.newArrayList(into.get(), 0, numKids) : ContainerUtil.<LighterASTNode>emptyList();
-    }
-  }
-
-
-  private static class TreeBackedLighterAST extends LighterAST {
-    private final FileASTNode myRoot;
-
-    public TreeBackedLighterAST(final FileASTNode root) {
-      super(root.getCharTable());
-      myRoot = root;
-    }
-
-    @NotNull
-    @Override
-    public LighterASTNode getRoot() {
-      //noinspection ConstantConditions
-      return wrap(myRoot);
-    }
-
-    @Override
-    public LighterASTNode getParent(@NotNull final LighterASTNode node) {
-      return wrap(((NodeWrapper)node).myNode.getTreeParent());
-    }
-
-    @NotNull
-    @Override
-    public List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent) {
-      final ASTNode[] children = ((NodeWrapper)parent).myNode.getChildren(null);
-      if (children == null || children.length == 0) {
-        return ContainerUtil.emptyList();
-      }
-      final ArrayList<LighterASTNode> result = new ArrayList<LighterASTNode>(children.length);
-      for (final ASTNode child : children) {
-        result.add(wrap(child));
-      }
-      return result;
-    }
-
-    @Nullable
-    private static LighterASTNode wrap(@Nullable final ASTNode node) {
-      if (node == null) return null;
-      if (node.getFirstChildNode() == null && node.getTextLength() > 0) {
-        return new TokenNodeWrapper(node);
-      }
-      return new NodeWrapper(node);
-    }
-
-    @NotNull
-    public ASTNode unwrap(LighterASTNode node) {
-      return ((NodeWrapper)node).myNode;
-    }
-
-    private static class NodeWrapper implements LighterASTNode {
-      protected final ASTNode myNode;
-
-      public NodeWrapper(ASTNode node) {
-        myNode = node;
-      }
-
-      @Override
-      public IElementType getTokenType() {
-        return myNode.getElementType();
-      }
-
-      @Override
-      public int getStartOffset() {
-        return myNode.getStartOffset();
-      }
-
-      @Override
-      public int getEndOffset() {
-        return myNode.getStartOffset() + myNode.getTextLength();
-      }
-
-      @Override
-      public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof NodeWrapper)) return false;
-        final NodeWrapper that = (NodeWrapper)o;
-        if (myNode != null ? !myNode.equals(that.myNode) : that.myNode != null) return false;
-        return true;
-      }
-
-      @Override
-      public int hashCode() {
-        return myNode.hashCode();
-      }
-
-      @Override
-      public String toString() {
-        return "node wrapper[" + myNode + "]";
-      }
-    }
-
-    private static class TokenNodeWrapper extends NodeWrapper implements LighterASTTokenNode {
-      public TokenNodeWrapper(final ASTNode node) {
-        super(node);
-      }
-
-      @Override
-      public CharSequence getText() {
-        return myNode.getText();
-      }
-
-      @Override
-      public String toString() {
-        return "token wrapper[" + myNode + "]";
-      }
-    }
   }
 }

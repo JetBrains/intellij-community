@@ -217,6 +217,7 @@ private layoutPlugins(layouts) {
       }
     }
     layouts.layoutPlugin("course-creator")
+//    layouts.layoutPlugin("ipnb")
   }
 
   layouts.layoutCommunityPlugins(ch)

@@ -35,6 +35,19 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
     super(tag);
   }
 
+  public static XmlAttributeDescriptor[] getCommonAttributeDescriptors(XmlTag context) {
+    final XmlNSDescriptor nsDescriptor = context != null ? context.getNSDescriptor("", false) : null;
+    if (nsDescriptor != null) {
+      for (XmlElementDescriptor descriptor : nsDescriptor.getRootElementsDescriptors(null)) {
+        final String name = descriptor.getName();
+        if ("div".equals(name) || "span".equals(name)) {
+          return descriptor.getAttributesDescriptors(context);
+        }
+      }
+    }
+    return XmlAttributeDescriptor.EMPTY;
+  }
+
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     XmlElementDescriptor elementDescriptor = super.getElementDescriptor(childTag, contextTag);

@@ -36,7 +36,7 @@ import java.util.*;
  */
 class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, ConcurrentList<E> {
   @SuppressWarnings("FieldMayBeFinal")
-  private volatile Object[] array;
+  @NotNull private volatile Object[] array;
 
   LockFreeCopyOnWriteArrayList() {
     array = ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -815,6 +815,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    *
    * @return a string representation of this list
    */
+  @Override
   @NotNull
   public String toString() {
     return Arrays.toString(array);
@@ -835,6 +836,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    * @param o the object to be compared for equality with this list
    * @return {@code true} if the specified object is equal to this list
    */
+  @Override
   public boolean equals(Object o) {
     if (o == this) {
       return true;
@@ -860,6 +862,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    *
    * @return the hash code value for this list
    */
+  @Override
   public int hashCode() {
     int hashCode = 1;
     for (Object obj : array) {

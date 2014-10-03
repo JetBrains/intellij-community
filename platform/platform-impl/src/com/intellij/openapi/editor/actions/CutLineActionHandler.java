@@ -56,11 +56,6 @@ class CutLineActionHandler extends EditorWriteActionHandler {
     int lineEndOffset = doc.getLineEndOffset(lineNumber);
     int lineStartOffset = doc.getLineStartOffset(lineNumber);
 
-    if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() 
-        && caretOffset == (myToLineStart ? lineStartOffset : lineEndOffset)) {
-      return;
-    }
-
     int start;
     int end;
     if (myToLineStart) {

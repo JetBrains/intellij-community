@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -77,8 +77,7 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiNewExpression newExpression =
         (PsiNewExpression)element.getParent();
@@ -93,8 +92,7 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
       }
       final PsiExpression argument = arguments[0];
       final String text = argument.getText();
-      final String newArgument =
-        '"' + text.substring(1, text.length() - 1) + '"';
+      final String newArgument = '"' + StringUtil.escapeStringCharacters(text.substring(1, text.length() - 1)) + '"';
       PsiReplacementUtil.replaceExpression(argument, newArgument);
     }
   }

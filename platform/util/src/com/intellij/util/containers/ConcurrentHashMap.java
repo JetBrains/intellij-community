@@ -23,7 +23,6 @@ import jsr166e.ForkJoinPool;
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Unsafe;
 
-import java.io.*;
 import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -31,7 +30,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A hash table supporting full concurrency of retrievals and
@@ -229,10 +227,9 @@ import java.util.concurrent.locks.ReentrantLock;
 // added cacheOrGet convenience method
 // Null keys are NOT allowed
 // Null values are NOT allowed
-public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, Serializable, TObjectHashingStrategy<K> {
-  private static final long serialVersionUID = 7249069246763182397L;
+// NOT serializable
+public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, TObjectHashingStrategy<K> {
   @NotNull private final TObjectHashingStrategy<K> myHashingStrategy;
-
   /*
    * Overview:
    *
@@ -436,19 +433,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * exhausted, whichever comes first. These cases are not fast, but
    * maximize aggregate expected throughput.
    *
-   * Maintaining API and serialization compatibility with previous
-   * versions of this class introduces several oddities. Mainly: We
-   * leave untouched but unused constructor arguments refering to
-   * concurrencyLevel. We accept a loadFactor constructor argument,
-   * but apply it only to initial table capacity (which is the only
-   * time that we can guarantee to honor it.) We also declare an
-   * unused "Segment" class that is instantiated in minimal form
-   * only when serializing.
-   *
-   * Also, solely for compatibility with previous versions of this
-   * class, it extends AbstractMap, even though all of its methods
-   * are overridden, so it is just useless baggage.
-   *
    * This file is organized to make things a little easier to follow
    * while reading than they might otherwise: First the main static
    * declarations and utilities, then fields, then main public
@@ -472,7 +456,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * The default initial table capacity.  Must be a power of 2
    * (i.e., at least 1) and at most MAXIMUM_CAPACITY.
    */
-  static final int DEFAULT_CAPACITY = 16;
+  private static final int DEFAULT_CAPACITY = 16;
 
   /**
    * The largest possible (non-power of two) array size.
@@ -481,19 +465,13 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
   /**
-   * The default concurrency level for this table. Unused but
-   * defined for compatibility with previous versions of this class.
-   */
-  private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
-
-  /**
    * The load factor for this table. Overrides of this value in
    * constructors affect only the initial table capacity.  The
    * actual floating point value isn't normally used -- it is
    * simpler to use expressions such as {@code n - (n >>> 2)} for
    * the associated resizing threshold.
    */
-  static final float LOAD_FACTOR = 0.75f;
+  private static final float LOAD_FACTOR = 0.75f;
 
   /**
    * The bin count threshold for using a tree rather than list for a
@@ -542,15 +520,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    */
   static final int NCPU = Runtime.getRuntime().availableProcessors();
 
-  /**
-   * For serialization compatibility.
-   */
-  private static final ObjectStreamField[] serialPersistentFields = {
-    new ObjectStreamField("segments", Segment[].class),
-    new ObjectStreamField("segmentMask", Integer.TYPE),
-    new ObjectStreamField("segmentShift", Integer.TYPE)
-  };
-
   /* ---------------- Nodes -------------- */
 
   /**
@@ -586,10 +555,12 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       return val;
     }
 
+    @Override
     public final int hashCode() {
       return key.hashCode() ^ val.hashCode();
     }
 
+    @Override
     public final String toString() {
       return key + "=" + val;
     }
@@ -599,6 +570,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public final boolean equals(Object o) {
       Object k;
       Object v;
@@ -945,7 +917,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     int n;
     int h = hash((K)key);
     if ((tab = table) != null && (n = tab.length) > 0 &&
-        (e = tabAt(tab, n - 1 & h)) != null) {
+        (e = tabAt(tab, (n - 1) & h)) != null) {
       int eh;
       K ek;
       if ((eh = e.hash) == h) {
@@ -1340,6 +1312,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    *
    * @return the hash code value for this map
    */
+  @Override
   public int hashCode() {
     int h = 0;
     Node<K, V>[] t;
@@ -1363,6 +1336,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    *
    * @return a string representation of this map
    */
+  @Override
   public String toString() {
     Node<K, V>[] t;
     int f = (t = table) == null ? 0 : t.length;
@@ -1396,6 +1370,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @param o object to be compared for equality with this map
    * @return {@code true} if the specified object is equal to this map
    */
+  @Override
   public boolean equals(Object o) {
     if (o != this) {
       if (!(o instanceof Map)) {
@@ -1425,177 +1400,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       }
     }
     return true;
-  }
-
-  /**
-   * Stripped-down version of helper class used in previous version,
-   * declared for the sake of serialization compatibility
-   */
-  private static class Segment extends ReentrantLock implements Serializable {
-    private static final long serialVersionUID = 2249069246763182397L;
-    private final float loadFactor;
-
-    Segment(float lf) {
-      loadFactor = lf;
-    }
-  }
-
-  /**
-   * Saves the state of the {@code ConcurrentHashMapV8} instance to a
-   * stream (i.e., serializes it).
-   *
-   * @param s the stream
-   * @throws IOException if an I/O error occurs
-   * @serialData the key (Object) and value (Object)
-   * for each key-value mapping, followed by a null pair.
-   * The key-value mappings are emitted in no particular order.
-   */
-  private void writeObject(ObjectOutputStream s)
-    throws IOException {
-    // For serialization compatibility
-    // Emulate segment calculation from previous version of this class
-    int sshift = 0;
-    int ssize = 1;
-    while (ssize < DEFAULT_CONCURRENCY_LEVEL) {
-      ++sshift;
-      ssize <<= 1;
-    }
-    int segmentShift = 32 - sshift;
-    int segmentMask = ssize - 1;
-    Segment[] segments = new Segment[DEFAULT_CONCURRENCY_LEVEL];
-    for (int i = 0; i < segments.length; ++i) {
-      segments[i] = new Segment(LOAD_FACTOR);
-    }
-    s.putFields().put("segments", segments);
-    s.putFields().put("segmentShift", segmentShift);
-    s.putFields().put("segmentMask", segmentMask);
-    s.writeFields();
-
-    Node<K, V>[] t;
-    if ((t = table) != null) {
-      Traverser<K, V> it = new Traverser<K, V>(t, t.length, 0, t.length);
-      for (Node<K, V> p; (p = it.advance()) != null; ) {
-        s.writeObject(p.key);
-        s.writeObject(p.val);
-      }
-    }
-    s.writeObject(null);
-    s.writeObject(null);
-    segments = null; // throw away
-  }
-
-  /**
-   * Reconstitutes the instance from a stream (that is, deserializes it).
-   *
-   * @param s the stream
-   * @throws ClassNotFoundException if the class of a serialized object
-   *                                could not be found
-   * @throws IOException            if an I/O error occurs
-   */
-  private void readObject(ObjectInputStream s)
-    throws IOException, ClassNotFoundException {
-      /*
-       * To improve performance in typical cases, we create nodes
-       * while reading, then place in table once size is known.
-       * However, we must also validate uniqueness and deal with
-       * overpopulated bins while doing so, which requires
-       * specialized versions of putVal mechanics.
-       */
-    sizeCtl = -1; // force exclusion for table construction
-    s.defaultReadObject();
-    long size = 0L;
-    Node<K, V> p = null;
-    for (; ; ) {
-      @SuppressWarnings("unchecked") K k = (K)s.readObject();
-      @SuppressWarnings("unchecked") V v = (V)s.readObject();
-      if (k != null && v != null) {
-        p = new Node<K, V>(hash(k), k, v, p,myHashingStrategy);
-        ++size;
-      }
-      else {
-        break;
-      }
-    }
-    if (size == 0L) {
-      sizeCtl = 0;
-    }
-    else {
-      int n;
-      if (size >= (long)(MAXIMUM_CAPACITY >>> 1)) {
-        n = MAXIMUM_CAPACITY;
-      }
-      else {
-        int sz = (int)size;
-        n = tableSizeFor(sz + (sz >>> 1) + 1);
-      }
-      @SuppressWarnings({"rawtypes", "unchecked"})
-      Node<K, V>[] tab = (Node<K, V>[])new Node[n];
-      int mask = n - 1;
-      long added = 0L;
-      while (p != null) {
-        boolean insertAtFront;
-        Node<K, V> next = p.next;
-        Node<K, V> first;
-        int h = p.hash;
-        int j = h & mask;
-        if ((first = tabAt(tab, j)) == null) {
-          insertAtFront = true;
-        }
-        else {
-          K k = p.key;
-          if (first.hash < 0) {
-            TreeBin<K, V> t = (TreeBin<K, V>)first;
-            if (t.putTreeVal(h, k, p.val) == null) {
-              ++added;
-            }
-            insertAtFront = false;
-          }
-          else {
-            insertAtFront = true;
-            Node<K, V> q;
-            int binCount = 0;
-            for (q = first; q != null; q = q.next) {
-              K qk;
-              if (q.hash == h &&
-                  ((qk = q.key) == k ||
-                   qk != null && myHashingStrategy.equals(k,qk))) {
-                insertAtFront = false;
-                break;
-              }
-              ++binCount;
-            }
-            if (insertAtFront && binCount >= TREEIFY_THRESHOLD) {
-              insertAtFront = false;
-              ++added;
-              p.next = first;
-              TreeNode<K, V> hd = null;
-              TreeNode<K, V> tl = null;
-              for (q = p; q != null; q = q.next) {
-                TreeNode<K, V> t = new TreeNode<K, V>
-                  (q.hash, q.key, q.val, null, null, myHashingStrategy);
-                if ((t.prev = tl) == null) {
-                  hd = t;
-                }
-                else {
-                  tl.next = t;
-                }
-                tl = t;
-              }
-              setTabAt(tab, j, new TreeBin<K, V>(hd, myHashingStrategy));
-            }
-          }
-        }
-        if (insertAtFront) {
-          ++added;
-          p.next = first;
-          setTabAt(tab, j, p);
-        }
-        p = next;
-      }
-      table = tab;
-      sizeCtl = n - (n >>> 2);
-      baseCount = added;
-    }
   }
 
   // ConcurrentMap methods
@@ -1657,8 +1461,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @return the mapping for the key, if present; else the default value
    * @throws NullPointerException if the specified key is null
    */
-// TODO no method in JDK6
-//  @Override
+  @SuppressWarnings("override") //no method in JDK6
   public V getOrDefault(@NotNull Object key, V defaultValue) {
     V v;
     return (v = get(key)) == null ? defaultValue : v;
@@ -2031,7 +1834,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
           sizeCtl = (n << 1) - (n >>> 1);
           return;
         }
-        for (int sc; ; ) {
+        for (; ; ) {
+          int sc;
           if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, ++sc)) {
             if (sc != -1) {
               return;
@@ -2379,7 +2183,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      */
     private void contendedLock() {
       boolean waiting = false;
-      for (int s; ; ) {
+      for (; ; ) {
+        int s;
         if (((s = lockState) & WRITER) == 0) {
           if (U.compareAndSwapInt(this, LOCKSTATE, s, WRITER)) {
             if (waiting) {
@@ -3120,14 +2925,17 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       return val;
     }
 
+    @Override
     public int hashCode() {
       return key.hashCode() ^ val.hashCode();
     }
 
+    @Override
     public String toString() {
       return key + "=" + val;
     }
 
+    @Override
     public boolean equals(Object o) {
       Object k;
       Object v;
@@ -3162,8 +2970,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * Base class for views.
    */
   private abstract static class CollectionView<K, V, E>
-    implements Collection<E>, Serializable {
-    private static final long serialVersionUID = 7249069246763182397L;
+    implements Collection<E> {
     final ConcurrentHashMap<K, V> map;
 
     CollectionView(@NotNull ConcurrentHashMap<K, V> map) {
@@ -3296,6 +3103,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      *
      * @return a string representation of this collection
      */
+    @Override
     public final String toString() {
       StringBuilder sb = new StringBuilder();
       sb.append('[');
@@ -3362,8 +3170,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @since 1.8
    */
   public static class KeySetView<K, V> extends CollectionView<K, V, K>
-    implements Set<K>, Serializable {
-    private static final long serialVersionUID = 7249069246763182397L;
+    implements Set<K> {
     private final V value;
 
     KeySetView(ConcurrentHashMap<K, V> map, V value) {  // non-public
@@ -3463,6 +3270,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       return added;
     }
 
+    @Override
     public int hashCode() {
       int h = 0;
       for (K e : this) {
@@ -3471,6 +3279,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       return h;
     }
 
+    @Override
     public boolean equals(Object o) {
       Set<?> c;
       return o instanceof Set &&
@@ -3486,8 +3295,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * directly instantiated. See {@link #values()}.
    */
   static final class ValuesView<K, V> extends CollectionView<K, V, V>
-    implements Collection<V>, Serializable {
-    private static final long serialVersionUID = 2249069246763182397L;
+    implements Collection<V> {
 
     ValuesView(ConcurrentHashMap<K, V> map) {
       super(map);
@@ -3539,8 +3347,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * {@link #entrySet()}.
    */
   static final class EntrySetView<K, V> extends CollectionView<K, V, Map.Entry<K, V>>
-    implements Set<Map.Entry<K, V>>, Serializable {
-    private static final long serialVersionUID = 2249069246763182397L;
+    implements Set<Map.Entry<K, V>> {
 
     EntrySetView(ConcurrentHashMap<K, V> map) {
       super(map);
@@ -3598,6 +3405,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       return added;
     }
 
+    @Override
     public final int hashCode() {
       int h = 0;
       Node<K, V>[] t;
@@ -3610,6 +3418,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       return h;
     }
 
+    @Override
     public final boolean equals(Object o) {
       Set<?> c;
       return o instanceof Set &&

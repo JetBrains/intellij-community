@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -192,7 +193,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
                        "exit $RV\n");
       script.deleteOnExit();
       String prompt = ApplicationBundle.message("desktop.entry.sudo.prompt");
-      int result = ExecUtil.sudoAndGetOutput(asList(script.getPath()), prompt, null).getExitCode();
+      int result = ExecUtil.sudoAndGetOutput(new GeneralCommandLine(script.getPath()), prompt).getExitCode();
       if (result != 0) throw new RuntimeException("'" + script.getAbsolutePath() + "' : " + result);
     }
     else {

@@ -17,6 +17,7 @@ package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
@@ -80,20 +81,24 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[] {
-        new ToggleAction("Show Branches Panel") {
-          @Override
-          public boolean isSelected(AnActionEvent e) {
-            return mySettings.isShowBranchesPanel();
-          }
+      return new AnAction[]{new ShowBranchesPanelAction()};
+    }
 
-          @Override
-          public void setSelected(AnActionEvent e, boolean state) {
-            mySettings.setShowBranchesPanel(state);
-            myUi.setBranchesPanelVisible(state);
-          }
-        }
-      };
+    private class ShowBranchesPanelAction extends ToggleAction implements DumbAware {
+      public ShowBranchesPanelAction() {
+        super("Show Branches Panel");
+      }
+
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return mySettings.isShowBranchesPanel();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        mySettings.setShowBranchesPanel(state);
+        myUi.setBranchesPanelVisible(state);
+      }
     }
   }
 }

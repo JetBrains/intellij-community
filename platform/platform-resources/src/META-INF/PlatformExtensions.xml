@@ -83,6 +83,8 @@
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapGroupFactory"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapGroupFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.keymap.impl.ActionShortcutRestrictions"
+                        serviceImplementation="com.intellij.openapi.keymap.impl.ActionShortcutRestrictionsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.highlighter.EditorHighlighterFactory"
                         serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ide.dnd.DnDManager"
@@ -200,21 +202,24 @@
     <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
                     serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
 
+    <projectService serviceInterface="com.intellij.openapi.project.ProjectReloadState"
+                    serviceImplementation="com.intellij.openapi.project.impl.ProjectReloadStateImpl"/>
+
     <!-- General -->
     <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general" instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 
     <!-- Appearance -->
-    <applicationConfigurable groupId="appearance" groupWeight="150" instance="com.intellij.ide.ui.AppearanceConfigurable" id="appearance" key="title.appearance"
+    <applicationConfigurable groupId="appearance" groupWeight="150" instance="com.intellij.ide.ui.AppearanceConfigurable" id="preferences.lookFeel" key="title.appearance"
                              bundle="messages.IdeBundle"/>
 
     <!-- Keymap -->
     <applicationConfigurable groupId="appearance" groupWeight="140" instance="com.intellij.openapi.keymap.impl.ui.KeymapPanel" id="preferences.keymap" key="keymap.display.name"
                              bundle="messages.KeyMapBundle"/>
-    <applicationConfigurable parentId="appearance" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" id="reference.idesettings.quicklists"
+    <applicationConfigurable parentId="preferences.lookFeel" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" id="reference.idesettings.quicklists"
                              displayName="Quick Lists"/>
 
     <!-- Customizations -->
-    <applicationConfigurable parentId="appearance" instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
+    <applicationConfigurable parentId="preferences.lookFeel" instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
                              key="title.customizations" bundle="messages.IdeBundle"/>
 
     <!-- Notifications -->

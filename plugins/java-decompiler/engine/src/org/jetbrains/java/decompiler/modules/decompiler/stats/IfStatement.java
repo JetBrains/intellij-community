@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
@@ -199,20 +200,22 @@ public class IfStatement extends Statement {
     return null;
   }
 
-  public String toJava(int indent) {
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     String indstr = InterpreterUtil.getIndentString(indent);
     StringBuilder buf = new StringBuilder();
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    buf.append(ExprProcessor.listToJava(varDefinitions, indent));
-    buf.append(first.toJava(indent));
+    buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
+    buf.append(first.toJava(indent, tracer));
 
     if (isLabeled()) {
       buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
+      tracer.incrementSourceLine();
     }
 
-    buf.append(indstr).append(headexprent.get(0).toJava(indent)).append(" {").append(new_line_separator);
+    buf.append(indstr).append(headexprent.get(0).toJava(indent, tracer)).append(" {").append(new_line_separator);
+    tracer.incrementSourceLine();
 
     if (ifstat == null) {
       buf.append(InterpreterUtil.getIndentString(indent + 1));
@@ -232,9 +235,10 @@ public class IfStatement extends Statement {
         }
       }
       buf.append(";").append(new_line_separator);
+      tracer.incrementSourceLine();
     }
     else {
-      buf.append(ExprProcessor.jmpWrapper(ifstat, indent + 1, true));
+      buf.append(ExprProcessor.jmpWrapper(ifstat, indent + 1, true, tracer));
     }
 
     boolean elseif = false;
@@ -245,7 +249,7 @@ public class IfStatement extends Statement {
           !elsestat.isLabeled() &&
           (elsestat.getSuccessorEdges(STATEDGE_DIRECT_ALL).isEmpty()
            || !elsestat.getSuccessorEdges(STATEDGE_DIRECT_ALL).get(0).explicit)) { // else if
-        String content = ExprProcessor.jmpWrapper(elsestat, indent, false);
+        String content = ExprProcessor.jmpWrapper(elsestat, indent, false, tracer);
         content = content.substring(indstr.length());
 
         buf.append(indstr).append("} else ");
@@ -254,10 +258,12 @@ public class IfStatement extends Statement {
         elseif = true;
       }
       else {
-        String content = ExprProcessor.jmpWrapper(elsestat, indent + 1, false);
+        String content = ExprProcessor.jmpWrapper(elsestat, indent + 1, false, tracer);
 
         if (content.length() > 0) {
           buf.append(indstr).append("} else {").append(new_line_separator);
+          tracer.incrementSourceLine(); // FIXME: wrong order
+
           buf.append(content);
         }
       }
@@ -265,6 +271,7 @@ public class IfStatement extends Statement {
 
     if (!elseif) {
       buf.append(indstr).append("}").append(new_line_separator);
+      tracer.incrementSourceLine();
     }
 
     return buf.toString();

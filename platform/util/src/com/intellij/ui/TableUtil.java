@@ -114,8 +114,9 @@ public class TableUtil {
     TableModel model = table.getModel();
     boolean removed = false;
     for (int index = maxSelectionIndex; index >= 0; index--) {
-      if (selectionModel.isSelectedIndex(index) && (applyable == null || applyable.isOperationApplyable(model, index))) {
-        itemRemovable.removeRow(index);
+      int modelIndex = table.convertRowIndexToModel(index);
+      if (selectionModel.isSelectedIndex(index) && (applyable == null || applyable.isOperationApplyable(model, modelIndex))) {
+        itemRemovable.removeRow(modelIndex);
         removed = true;
       }
     }

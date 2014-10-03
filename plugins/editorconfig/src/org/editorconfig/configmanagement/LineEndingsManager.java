@@ -71,7 +71,7 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
     if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
 
     final String filePath = file.getCanonicalPath();
-    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
+    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, filePath);
     final String lineEndings = Utils.configValueForKey(outPairs, lineEndingsKey);
     if (!lineEndings.isEmpty()) {
       try {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -138,19 +139,25 @@ public class ActionsTreeUtil {
 
   @Nullable
   private static Condition<AnAction> wrapFilter(@Nullable final Condition<AnAction> filter, final Keymap keymap, final ActionManager actionManager) {
-    if (Registry.is("keymap.show.alias.actions")) return filter;
-
+    final ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
     return new Condition<AnAction>() {
       @Override
       public boolean value(final AnAction action) {
         if (action == null) return false;
         final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
-          String binding = getActionBinding(keymap, id);
-          boolean bound = binding != null
-                          && actionManager.getAction(binding) != null // do not hide bound action, that miss the 'bound-with'
-                          && !hasAssociatedShortcutsInHierarchy(id, keymap); // do not hide bound actions when they are redefined
-          return filter == null ? !bound : !bound && filter.value(action);
+          if (!Registry.is("keymap.show.alias.actions")) {
+            String binding = getActionBinding(keymap, id);
+            boolean bound = binding != null
+                            && actionManager.getAction(binding) != null // do not hide bound action, that miss the 'bound-with'
+                            && !hasAssociatedShortcutsInHierarchy(id, keymap); // do not hide bound actions when they are redefined
+            if (bound) {
+              return false;
+            }
+          }
+          if (!shortcutRestrictions.getForActionId(id).allowChanging) {
+            return false;
+          }
         }
 
         return filter == null || filter.value(action);
@@ -537,5 +544,14 @@ public class ActionsTreeUtil {
         return false;
       }
     };
+  }
+
+  public static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
+                                                     final Keymap keymap,
+                                                     final KeyboardShortcut shortcut,
+                                                     final String filter,
+                                                     final boolean force) {
+    return filter != null && filter.length() > 0 ? isActionFiltered(filter, force) :
+           shortcut != null ? isActionFiltered(actionManager, keymap, shortcut) : null;
   }
 }

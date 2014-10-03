@@ -35,7 +35,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIntHashSet;
-import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
@@ -63,7 +62,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final Map<String, VirtualFileSystemEntry> myRoots = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
   private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
 
-  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<VirtualFileSystemEntry>();
+  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectMap();
   private final Object myInputLock = new Object();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);

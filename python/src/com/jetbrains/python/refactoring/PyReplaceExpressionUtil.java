@@ -83,6 +83,9 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
         return true;
       }
     }
+    else if (newExpr instanceof PyConditionalExpression && parentExpr instanceof PyConditionalExpression) {
+      return true;
+    }
     return false;
   }
 
@@ -433,30 +436,32 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
   private static boolean isNotAssociative(@NotNull final PyBinaryExpression binaryExpression) {
     final IElementType opType = getOperationType(binaryExpression);
     return COMPARISON_OPERATIONS.contains(opType) || binaryExpression instanceof PySliceExpression ||
-           opType == DIV || opType == PERC || opType == EXP || opType == MINUS;
+           opType == DIV || opType == FLOORDIV || opType == PERC || opType == EXP || opType == MINUS;
   }
 
   private static int getExpressionPriority(PyElement expr) {
     int priority = 0;
-    if (expr instanceof PySubscriptionExpression || expr instanceof PySliceExpression ||
-        expr instanceof PyCallExpression) priority = 1;
-    if (expr instanceof PyPrefixExpression) {
+    if (expr instanceof PySubscriptionExpression || expr instanceof PySliceExpression || expr instanceof PyCallExpression) priority = 1;
+    else if (expr instanceof PyPrefixExpression) {
       final IElementType opType = getOperationType(expr);
       if (opType == PLUS || opType == MINUS || opType == TILDE) priority = 2;
-      if (opType == NOT_KEYWORD) priority = 10;
+      if (opType == NOT_KEYWORD) priority = 11;
     }
-    if (expr instanceof PyBinaryExpression) {
+    else if (expr instanceof PyBinaryExpression) {
       final IElementType opType = getOperationType(expr);
       if (opType == EXP) priority =  3;
-      if (opType == MULT || opType == DIV || opType == PERC) priority =  4;
+      if (opType == MULT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  4;
       if (opType == PLUS || opType == MINUS) priority =  5;
       if (opType == LTLT || opType == GTGT) priority = 6;
       if (opType == AND) priority = 7;
-      if (opType == OR) priority = 8;
-      if (COMPARISON_OPERATIONS.contains(opType)) priority = 9;
-      if (opType == AND_KEYWORD) priority = 11;
+      if (opType == XOR) priority = 8;
+      if (opType == OR) priority = 9;
+      if (COMPARISON_OPERATIONS.contains(opType)) priority = 10;
+      if (opType == AND_KEYWORD) priority = 12;
+      if (opType == OR_KEYWORD) priority = 13;
     }
-    if (expr instanceof PyLambdaExpression) priority = 12; 
+    else if (expr instanceof PyConditionalExpression) priority = 14;
+    else if (expr instanceof PyLambdaExpression) priority = 15;
 
     return -priority;
   }

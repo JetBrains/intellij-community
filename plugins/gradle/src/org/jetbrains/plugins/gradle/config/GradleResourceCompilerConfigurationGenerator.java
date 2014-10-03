@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.components.ServiceManager;
@@ -30,10 +32,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectType;
+import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
@@ -73,12 +78,15 @@ public class GradleResourceCompilerConfigurationGenerator {
       @Nullable
       @Override
       protected ExternalProject create(String gradleProjectPath) {
-        return myExternalProjectDataService.getOrImportRootExternalProject(project, GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
+        return myExternalProjectDataService.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
       }
     };
   }
 
   public void generateBuildConfiguration() {
+
+    if(shouldBeBuiltByExternalSystem(myProject)) return;
+
     if (!hasGradleModules()) return;
 
     final BuildManager buildManager = BuildManager.getInstance();
@@ -91,14 +99,16 @@ public class GradleResourceCompilerConfigurationGenerator {
     for (Module module : myContext.getCompileScope().getAffectedModules()) {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
 
+      if(shouldBeBuiltByExternalSystem(module)) continue;
+
       final String gradleProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
       assert gradleProjectPath != null;
       final ExternalProject externalRootProject = myExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {
         myContext.addMessage(CompilerMessageCategory.ERROR,
-                             String.format("Unable to make the module: %s, related gradle module configuration was not imported",
-                                           module.getName()),
-                             VfsUtilCore.pathToUrl(gradleProjectPath), -1, -1);
+                             String.format("Unable to make the module: %s, related gradle configuration was not found. " +
+                                           "Please, re-import the Gradle project and try again.",
+                                           module.getName()), VfsUtilCore.pathToUrl(gradleProjectPath), -1, -1);
         continue;
       }
 
@@ -139,6 +149,21 @@ public class GradleResourceCompilerConfigurationGenerator {
         }
       }
     });
+  }
+
+  private static boolean shouldBeBuiltByExternalSystem(@NotNull Project project) {
+    // skip resource compilation by IDE for Android projects
+    // TODO [vlad] this check should be replaced when an option to make any gradle project with gradle be introduced.
+    ProjectType projectType = ProjectTypeService.getProjectType(project);
+    if(projectType != null && "Android".equals(projectType.getId())) return true;
+    return false;
+  }
+
+  private static boolean shouldBeBuiltByExternalSystem(@NotNull Module module) {
+    for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
+      if(ArrayUtil.contains(facet.getName(), "Android", "Android-Gradle", "Java-Gradle")) return true;
+    }
+    return false;
   }
 
   private boolean hasGradleModules() {

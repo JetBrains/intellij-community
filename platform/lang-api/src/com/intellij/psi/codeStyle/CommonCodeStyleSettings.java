@@ -918,7 +918,7 @@ public class CommonCodeStyleSettings {
 
     @Override
     public void writeExternal(Element element) throws WriteExternalException {
-      DefaultJDOMExternalizer.writeExternal(this, element);
+      DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<IndentOptions>(this, new IndentOptions()));
     }
 
     public void serialize(Element indentOptionsElement, final IndentOptions defaultOptions) {

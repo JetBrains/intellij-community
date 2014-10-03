@@ -84,6 +84,7 @@ public final class HgConflictResolver {
     }, ModalityState.defaultModalityState());
   }
 
+  @NotNull
   public static List<VirtualFile> findConflicts(final Project project, VirtualFile repo) {
     Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(project).getListSynchronously(repo);
     final List<VirtualFile> conflicts = new ArrayList<VirtualFile>();

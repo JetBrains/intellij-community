@@ -33,6 +33,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PathUtil;
@@ -66,12 +67,39 @@ public class CCRunTests extends AnAction {
     }
     PsiElement psiElement = location.getPsiElement();
     PsiFile psiFile = psiElement.getContainingFile();
-    if (psiFile != null && psiFile.getName().contains(".answer")) {
+    Project project = e.getProject();
+    if (project == null || psiFile == null) {
+      presentation.setVisible(false);
+      presentation.setEnabled(false);
+      return;
+    }
+    final CCProjectService service = CCProjectService.getInstance(project);
+    final Course course = service.getCourse();
+    final PsiDirectory taskDir = psiFile.getContainingDirectory();
+    final PsiDirectory lessonDir = taskDir.getParent();
+    if (lessonDir == null) return;
+    final Lesson lesson = course.getLesson(lessonDir.getName());
+    final Task task = lesson.getTask(taskDir.getName());
+    if (task == null) {
+      presentation.setVisible(false);
+      presentation.setEnabled(false);
+      return;
+    }
+    TaskFile taskFile = task.getTaskFile(psiFile.getName());
+    if (taskFile == null) {
+      LOG.info("could not find task file");
+      presentation.setVisible(false);
+      presentation.setEnabled(false);
+      return;
+    }
+    if (psiFile.getName().contains(".answer")) {
       presentation.setEnabled(true);
+      presentation.setVisible(true);
       presentation.setText("Run tests from '" + psiFile.getName() + "'");
     }
     else {
       presentation.setEnabled(false);
+      presentation.setVisible(false);
     }
   }
 

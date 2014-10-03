@@ -56,11 +56,11 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     assert openedFile != null;
     final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
     assert selectedTaskFile != null;
-    selectedTaskFile.setValidAndUpdate(true, openedFile, project);
     String openedFileName = openedFile.getName();
     Task currentTask = selectedTaskFile.getTask();
     resetTaskFile(document, project, course, selectedTaskFile, openedFileName, currentTask);
     selectedTaskFile.drawAllWindows(editor);
+    selectedTaskFile.createGuardedBlocks(document, editor);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

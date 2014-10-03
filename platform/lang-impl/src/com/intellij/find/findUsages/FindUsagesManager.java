@@ -44,7 +44,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -61,7 +64,6 @@ import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +77,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * see {@link com.intellij.find.impl.FindManagerImpl#getFindUsagesManager()}
  */
-public class FindUsagesManager implements JDOMExternalizable {
+public class FindUsagesManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
 
   private enum FileSearchScope {
@@ -89,7 +91,6 @@ public class FindUsagesManager implements JDOMExternalizable {
   @NonNls private static final String VALUE_START_USAGE_AGAIN = "START_AGAIN";
   private final Project myProject;
   private final com.intellij.usages.UsageViewManager myAnotherManager;
-  private boolean myToOpenInNewTab = true;
 
   private PsiElement2UsageTargetComposite myLastSearchInFileData; // EDT only
   private final UsageHistory myHistory = new UsageHistory();
@@ -127,16 +128,6 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   public boolean findPreviousUsageInFile(@NotNull FileEditor editor) {
     return findUsageInFile(editor, FileSearchScope.BEFORE_CARET);
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    myToOpenInNewTab = JDOMExternalizer.readBoolean(element, "OPEN_NEW_TAB");
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    JDOMExternalizer.write(element, "OPEN_NEW_TAB", myToOpenInNewTab);
   }
 
   private boolean findUsageInFile(@NotNull FileEditor editor, @NotNull FileSearchScope direction) {
@@ -313,17 +304,17 @@ public class FindUsagesManager implements JDOMExternalizable {
   public UsageViewPresentation createPresentation(@NotNull FindUsagesHandler handler, @NotNull FindUsagesOptions findUsagesOptions) {
     PsiElement element = handler.getPsiElement();
     LOG.assertTrue(element.isValid());
-    return createPresentation(element, findUsagesOptions, myToOpenInNewTab);
+    return createPresentation(element, findUsagesOptions, FindSettings.getInstance().isShowResultsInSeparateView());
   }
 
   private void setOpenInNewTab(final boolean toOpenInNewTab) {
     if (!mustOpenInNewTab()) {
-      myToOpenInNewTab = toOpenInNewTab;
+      FindSettings.getInstance().setShowResultsInSeparateView(toOpenInNewTab);
     }
   }
 
   private boolean shouldOpenInNewTab() {
-    return mustOpenInNewTab() || myToOpenInNewTab;
+    return mustOpenInNewTab() || FindSettings.getInstance().isShowResultsInSeparateView();
   }
 
   private boolean mustOpenInNewTab() {

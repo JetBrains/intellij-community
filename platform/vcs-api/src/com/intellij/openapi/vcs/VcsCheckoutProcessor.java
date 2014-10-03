@@ -32,16 +32,13 @@ public abstract class VcsCheckoutProcessor {
     return ContainerUtil.find(EXTENSION_POINT_NAME.getExtensions(), new Condition<VcsCheckoutProcessor>() {
       @Override
       public boolean value(VcsCheckoutProcessor processor) {
-        return protocol.equals(processor.getProtocol());
+        return protocol.equals(processor.getId());
       }
     });
   }
 
   @NotNull
-  public abstract String getProtocol();
+  public abstract String getId();
 
-  public abstract void checkout(@NotNull String url,
-                                @NotNull String directoryName,
-                                @NotNull VirtualFile parentDirectory,
-                                @NotNull CheckoutProvider.Listener listener);
+  public abstract boolean checkout(@NotNull String url, @NotNull VirtualFile parentDirectory, @NotNull String directoryName);
 }

@@ -33,7 +33,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -693,6 +692,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     reinitDocumentIndentOptions();
 
+    for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
+      if (scheme instanceof MyColorSchemeDelegate) {
+        ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
+        break;
+      }
+    }
+
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
 
     mySettings.reinitSettings();
@@ -709,12 +715,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       validateSize();
     }
 
-    for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
-      if (scheme instanceof MyColorSchemeDelegate) {
-        ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
-        break;
-      }
-    }
     myHighlighter.setColorScheme(myScheme);
     myFoldingModel.refreshSettings();
 
@@ -1785,22 +1785,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return StringUtil.countNewLines(c);
   }
 
-  private boolean updatingSize;
+  private boolean updatingSize; // accessed from EDT only
   private void updateGutterSize() {
     assertIsDispatchThread();
     if (!updatingSize) {
       updatingSize = true;
-      LaterInvocator.invokeLater(new Runnable() {
+      SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
           try {
-            myGutterComponent.updateSize();
+            if (!isDisposed()) {
+              myGutterComponent.updateSize();
+            }
           }
           finally {
             updatingSize = false;
           }
         }
-      }, ApplicationManager.getApplication().getDisposed());
+      });
     }
   }
 

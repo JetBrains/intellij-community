@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -19,6 +20,8 @@ import org.jetbrains.plugins.coursecreator.format.*;
 import org.jetbrains.plugins.coursecreator.ui.CreateTaskWindowDialog;
 
 public class CCAddTaskWindow extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(CCAddTaskWindow.class);
+
   public CCAddTaskWindow() {
     super("Add task window","Add task window", null);
   }
@@ -61,6 +64,7 @@ public class CCAddTaskWindow extends DumbAwareAction {
     int index = taskFile.getTaskWindows().size() + 1;
     taskFile.addTaskWindow(taskWindow, index);
     taskWindow.drawHighlighter(editor, false);
+    taskWindow.createGuardedBlocks(editor);
     DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
   }
 
@@ -102,8 +106,14 @@ public class CCAddTaskWindow extends DumbAwareAction {
       presentation.setEnabled(false);
       return;
     }
+    TaskFile taskFile = task.getTaskFile(file.getName());
+    if (taskFile == null) {
+      LOG.info("could not find task file");
+      presentation.setVisible(false);
+      presentation.setEnabled(false);
+      return;
+    }
     presentation.setVisible(true);
     presentation.setEnabled(true);
-
   }
 }

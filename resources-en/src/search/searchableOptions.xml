@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <options>
-  <configurable id="fileColors" configurable_name="File Colors">
+  <configurable id="reference.settings.ide.settings.file-colors" configurable_name="File Colors">
     <option name="" hit="" />
     <option name="colors" hit="Enable File Colors" />
     <option name="enable" hit="Enable File Colors" />
@@ -158,7 +158,7 @@
     <option name="default" hit="Default project copyright:" />
     <option name="project" hit="Default project copyright:" />
   </configurable>
-  <configurable id="Configurable.PHP" configurable_name="PHP">
+  <configurable id="reference.webide.settings.project.settings.php" configurable_name="PHP">
     <option name="" hit="" />
     <option name="development" hit="Development environment" />
     <option name="environment" hit="Development environment" />
@@ -1801,7 +1801,7 @@
     <option name="found" hit="not found" />
     <option name="not" hit="not found" />
   </configurable>
-  <configurable id="Configurable.PHP.Debug.DBGPProxy" configurable_name="DBGp Proxy">
+  <configurable id="reference.settings.php.debug.xdebug.proxy" configurable_name="DBGp Proxy">
     <option name="dbgp" hit="DBGp Proxy" />
     <option name="proxy" hit="DBGp Proxy" />
     <option name="host" hit="Host:" />
@@ -4128,7 +4128,7 @@
     <option name="variable" hit="Static member variable" />
     <option name="string" hit="String" />
   </configurable>
-  <configurable id="editor" configurable_name="Editor">
+  <configurable id="preferences.editor" configurable_name="Editor">
     <option name="" hit="" />
     <option name="" hit=" Change font size (Zoom) with Ctrl+Mouse Wheel " />
     <option name="change" hit=" Change font size (Zoom) with Ctrl+Mouse Wheel " />
@@ -4867,7 +4867,7 @@
     <option name="" hit="" />
     <option name="excludes" hit="Excludes" />
   </configurable>
-  <configurable id="Configurable.PHP.PHPUnit" configurable_name="PHPUnit">
+  <configurable id="reference.webide.settings.project.settings.php.phpunit" configurable_name="PHPUnit">
     <option name="" hit="" />
     <option name="bootstrap" hit="Default bootstrap file:" />
     <option name="default" hit="Default bootstrap file:" />
@@ -14600,7 +14600,7 @@
     <option name="write" hit="Use &quot;safe write&quot; (save changes to a temporary file first)" />
     <option name="sec" hit="sec." />
   </configurable>
-  <configurable id="Configurable.PHP.Composer" configurable_name="Composer">
+  <configurable id="reference.webide.settings.project.settings.php.composer" configurable_name="Composer">
     <option name="" hit="" />
     <option name="composer" hit="Composer" />
     <option name="composer" hit="Empty path to composer.phar" />
@@ -14717,7 +14717,7 @@
     <option name="view" hit="   Select a scope to view or edit its details here   " />
     <option name="scopes" hit="Scopes" />
   </configurable>
-  <configurable id="Configurable.PHP.MessDetector" configurable_name="Mess Detector">
+  <configurable id="com.jetbrains.php.tools.quality.messDetector.MessDetectorConfigurable" configurable_name="Mess Detector">
     <option name="" hit="" />
     <option name="files" hit="Ignored files:" />
     <option name="ignored" hit="Ignored files:" />
@@ -17493,7 +17493,7 @@
     <option name="modifier" hit="Wrap after modifier list" />
     <option name="wrap" hit="Wrap after modifier list" />
   </configurable>
-  <configurable id="Configurable.PHP.Servers" configurable_name="Servers">
+  <configurable id="settings.php.debug.servers" configurable_name="Servers">
     <option name="" hit="" />
     <option name="" hit="      " />
     <option name="body" hit="      " />
@@ -19628,7 +19628,7 @@
     <option name="tab" path="Tabs and Indents" hit="Use tab character" />
     <option name="use" path="Tabs and Indents" hit="Use tab character" />
   </configurable>
-  <configurable id="appearance" configurable_name="Appearance">
+  <configurable id="preferences.lookFeel" configurable_name="Appearance">
     <option name="" hit="" />
     <option name="" hit=" Automatically position mouse cursor on default button " />
     <option name="automatically" hit=" Automatically position mouse cursor on default button " />
@@ -19993,7 +19993,7 @@
     <option name="issue" hit="Issue Navigation" />
     <option name="navigation" hit="Issue Navigation" />
   </configurable>
-  <configurable id="Configurable.PHP.Smarty" configurable_name="Smarty">
+  <configurable id="reference.webide.settings.project.settings.smarty" configurable_name="Smarty">
     <option name="changes" hit="Reopen editor for changes to take effect" />
     <option name="editor" hit="Reopen editor for changes to take effect" />
     <option name="effect" hit="Reopen editor for changes to take effect" />
@@ -21083,7 +21083,7 @@
     <option name="password" hit="Password:" />
     <option name="test" hit="Test" />
   </configurable>
-  <configurable id="Configurable.PHP.Debug.SkippedPaths" configurable_name="Skipped Paths">
+  <configurable id="settings.php.debug.skipped.paths" configurable_name="Skipped Paths">
     <option name="" hit="" />
     <option name="about" hit="Notify about skipped files" />
     <option name="files" hit="Notify about skipped files" />
@@ -21423,7 +21423,7 @@
     <option name="line" hit="Use line comment" />
     <option name="use" hit="Use line comment" />
   </configurable>
-  <configurable id="Configurable.PHP.CodeSniffer" configurable_name="Code Sniffer">
+  <configurable id="com.jetbrains.php.tools.quality.phpcs.PhpCSConfigurable" configurable_name="Code Sniffer">
     <option name="" hit="" />
     <option name="code" hit="Code Sniffer" />
     <option name="sniffer" hit="Code Sniffer" />
@@ -22593,7 +22593,7 @@
     <option name="number" hit="Number" />
     <option name="string" hit="String" />
   </configurable>
-  <configurable id="Configurable.PHP.Debug" configurable_name="Debug">
+  <configurable id="reference.webide.settings.project.settings.php.debug" configurable_name="Debug">
     <option name="" hit="" />
     <option name="accept" hit="Can accept external connections" />
     <option name="can" hit="Can accept external connections" />

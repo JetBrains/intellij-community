@@ -16,12 +16,12 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Comparing;
+import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /** similar to java.util.ConcurrentHashMap except:
  keys are ints
@@ -29,8 +29,8 @@ import java.util.NoSuchElementException;
    -- using only one Segment
    -- eliminating unnecessary fields
    -- using one of 256 ReentrantLock for Segment statically pre-allocated in {@link StripedReentrantLocks}
- added hashing strategy argument
  made not Serializable
+ @deprecated use com.intellij.util.containers.ContainerUtil#createConcurrentIntObjectMap() instead
  */
 public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntObjectMap<V> {
   /* ---------------- Constants -------------- */
@@ -121,6 +121,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
 
   // inherit Map javadoc
 
+  @Override
   public boolean isEmpty() {
     return count == 0;
   }
@@ -211,12 +212,19 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
    *
    * @return an enumeration of the values in this table.
    */
+  @Override
   @NotNull
   public Enumeration<V> elements() {
     return new ValueIterator();
   }
 
-  /* ---------------- Iterator Support -------------- */
+  @Override
+  public Collection<V> values() {
+    Set<V> result = new THashSet<V>();
+    ContainerUtil.addAll(result, elements());
+    return result;
+  }
+/* ---------------- Iterator Support -------------- */
 
   private class HashIterator {
     private int nextTableIndex = table.length - 1;
@@ -276,12 +284,6 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
       return nextEntry().value;
     }
   }
-
-  public interface IntEntry<V> {
-    int getKey();
-    @NotNull V getValue();
-  }
-
 
   @Override
   @NotNull
@@ -478,6 +480,18 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
           return true;
         }
         e = e.next;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean containsValue(@NotNull V value) {
+    if (count != 0) { // read-volatile
+      ValueIterator valueIterator = new ValueIterator();
+      while (valueIterator.hasNext()) {
+        V next = valueIterator.next();
+        if (Comparing.equal(next, value)) return true;
       }
     }
     return false;

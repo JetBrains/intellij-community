@@ -55,7 +55,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
   @NotNull private final SingleTaskController<RefreshRequest, DataPack> mySingleTaskController;
 
-  @NotNull private DataPack myDataPack = EmptyDataPack.getInstance();
+  @NotNull private DataPack myDataPack = DataPack.EMPTY;
 
   public VcsLogRefresherImpl(@NotNull final Project project,
                              @NotNull VcsLogHashMap hashMap,
@@ -106,7 +106,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     }
     catch (VcsException e) {
       myExceptionHandler.consume(e);
-      return EmptyDataPack.getInstance();
+      return DataPack.EMPTY;
     }
   }
 
@@ -214,7 +214,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       Collection<VirtualFile> rootsToRefresh = ContainerUtil.newArrayList();
       for (RefreshRequest request : requests) {
         if (request == RefreshRequest.RELOAD_ALL) {
-          myCurrentDataPack = EmptyDataPack.getInstance();
+          myCurrentDataPack = DataPack.EMPTY;
           return myProviders.keySet();
         }
         rootsToRefresh.addAll(request.rootsToRefresh);
@@ -251,7 +251,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       }
       catch (Exception e) {
         myExceptionHandler.consume(e);
-        return EmptyDataPack.getInstance();
+        return DataPack.EMPTY;
       }
       finally {
         sw.report();

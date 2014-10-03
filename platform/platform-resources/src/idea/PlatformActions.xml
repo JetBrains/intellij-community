@@ -325,6 +325,7 @@
         <action id="Back" class="com.intellij.ide.actions.BackAction" icon="AllIcons.Actions.Back"/>
         <action id="Forward" class="com.intellij.ide.actions.ForwardAction" icon="AllIcons.Actions.Forward"/>
         <action id="JumpToLastChange" class="com.intellij.ide.actions.JumpToLastEditAction"/>
+        <action id="JumpToNextChange" class="com.intellij.ide.actions.JumpToNextEditAction"/>
         <separator/>
         <action id="PreviousOccurence" class="com.intellij.ide.actions.PreviousOccurenceAction" icon="AllIcons.Actions.PreviousOccurence"/>
         <action id="NextOccurence" class="com.intellij.ide.actions.NextOccurenceAction" icon="AllIcons.Actions.NextOccurence"/>
@@ -646,7 +647,7 @@
       <separator/>
       <reference ref="MaintenanceGroup"/>
 
-      <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.tmp.SendStatisticsAction" text="Send statistics"/>
+      <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.tmp.SendStatisticsAction" text="Send Statistics"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
