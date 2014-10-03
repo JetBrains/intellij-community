@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,9 +50,15 @@ public class HgMergeCommand {
       arguments.add("--rev");
       arguments.add(revision);
     }
-    final HgCommandResult result =
-      commandExecutor.executeInCurrentThread(repo, "merge", arguments);
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
-    return result;
+    DvcsUtil.workingTreeChangeStarted(project);
+    try {
+      final HgCommandResult result =
+        commandExecutor.executeInCurrentThread(repo, "merge", arguments);
+      project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
+      return result;
+    }
+    finally {
+      DvcsUtil.workingTreeChangeFinished(project);
+    }
   }
 }

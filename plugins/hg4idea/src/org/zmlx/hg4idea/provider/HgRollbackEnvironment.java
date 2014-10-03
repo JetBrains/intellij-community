@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
@@ -70,28 +71,40 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
         }
       }
     }
-    revert(filePaths);
-    for (FilePath file : toDelete) {
-      listener.accept(file);
-      try {
-        final File ioFile = file.getIOFile();
-        if (ioFile.exists()) {
-          if (!ioFile.delete()) {
-            //noinspection ThrowableInstanceNeverThrown
-            vcsExceptions.add(new VcsException("Unable to delete file: " + file));
+    DvcsUtil.workingTreeChangeStarted(project);
+    try {
+      revert(filePaths);
+      for (FilePath file : toDelete) {
+        listener.accept(file);
+        try {
+          final File ioFile = file.getIOFile();
+          if (ioFile.exists()) {
+            if (!ioFile.delete()) {
+              //noinspection ThrowableInstanceNeverThrown
+              vcsExceptions.add(new VcsException("Unable to delete file: " + file));
+            }
           }
         }
+        catch (Exception e) {
+          //noinspection ThrowableInstanceNeverThrown
+          vcsExceptions.add(new VcsException("Unable to delete file: " + file, e));
+        }
       }
-      catch (Exception e) {
-        //noinspection ThrowableInstanceNeverThrown
-        vcsExceptions.add(new VcsException("Unable to delete file: " + file, e));
-      }
+    }
+    finally {
+      DvcsUtil.workingTreeChangeFinished(project);
     }
   }
 
   public void rollbackMissingFileDeletion(List<FilePath> files,
-    List<VcsException> exceptions, RollbackProgressListener listener) {
-    revert(files);
+                                          List<VcsException> exceptions, RollbackProgressListener listener) {
+    DvcsUtil.workingTreeChangeStarted(project);
+    try {
+      revert(files);
+    }
+    finally {
+      DvcsUtil.workingTreeChangeFinished(project);
+    }
   }
 
   public void rollbackModifiedWithoutCheckout(List<VirtualFile> files,
