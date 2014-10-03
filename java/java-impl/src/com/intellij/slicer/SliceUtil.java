@@ -52,10 +52,9 @@ import java.util.Set;
 public class SliceUtil {
   public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
                                                  @NotNull Processor<SliceUsage> processor,
-                                                 @NotNull SliceUsage parent,
-                                                 int indexNesting,
-                                                 @NotNull String syntheticField) {
-    return processUsagesFlownDownTo(expression, processor, parent, parent.getSubstitutor(), indexNesting, syntheticField);
+                                                 @NotNull SliceUsage parent) {
+    return processUsagesFlownDownTo(expression, processor, parent, parent.getSubstitutor(), parent.getIndexNesting(),
+                                    parent.getSyntheticField());
   }
 
   public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,

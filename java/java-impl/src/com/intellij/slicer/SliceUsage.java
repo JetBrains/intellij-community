@@ -95,7 +95,7 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
       @Override
       public void run() {
         if (params.dataFlowToThis) {
-          SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, indexNesting,syntheticField);
+          SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this);
         }
         else {
           SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
@@ -122,5 +122,14 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
   @NotNull
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
+  }
+
+  public int getIndexNesting() {
+    return indexNesting;
+  }
+
+  @NotNull
+  public String getSyntheticField() {
+    return syntheticField;
   }
 }
