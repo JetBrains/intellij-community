@@ -16,6 +16,8 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.execution.configurations.RemoteRunProfile;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -97,7 +99,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
           myValueChildren.add(node);
           newChildren.add(node);
 
-          if (Registry.is("ide.debugger.inline") && "this".equals(node.getName()) && !isRemoteConfiguration(myTree)) { //todo[kb]: try to generify this dirty hack
+          if (Registry.is("ide.debugger.inline") && "this".equals(node.getName()) && isUseGetChildrenHack(myTree)) { //todo[kb]: try to generify this dirty hack
             //initialize "this" fields to display in inline view
             node.getChildren();
           }
@@ -118,10 +120,15 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     });
   }
 
-  private static boolean isRemoteConfiguration(XDebuggerTree tree) {
+  private static boolean isUseGetChildrenHack(@NotNull XDebuggerTree tree) {
     DataContext context = DataManager.getInstance().getDataContext(tree);
     ExecutionEnvironment env = LangDataKeys.EXECUTION_ENVIRONMENT.getData(context);
-    return env != null && env.getRunProfile() instanceof RemoteRunProfile;
+    if (env != null && env.getRunProfile() instanceof RemoteRunProfile) {
+      return false;
+    }
+
+    RunProfile runProfile = LangDataKeys.RUN_PROFILE.getData(context);
+    return !(runProfile instanceof RunConfiguration && ((RunConfiguration)runProfile).getType().getDisplayName().startsWith("JavaScript"));
   }
 
   @Nullable
