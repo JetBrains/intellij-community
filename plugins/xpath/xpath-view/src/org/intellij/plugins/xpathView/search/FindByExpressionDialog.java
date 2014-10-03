@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView.search;
 
+import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -35,6 +36,7 @@ public class FindByExpressionDialog extends InputExpressionDialog<FindFormPanel>
     public FindByExpressionDialog(Project parent, Config settings, HistoryElement[] history, Module module) {
         super(parent, settings, history, new FindFormPanel(parent, module, settings.SEARCH_SCOPE));
         setTitle("Find by XPath Expression");
+        setOKButtonText(FindBundle.message("find.button"));
     }
 
     protected void init() {
