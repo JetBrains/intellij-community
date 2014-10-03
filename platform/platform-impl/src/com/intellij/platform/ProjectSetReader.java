@@ -18,7 +18,6 @@ package com.intellij.platform;
 import com.google.gson.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +32,7 @@ import java.util.*;
  */
 public class ProjectSetReader {
 
-  public void readDescriptor(@Language("JSON") @NotNull String descriptor, @Nullable VirtualFile forTests) {
+  public void readDescriptor(@Language("JSON") @NotNull String descriptor, @Nullable ProjectSetProcessor.Context context) {
 
     ProjectSetProcessor[] extensions = ProjectSetProcessor.EXTENSION_POINT_NAME.getExtensions();
     Map<String, ProjectSetProcessor> processors = new HashMap<String, ProjectSetProcessor>();
@@ -50,15 +49,16 @@ public class ProjectSetReader {
       return;
     }
     Iterator<Map.Entry<String, JsonElement>> iterator = parse.getAsJsonObject().entrySet().iterator();
-    ProjectSetProcessor.Context context = new ProjectSetProcessor.Context();
+    if (context == null) {
+      context = new ProjectSetProcessor.Context();
+    }
     context.directoryName = "";
-    context.directory = forTests;
     runProcessor(processors, context, iterator);
   }
 
   private static void runProcessor(final Map<String, ProjectSetProcessor> processors, final ProjectSetProcessor.Context context, final Iterator<Map.Entry<String, JsonElement>> iterator) {
     if (!iterator.hasNext()) return;
-    Map.Entry<String, JsonElement> entry = iterator.next();
+    final Map.Entry<String, JsonElement> entry = iterator.next();
     String key = entry.getKey();
     ProjectSetProcessor processor = processors.get(key);
     if (processor == null) {
@@ -69,13 +69,25 @@ public class ProjectSetReader {
     List<Pair<String, String>> list;
     if (entry.getValue().isJsonObject()) {
       JsonObject object = entry.getValue().getAsJsonObject();
-      list = ContainerUtil.map(object.entrySet(), new Function<Map.Entry<String, JsonElement>, Pair<String, String>>() {
-        @Override
-        public Pair<String, String> fun(Map.Entry<String, JsonElement> entry) {
-          JsonElement value = entry.getValue();
-          return Pair.create(entry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString());
-        }
-      });
+      if (object.entrySet().size() == 1 && object.entrySet().iterator().next().getValue().isJsonArray()) {
+        final Map.Entry<String, JsonElement> next = object.entrySet().iterator().next();
+        list = ContainerUtil.map(next.getValue().getAsJsonArray(),
+                                 new Function<JsonElement, Pair<String,String>>() {
+                                   @Override
+                                   public Pair<String, String> fun(JsonElement o) {
+                                     return Pair.create(next.getKey(), o.getAsString());
+                                   }
+                                 });
+      }
+      else {
+        list = ContainerUtil.map(object.entrySet(), new Function<Map.Entry<String, JsonElement>, Pair<String, String>>() {
+          @Override
+          public Pair<String, String> fun(Map.Entry<String, JsonElement> entry) {
+            JsonElement value = entry.getValue();
+            return Pair.create(entry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString());
+          }
+        });
+      }
     }
     else {
       list = Collections.singletonList(Pair.create(entry.getKey(), entry.getValue().getAsString()));

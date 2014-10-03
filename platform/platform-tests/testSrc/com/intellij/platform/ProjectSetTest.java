@@ -35,6 +35,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -68,7 +71,9 @@ public class ProjectSetTest extends LightPlatformTestCase {
     }, myTestRootDisposable);
 
     @Language("JSON") String descriptor = FileUtil.loadFile(new File(getTestDataPath() + "descriptor.json"));
-    reader.readDescriptor(descriptor, getSourceRoot());
+    ProjectSetProcessor.Context context = new ProjectSetProcessor.Context();
+    context.directory = getSourceRoot();
+    reader.readDescriptor(descriptor, context);
 
     List<Pair<String, String>> entries = ref.get();
     assertEquals(2, entries.size());
@@ -78,6 +83,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
 
   public void testVcsCheckoutProcessor() throws IOException {
 
+    final List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>();
     PlatformTestUtil.registerExtension(VcsCheckoutProcessor.EXTENSION_POINT_NAME, new VcsCheckoutProcessor() {
       @NotNull
       @Override
@@ -88,20 +94,31 @@ public class ProjectSetTest extends LightPlatformTestCase {
       @Override
       public boolean checkout(@NotNull String url,
                               @NotNull VirtualFile parentDirectory, @NotNull String directoryName) {
-        assertEquals("schema://foo.bar/path", url);
-        assertEquals("path", directoryName);
+        pairs.add(Pair.create(url, directoryName));
         return true;
       }
     }, myTestRootDisposable);
 
     @Language("JSON") String descriptor = FileUtil.loadFile(new File(getTestDataPath() + "vcs.json"));
-    new ProjectSetReader().readDescriptor(descriptor, getSourceRoot());
+    ProjectSetProcessor.Context context = new ProjectSetProcessor.Context();
+    context.directoryName = "newDir";
+    context.directory = getSourceRoot();
+    new ProjectSetReader().readDescriptor(descriptor, context);
+    Collections.sort(pairs, new Comparator<Pair<String, String>>() {
+      @Override
+      public int compare(@NotNull Pair<String, String> o1, @NotNull Pair<String, String> o2) {
+        return o2.first.compareTo(o1.first);
+      }
+    });
+    assertEquals(Pair.create("schema://foo.bar/path", "path"), pairs.get(1));
+    assertEquals(Pair.create("schema://foo.bar1/path1", "path/custom"), pairs.get(0));
   }
 
   public void testOpenProject() throws IOException {
     @Language("JSON") String descriptor = FileUtil.loadFile(new File(getTestDataPath() + "project.json"));
-    VirtualFile directory = VfsUtil.findFileByIoFile(new File(getTestDataPath()), true);
-    new ProjectSetReader().readDescriptor(descriptor, directory);
+    ProjectSetProcessor.Context context = new ProjectSetProcessor.Context();
+    context.directory = VfsUtil.findFileByIoFile(new File(getTestDataPath()), true);
+    new ProjectSetReader().readDescriptor(descriptor, context);
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     Project project = ContainerUtil.find(projects, new Condition<Project>() {
       @Override
@@ -111,5 +128,10 @@ public class ProjectSetTest extends LightPlatformTestCase {
     });
     assertNotNull(project);
     ((ProjectManagerEx)ProjectManager.getInstance()).closeAndDispose(project);
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
   }
 }
