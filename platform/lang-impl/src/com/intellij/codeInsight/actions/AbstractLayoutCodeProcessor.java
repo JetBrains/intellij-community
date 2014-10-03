@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,7 +203,13 @@ public abstract class AbstractLayoutCodeProcessor {
           if (!previousTask.get() || previousTask.isCancelled()) return false;
         }
 
-        currentTask.run();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            currentTask.run();
+          }
+        });
+
         return currentTask.get() && !currentTask.isCancelled();
       }
     });
@@ -338,7 +344,7 @@ public abstract class AbstractLayoutCodeProcessor {
     };
   }
 
-  private void runProcessFiles(final @NotNull FileTreeIterator fileIterator) {
+  private void runProcessFiles(@NotNull final FileTreeIterator fileIterator) {
     final Runnable[] resultRunnable = new Runnable[1];
 
     Runnable readAction = new Runnable() {
@@ -412,7 +418,7 @@ public abstract class AbstractLayoutCodeProcessor {
               public void run() {
                 if (globalAction) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
                 try {
-                  ApplicationManager.getApplication().runWriteAction(writeAction);
+                  writeAction.run();
 
                   if (myPostRunnable != null) {
                     ApplicationManager.getApplication().invokeLater(myPostRunnable);
@@ -496,10 +502,15 @@ public abstract class AbstractLayoutCodeProcessor {
       updateIndicator(myFilesProcessed);
 
       if (myFileTreeIterator.hasNext()) {
-        PsiFile file = myFileTreeIterator.next();
+        final PsiFile file = myFileTreeIterator.next();
         myFilesProcessed++;
         if (file.isWritable() && canBeFormatted(file) && acceptedByFilters(file)) {
-          performFileProcessing(file);
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              performFileProcessing(file);
+            }
+          });
         }
       }
 

@@ -32,6 +32,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.IOException;
@@ -77,8 +78,8 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
     return file;
   }
 
-  protected void openFiles(String s) throws IOException, JDOMException, InterruptedException, ExecutionException {
-    Document document = JDOMUtil.loadDocument(s);
+  protected void openFiles(@NotNull String femSerialisedText) throws IOException, JDOMException, InterruptedException, ExecutionException {
+    Document document = JDOMUtil.loadDocument(femSerialisedText);
     Element rootElement = document.getRootElement();
     ExpandMacroToPathMap map = new ExpandMacroToPathMap();
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, getTestDataPath());
@@ -89,12 +90,7 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            myManager.getMainSplitters().openFiles();
-          }
-        });
+        myManager.getMainSplitters().openFiles();
       }
     });
     while (true) {

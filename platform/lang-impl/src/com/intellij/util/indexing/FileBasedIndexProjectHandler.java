@@ -78,7 +78,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
           // dumb mode should start before post-startup activities
           // only when queueTask is called from UI thread, we can guarantee that
           // when the method returns, the application has entered dumb mode
-          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
               if (!project.isDisposed()) {
