@@ -75,7 +75,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
 
   private static Collection<PyCustomMember> getClassMembers(@NotNull PyClass cls) {
     final List<PyCustomMember> result = new ArrayList<PyCustomMember>();
-    for (PyFunction function : cls.getMethods()) {
+    for (PyFunction function : cls.getMethods(false)) {
       final String name = function.getName();
       if (name != null) {
         result.add(new PyCustomMember(name, function));

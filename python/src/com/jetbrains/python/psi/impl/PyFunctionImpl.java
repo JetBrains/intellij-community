@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -698,5 +699,40 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public String getQualifiedName() {
     return QualifiedNameFinder.getQualifiedName(this);
+  }
+
+  @NotNull
+  @Override
+  public List<PyAssignmentStatement> findAttributes() {
+    final List<PyAssignmentStatement> result = new ArrayList<PyAssignmentStatement>();
+    for (final PyAssignmentStatement statement : new PsiQuery(this).siblings(PyAssignmentStatement.class).getElements()) {
+      for (final PyQualifiedExpression targetExpression : new PsiQuery(statement.getTargets()).filter(PyQualifiedExpression.class)
+        .getElements()) {
+        final PyExpression qualifier = targetExpression.getQualifier();
+        if (qualifier == null) {
+          continue;
+        }
+        final PsiReference qualifierReference = qualifier.getReference();
+        if (qualifierReference == null) {
+          continue;
+        }
+        if (qualifierReference.isReferenceTo(this)) {
+          result.add(statement);
+        }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override
+  public ProtectionLevel getProtectionLevel() {
+    final int underscoreLevels = PyUtil.getInitialUnderscores(getName());
+    for (final ProtectionLevel level : ProtectionLevel.values()) {
+      if (level.getUnderscoreLevel() == underscoreLevels) {
+        return level;
+      }
+    }
+    return ProtectionLevel.PRIVATE;
   }
 }

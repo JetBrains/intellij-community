@@ -65,6 +65,15 @@ public class PyEvaluator {
     if (expr instanceof PySequenceExpression) {
       return evaluateSequenceExpression((PySequenceExpression)expr);
     }
+    if (expr instanceof PyQualifiedExpression) { // support bool
+      final String referencedName = ((PyQualifiedExpression)expr).getReferencedName();
+      if (PyNames.TRUE.equals(referencedName)) {
+        return true;
+      }
+      if (PyNames.FALSE.equals(referencedName)) {
+        return true;
+      }
+    }
     if (expr instanceof PyCallExpression) {
       return evaluateCall((PyCallExpression)expr);
     }
