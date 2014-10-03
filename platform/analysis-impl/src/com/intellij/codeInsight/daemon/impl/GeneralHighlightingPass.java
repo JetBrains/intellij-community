@@ -302,7 +302,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               continue;
             }
 
-            if (element instanceof PsiErrorElement) {
+            boolean isErrorElement = element instanceof PsiErrorElement;
+            if (isErrorElement) {
               myHasErrorElement = true;
             }
             holder.clear();
@@ -349,7 +350,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               }
               // if this highlight info range is exactly the same as the element range we are visiting
               // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
-              info.setBijective(elementRange.equalsToRange(info.startOffset, info.endOffset));
+              // We also know that we can remove syntax error element.
+              info.setBijective(elementRange.equalsToRange(info.startOffset, info.endOffset) || isErrorElement);
 
               myHighlightInfoProcessor.infoIsAvailable(myHighlightingSession, info);
               infosForThisRange.add(info);

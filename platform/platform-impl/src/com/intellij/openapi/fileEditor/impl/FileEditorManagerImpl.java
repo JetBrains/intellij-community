@@ -747,7 +747,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
                                                          final boolean focusEditor,
                                                          final Boolean pin,
                                                          final int index) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed() : "must not open files under read action since we are doing a lot of invokeAndWaits here";
 
     final Ref<EditorWithProviderComposite> compositeRef = new Ref<EditorWithProviderComposite>();
 
@@ -774,8 +774,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           final FileEditorProvider provider = newProviders[i];
           LOG.assertTrue(provider != null, "Provider for file "+file+" is null. All providers: "+Arrays.asList(newProviders));
           LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
-          if (provider instanceof AsyncFileEditorProvider) {
-            builders[i] = ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file);
+          if ((provider instanceof AsyncFileEditorProvider)) {
+            builders[i] = ApplicationManager.getApplication().runReadAction(new Computable<AsyncFileEditorProvider.Builder>() {
+              @Override
+              public AsyncFileEditorProvider.Builder compute() {
+                return ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file);
+              }
+            });
           }
         }
         catch (Exception e) {
