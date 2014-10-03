@@ -53,6 +53,14 @@ public class SliceUtil {
   public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
                                                  @NotNull Processor<SliceUsage> processor,
                                                  @NotNull SliceUsage parent,
+                                                 int indexNesting,
+                                                 @NotNull String syntheticField) {
+    return processUsagesFlownDownTo(expression, processor, parent, parent.getSubstitutor(), indexNesting, syntheticField);
+  }
+
+  public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
+                                                 @NotNull Processor<SliceUsage> processor,
+                                                 @NotNull SliceUsage parent,
                                                  @NotNull PsiSubstitutor parentSubstitutor,
                                                  int indexNesting,
                                                  @NotNull String syntheticField) {

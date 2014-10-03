@@ -95,7 +95,7 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
       @Override
       public void run() {
         if (params.dataFlowToThis) {
-          SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, mySubstitutor, indexNesting,syntheticField);
+          SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, indexNesting,syntheticField);
         }
         else {
           SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
