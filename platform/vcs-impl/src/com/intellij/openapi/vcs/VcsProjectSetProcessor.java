@@ -84,8 +84,8 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     context.directoryName = Messages.showInputDialog((Project)null,
-                                        "Enter directory name for created project.<br>Leave blank to checkout directly into " +
-                                        context.directory.getName(),
+                                        "Enter directory name for created project. Leave blank to checkout directly into \"" +
+                                        context.directory.getName() + "\".",
                                         "Project Directory Name", null, context.directoryName, null);
     return context.directoryName != null;
   }
