@@ -113,4 +113,10 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("xxxx\n" +
                       "yyy<caret>");
   }
+
+  public void testIndentWhitespaceLineWithCaretAtLineStart() throws Exception {
+    init("<caret> ", TestFileType.TEXT);
+    executeAction("EditorIndentLineOrSelection");
+    checkResultByText("    <caret> ");
+  }
 }
