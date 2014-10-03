@@ -50,7 +50,7 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
   public static final int MAX_VISIBLE_SIZE = 20;
 
   public NewScratchFileAction() {
-    super("New Scratch Pad...", null, null);
+    super("New Scratch File...", null, null);
   }
 
   @Override
