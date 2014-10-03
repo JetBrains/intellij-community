@@ -132,7 +132,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   public void testInferredAnnoGutter() {
     setUpLibraries();
     openDecompiledClass("org.apache.velocity.util.ExceptionUtils");
-    checkHasGutter("<i>@org.jetbrains.annotations.Contract(&quot;null,_,_-&gt;null&quot;)</i>");
+    checkHasGutter("<i>@Contract(&quot;null,_,_-&gt;null&quot;)</i>");
   }
 
   public void testExternalAnnoGutter() {
