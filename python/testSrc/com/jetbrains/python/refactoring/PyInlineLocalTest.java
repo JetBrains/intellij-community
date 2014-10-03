@@ -16,6 +16,8 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -24,6 +26,8 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.refactoring.inline.PyInlineLocalHandler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
@@ -33,13 +37,18 @@ public class PyInlineLocalTest extends PyTestCase {
     doTest(null);
   }
 
-  private void doTest(String expectedError) {
+  private void doTest(@Nullable String expectedError) {
     final String name = getTestName(true);
     myFixture.configureByFile("/refactoring/inlinelocal/" + name + ".before.py");
+    if (!performRefactoring(expectedError)) return;
+    myFixture.checkResultByFile("/refactoring/inlinelocal/" + name + ".after.py");
+  }
+
+  private boolean performRefactoring(@Nullable String expectedError) {
     try {
-      PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(),
-                                                                   TargetElementUtilBase.getInstance().getReferenceSearchFlags());
-      PyInlineLocalHandler handler = PyInlineLocalHandler.getInstance();
+      final PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(),
+                                                                         TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+      final PyInlineLocalHandler handler = PyInlineLocalHandler.getInstance();
       handler.inlineElement(myFixture.getProject(), myFixture.getEditor(), element);
       if (expectedError != null) fail("expected error: '" + expectedError + "', got none");
     }
@@ -48,9 +57,9 @@ public class PyInlineLocalTest extends PyTestCase {
         e.printStackTrace();
       }
       assertEquals(expectedError, e.getMessage());
-      return;
+      return false;
     }
-    myFixture.checkResultByFile("/refactoring/inlinelocal/" + name + ".after.py");
+    return true;
   }
 
   public void testSimple() {
@@ -114,11 +123,33 @@ public class PyInlineLocalTest extends PyTestCase {
     }
   }
 
-  public void testParenthesisInsertedForSubtraction() {
-    doTest();
+  public void testOperatorPrecedence() throws Exception {
+    checkOperatorPrecedence("x = 10 ** 2", "power");
+    checkOperatorPrecedence("x = 10 * 2", "multiplication");
+    checkOperatorPrecedence("x = 10 / 2", "division");
+    checkOperatorPrecedence("x = 10 + 2", "addition");
+    checkOperatorPrecedence("x = 10 - 2", "subtraction");
+    checkOperatorPrecedence("x = 10 << 2", "bitwiseShift");
+    checkOperatorPrecedence("x = 10 & 2", "bitwiseAnd");
+    checkOperatorPrecedence("x = 10 ^ 2", "bitwiseXor");
+    checkOperatorPrecedence("x = 10 | 2", "bitwiseOr");
+    checkOperatorPrecedence("x = 10 < 2", "comparison");
+    checkOperatorPrecedence("x = not 10", "booleanNot");
+    checkOperatorPrecedence("x = 10 and 2", "booleanAnd");
+    checkOperatorPrecedence("x = 10 or 2", "booleanOr");
+    checkOperatorPrecedence("x = 10 if True else 2", "conditional");
   }
 
-  public void testParenthesisInsertedForPower() {
-    doTest();
+  private void checkOperatorPrecedence(@NotNull final String firstLine, @NotNull String resultPrefix) throws Exception {
+    myFixture.configureByFile("/refactoring/inlinelocal/operatorPrecedence/template.py");
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        myFixture.getEditor().getDocument().insertString(0, firstLine + "\n");
+      }
+    });
+    performRefactoring(null);
+    myFixture.checkResultByFile("/refactoring/inlinelocal/operatorPrecedence/" + resultPrefix + ".after.py");
+    FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()));
   }
 }

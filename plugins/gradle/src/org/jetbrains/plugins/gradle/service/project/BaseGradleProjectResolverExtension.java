@@ -258,12 +258,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       buildDir = buildDir == null ? externalProject.getBuildDir() : buildDir;
 
       if (!inheritOutputDirs) {
-        boolean isInitialProjectDataModified = fixCompileOutputPaths(compileOutputPaths, externalProject);
-        if (isInitialProjectDataModified) {
-          final DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(ideModule, ProjectKeys.PROJECT);
-          assert projectDataNode != null;
-          projectDataNode.createOrReplaceChild(ExternalProjectDataService.KEY, externalProject);
-        }
+        fixCompileOutputPaths(compileOutputPaths, externalProject);
       }
     }
     else {
@@ -714,9 +709,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     return taskName.toLowerCase(Locale.ENGLISH).contains("idea");
   }
 
-  private static boolean fixCompileOutputPaths(@NotNull Map<ExternalSystemSourceType, File> compileOutputPaths,
-                                               @NotNull ExternalProject externalProject) {
-    boolean isInitialProjectDataModified = false;
+  private static void fixCompileOutputPaths(@NotNull Map<ExternalSystemSourceType, File> compileOutputPaths,
+                                            @NotNull ExternalProject externalProject) {
     final File sourceCompileOutputPath = compileOutputPaths.get(ExternalSystemSourceType.SOURCE);
     if (sourceCompileOutputPath == null) {
       addCompileOutputPath(compileOutputPaths, externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.SOURCE);
@@ -726,14 +720,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       final ExternalSourceSet mainSourceSet = externalProject.getSourceSets().get(MAIN_SOURCE_SET);
       if (mainSourceSet != null) {
         final ExternalSourceDirectorySet sourceDirectories = mainSourceSet.getSources().get(ExternalSystemSourceType.SOURCE);
-        if (sourceDirectories instanceof DefaultExternalSourceDirectorySet) {
-          ((DefaultExternalSourceDirectorySet)sourceDirectories).setOutputDir(sourceCompileOutputPath);
-          isInitialProjectDataModified = true;
+        if (sourceDirectories instanceof ModifiableExternalSourceDirectorySet) {
+          ((ModifiableExternalSourceDirectorySet)sourceDirectories).setOutputDir(sourceCompileOutputPath);
         }
         final ExternalSourceDirectorySet resourceDirectories = mainSourceSet.getSources().get(ExternalSystemSourceType.RESOURCE);
-        if (resourceDirectories instanceof DefaultExternalSourceDirectorySet) {
-          ((DefaultExternalSourceDirectorySet)resourceDirectories).setOutputDir(sourceCompileOutputPath);
-          isInitialProjectDataModified = true;
+        if (resourceDirectories instanceof ModifiableExternalSourceDirectorySet) {
+          ((ModifiableExternalSourceDirectorySet)resourceDirectories).setOutputDir(sourceCompileOutputPath);
         }
       }
     }
@@ -749,18 +741,14 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         final ExternalSourceDirectorySet testDirectories = testSourceSet.getSources().get(ExternalSystemSourceType.TEST);
         if (testDirectories instanceof DefaultExternalSourceDirectorySet) {
           ((DefaultExternalSourceDirectorySet)testDirectories).setOutputDir(testCompileOutputPath);
-          isInitialProjectDataModified = true;
         }
         final ExternalSourceDirectorySet testResourceDirectories =
           testSourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE);
         if (testResourceDirectories instanceof DefaultExternalSourceDirectorySet) {
           ((DefaultExternalSourceDirectorySet)testResourceDirectories).setOutputDir(testCompileOutputPath);
-          isInitialProjectDataModified = true;
         }
       }
     }
-
-    return isInitialProjectDataModified;
   }
 
   private static void addCompileOutputPath(@NotNull Map<ExternalSystemSourceType, File> compileOutputPaths,

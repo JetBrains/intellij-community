@@ -646,7 +646,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return myDelegate;
   }
 
-  //todo use escaper?
   @Override
   public int hostToInjected(int hostOffset) {
     synchronized (myLock) {
@@ -659,10 +658,16 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
         if (currentRange == null) continue;
         Segment nextRange = i == myShreds.size() - 1 ? null : myShreds.get(i + 1).getHostRangeMarker();
         if (nextRange == null || hostOffset < nextRange.getStartOffset()) {
-          if (hostOffset >= currentRange.getEndOffset()) hostOffset = currentRange.getEndOffset();
-          return offset + hostOffset - currentRange.getStartOffset();
+          if (hostOffset >= currentRange.getEndOffset()) {
+            offset += myShreds.get(i).getRange().getLength();
+          }
+          else {
+            //todo use escaper to convert host-range delta into injected space
+            offset += hostOffset - currentRange.getStartOffset();
+          }
+          return offset;
         }
-        offset += currentRange.getEndOffset() - currentRange.getStartOffset();
+        offset += myShreds.get(i).getRange().getLength();
         offset += myShreds.get(i).getSuffix().length();
       }
       return getTextLength() - myShreds.get(myShreds.size() - 1).getSuffix().length();

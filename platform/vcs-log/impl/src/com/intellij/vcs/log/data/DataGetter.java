@@ -12,7 +12,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
+import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +81,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   }
 
   @Nullable
-  public T getCommitData(int row, @NotNull AbstractVcsLogTableModel<?> tableModel) {
+  public T getCommitData(int row, @NotNull GraphTableModel tableModel) {
     assert EventQueue.isDispatchThread();
     Hash hash = tableModel.getHashAtRow(row);
     if (hash == null) {
@@ -122,7 +122,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   @Nullable
   protected abstract T getFromAdditionalCache(@NotNull Hash hash);
 
-  private void runLoadAroundCommitData(int row, @NotNull AbstractVcsLogTableModel<?> tableModel) {
+  private void runLoadAroundCommitData(int row, @NotNull GraphTableModel tableModel) {
     long taskNumber = myCurrentTaskIndex++;
     MultiMap<VirtualFile, Hash> commits = getCommitsAround(row, tableModel, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT);
     for (Map.Entry<VirtualFile, Collection<Hash>> hashesByRoots : commits.entrySet()) {
@@ -143,7 +143,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   }
 
   @NotNull
-  private static MultiMap<VirtualFile, Hash> getCommitsAround(int selectedRow, @NotNull AbstractVcsLogTableModel<?> model,
+  private static MultiMap<VirtualFile, Hash> getCommitsAround(int selectedRow, @NotNull GraphTableModel model,
                                                               int above, int below) {
     MultiMap<VirtualFile, Hash> commits = MultiMap.create();
     for (int row = Math.max(0, selectedRow - above); row < selectedRow + below && row < model.getRowCount(); row++) {

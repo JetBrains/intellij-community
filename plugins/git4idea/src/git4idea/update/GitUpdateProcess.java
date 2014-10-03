@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -132,12 +133,12 @@ public class GitUpdateProcess {
 
     GitComplexProcess.Operation updateOperation = new GitComplexProcess.Operation() {
       @Override public void run(ContinuationContext continuationContext) {
-        GitUtil.workingTreeChangeStarted(myProject);
+        DvcsUtil.workingTreeChangeStarted(myProject);
         try {
           myResult = updateImpl(updateMethod, continuationContext);
         }
         finally {
-          GitUtil.workingTreeChangeFinished(myProject);
+          DvcsUtil.workingTreeChangeFinished(myProject);
         }
       }
     };

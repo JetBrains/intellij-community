@@ -3,6 +3,7 @@ package com.intellij.json.formatter;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,12 +12,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
 
-  // Standard option has awkward description "Code braces"
-  public boolean SPACE_WITHIN_BRACES = false;
   public boolean SPACE_AFTER_COLON = true;
   public boolean SPACE_BEFORE_COLON = false;
 
   public PropertyAlignment PROPERTY_ALIGNMENT = PropertyAlignment.DO_NOT_ALIGN;
+
+  public int OBJECT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+  // This was default policy for array elements wrapping in JavaScript's JSON.
+  // CHOP_DOWN_IF_LONG seems more appropriate however for short arrays.
+  public int ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
 
   public JsonCodeStyleSettings(CodeStyleSettings container) {
     super(JsonLanguage.INSTANCE.getID(), container);

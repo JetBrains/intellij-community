@@ -38,13 +38,6 @@ public class EditorModificationUtil {
   private EditorModificationUtil() { }
 
   public static void deleteSelectedText(Editor editor) {
-    deleteSelectedTextNoScrolling(editor);
-    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
-  }
-
-  private static void deleteSelectedTextNoScrolling(Editor editor) {
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasBlockSelection()) deleteBlockSelection(editor);
     if(!selectionModel.hasSelection()) return;
@@ -61,16 +54,18 @@ public class EditorModificationUtil {
     }
     selectionModel.removeSelection();
     editor.getDocument().deleteString(selectionStart, selectionEnd);
+    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
   }
 
   public static void deleteSelectedTextForAllCarets(@NotNull final Editor editor) {
     editor.getCaretModel().runForEachCaret(new CaretAction() {
       @Override
       public void perform(Caret caret) {
-        deleteSelectedTextNoScrolling(editor);
+        deleteSelectedText(editor);
       }
     });
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   public static void deleteBlockSelection(Editor editor) {

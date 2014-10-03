@@ -15,6 +15,7 @@
  */
 package git4idea.cherrypick;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ModalityState;
@@ -33,7 +34,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.GitPlatformFacade;
-import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitSimpleEventDetector;
@@ -81,7 +81,7 @@ public class GitCherryPicker {
 
   public void cherryPick(@NotNull Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots) {
     List<GitCommitWrapper> successfulCommits = new ArrayList<GitCommitWrapper>();
-    GitUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       for (Map.Entry<GitRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
         GitRepository repository = entry.getKey();
@@ -94,7 +94,7 @@ public class GitCherryPicker {
       notifySuccess(successfulCommits);
     }
     finally {
-      GitUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
   }
 

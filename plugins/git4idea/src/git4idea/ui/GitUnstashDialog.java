@@ -16,6 +16,7 @@
 package git4idea.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -356,7 +357,7 @@ public class GitUnstashDialog extends DialogWrapper {
     h.addLineListener(untrackedFilesDetector);
     h.addLineListener(localChangesDetector);
 
-    GitUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       final Ref<GitCommandResult> result = Ref.create();
       ProgressManager.getInstance().run(new Task.Modal(h.project(), GitBundle.getString("unstash.unstashing"), false) {
@@ -383,7 +384,7 @@ public class GitUnstashDialog extends DialogWrapper {
       }
     }
     finally {
-      GitUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
     super.doOKAction();
   }

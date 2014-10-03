@@ -17,6 +17,7 @@
 package org.intellij.plugins.xpathView.search;
 
 import com.intellij.find.FindProgressIndicator;
+import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -88,7 +89,7 @@ public class FindByXPathAction extends AnAction {
         presentation.setTabText(StringUtil.shortenTextWithEllipsis("XPath '" + expression + '\'', 60, 0, true));
         presentation.setScopeText(scope.getName());
 
-        presentation.setOpenInNewTab(settings.OPEN_NEW_TAB);
+        presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
 
         final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
         processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
@@ -126,7 +127,6 @@ public class FindByXPathAction extends AnAction {
     private class MyEditExpressionAction extends XPathEvalAction.EditExpressionAction {
         private final Project myProject;
         private final Module myModule;
-        private final Config myConfig = XPathAppComponent.getInstance().getConfig();
 
         public MyEditExpressionAction(Project project, Module module) {
             myProject = project;
@@ -134,16 +134,7 @@ public class FindByXPathAction extends AnAction {
         }
 
         protected void execute() {
-            myConfig.OPEN_NEW_TAB = false;
             executeSearch(myProject, myModule);
-        }
-
-        protected Object saveState() {
-            return myConfig.OPEN_NEW_TAB;
-        }
-
-        protected void restoreState(Object o) {
-            if (!myConfig.OPEN_NEW_TAB) myConfig.OPEN_NEW_TAB = Boolean.TRUE.equals(o);
         }
     }
 

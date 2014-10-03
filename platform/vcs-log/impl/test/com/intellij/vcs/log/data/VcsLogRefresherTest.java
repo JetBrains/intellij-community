@@ -174,7 +174,8 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
 
   private VcsLogRefresherImpl createLoader(DataWaiter dataWaiter) {
     myDataHolder = new VcsLogDataHolder(myProject, myProject, myLogProviders,
-                                                       ServiceManager.getService(myProject, VcsLogSettings.class), dataWaiter);
+                                                       ServiceManager.getService(myProject, VcsLogSettings.class),
+                                                       ServiceManager.getService(myProject, VcsLogUiProperties.class), Consumer.EMPTY_CONSUMER);
     return new VcsLogRefresherImpl(myProject, myDataHolder.getHashMap(), myLogProviders, myDataHolder.getUserRegistry(), myTopDetailsCache,
                                    dataWaiter, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT);
   }

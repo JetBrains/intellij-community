@@ -57,7 +57,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -617,7 +616,9 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
         useScope = GlobalSearchScope.projectScope(project).uniteWith((GlobalSearchScope)useScope);
       }
 
-      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
+      // if we've resolved all references, find usages will be fast
+      PsiSearchHelper.SearchCostResult cheapEnough = RefResolveService.ENABLED && RefResolveService.getInstance(project).isUpToDate() ? PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES :
+                                                     searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
 
       //search usages if it cheap
@@ -669,22 +670,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
         return element instanceof PsiComment; // ignore comments
       }
     });
-    if (foundUsage) return false;
-    return true;//!(useScope instanceof GlobalSearchScope) || !foundUsageInText(member, (GlobalSearchScope)useScope, searchHelper, ignoreFile);
-  }
-
-  private static boolean foundUsageInText(@NotNull PsiMember member,
-                                          @NotNull GlobalSearchScope scope,
-                                          @NotNull PsiSearchHelper searchHelper,
-                                          final PsiFile ignoreFile) {
-    return !searchHelper.processUsagesInNonJavaFiles(member, member.getName(), new PsiNonJavaFileReferenceProcessor() {
-      @Override
-      public boolean process(final PsiFile psiFile, final int startOffset, final int endOffset) {
-        if (psiFile == ignoreFile) return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
-        PsiElement element = psiFile.findElementAt(startOffset);
-        return element instanceof PsiComment; // ignore comments
-      }
-    }, scope);
+    return !foundUsage;
   }
 
   private static boolean isEnumValuesMethodUsed(@NotNull Project project,

@@ -188,9 +188,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     getInstance().doCheckCanceled();
   }
 
-  public void executeProcessUnderProgress(@NotNull Runnable process,
+  public abstract void executeProcessUnderProgress(@NotNull Runnable process,
                                           @Nullable("null means reuse current progress") ProgressIndicator progress)
-    throws ProcessCanceledException {
-    process.run();
-  }
+    throws ProcessCanceledException;
 }

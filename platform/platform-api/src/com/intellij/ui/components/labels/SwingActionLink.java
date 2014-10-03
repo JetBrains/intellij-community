@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.options.newEditor;
+package com.intellij.ui.components.labels;
 
-import com.intellij.ui.components.labels.LinkLabel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Action;
@@ -28,20 +27,19 @@ import static java.beans.EventHandler.create;
 /**
  * @author Sergey.Malenkov
  */
-final class ActionLink extends LinkLabel {
+public class SwingActionLink extends LinkLabel<Action> implements LinkListener<Action> {
   private final ActionEvent myEvent = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, Action.ACTION_COMMAND_KEY);
-  private final Action myAction;
 
-  ActionLink(@NotNull Action action) {
-    super("<html><body><strong>" + action.getValue(Action.NAME), (Icon)action.getValue(Action.SMALL_ICON));
+  public SwingActionLink(@NotNull Action action) {
+    super((String)action.getValue(Action.NAME), (Icon)action.getValue(Action.SMALL_ICON));
     setToolTipText((String)action.getValue(Action.SHORT_DESCRIPTION));
     setVisible(action.isEnabled());
-    myAction = action;
+    setListener(this, action);
     action.addPropertyChangeListener(create(PropertyChangeListener.class, this, "visible", "source.enabled"));
   }
 
   @Override
-  public void doClick() {
-    myAction.actionPerformed(myEvent);
+  public void linkSelected(LinkLabel link, Action action) {
+    action.actionPerformed(myEvent);
   }
 }

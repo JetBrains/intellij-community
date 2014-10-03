@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.graph;
+package com.intellij.openapi.externalSystem.model;
 
-import org.jetbrains.annotations.NotNull;
+import java.io.File;
 
-public class BekGraphAction implements GraphAction {
-
-  @NotNull
-  private final PermanentGraph.SortType mySortType;
-
-  public BekGraphAction(@NotNull PermanentGraph.SortType sortType) {
-    mySortType = sortType;
-  }
-
-  @NotNull
-  public PermanentGraph.SortType getSortType() {
-    return mySortType;
-  }
+/**
+ * @author Vladislav.Soroka
+ * @since 10/3/2014
+ */
+public interface ModifiableExternalSourceDirectorySet extends ExternalSourceDirectorySet {
+  void setOutputDir(File outputPath);
 }
