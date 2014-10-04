@@ -740,7 +740,11 @@ public class JavaDocInfoGenerator {
           if (inferred) buffer.append("<i>");
           final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
           buffer.append("@");
-          generateType(buffer, type, owner, generateLink);
+          if (inferred && !generateLink) {
+            buffer.append(type.getPresentableText());
+          } else {
+            generateType(buffer, type, owner, generateLink);
+          }
           final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
           if (attributes.length > 0) {
             buffer.append("(");
@@ -778,9 +782,11 @@ public class JavaDocInfoGenerator {
         }
       } else if (external) {
         if (inferred) buffer.append("<i>");
-        buffer.append(XmlStringUtil.escapeString(annotation.getText()));
-        buffer.append("&nbsp;");
+        String annoText = inferred ? "@" + annotation.getNameReferenceElement().getReferenceName() + annotation.getParameterList().getText()
+                                   : annotation.getText();
+        buffer.append(XmlStringUtil.escapeString(annoText));
         if (inferred) buffer.append("</i>");
+        buffer.append("&nbsp;");
       }
       else {
         buffer.append("<font color=red>");

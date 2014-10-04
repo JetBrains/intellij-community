@@ -29,14 +29,12 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.LineSet;
 import com.intellij.openapi.editor.impl.RangeMarkerTree;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +50,7 @@ import java.util.List;
  */
 public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, Disposable {
 
-  private static final String MY_PANEL_PROPERTY = "EditorTextFieldCellRenderer.MyEditorPanel";
+  private static final Key<MyPanel> MY_PANEL_PROPERTY = Key.create("EditorTextFieldCellRenderer.MyEditorPanel");
 
   public EditorTextFieldCellRenderer(Disposable parent) {
     Disposer.register(parent, this);
@@ -96,7 +94,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   @NotNull
   private MyPanel getEditorPanel(JTable table) {
-    MyPanel panel = (MyPanel)table.getClientProperty(MY_PANEL_PROPERTY);
+    MyPanel panel = UIUtil.getClientProperty(table, MY_PANEL_PROPERTY);
     if (panel != null) {
       EditorColorsScheme scheme = panel.myEditor.getColorsScheme();
       if (scheme instanceof DelegateColorScheme) {
