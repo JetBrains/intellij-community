@@ -15,13 +15,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -200,21 +198,26 @@ public class MatcherImpl {
   }
 
   public CompiledOptions precompileOptions(List<Configuration> configurations) {
-    List<Pair<MatchContext, Configuration>> contexts = new ArrayList<Pair<MatchContext, Configuration>>();
+    final List<Pair<MatchContext, Configuration>> contexts = new ArrayList<Pair<MatchContext, Configuration>>();
 
-    for (Configuration configuration : configurations) {
-      MatchContext matchContext = new MatchContext();
+    for (final Configuration configuration : configurations) {
+      final MatchContext matchContext = new MatchContext();
       matchContext.setMatcher(visitor);
-      MatchOptions matchOptions = configuration.getMatchOptions();
+      final MatchOptions matchOptions = configuration.getMatchOptions();
       matchContext.setOptions(matchOptions);
 
-      try {
-        CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
-        matchContext.setPattern(compiledPattern);
-        contexts.add(Pair.create(matchContext, configuration));
-      }
-      catch (UnsupportedPatternException ignored) {}
-      catch (MalformedPatternException ignored) {}
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
+            matchContext.setPattern(compiledPattern);
+            contexts.add(Pair.create(matchContext, configuration));
+          }
+          catch (UnsupportedPatternException ignored) {}
+          catch (MalformedPatternException ignored) {}
+        }
+      });
     }
     return new CompiledOptions(contexts);
   }
