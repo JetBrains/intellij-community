@@ -15,11 +15,24 @@
  */
 package com.intellij.vcs.log.graph.utils;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.BitSet;
 
-public class UnsignedBitSet {
-  private final BitSet myPositiveSet = new BitSet();
-  private final BitSet myNegativeSet = new BitSet();
+public class UnsignedBitSet implements Cloneable {
+  @NotNull
+  private final BitSet myPositiveSet;
+  @NotNull
+  private final BitSet myNegativeSet;
+
+  public UnsignedBitSet(@NotNull BitSet positiveSet, @NotNull BitSet negativeSet) {
+    myPositiveSet = positiveSet;
+    myNegativeSet = negativeSet;
+  }
+
+  public UnsignedBitSet() {
+    this(new BitSet(), new BitSet());
+  }
 
   private static int toPositive(int bitIndex) {
     return -bitIndex;
@@ -54,4 +67,8 @@ public class UnsignedBitSet {
       return myNegativeSet.get(toPositive(bitIndex));
   }
 
+  @Override
+  public UnsignedBitSet clone() {
+    return new UnsignedBitSet((BitSet)myPositiveSet.clone(), (BitSet)myNegativeSet.clone());
+  }
 }
