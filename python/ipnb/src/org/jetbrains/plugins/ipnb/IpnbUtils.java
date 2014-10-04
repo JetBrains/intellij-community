@@ -1,31 +1,15 @@
 package org.jetbrains.plugins.ipnb;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MarkdownUtil;
 import com.petebevin.markdown.MarkdownProcessor;
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
-import netscape.javascript.JSException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,7 +78,7 @@ public class IpnbUtils {
 
   public static void addLatexToPanel(@NotNull final String source, @NotNull final JPanel panel) {
     final StringBuilder result = convertToHtml(source);
-    addToPanel(result.toString(), panel);
+    //addToPanel(result.toString(), panel);
 
   }
 
@@ -158,7 +142,7 @@ public class IpnbUtils {
     return result;
   }
 
-  public static void addToPanel(@NotNull final String source, @NotNull final JPanel panel) {
+  /*public static void addToPanel(@NotNull final String source, @NotNull final JPanel panel) {
     Platform.setImplicitExit(false);
 
     final String text = ourPrefix + source + "</div></body></html>";
@@ -227,5 +211,5 @@ public class IpnbUtils {
         }
       }
     });
-  }
+  }*/
 }

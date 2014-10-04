@@ -1,10 +1,5 @@
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.web.WebView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbHtmlOutputCell;
 
@@ -17,7 +12,7 @@ public class IpnbHtmlPanel extends IpnbCodeOutputPanel<IpnbHtmlOutputCell> {
 
   @Override
   protected JComponent createViewPanel() {
-    Platform.setImplicitExit(false);
+    /*Platform.setImplicitExit(false);
     final JFXPanel javafxPanel = new JFXPanel();
     final StringBuilder text = new StringBuilder("<html>");
     for (String html : myCell.getHtmls()) {
@@ -40,6 +35,7 @@ public class IpnbHtmlPanel extends IpnbCodeOutputPanel<IpnbHtmlOutputCell> {
       }
     });
 
-    return javafxPanel;
+    return javafxPanel;*/
+    return null;
   }
 }
