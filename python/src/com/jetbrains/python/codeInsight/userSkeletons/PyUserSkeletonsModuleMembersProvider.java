@@ -17,7 +17,7 @@ package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.PyModuleMembersProvider;
@@ -43,17 +43,17 @@ public class PyUserSkeletonsModuleMembersProvider extends PyModuleMembersProvide
   }
 
   @Override
-  protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
+  protected Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName) {
    final PyFile moduleSkeleton = PyUserSkeletonsUtil.getUserSkeletonForModuleQName(qName, module);
     if (moduleSkeleton != null) {
-      final List<PyCustomMember> results = new ArrayList<PyCustomMember>();
+      final List<PyDynamicMember> results = new ArrayList<PyDynamicMember>();
       for (PyElement element : moduleSkeleton.iterateNames()) {
         if (element instanceof PsiFileSystemItem) {
           continue;
         }
         final String name = element.getName();
         if (name != null) {
-          results.add(new PyCustomMember(name, element));
+          results.add(new PyDynamicMember(name, element));
         }
       }
       return results;

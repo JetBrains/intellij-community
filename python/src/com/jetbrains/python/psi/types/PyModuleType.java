@@ -30,7 +30,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -289,7 +289,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     Set<String> namesAlready = context.get(CTX_NAMES);
     PointInImport point = ResolveImportUtil.getPointInImport(location);
     for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
-      for (PyCustomMember member : provider.getMembers(myModule, point)) {
+      for (PyDynamicMember member : provider.getMembers(myModule, point)) {
         final String name = member.getName();
         if (namesAlready != null) {
           namesAlready.add(name);

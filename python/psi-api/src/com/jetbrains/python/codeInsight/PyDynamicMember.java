@@ -33,7 +33,7 @@ import javax.swing.*;
 /**
  * @author Dennis.Ushakov
  */
-public class PyCustomMember {
+public class PyDynamicMember {
   private String myName;
   private final boolean myResolveToInstance;
   private final Function<PsiElement, PyType> myTypeCallback;
@@ -45,7 +45,7 @@ public class PyCustomMember {
 
   boolean myFunction = false;
 
-  public PyCustomMember(@NotNull final String name, @Nullable final String type, final boolean resolveToInstance) {
+  public PyDynamicMember(@NotNull final String name, @Nullable final String type, final boolean resolveToInstance) {
     myName = name;
     myResolveToInstance = resolveToInstance;
     myTypeName = type;
@@ -54,7 +54,7 @@ public class PyCustomMember {
     myTypeCallback = null;
   }
 
-  public PyCustomMember(@NotNull final String name) {
+  public PyDynamicMember(@NotNull final String name) {
     myName = name;
     myResolveToInstance = false;
     myTypeName = null;
@@ -63,9 +63,9 @@ public class PyCustomMember {
     myTypeCallback = null;
   }
 
-  public PyCustomMember(@NotNull final String name,
-                        @Nullable final String type,
-                        final Function<PsiElement, PyType> typeCallback) {
+  public PyDynamicMember(@NotNull final String name,
+                         @Nullable final String type,
+                         final Function<PsiElement, PyType> typeCallback) {
     myName = name;
 
     myResolveToInstance = false;
@@ -75,7 +75,7 @@ public class PyCustomMember {
     myTypeCallback = typeCallback;
   }
 
-  public PyCustomMember(@NotNull final String name, @Nullable final PsiElement target) {
+  public PyDynamicMember(@NotNull final String name, @Nullable final PsiElement target) {
     myName = name;
     myTarget = target;
     myResolveToInstance = false;
@@ -83,47 +83,47 @@ public class PyCustomMember {
     myTypeCallback = null;
   }
 
-  public PyCustomMember resolvesTo(String moduleQName) {
+  public PyDynamicMember resolvesTo(String moduleQName) {
     myPsiPath = new PyPsiPath.ToFile(moduleQName);
     return this;
   }
 
-  public PyCustomMember resolvesToClass(String classQName) {
+  public PyDynamicMember resolvesToClass(String classQName) {
     myPsiPath = new PyPsiPath.ToClassQName(classQName);
     return this;
   }
 
-  public PyCustomMember toClass(String name) {
+  public PyDynamicMember toClass(String name) {
     myPsiPath = new PyPsiPath.ToClass(myPsiPath, name);
     return this;
   }
 
-  public PyCustomMember toFunction(String name) {
+  public PyDynamicMember toFunction(String name) {
     myPsiPath = new PyPsiPath.ToFunction(myPsiPath, name);
     return this;
   }
 
-  public PyCustomMember toFunctionRecursive(String name) {
+  public PyDynamicMember toFunctionRecursive(String name) {
     myPsiPath = new PyPsiPath.ToFunctionRecursive(myPsiPath, name);
     return this;
   }
 
-  public PyCustomMember toClassAttribute(String name) {
+  public PyDynamicMember toClassAttribute(String name) {
     myPsiPath = new PyPsiPath.ToClassAttribute(myPsiPath, name);
     return this;
   }
 
-  public PyCustomMember toCall(String name, String... args) {
+  public PyDynamicMember toCall(String name, String... args) {
     myPsiPath = new PyPsiPath.ToCall(myPsiPath, name, args);
     return this;
   }
 
-  public PyCustomMember toAssignment(String assignee) {
+  public PyDynamicMember toAssignment(String assignee) {
     myPsiPath = new PyPsiPath.ToAssignment(myPsiPath, assignee);
     return this;
   }
 
-  public PyCustomMember toPsiElement(final PsiElement psiElement) {
+  public PyDynamicMember toPsiElement(final PsiElement psiElement) {
     myPsiPath = new PyPsiPath() {
 
       @Override
@@ -179,7 +179,7 @@ public class PyCustomMember {
     return myTypeName.substring(pos + 1);
   }
 
-  public PyCustomMember asFunction() {
+  public PyDynamicMember asFunction() {
     myFunction = true;
     return this;
   }
