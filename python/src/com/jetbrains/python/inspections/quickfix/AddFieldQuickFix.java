@@ -166,7 +166,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         appendToMethod(newInit, callback);
 
         PsiElement addAnchor = null;
-        PyFunction[] meths = cls.getMethods(false);
+        PyFunction[] meths = cls.getMethods();
         if (meths.length > 0) addAnchor = meths[0].getPrevSibling();
         PyStatementList clsContent = cls.getStatementList();
         newInit = (PyFunction) clsContent.addAfter(newInit, addAnchor);

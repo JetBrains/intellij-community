@@ -33,7 +33,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyCustomMembersType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyCustomMember;
@@ -463,7 +462,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         if (expr.isQualified()) {
           final PyClassTypeImpl object_type = (PyClassTypeImpl)PyBuiltinCache.getInstance(node).getObjectType();
-          if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refName)) {
+          if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refName)){
             return;
           }
         }
@@ -543,10 +542,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 }
                 markedQualified = true;
               }
-              else if (isHasCustomMember(refName, type)) {
-                // We have dynamic members
-                return;
-              }
               else {
                 description = PyBundle.message("INSP.cannot.find.$0.in.$1", refText, type.getName());
                 markedQualified = true;
@@ -608,16 +603,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       registerProblem(node, description, hl_type, null, rangeInElement, actions.toArray(new LocalQuickFix[actions.size()]));
-    }
-
-    /**
-     * Checks if type  is custom-member based and has custom member with certain name
-     * @param refName name to check
-     * @param type type
-     * @return true if has one
-     */
-    private static boolean isHasCustomMember(@NotNull final String refName, @NotNull final PyType type) {
-      return (type instanceof PyCustomMembersType) && ((PyCustomMembersType)type).hasMember(refName);
     }
 
     /**
@@ -699,13 +684,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (type instanceof PyImportedModuleType) {
         PyImportedModule module = ((PyImportedModuleType)type).getImportedModule();
         if (module.resolve() == null) {
-          return true;
-        }
-      }
-      if (type instanceof PyCustomMembersType) {
-        // Skip custom member types that mimics another class with fuzzy parents
-        PyClassType mimic = ((PyCustomMembersType)type).getTypeToMimic();
-        if (mimic != null && PyUtil.hasUnresolvedAncestors(mimic.getPyClass(), myTypeEvalContext)) {
           return true;
         }
       }
@@ -832,7 +810,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             }
           }
         }
-        for (PyFunction method : containedClass.getMethods(false)) {
+        for (PyFunction method : containedClass.getMethods()) {
           if (expr.getText().equals(method.getName())) {
             actions.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
           }

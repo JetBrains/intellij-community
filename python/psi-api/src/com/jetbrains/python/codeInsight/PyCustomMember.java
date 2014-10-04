@@ -75,15 +75,12 @@ public class PyCustomMember {
     myTypeCallback = typeCallback;
   }
 
-  public PyCustomMember(@NotNull final String name, @Nullable final PsiElement target, @Nullable String typeName) {
+  public PyCustomMember(@NotNull final String name, @Nullable final PsiElement target) {
     myName = name;
     myTarget = target;
     myResolveToInstance = false;
-    myTypeName = typeName;
+    myTypeName = null;
     myTypeCallback = null;
-  }
-  public PyCustomMember(@NotNull final String name, @Nullable final PsiElement target) {
-    this(name, target, null);
   }
 
   public PyCustomMember resolvesTo(String moduleQName) {

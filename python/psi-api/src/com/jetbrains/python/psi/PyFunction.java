@@ -26,8 +26,6 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * Function declaration in source (the <code>def</code> and everything within).
  *
@@ -103,48 +101,4 @@ extends
 
   @Nullable
   PyAnnotation getAnnotation();
-
-  // TODO: Doc
-  //
-
-  /**
-   * Searches for function attributes.
-   * See <a href="http://legacy.python.org/dev/peps/pep-0232/">PEP-0232</a>
-   * @return assignment statements for function attributes
-   */
-  @NotNull
-  List<PyAssignmentStatement> findAttributes();
-
-  /**
-   * @return function protection level (underscore based)
-   */
-  @NotNull
-  ProtectionLevel getProtectionLevel();
-
-  enum ProtectionLevel {
-    /**
-     * public members
-     */
-    PUBLIC(0),
-    /**
-     * _protected_memebers
-     */
-    PROTECTED(1),
-    /**
-     * __private_memebrs
-     */
-    PRIVATE(2);
-    private final int myUnderscoreLevel;
-
-    ProtectionLevel(final int underscoreLevel) {
-      myUnderscoreLevel = underscoreLevel;
-    }
-
-    /**
-     * @return number of underscores
-     */
-    public int getUnderscoreLevel() {
-      return myUnderscoreLevel;
-    }
-  }
 }

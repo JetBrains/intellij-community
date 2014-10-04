@@ -172,7 +172,9 @@ public class PsiQuery {
         }
       }
     }
-    return new PsiTypedQuery<T>(clazz, result);
+    @SuppressWarnings("unchecked") // Type is preserved
+    final T[] array = (T[])result.toArray(new PsiElement[result.size()]);
+    return new PsiTypedQuery<T>(clazz, array);
   }
 
 
@@ -307,17 +309,14 @@ public class PsiQuery {
    * Filter elements by class
    */
   @NotNull
-  public <T extends PsiElement> PsiTypedQuery<T> filter(@NotNull final Class<T> clazz) {
+  public PsiQuery filter(@NotNull final Class<? extends PsiElement> clazz) {
     final Set<PsiElement> result = new HashSet<PsiElement>(Arrays.asList(myPsiElements));
     for (final PsiElement element : myPsiElements) {
-      if (!(clazz.isInstance(element))) {
+      if (PyUtil.as(element, clazz) == null) {
         result.remove(element);
       }
     }
-    // We checked it in runtime
-    @SuppressWarnings("unchecked")
-    final List<T> toAdd = (List<T>)new ArrayList<PsiElement>(result);
-    return new PsiTypedQuery<T>(clazz, toAdd);
+    return new PsiQuery(result.toArray(new PsiElement[result.size()]));
   }
 
 
@@ -352,16 +351,16 @@ public class PsiQuery {
     @NotNull
     private final Class<T> myClass;
     @NotNull
-    private final List<T> myElements;
+    private final T[] myElements;
 
     /**
      * @param clazz    type
      * @param elements elements
      */
-    private PsiTypedQuery(@NotNull final Class<T> clazz, @NotNull final List<T> elements) {
+    private PsiTypedQuery(@NotNull final Class<T> clazz, @NotNull final T... elements) {
       super(elements);
       myClass = clazz;
-      myElements = elements;
+      myElements = elements.clone();
     }
 
     /**
@@ -384,8 +383,8 @@ public class PsiQuery {
      * @return All elements of certain type
      */
     @NotNull
-    public List<T> getElements() {
-      return Collections.unmodifiableList(myElements);
+    public T[] getElements() {
+      return myElements.clone();
     }
   }
 }

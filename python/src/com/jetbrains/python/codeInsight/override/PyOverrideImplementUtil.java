@@ -281,7 +281,7 @@ public class PyOverrideImplementUtil {
   public static Collection<PyFunction> getAllSuperFunctions(@NotNull final PyClass pyClass) {
     final Map<String, PyFunction> superFunctions = new HashMap<String, PyFunction>();
     for (PyClass aClass : pyClass.getAncestorClasses()) {
-      for (PyFunction function : aClass.getMethods(false)) {
+      for (PyFunction function : aClass.getMethods()) {
         if (!superFunctions.containsKey(function.getName())) {
           superFunctions.put(function.getName(), function);
         }

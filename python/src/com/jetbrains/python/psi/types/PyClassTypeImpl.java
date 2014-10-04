@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
@@ -33,7 +34,6 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
-import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.ResolveResultList;
@@ -151,8 +151,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                              @NotNull PyResolveContext resolveContext,
                                                              boolean inherited) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
-    PsiElement classMember =
-      resolveByOverridingMembersProviders(this, name, location); //overriding members provers have priority to normal resolve
+    PsiElement classMember = resolveByOverridingMembersProviders(this, name, location); //overriding members provers have priority to normal resolve
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -220,8 +219,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (inherited) {
-      classMember =
-        resolveByMembersProviders(this, name, location);  //ask providers after real class introspection as providers have less priority
+      classMember = resolveByMembersProviders(this, name, location);  //ask providers after real class introspection as providers have less priority
     }
 
     if (classMember != null) {
@@ -416,11 +414,16 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     addInheritedMembers(prefix, location, namesAlready, context, ret, typeEvalContext);
 
     // from providers
-    for (final PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      for (final PyCustomMember member : provider.getMembers(this, location)) {
+    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      for (PyCustomMember member : provider.getMembers(this, location)) {
         final String name = member.getName();
         if (!namesAlready.contains(name)) {
-          ret.add(PyCustomMemberUtils.toLookUpElement(member, getName()));
+          LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(getName());
+          if (member.isFunction()) {
+            lookupElementBuilder = lookupElementBuilder.withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS);
+            lookupElementBuilder.withTailText("()");
+          }
+          ret.add(lookupElementBuilder);
         }
       }
     }

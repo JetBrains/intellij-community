@@ -57,13 +57,13 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                  return;
                }
                Set<String> seenNames = new HashSet<String>();
-               for (PyFunction function : containingClass.getMethods(false)) {
+               for (PyFunction function : containingClass.getMethods()) {
                  seenNames.add(function.getName());
                }
                LanguageLevel languageLevel = LanguageLevel.forElement(parameters.getOriginalFile());
                seenNames.addAll(PyNames.getBuiltinMethods(languageLevel).keySet());
                for (PyClass ancestor : containingClass.getAncestorClasses()) {
-                 for (PyFunction superMethod : ancestor.getMethods(false)) {
+                 for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {
                      String text = superMethod.getName() + superMethod.getParameterList().getText();
                      LookupElementBuilder element = LookupElementBuilder.create(text);

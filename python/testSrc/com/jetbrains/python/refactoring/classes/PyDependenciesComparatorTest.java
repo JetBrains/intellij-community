@@ -1,6 +1,7 @@
 package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.text.Matcher;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import org.hamcrest.Matchers;
@@ -22,7 +23,7 @@ public class PyDependenciesComparatorTest extends PyTestCase {
 
     @SuppressWarnings("ConstantConditions") // Can't be null (class has docstring)
     PsiElement docStringExpression = clazz.getDocStringExpression().getParent();
-    PyFunction method = clazz.getMethods(false)[0];
+    PyFunction method = clazz.getMethods()[0];
     PsiElement classField = clazz.getClassAttributes().get(0).getParent();
 
     final List<PyStatement> elementList = new ArrayList<PyStatement>();

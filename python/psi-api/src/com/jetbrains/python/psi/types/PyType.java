@@ -47,8 +47,8 @@ public interface PyType {
    *         or a list of elements that define the name, a la multiResolve().
    */
   @Nullable
-  List<? extends RatedResolveResult> resolveMember(@NotNull String name, @Nullable final PyExpression location,
-                                                   @NotNull final AccessDirection direction, @NotNull final PyResolveContext resolveContext);
+  List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location,
+                                                   @NotNull AccessDirection direction, @NotNull PyResolveContext resolveContext);
 
   /**
    * Proposes completion variants from type's attributes.

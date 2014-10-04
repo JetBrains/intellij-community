@@ -389,34 +389,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return result;
   }
 
-  @Override
   @NotNull
-  public PyFunction[] getMethods(final boolean inherited) {
-    final PyFunction[] thisClassFunctions =
-      getClassChildren(PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens(), PyFunction.ARRAY_FACTORY);
-    if (!inherited) {
-      return thisClassFunctions;
-    }
-    // Map to get rid of duplicated (overwritten methods)
-    final Map<String, PyFunction> result = new HashMap<String, PyFunction>();
-    // We get classes in MRO order (hopefully), so last methods are last
-    for (final PyClass superClass : getSuperClasses()) {
-      for (final PyFunction function : superClass.getMethods(false)) {
-        final String functionName = function.getName();
-        if (functionName != null) {
-          result.put(functionName, function);
-        }
-      }
-    }
-    // We now need to add our own methods
-    for (final PyFunction function : thisClassFunctions) {
-      final String functionName = function.getName();
-      if (functionName != null) {
-        result.put(functionName, function);
-      }
-    }
-    final Collection<PyFunction> functionsToReturn = result.values();
-    return functionsToReturn.toArray(new PyFunction[functionsToReturn.size()]);
+  public PyFunction[] getMethods() {
+    return getClassChildren(PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens(), PyFunction.ARRAY_FACTORY);
   }
 
   @Override
@@ -539,7 +514,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     // look at @property decorators
     Map<String, List<PyFunction>> grouped = new HashMap<String, List<PyFunction>>();
     // group suitable same-named methods, each group defines a property
-    for (PyFunction method : getMethods(false)) {
+    for (PyFunction method : getMethods()) {
       final String methodName = method.getName();
       if (name == null || name.equals(methodName)) {
         List<PyFunction> bucket = grouped.get(methodName);
@@ -851,7 +826,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public boolean visitMethods(Processor<PyFunction> processor,
                               boolean inherited,
                               boolean skipClassObj) {
-    PyFunction[] methods = getMethods(false);
+    PyFunction[] methods = getMethods();
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : getAncestorClasses()) {
@@ -957,7 +932,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       collectInstanceAttributes(initMethod, result);
     }
     Set<String> namesInInit = new HashSet<String>(result.keySet());
-    final PyFunction[] methods = getMethods(false);
+    final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
       if (!PyNames.INIT.equals(method.getName())) {
         collectInstanceAttributes(method, result, namesInInit);
@@ -1006,8 +981,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
       statementList.accept(new PyRecursiveElementVisitor() {
         @Override
-        public void visitPyClass(PyClass node) {
-        }
+        public void visitPyClass(PyClass node) {}
 
         public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
           for (PyExpression expression : node.getTargets()) {
@@ -1363,11 +1337,5 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
     }
     return null;
-  }
-
-  @Nullable
-  @Override
-  public PyClassLikeType getType(@NotNull TypeEvalContext context) {
-    return PyUtil.as(context.getType(this), PyClassLikeType.class);
   }
 }

@@ -74,7 +74,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
             registerProblem(attr, "Old-style class contains __slots__ definition", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
           }
         }
-        for (PyFunction attr : node.getMethods(false)) {
+        for (PyFunction attr : node.getMethods()) {
           if ("__getattribute__".equals(attr.getName())) {
             final ASTNode nameNode = attr.getNameNode();
             assert nameNode != null;
