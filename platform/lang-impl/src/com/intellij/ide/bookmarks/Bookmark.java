@@ -120,8 +120,9 @@ public class Bookmark implements Navigatable {
     return myHighlighter;
   }
 
+  @Nullable
   public Document getDocument() {
-    return FileDocumentManager.getInstance().getDocument(getFile());
+    return FileDocumentManager.getInstance().getCachedDocument(getFile());
   }
 
   public void release() {
