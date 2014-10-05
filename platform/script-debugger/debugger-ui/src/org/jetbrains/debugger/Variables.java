@@ -62,7 +62,7 @@ public final class Variables {
         } :  NATURAL_NAME_COMPARATOR);
         sort(functions);
 
-        addAditionalVariables(variables, additionalVariables, properties);
+        addAditionalVariables(variables, additionalVariables, properties, memberFilter);
 
         if (!properties.isEmpty()) {
           node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast);
@@ -127,14 +127,17 @@ public final class Variables {
     }
     sort(result);
 
-    addAditionalVariables(variables, additionalVariables, result);
+    addAditionalVariables(variables, additionalVariables, result, memberFilter);
     return result;
   }
 
-  private static void addAditionalVariables(@NotNull List<? extends Variable> variables, @NotNull Collection<Variable> additionalVariables, @NotNull List<Variable> result) {
+  private static void addAditionalVariables(@NotNull List<? extends Variable> variables,
+                                            @NotNull Collection<Variable> additionalVariables,
+                                            @NotNull List<Variable> result,
+                                            @NotNull MemberFilter memberFilter) {
     ol: for (Variable variable : additionalVariables) {
       for (Variable frameVariable : variables) {
-        if (frameVariable.getName().equals(variable.getName())) {
+        if (memberFilter.getName(frameVariable).equals(memberFilter.getName(variable))) {
           continue ol;
         }
       }
