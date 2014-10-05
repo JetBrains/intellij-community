@@ -26,6 +26,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
@@ -138,27 +139,41 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       if (session != null) {
         final XSourcePosition position = session.getCurrentPosition();
         if (position != null) {
-          getValueContainer().computeSourcePosition(new XNearestSourcePosition() {
-                  @Override
-                  public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-                    final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-                    final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
-                    if (map == null || timestamps == null || sourcePosition == null) return;
-                    VirtualFile file = sourcePosition.getFile();
-                    final Document doc = FileDocumentManager.getInstance().getDocument(file);
-                    if (doc == null) return;
-                    int line = sourcePosition.getLine();
-                    Pair<VirtualFile, Integer> key = Pair.create(file, line);
-                    Set<XValueNodeImpl> presentations = new LinkedHashSet<XValueNodeImpl>();
-                    Set<XValueNodeImpl> old = map.get(key);
-                    map.put(key, presentations);
-                    timestamps.put(file, doc.getModificationStamp());
-                    presentations.add(XValueNodeImpl.this);
-                    if (old != null) {
-                      presentations.addAll(old);
-                    }
-                  }
-                });
+          final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
+            @Override
+            public void computed(@NotNull VirtualFile file, @NotNull Document document, int line) {
+              final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+              final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+              if (map == null || timestamps == null) {
+                return;
+              }
+
+              Pair<VirtualFile, Integer> key = Pair.create(file, line);
+              Set<XValueNodeImpl> presentations = new LinkedHashSet<XValueNodeImpl>();
+              Set<XValueNodeImpl> old = map.put(key, presentations);
+              timestamps.put(file, document.getModificationStamp());
+              presentations.add(XValueNodeImpl.this);
+              if (old != null) {
+                presentations.addAll(old);
+              }
+            }
+          };
+
+          if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
+            getValueContainer().computeSourcePosition(new XNearestSourcePosition() {
+              @Override
+              public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
+                final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+                final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+                if (map == null || timestamps == null || sourcePosition == null) return;
+                VirtualFile file = sourcePosition.getFile();
+                final Document doc = FileDocumentManager.getInstance().getDocument(file);
+                if (doc == null) return;
+                int line = sourcePosition.getLine();
+                callback.computed(file, doc, line);
+              }
+            });
+          }
         }
       }
     }
