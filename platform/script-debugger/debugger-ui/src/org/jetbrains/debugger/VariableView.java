@@ -566,6 +566,12 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
   }
 
+  @NotNull
+  @Override
+  public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
+    return getViewSupport().computeInlineDebuggerData(variable, context, callback);
+  }
+
   @Override
   @Nullable
   public String getEvaluationExpression() {
