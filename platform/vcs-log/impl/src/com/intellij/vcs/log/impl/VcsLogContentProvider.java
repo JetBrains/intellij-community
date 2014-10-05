@@ -18,15 +18,17 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
- *
+ * <p/>
  * Delegates to the VcsLogManager.
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider, NotNullFunction<Project, Boolean> {
@@ -34,9 +36,11 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
   public static final String TAB_NAME = "Log";
 
   @NotNull private final VcsLogManager myLogManager;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
 
-  public VcsLogContentProvider(@NotNull VcsLogManager logManager) {
+  public VcsLogContentProvider(@NotNull VcsLogManager logManager, @NotNull ProjectLevelVcsManager manager) {
     myLogManager = logManager;
+    myVcsManager = manager;
   }
 
   @NotNull
@@ -45,18 +49,17 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
     if (!Registry.is("git.new.log")) {
       return false;
     }
-    return !myLogManager.findLogProviders().isEmpty();
+    return !myLogManager.findLogProviders(Arrays.asList(myVcsManager.getAllVcsRoots())).isEmpty();
   }
 
   @Override
   public JComponent initContent() {
-    return myLogManager.initContent();
+    return myLogManager.initContent(Arrays.asList(myVcsManager.getAllVcsRoots()));
   }
 
   @Override
   public void disposeContent() {
     Disposer.dispose(myLogManager);
   }
-
 
 }

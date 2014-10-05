@@ -1,12 +1,13 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -25,7 +26,9 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.VcsLogSettings;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
@@ -41,28 +44,27 @@ import java.util.*;
 public class VcsLogManager implements Disposable {
 
   public static final ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
+  private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final VcsLogSettings mySettings;
   @NotNull private final VcsLogUiProperties myUiProperties;
 
   private PostponeableLogRefresher myLogRefresher;
   private volatile VcsLogUiImpl myUi;
 
-  public VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager,
+  public VcsLogManager(@NotNull Project project,
                        @NotNull VcsLogSettings settings,
                        @NotNull VcsLogUiProperties uiProperties) {
     myProject = project;
-    myVcsManager = vcsManager;
     mySettings = settings;
     myUiProperties = uiProperties;
     Disposer.register(myProject, this);
   }
 
   @NotNull
-  public JComponent initContent() {
-    final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
+  public JComponent initContent(@NotNull Collection<VcsRoot> roots) {
+    final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots);
 
     Consumer<VisiblePack> visiblePackConsumer = new Consumer<VisiblePack>() {
       @Override
@@ -109,15 +111,20 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public Map<VirtualFile, VcsLogProvider> findLogProviders() {
+  public Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<VcsRoot> roots) {
     Map<VirtualFile, VcsLogProvider> logProviders = ContainerUtil.newHashMap();
     VcsLogProvider[] allLogProviders = Extensions.getExtensions(LOG_PROVIDER_EP, myProject);
-    for (AbstractVcs vcs : myVcsManager.getAllActiveVcss()) {
+    for (VcsRoot root : roots) {
+      AbstractVcs vcs = root.getVcs();
+      VirtualFile path = root.getPath();
+      if (vcs == null || path == null) {
+        LOG.error("Skipping invalid VCS root: " + root);
+        continue;
+      }
+
       for (VcsLogProvider provider : allLogProviders) {
         if (provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod())) {
-          for (VirtualFile root : myVcsManager.getRootsUnderVcs(vcs)) {
-            logProviders.put(root, provider);
-          }
+          logProviders.put(path, provider);
           break;
         }
       }
