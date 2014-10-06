@@ -43,4 +43,7 @@ public abstract class SliceProvider {
 
   @Nullable
   public abstract PsiElement getExpressionAtCaret(@NotNull Editor editor, @NotNull PsiFile file, boolean isDataFlowToThis);
+
+  @NotNull
+  public abstract PsiElement getElementToSlice(@NotNull PsiElement element);
 }

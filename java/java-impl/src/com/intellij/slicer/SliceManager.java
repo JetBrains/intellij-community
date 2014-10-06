@@ -35,6 +35,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -170,10 +171,9 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     toolWindow.activate(null);
   }
 
-  public static String getElementDescription(String prefix, PsiElement element, String suffix) {
-    PsiElement elementToSlice = element;
-    if (element instanceof PsiReferenceExpression) elementToSlice = ((PsiReferenceExpression)element).resolve();
-    if (elementToSlice == null) elementToSlice = element;
+  @NotNull
+  public static String getElementDescription(@Nullable String prefix, @NotNull PsiElement element, @Nullable String suffix) {
+    final PsiElement elementToSlice = SliceProvider.forElement(element).getElementToSlice(element);
     String desc = ElementDescriptionUtil.getElementDescription(elementToSlice, RefactoringDescriptionLocation.WITHOUT_PARENT);
     return "<html><head>" + UIUtil.getCssFontDeclaration(BaseLabel.getLabelFont()) + "</head><body>" +
            (prefix == null ? "" : prefix) + StringUtil.first(desc, 100, true)+(suffix == null ? "" : suffix) +

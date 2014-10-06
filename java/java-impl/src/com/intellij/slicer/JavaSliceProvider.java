@@ -60,4 +60,13 @@ public class JavaSliceProvider extends SliceProvider {
     if (isDataFlowToThis && element instanceof PsiLiteralExpression) return null;
     return element;
   }
+
+  @NotNull
+  @Override
+  public PsiElement getElementToSlice(@NotNull PsiElement element) {
+    PsiElement elementToSlice = element;
+    if (element instanceof PsiReferenceExpression) elementToSlice = ((PsiReferenceExpression)element).resolve();
+    if (elementToSlice == null) elementToSlice = element;
+    return elementToSlice;
+  }
 }
