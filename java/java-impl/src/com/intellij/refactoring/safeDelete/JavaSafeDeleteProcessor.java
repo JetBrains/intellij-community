@@ -223,7 +223,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     if (element instanceof PsiMethod) {
       final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
 
-      if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final PsiMethod[] superMethods = ((PsiMethod) element).findSuperMethods();
         for (PsiMethod superMethod : superMethods) {
           if (isInside(superMethod, allElementsToDelete)) continue;
