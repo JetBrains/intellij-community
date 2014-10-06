@@ -172,6 +172,11 @@ public class GitCherryPickStepdefs {
         expectedMessage = expectedMessage.replace("\n", "").replace(" ", "");
         actualMessage = actualMessage.replace("\n", "").replace(" ", "");
       }
+      else {
+        // replace just double \n between subject and body to avoid lengthy feature steps
+        expectedMessage = expectedMessage.replace("\n\n", "\n");
+        actualMessage = actualMessage.replace("\n\n", "\n");
+      }
       expectedMessage = virtualCommits.replaceVirtualHashes(expectedMessage);
       assertEquals("Commit doesn't match", expectedMessage, trimHash(actualMessage));
     }
