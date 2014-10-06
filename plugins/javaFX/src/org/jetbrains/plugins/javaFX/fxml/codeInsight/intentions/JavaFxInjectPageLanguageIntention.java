@@ -17,14 +17,13 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiParserFacade;
@@ -36,16 +35,15 @@ import com.intellij.psi.xml.XmlProlog;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
 * User: anna
@@ -55,33 +53,14 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   public static final Logger LOG = Logger.getInstance("#" + JavaFxInjectPageLanguageIntention.class.getName());
 
   private static Set<String> getAvailableLanguages(Project project) {
-    final List<ScriptEngineFactory> engineFactories = new ScriptEngineManager(composeUserClassLoader(project)).getEngineFactories();
+    final List<ScriptEngineFactory> engineFactories = new ScriptEngineManager().getEngineFactories();
 
-    if (engineFactories != null) {
-      final Set<String> availableNames = new TreeSet<String>();
-      for (ScriptEngineFactory factory : engineFactories) {
-        final String engineName = (String)factory.getParameter(ScriptEngine.NAME);
-        availableNames.add(engineName);
-      }
-      return availableNames;
+    final Set<String> availableNames = new TreeSet<String>();
+    for (ScriptEngineFactory factory : engineFactories) {
+      final String engineName = (String)factory.getParameter(ScriptEngine.NAME);
+      availableNames.add(engineName);
     }
-
-    return null;
-  }
-
-  private static UrlClassLoader composeUserClassLoader(Project project) {
-    final List<URL> urls = new ArrayList<URL>();
-    final List<String> list = OrderEnumerator.orderEntries(project).recursively().runtimeOnly().getPathsList().getPathList();
-    for (String path : list) {
-      try {
-        urls.add(new File(FileUtil.toSystemIndependentName(path)).toURI().toURL());
-      }
-      catch (MalformedURLException e1) {
-        LOG.info(e1);
-      }
-    }
-
-    return UrlClassLoader.build().urls(urls).get();
+    return availableNames;
   }
 
   @Override
@@ -90,7 +69,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     final XmlFile containingFile = (XmlFile)element.getContainingFile();
 
     final Set<String> availableLanguages = getAvailableLanguages(project);
-    if (availableLanguages.size() == 1) {
+    if (availableLanguages.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       registerPageLanguage(project, containingFile, availableLanguages.iterator().next());
     } else {
       final JBList list = new JBList(availableLanguages);
