@@ -80,18 +80,16 @@ abstract class SpotlightPainter extends AbstractPainter {
       myGlassPanel.clear();
       String text = filter.getFilterText();
       myVisible = !text.isEmpty();
-      if (myVisible) {
-        try {
-          SearchableConfigurable searchable = new SearchableConfigurable.Delegate(configurable);
-          SearchUtil.lightOptions(searchable, component, text, myGlassPanel).run();
-          Runnable search = searchable.enableSearch(text);
-          if (search != null && !filter.contains(configurable) && !text.equals(myConfigurableOption.get(configurable))) {
-            search.run();
-          }
+      try {
+        SearchableConfigurable searchable = new SearchableConfigurable.Delegate(configurable);
+        SearchUtil.lightOptions(searchable, component, text, myGlassPanel).run();
+        Runnable search = searchable.enableSearch(text); // execute for empty string too
+        if (search != null && !filter.contains(configurable) && !text.equals(myConfigurableOption.get(configurable))) {
+          search.run();
         }
-        finally {
-          myConfigurableOption.put(configurable, text);
-        }
+      }
+      finally {
+        myConfigurableOption.put(configurable, text);
       }
     }
     else if (!ApplicationManager.getApplication().isUnitTestMode()) {
