@@ -2683,7 +2683,15 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean equalsIgnoreWhitespaces(@NotNull CharSequence s1, @NotNull CharSequence s2) {
+  public static boolean equalsIgnoreWhitespaces(@Nullable CharSequence s1, @Nullable CharSequence s2) {
+    if (s1 == null ^ s2 == null) {
+      return false;
+    }
+
+    if (s1 == null) {
+      return true;
+    }
+
     int len1 = s1.length();
     int len2 = s2.length();
 
