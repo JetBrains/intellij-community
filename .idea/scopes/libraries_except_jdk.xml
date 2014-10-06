@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="libraries.except.jdk" pattern="lib:*..*&amp;&amp;!lib:java..*&amp;&amp;!lib:javax..*" />
-</component>
