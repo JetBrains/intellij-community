@@ -164,7 +164,8 @@ public class ClassWriter {
     ClassNode outerNode = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, node);
 
-    BytecodeMappingTracer tracer = new BytecodeMappingTracer();
+    int total_offset_lines = 0;
+    BytecodeMappingTracer dummy_tracer = new BytecodeMappingTracer();
 
     try {
       // last minute processing
@@ -177,7 +178,12 @@ public class ClassWriter {
 
       String lineSeparator = DecompilerContext.getNewLineSeparator();
 
+      // write class definition
+      int start_class_def = buffer.length();
       writeClassDefinition(node, buffer, indent);
+
+      // count lines in class definition the easiest way
+      total_offset_lines = buffer.substring(start_class_def).toString().split(lineSeparator, -1).length - 1;
 
       boolean hasContent = false;
 
@@ -204,7 +210,7 @@ public class ClassWriter {
           enumFields = false;
         }
 
-        fieldToJava(wrapper, cl, fd, buffer, indent + 1, tracer);
+        fieldToJava(wrapper, cl, fd, buffer, indent + 1, dummy_tracer); // FIXME: insert real tracer
 
         hasContent = true;
       }
@@ -225,9 +231,13 @@ public class ClassWriter {
         if (hasContent) {
           buffer.append(lineSeparator);
         }
-        boolean methodSkipped = !methodToJava(node, mt, buffer, indent + 1, tracer);
+        BytecodeMappingTracer method_tracer = new BytecodeMappingTracer(total_offset_lines);
+        boolean methodSkipped = !methodToJava(node, mt, buffer, indent + 1, method_tracer);
         if (!methodSkipped) {
           hasContent = true;
+          DecompilerContext.getBytecodeSourceMapper().addTracer(cl.qualifiedName,
+                                  InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()), method_tracer);
+          total_offset_lines = method_tracer.getCurrentSourceline();
         }
         else {
           buffer.setLength(position);
@@ -558,6 +568,10 @@ public class ClassWriter {
     MethodWrapper methodWrapper = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor());
 
     boolean hideMethod = false;
+    int start_index_method = buffer.length();
+
+    String indentString = InterpreterUtil.getIndentString(indent);
+    String lineSeparator = DecompilerContext.getNewLineSeparator();
 
     MethodWrapper outerWrapper = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, methodWrapper);
@@ -568,9 +582,6 @@ public class ClassWriter {
       boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
       boolean isDeprecated = mt.getAttributes().containsKey("Deprecated");
       boolean clinit = false, init = false, dinit = false;
-
-      String indentString = InterpreterUtil.getIndentString(indent);
-      String lineSeparator = DecompilerContext.getNewLineSeparator();
 
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
@@ -793,6 +804,9 @@ public class ClassWriter {
 
         if (root != null && !methodWrapper.decompiledWithErrors) { // check for existence
           try {
+
+            tracer.setCurrentSourceline(buffer.substring(start_index_method).split(lineSeparator, -1).length - 1);
+
             String code = root.toJava(indent + 1, tracer);
 
             hideMethod = (clinit || dinit || hideConstructor(wrapper, init, throwsExceptions, paramCount)) && code.length() == 0;
@@ -819,6 +833,10 @@ public class ClassWriter {
     finally {
       DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, outerWrapper);
     }
+
+    // save total lines
+    // TODO: optimize
+    tracer.setCurrentSourceline(buffer.substring(start_index_method).split(lineSeparator, -1).length - 1);
 
     return !hideMethod;
   }

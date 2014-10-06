@@ -85,6 +85,8 @@ public class VarExprent extends Exprent {
   public String toJava(int indent, BytecodeMappingTracer tracer) {
     StringBuilder buffer = new StringBuilder();
 
+    tracer.addMapping(bytecode);
+
     if (classdef) {
       ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(vartype.value);
       new ClassWriter().classToJava(child, buffer, indent);

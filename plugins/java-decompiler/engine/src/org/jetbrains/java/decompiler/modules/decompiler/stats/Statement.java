@@ -489,9 +489,9 @@ public class Statement {
   }
 
   // to be overwritten
-  //public String toJava() {
-  //  return toJava(0);
-  //}
+  public String toJava() {
+    return toJava(0, new BytecodeMappingTracer());
+  }
 
   public String toJava(int indent, BytecodeMappingTracer tracer) {
     throw new RuntimeException("not implemented");

@@ -38,12 +38,15 @@ public class AssertExprent extends Exprent {
 
     buffer.append("assert ");
 
+    tracer.addMapping(bytecode);
+
     if (parameters.get(0) == null) {
       buffer.append("false");
     }
     else {
       buffer.append(parameters.get(0).toJava(indent, tracer));
     }
+
     if (parameters.size() > 1) {
       buffer.append(" : ");
       buffer.append(parameters.get(1).toJava(indent, tracer));

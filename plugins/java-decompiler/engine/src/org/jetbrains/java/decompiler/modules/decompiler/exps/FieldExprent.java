@@ -159,6 +159,8 @@ public class FieldExprent extends Exprent {
 
     buf.append(name);
 
+    tracer.addMapping(bytecode);
+
     return buf.toString();
   }
 

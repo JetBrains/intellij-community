@@ -77,6 +77,9 @@ public class ExitExprent extends Exprent {
 
   @Override
   public String toJava(int indent, BytecodeMappingTracer tracer) {
+
+    tracer.addMapping(bytecode);
+
     if (exittype == EXIT_RETURN) {
       StringBuilder buffer = new StringBuilder();
 

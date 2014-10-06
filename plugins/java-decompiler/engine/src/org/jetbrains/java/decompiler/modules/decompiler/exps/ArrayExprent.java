@@ -96,6 +96,8 @@ public class ArrayExprent extends Exprent {
       res = "((" + ExprProcessor.getCastTypeName(objarr) + ")" + res + ")";
     }
 
+    tracer.addMapping(bytecode);
+
     return res + "[" + index.toJava(indent, tracer) + "]";
   }
 

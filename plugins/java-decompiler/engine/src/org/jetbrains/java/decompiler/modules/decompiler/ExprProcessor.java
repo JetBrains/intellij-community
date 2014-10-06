@@ -331,6 +331,7 @@ public class ExprProcessor implements CodeConstants {
     for (int i = 0; i < seq.length(); i++) {
 
       Instruction instr = seq.getInstr(i);
+      Integer bytecode_offset = block.getOldOffset(i);
 
       switch (instr.opcode) {
         case opc_aconst_null:
