@@ -34,4 +34,7 @@ public abstract class SliceProvider {
                                                    @NotNull SliceUsage parent);
   public abstract boolean processUsagesFlownFromThe(@NotNull PsiElement element, @NotNull Processor<SliceUsage> processor,
                                                     @NotNull SliceUsage parent);
+
+  @NotNull
+  public abstract SliceUsageCellRenderer createSliceUsageCellRenderer();
 }

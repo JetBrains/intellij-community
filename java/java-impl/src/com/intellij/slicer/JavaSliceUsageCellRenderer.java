@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,13 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.TextChunk;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -37,34 +33,9 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * @author cdr
+ * @author vlan
  */
-public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
-  private static final EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-  public static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));
-
-  public SliceUsageCellRenderer() {
-    setOpaque(false);
-  }
-
-  @Override
-  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    assert value instanceof DefaultMutableTreeNode;
-    DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
-    Object userObject = treeNode.getUserObject();
-    if (userObject == null) return;
-    if (userObject instanceof MyColoredTreeCellRenderer) {
-      MyColoredTreeCellRenderer node = (MyColoredTreeCellRenderer)userObject;
-      node.customizeCellRenderer(this, tree, value, selected, expanded, leaf, row, hasFocus);
-      if (node instanceof SliceNode) {
-        setToolTipText(((SliceNode)node).getPresentation().getTooltip());
-      }
-    }
-    else {
-      append(userObject.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-    }
-  }
-
+public class JavaSliceUsageCellRenderer extends SliceUsageCellRenderer {
   public void customizeCellRendererFor(@NotNull SliceUsage sliceUsage) {
     boolean isForcedLeaf = sliceUsage instanceof SliceDereferenceUsage;
 
@@ -119,5 +90,22 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
       append(" in " + location, attributes);
     }
   }
-}
 
+  @Override
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    assert value instanceof DefaultMutableTreeNode;
+    DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+    Object userObject = treeNode.getUserObject();
+    if (userObject == null) return;
+    if (userObject instanceof MyColoredTreeCellRenderer) {
+      MyColoredTreeCellRenderer node = (MyColoredTreeCellRenderer)userObject;
+      node.customizeCellRenderer(this, tree, value, selected, expanded, leaf, row, hasFocus);
+      if (node instanceof SliceNode) {
+        setToolTipText(((SliceNode)node).getPresentation().getTooltip());
+      }
+    }
+    else {
+      append(userObject.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    }
+  }
+}

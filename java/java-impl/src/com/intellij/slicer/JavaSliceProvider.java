@@ -36,4 +36,10 @@ public class JavaSliceProvider extends SliceProvider {
                                            @NotNull SliceUsage parent) {
     return SliceForwardUtil.processUsagesFlownFromThe(element, processor, parent);
   }
+
+  @NotNull
+  @Override
+  public SliceUsageCellRenderer createSliceUsageCellRenderer() {
+    return new JavaSliceUsageCellRenderer();
+  }
 }

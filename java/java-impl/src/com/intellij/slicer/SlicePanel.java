@@ -118,7 +118,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     myProject = project;
-    myTree = createTree();
+    myTree = createTree(rootNode);
 
     myBuilder = new SliceTreeBuilder(myTree, project, dataFlowToThis, rootNode, splitByLeafExpressions);
     myBuilder.setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
@@ -188,7 +188,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   }
 
   @NotNull
-  private JTree createTree() {
+  private JTree createTree(@NotNull SliceNode rootNode) {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     final Tree tree = new Tree(new DefaultTreeModel(root))/* {
       @Override
@@ -200,7 +200,8 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     tree.setOpaque(false);
 
     tree.setToggleClickCount(-1);
-    SliceUsageCellRenderer renderer = new SliceUsageCellRenderer();
+    final SliceProvider provider = SliceProvider.forElement(rootNode.getValue().getElement());
+    SliceUsageCellRenderer renderer = provider.createSliceUsageCellRenderer();
     renderer.setOpaque(false);
     tree.setCellRenderer(renderer);
     UIUtil.setLineStyleAngled(tree);
