@@ -10,10 +10,19 @@ public class Utils {
   private static final byte[] BUFFER = new byte[64 * 1024];
   private static File myTempDir;
 
+  public static boolean isWindows() {
+    return System.getProperty("os.name").startsWith("Windows");
+  }
+
   public static boolean isZipFile(String fileName) {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
+  /**
+   * Creates a new temp file. <br/>
+   * All the temp files created here are located in a unique root temp directory
+   * that is automatically deleted by {@link #cleanup()}.
+   */
   @SuppressWarnings({"SSBasedInspection"})
   public static File createTempFile() throws IOException {
     if (myTempDir == null) {
@@ -26,6 +35,12 @@ public class Utils {
     return File.createTempFile("temp.", ".tmp", myTempDir);
   }
 
+
+  /**
+   * Creates a new temp directory. <br/>
+   * All the temp directories created here are located in a unique root temp directory
+   * that is automatically deleted by {@link #cleanup()}.
+   */
   public static File createTempDir() throws IOException {
     File result = createTempFile();
     delete(result);
@@ -42,6 +57,15 @@ public class Utils {
     myTempDir = null;
   }
 
+  /**
+   * Deletes a file or directory with a default timeout of 100 milliseconds.
+   * Directories are deleted recursively. The timeout occurs on each file.
+   * If one of the files fails to be deleted, the recursive directory deletion
+   * is aborted and not retried.
+   *
+   * @param file The file or directory to delete.
+   * @throws IOException
+   */
   public static void delete(File file) throws IOException {
     if (file.isDirectory()) {
       File[] files = file.listFiles();
@@ -52,16 +76,20 @@ public class Utils {
         }
       }
     }
+
     for (int i = 0; i < 10; i++) {
-      if (file.delete() || !file.exists()) return;
+      if (file.delete() || !file.exists()) {
+        return;
+      }
       try {
         Thread.sleep(10);
-      }
-      catch (InterruptedException ignore) {
+      } catch (InterruptedException ignore) {
         Runner.printStackTrace(ignore);
       }
     }
-    if (file.exists()) throw new IOException("Cannot delete file " + file);
+    if (file.exists()) {
+      throw new IOException("Cannot delete file " + file);
+    }
   }
 
   public static void setExecutable(File file, boolean executable) throws IOException {

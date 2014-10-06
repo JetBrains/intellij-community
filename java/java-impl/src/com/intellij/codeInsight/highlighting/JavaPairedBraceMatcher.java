@@ -28,7 +28,8 @@ import com.intellij.psi.tree.TokenSet;
 public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
   private static final TokenSet TYPE_TOKENS = 
     TokenSet.orSet(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET, 
-                   TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, 
+                   TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.COMMA,
+                                   JavaTokenType.AT,//anno
                                    JavaTokenType.RBRACKET, JavaTokenType.LBRACKET, //arrays
                                    JavaTokenType.QUEST, JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD));//wildcards
   

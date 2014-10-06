@@ -18,6 +18,7 @@ package com.intellij.embedding;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * A delegate PsiBuilder that hides or substitutes some tokens (namely, the ones provided by {@link MasqueradingLexer})
@@ -68,33 +68,40 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   @Override
   public void advanceLexer() {
-//    logPos();
     myLexPosition++;
+    skipWhitespace();
 
-    synchronizePositions();
-//    logPos();
+    synchronizePositions(false);
   }
 
-  private void synchronizePositions() {
+  /**
+   * @param exact if true then positions should be equal;
+   *              else delegate should be behind, not including exactly all foreign (skipped) tokens
+   */
+  private void synchronizePositions(boolean exact) {
     final PsiBuilder delegate = getDelegate();
-    while (!delegate.eof() || myLexPosition < myShrunkSequence.size()) {
-      if (myLexPosition >= myShrunkSequence.size()) {
+
+    if (myLexPosition >= myShrunkSequence.size() || delegate.eof()) {
+      myLexPosition = myShrunkSequence.size();
+      while (!delegate.eof()) {
         delegate.advanceLexer();
-        continue;
       }
-      if (delegate.eof()) {
-        myLexPosition = myShrunkSequence.size();
-        break;
-      }
+      return;
+    }
+
+    if (delegate.getCurrentOffset() > myShrunkSequence.get(myLexPosition).realStart) {
+      Logger.getInstance(getClass()).error("delegate is ahead of my builder!");
+      return;
+    }
+
+    final int keepUpPosition = getKeepUpPosition(exact);
+
+    while (!delegate.eof()) {
 
       final int delegatePosition = delegate.getCurrentOffset();
-      final int myPosition = myShrunkSequence.get(myLexPosition).realStart;
 
-      if (delegatePosition < myPosition) {
+      if (delegatePosition < keepUpPosition) {
         delegate.advanceLexer();
-      }
-      else if (delegatePosition > myPosition) {
-        myLexPosition++;
       }
       else {
         break;
@@ -102,11 +109,24 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
   }
 
+  private int getKeepUpPosition(boolean exact) {
+    if (exact) {
+      return myShrunkSequence.get(myLexPosition).realStart;
+    }
+
+    int lexPosition = myLexPosition;
+    while (lexPosition > 0 && (myShrunkSequence.get(lexPosition - 1).shrunkStart == myShrunkSequence.get(lexPosition).shrunkStart
+                               || isWhiteSpaceOnPos(lexPosition - 1))) {
+      lexPosition--;
+    }
+    if (lexPosition == 0) {
+      return myShrunkSequence.get(lexPosition).realStart;
+    }
+    return myShrunkSequence.get(lexPosition - 1).realStart + 1;
+  }
+
   @Override
   public IElementType lookAhead(int steps) {
-    final PsiBuilderImpl delegate = (PsiBuilderImpl)getDelegate();
-    synchronizePositions();
-
     if (eof()) {    // ensure we skip over whitespace if it's needed
       return null;
     }
@@ -114,7 +134,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
     while (steps > 0) {
       ++cur;
-      while (cur < myShrunkSequence.size() && delegate.whitespaceOrComment(myShrunkSequence.get(cur).elementType)) {
+      while (cur < myShrunkSequence.size() && isWhiteSpaceOnPos(cur)) {
         cur++;
       }
 
@@ -154,7 +174,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     if (allIsEmpty()) {
       return TokenType.DUMMY_HOLDER;
     }
-    checkWhitespace();
+    skipWhitespace();
 
     return myLexPosition < myShrunkSequence.size() ? myShrunkSequence.get(myLexPosition).elementType : null;
   }
@@ -165,7 +185,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     if (allIsEmpty()) {
       return getDelegate().getOriginalText().toString();
     }
-    checkWhitespace();
+    skipWhitespace();
 
     if (myLexPosition >= myShrunkSequence.size()) {
       return null;
@@ -176,7 +196,23 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   }
 
   @Override
+  public boolean eof() {
+    boolean isEof = myLexPosition >= myShrunkSequence.size();
+    if (!isEof) {
+      return false;
+    }
+
+    synchronizePositions(true);
+    return true;
+  }
+
+  @Override
   public Marker mark() {
+    // In the case of the topmost node all should be inserted
+    if (myLexPosition != 0) {
+      synchronizePositions(true);
+    }
+
     final Marker mark = super.mark();
     return new MyMarker(mark, myLexPosition);
   }
@@ -185,12 +221,14 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     return myShrunkSequence.isEmpty() && getDelegate().getOriginalText().length() != 0;
   }
 
-  private void checkWhitespace() {
-    while (myLexPosition < myShrunkSequence.size() &&
-           ((PsiBuilderImpl)myDelegate).whitespaceOrComment(myShrunkSequence.get(myLexPosition).elementType)) {
+  private void skipWhitespace() {
+    while (myLexPosition < myShrunkSequence.size() && isWhiteSpaceOnPos(myLexPosition)) {
       myLexPosition++;
     }
-    synchronizePositions();
+  }
+
+  private boolean isWhiteSpaceOnPos(int pos) {
+    return ((PsiBuilderImpl)myDelegate).whitespaceOrComment(myShrunkSequence.get(pos).elementType);
   }
 
   protected void initShrunkSequence() {
@@ -199,7 +237,6 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
     initTokenListAndCharSequence(lexer);
     myLexPosition = 0;
-//    synchronizePositions();
   }
 
   private void initTokenListAndCharSequence(MasqueradingLexer lexer) {
@@ -235,7 +272,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   @SuppressWarnings({"StringConcatenationInsideStringBufferAppend", "UnusedDeclaration"})
   private void logPos() {
-    final Logger log = Logger.getLogger(this.getClass().getSimpleName());
+    final Logger log = Logger.getInstance(getClass());
     StringBuilder sb = new StringBuilder();
     sb.append("\nmyLexPosition=" + myLexPosition + "/" + myShrunkSequence.size());
     if (myLexPosition < myShrunkSequence.size()) {
@@ -270,6 +307,11 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
       this.realEnd = realEnd;
       this.shrunkStart = shrunkStart;
       this.shrunkEnd = shrunkEnd;
+    }
+
+    @Override
+    public String toString() {
+      return "MSTk: [" + realStart + ", " + realEnd + "] -> [" + shrunkStart + ", " + shrunkEnd + "]: " + elementType.toString();
     }
   }
 

@@ -375,8 +375,9 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class);
       final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
-      if (method != null) {
+      if (method != null && (lambdaExpression == null || PsiTreeUtil.isAncestor(lambdaExpression, method, true))) {
         final PsiType returnType = method.getReturnType();
         if (returnType != null && returnType != PsiType.VOID) {
           final PsiExpression returnValue = statement.getReturnValue();

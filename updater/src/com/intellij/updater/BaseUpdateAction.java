@@ -35,7 +35,13 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   protected void replaceUpdated(File from, File dest) throws IOException {
     // on OS X code signing caches seem to be associated with specific file ids, so we need to remove the original file.
-    if (!dest.delete()) throw new IOException("Cannot delete file " + dest);
+    if (!dest.delete()) {
+      if (Utils.isWindows()) {
+        throw new RetryException("Cannot delete file " + dest);
+      } else {
+        throw new IOException("Cannot delete file " + dest);
+      }
+    }
     Utils.copy(from, dest);
   }
 
