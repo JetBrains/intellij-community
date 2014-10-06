@@ -207,14 +207,17 @@ public class SearchingForTestsTask extends Task.Backgroundable {
           }
         }
       }
-      map.put(ApplicationManager.getApplication().runReadAction(
+      final String className = ApplicationManager.getApplication().runReadAction(
         new Computable<String>() {
           @Nullable
           public String compute() {
             return ClassUtil.getJVMClassName(entry.getKey());
           }
         }
-      ), methods);
+      );
+      if (className != null) {
+        map.put(className, methods);
+      }
     }
     // We have groups we wish to limit to.
     Collection<String> groupNames = null;
