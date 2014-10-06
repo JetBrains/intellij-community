@@ -83,7 +83,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     myServerSocket = serverSocket;
     myConfig = config;
     myTempFile = tempFile;
-    myClasses = new HashMap<PsiClass, Collection<PsiMethod>>();
+    myClasses = new LinkedHashMap<PsiClass, Collection<PsiMethod>>();
   }
 
   public void run(@NotNull ProgressIndicator indicator) {
@@ -190,13 +190,13 @@ public class SearchingForTestsTask extends Task.Backgroundable {
   }
 
   private void composeTestSuiteFromClasses() {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
+    Map<String, Collection<String>> map = new LinkedHashMap<String, Collection<String>>();
 
     final boolean findTestMethodsForClass = shouldSearchForTestMethods();
 
     for (final Map.Entry<PsiClass, Collection<PsiMethod>> entry : myClasses.entrySet()) {
       final Collection<PsiMethod> depMethods = entry.getValue();
-      Collection<String> methods = new HashSet<String>(depMethods.size());
+      Collection<String> methods = new LinkedHashSet<String>(depMethods.size());
       for (PsiMethod method : depMethods) {
         methods.add(method.getName());
       }
@@ -523,7 +523,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
                                      final Set<PsiMember> alreadyMarkedToBeChecked,
                                      @Nullable final PsiClass... classes) {
     if (classes != null && classes.length > 0) {
-      final Set<String> groupDependencies = new HashSet<String>();
+      final Set<String> groupDependencies = new LinkedHashSet<String>();
       TestNGUtil.collectAnnotationValues(groupDependencies, "dependsOnGroups", methods, classes);
       final Set<PsiMember> membersToCheckNow = new LinkedHashSet<PsiMember>();
       if (!groupDependencies.isEmpty()) {
@@ -574,7 +574,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
                                               final PsiClass... classes) {
     final PsiClass[] psiClasses;
     if (methods != null && methods.length > 0) {
-      final Set<PsiClass> containingClasses = new HashSet<PsiClass>();
+      final Set<PsiClass> containingClasses = new LinkedHashSet<PsiClass>();
       for (PsiMethod method : methods) {
         containingClasses.add(method.getContainingClass());
       }
@@ -583,7 +583,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
       psiClasses = classes;
     }
     for (final PsiClass containingClass : psiClasses) {
-      final Set<String> testMethodDependencies = new HashSet<String>();
+      final Set<String> testMethodDependencies = new LinkedHashSet<String>();
       TestNGUtil.collectAnnotationValues(testMethodDependencies, "dependsOnMethods", methods, containingClass);
       if (!testMethodDependencies.isEmpty()) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
