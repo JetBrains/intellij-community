@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,20 +85,9 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
-  public void switchToGroupedByLeavesNodes() {
+  public void runWithAnalysisInProgress(@NotNull Consumer<Runnable> actionWithContinuation) {
     analysisInProgress = true;
-    SliceLeafAnalyzer.startAnalyzeValues(getTreeStructure(), new Runnable(){
-      @Override
-      public void run() {
-        analysisInProgress = false;
-      }
-    });
-  }
-
-
-  public void switchToLeafNulls() {
-    analysisInProgress = true;
-    SliceNullnessAnalyzer.startAnalyzeNullness(getTreeStructure(), new Runnable(){
+    actionWithContinuation.consume(new Runnable() {
       @Override
       public void run() {
         analysisInProgress = false;

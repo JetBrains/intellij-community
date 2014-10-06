@@ -19,6 +19,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.*;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -62,7 +64,12 @@ public class CanItBeNullAction  extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    myTreeBuilder.switchToLeafNulls();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    myTreeBuilder.runWithAnalysisInProgress(new Consumer<Runnable>() {
+      @Override
+      public void consume(Runnable runnable) {
+        SliceNullnessAnalyzer.startAnalyzeNullness(myTreeBuilder.getTreeStructure(), runnable);
+      }
+    });
   }
 }

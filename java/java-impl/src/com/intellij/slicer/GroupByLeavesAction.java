@@ -17,7 +17,9 @@ package com.intellij.slicer;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -42,7 +44,12 @@ class GroupByLeavesAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    myTreeBuilder.switchToGroupedByLeavesNodes();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    myTreeBuilder.runWithAnalysisInProgress(new Consumer<Runnable>() {
+      @Override
+      public void consume(Runnable runnable) {
+        SliceLeafAnalyzer.startAnalyzeValues(myTreeBuilder.getTreeStructure(), runnable);
+      }
+    });
   }
 }
