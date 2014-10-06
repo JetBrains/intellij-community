@@ -30,7 +30,7 @@ public class InterpreterUtil {
   public static final boolean IS_WINDOWS = System.getProperty("os.name", "").startsWith("Windows");
 
   private static final int CHANNEL_WINDOW_SIZE = IS_WINDOWS ? 64 * 1024 * 1024 - (32 * 1024) : 64 * 1024 * 1024;  // magic number for Windows
-  private static final int BUFFER_SIZE = 16* 1024;
+  private static final int BUFFER_SIZE = 16 * 1024;
 
   public static void copyFile(File in, File out) throws IOException {
     FileInputStream inStream = new FileInputStream(in);

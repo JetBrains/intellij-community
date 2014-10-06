@@ -383,10 +383,10 @@ public class FileUtil extends FileUtilRt {
 
   @Nullable
   private static File renameToTempFileOrDelete(@NotNull File file) {
-    final File tempDir = new File(getTempDirectory());
+    String tempDir = getTempDirectory();
     boolean isSameDrive = true;
     if (SystemInfo.isWindows) {
-      String tempDirDrive = tempDir.getAbsolutePath().substring(0, 2);
+      String tempDirDrive = tempDir.substring(0, 2);
       String fileDrive = file.getAbsolutePath().substring(0, 2);
       isSameDrive = tempDirDrive.equalsIgnoreCase(fileDrive);
     }
@@ -405,7 +405,7 @@ public class FileUtil extends FileUtilRt {
     return null;
   }
 
-  private static File getTempFile(@NotNull String originalFileName, @NotNull File parent) {
+  private static File getTempFile(@NotNull String originalFileName, @NotNull String parent) {
     int randomSuffix = (int)(System.currentTimeMillis() % 1000);
     for (int i = randomSuffix; ; i++) {
       @NonNls String name = "___" + originalFileName + i + ASYNC_DELETE_EXTENSION;

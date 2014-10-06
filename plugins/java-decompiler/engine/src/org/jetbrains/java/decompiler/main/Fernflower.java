@@ -82,7 +82,7 @@ public class Fernflower implements IDecompiledData {
   @Override
   public String getClassContent(StructClass cl) {
     try {
-      StringBuilder buffer = new StringBuilder();
+      StringBuilder buffer = new StringBuilder(ClassesProcessor.AVERAGE_CLASS_SIZE);
       classesProcessor.writeClass(cl, buffer);
       return buffer.toString();
     }
