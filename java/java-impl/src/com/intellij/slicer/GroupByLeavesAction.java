@@ -36,10 +36,10 @@ class GroupByLeavesAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setText(TEXT + (myTreeBuilder.analysisInProgress ? " (Analysis in progress)" : ""));
-    e.getPresentation().setEnabled(isAvailabale());
+    e.getPresentation().setEnabled(isAvailable());
   }
 
-  private boolean isAvailabale() {
+  private boolean isAvailable() {
     return !myTreeBuilder.analysisInProgress && !myTreeBuilder.splitByLeafExpressions;
   }
 
