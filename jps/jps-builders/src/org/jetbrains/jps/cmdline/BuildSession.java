@@ -432,7 +432,10 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private static boolean hasWorkToDo(BuildFSState state, ProjectDescriptor pd) {
+  private static boolean hasWorkToDo(BuildFSState state, @Nullable ProjectDescriptor pd) {
+    if (pd == null) {
+      return true; // assuming worst case
+    }
     final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
     for (JpsModule module : pd.getProject().getModules()) {
       for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
