@@ -237,7 +237,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   @NotNull
   @Override
   public ArrangementAtomMatchCondition getMatchCondition() {
-    if (myInverted == myCondition.getValue()) {
+    if (Boolean.valueOf(myInverted) == myCondition.getValue()) {
       if (myOppositeCondition == null) {
         myOppositeCondition = new ArrangementAtomMatchCondition(myCondition.getType(), !myInverted);
       }
