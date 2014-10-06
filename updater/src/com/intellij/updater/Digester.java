@@ -28,7 +28,8 @@ public class Digester {
         zipFile = new ZipFile(file);
       }
       catch (IOException e) {
-        Runner.printStackTrace(e);
+        // If this isn't a zip file, this isn't really an error, merely an info.
+        Runner.infoStackTrace("Can't open file as zip file: " + file.getPath() + "\n", e);
         return doDigestRegularFile(file);
       }
 
