@@ -88,12 +88,7 @@ public class IdeaApplication {
     }
 
     if (Main.isCommandLine()) {
-      if (CommandLineApplication.ourInstance == null) {
-        new CommandLineApplication(isInternal, isUnitTest, headless);
-      }
-      if (isUnitTest) {
-        myLoaded = true;
-      }
+      new CommandLineApplication(isInternal, isUnitTest, headless);
     }
     else {
       Splash splash = null;
@@ -122,7 +117,7 @@ public class IdeaApplication {
   private static void patchSystem() {
     System.setProperty("sun.awt.noerasebackground", "true");
 
-    IdeEventQueue.getInstance(); // replace system event queue
+    Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
 
     if (Patches.SUN_BUG_ID_6209673) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());

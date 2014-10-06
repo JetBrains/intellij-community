@@ -34,13 +34,12 @@ public class CacheUpdateSession {
   private static final Logger LOG = Logger.getInstance("#" + CacheUpdateSession.class.getName());
   private final List<VirtualFile> myFilesToUpdate;
   private final int myJobsToDo;
-  private final List<Pair<CacheUpdater, Collection<VirtualFile>>> myUpdatersWithFiles;
+  private final List<Pair<CacheUpdater, Collection<VirtualFile>>> myUpdatersWithFiles = new ArrayList<Pair<CacheUpdater, Collection<VirtualFile>>>();
 
   CacheUpdateSession(@NotNull Collection<CacheUpdater> updaters, @NotNull ProgressIndicator indicator) {
     List<CacheUpdater> processedUpdaters = new ArrayList<CacheUpdater>();
 
     LinkedHashSet<VirtualFile> set = ContainerUtil.newLinkedHashSet();
-    List<Pair<CacheUpdater, Collection<VirtualFile>>> list = new ArrayList<Pair<CacheUpdater, Collection<VirtualFile>>>();
     try {
       int jobsCount = 0;
       for (CacheUpdater each : updaters) {
@@ -50,7 +49,7 @@ public class CacheUpdateSession {
           List<VirtualFile> updaterFiles = Arrays.asList(each.queryNeededFiles(indicator));
           processedUpdaters.add(each);
           set.addAll(updaterFiles);
-          list.add(Pair.create(each, (Collection<VirtualFile>)new THashSet<VirtualFile>(updaterFiles)));
+          myUpdatersWithFiles.add(Pair.create(each, (Collection<VirtualFile>)new THashSet<VirtualFile>(updaterFiles)));
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -67,11 +66,10 @@ public class CacheUpdateSession {
       }
       throw e;
     }
-    myUpdatersWithFiles = ContainerUtil.createLockFreeCopyOnWriteList(list);
     myFilesToUpdate = ContainerUtil.newArrayList(set);
   }
 
-  int getNumberOfPendingUpdateJobs() {
+  public int getNumberOfPendingUpdateJobs() {
     return myJobsToDo;
   }
 
@@ -81,19 +79,16 @@ public class CacheUpdateSession {
   }
 
   @Nullable
-  private Pair<CacheUpdater, Collection<VirtualFile>> getPair(@NotNull final VirtualFile file) {
+  private synchronized Pair<CacheUpdater, Collection<VirtualFile>> getPair(@NotNull final VirtualFile file) {
     return ContainerUtil.find(myUpdatersWithFiles, new Condition<Pair<CacheUpdater, Collection<VirtualFile>>>() {
       @Override
       public boolean value(Pair<CacheUpdater, Collection<VirtualFile>> cacheUpdaterCollectionPair) {
-        Collection<VirtualFile> second = cacheUpdaterCollectionPair.second;
-        synchronized (second) {
-          return second.contains(file);
-        }
+        return cacheUpdaterCollectionPair.second.contains(file);
       }
     });
   }
 
-  void processFile(@NotNull FileContent content) {
+  public void processFile(@NotNull FileContent content) {
     VirtualFile file = content.getVirtualFile();
     boolean isValid = file.isValid() && !file.isDirectory();
 
@@ -121,22 +116,29 @@ public class CacheUpdateSession {
     if (exception != null) throw new RuntimeException(exception);
   }
 
-  private void removeFile(@NotNull VirtualFile file, @NotNull CacheUpdater eachUpdater, @NotNull Collection<VirtualFile> eachFiles) {
-    synchronized (eachFiles) {
-      eachFiles.remove(file);
+  private synchronized void removeFile(@NotNull VirtualFile file, @NotNull CacheUpdater eachUpdater, @NotNull Collection<VirtualFile> eachFiles) {
+    eachFiles.remove(file);
+
+    if (eachFiles.isEmpty()) {
+      try {
+        eachUpdater.updatingDone();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
   }
 
-  void updatingDone() {
+  public void updatingDone() {
     for (Pair<CacheUpdater, Collection<VirtualFile>> eachPair : myUpdatersWithFiles) {
       try {
         CacheUpdater eachUpdater = eachPair.first;
         eachUpdater.updatingDone();
-        Collection<VirtualFile> second = eachPair.second;
-        synchronized (second) {
-          if (!second.isEmpty()) {
-            LOG.error(CacheUpdater.class.getSimpleName() + " " + eachUpdater + " has not finished yet:\n" + new ArrayList<VirtualFile>(second));
-          }
+        if (!eachPair.second.isEmpty()) {
+          LOG.error(CacheUpdater.class.getSimpleName() + " " + eachUpdater + " has not finished yet:\n" + new ArrayList<VirtualFile>(eachPair.second));
         }
       }
       catch (ProcessCanceledException e) {
@@ -148,7 +150,7 @@ public class CacheUpdateSession {
     }
   }
 
-  void canceled() {
+  public void canceled() {
     for (Pair<CacheUpdater, Collection<VirtualFile>> eachPair : myUpdatersWithFiles) {
       eachPair.first.canceled();
     }

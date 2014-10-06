@@ -79,14 +79,12 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
       EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
 
       multicaster.addCaretListener(new CaretAdapter() {
-          @Override
           public void caretPositionChanged(CaretEvent e) {
             MavenMergingUpdateQueue.this.restartTimer();
           }
         }, this);
 
       multicaster.addDocumentListener(new DocumentAdapter() {
-          @Override
           public void documentChanged(DocumentEvent event) {
             MavenMergingUpdateQueue.this.restartTimer();
           }
@@ -95,14 +93,12 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
       project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         int beforeCalled;
 
-        @Override
         public void beforeRootsChange(ModuleRootEvent event) {
           if (beforeCalled++ == 0) {
             suspend();
           }
         }
 
-        @Override
         public void rootsChanged(ModuleRootEvent event) {
           if (beforeCalled == 0)
             return; // This may occur if listener has been added between beforeRootsChange() and rootsChanged() calls.
@@ -125,12 +121,10 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
     try {
       MessageBusConnection connection = project.getMessageBus().connect(this);
       connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-        @Override
         public void enteredDumbMode() {
           suspend();
         }
 
-        @Override
         public void exitDumbMode() {
           resume();
         }
@@ -146,10 +140,9 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
   }
 
   public void makeModalAware(Project project) {
-    MavenUtil.invokeLater(project, new Runnable() {
+    MavenUtil.invokeAndWait(project, new Runnable() {
       public void run() {
         final ModalityStateListener listener = new ModalityStateListener() {
-          @Override
           public void beforeModalityStateChanged(boolean entering) {
             if (entering) {
               suspend();

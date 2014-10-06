@@ -21,7 +21,7 @@ import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -167,7 +167,7 @@ public class CacheUpdateRunner extends DumbModeTask {
       if (threadsCount <= 0) {
         threadsCount = Math.max(1, Math.min(PROC_COUNT - 1, 4));
       }
-      if (threadsCount == 1 || application.isWriteAccessAllowed()) {
+      if (threadsCount == 1) {
         Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, project, fileProcessor);
         ProgressManager.getInstance().runProcess(process, innerIndicator);
       }
@@ -178,7 +178,7 @@ public class CacheUpdateRunner extends DumbModeTask {
           AtomicBoolean ref = new AtomicBoolean();
           finishedRefs[i] = ref;
           Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, project, fileProcessor);
-          futures[i] = ApplicationManager.getApplication().executeOnPooledThread(process);
+          futures[i] = ApplicationManager.getApplication().executeOnPooledThread(getProcessWrapper(process));
         }
         isFinished.set(waitForAll(finishedRefs, futures));
       }
@@ -191,7 +191,6 @@ public class CacheUpdateRunner extends DumbModeTask {
   }
 
   private static boolean waitForAll(@NotNull AtomicBoolean[] finishedRefs, @NotNull Future<?>[] futures) {
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     try {
       for (Future<?> future : futures) {
         future.get();
@@ -205,6 +204,7 @@ public class CacheUpdateRunner extends DumbModeTask {
         }
       }
       return allFinished;
+
     }
     catch (InterruptedException ignored) {
     }
@@ -295,9 +295,7 @@ public class CacheUpdateRunner extends DumbModeTask {
                 @Override
                 public void run() {
                   if (myProcessInReadAction) {
-                    if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)) {
-                      throw new ProcessCanceledException();
-                    }
+                    ApplicationManager.getApplication().runReadAction(action);
                   }
                   else {
                     action.run();
@@ -320,5 +318,21 @@ public class CacheUpdateRunner extends DumbModeTask {
         }
       }
     }
+  }
+
+  private static Runnable getProcessWrapper(final Runnable process) {
+    // launching thread will hold read access for workers
+    return ApplicationManager.getApplication().isReadAccessAllowed() ? new Runnable() {
+      @Override
+      public void run() {
+        ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
+        try {
+          process.run();
+        }
+        finally {
+          ApplicationImpl.setExceptionalThreadWithReadAccessFlag(false);
+        }
+      }
+    } : process;
   }
 }
