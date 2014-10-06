@@ -233,4 +233,29 @@ public class StringUtilTest extends TestCase {
   public void testReplace() {
     assertEquals(StringUtil.replace("$PROJECT_FILE$/filename", "$PROJECT_FILE$", "/tmp"), "/tmp/filename");
   }
+
+  public void testEqualsIgnoreWhitespaces() {
+    assertTrue(StringUtil.equalsIgnoreWhitespaces(null, null));
+    assertFalse(StringUtil.equalsIgnoreWhitespaces("", null));
+
+    assertTrue(StringUtil.equalsIgnoreWhitespaces("", ""));
+    assertTrue(StringUtil.equalsIgnoreWhitespaces("\n\t ", ""));
+    assertTrue(StringUtil.equalsIgnoreWhitespaces("", "\t\n \n\t"));
+    assertTrue(StringUtil.equalsIgnoreWhitespaces("\t", "\n"));
+
+    assertTrue(StringUtil.equalsIgnoreWhitespaces("x", " x"));
+    assertTrue(StringUtil.equalsIgnoreWhitespaces("x", "x "));
+    assertTrue(StringUtil.equalsIgnoreWhitespaces("x\n", "x"));
+
+    assertTrue(StringUtil.equalsIgnoreWhitespaces("abcd", "a\nb\nc\nd\n"));
+    assertTrue(StringUtil.equalsIgnoreWhitespaces("x y x", "x y x"));
+    assertTrue(StringUtil.equalsIgnoreWhitespaces("xyx", "x y x"));
+
+    assertFalse(StringUtil.equalsIgnoreWhitespaces("x", "\t\n "));
+    assertFalse(StringUtil.equalsIgnoreWhitespaces("", " x "));
+    assertFalse(StringUtil.equalsIgnoreWhitespaces("", "x "));
+    assertFalse(StringUtil.equalsIgnoreWhitespaces("", " x"));
+    assertFalse(StringUtil.equalsIgnoreWhitespaces("xyx", "xxx"));
+    assertFalse(StringUtil.equalsIgnoreWhitespaces("xyx", "xYx"));
+  }
 }
