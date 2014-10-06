@@ -1939,7 +1939,7 @@ public class UIUtil {
 
   public static Font getTitledBorderFont() {
     Font defFont = getLabelFont();
-    return defFont.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
+    return defFont.deriveFont(defFont.getSize() - 1f);
   }
 
   /**
@@ -3025,7 +3025,7 @@ public class UIUtil {
   }
 
   public static Color getSidePanelColor() {
-    return new JBColor(new Color(0xD2D6DD), new Color(60, 68, 71));
+    return new JBColor(0xD2D6DD, 0x3C4447);
   }
 
   /**
