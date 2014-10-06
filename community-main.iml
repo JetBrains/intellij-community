@@ -71,7 +71,6 @@
     <orderEntry type="module" module-name="svn4idea-tests" />
     <orderEntry type="module" module-name="testng" />
     <orderEntry type="module" module-name="IntelliLang-java" />
-    <orderEntry type="module" module-name="IntelliLang-javaee" />
     <orderEntry type="module" module-name="IntelliLang-xml" />
     <orderEntry type="module" module-name="xpath" />
     <orderEntry type="module" module-name="xslt-debugger" />
