@@ -110,8 +110,12 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   @NotNull
   PyExpression[] getSuperClassExpressions();
 
+  /**
+   * @param inherited return inherited (parent) methods as well
+   * @return class methods
+   */
   @NotNull
-  PyFunction[] getMethods();
+  PyFunction[] getMethods(boolean inherited);
 
   /**
    * Get class properties.
@@ -243,4 +247,12 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    */
   @Nullable
   PyExpression getMetaClassExpression();
+
+  /**
+   *
+   * @param context eval context
+   * @return {@link com.jetbrains.python.psi.types.PyType} casted if it has right type
+   */
+  @Nullable
+  PyClassLikeType getType(@NotNull TypeEvalContext context);
 }
