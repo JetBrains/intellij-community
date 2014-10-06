@@ -15,9 +15,13 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
@@ -41,5 +45,19 @@ public class JavaSliceProvider extends SliceProvider {
   @Override
   public SliceUsageCellRenderer createSliceUsageCellRenderer() {
     return new JavaSliceUsageCellRenderer();
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getExpressionAtCaret(@NotNull Editor editor, @NotNull PsiFile file, boolean isDataFlowToThis) {
+    int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    if (offset == 0) {
+      return null;
+    }
+    PsiElement atCaret = file.findElementAt(offset);
+
+    PsiElement element = PsiTreeUtil.getParentOfType(atCaret, PsiExpression.class, PsiVariable.class);
+    if (isDataFlowToThis && element instanceof PsiLiteralExpression) return null;
+    return element;
   }
 }

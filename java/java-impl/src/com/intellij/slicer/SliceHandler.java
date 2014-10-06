@@ -19,14 +19,14 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,16 +59,8 @@ public class SliceHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  public PsiElement getExpressionAtCaret(final Editor editor, final PsiFile file) {
-    int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-    if (offset == 0) {
-      return null;
-    }
-    PsiElement atCaret = file.findElementAt(offset);
-
-    PsiElement element = PsiTreeUtil.getParentOfType(atCaret, PsiExpression.class, PsiVariable.class);
-    if (myDataFlowToThis && element instanceof PsiLiteralExpression) return null;
-    return element;
+  public PsiElement getExpressionAtCaret(@NotNull final Editor editor, @NotNull final PsiFile file) {
+    return SliceProvider.forElement(file).getExpressionAtCaret(editor, file, myDataFlowToThis);
   }
 
   public SliceAnalysisParams askForParams(PsiElement element, boolean dataFlowToThis, SliceManager.StoredSettingsBean storedSettingsBean, String dialogTitle) {

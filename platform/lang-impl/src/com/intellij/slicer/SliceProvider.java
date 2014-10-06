@@ -16,9 +16,12 @@
 package com.intellij.slicer;
 
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
@@ -37,4 +40,7 @@ public abstract class SliceProvider {
 
   @NotNull
   public abstract SliceUsageCellRenderer createSliceUsageCellRenderer();
+
+  @Nullable
+  public abstract PsiElement getExpressionAtCaret(@NotNull Editor editor, @NotNull PsiFile file, boolean isDataFlowToThis);
 }
