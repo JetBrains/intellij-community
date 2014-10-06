@@ -86,7 +86,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Comparator<HighlightVisitor> VISITOR_ORDER_COMPARATOR = new Comparator<HighlightVisitor>() {
     @Override
     public int compare(final HighlightVisitor o1, final HighlightVisitor o2) {
-      return o1.order() - o2.order();
+      int delta = o1.order() - o2.order();
+      if (delta != 0) return delta;
+      if (o1.getClass() == o2.getClass()) {
+        LOG.error("Duplicate visitors registered: "+o1 +" and "+o2 + " ("+o1.getClass()+")");
+      }
+      return 0;
     }
   };
   protected final EditorColorsScheme myGlobalScheme;
