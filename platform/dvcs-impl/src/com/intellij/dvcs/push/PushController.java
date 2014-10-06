@@ -376,7 +376,10 @@ public class PushController implements Disposable {
                                                                                          boolean force) {
     VcsPushOptionValue options = myDialog.getAdditionalOptionValue(support);
     Pusher<R, S, T> pusher = support.getPusher();
-    pusher.push(collectPushSpecsForVcs(support), options, force);
+    Map<R, PushSpec<S, T>> specs = collectPushSpecsForVcs(support);
+    if (!specs.isEmpty()) {
+      pusher.push(specs, options, force);
+    }
   }
 
   @NotNull

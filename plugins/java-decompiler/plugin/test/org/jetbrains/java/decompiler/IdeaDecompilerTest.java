@@ -91,14 +91,19 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNavigation() {
-    String path = PluginPathManager.getPluginHomePath("java-decompiler") + "/testData/Navigation.class";
-    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
-    assertNotNull(path, file);
+    VirtualFile file = getTestFile();
     myFixture.openFileInEditor(file);
 
     doTestNavigation(11, 14, 14, 10);  // to "m2()"
     doTestNavigation(15, 21, 14, 17);  // to "int i"
     doTestNavigation(16, 28, 15, 13);  // to "int r"
+  }
+
+  private VirtualFile getTestFile() {
+    String path = PluginPathManager.getPluginHomePath("java-decompiler") + "/plugin/testData/" + getTestName(false) + ".class";
+    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
+    assertNotNull(path, file);
+    return file;
   }
 
   private void doTestNavigation(int line, int column, int expectedLine, int expectedColumn) {
@@ -114,9 +119,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testHighlighting() {
-    String path = PluginPathManager.getPluginHomePath("java-decompiler") + "/testData/Navigation.class";
-    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
-    assertNotNull(path, file);
+    VirtualFile file = getTestFile();
     myFixture.openFileInEditor(file);
 
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled(new Runnable() {
