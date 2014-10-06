@@ -45,7 +45,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -88,7 +87,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
   public SlicePanel(@NotNull final Project project,
                     boolean dataFlowToThis,
-                    @NotNull SliceNode rootNode,
+                    @NotNull final SliceNode rootNode,
                     boolean splitByLeafExpressions,
                     @NotNull final ToolWindow toolWindow) {
     super(new BorderLayout());
@@ -104,7 +103,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
         if (!project.isOpen()) return;
         if (toolWindow.getAnchor() != myAnchor) {
           myAnchor = myToolWindow.getAnchor();
-          layoutPanel();
+          layoutPanel(rootNode);
         }
       }
     };
@@ -141,10 +140,10 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       }
     });
 
-    layoutPanel();
+    layoutPanel(rootNode);
   }
 
-  private void layoutPanel() {
+  private void layoutPanel(@NotNull SliceNode rootNode) {
     if (myUsagePreviewPanel != null) {
       Disposer.dispose(myUsagePreviewPanel);
     }
@@ -169,7 +168,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       add(pane, BorderLayout.CENTER);
     }
 
-    add(createToolbar().getComponent(), BorderLayout.WEST);
+    add(createToolbar(rootNode).getComponent(), BorderLayout.WEST);
 
     myTree.getParent().setBackground(UIManager.getColor("Tree.background"));
 
@@ -337,7 +336,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   }
 
   @NotNull
-  private ActionToolbar createToolbar() {
+  private ActionToolbar createToolbar(@NotNull final SliceNode rootNode) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new MyRefreshAction(myTree));
     if (isToShowAutoScrollButton()) {
@@ -356,15 +355,12 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
         @Override
         public void setSelected(AnActionEvent e, boolean state) {
           setPreview(state);
-          layoutPanel();
+          layoutPanel(rootNode);
         }
       });
     }
 
-    if (myBuilder.dataFlowToThis) {
-      actionGroup.add(new GroupByLeavesAction(myBuilder));
-      actionGroup.add(new CanItBeNullAction(myBuilder));
-    }
+    actionGroup.addAll(SliceProvider.forElement(rootNode.getValue().getElement()).createToolbarActions(this));
 
     //actionGroup.add(new ContextHelpAction(HELP_ID));
 
@@ -417,7 +413,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
   }
 
-  @TestOnly
+  @NotNull
   public SliceTreeBuilder getBuilder() {
     return myBuilder;
   }

@@ -16,12 +16,15 @@
 package com.intellij.slicer;
 
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author vlan
@@ -40,6 +43,9 @@ public abstract class SliceProvider {
 
   @NotNull
   public abstract SliceUsageCellRenderer createSliceUsageCellRenderer();
+
+  @NotNull
+  public abstract List<AnAction> createToolbarActions(@NotNull SlicePanel panel);
 
   @Nullable
   public abstract PsiElement getExpressionAtCaret(@NotNull Editor editor, @NotNull PsiFile file, boolean isDataFlowToThis);
