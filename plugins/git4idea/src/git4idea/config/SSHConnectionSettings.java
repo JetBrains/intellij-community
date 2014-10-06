@@ -28,8 +28,8 @@ import java.util.TreeMap;
  */
 @State(
   name = "SSHConnectionSettings",
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/security.xml")})
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/security.xml", roamingType = RoamingType.DISABLED)}
+)
 public class SSHConnectionSettings implements PersistentStateComponent<SSHConnectionSettings.State> {
   /**
    * The last successful hosts, the entries are sorted to save on efforts on sorting during saving and loading
