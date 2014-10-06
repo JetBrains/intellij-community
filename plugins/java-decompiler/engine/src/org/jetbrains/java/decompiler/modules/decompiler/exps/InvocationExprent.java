@@ -194,6 +194,8 @@ public class InvocationExprent extends Exprent {
     String super_qualifier = null;
     boolean isInstanceThis = false;
 
+    tracer.addMapping(bytecode);
+
     if (invocationTyp == INVOKE_DYNAMIC) {
       //			ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
       //

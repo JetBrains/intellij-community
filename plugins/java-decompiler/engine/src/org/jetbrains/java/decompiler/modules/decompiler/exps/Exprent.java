@@ -54,6 +54,9 @@ public class Exprent {
 
   public int id;
 
+  //offsets of bytecode instructions decompiled to this exprent
+  public Set<Integer> bytecode = new HashSet<Integer>();
+
   {
     // set exprent id
     id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.EXPRENT_COUNTER);

@@ -450,6 +450,8 @@ public class FunctionExprent extends Exprent {
   @Override
   public String toJava(int indent, BytecodeMappingTracer tracer) {
 
+    tracer.addMapping(bytecode);
+
     if (functype <= FUNCTION_USHR) {
       return wrapOperandString(lstOperands.get(0), false, indent, tracer) + operators[functype] +
              wrapOperandString(lstOperands.get(1), true, indent, tracer);

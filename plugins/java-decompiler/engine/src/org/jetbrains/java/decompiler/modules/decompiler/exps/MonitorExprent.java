@@ -52,6 +52,9 @@ public class MonitorExprent extends Exprent {
 
   @Override
   public String toJava(int indent, BytecodeMappingTracer tracer) {
+
+    tracer.addMapping(bytecode);
+
     if (montype == MONITOR_ENTER) {
       return "synchronized(" + value.toJava(indent, tracer) + ")";
     }
