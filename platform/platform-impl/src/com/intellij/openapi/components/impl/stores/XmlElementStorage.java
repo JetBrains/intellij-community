@@ -56,7 +56,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private final ComponentVersionProvider myLocalVersionProvider;
   protected final RemoteComponentVersionProvider myRemoteVersionProvider;
 
-  private final RoamingType myRoamingType;
+  protected final RoamingType myRoamingType;
 
   private boolean myDisposed;
 

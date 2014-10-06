@@ -260,6 +260,11 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   public void updatedFromStreamProvider(@NotNull Set<String> changedComponentNames, boolean deleted) {
+    if (myRoamingType == RoamingType.DISABLED) {
+      // storage roaming was changed to DISABLED, but settings repository has old state
+      return;
+    }
+
     resetProviderCache();
 
     try {
