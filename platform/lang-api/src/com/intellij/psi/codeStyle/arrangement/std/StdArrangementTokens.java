@@ -87,6 +87,12 @@ public class StdArrangementTokens {
     };
   }
 
+  private static StdArrangementSettingsToken invertible(@NotNull String id, @NotNull StdArrangementTokenType type) {
+    StdArrangementSettingsToken result = StdInvertibleArrangementSettingsToken.invertibleTokenById(id, type);
+    TOKENS_BY_ID.put(id, result);
+    return result;
+  }
+
   private static StdArrangementSettingsToken token(@NotNull String id, @NotNull StdArrangementTokenType type) {
     StdArrangementSettingsToken result = StdArrangementSettingsToken.tokenById(id, type);
     TOKENS_BY_ID.put(id, result);
@@ -132,20 +138,23 @@ public class StdArrangementTokens {
     }
   }
   public static class EntryType {
-    @NotNull public static final ArrangementSettingsToken CLASS           = token("CLASS", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken ANONYMOUS_CLASS = token("ANONYMOUS_CLASS", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken FIELD           = token("FIELD", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken CONSTRUCTOR     = token("CONSTRUCTOR", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken METHOD          = token("METHOD", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken ENUM            = token("ENUM", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken INTERFACE       = token("INTERFACE", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken CONST           = token("CONST", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken VAR             = token("VAR", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken PROPERTY        = token("PROPERTY", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken EVENT_HANDLER   = token("EVENT_HANDLER", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken STATIC_INIT     = token("STATIC_INIT", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken NAMESPACE       = token("NAMESPACE", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken TRAIT           = token("TRAIT", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken CLASS           = invertible("CLASS", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken ANONYMOUS_CLASS = invertible("ANONYMOUS_CLASS",
+                                                                                       StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken FIELD           = invertible("FIELD", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken CONSTRUCTOR     = invertible("CONSTRUCTOR", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken METHOD          = invertible("METHOD", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken ENUM            = invertible("ENUM", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken INTERFACE       = invertible("INTERFACE", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken CONST           = invertible("CONST", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken VAR             = invertible("VAR", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken PROPERTY        = invertible("PROPERTY", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken EVENT_HANDLER   = invertible("EVENT_HANDLER", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken STATIC_INIT     = invertible("STATIC_INIT", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken NAMESPACE       = invertible("NAMESPACE", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken TRAIT           = invertible("TRAIT", StdArrangementTokenType.ENTRY_TYPE);
+
+    // xml use only two entry types -> invertible tokens make no sense
     @NotNull public static final ArrangementSettingsToken XML_TAG         =
       token("XML_TAG", "arrangement.settings.text.entry.type.xml.tag", StdArrangementTokenType.ENTRY_TYPE);
     @NotNull public static final StdArrangementSettingsToken XML_ATTRIBUTE   =
@@ -162,17 +171,17 @@ public class StdArrangementTokens {
     }
   }
   public static class Modifier {
-    @NotNull public static final ArrangementSettingsToken PUBLIC          = token("PUBLIC", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken PROTECTED       = token("PROTECTED", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken PRIVATE         = token("PRIVATE", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken PACKAGE_PRIVATE = token("PACKAGE_PRIVATE", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken STATIC          = token("STATIC", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken FINAL           = token("FINAL", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken TRANSIENT       = token("TRANSIENT", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken VOLATILE        = token("VOLATILE", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken SYNCHRONIZED    = token("SYNCHRONIZED", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken ABSTRACT        = token("ABSTRACT", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken OVERRIDE        = token("OVERRIDE", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken PUBLIC          = invertible("PUBLIC", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken PROTECTED       = invertible("PROTECTED", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken PRIVATE         = invertible("PRIVATE", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken PACKAGE_PRIVATE = invertible("PACKAGE_PRIVATE", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken STATIC          = invertible("STATIC", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken FINAL           = invertible("FINAL", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken TRANSIENT       = invertible("TRANSIENT", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken VOLATILE        = invertible("VOLATILE", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken SYNCHRONIZED    = invertible("SYNCHRONIZED", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken ABSTRACT        = invertible("ABSTRACT", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken OVERRIDE        = invertible("OVERRIDE", StdArrangementTokenType.MODIFIER);
     private static final NotNullLazyValue<Set<ArrangementSettingsToken>> TOKENS = collectFields(Modifier.class);
 
     private Modifier() {

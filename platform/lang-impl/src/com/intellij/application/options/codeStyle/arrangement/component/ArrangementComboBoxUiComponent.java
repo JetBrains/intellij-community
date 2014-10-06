@@ -123,4 +123,9 @@ public class ArrangementComboBoxUiComponent extends AbstractArrangementUiCompone
   public int getBaselineToUse(int width, int height) {
     return -1;
   }
+
+  @Override
+  public void handleMouseClickOnSelected() {
+    setSelected(false);
+  }
 }
