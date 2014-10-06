@@ -87,7 +87,11 @@ import java.util.List;
  */
 @State(
   name = "LafManager",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml", roamingType = RoamingType.PER_PLATFORM)}
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_PLATFORM)
+  },
+  storageChooser = LastStorageChooserForWrite.class
 )
 public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
@@ -259,14 +263,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   @Override
   public void loadState(final Element element) {
     String className = null;
-    for (final Object o : element.getChildren()) {
-      Element child = (Element)o;
-      if (ELEMENT_LAF.equals(child.getName())) {
-        className = child.getAttributeValue(ATTRIBUTE_CLASS_NAME);
-        if (className != null && ourLafClassesAliases.containsKey(className)) {
-          className = ourLafClassesAliases.get(className);
-        }
-        break;
+    Element lafElement = element.getChild(ELEMENT_LAF);
+    if (lafElement != null) {
+      className = lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME);
+      if (className != null && ourLafClassesAliases.containsKey(className)) {
+        className = ourLafClassesAliases.get(className);
       }
     }
 

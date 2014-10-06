@@ -27,7 +27,7 @@ import java.io.IOException;
  */
 public class ImageSerializer {
   public static byte[] imageToBytes(Image image) throws IOException {
-    BufferedImage bi = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_RGB);
+    BufferedImage bi = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = bi.createGraphics();
     g.drawImage(image, 0, 0, null);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();

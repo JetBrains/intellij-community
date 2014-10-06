@@ -876,6 +876,35 @@ public class StringUtil extends StringUtilRt {
     return stringHashCodeInsensitive(chars, 0, chars.length());
   }
 
+  @Contract(pure = true)
+  public static int stringHashCodeIgnoreWhitespaces(char[] chars, int from, int to) {
+    int h = 0;
+    for (int off = from; off < to; off++) {
+      char c = chars[off];
+      if (!isWhiteSpace(c)) {
+        h = 31 * h + c;
+      }
+    }
+    return h;
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeIgnoreWhitespaces(@NotNull CharSequence chars, int from, int to) {
+    int h = 0;
+    for (int off = from; off < to; off++) {
+      char c = chars.charAt(off);
+      if (!isWhiteSpace(c)) {
+        h = 31 * h + c;
+      }
+    }
+    return h;
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeIgnoreWhitespaces(@NotNull CharSequence chars) {
+    return stringHashCodeIgnoreWhitespaces(chars, 0, chars.length());
+  }
+
   /**
    * Equivalent to string.startsWith(prefixes[0] + prefixes[1] + ...) but avoids creating an object for concatenation.
    */
@@ -2650,6 +2679,43 @@ public class StringUtil extends StringUtilRt {
         return false;
       }
     }
+    return true;
+  }
+
+  @Contract(pure = true)
+  public static boolean equalsIgnoreWhitespaces(@NotNull CharSequence s1, @NotNull CharSequence s2) {
+    int len1 = s1.length();
+    int len2 = s2.length();
+
+    int index1 = 0;
+    int index2 = 0;
+    while (index1 < len1 && index2 < len2) {
+      if (s1.charAt(index1) == s2.charAt(index2)) {
+        index1++;
+        index2++;
+        continue;
+      }
+
+      boolean skipped = false;
+      while (index1 != len1 && isWhiteSpace(s1.charAt(index1))) {
+        skipped = true;
+        index1++;
+      }
+      while (index2 != len2 && isWhiteSpace(s2.charAt(index2))) {
+        skipped = true;
+        index2++;
+      }
+
+      if (!skipped) return false;
+    }
+
+    for (; index1 != len1; index1++) {
+      if (!isWhiteSpace(s1.charAt(index1))) return false;
+    }
+    for (; index2 != len2; index2++) {
+      if (!isWhiteSpace(s2.charAt(index2))) return false;
+    }
+
     return true;
   }
 

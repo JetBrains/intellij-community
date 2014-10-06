@@ -247,7 +247,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       compileOutputPaths.put(ExternalSystemSourceType.SOURCE, moduleCompilerOutput.getOutputDir());
       compileOutputPaths.put(ExternalSystemSourceType.RESOURCE, moduleCompilerOutput.getOutputDir());
       compileOutputPaths.put(ExternalSystemSourceType.TEST, moduleCompilerOutput.getTestOutputDir());
-      compileOutputPaths.put(ExternalSystemSourceType.TEST_RESOURCE, moduleCompilerOutput.getOutputDir());
+      compileOutputPaths.put(ExternalSystemSourceType.TEST_RESOURCE, moduleCompilerOutput.getTestOutputDir());
 
       inheritOutputDirs = moduleCompilerOutput.getInheritOutputDirs();
     }
@@ -258,7 +258,17 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       buildDir = buildDir == null ? externalProject.getBuildDir() : buildDir;
 
       if (!inheritOutputDirs) {
-        fixCompileOutputPaths(compileOutputPaths, externalProject);
+        final File sourceCompileOutputPath = compileOutputPaths.get(ExternalSystemSourceType.SOURCE);
+        if (sourceCompileOutputPath == null) {
+          addCompileOutputPath(compileOutputPaths, externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.SOURCE);
+          addCompileOutputPath(compileOutputPaths, externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.RESOURCE);
+        }
+
+        final File testCompileOutputPath = compileOutputPaths.get(ExternalSystemSourceType.TEST);
+        if (testCompileOutputPath == null) {
+          addCompileOutputPath(compileOutputPaths, externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST);
+          addCompileOutputPath(compileOutputPaths, externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST_RESOURCE);
+        }
       }
     }
     else {
@@ -707,48 +717,6 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   private static boolean isIdeaTask(final String taskName) {
     return taskName.toLowerCase(Locale.ENGLISH).contains("idea");
-  }
-
-  private static void fixCompileOutputPaths(@NotNull Map<ExternalSystemSourceType, File> compileOutputPaths,
-                                            @NotNull ExternalProject externalProject) {
-    final File sourceCompileOutputPath = compileOutputPaths.get(ExternalSystemSourceType.SOURCE);
-    if (sourceCompileOutputPath == null) {
-      addCompileOutputPath(compileOutputPaths, externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.SOURCE);
-      addCompileOutputPath(compileOutputPaths, externalProject, MAIN_SOURCE_SET, ExternalSystemSourceType.RESOURCE);
-    }
-    else {
-      final ExternalSourceSet mainSourceSet = externalProject.getSourceSets().get(MAIN_SOURCE_SET);
-      if (mainSourceSet != null) {
-        final ExternalSourceDirectorySet sourceDirectories = mainSourceSet.getSources().get(ExternalSystemSourceType.SOURCE);
-        if (sourceDirectories instanceof ModifiableExternalSourceDirectorySet) {
-          ((ModifiableExternalSourceDirectorySet)sourceDirectories).setOutputDir(sourceCompileOutputPath);
-        }
-        final ExternalSourceDirectorySet resourceDirectories = mainSourceSet.getSources().get(ExternalSystemSourceType.RESOURCE);
-        if (resourceDirectories instanceof ModifiableExternalSourceDirectorySet) {
-          ((ModifiableExternalSourceDirectorySet)resourceDirectories).setOutputDir(sourceCompileOutputPath);
-        }
-      }
-    }
-
-    final File testCompileOutputPath = compileOutputPaths.get(ExternalSystemSourceType.TEST);
-    if (testCompileOutputPath == null) {
-      addCompileOutputPath(compileOutputPaths, externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST);
-      addCompileOutputPath(compileOutputPaths, externalProject, TEST_SOURCE_SET, ExternalSystemSourceType.TEST_RESOURCE);
-    }
-    else {
-      final ExternalSourceSet testSourceSet = externalProject.getSourceSets().get(TEST_SOURCE_SET);
-      if (testSourceSet != null) {
-        final ExternalSourceDirectorySet testDirectories = testSourceSet.getSources().get(ExternalSystemSourceType.TEST);
-        if (testDirectories instanceof DefaultExternalSourceDirectorySet) {
-          ((DefaultExternalSourceDirectorySet)testDirectories).setOutputDir(testCompileOutputPath);
-        }
-        final ExternalSourceDirectorySet testResourceDirectories =
-          testSourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE);
-        if (testResourceDirectories instanceof DefaultExternalSourceDirectorySet) {
-          ((DefaultExternalSourceDirectorySet)testResourceDirectories).setOutputDir(testCompileOutputPath);
-        }
-      }
-    }
   }
 
   private static void addCompileOutputPath(@NotNull Map<ExternalSystemSourceType, File> compileOutputPaths,

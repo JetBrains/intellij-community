@@ -950,6 +950,17 @@ public abstract class ChooseByNameBase {
     }
 
     myAlarm.cancelAllRequests();
+
+    if (delay > 0) {
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          rebuildList(pos, 0, modalityState, postRunnable);
+        }
+      }, delay, ModalityState.stateForComponent(myTextField));
+      return;
+    }
+    
     myListUpdater.cancelAll();
 
     final CalcElementsThread calcElementsThread = myCalcElementsThread;
@@ -977,32 +988,20 @@ public abstract class ChooseByNameBase {
       ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
     }
 
-    final Runnable request = new Runnable() {
+    scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
       @Override
-      public void run() {
-        scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
-          @Override
-          public void consume(Set<?> elements) {
-            ApplicationManager.getApplication().assertIsDispatchThread();
-            if (checkDisposed()) {
-              return;
-            }
-            backgroundCalculationFinished(elements, pos);
+      public void consume(Set<?> elements) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        if (checkDisposed()) {
+          return;
+        }
+        backgroundCalculationFinished(elements, pos);
 
-            if (postRunnable != null) {
-              postRunnable.run();
-            }
-          }
-        });
+        if (postRunnable != null) {
+          postRunnable.run();
+        }
       }
-    };
-
-    if (delay > 0) {
-      myAlarm.addRequest(request, delay, ModalityState.stateForComponent(myTextField));
-    }
-    else {
-      request.run();
-    }
+    });
   }
 
   private void backgroundCalculationFinished(Collection<?> result, int toSelect) {

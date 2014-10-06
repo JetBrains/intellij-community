@@ -15,7 +15,11 @@
  */
 package com.intellij.embedding;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterLazyParseableNode;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.impl.DelegateMarker;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,6 +38,7 @@ import java.util.List;
  * @see MasqueradingLexer
  */
 public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
+  private final static Logger LOG = Logger.getInstance(MasqueradingPsiBuilderAdapter.class);
 
   private List<MyShiftedToken> myShrunkSequence;
 
@@ -41,14 +46,16 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   private int myLexPosition;
 
+  private final PsiBuilderImpl myBuilderDelegate;
+
+  private final MasqueradingLexer myLexer;
+
   public MasqueradingPsiBuilderAdapter(@NotNull final Project project,
                         @NotNull final ParserDefinition parserDefinition,
                         @NotNull final MasqueradingLexer lexer,
                         @NotNull final ASTNode chameleon,
                         @NotNull final CharSequence text) {
-    super(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
-
-    initShrunkSequence();
+    this(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
   }
 
   public MasqueradingPsiBuilderAdapter(@NotNull final Project project,
@@ -56,7 +63,17 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
                         @NotNull final MasqueradingLexer lexer,
                         @NotNull final LighterLazyParseableNode chameleon,
                         @NotNull final CharSequence text) {
-    super(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
+    this(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
+  }
+
+  private MasqueradingPsiBuilderAdapter(PsiBuilderImpl builder) {
+    super(builder);
+
+    LOG.assertTrue(myDelegate instanceof PsiBuilderImpl);
+    myBuilderDelegate = ((PsiBuilderImpl)myDelegate);
+
+    LOG.assertTrue(myBuilderDelegate.getLexer() instanceof MasqueradingLexer);
+    myLexer = ((MasqueradingLexer)myBuilderDelegate.getLexer());
 
     initShrunkSequence();
   }
@@ -76,7 +93,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   /**
    * @param exact if true then positions should be equal;
-   *              else delegate should be behind, not including exactly all foreign (skipped) tokens
+   *              else delegate should be behind, not including exactly all foreign (skipped) or whitespace tokens
    */
   private void synchronizePositions(boolean exact) {
     final PsiBuilder delegate = getDelegate();
@@ -90,14 +107,13 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
 
     if (delegate.getCurrentOffset() > myShrunkSequence.get(myLexPosition).realStart) {
-      Logger.getInstance(getClass()).error("delegate is ahead of my builder!");
+      LOG.error("delegate is ahead of my builder!");
       return;
     }
 
     final int keepUpPosition = getKeepUpPosition(exact);
 
     while (!delegate.eof()) {
-
       final int delegatePosition = delegate.getCurrentOffset();
 
       if (delegatePosition < keepUpPosition) {
@@ -228,14 +244,11 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   }
 
   private boolean isWhiteSpaceOnPos(int pos) {
-    return ((PsiBuilderImpl)myDelegate).whitespaceOrComment(myShrunkSequence.get(pos).elementType);
+    return myBuilderDelegate.whitespaceOrComment(myShrunkSequence.get(pos).elementType);
   }
 
   protected void initShrunkSequence() {
-    final PsiBuilderImpl delegate = (PsiBuilderImpl)getDelegate();
-    final MasqueradingLexer lexer = (MasqueradingLexer)delegate.getLexer();
-
-    initTokenListAndCharSequence(lexer);
+    initTokenListAndCharSequence(myLexer);
     myLexPosition = 0;
   }
 
@@ -272,7 +285,6 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   @SuppressWarnings({"StringConcatenationInsideStringBufferAppend", "UnusedDeclaration"})
   private void logPos() {
-    final Logger log = Logger.getInstance(getClass());
     StringBuilder sb = new StringBuilder();
     sb.append("\nmyLexPosition=" + myLexPosition + "/" + myShrunkSequence.size());
     if (myLexPosition < myShrunkSequence.size()) {
@@ -288,18 +300,18 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
       sb.append("\nposition:" + myDelegate.getCurrentOffset() + "," + (myDelegate.getCurrentOffset() + myDelegate.getTokenText().length()));
       sb.append("\nTT:" + myDelegate.getTokenText());
     }
-    log.info(sb.toString());
+    LOG.info(sb.toString());
   }
 
 
   private static class MyShiftedToken {
-    public IElementType elementType;
+    public final IElementType elementType;
 
-    public int realStart;
-    public int realEnd;
+    public final int realStart;
+    public final int realEnd;
 
-    public int shrunkStart;
-    public int shrunkEnd;
+    public final int shrunkStart;
+    public final int shrunkEnd;
 
     public MyShiftedToken(IElementType elementType, int realStart, int realEnd, int shrunkStart, int shrunkEnd) {
       this.elementType = elementType;
@@ -329,66 +341,6 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     public void rollbackTo() {
       super.rollbackTo();
       myLexPosition = myBuilderPosition;
-    }
-  }
-
-  public static class DelegateMarker implements Marker {
-
-    public Marker myDelegate;
-
-    public DelegateMarker(Marker delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public Marker precede() {
-      return myDelegate.precede();
-    }
-
-    @Override
-    public void drop() {
-      myDelegate.drop();
-    }
-
-    @Override
-    public void rollbackTo() {
-      myDelegate.rollbackTo();
-    }
-
-    @Override
-    public void done(IElementType type) {
-      myDelegate.done(type);
-    }
-
-    @Override
-    public void collapse(IElementType type) {
-      myDelegate.collapse(type);
-    }
-
-    @Override
-    public void doneBefore(IElementType type, Marker before) {
-      myDelegate.doneBefore(type, before);
-    }
-
-    @Override
-    public void doneBefore(IElementType type, Marker before, String errorMessage) {
-      myDelegate.doneBefore(type, before, errorMessage);
-    }
-
-    @Override
-    public void error(String message) {
-      myDelegate.error(message);
-    }
-
-    @Override
-    public void errorBefore(String message, Marker before) {
-      myDelegate.errorBefore(message, before);
-    }
-
-    @Override
-    public void setCustomEdgeTokenBinders(@Nullable WhitespacesAndCommentsBinder left,
-                                          @Nullable WhitespacesAndCommentsBinder right) {
-      myDelegate.setCustomEdgeTokenBinders(left, right);
     }
   }
 }
