@@ -2,8 +2,8 @@
   <name>Settings Repository</name>
   <id>org.jetbrains.settingsRepository</id>
   <description>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers</description>
-  <version>2.0-alpha1</version>
-  <idea-version since-build="138.2442"/>
+  <version>2.0-alpha2</version>
+  <idea-version since-build="138.2677"/>
   <vendor>JetBrains</vendor>
 
   <!-- otherwise plugin will be not loaded in tests -->
@@ -27,6 +27,7 @@
     </group>
     <action id="ConfigureIcs" class="org.jetbrains.settingsRepository.actions.ConfigureIcsAction">
       <add-to-group group-id="ExportImportGroup"/>
+      <add-to-group group-id="WelcomeScreen.Configure" anchor="after" relative-to-action="WelcomeScreen.Configure.Export"/>
     </action>
     <!--<action id="CommitToIcs" class="org.jetbrains.settingsRepository.actions.CommitToIcsAction">-->
       <!--<add-to-group group-id="ChangesViewPopupMenu" relative-to-action="ChangesView.Shelve" anchor="after"/>-->

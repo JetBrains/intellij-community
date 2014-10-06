@@ -38,8 +38,8 @@ class ResetToMyAction : SyncAction(SyncType.RESET_TO_MY)
 
 class ConfigureIcsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    IcsManager.getInstance().runInAutoCommitDisabledMode() {
-      IcsSettingsPanel(e.getProject()!!).show()
+    IcsManager.getInstance().runInAutoCommitDisabledMode {
+      IcsSettingsPanel(e.getProject()).show()
     }
   }
 }
