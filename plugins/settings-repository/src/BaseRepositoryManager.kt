@@ -44,7 +44,7 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
     return if (file.exists()) FileInputStream(file) else null
   }
 
-  override fun write(path: String, content: ByteArray, size: Int, async: Boolean) {
+  override fun write(path: String, content: ByteArray, size: Int) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Write " + path)
     }

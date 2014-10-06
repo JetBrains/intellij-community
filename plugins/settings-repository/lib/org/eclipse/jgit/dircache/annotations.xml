@@ -32,4 +32,7 @@
   <item name='org.eclipse.jgit.dircache.DirCacheEntry byte[] getRawPath()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.dircache.DirCacheEntry java.lang.String getPathString()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

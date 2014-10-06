@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import java.io.IOException
 import java.io.InputStream
 import gnu.trove.THashSet
+import java.util.Collections
 
 public trait RepositoryManager {
   public fun createRepositoryIfNeed(): Boolean
@@ -32,7 +33,7 @@ public trait RepositoryManager {
   /**
    * @param async Write postpone or immediately
    */
-  public fun write(path: String, content: ByteArray, size: Int, async: Boolean)
+  public fun write(path: String, content: ByteArray, size: Int)
 
   public fun delete(path: String)
 
@@ -56,7 +57,7 @@ public trait RepositoryManager {
 
   public fun resetToTheirs(indicator: ProgressIndicator): UpdateResult?
 
-  public fun resetToMy(indicator: ProgressIndicator): UpdateResult?
+  public fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?): UpdateResult?
 
   public fun canCommit(): Boolean
 }
@@ -64,8 +65,9 @@ public trait RepositoryManager {
 public trait UpdateResult {
   val changed: Collection<String>
   val deleted: Collection<String>
-  //val unmerged: Collection<String> = listOf()
 }
+
+val EMPTY_UPDATE_RESULT = ImmutableUpdateResult(Collections.emptySet(), Collections.emptySet())
 
 public data class ImmutableUpdateResult(override val changed: Collection<String>, override val deleted: Collection<String>) : UpdateResult {
   public fun toMutable(): MutableUpdateResult = MutableUpdateResult(changed, deleted)
@@ -75,8 +77,11 @@ public data class MutableUpdateResult(changed: Collection<String>, deleted: Coll
   override val changed = THashSet(changed)
   override val deleted = THashSet(deleted)
 
-  fun add(result: UpdateResult) {
-    add(result.changed, result.deleted)
+  fun add(result: UpdateResult?): MutableUpdateResult {
+    if (result != null) {
+      add(result.changed, result.deleted)
+    }
+    return this
   }
 
   fun add(newChanged: Collection<String>, newDeleted: Collection<String>): MutableUpdateResult {
@@ -92,5 +97,20 @@ public data class MutableUpdateResult(changed: Collection<String>, deleted: Coll
     deleted.removeAll(newChanged)
     changed.addAll(newChanged)
     return this
+  }
+}
+
+public fun UpdateResult?.isEmpty(): Boolean = this == null || (changed.isEmpty() && deleted.isEmpty())
+
+public fun UpdateResult?.concat(result: UpdateResult?): UpdateResult? {
+  if (result.isEmpty()) {
+    return this
+  }
+  else if (isEmpty()) {
+    return result
+  }
+  else {
+    this!!
+    return MutableUpdateResult(changed, deleted).add(result!!)
   }
 }

@@ -14,11 +14,8 @@ import com.intellij.openapi.util.RoamingTypeDisabled
 import com.intellij.openapi.components.impl.stores.StreamProvider
 
 fun copyLocalConfig() {
-  val application = ApplicationManager.getApplication()!! as ApplicationImpl
-  application.saveSettings()
-
-  val stateStorageManager = application.getStateStore().getStateStorageManager()
-  val streamProvider = stateStorageManager.getStreamProvider()!!
+  val stateStorageManager = (ApplicationManager.getApplication()!! as ApplicationImpl).getStateStore().getStateStorageManager()
+  val streamProvider = stateStorageManager.getStreamProvider()!! as IcsManager.IcsStreamProvider
 
   val fileToComponents = ExportSettingsAction.getExportableComponentsMap(true)
   for (file in fileToComponents.keySet()) {
@@ -39,7 +36,7 @@ fun copyLocalConfig() {
 
     if (file.isFile()) {
       val fileBytes = FileUtil.loadFileBytes(file)
-      streamProvider.saveContent(fileSpec, fileBytes, fileBytes.size, roamingType, false)
+      streamProvider.doSave(fileSpec, fileBytes, fileBytes.size, roamingType)
     }
     else {
       saveDirectory(file, fileSpec, roamingType, streamProvider)
@@ -47,14 +44,14 @@ fun copyLocalConfig() {
   }
 }
 
-private fun saveDirectory(parent: File, parentFileSpec: String, roamingType: RoamingType, streamProvider: StreamProvider) {
+private fun saveDirectory(parent: File, parentFileSpec: String, roamingType: RoamingType, streamProvider: IcsManager.IcsStreamProvider) {
   val files = parent.listFiles()
   if (files != null) {
     for (file in files) {
       val childFileSpec = parentFileSpec + '/' + file.getName()
       if (file.isFile()) {
         val fileBytes = FileUtil.loadFileBytes(file)
-        streamProvider.saveContent(childFileSpec, fileBytes, fileBytes.size, roamingType, false)
+        streamProvider.doSave(childFileSpec, fileBytes, fileBytes.size, roamingType)
       }
       else {
         saveDirectory(file, childFileSpec, roamingType, streamProvider)

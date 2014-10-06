@@ -20,9 +20,7 @@ import org.jetbrains.settingsRepository.BaseRepositoryManager
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.AddLoadedFile
-import org.jetbrains.settingsRepository.UpdateResult
 import org.eclipse.jgit.revwalk.RevCommit
-import org.jetbrains.settingsRepository.MutableUpdateResult
 import org.jetbrains.jgit.dirCache.deletePath
 
 class GitRepositoryService : RepositoryService {
@@ -153,7 +151,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
   override fun resetToTheirs(indicator: ProgressIndicator) = Reset(this, indicator).reset(true)
 
-  override fun resetToMy(indicator: ProgressIndicator) = Reset(this, indicator).reset(false)
+  override fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?) = Reset(this, indicator).reset(false, localRepositoryInitializer)
 
   override fun canCommit() = repository.getRepositoryState().canCommit()
 }

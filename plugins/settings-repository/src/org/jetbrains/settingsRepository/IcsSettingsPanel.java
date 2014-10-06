@@ -1,6 +1,7 @@
 package org.jetbrains.settingsRepository;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -11,6 +12,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
+import kotlin.Function0;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.settingsRepository.actions.ActionsPackage;
@@ -55,9 +58,22 @@ public class IcsSettingsPanel extends DialogWrapper {
           }
 
           try {
-            icsManager.sync(syncType, project);
+            if (repositoryWillBeCreated && syncType != SyncType.RESET_TO_THEIRS) {
+              ApplicationManager.getApplication().saveSettings();
+
+              icsManager.sync(syncType, project, new Function0<Unit>() {
+                @Override
+                public Unit invoke() {
+                  SettingsRepositoryPackage.copyLocalConfig();
+                  return Unit.INSTANCE$;
+                }
+              });
+            }
+            else {
+              icsManager.sync(syncType, project, null);
+            }
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             if (repositoryWillBeCreated) {
               // remove created repository
               icsManager.getRepositoryManager().deleteRepository();
@@ -128,17 +144,14 @@ public class IcsSettingsPanel extends DialogWrapper {
           return false;
         }
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         return false;
       }
     }
 
     try {
       RepositoryManager repositoryManager = icsManager.getRepositoryManager();
-      if (repositoryManager.createRepositoryIfNeed() && syncType != SyncType.RESET_TO_THEIRS) {
-        // we must copy current app config
-        SettingsRepositoryPackage.copyLocalConfig();
-      }
+      repositoryManager.createRepositoryIfNeed();
       repositoryManager.setUpstream(url, null);
       return true;
     }

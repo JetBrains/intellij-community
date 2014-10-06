@@ -30,8 +30,6 @@ import java.util.LinkedHashSet
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.ui.Messages
 import javax.swing.SwingUtilities
 import com.intellij.util.ui.UIUtil
 import com.intellij.openapi.util.Computable
@@ -169,8 +167,7 @@ public class IcsManager : ApplicationLoadListener {
     return settings
   }
 
-  throws(javaClass<Exception>())
-  public fun sync(syncType: SyncType, project: Project?) {
+  public fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null) {
     ApplicationManager.getApplication()!!.assertIsDispatchThread()
 
     var exception: Throwable? = null
@@ -183,20 +180,22 @@ public class IcsManager : ApplicationLoadListener {
         override fun run(indicator: ProgressIndicator) {
           indicator.setIndeterminate(true)
 
-          try {
-            // we commit before even if sync "RESET_TO_THEIRS" — preserve history and ability to undo
-            if (repositoryManager.canCommit()) {
-              repositoryManager.commit(indicator)
+          if (localRepositoryInitializer == null) {
+            try {
+              // we commit before even if sync "RESET_TO_THEIRS" — preserve history and ability to undo
+              if (repositoryManager.canCommit()) {
+                repositoryManager.commit(indicator)
+              }
+              // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
             }
-            // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
+            catch (e: Throwable) {
+              LOG.error(e)
 
-            // "RESET_TO_*" will do "reset hard", so, probably, error will be gone, so, we can continue operation
-            if (syncType == SyncType.MERGE) {
-              exception = e
-              return
+              // "RESET_TO_*" will do "reset hard", so, probably, error will be gone, so, we can continue operation
+              if (syncType == SyncType.MERGE) {
+                exception = e
+                return
+              }
             }
           }
 
@@ -209,6 +208,12 @@ public class IcsManager : ApplicationLoadListener {
             when (syncType) {
               SyncType.MERGE -> {
                 updateResult = repositoryManager.pull(indicator)
+                if (localRepositoryInitializer != null) {
+                  // must be performed only after initial pull, so, local changes will be relative to remote files
+                  localRepositoryInitializer()
+                  repositoryManager.commit(indicator)
+                  updateResult = updateResult.concat(repositoryManager.pull(indicator))
+                }
                 repositoryManager.push(indicator)
               }
               SyncType.RESET_TO_THEIRS -> {
@@ -216,7 +221,7 @@ public class IcsManager : ApplicationLoadListener {
                 updateResult = repositoryManager.resetToTheirs(indicator)
               }
               SyncType.RESET_TO_MY -> {
-                updateResult = repositoryManager.resetToMy(indicator)
+                updateResult = repositoryManager.resetToMy(indicator, localRepositoryInitializer)
                 repositoryManager.push(indicator)
               }
             }
@@ -291,16 +296,21 @@ public class IcsManager : ApplicationLoadListener {
     })
   }
 
-  private open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider() {
+  open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider() {
     override fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType, async: Boolean) {
       if (writeAndDeleteProhibited) {
         throw IllegalStateException("Save is prohibited now")
       }
 
-      repositoryManager.write(buildPath(fileSpec, roamingType, projectId), content, size, async)
+      doSave(fileSpec, content, size, roamingType)
+
       if (isAutoCommit(fileSpec, roamingType)) {
         scheduleCommit()
       }
+    }
+
+    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+      repositoryManager.write(buildPath(fileSpec, roamingType, projectId), content, size)
     }
 
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true

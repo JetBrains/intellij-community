@@ -188,13 +188,30 @@ private class DirCacheTerminator(dirCache: DirCache) : BaseDirCacheEditor(dirCac
   }
 }
 
-public fun Repository.deleteAllFiles() {
+public fun Repository.deleteAllFiles(deletedSet: MutableSet<String>? = null, fromWorkingTree: Boolean = true) {
   val dirCache = lockDirCache()
   try {
+    if (deletedSet != null) {
+      for (i in 0..dirCache.getEntryCount() - 1) {
+        val entry = dirCache.getEntry(i)
+        if (entry.getFileMode() == FileMode.REGULAR_FILE) {
+          deletedSet.add(entry.getPathString())
+        }
+      }
+    }
     DirCacheTerminator(dirCache).commit()
   }
   finally {
     dirCache.unlock()
+  }
+
+  if (fromWorkingTree) {
+    val files = getWorkTree().listFiles { it.getName() != Constants.DOT_GIT }
+    if (files != null) {
+      for (file in files) {
+        FileUtil.delete(file)
+      }
+    }
   }
 }
 
