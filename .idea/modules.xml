@@ -40,9 +40,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/copyright/copyright.iml" filepath="$PROJECT_DIR$/plugins/copyright/copyright.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-api/core-api.iml" filepath="$PROJECT_DIR$/platform/core-api/core-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-impl/core-impl.iml" filepath="$PROJECT_DIR$/platform/core-impl/core-impl.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" filepath="$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/coverage/covergae_rt/coverage_rt.iml" filepath="$PROJECT_DIR$/plugins/coverage/covergae_rt/coverage_rt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage.iml" group="plugins/coverage" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" filepath="$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" group="plugins/coverage" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/coverage/covergae_rt/coverage_rt.iml" filepath="$PROJECT_DIR$/plugins/coverage/covergae_rt/coverage_rt.iml" group="plugins/coverage" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cucumber-jvm-formatter/cucumber-jvm-formatter.iml" filepath="$PROJECT_DIR$/plugins/cucumber-jvm-formatter/cucumber-jvm-formatter.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/build/cucumber-test-runner/cucumber-test-runner.iml" filepath="$PROJECT_DIR$/build/cucumber-test-runner/cucumber-test-runner.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/cvs-core/cvs-core.iml" filepath="$PROJECT_DIR$/plugins/cvs/cvs-core/cvs-core.iml" group="plugins/VCS/cvs" />
@@ -56,7 +56,7 @@
       <module fileurl="file://$PROJECT_DIR$/xml/dom-openapi/dom-openapi.iml" filepath="$PROJECT_DIR$/xml/dom-openapi/dom-openapi.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/xml/dom-tests/dom-tests.iml" filepath="$PROJECT_DIR$/xml/dom-tests/dom-tests.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/draw9patch/draw9patch.iml" filepath="$PROJECT_DIR$/android/tools-base/draw9patch/draw9patch.iml" group="android/sdktools" />
-      <module fileurl="file://$PROJECT_DIR$/platform/duplicates-analysis/duplicates-analysis.iml" filepath="$PROJECT_DIR$/platform/duplicates-analysis/duplicates-analysis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/duplicates-analysis/duplicates-analysis.iml" filepath="$PROJECT_DIR$/platform/duplicates-analysis/duplicates-analysis.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs-api/dvcs-api.iml" filepath="$PROJECT_DIR$/platform/dvcs-api/dvcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs-impl/dvcs-impl.iml" filepath="$PROJECT_DIR$/platform/dvcs-impl/dvcs-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/device_validator/dvlib/dvlib.iml" filepath="$PROJECT_DIR$/android/tools-base/device_validator/dvlib/dvlib.iml" group="android/sdktools" />
@@ -77,11 +77,11 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github.iml" filepath="$PROJECT_DIR$/plugins/github/github.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/google-app-engine/google-app-engine.iml" filepath="$PROJECT_DIR$/plugins/google-app-engine/google-app-engine.iml" group="plugins/GAE" />
       <module fileurl="file://$PROJECT_DIR$/plugins/google-app-engine/jps-plugin/google-app-engine-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/google-app-engine/jps-plugin/google-app-engine-jps-plugin.iml" group="plugins/GAE" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/gradle.iml" filepath="$PROJECT_DIR$/plugins/gradle/gradle.iml" group="community/plugins/gradle" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/gradle.iml" filepath="$PROJECT_DIR$/plugins/gradle/gradle.iml" group="plugins/gradle" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/gradle-import/gradle-import.iml" filepath="$PROJECT_DIR$/android/tools-base/gradle-import/gradle-import.iml" group="android/sdktools" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/jps-plugin/gradle-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/gradle/jps-plugin/gradle-jps-plugin.iml" group="community/plugins/gradle" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-api/gradle-tooling-extension-api.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-api/gradle-tooling-extension-api.iml" group="community/plugins/gradle" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/gradle-tooling-extension-impl.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/gradle-tooling-extension-impl.iml" group="community/plugins/gradle" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/jps-plugin/gradle-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/gradle/jps-plugin/gradle-jps-plugin.iml" group="plugins/gradle" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-api/gradle-tooling-extension-api.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-api/gradle-tooling-extension-api.iml" group="plugins/gradle" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/gradle-tooling-extension-impl.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/gradle-tooling-extension-impl.iml" group="plugins/gradle" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jps-plugin/groovy-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/groovy/jps-plugin/groovy-jps-plugin.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/groovy-psi/groovy-psi.iml" filepath="$PROJECT_DIR$/plugins/groovy/groovy-psi/groovy-psi.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt-constants/groovy-rt-constants.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt-constants/groovy-rt-constants.iml" group="plugins/Groovy" />
@@ -119,7 +119,7 @@
       <module fileurl="file://$PROJECT_DIR$/jps/model-api/jps-model-api.iml" filepath="$PROJECT_DIR$/jps/model-api/jps-model-api.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-impl.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-impl.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-model-serialization.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-model-serialization.iml" group="jps" />
-      <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/plugin-system/jps-plugin-system.iml" filepath="$PROJECT_DIR$/jps/plugin-system/jps-plugin-system.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/jps-standalone-builder.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/jps-standalone-builder.iml" group="jps" />
@@ -196,10 +196,10 @@
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/smRunner.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/spellchecker.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/structuralsearch.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/structuralsearch.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/structuralsearch-groovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/structuralsearch-groovy.iml" />
-      <module fileurl="file://$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" filepath="$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/structuralsearch-tests.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/structuralsearch-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/structuralsearch.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/structuralsearch.iml" group="plugins/structuralsearch" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/structuralsearch-groovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/structuralsearch-groovy.iml" group="plugins/Groovy" />
+      <module fileurl="file://$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" filepath="$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/structuralsearch-tests.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/structuralsearch-tests.iml" group="plugins/structuralsearch" />
       <module fileurl="file://$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" filepath="$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" filepath="$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" group="plugins/VCS" />
@@ -216,7 +216,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" filepath="$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/bootstrap/tests_bootstrap.iml" filepath="$PROJECT_DIR$/platform/testFramework/bootstrap/tests_bootstrap.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/testutils/testutils.iml" filepath="$PROJECT_DIR$/android/tools-base/testutils/testutils.iml" group="android/sdktools" />
-      <module fileurl="file://$PROJECT_DIR$/java/typeMigration/typeMigration.iml" filepath="$PROJECT_DIR$/java/typeMigration/typeMigration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/typeMigration/typeMigration.iml" filepath="$PROJECT_DIR$/java/typeMigration/typeMigration.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" filepath="$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" group="plugins" />
@@ -249,4 +249,3 @@
     </modules>
   </component>
 </project>
-
