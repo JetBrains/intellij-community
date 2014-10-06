@@ -671,7 +671,7 @@ def layoutAndroid(String androidHome) {
     layoutPlugin("android") {
       fileset(dir: "${androidHome}/android/lib") {
         include(name: "**/*.jar")
-        exclude(name: "**/ddmlib_1.jar")
+        exclude(name: "**/fest-*.jar")
         exclude(name: "src/*.jar")
       }
 
