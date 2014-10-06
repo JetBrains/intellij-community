@@ -427,7 +427,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   @Override
   public void handleMouseClickOnSelected() {
-    if (myInverted) {
+    if (myInverted || !(myCondition.getType() instanceof InvertibleArrangementSettingsToken)) {
       setSelected(false);
     }
     setData(myInverted);
