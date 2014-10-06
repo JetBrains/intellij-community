@@ -658,6 +658,27 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
         if (currentRange == null) continue;
         Segment nextRange = i == myShreds.size() - 1 ? null : myShreds.get(i + 1).getHostRangeMarker();
         if (nextRange == null || hostOffset < nextRange.getStartOffset()) {
+          if (hostOffset >= currentRange.getEndOffset()) hostOffset = currentRange.getEndOffset();
+          return offset + hostOffset - currentRange.getStartOffset();
+        }
+        offset += currentRange.getEndOffset() - currentRange.getStartOffset();
+        offset += myShreds.get(i).getSuffix().length();
+      }
+      return getTextLength() - myShreds.get(myShreds.size() - 1).getSuffix().length();
+    }
+  }
+
+  public int hostToUnescaped(int hostOffset) {
+    synchronized (myLock) {
+      Segment hostRangeMarker = myShreds.get(0).getHostRangeMarker();
+      if (hostRangeMarker == null || hostOffset < hostRangeMarker.getStartOffset()) return myShreds.get(0).getPrefix().length();
+      int offset = 0;
+      for (int i = 0; i < myShreds.size(); i++) {
+        offset += myShreds.get(i).getPrefix().length();
+        Segment currentRange = myShreds.get(i).getHostRangeMarker();
+        if (currentRange == null) continue;
+        Segment nextRange = i == myShreds.size() - 1 ? null : myShreds.get(i + 1).getHostRangeMarker();
+        if (nextRange == null || hostOffset < nextRange.getStartOffset()) {
           if (hostOffset >= currentRange.getEndOffset()) {
             offset += myShreds.get(i).getRange().getLength();
           }

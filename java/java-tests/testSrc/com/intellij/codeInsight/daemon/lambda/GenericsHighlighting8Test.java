@@ -762,6 +762,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
 
   public void testIDEA78402() { doTest(); }
 
+  public void testUncheckedWarningInsideLambdaReturnStatement() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() {
     doTest(false);
   }

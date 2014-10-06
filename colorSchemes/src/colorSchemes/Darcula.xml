@@ -17,6 +17,7 @@
     <option name="CARET_COLOR" value="bbbbbb" />
     <option name="CARET_ROW_COLOR" value="323232" />
     <option name="CONSOLE_BACKGROUND_KEY" value="2B2B2B" />
+    <option name="DELETED_LINES_COLOR" value="656e76"/>
     <option name="FILESTATUS_ADDED" value="629755" />
     <option name="FILESTATUS_DELETED" value="6c6c6c" />
     <option name="FILESTATUS_IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM" value="6c6c6c" />
@@ -48,6 +49,7 @@
     <option name="SELECTION_FOREGROUND" value="" />
     <option name="TEARLINE_COLOR" value="555555" />
     <option name="WHITESPACES" value="505050" />
+    <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="2d4249"/>
   </colors>
   <attributes>
     <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

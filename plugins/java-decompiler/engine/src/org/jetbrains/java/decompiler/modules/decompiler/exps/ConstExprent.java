@@ -112,6 +112,8 @@ public class ConstExprent extends Exprent {
     boolean literal = DecompilerContext.getOption(IFernflowerPreferences.LITERALS_AS_IS);
     boolean ascii = DecompilerContext.getOption(IFernflowerPreferences.ASCII_STRING_CHARACTERS);
 
+    tracer.addMapping(bytecode);
+
     if (consttype.type != CodeConstants.TYPE_NULL && value == null) {
       return ExprProcessor.getCastTypeName(consttype);
     }

@@ -87,8 +87,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   @NotNull
   private String createPopupTitle(@NotNull Repo currentRepository) {
     String title = myVcs.getDisplayName() + " Branches";
-    if (myRepositoryManager.moreThanOneRoot() &&
-        (myMultiRootBranchConfig.diverged() || myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC)) {
+    if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC) {
       title += " in " + DvcsUtil.getShortRepositoryName(currentRepository);
     }
     return title;

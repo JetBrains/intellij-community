@@ -142,6 +142,10 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
     return new ArrangementAtomMatchCondition(token);
   }
 
+  protected static ArrangementAtomMatchCondition atom(@NotNull ArrangementSettingsToken token, boolean included) {
+    return new ArrangementAtomMatchCondition(token, included);
+  }
+
   @NotNull
   protected static ArrangementAtomMatchCondition atom(@NotNull String nameFilter) {
     return new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter);

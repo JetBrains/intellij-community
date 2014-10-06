@@ -41,6 +41,8 @@ import java.util.Map.Entry;
 
 public class ClassesProcessor {
 
+  public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
+
   private Map<String, ClassNode> mapRootClasses = new HashMap<String, ClassNode>();
 
   public ClassesProcessor(StructContext context) {
@@ -258,14 +260,17 @@ public class ClassesProcessor {
 
       new NestedMemberAccess().propagateMemberAccess(root);
 
-      StringBuilder classBuffer = new StringBuilder();
+      StringBuilder classBuffer = new StringBuilder(AVERAGE_CLASS_SIZE);
       new ClassWriter().classToJava(root, classBuffer, 0);
 
       String lineSeparator = DecompilerContext.getNewLineSeparator();
+      int total_offset_lines = 0;
 
       int index = cl.qualifiedName.lastIndexOf("/");
       if (index >= 0) {
+        total_offset_lines++;
         String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
+
         buffer.append("package ");
         buffer.append(packageName);
         buffer.append(";");
@@ -273,15 +278,20 @@ public class ClassesProcessor {
         buffer.append(lineSeparator);
       }
 
-      if (importCollector.writeImports(buffer)) {
+      int import_lines_written = importCollector.writeImports(buffer);
+      if (import_lines_written > 0) {
         buffer.append(lineSeparator);
+        total_offset_lines += import_lines_written + 1;
       }
 
       buffer.append(classBuffer);
 
       if(DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
+        BytecodeSourceMapper mapper = DecompilerContext.getBytecodeSourceMapper();
+        mapper.addTotalOffset(total_offset_lines);
+
         buffer.append(lineSeparator);
-        DecompilerContext.getBytecodeSourceMapper().dumpMapping(classBuffer);
+        mapper.dumpMapping(buffer);
       }
     }
     finally {

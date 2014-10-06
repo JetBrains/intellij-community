@@ -22,6 +22,7 @@ import com.intellij.application.options.codeStyle.arrangement.color.ArrangementC
 import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.ui.IdeBorderFactory;
@@ -97,9 +98,14 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   @Nullable private       Rectangle myScreenBounds;
   @Nullable private       Listener  myListener;
 
+  private boolean myInverted = false;
   private boolean myEnabled = true;
   private boolean mySelected;
   private boolean myCloseButtonHovered;
+
+  // cached value for inverted atom condition, e.g. condition: 'static', opposite: 'not static'
+  @Nullable private ArrangementAtomMatchCondition myOppositeCondition;
+  @Nullable private String myInvertedText;
 
   public ArrangementAtomMatchConditionComponent(@NotNull ArrangementStandardSettingsManager manager,
                                                 @NotNull ArrangementColorsProvider colorsProvider,
@@ -117,7 +123,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     else {
       myBorderStrategy = PREDEFINED_BORDER_STRATEGY;
     }
-    if (type.equals(condition.getValue())) {
+    if (type.equals(condition.getValue()) || condition.getValue() instanceof Boolean) {
       myText = type.getRepresentationValue();
     }
     else if (StdArrangementTokenType.REG_EXP.is(type)) {
@@ -225,17 +231,27 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     if (myCloseButton != null) {
       myCloseButton.setVisible(false);
     }
+    setData(myCondition.getValue());
   }
 
   @NotNull
   @Override
   public ArrangementAtomMatchCondition getMatchCondition() {
+    if (myInverted == myCondition.getValue()) {
+      if (myOppositeCondition == null) {
+        myOppositeCondition = new ArrangementAtomMatchCondition(myCondition.getType(), !myInverted);
+      }
+      return myOppositeCondition;
+    }
     return myCondition;
   }
 
   @Override
   public void setData(@NotNull Object data) {
-    // Do nothing
+    if (data instanceof Boolean && myCondition.getType() instanceof InvertibleArrangementSettingsToken) {
+      myInverted = !((Boolean)data);
+      updateComponentText(mySelected);
+    }
   }
 
   @NotNull
@@ -259,14 +275,32 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   public void setSelected(boolean selected) {
     boolean notifyListener = selected != mySelected;
     mySelected = selected;
-    myTextControl.clear();
-    TextAttributes attributes = myColorsProvider.getTextAttributes(myCondition.getType(), selected);
-    myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(attributes));
+    TextAttributes attributes = updateComponentText(selected);
     myBorder.setColor(myColorsProvider.getBorderColor(selected));
     myBackgroundColor = attributes.getBackgroundColor();
     if (notifyListener && myListener != null) {
       myListener.stateChanged();
     }
+  }
+
+  @NotNull
+  private TextAttributes updateComponentText(boolean selected) {
+    myTextControl.clear();
+    TextAttributes attributes = myColorsProvider.getTextAttributes(myCondition.getType(), selected);
+    myTextControl.append(getComponentText(), SimpleTextAttributes.fromTextAttributes(attributes));
+    return attributes;
+  }
+
+  private String getComponentText() {
+    if (myInverted) {
+      if (StringUtil.isEmpty(myInvertedText)) {
+        final ArrangementSettingsToken token = myCondition.getType();
+        assert token instanceof InvertibleArrangementSettingsToken;
+        myInvertedText = ((InvertibleArrangementSettingsToken)token).getInvertedRepresentationValue();
+      }
+      return myInvertedText;
+    }
+    return myText;
   }
 
   @Override
@@ -349,7 +383,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   @Override
   public String toString() {
-    return myText;
+    return getComponentText();
   }
 
   @NotNull
@@ -377,6 +411,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   @Override
   public void reset() {
     setSelected(false);
+    setData(true);
   }
 
   @Override
@@ -388,6 +423,19 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   @Override
   public void setListener(@NotNull Listener listener) {
     myListener = listener;
+  }
+
+  @Override
+  public void handleMouseClickOnSelected() {
+    if (myInverted || !(myCondition.getType() instanceof InvertibleArrangementSettingsToken)) {
+      setSelected(false);
+    }
+    setData(myInverted);
+  }
+
+  @Override
+  public boolean alwaysCanBeActive() {
+    return myInverted;
   }
 
   private interface BorderStrategy {

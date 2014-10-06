@@ -59,7 +59,15 @@ public class CreateAction extends PatchAction {
 
   private static void prepareToWriteFile(File file) throws IOException {
     if (file.exists()) {
-      Utils.delete(file);
+      try {
+        Utils.delete(file);
+      } catch (IOException e) {
+        if (Utils.isWindows() && file.exists()) {
+          throw new RetryException(e);
+        } else {
+          throw e;
+        }
+      }
       return;
     }
 

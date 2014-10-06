@@ -8,6 +8,7 @@
     <option name="CARET_COLOR" value="ff00" />
     <option name="CARET_ROW_COLOR" value="282828" />
     <option name="CONSOLE_BACKGROUND_KEY" value="404040" />
+    <option name="DELETED_LINES_COLOR" value="747474"/>
     <option name="FILESTATUS_MODIFIED" value="215ee6" />
     <option name="GUTTER_BACKGROUND" value="424242" />
     <option name="INDENT_GUIDE" value="505050" />
@@ -21,6 +22,7 @@
     <option name="SELECTED_INDENT_GUIDE" value="6b5656" />
     <option name="SELECTION_BACKGROUND" value="348d34" />
     <option name="WHITESPACES" value="656565" />
+    <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="6E5A5A"/>
   </colors>
   <attributes>
     <option name="ABSTRACT_CLASS_NAME_ATTRIBUTES">

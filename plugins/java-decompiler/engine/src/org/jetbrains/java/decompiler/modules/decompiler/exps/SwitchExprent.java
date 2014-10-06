@@ -84,6 +84,7 @@ public class SwitchExprent extends Exprent {
 
   @Override
   public String toJava(int indent, BytecodeMappingTracer tracer) {
+    tracer.addMapping(bytecode);
     return "switch(" + value.toJava(indent, tracer) + ")";
   }
 

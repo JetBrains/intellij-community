@@ -115,11 +115,16 @@ public class ArrangementCheckBoxUiComponent extends AbstractArrangementUiCompone
 
   @Override
   public void setSelected(boolean selected) {
-    myCheckBox.setSelected(selected); 
+    myCheckBox.setSelected(selected);
   }
 
   @Override
   public int getBaselineToUse(int width, int height) {
     return myTextLabel.getBaseline(width, height);
+  }
+
+  @Override
+  public void handleMouseClickOnSelected() {
+    setSelected(false);
   }
 }

@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.model;
+package com.intellij.psi.codeStyle.arrangement.std;
 
-import java.io.File;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Vladislav.Soroka
- * @since 10/3/2014
+ * Tokens that can be used in conditions in inverted state,
+ * e.g. 'public' -> 'not public' unlike 'order' or 'name' that can't be inverted
+ *
+ * @author Svetlana.Zemlyanskaya
  */
-public interface ModifiableExternalSourceDirectorySet extends ExternalSourceDirectorySet {
-  void setOutputDir(File outputPath);
+public interface InvertibleArrangementSettingsToken {
+
+  /**
+   * Inverted representation value that will be used in UI
+   */
+  @NotNull
+  String getInvertedRepresentationValue();
 }

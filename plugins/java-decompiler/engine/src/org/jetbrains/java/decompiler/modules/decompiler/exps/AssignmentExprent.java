@@ -153,6 +153,8 @@ public class AssignmentExprent extends Exprent {
 
     buffer.append(condtype == CONDITION_NONE ? " = " : funceq[condtype]).append(res);
 
+    tracer.addMapping(bytecode);
+
     return buffer.toString();
   }
 
