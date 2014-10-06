@@ -57,7 +57,7 @@ public class TestData implements Cloneable
   public List<String> TEST_LISTENERS = new ArrayList<String>();
   public boolean USE_DEFAULT_REPORTERS = false;
   public String PROPERTIES_FILE;
-  private Set<String> myPatterns = new LinkedHashSet<String>();
+  private LinkedHashSet<String> myPatterns = new LinkedHashSet<String>();
 
   public TestData() {
     TEST_OBJECT = TestType.CLASS.getType();
@@ -168,7 +168,7 @@ public class TestData implements Cloneable
 
     data.USE_DEFAULT_REPORTERS = USE_DEFAULT_REPORTERS;
     data.ENVS = new LinkedHashMap<String, String>(ENVS);
-    data.myPatterns = new HashSet<String>();
+    data.myPatterns = new LinkedHashSet<String>();
     data.myPatterns.addAll(myPatterns);
     data.setScope(getScope());
     return data;
@@ -251,7 +251,7 @@ public class TestData implements Cloneable
     return myPatterns;
   }
 
-  public void setPatterns(Set<String> set) {
+  public void setPatterns(LinkedHashSet<String> set) {
     myPatterns = set;
   }
 }
