@@ -354,11 +354,11 @@ public class LineStatusTrackerDrawing {
       case Range.INSERTED:
         return globalScheme.getColor(EditorColors.ADDED_LINES_COLOR);
       case Range.DELETED:
-        return globalScheme.getAttributes(DiffColors.DIFF_DELETED).getErrorStripeColor();
+        return globalScheme.getColor(EditorColors.DELETED_LINES_COLOR);
       case Range.MODIFIED:
         return globalScheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
       case Range.EQUAL:
-        return globalScheme.getColor(EditorColors.MODIFIED_LINES_COLOR).brighter();
+        return globalScheme.getColor(EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
       default:
         assert false;
         return null;
@@ -388,7 +388,7 @@ public class LineStatusTrackerDrawing {
       case Range.INSERTED:
         return globalScheme.getColor(EditorColors.ADDED_LINES_COLOR);
       case Range.DELETED:
-        return globalScheme.getAttributes(DiffColors.DIFF_DELETED).getErrorStripeColor();
+        return globalScheme.getColor(EditorColors.DELETED_LINES_COLOR);
       case Range.MODIFIED:
         return globalScheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
       default:
