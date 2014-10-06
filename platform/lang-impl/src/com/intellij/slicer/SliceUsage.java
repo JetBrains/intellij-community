@@ -63,7 +63,7 @@ public class SliceUsage extends UsageInfo2UsageAdapter implements UserDataHolder
     return new SliceUsage(element, params);
   }
 
-  public void processChildren(@NotNull Processor<SliceUsage> processor) {
+  public void processChildren(@NotNull final Processor<SliceUsage> processor) {
     final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
       @Override
       public PsiElement compute() {
@@ -89,11 +89,12 @@ public class SliceUsage extends UsageInfo2UsageAdapter implements UserDataHolder
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
+        final SliceProvider provider = SliceProvider.forElement(element);
         if (params.dataFlowToThis) {
-          SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this);
+          provider.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this);
         }
         else {
-          SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
+          provider.processUsagesFlownFromThe(element,uniqueProcessor, SliceUsage.this);
         }
       }
     });

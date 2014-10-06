@@ -684,6 +684,10 @@
       <with attribute="implementationClass" implements="com.intellij.ide.hierarchy.HierarchyProvider"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.sliceProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.slicer.SliceProvider"/>
+    </extensionPoint>
+
     <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
       <with attribute="instance" implements="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
     </extensionPoint>
