@@ -96,7 +96,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/intellilang-jps-plugin/intellilang-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/intellilang-jps-plugin/intellilang-jps-plugin.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/java/java-analysis-api/java-analysis-api.iml" filepath="$PROJECT_DIR$/java/java-analysis-api/java-analysis-api.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-analysis-impl/java-analysis-impl.iml" filepath="$PROJECT_DIR$/java/java-analysis-impl/java-analysis-impl.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/java-decompiler.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/java-decompiler.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/engine/java-decompiler-engine.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/engine/java-decompiler-engine.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/plugin/java-decompiler-plugin.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/plugin/java-decompiler-plugin.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-i18n/java-i18n.iml" filepath="$PROJECT_DIR$/plugins/java-i18n/java-i18n.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/java/java-impl/java-impl.iml" filepath="$PROJECT_DIR$/java/java-impl/java-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-indexing-api/java-indexing-api.iml" filepath="$PROJECT_DIR$/java/java-indexing-api/java-indexing-api.iml" group="java" />
