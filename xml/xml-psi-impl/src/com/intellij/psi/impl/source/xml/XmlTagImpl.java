@@ -694,8 +694,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   public XmlAttribute getAttribute(String name, String namespace) {
     if (name != null && name.indexOf(':') != -1 ||
         namespace == null ||
-        XmlUtil.EMPTY_URI.equals(namespace) ||
-        XmlUtil.ANY_URI.equals(namespace)) {
+        XmlUtil.EMPTY_URI.equals(namespace)) {
       return getAttribute(name);
     }
 
