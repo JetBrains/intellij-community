@@ -668,7 +668,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     }
   }
 
-  public int hostToUnescaped(int hostOffset) {
+  public int hostToInjectedUnescaped(int hostOffset) {
     synchronized (myLock) {
       Segment hostRangeMarker = myShreds.get(0).getHostRangeMarker();
       if (hostRangeMarker == null || hostOffset < hostRangeMarker.getStartOffset()) return myShreds.get(0).getPrefix().length();
