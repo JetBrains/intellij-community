@@ -137,13 +137,7 @@ public class IcsSettingsPanel extends DialogWrapper {
       RepositoryManager repositoryManager = icsManager.getRepositoryManager();
       if (repositoryManager.createRepositoryIfNeed() && syncType != SyncType.RESET_TO_THEIRS) {
         // we must copy current app config
-        try {
-          SettingsRepositoryPackage.copyLocalConfig();
-        }
-        catch (Throwable e) {
-
-          throw e;
-        }
+        SettingsRepositoryPackage.copyLocalConfig();
       }
       repositoryManager.setUpstream(url, null);
       return true;
