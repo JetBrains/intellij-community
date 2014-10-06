@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.IOException;
 
@@ -29,7 +30,7 @@ import java.io.IOException;
  * Created by Egor on 05.10.2014.
  */
 public class StructLineNumberTableAttribute extends StructGeneralAttribute {
-  private int[] myLineInfo = new int[0];
+  private int[] myLineInfo = InterpreterUtil.EMPTY_INT_ARRAY;
 
   @Override
   public void initContent(ConstantPool pool) throws IOException {
@@ -44,7 +45,7 @@ public class StructLineNumberTableAttribute extends StructGeneralAttribute {
       }
     }
     else if (myLineInfo.length > 0) {
-      myLineInfo = new int[0];
+      myLineInfo = InterpreterUtil.EMPTY_INT_ARRAY;
     }
   }
 
