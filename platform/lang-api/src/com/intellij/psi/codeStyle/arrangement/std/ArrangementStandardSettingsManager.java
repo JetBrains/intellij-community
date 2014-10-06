@@ -164,14 +164,21 @@ public class ArrangementStandardSettingsManager {
 
   private int parseWidth(@NotNull ArrangementSettingsToken token, @NotNull SimpleColoredComponent renderer) {
     renderer.clear();
-    renderer.append(token.getRepresentationValue(),
-                    SimpleTextAttributes.fromTextAttributes(myColorsProvider.getTextAttributes(token, true)));
+    final String value = getPresentationValue(token);
+    renderer.append(value, SimpleTextAttributes.fromTextAttributes(myColorsProvider.getTextAttributes(token, true)));
     int result = renderer.getPreferredSize().width;
 
     renderer.clear();
-    renderer.append(token.getRepresentationValue(),
-                    SimpleTextAttributes.fromTextAttributes(myColorsProvider.getTextAttributes(token, false)));
+    renderer.append(value, SimpleTextAttributes.fromTextAttributes(myColorsProvider.getTextAttributes(token, false)));
     return Math.max(result, renderer.getPreferredSize().width);
+  }
+
+  @NotNull
+  private static String getPresentationValue(@NotNull ArrangementSettingsToken token) {
+    if (token instanceof InvertibleArrangementSettingsToken) {
+      return ((InvertibleArrangementSettingsToken)token).getInvertedRepresentationValue();
+    }
+    return token.getRepresentationValue();
   }
   
   public List<ArrangementSettingsToken> sort(@NotNull Collection<ArrangementSettingsToken> tokens) {

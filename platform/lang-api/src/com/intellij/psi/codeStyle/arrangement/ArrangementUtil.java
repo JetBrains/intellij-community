@@ -205,7 +205,7 @@ public class ArrangementUtil {
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
         ArrangementSettingsToken type = condition.getType();
         Object value = condition.getValue();
-        result.put(condition.getType(), type.equals(value) ? null : value); 
+        result.put(condition.getType(), type.equals(value) ? null : value);
       }
 
       @Override
@@ -260,10 +260,10 @@ public class ArrangementUtil {
   @Nullable
   public static ArrangementEntryMatcher buildMatcher(@NotNull ArrangementAtomMatchCondition condition) {
     if (StdArrangementTokenType.ENTRY_TYPE.is(condition.getType())) {
-      return new ByTypeArrangementEntryMatcher(condition.getType());
+      return new ByTypeArrangementEntryMatcher(condition);
     }
     else if (StdArrangementTokenType.MODIFIER.is(condition.getType())) {
-      return new ByModifierArrangementEntryMatcher(condition.getType());
+      return new ByModifierArrangementEntryMatcher(condition);
     }
     else if (StdArrangementTokens.Regexp.NAME.equals(condition.getType())) {
       return new ByNameArrangementEntryMatcher(condition.getValue().toString());

@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.ModifierAwareArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -30,20 +31,28 @@ import java.util.Set;
  */
 public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final Set<ArrangementSettingsToken> myModifiers = ContainerUtilRt.newHashSet();
+  @NotNull private final Set<ArrangementAtomMatchCondition> myModifiers = ContainerUtilRt.newHashSet();
 
-  public ByModifierArrangementEntryMatcher(@NotNull ArrangementSettingsToken interestedModifier) {
+  public ByModifierArrangementEntryMatcher(@NotNull ArrangementAtomMatchCondition interestedModifier) {
     myModifiers.add(interestedModifier);
   }
   
-  public ByModifierArrangementEntryMatcher(@NotNull Collection<ArrangementSettingsToken> interestedModifiers) {
+  public ByModifierArrangementEntryMatcher(@NotNull Collection<ArrangementAtomMatchCondition> interestedModifiers) {
     myModifiers.addAll(interestedModifiers);
   }
 
   @Override
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     if (entry instanceof ModifierAwareArrangementEntry) {
-      return ((ModifierAwareArrangementEntry)entry).getModifiers().containsAll(myModifiers);
+      final Set<ArrangementSettingsToken> modifiers = ((ModifierAwareArrangementEntry)entry).getModifiers();
+      for (ArrangementAtomMatchCondition condition : myModifiers) {
+        final Object value = condition.getValue();
+        boolean isInverted = value instanceof Boolean && !((Boolean)value);
+        if (isInverted == modifiers.contains(condition.getType())) {
+          return false;
+        }
+      }
+      return true;
     }
     return false;
   }
