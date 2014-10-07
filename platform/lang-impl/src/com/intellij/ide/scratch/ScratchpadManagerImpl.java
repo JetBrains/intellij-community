@@ -26,9 +26,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class ScratchpadManagerImpl extends ScratchpadManager implements Disposable {
   private final Project myProject;
@@ -61,7 +62,7 @@ public class ScratchpadManagerImpl extends ScratchpadManager implements Disposab
 
   private static void updateHistory(Project project, Language language) {
     String[] values = PropertiesComponent.getInstance(project).getValues(ScratchpadManager.class.getName());
-    ArrayList<String> lastUsed = new ArrayList<String>(5);
+    List<String> lastUsed = ContainerUtil.newArrayListWithCapacity(5);
     lastUsed.add(language.getID());
     if (values != null) {
       for (String value : values) {

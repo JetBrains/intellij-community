@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -65,25 +64,17 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
   
   public static List<String> getLastUsedLanguagesIds(Project project) {
     String[] values = PropertiesComponent.getInstance(project).getValues(ScratchpadManager.class.getName());
-    if (values == null) {
-      return ContainerUtil.emptyList();
-    }
-    return ContainerUtil.list(values);
+    return values == null ? ContainerUtil.<String>emptyList() : ContainerUtil.list(values);
   }
   
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
     
-    Language context = null;
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
-    
-    if (file != null) {
-      context = file.getLanguage();
-    }
-    
+    Language context = file != null ? file.getLanguage() : null;
+
     ListPopup popup = buildLanguagePopup(project, context, new Consumer<Language>() {
       @Override
       public void consume(Language language) {
@@ -98,7 +89,7 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
   @NotNull
   static ListPopup buildLanguagePopup(@NotNull Project project, @Nullable Language context, final Consumer<Language> onChoosen) {
     List<Language> languages = LanguageUtil.getFileLanguages();
-    final List<String> ids = new ArrayList<String>(getLastUsedLanguagesIds(project));
+    final List<String> ids = ContainerUtil.newArrayList(getLastUsedLanguagesIds(project));
     if (context != null) {
       ids.add(context.getID());
     }
@@ -108,7 +99,7 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
     
     ContainerUtil.sort(languages, new Comparator<Language>() {
       @Override
-      public int compare(Language o1, Language o2) {
+      public int compare(@NotNull Language o1, @NotNull Language o2) {
         int ind1 = ids.indexOf(o1.getID());
         int ind2 = ids.indexOf(o2.getID());
         if (ind1 == -1) ind1 = 666;
