@@ -569,17 +569,23 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private void paintMacThumb(Graphics g, Rectangle thumbBounds) {
-    if (myMacScrollbarHidden) return;
-    
     thumbBounds = getMacScrollBarBounds(thumbBounds, true);
     Graphics2D g2d = (Graphics2D)g;
     RenderingHints oldHints = g2d.getRenderingHints();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    g2d.setColor(adjustColor(new JBColor(Gray._0, Gray._128)));
-    
+    JBColor baseColor = new JBColor(Gray._0, Gray._128);
     int arc = Math.min(thumbBounds.width, thumbBounds.height);
-    g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
+
+    if (alwaysShowTrack()) {
+      g2d.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), UIUtil.isUnderDarcula() ? 100 : 40));
+      g2d.drawRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
+    }
+
+    if (!myMacScrollbarHidden) {
+      g2d.setColor(adjustColor(baseColor));
+      g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
+    }
     
     g2d.setRenderingHints(oldHints);
   }
