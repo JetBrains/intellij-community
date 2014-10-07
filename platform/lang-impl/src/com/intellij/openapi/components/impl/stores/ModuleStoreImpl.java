@@ -48,8 +48,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
   private final ModuleImpl myModule;
 
-  public static final String DEFAULT_STATE_STORAGE = "$MODULE_FILE$";
-
   @SuppressWarnings({"UnusedDeclaration"})
   public ModuleStoreImpl(final ComponentManagerImpl componentManager, final ModuleImpl module) {
     super(componentManager);
@@ -58,7 +56,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
   @Override
   protected FileBasedStorage getMainStorage() {
-    FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE, RoamingType.PER_USER);
+    FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
     assert storage != null;
     return storage;
   }
@@ -176,8 +174,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     final String path = filePath.replace(File.separatorChar, '/');
     LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     final StateStorageManager storageManager = getStateStorageManager();
-    storageManager.clearStateStorage(DEFAULT_STATE_STORAGE);
-    storageManager.addMacro(DEFAULT_STATE_STORAGE, path);
+    storageManager.clearStateStorage(StoragePathMacros.MODULE_FILE);
+    storageManager.addMacro(StoragePathMacros.MODULE_FILE, path);
   }
 
   @Override
