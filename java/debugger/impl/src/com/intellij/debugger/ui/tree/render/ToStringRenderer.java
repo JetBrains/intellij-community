@@ -28,6 +28,7 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.ui.classFilter.ClassFilter;
@@ -78,8 +79,7 @@ public class ToStringRenderer extends NodeRendererImpl {
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       public void evaluationResult(String message) {
         valueDescriptor.setValueLabel(
-          // no need to add quotes and escape characters here, XValueTextRendererImpl handles the presentation
-          message == null? "" : /*"\"" + DebuggerUtils.convertToPresentationString(*/DebuggerUtilsEx.truncateString(message)/*) + "\""*/
+          StringUtil.notNullize(message)
         );
         labelListener.labelChanged();
       }
