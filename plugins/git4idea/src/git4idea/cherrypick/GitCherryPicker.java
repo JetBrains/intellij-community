@@ -170,18 +170,11 @@ public class GitCherryPicker {
     CherryPickData data = updateChangeListManager(commit.getCommit());
     boolean committed = showCommitDialogAndWaitForCommit(repository, commit, data.myChangeList, data.myCommitMessage);
     if (committed) {
-      removeChangeList(data);
+      myChangeListManager.removeChangeList(data.myChangeList);
       successfulCommits.add(commit);
       return true;
     }
     return false;
-  }
-
-  private void removeChangeList(CherryPickData list) {
-    myChangeListManager.setDefaultChangeList(list.myPreviouslyDefaultChangeList);
-    if (!myChangeListManager.getDefaultChangeList().equals(list.myChangeList)) {
-      myChangeListManager.removeChangeList(list.myChangeList);
-    }
   }
 
   private void notifyConflictWarning(@NotNull GitRepository repository, @NotNull GitCommitWrapper commit,
@@ -210,9 +203,8 @@ public class GitCherryPicker {
     final Collection<FilePath> paths = ChangesUtil.getPaths(commit.getChanges());
     refreshChangedFiles(paths);
     final String commitMessage = createCommitMessage(commit);
-    LocalChangeList previouslyDefaultChangeList = myChangeListManager.getDefaultChangeList();
     LocalChangeList changeList = createChangeListAfterUpdate(commit, paths, commitMessage);
-    return new CherryPickData(changeList, commitMessage, previouslyDefaultChangeList);
+    return new CherryPickData(changeList, commitMessage);
   }
 
   @NotNull
@@ -378,14 +370,12 @@ public class GitCherryPicker {
   @NotNull
   private LocalChangeList createChangeList(@NotNull VcsFullCommitDetails commit, @NotNull String commitMessage) {
     Collection<Change> changes = commit.getChanges();
+    String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
+    final LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
     if (!changes.isEmpty()) {
-      String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
-      final LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
       myChangeListManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
-      myChangeListManager.setDefaultChangeList(changeList);
-      return changeList;
     }
-    return myChangeListManager.getDefaultChangeList();
+    return changeList;
   }
 
   @NotNull
@@ -405,12 +395,10 @@ public class GitCherryPicker {
   private static class CherryPickData {
     private final LocalChangeList myChangeList;
     private final String myCommitMessage;
-    private final LocalChangeList myPreviouslyDefaultChangeList;
 
-    private CherryPickData(LocalChangeList list, String message, LocalChangeList previouslyDefaultChangeList) {
+    private CherryPickData(LocalChangeList list, String message) {
       myChangeList = list;
       myCommitMessage = message;
-      myPreviouslyDefaultChangeList = previouslyDefaultChangeList;
     }
   }
 

@@ -82,7 +82,7 @@ Background:
       M conflict.txt "feature version"
       """
     When I cherry-pick the commit bb6453c and don't resolve conflicts
-    Then active changelist is 'feature content (cherry picked from commit bb6453c)'
+    Then there is changelist 'feature content (cherry picked from commit bb6453c)'
     And warning notification is shown 'Cherry-picked with conflicts'
       """
       bb6453c feature content
@@ -137,7 +137,7 @@ Background:
       M conflict.txt "feature version"
       """
     When I cherry-pick the commit bb6453c, resolve conflicts and don't commit
-    Then active changelist is 'feature content (cherry picked from commit bb6453c)'
+    Then there is changelist 'feature content (cherry picked from commit bb6453c)'
     And no notification is shown
 
   Scenario: Cherry-pick 2 commits
