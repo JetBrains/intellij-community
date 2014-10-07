@@ -193,7 +193,7 @@ public class CodeCompletionHandlerBase {
     insertDummyIdentifier(initializationContext[0], hasModifiers, invocationCount);
   }
 
-  private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile, int invocationCount, Caret caret) {
+  private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile, int invocationCount, @NotNull Caret caret) {
     final Ref<CompletionContributor> current = Ref.create(null);
     CompletionInitializationContext context = new CompletionInitializationContext(editor, caret, psiFile, myCompletionType, invocationCount) {
       CompletionContributor dummyIdentifierChanger;
@@ -296,7 +296,8 @@ public class CodeCompletionHandlerBase {
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
-    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
+    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
+                                                                                  parameters, this, freezeSemaphore,
                                                                                   initContext.getOffsetMap(), hasModifiers, lookup);
     Disposer.register(indicator, hostMap);
     Disposer.register(indicator, context.getOffsetMap());
@@ -602,7 +603,7 @@ public class CodeCompletionHandlerBase {
                                                                         final CompletionLookupArranger.StatisticsUpdate update) {
     final Editor editor = indicator.getEditor();
 
-    final int caretOffset = editor.getCaretModel().getOffset();
+    final int caretOffset = indicator.getCaret().getOffset();
     int idEndOffset = indicator.getIdentifierEndOffset();
     if (idEndOffset < 0) {
       idEndOffset = CompletionInitializationContext.calcDefaultIdentifierEnd(editor, caretOffset);
