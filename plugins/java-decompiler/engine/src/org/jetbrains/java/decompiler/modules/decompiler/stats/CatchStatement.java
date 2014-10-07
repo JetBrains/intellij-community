@@ -160,11 +160,11 @@ public class CatchStatement extends Statement {
 
     if (isLabeled()) {
       buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
 
     buf.append(indstr).append("try {").append(new_line_separator);
-    tracer.incrementSourceLine();
+    tracer.incrementCurrentSourceLine();
 
     buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
     buf.append(indstr).append("}");
@@ -183,14 +183,14 @@ public class CatchStatement extends Statement {
       }
       buf.append(vars.get(i - 1).toJava(indent, tracer));
       buf.append(") {").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
       buf.append(ExprProcessor.jmpWrapper(stats.get(i), indent + 1, true, tracer)).append(indstr)
         .append("}");
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
     buf.append(new_line_separator);
 
-    tracer.incrementSourceLine();
+    tracer.incrementCurrentSourceLine();
     return buf.toString();
   }
 

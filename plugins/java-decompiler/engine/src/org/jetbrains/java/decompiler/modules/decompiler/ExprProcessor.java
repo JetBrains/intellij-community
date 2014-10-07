@@ -778,13 +778,13 @@ public class ExprProcessor implements CodeConstants {
           buf.append(" label").append(edge.closure.id);
         }
         buf.append(";").append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
       }
     }
 
     if (buf.length() == 0 && semicolon) {
       buf.append(InterpreterUtil.getIndentString(indent)).append(";").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
 
     return buf.toString();
@@ -828,7 +828,7 @@ public class ExprProcessor implements CodeConstants {
           buf.append(";");
         }
         buf.append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
       }
     }
 

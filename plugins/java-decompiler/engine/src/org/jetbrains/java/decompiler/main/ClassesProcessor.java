@@ -268,7 +268,7 @@ public class ClassesProcessor {
 
       int index = cl.qualifiedName.lastIndexOf("/");
       if (index >= 0) {
-        total_offset_lines++;
+        total_offset_lines+=2;
         String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
 
         buffer.append("package ");
@@ -283,6 +283,7 @@ public class ClassesProcessor {
         buffer.append(lineSeparator);
         total_offset_lines += import_lines_written + 1;
       }
+      //buffer.append(lineSeparator);
 
       buffer.append(classBuffer);
 

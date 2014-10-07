@@ -124,7 +124,7 @@ public class CatchAllStatement extends Statement {
     boolean labeled = isLabeled();
     if (labeled) {
       buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
 
     List<StatEdge> lstSuccs = first.getSuccessorEdges(STATEDGE_DIRECT_ALL);
@@ -137,30 +137,30 @@ public class CatchAllStatement extends Statement {
     }
     else {
       buf.append(indstr).append("try {").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
       buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
       buf.append(indstr).append("}");
     }
 
     buf.append(isFinally ? " finally" :
                " catch (" + vars.get(0).toJava(indent, tracer) + ")").append(" {").append(new_line_separator);
-    tracer.incrementSourceLine();
+    tracer.incrementCurrentSourceLine();
 
     if (monitor != null) {
       indstr1 = InterpreterUtil.getIndentString(indent + 1);
       buf.append(indstr1).append("if(").append(monitor.toJava(indent, tracer)).append(") {").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
 
     buf.append(ExprProcessor.jmpWrapper(handler, indent + 1 + (monitor != null ? 1 : 0), true, tracer));
 
     if (monitor != null) {
       buf.append(indstr1).append("}").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
 
     buf.append(indstr).append("}").append(new_line_separator);
-    tracer.incrementSourceLine();
+    tracer.incrementCurrentSourceLine();
 
     return buf.toString();
   }

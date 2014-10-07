@@ -80,17 +80,17 @@ public class SynchronizedStatement extends Statement {
 
     if (isLabeled()) {
       buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
 
     buf.append(indstr).append(headexprent.get(0).toJava(indent, tracer)).append(" {").append(new_line_separator);
-    tracer.incrementSourceLine();
+    tracer.incrementCurrentSourceLine();
 
     buf.append(ExprProcessor.jmpWrapper(body, indent + 1, true, tracer));
-    tracer.incrementSourceLine();
+    tracer.incrementCurrentSourceLine();
 
     buf.append(indstr).append("}").append(new_line_separator);
-    tracer.incrementSourceLine();
+    tracer.incrementCurrentSourceLine();
 
     return buf.toString();
   }
