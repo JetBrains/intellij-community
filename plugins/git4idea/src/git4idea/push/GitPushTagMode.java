@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class GitPushTagMode implements VcsPushOptionValue {
 
-  public static GitPushTagMode ALL = new GitPushTagMode("All", "--tags");
-  public static GitPushTagMode FOLLOW = new GitPushTagMode("Current Branch", "--follow-tags");
+  public static final GitPushTagMode ALL = new GitPushTagMode("All", "--tags");
+  public static final GitPushTagMode FOLLOW = new GitPushTagMode("Current Branch", "--follow-tags");
 
-  @NotNull public final String myTitle;
-  @NotNull public final String myArgument;
+  @NotNull private String myTitle;
+  @NotNull private String myArgument;
 
   // for deserialization
   @SuppressWarnings("UnusedDeclaration")
@@ -52,6 +52,18 @@ public final class GitPushTagMode implements VcsPushOptionValue {
   @NotNull
   public String getArgument() {
     return myArgument;
+  }
+
+  // for deserialization
+  @SuppressWarnings("UnusedDeclaration")
+  public void setTitle(@NotNull String title) {
+    myTitle = title;
+  }
+
+  // for deserialization
+  @SuppressWarnings("UnusedDeclaration")
+  public void setArgument(@NotNull String argument) {
+    myArgument = argument;
   }
 
   @Override
