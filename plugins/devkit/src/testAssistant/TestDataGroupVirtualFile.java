@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -103,7 +104,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public byte[] contentsToByteArray() throws IOException {
-    throw new UnsupportedOperationException();
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   @Override
