@@ -223,49 +223,49 @@ Background:
     Given commit eef9832 on branch master
       """
       fix #1 manually incorporated
-      M file.txt "feature changes"
+      M file.txt "initial content\nfeature changes"
       """
     When I cherry-pick the commit f5027a3
     Then the last commit is eef9832
     And warning notification is shown 'Nothing to cherry-pick'
       """
-      All changes from f5027a3 fix #1 have already been applied
+      All changes from f5027a3 have already been applied
       """
 
   Scenario: Cherry-pick 3 commits, second commit have already been applied (IDEA-73548)
     Given commit c123abc on branch feature
       """
       fix #2
-      M file.txt "feature changes\nmore feature changes"
+      A newfile.txt "initial content"
       """
     Given commit d123abc on branch feature
       """
       fix #3
-      M file.txt "feature changes\nmore feature changes\nmore feature changes"
+      M newfile.txt "initial content\nfeature changes"
       """
     Given commit e123abc on branch feature
       """
       fix for f2
-      M a.txt "feature changes"
+      M a.txt "initial content\nfeature changes"
       """
     Given commit e098fed on branch master
       """
       fix for f2 manually incorporated
-      M a.txt "feature changes"
+      M a.txt "initial content\nfeature changes"
       """
     When I cherry-pick commits c123abc, d123abc and e123abc
     Then `git log -2` should return
       """
       fix #3
-      (cherry picked from commit c123abc)
+      (cherry picked from commit d123abc)
       -----
       fix #2
-      (cherry picked from commit f5027a3)
+      (cherry picked from commit c123abc)
       """
-    And warning notification is shown 'Cherry-picked 2 commits'
+    And success notification is shown 'Cherry-picked 2 commits from 3'
       """
       c123abc fix #2
       d123abc fix #3
       <hr/>
-      Commit e123abc wasn't picked, because all changes from it have already been applied.
+      e123abc wasn't picked, because all changes from it have already been applied.
       """

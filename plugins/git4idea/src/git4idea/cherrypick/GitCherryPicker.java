@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -52,7 +53,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -240,7 +243,7 @@ public class GitCherryPicker {
       public void run() {
         myChangeListManager.invokeAfterUpdate(new Runnable() {
                                                 public void run() {
-                                                  changeList.set(createChangeList(commit, commitMessage));
+                                                  changeList.set(createChangeListIfThereAreChanges(commit, commitMessage));
                                                 }
                                               }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "Cherry-pick",
                                               new Consumer<VcsDirtyScopeManager>() {
@@ -369,8 +372,8 @@ public class GitCherryPicker {
     else if (!successfulCommits.isEmpty()) {
       String title = String.format("Cherry-picked %d commits from %d", successfulCommits.size(),
                                    successfulCommits.size() + alreadyPicked.size());
-      String description = getCommitsDetails(successfulCommits) + "<p/>" + formAlreadyPickedDescription(alreadyPicked, true);
-      VcsNotifier.getInstance(myProject).notifyImportantWarning(title, description);
+      String description = getCommitsDetails(successfulCommits) + "<hr/>" + formAlreadyPickedDescription(alreadyPicked, true);
+      VcsNotifier.getInstance(myProject).notifySuccess(title, description);
     }
     else {
       VcsNotifier.getInstance(myProject).notifyImportantWarning("Nothing to cherry-pick",
@@ -421,18 +424,65 @@ public class GitCherryPicker {
   }
 
   @Nullable
-  private LocalChangeList createChangeList(@NotNull VcsFullCommitDetails commit, @NotNull String commitMessage) {
-    Collection<Change> changes = commit.getChanges();
-    String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
-    final LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
-    if (!changes.isEmpty()) {
-      myChangeListManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
+  private LocalChangeList createChangeListIfThereAreChanges(@NotNull VcsFullCommitDetails commit, @NotNull String commitMessage) {
+    Collection<Change> originalChanges = commit.getChanges();
+    if (originalChanges.isEmpty()) {
+      LOG.info("Empty commit " + commit.getId());
+      return null;
     }
-    if (!changeList.getChanges().isEmpty()) {
+    if (noChangesAfterCherryPick(originalChanges)) {
+      LOG.info("No changes after cherry-picking " + commit.getId());
+      return null;
+    }
+
+    String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
+    LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
+    changeList = (LocalChangeList)moveChanges(originalChanges, changeList);
+    if (changeList != null && !changeList.getChanges().isEmpty()) {
       return changeList;
     }
+    LOG.warn("No changes were moved to the changelist. Changes from commit: " + originalChanges +
+             "\nAll changes: " + myChangeListManager.getAllChanges());
     myChangeListManager.removeChangeList(changeList);
     return null;
+  }
+
+  private boolean noChangesAfterCherryPick(@NotNull Collection<Change> originalChanges) {
+    final Collection<Change> allChanges = myChangeListManager.getAllChanges();
+    return !ContainerUtil.exists(originalChanges, new Condition<Change>() {
+      @Override
+      public boolean value(Change change) {
+        return allChanges.contains(change);
+      }
+    });
+  }
+
+  @Nullable
+  private ChangeList moveChanges(@NotNull Collection<Change> originalChanges, @NotNull LocalChangeList targetChangeList) {
+    // 1. We have to listen to CLM changes, because moveChangesTo is asynchronous
+    // 2. We have to collect the real target change list, because the original target list (passed to moveChangesTo) is not updated in time.
+    final CountDownLatch moveChangesWaiter = new CountDownLatch(1);
+    final AtomicReference<ChangeList> resultingChangeList = new AtomicReference<ChangeList>();
+    ChangeListAdapter listener = new ChangeListAdapter() {
+      @Override
+      public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+        resultingChangeList.set(toList);
+        moveChangesWaiter.countDown();
+      }
+    };
+    try {
+      myChangeListManager.addChangeListListener(listener);
+      myChangeListManager.moveChangesTo(targetChangeList, originalChanges.toArray(new Change[originalChanges.size()]));
+      moveChangesWaiter.await(100, TimeUnit.SECONDS);
+      return resultingChangeList.get();
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+      return null;
+    }
+    finally {
+      myChangeListManager.removeChangeListListener(listener);
+    }
   }
 
   @NotNull
