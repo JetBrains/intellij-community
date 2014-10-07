@@ -25,8 +25,8 @@ public final class GitPushTagMode implements VcsPushOptionValue {
   public static GitPushTagMode ALL = new GitPushTagMode("All", "--tags");
   public static GitPushTagMode FOLLOW = new GitPushTagMode("Current Branch", "--follow-tags");
 
-  @NotNull private final String myTitle;
-  @NotNull private final String myArgument;
+  @NotNull public final String myTitle;
+  @NotNull public final String myArgument;
 
   // for deserialization
   @SuppressWarnings("UnusedDeclaration")
