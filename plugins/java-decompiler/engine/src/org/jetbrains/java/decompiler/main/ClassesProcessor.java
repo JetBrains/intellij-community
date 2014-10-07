@@ -236,7 +236,7 @@ public class ClassesProcessor {
     }
   }
 
-  public void writeClass(StructClass cl, StringBuilder buffer) throws IOException {
+  public void writeClass(StructClass cl, TextBuffer buffer) throws IOException {
     ClassNode root = mapRootClasses.get(cl.qualifiedName);
     if (root.type != ClassNode.CLASS_ROOT) {
       return;
@@ -260,7 +260,7 @@ public class ClassesProcessor {
 
       new NestedMemberAccess().propagateMemberAccess(root);
 
-      StringBuilder classBuffer = new StringBuilder(AVERAGE_CLASS_SIZE);
+      TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
       new ClassWriter().classToJava(root, classBuffer, 0);
 
       String lineSeparator = DecompilerContext.getNewLineSeparator();

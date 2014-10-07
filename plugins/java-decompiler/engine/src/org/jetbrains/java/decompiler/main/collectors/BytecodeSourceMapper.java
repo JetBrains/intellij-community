@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class BytecodeSourceMapper {
@@ -37,7 +38,7 @@ public class BytecodeSourceMapper {
     }
   }
 
-  public void dumpMapping(StringBuilder buffer) {
+  public void dumpMapping(TextBuffer buffer) {
 
     String lineSeparator = DecompilerContext.getNewLineSeparator();
     String indentstr1 = InterpreterUtil.getIndentString(1);

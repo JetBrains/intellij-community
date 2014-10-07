@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.main.collectors;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.struct.StructContext;
 
 import java.util.*;
@@ -107,7 +108,7 @@ public class ImportCollector {
     return retname == null ? nshort : retname;
   }
 
-  public int writeImports(StringBuilder buffer) {
+  public int writeImports(TextBuffer buffer) {
 
     int importlines_written = 0;
     String new_line_separator = DecompilerContext.getNewLineSeparator();

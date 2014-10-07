@@ -15,9 +15,11 @@
  */
 package org.jetbrains.java.decompiler.struct;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
+
 public interface IDecompiledData {
 
   String getClassEntryName(StructClass cl, String entryname);
 
-  String getClassContent(StructClass cl);
+  TextBuffer getClassContent(StructClass cl);
 }

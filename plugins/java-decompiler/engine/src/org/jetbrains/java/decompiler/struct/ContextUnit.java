@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.struct;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader.Link;
@@ -110,7 +111,7 @@ public class ContextUnit {
           StructClass cl = classes.get(i);
           String entryName = decompiledData.getClassEntryName(cl, classEntries.get(i));
           if (entryName != null) {
-            String content = decompiledData.getClassContent(cl);
+            TextBuffer content = decompiledData.getClassContent(cl);
             if (content != null) {
               resultSaver.saveClassFile(filename, cl.qualifiedName, entryName, content);
             }
@@ -142,8 +143,8 @@ public class ContextUnit {
           StructClass cl = classes.get(i);
           String entryName = decompiledData.getClassEntryName(cl, classEntries.get(i));
           if (entryName != null) {
-            String content = decompiledData.getClassContent(cl);
-            resultSaver.saveClassEntry(archivePath, filename, cl.qualifiedName, entryName, content);
+            TextBuffer content = decompiledData.getClassContent(cl);
+            resultSaver.saveClassEntry(archivePath, filename, cl.qualifiedName, entryName, content.toString());
           }
         }
 
