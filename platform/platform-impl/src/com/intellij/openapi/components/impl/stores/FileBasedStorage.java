@@ -21,7 +21,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,8 +42,6 @@ import java.util.Collections;
 import java.util.Set;
 
 public class FileBasedStorage extends XmlElementStorage {
-  private static final Logger LOG = Logger.getInstance(FileBasedStorage.class);
-
   private final String myFilePath;
   private final File myFile;
   private volatile VirtualFile myCachedVirtualFile;
@@ -104,11 +101,11 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   @Override
-  protected MySaveSession createSaveSession(@NotNull StorageData storageData) {
+  protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
     return new FileSaveSession(storageData);
   }
 
-  private class FileSaveSession extends MySaveSession {
+  private class FileSaveSession extends XmlElementStorageSaveSession {
     protected FileSaveSession(@NotNull StorageData storageData) {
       super(storageData);
     }
@@ -132,6 +129,10 @@ public class FileBasedStorage extends XmlElementStorage {
       }
       catch (Throwable e) {
         LOG.error(e);
+      }
+
+      if (LOG.isDebugEnabled() && myFileSpec.equals(StoragePathMacros.MODULE_FILE)) {
+        LOG.debug("doSave " + getFilePath());
       }
 
       if (content == null) {
@@ -300,5 +301,10 @@ public class FileBasedStorage extends XmlElementStorage {
     File file = new File(myFile.getAbsolutePath());
     FileUtil.writeToFile(file, out.getInternalBuffer(), 0, out.size());
     return file;
+  }
+
+  @Override
+  public String toString() {
+    return getFilePath();
   }
 }
