@@ -16,23 +16,27 @@
 
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author mike
- */
-public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, ModuleComponent {
+@State(
+  name = "VcsManagerConfiguration",
+  storages = @Storage(file = StoragePathMacros.MODULE_FILE)
+)
+public class VcsManagerPerModuleConfiguration implements ModuleComponent, PersistentStateComponent<Element> {
   private final Module myModule;
   public String ACTIVE_VCS_NAME = "";
   public boolean USE_PROJECT_VCS = true;
@@ -47,7 +51,6 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
 
   @Override
   public void moduleAdded() {
-
   }
 
   @Override
@@ -71,27 +74,32 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
     return "VcsManagerConfiguration";
   }
 
+  @Nullable
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManagerEx.getInstanceEx(myModule.getProject());
-    if (!USE_PROJECT_VCS) {
-      final VirtualFile[] roots = ModuleRootManager.getInstance(myModule).getContentRoots();
+  public Element getState() {
+    return null;
+  }
 
+  @Override
+  public void loadState(Element state) {
+    try {
+      //noinspection deprecation
+      DefaultJDOMExternalizer.readExternal(this, state);
+    }
+    catch (InvalidDataException ignored) {
+    }
+
+    if (!USE_PROJECT_VCS) {
       StartupManager.getInstance(myModule.getProject()).runWhenProjectIsInitialized(new Runnable() {
         @Override
         public void run() {
-          for(VirtualFile file: roots) {
+          ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManagerEx.getInstanceEx(myModule.getProject());
+          for(VirtualFile file: ModuleRootManager.getInstance(myModule).getContentRoots()) {
             vcsManager.setDirectoryMapping(file.getPath(), ACTIVE_VCS_NAME);
           }
           vcsManager.cleanupMappings();
         }
       });
     }
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    throw new WriteExternalException();
   }
 }

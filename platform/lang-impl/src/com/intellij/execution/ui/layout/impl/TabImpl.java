@@ -16,23 +16,12 @@
 
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.Tab;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
+import com.intellij.execution.ui.layout.Tab;
 
 import javax.swing.*;
 
 public class TabImpl extends AbstractTab implements Tab {
-
-  public TabImpl(Element element) {
-    read(element);
-  }
-
-  public void read(final Element element) {
-    XmlSerializer.deserializeInto(this, element);
-  }
-
   TabImpl() {
   }
 
@@ -64,12 +53,6 @@ public class TabImpl extends AbstractTab implements Tab {
 
   public void setDisplayName(final String displayName) {
     myDisplayName = displayName;
-  }
-
-
-  public void write(final Element parentNode) {
-    final Element element = XmlSerializer.serialize(this);
-    parentNode.addContent(element);
   }
 
   public float getLeftProportion() {

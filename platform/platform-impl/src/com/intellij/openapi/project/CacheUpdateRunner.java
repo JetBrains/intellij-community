@@ -263,7 +263,7 @@ public class CacheUpdateRunner extends DumbModeTask {
         try {
           final FileContent fileContent = myQueue.take(myInnerIndicator);
           if (fileContent == null) {
-            myFinished.set(Boolean.TRUE);
+            myFinished.set(true);
             return;
           }
 
@@ -295,6 +295,7 @@ public class CacheUpdateRunner extends DumbModeTask {
                 @Override
                 public void run() {
                   if (myProcessInReadAction) {
+                    // in wait methods we don't want to deadlock by grabbing write lock (or having it in queue) and trying to run read action in separate thread
                     if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)) {
                       throw new ProcessCanceledException();
                     }
