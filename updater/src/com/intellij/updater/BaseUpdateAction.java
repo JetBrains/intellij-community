@@ -57,6 +57,7 @@ public abstract class BaseUpdateAction extends PatchAction {
     BufferedInputStream newerFileIn = new BufferedInputStream(new FileInputStream(newerFile));
     try {
       writeDiff(olderFileIn, newerFileIn, patchOutput);
+      newerFile.setLastModified(olderFile.lastModified());
     }
     finally {
       olderFileIn.close();

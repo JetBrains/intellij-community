@@ -23,6 +23,7 @@ public class CreateAction extends PatchAction {
 
     writeExecutableFlag(patchOutput, newerFile);
     Utils.copyFileToStream(newerFile, patchOutput);
+    newerFile.setLastModified(olderFile.lastModified());
 
     patchOutput.closeEntry();
   }

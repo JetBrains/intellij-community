@@ -19,6 +19,7 @@ public class UpdateAction extends BaseUpdateAction {
     patchOutput.putNextEntry(new ZipEntry(myPath));
     writeExecutableFlag(patchOutput, newerFile);
     writeDiff(olderFile, newerFile, patchOutput);
+    newerFile.setLastModified(olderFile.lastModified());
     patchOutput.closeEntry();
   }
 
