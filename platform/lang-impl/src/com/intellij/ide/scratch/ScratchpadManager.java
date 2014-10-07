@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class ScratchpadManager {
   public static ScratchpadManager getInstance(@NotNull Project project) {
@@ -29,7 +28,4 @@ public abstract class ScratchpadManager {
 
   @NotNull
   public abstract VirtualFile createScratchFile(@NotNull Language language);
-
-  @Nullable
-  public abstract Language getLatestLanguage();
 }
