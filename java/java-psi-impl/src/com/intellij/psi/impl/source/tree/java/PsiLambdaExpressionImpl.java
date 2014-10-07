@@ -37,6 +37,24 @@ import javax.swing.*;
 
 public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements PsiLambdaExpression {
 
+  private static final ControlFlowPolicy ourPolicy = new ControlFlowPolicy() {
+    @Nullable
+    @Override
+    public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
+      return null;
+    }
+
+    @Override
+    public boolean isParameterAccepted(@NotNull PsiParameter psiParameter) {
+      return true;
+    }
+
+    @Override
+    public boolean isLocalVariableAccepted(@NotNull PsiLocalVariable psiVariable) {
+      return true;
+    }
+  };
+
   public PsiLambdaExpressionImpl() {
     super(JavaElementType.LAMBDA_EXPRESSION);
   }
@@ -92,9 +110,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     final PsiElement body = getBody();
     if (body instanceof PsiCodeBlock) {
       try {
-        ControlFlow controlFlow =
-          ControlFlowFactory.getInstance(getProject()).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy
-            .getInstance());
+        ControlFlow controlFlow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, ourPolicy);
         int startOffset = controlFlow.getStartOffset(body);
         int endOffset = controlFlow.getEndOffset(body);
         if (startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset)) {
