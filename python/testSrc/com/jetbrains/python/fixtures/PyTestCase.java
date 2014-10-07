@@ -16,6 +16,7 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -71,6 +72,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yole
@@ -237,6 +239,19 @@ public abstract class PyTestCase extends UsefulTestCase {
       result.add(info.getElement());
     }
 
+    return result;
+  }
+
+  /**
+   * @return completion strings suggested by {@link com.intellij.testFramework.fixtures.CodeInsightTestFixture#completeBasic()}
+   */
+  @NotNull
+  protected List<String> getCompletionStrings() {
+    final LookupElement[] elements = myFixture.completeBasic();
+    final List<String> result = new ArrayList<String>(elements.length);
+    for (final LookupElement element : elements) {
+      result.add(element.getLookupString());
+    }
     return result;
   }
 
