@@ -147,9 +147,12 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private IdeEventQueue() {
-    EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
-    systemEventQueue.push(this);
+    final Application application = ApplicationManager.getApplication();
+    if (application == null || !application.isUnitTestMode()) {
+      EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+      assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
+      systemEventQueue.push(this);
+    }
     addIdleTimeCounterRequest();
 
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
