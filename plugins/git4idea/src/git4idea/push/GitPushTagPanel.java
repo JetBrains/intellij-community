@@ -33,7 +33,7 @@ class GitPushTagPanel extends VcsPushOptionsPanel {
   private final ComboBox myCombobox;
   private final JBCheckBox myCheckBox;
 
-  GitPushTagPanel(@NotNull GitPushTagMode defaultMode, boolean followTagsSupported) {
+  GitPushTagPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported) {
     String checkboxText = "Push Tags";
     if (followTagsSupported) {
       checkboxText += ": ";
