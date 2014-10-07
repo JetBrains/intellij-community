@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -81,7 +82,7 @@ public class ExitExprent extends Exprent {
     tracer.addMapping(bytecode);
 
     if (exittype == EXIT_RETURN) {
-      StringBuilder buffer = new StringBuilder();
+      TextBuffer buffer = new TextBuffer();
 
       if (rettype.type != CodeConstants.TYPE_VOID) {
         buffer.append(" ");
@@ -115,7 +116,7 @@ public class ExitExprent extends Exprent {
           if (classname != null) {
             VarType exctype = new VarType(classname, true);
 
-            StringBuilder buffer = new StringBuilder();
+            TextBuffer buffer = new TextBuffer();
             ExprProcessor.getCastedExprent(value, exctype, buffer, indent, false, tracer);
 
             return "throw " + buffer.toString();

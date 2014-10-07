@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -83,7 +84,7 @@ public class VarExprent extends Exprent {
 
   @Override
   public String toJava(int indent, BytecodeMappingTracer tracer) {
-    StringBuilder buffer = new StringBuilder();
+    TextBuffer buffer = new TextBuffer();
 
     tracer.addMapping(bytecode);
 

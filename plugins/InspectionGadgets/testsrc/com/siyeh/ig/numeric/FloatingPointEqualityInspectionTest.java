@@ -13,13 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.java.decompiler.struct;
+package com.siyeh.ig.numeric;
 
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.Nullable;
 
-public interface IDecompiledData {
+/**
+ * @author Bas Leijdekkers
+ */
+public class FloatingPointEqualityInspectionTest extends LightInspectionTestCase {
 
-  String getClassEntryName(StructClass cl, String entryname);
+  public void testFloatingPointEquality() { doTest(); }
 
-  TextBuffer getClassContent(StructClass cl);
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new FloatingPointEqualityInspection();
+  }
 }
