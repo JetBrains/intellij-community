@@ -94,7 +94,7 @@ public class NewExprent extends Exprent {
     if (anonymous) {
       ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newtype.value);
 
-      return node.anonimousClassType;
+      return node.anonymousClassType;
     }
     else {
       return newtype;
@@ -232,13 +232,13 @@ public class NewExprent extends Exprent {
       if (!enumconst) {
         String enclosing = null;
         if (!lambda && constructor != null) {
-          enclosing = getQualifiedNewInstance(child.anonimousClassType.value, constructor.getLstParameters(), indent, tracer);
+          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getLstParameters(), indent, tracer);
         }
 
-        String typename = ExprProcessor.getCastTypeName(child.anonimousClassType);
+        String typename = ExprProcessor.getCastTypeName(child.anonymousClassType);
 
         if (enclosing != null) {
-          ClassNode anonimousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonimousClassType.value);
+          ClassNode anonimousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonymousClassType.value);
           if (anonimousNode != null) {
             typename = anonimousNode.simpleName;
           }
