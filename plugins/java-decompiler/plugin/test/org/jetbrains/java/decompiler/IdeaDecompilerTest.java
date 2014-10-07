@@ -91,7 +91,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNavigation() {
-    VirtualFile file = getTestFile();
+    VirtualFile file = getTestFile("Navigation.class");
     myFixture.openFileInEditor(file);
 
     doTestNavigation(11, 14, 14, 10);  // to "m2()"
@@ -99,8 +99,24 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
     doTestNavigation(16, 28, 15, 13);  // to "int r"
   }
 
-  private VirtualFile getTestFile() {
-    String path = PluginPathManager.getPluginHomePath("java-decompiler") + "/plugin/testData/" + getTestName(false) + ".class";
+  public void testHighlighting() {
+    VirtualFile file = getTestFile("Navigation.class");
+    myFixture.openFileInEditor(file);
+
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(new Runnable() {
+      public void run() {
+        myFixture.getEditor().getCaretModel().moveToOffset(offset(11, 14));  // m2(): usage, declaration
+        assertEquals(2, myFixture.doHighlighting().size());
+        myFixture.getEditor().getCaretModel().moveToOffset(offset(15, 21));  // int i: usage, declaration
+        assertEquals(2, myFixture.doHighlighting().size());
+        myFixture.getEditor().getCaretModel().moveToOffset(offset(16, 28));  // int r: usage, declaration
+        assertEquals(2, myFixture.doHighlighting().size());
+      }
+    });
+  }
+
+  private static VirtualFile getTestFile(String name) {
+    String path = PluginPathManager.getPluginHomePath("java-decompiler") + "/plugin/testData/" + name;
     VirtualFile file = StandardFileSystems.local().findFileByPath(path);
     assertNotNull(path, file);
     return file;
@@ -116,21 +132,5 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
 
   private int offset(int line, int column) {
     return myFixture.getEditor().getDocument().getLineStartOffset(line - 1) + column - 1;
-  }
-
-  public void testHighlighting() {
-    VirtualFile file = getTestFile();
-    myFixture.openFileInEditor(file);
-
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(new Runnable() {
-      public void run() {
-        myFixture.getEditor().getCaretModel().moveToOffset(offset(11, 14));  // m2(): usage, declaration
-        assertEquals(2, myFixture.doHighlighting().size());
-        myFixture.getEditor().getCaretModel().moveToOffset(offset(15, 21));  // int i: usage, declaration
-        assertEquals(2, myFixture.doHighlighting().size());
-        myFixture.getEditor().getCaretModel().moveToOffset(offset(16, 28));  // int r: usage, declaration
-        assertEquals(2, myFixture.doHighlighting().size());
-      }
-    });
   }
 }

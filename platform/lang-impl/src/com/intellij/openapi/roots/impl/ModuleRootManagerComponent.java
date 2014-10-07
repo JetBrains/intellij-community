@@ -27,15 +27,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 @State(
   name = "NewModuleRootManager",
   storages = {
-    @Storage(
-      id = ClassPathStorageUtil.DEFAULT_STORAGE,
-      file = "$MODULE_FILE$"
-    ),
-
-    @Storage(
-          id = ClasspathStorage.SPECIAL_STORAGE,
-          storageClass = ClasspathStorage.class
-    )
+    @Storage(id = ClassPathStorageUtil.DEFAULT_STORAGE, file = StoragePathMacros.MODULE_FILE),
+    @Storage(id = ClasspathStorage.SPECIAL_STORAGE, storageClass = ClasspathStorage.class)
   },
   storageChooser = ModuleRootManagerComponent.StorageChooser.class
 )

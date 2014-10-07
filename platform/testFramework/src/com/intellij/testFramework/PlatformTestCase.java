@@ -599,6 +599,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public void runBare() throws Throwable {
     if (!shouldRunTest()) return;
 
+    replaceIdeEventQueueSafely();
     try {
       runBareImpl();
     }

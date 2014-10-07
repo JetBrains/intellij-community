@@ -653,6 +653,7 @@ public class CodeCompletionHandlerBase {
       hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
+          PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostEditor.getDocument());
           PsiFile targetFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, caret.getOffset());
           Editor targetEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, targetFile);
           int targetCaretOffset = targetEditor.getCaretModel().getOffset();
