@@ -47,6 +47,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testReturnStatementsInsideNestedLambdasDuringVoidValueCompatibilityChecks() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
@@ -30,12 +29,12 @@ import java.util.Set;
  */
 public class UsageViewContext {
   protected final SearchContext mySearchContext;
-  private final SearchStarter mySearchStarter;
+  private final Runnable mySearchStarter;
   private UsageView myUsageView;
   protected final Configuration myConfiguration;
   private Set<Usage> myExcludedSet;
 
-  protected UsageViewContext(Configuration configuration, SearchContext searchContext, SearchStarter searchStarter) {
+  protected UsageViewContext(Configuration configuration, SearchContext searchContext, Runnable searchStarter) {
     myConfiguration = configuration;
     mySearchContext = searchContext;
     mySearchStarter = searchStarter;
@@ -60,13 +59,15 @@ public class UsageViewContext {
 
   public void configure(@NotNull UsageViewPresentation presentation) {
     final String pattern = myConfiguration.getMatchOptions().getSearchPattern();
-    presentation.setScopeText(myConfiguration.getMatchOptions().getScope().getDisplayName());
+    final String scopeText = myConfiguration.getMatchOptions().getScope().getDisplayName();
+    presentation.setScopeText(scopeText);
     final String usagesString = SSRBundle.message("occurrences.of", pattern);
     presentation.setUsagesString(usagesString);
     presentation.setTabText(StringUtil.shortenTextWithEllipsis(usagesString, 60, 0, false));
     presentation.setUsagesWord(SSRBundle.message("occurrence"));
-    presentation.setCodeUsagesString(SSRBundle.message("found.occurrences"));
+    presentation.setCodeUsagesString(SSRBundle.message("found.occurrences", scopeText));
     presentation.setTargetsNodeText(SSRBundle.message("targets.node.text"));
+    presentation.setCodeUsages(false);
   }
 
   protected void configureActions() {}
@@ -76,17 +77,7 @@ public class UsageViewContext {
     @NotNull
     @Override
     public String getPresentableText() {
-      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-      final String pattern = matchOptions.getSearchPattern();
-      final String scope = matchOptions.getScope().getDisplayName();
-      if (myConfiguration instanceof ReplaceConfiguration) {
-        final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)myConfiguration;
-        final String replacement = replaceConfiguration.getOptions().getReplacement();
-        return SSRBundle.message("replace.occurrences.of.0.with.1.in.2", pattern, replacement, scope);
-      }
-      else {
-        return SSRBundle.message("occurrences.of.0.in.1", pattern, scope);
-      }
+      return myConfiguration.getMatchOptions().getSearchPattern();
     }
 
     @Override
@@ -102,7 +93,7 @@ public class UsageViewContext {
 
     @Override
     public void findUsages() {
-      mySearchStarter.startSearch();
+      mySearchStarter.run();
     }
 
     @Override
@@ -175,7 +166,19 @@ public class UsageViewContext {
     @NotNull
     @Override
     public String getLongDescriptiveName() {
-      return StringUtil.shortenTextWithEllipsis(getPresentableText(), 150, 0, true);
+      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+      final String pattern = matchOptions.getSearchPattern();
+      final String scope = matchOptions.getScope().getDisplayName();
+      final String result;
+      if (myConfiguration instanceof ReplaceConfiguration) {
+        final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)myConfiguration;
+        final String replacement = replaceConfiguration.getOptions().getReplacement();
+        result = SSRBundle.message("replace.occurrences.of.0.with.1.in.2", pattern, replacement, scope);
+      }
+      else {
+        result = SSRBundle.message("occurrences.of.0.in.1", pattern, scope);
+      }
+      return StringUtil.shortenTextWithEllipsis(result, 150, 0, true);
     }
   }
 }

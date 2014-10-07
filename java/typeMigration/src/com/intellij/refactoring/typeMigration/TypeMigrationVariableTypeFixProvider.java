@@ -56,6 +56,11 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
           LOG1.error(e);
         }
       }
+
+      @Override
+      public boolean startInWriteAction() {
+        return true;
+      }
     }};
   }
 }

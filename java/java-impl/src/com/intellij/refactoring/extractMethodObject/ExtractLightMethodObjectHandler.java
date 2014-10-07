@@ -97,6 +97,9 @@ public class ExtractLightMethodObjectHandler {
       CodeInsightUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
     //todo before this or super, not found etc
     final PsiElement anchor = RefactoringUtil.getParentStatement(originalAnchor, false);
+    if (anchor == null) {
+      return null;
+    }
     final PsiElement container = anchor.getParent();
     final PsiElement firstElementCopy = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);
     final PsiElement[] elementsCopy = CodeInsightUtil.findStatementsInRange(copy,
@@ -105,8 +108,11 @@ public class ExtractLightMethodObjectHandler {
     if (elementsCopy[elementsCopy.length - 1] instanceof PsiExpressionStatement) {
       final PsiExpression expr = ((PsiExpressionStatement)elementsCopy[elementsCopy.length - 1]).getExpression();
       if (!(expr instanceof PsiAssignmentExpression)) {
-        final PsiType expressionType = expr.getType();
-        if (expressionType != null && expressionType != PsiType.VOID) {
+        PsiType expressionType = GenericsUtil.getVariableTypeByExpressionType(expr.getType());
+        if (expressionType instanceof PsiDisjunctionType) {
+          expressionType = ((PsiDisjunctionType)expressionType).getLeastUpperBound();
+        }
+        if (isValidVariableType(expressionType)) {
           final String uniqueResultName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("result", elementsCopy[0], true);
           final String statementText = expressionType.getCanonicalText() + " " + uniqueResultName + " = " + expr.getText() + ";";
           elementsCopy[elementsCopy.length - 1] = elementsCopy[elementsCopy.length - 1]
@@ -207,6 +213,14 @@ public class ExtractLightMethodObjectHandler {
                              originalAnchor);
   }
 
+  private static boolean isValidVariableType(PsiType type) {
+    if (type instanceof PsiClassType ||
+        type instanceof PsiArrayType ||
+        type instanceof PsiPrimitiveType && type != PsiType.VOID) {
+      return true;
+    }
+    return false;
+  }
 
   private static class LightExtractMethodObjectDialog implements AbstractExtractDialog {
     private final ExtractMethodObjectProcessor myProcessor;

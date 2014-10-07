@@ -21,6 +21,7 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +51,6 @@ import java.io.*;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
   private static final Logger LOG = Logger.getInstance(ProjectStoreImpl.class);
@@ -460,14 +461,14 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  protected SaveSessionImpl createSaveSession() throws StateStorageException {
+  protected SaveSessionImpl createSaveSession() {
     return new ProjectSaveSession();
   }
 
   protected class ProjectSaveSession extends SaveSessionImpl {
     @NotNull
     @Override
-    public ComponentSaveSession save(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+    public ComponentSaveSession save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
       ProjectImpl.UnableToSaveProjectNotification[] notifications =
         NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
       if (notifications.length > 0) {
@@ -494,7 +495,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         }
         else {
           readonlyFiles.clear();
-          for (Pair<StateStorageManager.SaveSession, VirtualFile> entry : readonlyFiles) {
+          for (Pair<SaveSession, VirtualFile> entry : readonlyFiles) {
             executeSave(entry.first, readonlyFiles);
           }
 
@@ -509,7 +510,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     @NotNull
-    private VirtualFile[] getFilesList(List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+    private VirtualFile[] getFilesList(List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
       final VirtualFile[] files = new VirtualFile[readonlyFiles.size()];
       for (int i = 0, size = readonlyFiles.size(); i < size; i++) {
         files[i] = readonlyFiles.get(i).second;
@@ -517,7 +518,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return files;
     }
 
-    protected void beforeSave(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+    protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
     }
   }
 
@@ -629,8 +630,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
+  @NotNull
   @Override
-  public boolean reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException {
-    return reload(changedFiles, myProject.getMessageBus()) == null;
+  protected MessageBus getMessageBus() {
+    return myProject.getMessageBus();
   }
 }

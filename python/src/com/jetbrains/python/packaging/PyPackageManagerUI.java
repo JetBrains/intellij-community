@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -31,7 +33,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +46,8 @@ import java.util.*;
 * @author vlan
 */
 public class PyPackageManagerUI {
-  private static final Logger LOG = Logger.getInstance(PyPackageManagerUI.class);
+  @NotNull private static final Logger LOG = Logger.getInstance(PyPackageManagerUI.class);
+
   @Nullable private Listener myListener;
   @NotNull private Project myProject;
   @NotNull private Sdk mySdk;
@@ -50,7 +55,7 @@ public class PyPackageManagerUI {
   public interface Listener {
     void started();
 
-    void finished(List<PyExternalProcessException> exceptions);
+    void finished(List<ExecutionException> exceptions);
   }
 
   public PyPackageManagerUI(@NotNull Project project, @NotNull Sdk sdk, @Nullable Listener listener) {
@@ -113,14 +118,14 @@ public class PyPackageManagerUI {
       }
       if (warning[0] != Messages.YES) return true;
     }
-    catch (PyExternalProcessException e) {
+    catch (ExecutionException e) {
       LOG.info("Error loading packages dependents: " + e.getMessage(), e);
     }
     return false;
   }
 
-  private static Map<String, Set<PyPackage>> collectDependents(@NotNull final List<PyPackage> packages, Sdk sdk)
-    throws PyExternalProcessException {
+  private static Map<String, Set<PyPackage>> collectDependents(@NotNull final List<PyPackage> packages,
+                                                               Sdk sdk) throws ExecutionException {
     Map<String, Set<PyPackage>> dependentPackages = new HashMap<String, Set<PyPackage>>();
     for (PyPackage pkg : packages) {
       final Set<PyPackage> dependents = PyPackageManager.getInstance(sdk).getDependents(pkg);
@@ -138,10 +143,12 @@ public class PyPackageManagerUI {
   private abstract static class PackagingTask extends Task.Backgroundable {
     private static final String PACKAGING_GROUP_ID = "Packaging";
 
+    @NotNull protected final Sdk mySdk;
     @Nullable protected final Listener myListener;
 
-    public PackagingTask(@Nullable Project project, @NotNull String title, @Nullable Listener listener) {
+    public PackagingTask(@Nullable Project project, @NotNull Sdk sdk, @NotNull String title, @Nullable Listener listener) {
       super(project, title);
+      mySdk = sdk;
       myListener = listener;
     }
 
@@ -152,7 +159,7 @@ public class PyPackageManagerUI {
     }
 
     @NotNull
-    protected abstract List<PyExternalProcessException> runTask(@NotNull ProgressIndicator indicator);
+    protected abstract List<ExecutionException> runTask(@NotNull ProgressIndicator indicator);
 
     @NotNull
     protected abstract String getSuccessTitle();
@@ -175,27 +182,28 @@ public class PyPackageManagerUI {
       }
     }
 
-    protected void taskFinished(@NotNull final List<PyExternalProcessException> exceptions) {
+    protected void taskFinished(@NotNull final List<ExecutionException> exceptions) {
       final Ref<Notification> notificationRef = new Ref<Notification>(null);
       if (exceptions.isEmpty()) {
         notificationRef.set(new Notification(PACKAGING_GROUP_ID, getSuccessTitle(), getSuccessDescription(),
                                              NotificationType.INFORMATION));
       }
-      else if (!isCancelled(exceptions)) {
-        final String firstLine = getTitle() + ": error occurred.";
-        final String description = createDescription(exceptions, firstLine);
-        notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(),
-                                             firstLine + " <a href=\"xxx\">Details...</a>",
-                                             NotificationType.ERROR,
-                                             new NotificationListener() {
-                                               @Override
-                                               public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                           @NotNull HyperlinkEvent event) {
-                                                 assert myProject != null;
-                                                 PackagesNotificationPanel.showError(myProject, getFailureTitle(), description);
-                                               }
-                                             }
-        ));
+      else {
+        final PackageManagementService.ErrorDescription description = PyPackageManagementService.toErrorDescription(exceptions, mySdk);
+        if (description != null) {
+          final String firstLine = getTitle() + ": error occurred.";
+          final NotificationListener listener = new NotificationListener() {
+            @Override
+            public void hyperlinkUpdate(@NotNull Notification notification,
+                                        @NotNull HyperlinkEvent event) {
+              assert myProject != null;
+              final String title = StringUtil.capitalizeWords(getFailureTitle(), true);
+              PackagesNotificationPanel.showError(title, description);
+            }
+          };
+          notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(), firstLine + " <a href=\"xxx\">Details...</a>",
+                                               NotificationType.ERROR, listener));
+        }
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
@@ -210,19 +218,9 @@ public class PyPackageManagerUI {
         }
       });
     }
-
-    private static boolean isCancelled(@NotNull List<PyExternalProcessException> exceptions) {
-      for (PyExternalProcessException e : exceptions) {
-        if (e instanceof PyProcessCancelledException) {
-          return true;
-        }
-      }
-      return false;
-    }
   }
 
   private static class InstallTask extends PackagingTask {
-    @NotNull protected final Sdk mySdk;
     @NotNull private final List<PyRequirement> myRequirements;
     @NotNull private final List<String> myExtraArgs;
 
@@ -231,16 +229,15 @@ public class PyPackageManagerUI {
                        @NotNull List<PyRequirement> requirements,
                        @NotNull List<String> extraArgs,
                        @Nullable Listener listener) {
-      super(project, "Installing packages", listener);
-      mySdk = sdk;
+      super(project, sdk, "Installing packages", listener);
       myRequirements = requirements;
       myExtraArgs = extraArgs;
     }
 
     @NotNull
     @Override
-    protected List<PyExternalProcessException> runTask(@NotNull ProgressIndicator indicator) {
-      final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
+    protected List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
+      final List<ExecutionException> exceptions = new ArrayList<ExecutionException>();
       final int size = myRequirements.size();
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
       for (int i = 0; i < size; i++) {
@@ -256,11 +253,11 @@ public class PyPackageManagerUI {
         try {
           manager.install(Arrays.asList(requirement), myExtraArgs);
         }
-        catch (PyProcessCancelledException e) {
+        catch (RunCanceledByUserException e) {
           exceptions.add(e);
           break;
         }
-        catch (PyExternalProcessException e) {
+        catch (ExecutionException e) {
           exceptions.add(e);
         }
       }
@@ -297,15 +294,15 @@ public class PyPackageManagerUI {
 
     @NotNull
     @Override
-    protected List<PyExternalProcessException> runTask(@NotNull ProgressIndicator indicator) {
-      final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
+    protected List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
+      final List<ExecutionException> exceptions = new ArrayList<ExecutionException>();
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
       indicator.setText("Installing packaging tools...");
       indicator.setIndeterminate(true);
       try {
         manager.installManagement();
       }
-      catch (PyExternalProcessException e) {
+      catch (ExecutionException e) {
         exceptions.add(e);
       }
       manager.refresh();
@@ -320,28 +317,26 @@ public class PyPackageManagerUI {
   }
 
   private static class UninstallTask extends PackagingTask {
-    @NotNull private final Sdk mySdk;
     @NotNull private final List<PyPackage> myPackages;
 
     public UninstallTask(@Nullable Project project,
                          @NotNull Sdk sdk,
                          @Nullable Listener listener,
                          @NotNull List<PyPackage> packages) {
-      super(project, "Uninstalling packages", listener);
-      mySdk = sdk;
+      super(project, sdk, "Uninstalling packages", listener);
       myPackages = packages;
     }
 
     @NotNull
     @Override
-    protected List<PyExternalProcessException> runTask(@NotNull ProgressIndicator indicator) {
+    protected List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
       indicator.setIndeterminate(true);
       try {
         manager.uninstall(myPackages);
         return Arrays.asList();
       }
-      catch (PyExternalProcessException e) {
+      catch (ExecutionException e) {
         return Arrays.asList(e);
       }
       finally {
@@ -374,14 +369,15 @@ public class PyPackageManagerUI {
     }
   }
 
-  public static String createDescription(List<PyExternalProcessException> exceptions, String firstLine) {
+  @NotNull
+  public static PackageManagementService.ErrorDescription createDescription(List<ExecutionException> exceptions, String firstLine) {
     final StringBuilder b = new StringBuilder();
     b.append(firstLine);
     b.append("\n\n");
-    for (PyExternalProcessException exception : exceptions) {
+    for (ExecutionException exception : exceptions) {
       b.append(exception.toString());
       b.append("\n");
     }
-    return b.toString();
+    return PackageManagementService.ErrorDescription.fromMessage(b.toString());
   }
 }

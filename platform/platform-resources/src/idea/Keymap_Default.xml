@@ -121,6 +121,9 @@
   <action id="EditorAddOrRemoveCaret">
     <mouse-shortcut keystroke="alt shift button1"/>
   </action>
+  <action id="EditorCreateRectangularSelection">
+    <mouse-shortcut keystroke="alt shift button2"/>
+  </action>
   <action id="GotoDeclaration">
     <keyboard-shortcut first-keystroke="control B"/>
     <mouse-shortcut keystroke="ctrl button1"/>
@@ -702,6 +705,9 @@
     <keyboard-shortcut first-keystroke="UP"/>
   </action>
   <action id="EditorTab">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
+  <action id="ExpandLiveTemplateByTab">
     <keyboard-shortcut first-keystroke="TAB"/>
   </action>
   <action id="IntroduceParameter">

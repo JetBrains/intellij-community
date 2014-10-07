@@ -16,20 +16,27 @@
 package com.intellij.projectImport;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public abstract class ProjectSetProcessor<TState> {
+public abstract class ProjectSetProcessor {
 
   public static final ExtensionPointName<ProjectSetProcessor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.projectSetProcessor");
 
   public abstract String getId();
 
-  /**
-   * @return null if user canceled the operation.
-   */
-  public abstract TState interactWithUser();
+  public abstract void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext);
 
-  public abstract void processEntry(String key, String value, TState state);
+  public static class Context {
+    public VirtualFile directory;
+    public String directoryName;
+    public Project project;
+  }
 }

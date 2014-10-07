@@ -950,6 +950,17 @@ public abstract class ChooseByNameBase {
     }
 
     myAlarm.cancelAllRequests();
+
+    if (delay > 0) {
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          rebuildList(pos, 0, modalityState, postRunnable);
+        }
+      }, delay, ModalityState.stateForComponent(myTextField));
+      return;
+    }
+    
     myListUpdater.cancelAll();
 
     final CalcElementsThread calcElementsThread = myCalcElementsThread;
@@ -977,32 +988,20 @@ public abstract class ChooseByNameBase {
       ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
     }
 
-    final Runnable request = new Runnable() {
+    scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
       @Override
-      public void run() {
-        scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
-          @Override
-          public void consume(Set<?> elements) {
-            ApplicationManager.getApplication().assertIsDispatchThread();
-            if (checkDisposed()) {
-              return;
-            }
-            backgroundCalculationFinished(elements, pos);
+      public void consume(Set<?> elements) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        if (checkDisposed()) {
+          return;
+        }
+        backgroundCalculationFinished(elements, pos);
 
-            if (postRunnable != null) {
-              postRunnable.run();
-            }
-          }
-        });
+        if (postRunnable != null) {
+          postRunnable.run();
+        }
       }
-    };
-
-    if (delay > 0) {
-      myAlarm.addRequest(request, delay, ModalityState.stateForComponent(myTextField));
-    }
-    else {
-      request.run();
-    }
+    });
   }
 
   private void backgroundCalculationFinished(Collection<?> result, int toSelect) {
@@ -1024,6 +1023,7 @@ public abstract class ChooseByNameBase {
   }
 
   private void scheduleCalcElements(final CalcElementsThread thread) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myCalcElementsThread = thread;
     ApplicationManager.getApplication().executeOnPooledThread(thread);
   }
@@ -1514,6 +1514,8 @@ public abstract class ChooseByNameBase {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 @Override
                 public void run() {
+                  if (myProject.isDisposed()) return;
+
                   ApplicationAdapter listener = new ApplicationAdapter() {
                     @Override
                     public void beforeWriteActionStart(Object action) {
@@ -1559,7 +1561,8 @@ public abstract class ChooseByNameBase {
             @Override
             public void run() {
               if (!myCancelled.isCanceled()) {
-                LOG.assertTrue(myCalcElementsThread == CalcElementsThread.this);
+                CalcElementsThread currentBgProcess = myCalcElementsThread;
+                LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
                 myCallback.consume(edt ? filter(elements) : filtered);
               }
             }
@@ -1618,6 +1621,7 @@ public abstract class ChooseByNameBase {
     }
 
     private boolean cancel() {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       if (myCancelled.isCanceled()) {
         return false;
       }

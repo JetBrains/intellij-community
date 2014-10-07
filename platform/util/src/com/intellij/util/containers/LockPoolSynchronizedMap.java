@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@Deprecated // use com.intellij.util.containers.ContainerUtil.newConcurrentMap() instead
 public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements ConcurrentMap<K, V> {
   private final Lock r;
   private final Lock w;

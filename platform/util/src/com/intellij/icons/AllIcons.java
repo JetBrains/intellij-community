@@ -102,6 +102,7 @@ public class AllIcons {
     public static final Icon Move_to_button = IconLoader.getIcon("/actions/move-to-button.png"); // 11x10
     public static final Icon MoveDown = IconLoader.getIcon("/actions/moveDown.png"); // 14x14
     public static final Icon MoveToAnotherChangelist = IconLoader.getIcon("/actions/moveToAnotherChangelist.png"); // 16x16
+    public static final Icon MoveToStandardPlace = IconLoader.getIcon("/actions/moveToStandardPlace.png"); // 16x16
     public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.png"); // 14x14
     public static final Icon New = IconLoader.getIcon("/actions/new.png"); // 16x16
     public static final Icon NewFolder = IconLoader.getIcon("/actions/newFolder.png"); // 16x16
@@ -135,6 +136,7 @@ public class AllIcons {
     public static final Icon Right = IconLoader.getIcon("/actions/right.png"); // 16x16
     public static final Icon Rollback = IconLoader.getIcon("/actions/rollback.png"); // 16x16
     public static final Icon RunToCursor = IconLoader.getIcon("/actions/runToCursor.png"); // 16x16
+    public static final Icon Scratch = IconLoader.getIcon("/actions/scratch.png"); // 16x16
     public static final Icon Search = IconLoader.getIcon("/actions/search.png"); // 16x16
     public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.png"); // 16x16
     public static final Icon Share = IconLoader.getIcon("/actions/share.png"); // 14x14
@@ -1129,6 +1131,7 @@ public class AllIcons {
     public static final Icon ToolWindowMessages = IconLoader.getIcon("/toolwindows/toolWindowMessages.png"); // 13x13
     public static final Icon ToolWindowModuleDependencies = IconLoader.getIcon("/toolwindows/toolWindowModuleDependencies.png"); // 13x13
     public static final Icon ToolWindowPalette = IconLoader.getIcon("/toolwindows/toolWindowPalette.png"); // 13x13
+    public static final Icon ToolWindowPreview = IconLoader.getIcon("/toolwindows/toolWindowPreview.png"); // 13x13
     public static final Icon ToolWindowProject = IconLoader.getIcon("/toolwindows/toolWindowProject.png"); // 13x13
     public static final Icon ToolWindowRun = IconLoader.getIcon("/toolwindows/toolWindowRun.png"); // 13x13
     public static final Icon ToolWindowStructure = IconLoader.getIcon("/toolwindows/toolWindowStructure.png"); // 13x13

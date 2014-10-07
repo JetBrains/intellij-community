@@ -50,7 +50,7 @@ import java.util.Map;
  */
 public class QuickDocOnMouseOverManager {
 
-  @NotNull private final EditorMouseMotionListener myMouseListener       = new MyEditorMouseListener();
+  @NotNull private final MyEditorMouseListener     myMouseListener       = new MyEditorMouseListener();
   @NotNull private final VisibleAreaListener       myVisibleAreaListener = new MyVisibleAreaListener();
   @NotNull private final CaretListener             myCaretListener       = new MyCaretListener();
   @NotNull private final DocumentListener          myDocumentListener    = new MyDocumentListener();
@@ -117,6 +117,7 @@ public class QuickDocOnMouseOverManager {
   }
 
   private void registerListeners(@NotNull Editor editor) {
+    editor.addEditorMouseListener(myMouseListener);
     editor.addEditorMouseMotionListener(myMouseListener);
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     editor.getCaretModel().addCaretListener(myCaretListener);
@@ -128,6 +129,7 @@ public class QuickDocOnMouseOverManager {
   }
 
   private void unRegisterListeners(@NotNull Editor editor) {
+    editor.removeEditorMouseListener(myMouseListener);
     editor.removeEditorMouseMotionListener(myMouseListener);
     editor.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
     editor.getCaretModel().removeCaretListener(myCaretListener);
@@ -136,6 +138,10 @@ public class QuickDocOnMouseOverManager {
     if (myMonitoredDocuments.remove(document) != null) {
       document.removeDocumentListener(myDocumentListener);
     }
+  }
+
+  private void processMouseExited() {
+    myDelayedQuickDocInfo = null;
   }
   
   private void processMouseMove(@NotNull EditorMouseEvent e) {
@@ -335,12 +341,19 @@ public class QuickDocOnMouseOverManager {
     }
   }
 
-  private class MyEditorMouseListener extends EditorMouseMotionAdapter {
+  private class MyEditorMouseListener extends EditorMouseAdapter implements EditorMouseMotionListener {
+    @Override
+    public void mouseExited(EditorMouseEvent e) {
+      processMouseExited();
+    }
 
     @Override
     public void mouseMoved(EditorMouseEvent e) {
       processMouseMove(e);
     }
+
+    @Override
+    public void mouseDragged(EditorMouseEvent e) {}
   }
   
   private class MyVisibleAreaListener implements VisibleAreaListener {

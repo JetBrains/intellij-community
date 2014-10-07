@@ -74,19 +74,16 @@ class OptionTagBinding extends BasePrimitiveBinding {
     else {
       assert myBinding != null;
       Object node = myBinding.serialize(value, targetElement, filter);
-      if (node == null) {
-        return context == null ? targetElement : null;
-      }
-
-      if (node instanceof Text) {
-        Text text = (Text)node;
-        targetElement.setAttribute(myValueAttribute, text.getText());
-      }
-      else if (targetElement != node) {
-        JDOMUtil.addContent(targetElement, node);
+      if (node != null) {
+        if (node instanceof Text) {
+          Text text = (Text)node;
+          targetElement.setAttribute(myValueAttribute, text.getText());
+        }
+        else if (targetElement != node) {
+          JDOMUtil.addContent(targetElement, node);
+        }
       }
     }
-
     return targetElement;
   }
 

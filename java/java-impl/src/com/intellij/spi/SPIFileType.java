@@ -42,7 +42,7 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
   }
 
   @Override
-  public boolean isMyFileType(VirtualFile file) {
+  public boolean isMyFileType(@NotNull VirtualFile file) {
     VirtualFile parent = file.getParent();
     if (parent != null && Comparing.equal("services", parent.getNameSequence())) {
       final VirtualFile gParent = parent.getParent();

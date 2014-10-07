@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.testing.pytest;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.module.Module;
@@ -28,7 +29,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.webcore.packaging.PackageVersionComparator;
-import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyClass;
@@ -106,7 +106,7 @@ public class PyTestConfigurationProducer extends PythonTestConfigurationProducer
             keywords = pyClass.getName() + "." + keywords;
           }
         }
-        catch (PyExternalProcessException e) {
+        catch (ExecutionException e) {
           keywords = pyClass.getName() + "." + keywords;
         }
       }

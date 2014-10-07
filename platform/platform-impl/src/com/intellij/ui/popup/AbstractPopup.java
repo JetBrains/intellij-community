@@ -56,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.HashSet;
@@ -901,7 +902,9 @@ public class AbstractPopup implements JBPopup {
       public void run() {
         if (myPreferredFocusedComponent != null && myInStack && myFocusable) {
           myFocusTrackback.registerFocusComponent(myPreferredFocusedComponent);
-          IJSwingUtilities.moveMousePointerOn(myPreferredFocusedComponent);
+          if (myPreferredFocusedComponent instanceof JTextComponent) {
+            IJSwingUtilities.moveMousePointerOn(myPreferredFocusedComponent);
+          }
         }
 
         removeActivity();

@@ -55,7 +55,9 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -65,7 +67,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.LinkedHashSet;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -640,10 +641,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         wrapper = globalInspectionToolWrapper.getSharedLocalInspectionToolWrapper();
       }
       if (wrapper == null) continue;
-      if (myIgnoreSuppressed) {
-        if (wrapper.isApplicable(language) && SuppressionUtil.inspectionResultSuppressed(myFile, wrapper.getTool())) {
-          continue;
-        }
+      if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(myFile, wrapper.getTool())) {
+        continue;
       }
       enabled.add(wrapper);
     }

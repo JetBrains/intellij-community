@@ -398,7 +398,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     });
   }
 
-  private void computeArrayRanges(@NotNull List<? extends Variable> properties, @NotNull XCompositeNode node) {
+  private void computeArrayRanges(@NotNull List<Variable> properties, @NotNull XCompositeNode node) {
     final List<Variable> variables = Variables.filterAndSort(properties, this, false);
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
@@ -564,6 +564,12 @@ public final class VariableView extends XNamedValue implements VariableContext {
     else {
       getViewSupport().computeSourcePosition(variable, context, navigatable);
     }
+  }
+
+  @NotNull
+  @Override
+  public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
+    return getViewSupport().computeInlineDebuggerData(variable, context, callback);
   }
 
   @Override

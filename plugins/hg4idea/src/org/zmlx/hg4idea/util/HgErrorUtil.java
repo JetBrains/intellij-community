@@ -70,8 +70,14 @@ public final class HgErrorUtil {
     return errorLines.get(errorLines.size() - 1);
   }
 
+  //unresolved conflict errors included
   public static boolean hasErrorsInCommandExecution(@Nullable HgCommandResult result) {
     return isAbort(result) || result.getExitValue() != 0;
+  }
+
+  //todo should be modified and/or merged with HgErrorHandler
+  public static boolean isCommandExecutionFailed(@Nullable HgCommandResult result) {
+    return isAbort(result) || result.getExitValue() > 1;
   }
 
   public static boolean hasAuthorizationInDestinationPath(@Nullable String destinationPath) {

@@ -146,7 +146,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                 presentation = new JavaValuePresentation(value, type, exception != null ? exception.getMessage() : null);
               }
             }
-            if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
+            if (myValueDescriptor.getLastRenderer() instanceof FullValueEvaluatorProvider) {
+              node.setFullValueEvaluator(((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer()).getFullValueEvaluator(myEvaluationContext, myValueDescriptor));
+            }
+            else if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
               node.setFullValueEvaluator(new XFullValueEvaluator() {
                 @Override
                 public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
@@ -158,7 +161,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
                     @Override
                     public void contextAction() throws Exception {
-                      final String valueAsString = DebuggerUtilsEx.getValueOrErrorAsString(myEvaluationContext, myValueDescriptor.getValue());
+                      final String valueAsString = myValueDescriptor.getValueText();
                       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
                         @Override
                         public void run() {

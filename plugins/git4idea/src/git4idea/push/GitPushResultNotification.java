@@ -177,7 +177,7 @@ class GitPushResultNotification extends Notification {
         description = formDescriptionBasedOnUpdateResult(result.getUpdateResult(), targetBranch);
         break;
       case ERROR:
-        description = String.format("failed with error: " + result.getError());
+        description = "failed with error: " + result.getError();
         break;
       default:
         LOG.error("Unexpected push result: " + result);

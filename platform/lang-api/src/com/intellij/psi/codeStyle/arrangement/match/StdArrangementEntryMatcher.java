@@ -18,10 +18,7 @@ package com.intellij.psi.codeStyle.arrangement.match;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.model.*;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,8 +126,8 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
      * Maps token type to all arrangement tokens that were encountered so far by parsing conditions with
      * {@link #onCondition(ArrangementAtomMatchCondition) onCondition} calls.
      */
-    @NotNull protected final MultiValuesMap<StdArrangementTokenType, ArrangementSettingsToken > context =
-      new MultiValuesMap<StdArrangementTokenType, ArrangementSettingsToken>();
+    @NotNull protected final MultiValuesMap<StdArrangementTokenType, ArrangementAtomMatchCondition> context =
+      new MultiValuesMap<StdArrangementTokenType, ArrangementAtomMatchCondition>();
     @Nullable private String myNamePattern;
     @Nullable private String myNamespacePattern;
     @Nullable private String myText;
@@ -139,9 +136,9 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
      * Adds given entry to context by given entry type.
      * @param token token added to context
      */
-    protected void addToContext(@NotNull StdArrangementSettingsToken token) {
+    protected void addToContext(@NotNull StdArrangementSettingsToken token, @NotNull ArrangementAtomMatchCondition condition) {
       StdArrangementTokenType tokenType = token.getTokenType();
-      context.put(tokenType, token);
+      context.put(tokenType, condition);
     }
 
     @Override
@@ -157,10 +154,10 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
         myText = condition.getValue().toString();
       }
       Object v = condition.getValue();
-      //Process any StdArrangementSettingsToken. No need to change it when new types of tokens will be processed.
-      if (v instanceof StdArrangementSettingsToken) {
-        StdArrangementSettingsToken token = (StdArrangementSettingsToken)v;
-        addToContext(token);
+      final ArrangementSettingsToken type = condition.getType();
+      if (type instanceof StdArrangementSettingsToken) {
+        //Process any StdArrangementSettingsToken. No need to change it when new types of tokens will be processed.
+        addToContext((StdArrangementSettingsToken)type, condition);
       }
     }
 
@@ -168,11 +165,11 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
     @Override
     public Collection<ArrangementEntryMatcher> buildMatchers() {
       List<ArrangementEntryMatcher> result = ContainerUtilRt.newArrayList(myMatchers);
-      Collection<ArrangementSettingsToken> entryTokens = context.get(StdArrangementTokenType.ENTRY_TYPE);
+      Collection<ArrangementAtomMatchCondition> entryTokens = context.get(StdArrangementTokenType.ENTRY_TYPE);
       if (entryTokens!= null) {
         result.add(new ByTypeArrangementEntryMatcher(entryTokens));
       }
-      Collection<ArrangementSettingsToken> modifierTokens = context.get(StdArrangementTokenType.MODIFIER);
+      Collection<ArrangementAtomMatchCondition> modifierTokens = context.get(StdArrangementTokenType.MODIFIER);
       if (modifierTokens != null) {
         result.add(new ByModifierArrangementEntryMatcher(modifierTokens));
       }

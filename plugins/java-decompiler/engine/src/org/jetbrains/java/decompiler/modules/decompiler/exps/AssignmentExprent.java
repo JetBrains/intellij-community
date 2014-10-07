@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -103,7 +104,8 @@ public class AssignmentExprent extends Exprent {
     return 13;
   }
 
-  public String toJava(int indent) {
+  @Override
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     VarType leftType = left.getExprType();
     VarType rightType = right.getExprType();
 
@@ -134,10 +136,10 @@ public class AssignmentExprent extends Exprent {
       buffer.append(((FieldExprent)left).getName());
     }
     else {
-      buffer.append(left.toJava(indent));
+      buffer.append(left.toJava(indent, tracer));
     }
 
-    String res = right.toJava(indent);
+    String res = right.toJava(indent, tracer);
 
     if (condtype == CONDITION_NONE &&
         !leftType.isSuperset(rightType) &&
@@ -150,6 +152,8 @@ public class AssignmentExprent extends Exprent {
     }
 
     buffer.append(condtype == CONDITION_NONE ? " = " : funceq[condtype]).append(res);
+
+    tracer.addMapping(bytecode);
 
     return buffer.toString();
   }

@@ -53,6 +53,11 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
   }
 
+  @Override
+  public void reinitComponents(@NotNull Set<String> componentNames, @NotNull Collection<String> notReloadableComponents, boolean reloadData) {
+    throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
+  }
+
   @NotNull
   @Override
   public Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames) {
@@ -124,14 +129,6 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method initComponent is not yet implemented in " + getClass().getName());
   }
 
-  public void commit() {
-    throw new UnsupportedOperationException("Method commit is not yet implemented in " + getClass().getName());
-  }
-
-  public boolean save() throws IOException {
-    throw new UnsupportedOperationException("Method save is not yet implemented in " + getClass().getName());
-  }
-
   @Override
   public void load() throws IOException {
     throw new UnsupportedOperationException("Method load is not yet implemented in " + getClass().getName());
@@ -149,19 +146,15 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method getPresentableUrl not implemented in " + getClass());
   }
 
+  @Nullable
   @Override
-  public boolean reload(@NotNull final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
-    throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
+  public Collection<String> reload(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles) {
+    return null;
   }
 
   @NotNull
   @Override
   public StateStorageManager getStateStorageManager() {
     throw new UnsupportedOperationException("Method getStateStorageManager not implemented in " + getClass());
-  }
-
-  @Override
-  public boolean isSaving() {
-    return false;
   }
 }

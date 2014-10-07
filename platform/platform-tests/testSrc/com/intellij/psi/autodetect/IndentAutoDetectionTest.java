@@ -16,12 +16,15 @@
 package com.intellij.psi.autodetect;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.autodetect.*;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
@@ -72,6 +75,13 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
 
   public void testNoZeroIndentsInStats() {
     doTestIndentSize(4);
+  }
+
+  public void testNoIndentsUseLanguageSpecificSettings() {
+    CommonCodeStyleSettings.IndentOptions options = new CommonCodeStyleSettings.IndentOptions();
+    options.USE_TAB_CHARACTER = true;
+
+    doTestTabsUsed(options);
   }
 
   public void testManyZeroIndents() { doTestIndentSize(2); }
@@ -139,19 +149,44 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
   }
 
   private void doTestTabsUsed() {
-    CommonCodeStyleSettings.IndentOptions options = getIndentOptions();
+    doTestTabsUsed(null);
+  }
+
+  private void doTestTabsUsed(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions) {
+    configureByFile(getTestName(true) + ".java");
+
+    if (defaultIndentOptions != null) {
+      setIndentOptions(defaultIndentOptions);
+    }
+
+    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions();
     Assert.assertTrue("Tab usage not detected", options.USE_TAB_CHARACTER);
   }
 
-  private void doTestIndentSize(int indent) {
-    CommonCodeStyleSettings.IndentOptions options = getIndentOptions();
+  private void doTestIndentSize(int expectedIndent) {
+    doTestIndentSize(null, expectedIndent);
+  }
+
+  private void doTestIndentSize(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions, int expectedIndent) {
+    configureByFile(getTestName(true) + ".java");
+
+    if (defaultIndentOptions != null) {
+      setIndentOptions(defaultIndentOptions);
+    }
+
+    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions();
     Assert.assertFalse("Tab usage detected: ", options.USE_TAB_CHARACTER);
-    Assert.assertEquals("Indent mismatch", indent, options.INDENT_SIZE);
+    Assert.assertEquals("Indent mismatch", expectedIndent, options.INDENT_SIZE);
+  }
+
+  private static void setIndentOptions(@NotNull CommonCodeStyleSettings.IndentOptions defaultIndentOptions) {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(myFile.getFileType());
+    indentOptions.copyFrom(defaultIndentOptions);
   }
 
   @NotNull
-  private CommonCodeStyleSettings.IndentOptions getIndentOptions() {
-    configureByFile(getTestName(true) + ".java");
+  private static CommonCodeStyleSettings.IndentOptions detectIndentOptions() {
     IndentOptionsDetector detector = new IndentOptionsDetectorImpl(myFile);
     return detector.getIndentOptions();
   }

@@ -50,6 +50,12 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
     myEmptyText = new TextComponentEmptyText(this);
   }
 
+  @Override
+  public void setText(String t) {
+    super.setText(t);
+    UIUtil.resetUndoRedoActions(this);
+  }
+
   @NotNull
   @Override
   public StatusText getEmptyText() {

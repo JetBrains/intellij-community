@@ -330,7 +330,7 @@ public class Switcher extends AnAction implements DumbAware {
       final ArrayList<FileInfo> editors = new ArrayList<FileInfo>();
       if (!pinned) {
         for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
-          editors.add(new FileInfo(pair.first, pair.second));
+          editors.add(new FileInfo(pair.first, pair.second, project));
         }
       }
       if (editors.size() < 2 || isPinnedMode()) {
@@ -347,7 +347,7 @@ public class Switcher extends AnAction implements DumbAware {
             continue;
           }
 
-          final FileInfo info = new FileInfo(recentFiles[i], null);
+          final FileInfo info = new FileInfo(recentFiles[i], null, project);
           boolean add = true;
           if (isPinnedMode()) {
             for (FileInfo fileInfo : filesData) {
@@ -1128,17 +1128,13 @@ public class Switcher extends AnAction implements DumbAware {
       if (value instanceof FileInfo) {
         Project project = mySwitcherPanel.project;
         VirtualFile virtualFile = ((FileInfo)value).getFirst();
-        String name = virtualFile instanceof VirtualFilePathWrapper && ((VirtualFilePathWrapper)virtualFile).enforcePresentableName()
-                      ? ((VirtualFilePathWrapper)virtualFile).getPresentablePath()
-                      : UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES
-                        ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, virtualFile)
-                        : virtualFile.getName();
+        String renderedName = ((FileInfo)value).getNameForRendering();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, project));
 
         FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
         open = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
         TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
-        append(name, SimpleTextAttributes.fromTextAttributes(attributes));
+        append(renderedName, SimpleTextAttributes.fromTextAttributes(attributes));
 
         // calc color the same way editor tabs do this, i.e. including extensions
         Color color = EditorTabbedContainer.calcTabColor(project, virtualFile);
@@ -1152,8 +1148,23 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   private static class FileInfo extends Pair<VirtualFile, EditorWindow> {
-    public FileInfo(VirtualFile first, EditorWindow second) {
+    private final Project myProject;
+    private String myNameForRendering;
+
+    public FileInfo(VirtualFile first, EditorWindow second, Project project) {
       super(first, second);
+      myProject = project;
+    }
+
+    String getNameForRendering() {
+      if (myNameForRendering == null) {
+        myNameForRendering = first instanceof VirtualFilePathWrapper && ((VirtualFilePathWrapper)first).enforcePresentableName()
+          ? ((VirtualFilePathWrapper)first).getPresentablePath()
+          : UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES
+            ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(myProject, first)
+            : first.getName();
+      }
+      return myNameForRendering;
     }
   }
 

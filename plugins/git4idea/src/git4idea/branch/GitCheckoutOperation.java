@@ -15,6 +15,7 @@
  */
 package git4idea.branch;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -64,7 +65,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   protected void execute() {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
-    GitUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();
@@ -103,7 +104,7 @@ class GitCheckoutOperation extends GitBranchOperation {
       }
     }
     finally {
-      GitUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
 
     if (!fatalErrorHappened) {

@@ -1,6 +1,7 @@
 package com.intellij.webcore.packaging;
 
 import com.intellij.util.CatchingConsumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -130,10 +131,60 @@ public abstract class PackageManagementService {
 
     /**
      * Fired when the installation of the specified package has been completed (successfully or unsuccessfully).
-     *
-     * @param packageName the name of the installed package.
+     *  @param packageName the name of the installed package.
      * @param errorDescription null if the package has been installed successfully, error message otherwise.
      */
-    void operationFinished(String packageName, @Nullable String errorDescription);
+    void operationFinished(String packageName, @Nullable ErrorDescription errorDescription);
+  }
+
+  public static class ErrorDescription {
+    @NotNull private final String myMessage;
+    @Nullable private final String myCommand;
+    @Nullable private final String myOutput;
+    @Nullable private final String mySolution;
+
+    @Nullable
+    public static ErrorDescription fromMessage(@Nullable String message) {
+      return message != null ? new ErrorDescription(message, null, null, null) : null;
+    }
+
+    public ErrorDescription(@NotNull String message, @Nullable String command, @Nullable String output, @Nullable String solution) {
+      myMessage = message;
+      myCommand = command;
+      myOutput = output;
+      mySolution = solution;
+    }
+
+    /**
+     * The reason message that explains why the error has occurred.
+     */
+    @NotNull
+    public String getMessage() {
+      return myMessage;
+    }
+
+    /**
+     * The packaging command that has been executed, if it is meaningful to the user.
+     */
+    @Nullable
+    public String getCommand() {
+      return myCommand;
+    }
+
+    /**
+     * The output of the packaging command.
+     */
+    @Nullable
+    public String getOutput() {
+      return myOutput;
+    }
+
+    /**
+     * A possible solution of this packaging problem for the user.
+     */
+    @Nullable
+    public String getSolution() {
+      return mySolution;
+    }
   }
 }

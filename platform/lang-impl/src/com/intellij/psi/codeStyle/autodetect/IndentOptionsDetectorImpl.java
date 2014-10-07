@@ -64,7 +64,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     if (linesWithTabs > linesWithWhiteSpaceIndent) {
       setUseTabs(indentOptions, true);
     }
-    else {
+    else if (linesWithWhiteSpaceIndent > linesWithTabs) {
       setUseTabs(indentOptions, false);
 
       int newIndentSize = getPositiveIndentSize(stats);

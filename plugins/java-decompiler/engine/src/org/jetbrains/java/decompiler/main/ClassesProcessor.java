@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -39,6 +40,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class ClassesProcessor {
+
+  public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
 
   private Map<String, ClassNode> mapRootClasses = new HashMap<String, ClassNode>();
 
@@ -243,6 +246,7 @@ public class ClassesProcessor {
       ImportCollector importCollector = new ImportCollector(root);
       DecompilerContext.setImportCollector(importCollector);
       DecompilerContext.setCounterContainer(new CounterContainer());
+      DecompilerContext.setBytecodeSourceMapper(new BytecodeSourceMapper());
 
       new LambdaProcessor().processClass(root);
 
@@ -256,14 +260,17 @@ public class ClassesProcessor {
 
       new NestedMemberAccess().propagateMemberAccess(root);
 
-      StringBuilder classBuffer = new StringBuilder();
+      StringBuilder classBuffer = new StringBuilder(AVERAGE_CLASS_SIZE);
       new ClassWriter().classToJava(root, classBuffer, 0);
 
       String lineSeparator = DecompilerContext.getNewLineSeparator();
+      int total_offset_lines = 0;
 
       int index = cl.qualifiedName.lastIndexOf("/");
       if (index >= 0) {
+        total_offset_lines+=2;
         String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
+
         buffer.append("package ");
         buffer.append(packageName);
         buffer.append(";");
@@ -271,11 +278,22 @@ public class ClassesProcessor {
         buffer.append(lineSeparator);
       }
 
-      if (importCollector.writeImports(buffer)) {
+      int import_lines_written = importCollector.writeImports(buffer);
+      if (import_lines_written > 0) {
         buffer.append(lineSeparator);
+        total_offset_lines += import_lines_written + 1;
       }
+      //buffer.append(lineSeparator);
 
       buffer.append(classBuffer);
+
+      if(DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
+        BytecodeSourceMapper mapper = DecompilerContext.getBytecodeSourceMapper();
+        mapper.addTotalOffset(total_offset_lines);
+
+        buffer.append(lineSeparator);
+        mapper.dumpMapping(buffer);
+      }
     }
     finally {
       destroyWrappers(root);

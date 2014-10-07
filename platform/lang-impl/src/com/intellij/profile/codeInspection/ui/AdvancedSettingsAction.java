@@ -17,8 +17,9 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -38,7 +39,7 @@ import java.awt.*;
 /**
  * @author Dmitry Batkovich
  */
-public abstract class AdvancedSettingsAction extends AnAction {
+public abstract class AdvancedSettingsAction extends DumbAwareAction {
   private final int myCheckBoxIndent;
   private Project myProject;
   private InspectionConfigTreeNode myRoot;

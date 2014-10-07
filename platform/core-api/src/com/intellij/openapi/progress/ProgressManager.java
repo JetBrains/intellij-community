@@ -19,17 +19,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.containers.ConcurrentHashSet;
-import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
   private static class ProgressManagerHolder {
@@ -45,12 +39,19 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract boolean hasModalProgressIndicator();
   public abstract boolean hasUnsafeProgressIndicator();
 
+  /**
+   * Runs given process synchronously (in calling thread).
+   */
   public abstract void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
+
+  /**
+   * Runs given process synchronously (in calling thread).
+   */
   public abstract <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException;
 
   @Override
   public ProgressIndicator getProgressIndicator() {
-    return myThreadIndicator.get();
+    return null;
   }
 
   public static void progress(@NotNull String text) throws ProcessCanceledException {
@@ -176,96 +177,18 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   public abstract void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task, @NotNull ProgressIndicator progressIndicator);
 
-  protected static final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
-
-  // indicator -> threads which are running under this indicator
-  private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new THashMap<ProgressIndicator, Set<Thread>>();
-  // threads which are running under canceled indicator
-  private static final Set<Thread> threadsUnderCanceledIndicator = new ConcurrentHashSet<Thread>();
+  protected void indicatorCanceled(@NotNull ProgressIndicator indicator) {
+  }
 
   public static void canceled(@NotNull ProgressIndicator indicator) {
-    // mark threads running under this indicator as canceled
-    synchronized (threadsUnderIndicator) {
-      Set<Thread> threads = threadsUnderIndicator.get(indicator);
-      if (threads != null) {
-        threadsUnderCanceledIndicator.addAll(threads);
-      }
-    }
+    getInstance().indicatorCanceled(indicator);
   }
 
-  public static volatile boolean ALWAYS_CHECK_CANCELED = false;
   public static void checkCanceled() throws ProcessCanceledException {
-    boolean thereIsCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
-    if (thereIsCanceledIndicator || ALWAYS_CHECK_CANCELED) {
-      getInstance().doCheckCanceled();
-    }
+    getInstance().doCheckCanceled();
   }
 
-  private static final Collection<ProgressIndicator> nonStandardIndicators = new ConcurrentHashSet<ProgressIndicator>();
-  protected static void callCheckCancelForNonStandardIndicators() {
-    for (ProgressIndicator indicator : nonStandardIndicators) {
-      try {
-        indicator.checkCanceled();
-      }
-      catch (ProcessCanceledException e) {
-        canceled(indicator);
-      }
-    }
-  }
-
-
-  public void executeProcessUnderProgress(@NotNull Runnable process,
+  public abstract void executeProcessUnderProgress(@NotNull Runnable process,
                                           @Nullable("null means reuse current progress") ProgressIndicator progress)
-    throws ProcessCanceledException {
-    ProgressIndicator oldIndicator = null;
-    boolean set = progress != null && progress != (oldIndicator = getProgressIndicator());
-    if (set) {
-      myThreadIndicator.set(progress);
-      try {
-        registerIndicatorAndRun(progress, Thread.currentThread(), process);
-      }
-      finally {
-        myThreadIndicator.set(oldIndicator);
-      }
-    }
-    else {
-      process.run();
-    }
-  }
-
-  private static void registerIndicatorAndRun(@NotNull ProgressIndicator progress, @NotNull Thread currentThread, @NotNull Runnable process) {
-    Set<Thread> underIndicator;
-    boolean alreadyUnder;
-    boolean addedToPerverse;
-    synchronized (threadsUnderIndicator) {
-      underIndicator = threadsUnderIndicator.get(progress);
-      if (underIndicator == null) {
-        underIndicator = new SmartHashSet<Thread>();
-        threadsUnderIndicator.put(progress, underIndicator);
-      }
-      alreadyUnder = !underIndicator.add(currentThread);
-      addedToPerverse = !(progress instanceof StandardProgressIndicator) && nonStandardIndicators.add(progress);
-    }
-
-    try {
-      if (progress instanceof WrappedProgressIndicator) {
-        registerIndicatorAndRun(((WrappedProgressIndicator)progress).getOriginalProgressIndicator(), currentThread, process);
-      }
-      else {
-        process.run();
-      }
-    }
-    finally {
-      synchronized (threadsUnderIndicator) {
-        boolean removed = alreadyUnder || underIndicator.remove(currentThread);
-        if (removed && underIndicator.isEmpty()) {
-          threadsUnderIndicator.remove(progress);
-        }
-        threadsUnderCanceledIndicator.remove(currentThread);
-        if (addedToPerverse) {
-          nonStandardIndicators.remove(progress);
-        }
-      }
-    }
-  }
+    throws ProcessCanceledException;
 }

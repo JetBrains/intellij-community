@@ -16,9 +16,8 @@
 package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.DependentLanguage;
-import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -31,23 +30,18 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author ignatov
@@ -56,7 +50,7 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
   public static final int MAX_VISIBLE_SIZE = 20;
 
   public NewScratchFileAction() {
-    super("New Scratch Pad...", null, null);
+    super("New Scratch File...", null, null);
   }
 
   @Override
@@ -82,7 +76,7 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
 
   @NotNull
   static ListPopup buildLanguagePopup(@Nullable Language previous, final Consumer<Language> onChoosen) {
-    List<Language> languages = getLanguages();
+    List<Language> languages = LanguageUtil.getFileLanguages();
     BaseListPopupStep<Language> step =
       new BaseListPopupStep<Language>("Choose Language", languages) {
         @NotNull
@@ -127,31 +121,5 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
       popup.setSize(size);
     }
     return popup;
-  }
-
-
-  @NotNull
-  private static List<Language> getLanguages() {
-    Set<Language> result = ContainerUtilRt.newTreeSet(new Comparator<Language>() {
-      @Override
-      public int compare(@NotNull Language l1, @NotNull Language l2) {
-        return l1.getDisplayName().compareTo(l2.getDisplayName());
-      }
-    });
-    for (Language lang : Language.getRegisteredLanguages()) {
-      if (!StringUtil.isEmpty(lang.getDisplayName())) result.add(lang);
-      for (Language dialect : lang.getDialects()) result.add(dialect);
-    }
-    return ContainerUtil.filter(result, new Condition<Language>() {
-      @Override
-      public boolean value(Language lang) {
-        if (lang instanceof DependentLanguage || lang instanceof InjectableLanguage) return false;
-        LanguageFileType type = lang.getAssociatedFileType();
-        if (type == null) return false;
-        String name = lang.getDisplayName();
-        if (StringUtil.startsWith(name, "<") || StringUtil.startsWith(name, "[") || StringUtil.isEmpty(name) || StringUtil.equalsIgnoreCase(name, "SQL")) return false;
-        return !StringUtil.isEmpty(type.getDefaultExtension());
-      }
-    });
   }
 }

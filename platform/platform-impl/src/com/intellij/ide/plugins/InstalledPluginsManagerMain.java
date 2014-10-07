@@ -318,19 +318,17 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   public boolean isModified() {
     final boolean modified = super.isModified();
     if (modified) return true;
+    final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
     for (int i = 0; i < pluginsModel.getRowCount(); i++) {
-      final IdeaPluginDescriptor pluginDescriptor = pluginsModel.getObjectAt(i);
-      if (pluginDescriptor.isEnabled() != ((InstalledPluginsTableModel)pluginsModel).isEnabled(pluginDescriptor.getPluginId())) {
+      if (isPluginStateChanged(pluginsModel.getObjectAt(i), disabledPlugins)) {
         return true;
       }
     }
     for (IdeaPluginDescriptor descriptor : pluginsModel.filtered) {
-      if (descriptor.isEnabled() !=
-          ((InstalledPluginsTableModel)pluginsModel).isEnabled(descriptor.getPluginId())) {
+      if (isPluginStateChanged(descriptor, disabledPlugins)) {
         return true;
       }
     }
-    final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
     for (Map.Entry<PluginId, Boolean> entry : ((InstalledPluginsTableModel)pluginsModel).getEnabledMap().entrySet()) {
       final Boolean enabled = entry.getValue();
       if (enabled != null && !enabled.booleanValue() && !disabledPlugins.contains(entry.getKey().toString())) {
@@ -338,6 +336,19 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     }
 
+    return false;
+  }
+
+  private boolean isPluginStateChanged(final IdeaPluginDescriptor pluginDescriptor,
+                                       final List<String> disabledPlugins) {
+    final PluginId pluginId = pluginDescriptor.getPluginId();
+    final boolean enabledInTable = ((InstalledPluginsTableModel)pluginsModel).isEnabled(pluginId);
+    if (pluginDescriptor.isEnabled() != enabledInTable) {
+      if (enabledInTable && !disabledPlugins.contains(pluginId.getIdString())) {
+        return false; //was disabled automatically on startup
+      }
+      return true;
+    }
     return false;
   }
 

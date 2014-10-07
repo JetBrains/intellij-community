@@ -2102,6 +2102,30 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
+  public static <T> int lastIndexOf(@NotNull List<T> list, @NotNull Condition<T> condition) {
+    for (int i = list.size() - 1; i >= 0; i--) {
+      T t = list.get(i);
+      if (condition.value(t)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Nullable
+  @Contract(pure = true)
+  public static <T, U extends T> U findLastInstance(@NotNull List<T> list, @NotNull final Class<U> clazz) {
+    int i = lastIndexOf(list, new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return clazz.isInstance(t);
+      }
+    });
+    //noinspection unchecked
+    return i < 0 ? null : (U)list.get(i);
+  }
+
+  @Contract(pure=true)
   public static <T> int indexOf(@NotNull List<T> list, @NotNull final T object) {
     return indexOf(list, new Condition<T>() {
       @Override
@@ -2195,6 +2219,18 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap() {
+    return new StripedLockIntObjectConcurrentHashMap<V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap() {
+    return new ConcurrentLongObjectHashMap<V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <T> ConcurrentList<T> createConcurrentList() {
     return new LockFreeCopyOnWriteArrayList<T>();
   }
@@ -2229,6 +2265,20 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T, V> Set<V> map2Set(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
     return ContainerUtilRt.map2Set(collection, mapper);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T, V> Set<V> map2SetNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
+    if (collection.isEmpty()) return Collections.emptySet();
+    Set <V> set = new HashSet<V>(collection.size());
+    for (T t : collection) {
+      V value = mapper.fun(t);
+      if (value != null) {
+        set.add(value);
+      }
+    }
+    return set.isEmpty() ? Collections.<V>emptySet() : set;
   }
 
   @NotNull

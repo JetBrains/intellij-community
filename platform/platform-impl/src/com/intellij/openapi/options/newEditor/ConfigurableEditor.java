@@ -17,7 +17,6 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.Disposable;
@@ -54,11 +53,12 @@ import static javax.swing.SwingUtilities.isDescendingFrom;
  * @author Sergey.Malenkov
  */
 class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
+  private static final JBColor ERROR_BACKGROUND = new JBColor(0xffbfbf, 0x591f1f);
   private static final String RESET_NAME = "Reset";
   private static final String RESET_DESCRIPTION = "Rollback changes for this configuration element";
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this);
   private final IdentityHashMap<Configurable, JComponent> myConfigurableContent = new IdentityHashMap<Configurable, JComponent>();
-  private final JLabel myErrorLabel = new JLabel(AllIcons.Actions.Lightning, SwingConstants.LEFT);
+  private final JLabel myErrorLabel = new JLabel();
   private final AbstractAction myApplyAction;
   private final AbstractAction myResetAction = new AbstractAction(RESET_NAME) {
     @Override
@@ -83,12 +83,13 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     myResetAction.setEnabled(false);
     myErrorLabel.setOpaque(true);
     myErrorLabel.setVisible(false);
-    myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    myErrorLabel.setBackground(JBColor.RED);
-    myErrorLabel.setForeground(JBColor.WHITE);
+    myErrorLabel.setVerticalTextPosition(SwingConstants.TOP);
+    myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
+    myErrorLabel.setBackground(ERROR_BACKGROUND);
     add(BorderLayout.SOUTH, myErrorLabel);
     ActionManager.getInstance().addAnActionListener(this, this);
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
+    myConfigurable = configurable;
     setCurrent(configurable, readContent(configurable));
   }
 
@@ -236,7 +237,11 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       myErrorLabel.setVisible(false);
       return true;
     }
-    myErrorLabel.setText("<html><body>Changes were not applied because of the following error:<br>" + exception.getMessage());
+    Font font = myErrorLabel.getFont();
+    if (font != null) {
+      myErrorLabel.setFont(font.deriveFont(2f + font.getSize()));
+    }
+    myErrorLabel.setText("<html><body><strong>Changes were not applied because of the following error</strong>:<br>" + exception.getMessage());
     myErrorLabel.setVisible(true);
     return false;
   }

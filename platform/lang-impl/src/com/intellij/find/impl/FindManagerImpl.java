@@ -33,10 +33,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -48,7 +44,10 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -67,8 +66,6 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,14 +77,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-@State(
-  name = "FindManager",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
-public class FindManagerImpl extends FindManager implements PersistentStateComponent<Element> {
+public class FindManagerImpl extends FindManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindManagerImpl");
 
   private final FindUsagesManager myFindUsagesManager;
@@ -103,7 +93,6 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   private final Project myProject;
   private final MessageBus myBus;
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
-  @NonNls private static final String FIND_USAGES_MANAGER_ELEMENT = "FindUsagesManager";
   public static final boolean ourHasSearchInCommentsAndLiterals = true;
   private FindDialog myFindDialog;
 
@@ -127,33 +116,6 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     model.setReplaceState(true);
     model.setPromptOnReplace(false);
     return model;
-  }
-
-  @Override
-  public Element getState() {
-    Element element = new Element("FindManager");
-    final Element findUsages = new Element(FIND_USAGES_MANAGER_ELEMENT);
-    element.addContent(findUsages);
-    try {
-      myFindUsagesManager.writeExternal(findUsages);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    return element;
-  }
-
-  @Override
-  public void loadState(final Element state) {
-    final Element findUsages = state.getChild(FIND_USAGES_MANAGER_ELEMENT);
-    if (findUsages != null) {
-      try {
-        myFindUsagesManager.readExternal(findUsages);
-      }
-      catch (InvalidDataException e) {
-        LOG.error(e);
-      }
-    }
   }
 
   @Override

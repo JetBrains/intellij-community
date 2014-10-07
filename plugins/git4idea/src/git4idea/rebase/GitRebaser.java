@@ -15,6 +15,7 @@
  */
 package git4idea.rebase;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -91,7 +92,7 @@ public class GitRebaser {
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
     final AtomicBoolean failure = new AtomicBoolean();
     try {
-      GitUtil.workingTreeChangeStarted(myProject);
+      DvcsUtil.workingTreeChangeStarted(myProject);
       rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
         @Override
         protected void onSuccess() {
@@ -117,7 +118,7 @@ public class GitRebaser {
       }
     }
     finally {
-      GitUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
     return updateResult.get();
   }
@@ -145,7 +146,7 @@ public class GitRebaser {
    * @return true if rebase successfully finished.
    */
   public boolean continueRebase(@NotNull Collection<VirtualFile> rebasingRoots) {
-    GitUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       boolean success = true;
       for (VirtualFile root : rebasingRoots) {
@@ -154,7 +155,7 @@ public class GitRebaser {
       return success;
     }
     finally {
-      GitUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
   }
 

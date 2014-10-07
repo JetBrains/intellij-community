@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
@@ -90,6 +91,8 @@ public class ClassWriter {
     ClassNode outerNode = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, node);
 
+    BytecodeMappingTracer tracer = new BytecodeMappingTracer();
+
     try {
       ClassWrapper wrapper = classNode.wrapper;
       StructClass cl = wrapper.getClassStruct();
@@ -99,7 +102,7 @@ public class ClassWriter {
       if (node.lambda_information.is_method_reference) {
         if (!node.lambda_information.is_content_method_static && method_object != null) {
           // reference to a virtual method
-          buffer.append(method_object.toJava(indent));
+          buffer.append(method_object.toJava(indent, tracer));
         }
         else {
           // reference to a static method
@@ -144,7 +147,7 @@ public class ClassWriter {
         buffer.append(" {");
         buffer.append(DecompilerContext.getNewLineSeparator());
 
-        methodLambdaToJava(node, classNode, mt, buffer, indent + 1, !lambdaToAnonymous);
+        methodLambdaToJava(node, classNode, mt, buffer, indent + 1, !lambdaToAnonymous, tracer);
 
         InterpreterUtil.appendIndent(buffer, indent);
         buffer.append("}");
@@ -161,6 +164,9 @@ public class ClassWriter {
     ClassNode outerNode = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, node);
 
+    int total_offset_lines = 0;
+    BytecodeMappingTracer dummy_tracer = new BytecodeMappingTracer();
+
     try {
       // last minute processing
       invokeProcessors(node);
@@ -172,7 +178,12 @@ public class ClassWriter {
 
       String lineSeparator = DecompilerContext.getNewLineSeparator();
 
+      // write class definition
+      int start_class_def = buffer.length();
       writeClassDefinition(node, buffer, indent);
+
+//      // count lines in class definition the easiest way
+//      total_offset_lines = buffer.substring(start_class_def).toString().split(lineSeparator, -1).length - 1;
 
       boolean hasContent = false;
 
@@ -199,7 +210,7 @@ public class ClassWriter {
           enumFields = false;
         }
 
-        fieldToJava(wrapper, cl, fd, buffer, indent + 1);
+        fieldToJava(wrapper, cl, fd, buffer, indent + 1, dummy_tracer); // FIXME: insert real tracer
 
         hasContent = true;
       }
@@ -208,6 +219,9 @@ public class ClassWriter {
         buffer.append(';');
         buffer.append(lineSeparator);
       }
+
+      // FIXME: fields don't matter at the moment
+      total_offset_lines = buffer.substring(start_class_def).toString().split(lineSeparator, -1).length - 1;
 
       // methods
       for (StructMethod mt : cl.getMethods()) {
@@ -220,9 +234,13 @@ public class ClassWriter {
         if (hasContent) {
           buffer.append(lineSeparator);
         }
-        boolean methodSkipped = !methodToJava(node, mt, buffer, indent + 1);
+        BytecodeMappingTracer method_tracer = new BytecodeMappingTracer(total_offset_lines);
+        boolean methodSkipped = !methodToJava(node, mt, buffer, indent + 1, method_tracer);
         if (!methodSkipped) {
           hasContent = true;
+          DecompilerContext.getBytecodeSourceMapper().addTracer(cl.qualifiedName,
+                                  InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()), method_tracer);
+          total_offset_lines = (method_tracer.getCurrentSourceLine() + 1); // zero-based line index
         }
         else {
           buffer.setLength(position);
@@ -372,7 +390,7 @@ public class ClassWriter {
     buffer.append(lineSeparator);
   }
 
-  private void fieldToJava(ClassWrapper wrapper, StructClass cl, StructField fd, StringBuilder buffer, int indent) {
+  private void fieldToJava(ClassWrapper wrapper, StructClass cl, StructField fd, StringBuilder buffer, int indent, BytecodeMappingTracer tracer) {
     String indentString = InterpreterUtil.getIndentString(indent);
     String lineSeparator = DecompilerContext.getNewLineSeparator();
 
@@ -434,11 +452,12 @@ public class ClassWriter {
       if (isEnum && initializer.type == Exprent.EXPRENT_NEW) {
         NewExprent nexpr = (NewExprent)initializer;
         nexpr.setEnumconst(true);
-        buffer.append(nexpr.toJava(indent));
+        buffer.append(nexpr.toJava(indent, tracer));
       }
       else {
         buffer.append(" = ");
-        buffer.append(initializer.toJava(indent));
+        // FIXME: special case field initializer. Can map to more than one method (constructor) and bytecode intruction.
+        buffer.append(initializer.toJava(indent, tracer));
       }
     }
     else if (fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_STATIC)) {
@@ -447,7 +466,7 @@ public class ClassWriter {
       if (attr != null) {
         PrimitiveConstant constant = cl.getPool().getPrimitiveConstant(attr.getIndex());
         buffer.append(" = ");
-        buffer.append(new ConstExprent(fieldType, constant.value).toJava(indent));
+        buffer.append(new ConstExprent(fieldType, constant.value).toJava(indent, tracer));
       }
     }
 
@@ -462,7 +481,7 @@ public class ClassWriter {
                                          StructMethod mt,
                                          StringBuilder buffer,
                                          int indent,
-                                         boolean codeOnly) {
+                                         boolean codeOnly, BytecodeMappingTracer tracer) {
     ClassWrapper classWrapper = classNode.wrapper;
     MethodWrapper methodWrapper = classWrapper.getMethodWrapper(mt.getName(), mt.getDescriptor());
 
@@ -518,7 +537,7 @@ public class ClassWriter {
         RootStatement root = classWrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
         if (root != null) { // check for existence
           try {
-            buffer.append(root.toJava(indent));
+            buffer.append(root.toJava(indent, tracer));
           }
           catch (Throwable ex) {
             DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.", ex);
@@ -546,12 +565,16 @@ public class ClassWriter {
     }
   }
 
-  private boolean methodToJava(ClassNode node, StructMethod mt, StringBuilder buffer, int indent) {
+  private boolean methodToJava(ClassNode node, StructMethod mt, StringBuilder buffer, int indent, BytecodeMappingTracer tracer) {
     ClassWrapper wrapper = node.wrapper;
     StructClass cl = wrapper.getClassStruct();
     MethodWrapper methodWrapper = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor());
 
     boolean hideMethod = false;
+    int start_index_method = buffer.length();
+
+    String indentString = InterpreterUtil.getIndentString(indent);
+    String lineSeparator = DecompilerContext.getNewLineSeparator();
 
     MethodWrapper outerWrapper = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, methodWrapper);
@@ -562,9 +585,6 @@ public class ClassWriter {
       boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
       boolean isDeprecated = mt.getAttributes().containsKey("Deprecated");
       boolean clinit = false, init = false, dinit = false;
-
-      String indentString = InterpreterUtil.getIndentString(indent);
-      String lineSeparator = DecompilerContext.getNewLineSeparator();
 
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
@@ -768,7 +788,7 @@ public class ClassWriter {
           StructAnnDefaultAttribute attr = (StructAnnDefaultAttribute)mt.getAttributes().getWithKey("AnnotationDefault");
           if (attr != null) {
             buffer.append(" default ");
-            buffer.append(attr.getDefaultValue().toJava(indent + 1));
+            buffer.append(attr.getDefaultValue().toJava(indent + 1, new BytecodeMappingTracer())); // dummy tracer
           }
         }
 
@@ -787,7 +807,10 @@ public class ClassWriter {
 
         if (root != null && !methodWrapper.decompiledWithErrors) { // check for existence
           try {
-            String code = root.toJava(indent + 1);
+
+            tracer.incrementCurrentSourceLine(buffer.substring(start_index_method).split(lineSeparator, -1).length - 1);
+
+            String code = root.toJava(indent + 1, tracer);
 
             hideMethod = (clinit || dinit || hideConstructor(wrapper, init, throwsExceptions, paramCount)) && code.length() == 0;
 
@@ -813,6 +836,10 @@ public class ClassWriter {
     finally {
       DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, outerWrapper);
     }
+
+    // save total lines
+    // TODO: optimize
+    tracer.setCurrentSourceLine(buffer.substring(start_index_method).split(lineSeparator, -1).length - 1);
 
     return !hideMethod;
   }
@@ -896,11 +923,14 @@ public class ClassWriter {
     StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS};
 
   private static void appendAnnotations(StringBuilder buffer, StructMember mb, int indent, String lineSeparator) {
+
+    BytecodeMappingTracer tracer_dummy = new BytecodeMappingTracer(); // FIXME: replace with a real one
+
     for (String name : ANNOTATION_ATTRIBUTES) {
       StructAnnotationAttribute attribute = (StructAnnotationAttribute)mb.getAttributes().getWithKey(name);
       if (attribute != null) {
         for (AnnotationExprent annotation : attribute.getAnnotations()) {
-          buffer.append(annotation.toJava(indent)).append(lineSeparator);
+          buffer.append(annotation.toJava(indent, tracer_dummy)).append(lineSeparator);
         }
       }
     }
@@ -910,13 +940,16 @@ public class ClassWriter {
     StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
 
   private static void appendParameterAnnotations(StringBuilder buffer, StructMethod mt, int param) {
+
+    BytecodeMappingTracer tracer_dummy = new BytecodeMappingTracer(); // FIXME: replace with a real one
+
     for (String name : PARAMETER_ANNOTATION_ATTRIBUTES) {
       StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttributes().getWithKey(name);
       if (attribute != null) {
         List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
         if (param < annotations.size()) {
           for (AnnotationExprent annotation : annotations.get(param)) {
-            buffer.append(annotation.toJava(0)).append(' ');
+            buffer.append(annotation.toJava(0, tracer_dummy)).append(' ');
           }
         }
       }

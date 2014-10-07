@@ -76,7 +76,6 @@
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
         serviceImplementation="com.jetbrains.python.edu.StudyInstructionPainter" overrides="true"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <editorNotificationProvider implementation="com.jetbrains.python.edu.StudyEditorNotificationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <visitorFilter language="Python" implementationClass="com.jetbrains.python.edu.highlighting.StudyVisitorFilter"/>

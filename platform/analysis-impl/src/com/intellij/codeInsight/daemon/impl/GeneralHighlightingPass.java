@@ -86,7 +86,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Comparator<HighlightVisitor> VISITOR_ORDER_COMPARATOR = new Comparator<HighlightVisitor>() {
     @Override
     public int compare(final HighlightVisitor o1, final HighlightVisitor o2) {
-      return o1.order() - o2.order();
+      int delta = o1.order() - o2.order();
+      if (delta != 0) return delta;
+      if (o1.getClass() == o2.getClass()) {
+        LOG.error("Duplicate visitors registered: "+o1 +" and "+o2 + " ("+o1.getClass()+")");
+      }
+      return 0;
     }
   };
   protected final EditorColorsScheme myGlobalScheme;
@@ -302,7 +307,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               continue;
             }
 
-            if (element instanceof PsiErrorElement) {
+            boolean isErrorElement = element instanceof PsiErrorElement;
+            if (isErrorElement) {
               myHasErrorElement = true;
             }
             holder.clear();
@@ -349,7 +355,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               }
               // if this highlight info range is exactly the same as the element range we are visiting
               // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
-              info.setBijective(elementRange.equalsToRange(info.startOffset, info.endOffset));
+              // We also know that we can remove syntax error element.
+              info.setBijective(elementRange.equalsToRange(info.startOffset, info.endOffset) || isErrorElement);
 
               myHighlightInfoProcessor.infoIsAvailable(myHighlightingSession, info);
               infosForThisRange.add(info);

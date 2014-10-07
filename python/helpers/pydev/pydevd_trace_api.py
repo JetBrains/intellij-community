@@ -36,3 +36,6 @@ def suspend(plugin, pydb, thread, frame):
 
 def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
     return None
+
+def change_variable(plugin, frame, attr, expression):
+    return False

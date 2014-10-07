@@ -2,16 +2,15 @@ package com.intellij.json.formatter;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.json.JsonLanguage;
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.json.JsonLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.SPACES_OTHER;
-import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.SPACES_WITHIN;
 
 /**
  * @author Mikhail Golubev
@@ -31,17 +30,36 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showStandardOptions("SPACE_WITHIN_BRACKETS",
+                                   "SPACE_WITHIN_BRACES",
                                    "SPACE_AFTER_COMMA",
-                                   "SPACE_BEFORE_COMMA"
-      );
-      consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_WITHIN_BRACES", "Braces", SPACES_WITHIN);
+                                   "SPACE_BEFORE_COMMA");
+      consumer.renameStandardOption("SPACE_WITHIN_BRACES", "Braces");
       consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_BEFORE_COLON", "Before ':'", SPACES_OTHER);
       consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_AFTER_COLON", "After ':'", SPACES_OTHER);
     }
-    if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
+    else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showStandardOptions("KEEP_BLANK_LINES_IN_CODE");
     }
-    super.customizeSettings(consumer, settingsType);
+    else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
+      consumer.showStandardOptions("RIGHT_MARGIN",
+                                   "KEEP_LINE_BREAKS",
+                                   "WRAP_LONG_LINES");
+
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "ARRAY_WRAPPING",
+                                "Arrays",
+                                null,
+                                CodeStyleSettingsCustomizable.WRAP_OPTIONS,
+                                CodeStyleSettingsCustomizable.WRAP_VALUES);
+
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "OBJECT_WRAPPING",
+                                "Objects",
+                                null,
+                                CodeStyleSettingsCustomizable.WRAP_OPTIONS,
+                                CodeStyleSettingsCustomizable.WRAP_VALUES);
+
+    }
   }
 
   @NotNull
@@ -53,7 +71,6 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @Nullable
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
-    // TODO: read sources of this one carefully
     return new SmartIndentOptionsEditor();
   }
 

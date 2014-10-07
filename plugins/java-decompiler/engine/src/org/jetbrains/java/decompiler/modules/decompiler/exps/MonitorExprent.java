@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
@@ -49,9 +50,13 @@ public class MonitorExprent extends Exprent {
     return lst;
   }
 
-  public String toJava(int indent) {
+  @Override
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
+
+    tracer.addMapping(bytecode);
+
     if (montype == MONITOR_ENTER) {
-      return "synchronized(" + value.toJava(indent) + ")";
+      return "synchronized(" + value.toJava(indent, tracer) + ")";
     }
     else {
       return "";

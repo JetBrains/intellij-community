@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
@@ -52,6 +53,9 @@ public class Exprent {
   public int type;
 
   public int id;
+
+  //offsets of bytecode instructions decompiled to this exprent
+  public Set<Integer> bytecode = new HashSet<Integer>();
 
   {
     // set exprent id
@@ -124,7 +128,7 @@ public class Exprent {
     throw new RuntimeException("not implemented");
   }
 
-  public String toJava(int indent) {
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     throw new RuntimeException("not implemented");
   }
 

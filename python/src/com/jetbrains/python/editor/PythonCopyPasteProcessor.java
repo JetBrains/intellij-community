@@ -176,7 +176,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       if (indent < minIndent && !StringUtil.isEmptyOrSpaces(s))
         minIndent = indent;
     }
-    return minIndent;
+    return minIndent >= 0 ? minIndent : 0;
   }
 
   private static boolean isApplicable(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {

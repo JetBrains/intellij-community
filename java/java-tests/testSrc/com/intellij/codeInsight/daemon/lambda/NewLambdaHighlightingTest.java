@@ -22,8 +22,6 @@ import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -136,8 +134,16 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testSameParametrizationCheckTakesTypeParametersIntoAccount() throws Exception {
+    doTest();
+  }
+
   @Bombed(month = Calendar.OCTOBER, day = 30)
   public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA130129() throws Exception {
     doTest();
   }
 

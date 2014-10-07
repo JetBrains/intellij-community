@@ -18,31 +18,39 @@ package com.intellij.profile.codeInspection.ui.filter;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.SortedSet;
+import java.util.*;
 
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionFilterAction extends DefaultActionGroup implements Toggleable {
+public class InspectionFilterAction extends DefaultActionGroup implements Toggleable, DumbAware {
 
   private final SeverityRegistrar mySeverityRegistrar;
   private final InspectionsFilter myInspectionsFilter;
 
-  public InspectionFilterAction(final InspectionProfileImpl profile, final InspectionsFilter inspectionsFilter) {
+  public InspectionFilterAction(final InspectionProfileImpl profile,
+                                final InspectionsFilter inspectionsFilter,
+                                final Project project) {
     super("Filter Inspections", true);
     myInspectionsFilter = inspectionsFilter;
     mySeverityRegistrar = ((SeverityProvider)profile.getProfileManager()).getOwnSeverityRegistrar();
     getTemplatePresentation().setIcon(AllIcons.General.Filter);
-    tune();
+    tune(profile, project);
   }
 
   @Override
@@ -51,7 +59,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     e.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, !myInspectionsFilter.isEmptyFilter());
   }
 
-  private void tune() {
+  private void tune(InspectionProfileImpl profile, Project project) {
     addAction(new ResetFilterAction());
     addSeparator();
 
@@ -65,11 +73,40 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
     addSeparator();
 
+    final Set<String> languageIds = new HashSet<String>();
+    for (ScopeToolState state : profile.getDefaultStates(project)) {
+      final String languageId = state.getTool().getLanguage();
+      languageIds.add(languageId);
+    }
+
+    final List<Language> languages = new ArrayList<Language>();
+    for (String id : languageIds) {
+      if (id != null) {
+        final Language language = Language.findLanguageByID(id);
+        if (language != null) {
+          languages.add(language);
+        }
+      }
+    }
+
+    if (!languages.isEmpty()) {
+      Collections.sort(languages, new Comparator<Language>() {
+        @Override
+        public int compare(Language l1, Language l2) {
+          return l1.getDisplayName().compareTo(l2.getDisplayName());
+        }
+      });
+      for (Language language : languages) {
+        add(new LanguageFilterAction(language));
+      }
+      addSeparator();
+    }
+
     add(new ShowAvailableOnlyOnAnalyzeInspectionsAction());
     add(new ShowOnlyCleanupInspectionsAction());
   }
 
-  private class ResetFilterAction extends AnAction {
+  private class ResetFilterAction extends DumbAwareAction {
     public ResetFilterAction() {
       super("Reset Filter");
     }
@@ -86,7 +123,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowOnlyCleanupInspectionsAction extends CheckboxAction {
+  private class ShowOnlyCleanupInspectionsAction extends CheckboxAction implements DumbAware{
     public ShowOnlyCleanupInspectionsAction() {
       super("Show Only Cleanup Inspections");
     }
@@ -102,7 +139,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction {
+  private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction implements DumbAware {
 
     public ShowAvailableOnlyOnAnalyzeInspectionsAction() {
       super("Show Only \"Available only for Analyze | Inspect Code\"");
@@ -119,7 +156,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowWithSpecifiedSeverityInspectionsAction extends CheckboxAction {
+  private class ShowWithSpecifiedSeverityInspectionsAction extends CheckboxAction implements DumbAware {
 
     private final HighlightSeverity mySeverity;
 
@@ -139,14 +176,14 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     @Override
     public void setSelected(final AnActionEvent e, final boolean state) {
       if (state) {
-        myInspectionsFilter.add(mySeverity);
+        myInspectionsFilter.addSeverity(mySeverity);
       } else {
-        myInspectionsFilter.remove(mySeverity);
+        myInspectionsFilter.removeSeverity(mySeverity);
       }
     }
   }
 
-  private class ShowEnabledOrDisabledInspectionsAction extends CheckboxAction {
+  private class ShowEnabledOrDisabledInspectionsAction extends CheckboxAction implements DumbAware{
 
     private final Boolean myShowEnabledActions;
 
@@ -165,6 +202,30 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     public void setSelected(final AnActionEvent e, final boolean state) {
       final boolean previousState = isSelected(e);
       myInspectionsFilter.setSuitableInspectionsStates(previousState ? null : myShowEnabledActions);
+    }
+  }
+
+  private class LanguageFilterAction extends CheckboxAction implements DumbAware {
+
+    private final String myLanguageId;
+
+    public LanguageFilterAction(final Language language) {
+      super(language.getDisplayName());
+      myLanguageId = language.getID();
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myInspectionsFilter.containsLanguageId(myLanguageId);
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      if (state) {
+        myInspectionsFilter.addLanguageId(myLanguageId);
+      } else {
+        myInspectionsFilter.removeLanguageId(myLanguageId);
+      }
     }
   }
 }

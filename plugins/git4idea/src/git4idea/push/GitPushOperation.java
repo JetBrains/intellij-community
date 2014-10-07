@@ -357,9 +357,9 @@ public class GitPushOperation {
     });
   }
 
-  private void savePushUpdateSettings(@NotNull PushUpdateSettings PushUpdateSettings) {
-    UpdateMethod updateMethod = PushUpdateSettings.getUpdateMethod();
-    myPushSettings.setUpdateAllRoots(PushUpdateSettings.shouldUpdateAllRoots());
+  private void savePushUpdateSettings(@NotNull PushUpdateSettings settings) {
+    UpdateMethod updateMethod = settings.getUpdateMethod();
+    myPushSettings.setUpdateAllRoots(settings.shouldUpdateAllRoots());
     myPushSettings.setUpdateMethod(updateMethod);
   }
 

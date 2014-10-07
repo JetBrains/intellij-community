@@ -30,6 +30,8 @@ public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
             addIndentOptionsTab(settings);
             addSpacesTab(settings);
             addBlankLinesTab(settings);
+            addWrappingAndBracesTab(settings);
+            addTab(new JsonCodeStylePanel(settings));
           }
         };
       }
@@ -37,7 +39,7 @@ public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
       @Nullable
       @Override
       public String getHelpTopic() {
-        return null;
+        return "reference.settingsdialog.codestyle.json";
       }
     };
   }

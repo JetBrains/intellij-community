@@ -47,7 +47,7 @@ public class ProjectSetRequestHandler extends HttpRequestHandler {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        new ProjectSetReader().readDescriptor(desc);
+        new ProjectSetReader().readDescriptor(desc, null);
       }
     });
     Responses.sendStatus(HttpResponseStatus.OK, context.channel(), request);

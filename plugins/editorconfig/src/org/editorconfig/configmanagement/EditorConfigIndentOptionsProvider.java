@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import org.editorconfig.Utils;
@@ -37,7 +36,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     // Get editorconfig settings
     final String filePath = file.getCanonicalPath();
     final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
-    final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(filePath);
+    final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(project, filePath);
     // Apply editorconfig settings for the current editor
     return applyCodeStyleSettings(project, outPairs, file);
   }

@@ -918,7 +918,15 @@ public class CommonCodeStyleSettings {
 
     @Override
     public void writeExternal(Element element) throws WriteExternalException {
-      DefaultJDOMExternalizer.writeExternal(this, element);
+      DefaultJDOMExternalizer.writeExternal(this, element, new DefaultJDOMExternalizer.JDOMFilter() {
+        @Override
+        public boolean isAccept(@NotNull Field field) {
+          if ("KEEP_INDENTS_ON_EMPTY_LINES".equals(field.getName())) {
+            return KEEP_INDENTS_ON_EMPTY_LINES;
+          }
+          return true;
+        }
+      });
     }
 
     public void serialize(Element indentOptionsElement, final IndentOptions defaultOptions) {

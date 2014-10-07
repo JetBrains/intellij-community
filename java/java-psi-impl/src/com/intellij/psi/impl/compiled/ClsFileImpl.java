@@ -375,6 +375,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       }
     }
 
+    ((PsiFileImpl)mirror).setOriginalFile(this);
+
     return mirrorTreeElement;
   }
 
@@ -563,8 +565,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @NotNull
   public static CharSequence decompile(@NotNull VirtualFile file) {
     PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
-    StringBuilder buffer = new StringBuilder();
-    new ClsFileImpl(new ClassFileViewProvider(manager, file), true).appendMirrorText(0, buffer);
+    final ClsFileImpl clsFile = new ClsFileImpl(new ClassFileViewProvider(manager, file), true);
+    final StringBuilder buffer = new StringBuilder();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        clsFile.appendMirrorText(0, buffer);
+      }
+    });
     return buffer;
   }
 

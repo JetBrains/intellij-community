@@ -24,11 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 class CoreProgressManager extends ProgressManager {
+  private static final ThreadLocal<ProgressIndicator> myIndicator = new ThreadLocal<ProgressIndicator>();
   @Override
   public boolean hasProgressIndicator() {
-    return false;
+    return getProgressIndicator() != null;
   }
 
   @Override
@@ -42,18 +44,40 @@ class CoreProgressManager extends ProgressManager {
   }
 
   @Override
-  public void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    process.run();
+  public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) throws ProcessCanceledException {
+    executeProcessUnderProgress(new Runnable(){
+      @Override
+      public void run() {
+        try {
+          if (progress != null && !progress.isRunning()) {
+            progress.start();
+          }
+          process.run();
+        }
+        finally {
+          if (progress != null && progress.isRunning()) {
+            progress.stop();
+          }
+        }
+      }
+    },progress);
   }
 
   @Override
-  public <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
-    return process.compute();
+  public <T> T runProcess(@NotNull final Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
+    final AtomicReference<T> result = new AtomicReference<T>();
+    executeProcessUnderProgress(new Runnable() {
+      @Override
+      public void run() {
+        result.set(process.compute());
+      }
+    }, progress);
+    return result.get();
   }
 
   @Override
   public void executeNonCancelableSection(@NotNull Runnable runnable) {
-    runnable.run();
+    executeProcessUnderProgress(runnable, new EmptyProgressIndicator());
   }
 
   @Override
@@ -66,16 +90,30 @@ class CoreProgressManager extends ProgressManager {
                                                      @NotNull @Nls String progressTitle,
                                                      boolean canBeCanceled,
                                                      @Nullable Project project) {
-    process.run();
+    executeProcessUnderProgress(process, new EmptyProgressIndicator());
     return true;
   }
 
   @Override
-  public <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
+  public <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull final ThrowableComputable<T, E> process,
                                                                         @NotNull @Nls String progressTitle,
                                                                         boolean canBeCanceled,
                                                                         @Nullable Project project) throws E {
-    return process.compute();
+    final AtomicReference<T> result = new AtomicReference<T>();
+    final AtomicReference<E> exception = new AtomicReference<E>();
+    executeProcessUnderProgress(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          result.set(process.compute());
+        }
+        catch (Exception e) {
+          exception.set((E)e);
+        }
+      }
+    }, new EmptyProgressIndicator());
+    if (exception.get() != null) throw exception.get();
+    return result.get();
   }
 
   @Override
@@ -84,8 +122,7 @@ class CoreProgressManager extends ProgressManager {
                                                      boolean canBeCanceled,
                                                      @Nullable Project project,
                                                      @Nullable JComponent parentComponent) {
-    process.run();
-    return true;
+    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project);
   }
 
   @Override
@@ -94,7 +131,7 @@ class CoreProgressManager extends ProgressManager {
                                                    @NotNull Runnable process,
                                                    @Nullable Runnable successRunnable,
                                                    @Nullable Runnable canceledRunnable) {
-    process.run();
+    runProcess(process, new EmptyProgressIndicator());
   }
 
   @Override
@@ -104,12 +141,17 @@ class CoreProgressManager extends ProgressManager {
                                                    @Nullable Runnable successRunnable,
                                                    @Nullable Runnable canceledRunnable,
                                                    @NotNull PerformInBackgroundOption option) {
-    process.run();
+    runProcess(process, new EmptyProgressIndicator());
   }
 
   @Override
-  public void run(@NotNull Task task) {
-    task.run(getProgressIndicator());
+  public void run(@NotNull final Task task) {
+    runProcess(new Runnable() {
+      @Override
+      public void run() {
+        task.run(getProgressIndicator());
+      }
+    }, new EmptyProgressIndicator());
   }
 
   @Override
@@ -119,11 +161,34 @@ class CoreProgressManager extends ProgressManager {
 
   @Override
   public ProgressIndicator getProgressIndicator() {
-    return new EmptyProgressIndicator();
+    return myIndicator.get();
   }
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
+    ProgressIndicator indicator = getProgressIndicator();
+    if (indicator != null) {
+      indicator.checkCanceled();
+    }
+  }
+
+  @Override
+  public void executeProcessUnderProgress(@NotNull Runnable process,
+                                          @Nullable("null means reuse current progress") ProgressIndicator progress)
+    throws ProcessCanceledException {
+    ProgressIndicator old = null;
+    if (progress != null) {
+      old = getProgressIndicator();
+      myIndicator.set(progress);
+    }
+    try {
+      process.run();
+    }
+    finally {
+      if (progress != null) {
+        myIndicator.set(old);
+      }
+    }
   }
 
   @NotNull

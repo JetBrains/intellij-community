@@ -23,21 +23,27 @@ import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Alarm;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +54,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
 import java.util.HashMap;
@@ -63,8 +70,12 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private final static int SEVERITIES_COLUMN = 1;
   private final static int IS_ENABLED_COLUMN = 2;
 
-  public InspectionsConfigTreeTable(final InspectionsConfigTreeTableSettings settings) {
-    super(new InspectionsConfigTreeTableModel(settings));
+  public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
+    return new InspectionsConfigTreeTable(new InspectionsConfigTreeTableModel(settings, parentDisposable));
+  }
+
+  public InspectionsConfigTreeTable(final InspectionsConfigTreeTableModel model) {
+    super(model);
 
     final TableColumn severitiesColumn = getColumnModel().getColumn(SEVERITIES_COLUMN);
     severitiesColumn.setMaxWidth(20);
@@ -112,29 +123,44 @@ public class InspectionsConfigTreeTable extends TreeTable {
         if (path != null) {
           final InspectionConfigTreeNode node = (InspectionConfigTreeNode)path.getLastPathComponent();
           if (node.isLeaf()) {
-            swapInspectionEnableState();
+            model.swapInspectionEnableState();
           }
         }
         return true;
       }
     }.installOn(this);
 
+    setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
+        if (path != null) {
+          return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(), new NullableFunction<Object, String>() {
+            @Nullable
+            @Override
+            public String fun(Object o) {
+              return o == path.getPath()[0] ? null : o.toString();
+            }
+          }), " | "));
+        }
+        return null;
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
+
     registerKeyboardAction(new ActionListener() {
                              public void actionPerformed(ActionEvent e) {
-                               swapInspectionEnableState();
+                               model.swapInspectionEnableState();
                                updateUI();
                              }
                            }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
     getEmptyText().setText("No enabled inspections available");
-  }
-
-  private void swapInspectionEnableState() {
-    for (int selectedRow : getSelectedRows()) {
-      final Object value = getValueAt(selectedRow, IS_ENABLED_COLUMN);
-      final boolean newValue = !Boolean.TRUE.equals(value);
-      setValueAt(newValue, selectedRow, IS_ENABLED_COLUMN);
-    }
   }
 
   public abstract static class InspectionsConfigTreeTableSettings {
@@ -157,16 +183,28 @@ public class InspectionsConfigTreeTable extends TreeTable {
     protected abstract InspectionProfileImpl getInspectionProfile();
 
     protected abstract void onChanged(InspectionConfigTreeNode node);
+
+    public abstract void updateRightPanel();
   }
 
   private static class InspectionsConfigTreeTableModel extends DefaultTreeModel implements TreeTableModel {
 
     private final InspectionsConfigTreeTableSettings mySettings;
+    private final Runnable myUpdateRunnable;
     private TreeTable myTreeTable;
 
-    public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings) {
+    private Alarm myUpdateAlarm;
+
+    public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
       super(settings.getRoot());
       mySettings = settings;
+      myUpdateRunnable = new Runnable() {
+        public void run() {
+          settings.updateRightPanel();
+          ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
+        }
+      };
+      myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
     }
 
     @Override
@@ -245,25 +283,90 @@ public class InspectionsConfigTreeTable extends TreeTable {
       LOG.assertTrue(aValue != null, "node = " + node);
       final boolean doEnable = (Boolean) aValue;
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
-      for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode) node)) {
-        final String toolId = aNode.getKey().toString();
-        if (doEnable) {
-          profile.enableTool(toolId, mySettings.getProject());
-        } else {
-          profile.disableTool(toolId, mySettings.getProject());
-        }
-        for (ScopeToolState state : profile.getTools(toolId, mySettings.getProject()).getTools()) {
-          state.setEnabled(doEnable);
-        }
+      for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
+        setToolEnabled(doEnable, profile, aNode.getKey());
         aNode.dropCache();
         mySettings.onChanged(aNode);
       }
+      updateRightPanel();
+    }
+
+    public void swapInspectionEnableState() {
+      LOG.assertTrue(myTreeTable != null);
+
+      Boolean state = null;
+      final HashSet<HighlightDisplayKey> tools = new HashSet<HighlightDisplayKey>();
+      final List<InspectionConfigTreeNode> nodes = new ArrayList<InspectionConfigTreeNode>();
+
+      for (TreePath selectionPath : myTreeTable.getTree().getSelectionPaths()) {
+        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
+        collectInspectionFromNodes(node, tools, nodes);
+      }
+
+      final int[] selectedRows = myTreeTable.getSelectedRows();
+      for (int selectedRow : selectedRows) {
+        final Boolean value = (Boolean)myTreeTable.getValueAt(selectedRow, IS_ENABLED_COLUMN);
+        if (state == null) {
+          state = value;
+        }
+        else if (!state.equals(value)) {
+          state = null;
+          break;
+        }
+      }
+      final boolean newState = !Boolean.TRUE.equals(state);
+
+      final InspectionProfileImpl profile = mySettings.getInspectionProfile();
+      for (HighlightDisplayKey tool : tools) {
+        setToolEnabled(newState, profile, tool);
+      }
+
+      for (InspectionConfigTreeNode node : nodes) {
+        node.dropCache();
+        mySettings.onChanged(node);
+      }
+
+      updateRightPanel();
+    }
+
+    private void updateRightPanel() {
       if (myTreeTable != null) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          public void run() {
-            ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
-          }
-        });
+        if (!myUpdateAlarm.isDisposed()) {
+          myUpdateAlarm.cancelAllRequests();
+          myUpdateAlarm.addRequest(myUpdateRunnable, 10, ModalityState.stateForComponent(myTreeTable));
+        }
+      }
+    }
+
+    private void setToolEnabled(boolean newState, InspectionProfileImpl profile, HighlightDisplayKey tool) {
+      final String toolId = tool.toString();
+      if (newState) {
+        profile.enableTool(toolId, mySettings.getProject());
+      }
+      else {
+        profile.disableTool(toolId, mySettings.getProject());
+      }
+      for (ScopeToolState scopeToolState : profile.getTools(toolId, mySettings.getProject()).getTools()) {
+        scopeToolState.setEnabled(newState);
+      }
+    }
+
+    private static void collectInspectionFromNodes(final InspectionConfigTreeNode node,
+                                                   final Set<HighlightDisplayKey> tools,
+                                                   final List<InspectionConfigTreeNode> nodes) {
+      if (node == null) {
+        return;
+      }
+      nodes.add(node);
+
+      final ToolDescriptors descriptors = node.getDescriptors();
+      if (descriptors == null) {
+        for (int i = 0; i < node.getChildCount(); i++) {
+          collectInspectionFromNodes((InspectionConfigTreeNode)node.getChildAt(i), tools, nodes);
+        }
+      } else {
+        final HighlightDisplayKey key = descriptors.getDefaultDescriptor().getKey();
+        tools.add(key);
       }
     }
 
@@ -341,13 +444,6 @@ public class InspectionsConfigTreeTable extends TreeTable {
       if (myScopeToAverageSeverityMap.size() == 1) {
         return result;
       }
-      String[] scopesOrder = inspectionProfile.getScopesOrder();
-      if (scopesOrder == null || scopesOrder.length == 0) {
-        final ArrayList<String> scopesList = new ArrayList<String>(myScopeToAverageSeverityMap.keySet());
-        scopesList.remove(myDefaultScopeName);
-        ContainerUtil.sort(scopesList);
-        scopesOrder = ArrayUtil.toStringArray(scopesList);
-      }
 
       final SeverityAndOccurrences defaultSeveritiesAndOccurrences = myScopeToAverageSeverityMap.get(myDefaultScopeName);
       if (defaultSeveritiesAndOccurrences == null) {
@@ -361,15 +457,15 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
       final int allInspectionsCount = defaultSeveritiesAndOccurrences.getOccurrencesSize();
       final Map<String, HighlightSeverity> allScopes = defaultSeveritiesAndOccurrences.getOccurrences();
-      String[] reversedScopesOrder = ArrayUtil.reverseArray(scopesOrder);
-      for (String currentScope : reversedScopesOrder) {
+      for (String currentScope : myScopeToAverageSeverityMap.keySet()) {
         final SeverityAndOccurrences currentSeverityAndOccurrences = myScopeToAverageSeverityMap.get(currentScope);
         if (currentSeverityAndOccurrences == null) {
           continue;
         }
         final HighlightSeverity currentSeverity = currentSeverityAndOccurrences.getPrimarySeverity();
         if (currentSeverity == ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY ||
-            currentSeverityAndOccurrences.getOccurrencesSize() == allInspectionsCount) {
+            currentSeverityAndOccurrences.getOccurrencesSize() == allInspectionsCount ||
+            myDefaultScopeName.equals(currentScope)) {
           result.put(currentScope, currentSeverity);
         }
         else {

@@ -55,7 +55,6 @@ public class RootIndex {
   };
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
 
-  private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
   private final MultiMap<String, VirtualFile> myPackagePrefixRoots = new MultiMap<String, VirtualFile>() {
     @NotNull
     @Override
@@ -93,9 +92,6 @@ public class RootIndex {
                                          : new Pair<DirectoryInfo, String>(NonProjectDirectoryInfo.IGNORED, null);
       cacheInfos(root, root, pair.first);
       myPackagePrefixRoots.putValue(pair.second, root);
-      if (info.shouldMarkAsProjectExcluded(root, hierarchy)) {
-        myProjectExcludedRoots.add(root);
-      }
     }
   }
 
@@ -252,10 +248,6 @@ public class RootIndex {
 
 
   public void checkConsistency() {
-    for (VirtualFile file : myProjectExcludedRoots) {
-      assert file.exists() : file.getPath() + " does not exist";
-    }
-
     for (VirtualFile file : myPackagePrefixRoots.values()) {
       assert file.exists() : file.getPath() + " does not exist";
     }
@@ -467,17 +459,6 @@ public class RootIndex {
       result.addAll(excludedFromModule.keySet());
       result.addAll(excludedFromProject);
       return result;
-    }
-
-    private boolean shouldMarkAsProjectExcluded(@NotNull VirtualFile root, @Nullable List<VirtualFile> hierarchy) {
-      if (hierarchy == null) return false;
-      if (!excludedFromProject.contains(root) && !excludedFromModule.containsKey(root)) return false;
-      return ContainerUtil.find(hierarchy, new Condition<VirtualFile>() {
-        @Override
-        public boolean value(VirtualFile ancestor) {
-          return contentRootOf.containsKey(ancestor);
-        }
-      }) == null;
     }
 
     @Nullable

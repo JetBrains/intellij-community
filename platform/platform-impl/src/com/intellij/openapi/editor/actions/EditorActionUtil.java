@@ -134,10 +134,11 @@ public class EditorActionUtil {
     Document document = editor.getDocument();
     int spacesEnd = 0;
     int lineStart = 0;
+    int lineEnd = 0;
     int tabsEnd = 0;
     if (lineNumber < document.getLineCount()) {
       lineStart = document.getLineStartOffset(lineNumber);
-      int lineEnd = document.getLineEndOffset(lineNumber);
+      lineEnd = document.getLineEndOffset(lineNumber);
       spacesEnd = lineStart;
       CharSequence text = document.getCharsSequence();
       boolean inTabs = true;
@@ -157,6 +158,11 @@ public class EditorActionUtil {
       if (inTabs) {
         tabsEnd = lineEnd;
       } 
+    }
+    int newCaretOffset = editor.getCaretModel().getOffset();
+    if (newCaretOffset >= lineStart && newCaretOffset < lineEnd && spacesEnd == lineEnd) {
+      spacesEnd = newCaretOffset;
+      tabsEnd = Math.min(spacesEnd, tabsEnd);
     }
     int oldLength = editor.offsetToLogicalPosition(spacesEnd).column;
     tabsEnd = editor.offsetToLogicalPosition(tabsEnd).column;
@@ -181,7 +187,6 @@ public class EditorActionUtil {
       }
     }
 
-    int newCaretOffset = editor.getCaretModel().getOffset();
     if (newCaretOffset >= spacesEnd) {
       newCaretOffset += buf.length() - (spacesEnd - lineStart);
     }

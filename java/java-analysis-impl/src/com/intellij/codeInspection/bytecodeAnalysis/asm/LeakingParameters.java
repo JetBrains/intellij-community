@@ -39,6 +39,7 @@ public class LeakingParameters {
     this.nullableParameters = nullableParameters;
   }
 
+  @NotNull
   public static LeakingParameters build(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     Frame<ParamsValue>[] frames = jsr ?
                                   new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode) :
@@ -67,6 +68,7 @@ public class LeakingParameters {
     return new LeakingParameters((Frame<Value>[])(Frame<?>[])frames, notNullParameters, nullableParameters);
   }
 
+  @NotNull
   public static LeakingParameters buildFast(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     IParametersUsage parametersUsage = new IParametersUsage(methodNode);
     Frame<?>[] frames = jsr ?

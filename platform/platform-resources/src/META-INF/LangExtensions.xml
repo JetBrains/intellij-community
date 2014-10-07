@@ -360,8 +360,8 @@
                     serviceImplementation="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
 
     <!-- Editor -->
-    <applicationConfigurable groupId="editor" groupWeight="190" instance="com.intellij.application.options.editor.EditorOptions" id="editor" key="title.editor"
-                             bundle="messages.ApplicationBundle" order="after appearance"
+    <applicationConfigurable groupId="editor" groupWeight="190" instance="com.intellij.application.options.editor.EditorOptions" id="preferences.editor" key="title.editor"
+                             bundle="messages.ApplicationBundle" order="after preferences.lookFeel"
                              childrenEPName="com.intellij.editorOptionsProvider"/>
 
     <projectService serviceInterface="com.intellij.semantic.SemService" serviceImplementation="com.intellij.semantic.SemServiceImpl"/>
@@ -375,7 +375,7 @@
     <applicationConfigurable groupId="editor" groupWeight="120" instance="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable" id="preferences.fileTypes"
                              key="filetype.settings.title" bundle="messages.FileTypesBundle"/>
 
-    <applicationConfigurable groupId="editor" key="intention.settings" bundle="messages.CodeInsightBundle" instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="intentions"/>
+    <applicationConfigurable groupId="editor" key="intention.settings" bundle="messages.CodeInsightBundle" instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="preferences.intentionPowerPack"/>
 
     <!-- Live Templates -->
     <applicationConfigurable groupId="editor" groupWeight="130" instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable" id="editing.templates"
@@ -751,7 +751,7 @@
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper" order="last"/>
 
     <projectConfigurable groupId="editor" groupWeight="140" key="file.encodings.configurable" bundle="messages.IdeBundle" instance="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
-    <projectConfigurable groupId="appearance" instance="com.intellij.ui.tabs.FileColorsConfigurable" id="fileColors" displayName="File Colors"/>
+    <projectConfigurable groupId="appearance" instance="com.intellij.ui.tabs.FileColorsConfigurable" id="reference.settings.ide.settings.file-colors" displayName="File Colors"/>
 
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.ActionTracer"/>

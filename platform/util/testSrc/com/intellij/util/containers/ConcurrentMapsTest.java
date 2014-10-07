@@ -17,17 +17,14 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectHashingStrategy;
-import org.junit.Test;
+import junit.framework.TestCase;
 
 import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-public class ConcurrentMapsTest {
+public class ConcurrentMapsTest extends TestCase {
   private static final TObjectHashingStrategy<String> CUSTOM_STRATEGY = new TObjectHashingStrategy<String>() {
     @Override
     public int computeHashCode(String object) {
@@ -40,7 +37,6 @@ public class ConcurrentMapsTest {
     }
   };
 
-  @Test
   public void testKeysRemovedWhenIdentityStrategyIsUsed() {
     @SuppressWarnings("unchecked") ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
     map.put(new Object(), new Object());
@@ -54,7 +50,6 @@ public class ConcurrentMapsTest {
     assertEquals(1, map.underlyingMapSize());
   }
 
-  @Test
   public void testRemoveFromSoftEntrySet() {
     ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<Object, Object>();
     map.put(this, this);
@@ -66,7 +61,6 @@ public class ConcurrentMapsTest {
     assertTrue(map.isEmpty());
   }
 
-  @Test
   public void testRemoveFromWeakEntrySet() {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>();
     map.put(this, this);
@@ -78,7 +72,6 @@ public class ConcurrentMapsTest {
     assertTrue(map.isEmpty());
   }
 
-  @Test
   public void testTossedWeakKeysAreRemoved() {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -102,7 +95,6 @@ public class ConcurrentMapsTest {
     }
   }
 
-  @Test
   public void testTossedSoftKeysAreRemoved() {
     ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -117,7 +109,6 @@ public class ConcurrentMapsTest {
     assertEquals(1, map.underlyingMapSize());
   }
 
-  @Test
   public void testTossedWeakValueIsRemoved() {
     ConcurrentWeakValueHashMap<Object, Object> map = new ConcurrentWeakValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -131,7 +122,6 @@ public class ConcurrentMapsTest {
     map.put(this, this);
     assertEquals(1, map.underlyingMapSize());
   }
-  @Test
   public void testTossedSoftValueIsRemoved() {
     ConcurrentSoftValueHashMap<Object, Object> map = new ConcurrentSoftValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -146,7 +136,6 @@ public class ConcurrentMapsTest {
     assertEquals(1, map.underlyingMapSize());
   }
 
-  @Test
   public void testCustomStrategy() {
     SoftHashMap<String, String> map = new SoftHashMap<String, String>(CUSTOM_STRATEGY);
 
@@ -157,7 +146,6 @@ public class ConcurrentMapsTest {
     assertTrue(map.isEmpty());
   }
 
-  @Test
   public void testCustomStrategyForConcurrentSoft() {
     ConcurrentSoftHashMap<String, String> map = new ConcurrentSoftHashMap<String, String>(CUSTOM_STRATEGY);
 
@@ -169,7 +157,6 @@ public class ConcurrentMapsTest {
     assertTrue(map.isEmpty());
   }
 
-  @Test
   public void testCustomStrategyForConcurrentWeakSoft() {
     ConcurrentWeakKeySoftValueHashMap<String, String> map = new ConcurrentWeakKeySoftValueHashMap<String, String>(1,1,1,CUSTOM_STRATEGY);
 
@@ -181,7 +168,6 @@ public class ConcurrentMapsTest {
     assertTrue(map.isEmpty());
   }
 
-  @Test
   public void testTossedSoftKeyAndValue() {
     SoftKeySoftValueHashMap<Object, Object> map = new SoftKeySoftValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -194,7 +180,6 @@ public class ConcurrentMapsTest {
     assertTrue(map.isEmpty());
   }
 
-  @Test
   public void testTossedWeakKeyAndValue() {
     WeakKeyWeakValueHashMap<Object, Object> map = new WeakKeyWeakValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -205,5 +190,66 @@ public class ConcurrentMapsTest {
     }
     while (!map.processQueue());
     assertTrue(map.isEmpty());
+  }
+
+  public void testConcurrentLongObjectHashMap() {
+    ConcurrentLongObjectMap<Object> map = new ConcurrentLongObjectHashMap<Object>();
+    for (int i=0; i<1000;i++) {
+      Object prev = map.put(i, i);
+      assertNull(prev);
+      Object ret = map.get(i);
+      assertTrue(ret instanceof Integer);
+      assertEquals(i, ret);
+
+      if (i != 0) {
+        Object remove = map.remove(i - 1);
+        assertTrue(remove instanceof Integer);
+        assertEquals(i-1, remove);
+      }
+      assertEquals(map.size(), 1);
+    }
+    map.clear();
+    assertEquals(map.size(), 0);
+    assertTrue(map.isEmpty());
+  }
+
+  public void testStripedLockIntObjectConcurrentHashMap() {
+    ConcurrentIntObjectMap<Object> map = new StripedLockIntObjectConcurrentHashMap<Object>();
+    for (int i=0; i<1000;i++) {
+      Object prev = map.put(i, i);
+      assertNull(prev);
+      Object ret = map.get(i);
+      assertTrue(ret instanceof Integer);
+      assertEquals(i, ret);
+
+      if (i != 0) {
+        Object remove = map.remove(i - 1);
+        assertTrue(remove instanceof Integer);
+        assertEquals(i-1, remove);
+      }
+      assertEquals(map.size(), 1);
+    }
+    map.clear();
+    assertEquals(map.size(), 0);
+  }
+
+  public void testConcurrentIntObjectHashMap() {
+    ConcurrentIntObjectMap<Object> map = new ConcurrentIntObjectHashMap<Object>();
+    for (int i=0; i<1000;i++) {
+      Object prev = map.put(i, i);
+      assertNull(prev);
+      Object ret = map.get(i);
+      assertTrue(ret instanceof Integer);
+      assertEquals(i, ret);
+
+      if (i != 0) {
+        Object remove = map.remove(i - 1);
+        assertTrue(remove instanceof Integer);
+        assertEquals(i-1, remove);
+      }
+      assertEquals(map.size(), 1);
+    }
+    map.clear();
+    assertEquals(map.size(), 0);
   }
 }

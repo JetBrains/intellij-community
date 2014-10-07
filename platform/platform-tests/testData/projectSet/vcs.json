@@ -1,0 +1,6 @@
+{
+  "vcs": {
+    "schema": ["schema://foo.bar/path",
+               "schema://foo.bar1/path1 custom"]
+  }
+}

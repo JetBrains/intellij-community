@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,7 +48,7 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
   @Override
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-    final JCheckBox optimizeBox = new JCheckBox(VcsBundle.message("checkbox.checkin.options.optimize.imports"));
+    final JCheckBox optimizeBox = new NonFocusableCheckBox(VcsBundle.message("checkbox.checkin.options.optimize.imports"));
     CheckinHandlerUtil.disableWhenDumb(myProject, optimizeBox, "Impossible until indices are up-to-date");
     return new RefreshableOnComponent() {
       @Override

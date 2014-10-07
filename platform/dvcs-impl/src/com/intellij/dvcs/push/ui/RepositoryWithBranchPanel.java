@@ -28,6 +28,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,13 +56,13 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     myRepositoryCheckbox.setOpaque(false);
     myRepositoryCheckbox.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         fireOnSelectionChange(myRepositoryCheckbox.isSelected());
       }
     });
     myRepositoryLabel = new JLabel(repoName);
     myLocalBranch = new JBLabel(sourceName);
-    myArrowLabel = new JLabel(" -> ");
+    myArrowLabel = new JLabel(" " + UIUtil.rightArrow() + " ");
     myDestPushTargetPanelComponent = destPushTargetPanelComponent;
     myTextRenderer = new ColoredTreeCellRenderer() {
       public void customizeCellRenderer(@NotNull JTree tree,
@@ -138,7 +139,6 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getWidth() - bounds.x, bounds.height));
     }
-    myDestPushTargetPanelComponent.grabFocus();
     myDestPushTargetPanelComponent.requestFocus();
     revalidate();
     return this;

@@ -30,6 +30,7 @@ import java.awt.image.ImageObserver;
 
 class LoadingIcon extends JBImageIcon {
 
+  //todo fix double size animated icons
   private static final String LOADING_ICON = "/icons/loading.gif";
   private static final Logger LOG = Logger.getInstance(LoadingIcon.class);
 

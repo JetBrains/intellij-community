@@ -641,19 +641,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
 
       assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() :
-        event +
-        "; file=" +
-        file +
-        "; allFiles=" +
-        files +
-        "; viewProvider=" +
-        viewProvider;
+        event + "; file=" + file + "; allFiles=" + files + "; viewProvider=" + viewProvider;
     }
 
     boolean forceCommit = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class) &&
                           (SystemProperties.getBooleanProperty("idea.force.commit.on.external.change", false) ||
-                           ApplicationManager.getApplication().isHeadlessEnvironment()
-                          );
+                           ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode());
 
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and
     // current document lines number is roughly above 5000. This makes sense in situations when external change is performed

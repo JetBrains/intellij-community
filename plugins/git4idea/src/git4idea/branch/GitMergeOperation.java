@@ -73,7 +73,7 @@ class GitMergeOperation extends GitBranchOperation {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
     int alreadyUpToDateRepositories = 0;
-    GitUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();
@@ -147,7 +147,7 @@ class GitMergeOperation extends GitBranchOperation {
       restoreLocalChanges();
     }
     finally {
-      GitUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
   }
 

@@ -18,7 +18,6 @@ package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -214,9 +213,10 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
   public void removeBookmark(@NotNull Bookmark bookmark) {
-    myBookmarks.remove(bookmark);
-    bookmark.release();
-    myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkRemoved(bookmark);
+    if (myBookmarks.remove(bookmark)) {
+      bookmark.release();
+      myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkRemoved(bookmark);
+    }
   }
 
   @Override
@@ -443,14 +443,15 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   private class MyDocumentListener extends DocumentAdapter {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
+      if (e.isWholeTextReplaced()) return;
       List<Bookmark> bookmarksToRemove = null;
       for (Bookmark bookmark : myBookmarks) {
-        Document document = FileDocumentManager.getInstance().getCachedDocument(bookmark.getFile());
+        Document document = bookmark.getDocument();
         if (document == null || document != e.getDocument()) continue;
         if (bookmark.getLine() ==-1) continue;
 
-        int start = bookmark.getDocument().getLineStartOffset(bookmark.getLine());
-        int end = bookmark.getDocument().getLineEndOffset(bookmark.getLine());
+        int start = document.getLineStartOffset(bookmark.getLine());
+        int end = document.getLineEndOffset(bookmark.getLine());
         if (start >= e.getOffset() && end <= e.getOffset() + e.getOldLength() ) {
           if (bookmarksToRemove == null) {
             bookmarksToRemove = new ArrayList<Bookmark>();
@@ -465,11 +466,24 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       }
     }
 
+    private boolean isDuplicate(Bookmark bookmark, @Nullable List<Bookmark> toRemove) {
+      for (Bookmark b : myBookmarks) {
+        if (b == bookmark) continue;
+        if (!b.isValid()) continue;
+        if (Comparing.equal(b.getFile(), bookmark.getFile()) && b.getLine() == bookmark.getLine()) {
+          if (toRemove == null || !toRemove.contains(b)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     @Override
     public void documentChanged(DocumentEvent e) {
       List<Bookmark> bookmarksToRemove = null;
       for (Bookmark bookmark : myBookmarks) {
-        if (!bookmark.isValid()) {
+        if (!bookmark.isValid() || isDuplicate(bookmark, bookmarksToRemove)) {
           if (bookmarksToRemove == null) {
             bookmarksToRemove = new ArrayList<Bookmark>();
           }

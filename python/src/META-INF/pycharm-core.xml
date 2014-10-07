@@ -1,5 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2">
-  <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin. -->
+  <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin.
+       Both Community and Professional editions. -->
+
   <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PlatformLangPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -13,12 +15,6 @@
     <xi:fallback/>
   </xi:include>
 
-  <application-components>
-    <component>
-      <implementation-class>com.jetbrains.python.PyCharmInitialConfigurator</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </application-components>
   <project-components>
     <component>
       <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsProjectComponent</implementation-class>

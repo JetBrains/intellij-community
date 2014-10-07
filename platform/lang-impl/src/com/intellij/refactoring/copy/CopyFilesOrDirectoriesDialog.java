@@ -38,6 +38,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
 import com.intellij.ui.components.JBLabelDecorator;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.FormBuilder;
@@ -192,7 +193,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
     };
 
     if (myShowNewNameField) {
-      myNewNameField = new JTextField();
+      myNewNameField = new JBTextField();
       myNewNameField.getDocument().addDocumentListener(documentListener);
       formBuilder.addLabeledComponent(RefactoringBundle.message("copy.files.new.name.label"), myNewNameField);
     }

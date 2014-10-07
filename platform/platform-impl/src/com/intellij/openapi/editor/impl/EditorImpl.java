@@ -33,7 +33,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -693,6 +692,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     reinitDocumentIndentOptions();
 
+    for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
+      if (scheme instanceof MyColorSchemeDelegate) {
+        ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
+        break;
+      }
+    }
+
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
 
     mySettings.reinitSettings();
@@ -709,12 +715,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       validateSize();
     }
 
-    for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
-      if (scheme instanceof MyColorSchemeDelegate) {
-        ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
-        break;
-      }
-    }
     myHighlighter.setColorScheme(myScheme);
     myFoldingModel.refreshSettings();
 
@@ -1785,22 +1785,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return StringUtil.countNewLines(c);
   }
 
-  private boolean updatingSize;
+  private boolean updatingSize; // accessed from EDT only
   private void updateGutterSize() {
     assertIsDispatchThread();
     if (!updatingSize) {
       updatingSize = true;
-      LaterInvocator.invokeLater(new Runnable() {
+      SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
           try {
-            myGutterComponent.updateSize();
+            if (!isDisposed()) {
+              myGutterComponent.updateSize();
+            }
           }
           finally {
             updatingSize = false;
           }
         }
-      }, ApplicationManager.getApplication().getDisposed());
+      });
     }
   }
 
@@ -4048,7 +4050,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // and, in the case of the positive answer, clear selection. Please note that there is a possible case that mouse click
     // is performed inside selection but it triggers context menu. We don't want to drop the selection then.
     if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection
-        && !myMousePressedEvent.isShiftDown() && !myMousePressedEvent.isPopupTrigger()) {
+        && !myMousePressedEvent.isShiftDown() && !myMousePressedEvent.isPopupTrigger()
+        && !isCreateRectangularSelectionEvent(myMousePressedEvent)) {
       getSelectionModel().removeSelection();
     }
   }
@@ -5698,6 +5701,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             getCaretModel().moveToLogicalPosition(pos);
           }
         }
+        else if (myCaretModel.supportsMultipleCarets() && e.getSource() != myGutterComponent && isCreateRectangularSelectionEvent(e)) {
+          mySelectionModel.setBlockSelection(myCaretModel.getLogicalPosition(), pos);
+        }
         else {
           getCaretModel().removeSecondaryCarets();
           getCaretModel().moveToLogicalPosition(pos);
@@ -5797,7 +5803,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static boolean isToggleCaretEvent(MouseEvent e) {
+  private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET);
+  }
+
+  private static boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+  }
+
+  private static boolean isMouseActionEvent(@NotNull MouseEvent e, @NotNull String actionId) {
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null) {
       return false;
@@ -5810,8 +5824,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (actionIds == null) {
       return false;
     }
-    for (String actionId : actionIds) {
-      if (IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET.equals(actionId)) {
+    for (String id : actionIds) {
+      if (actionId.equals(id)) {
         return true;
       }
     }

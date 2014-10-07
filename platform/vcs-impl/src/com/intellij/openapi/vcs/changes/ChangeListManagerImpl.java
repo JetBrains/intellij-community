@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -328,8 +329,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     }
 
+    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
+    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       for (String url : ModuleRootManager.getInstance(module).getExcludeRootUrls()) {
+        VirtualFile file = virtualFileManager.findFileByUrl(url);
+        if (file != null && !fileIndex.isExcluded(file)) {
+          //root is included into some inner module so it shouldn't be ignored
+          continue;
+        }
         addDirectoryToIgnoreImplicitly(VfsUtilCore.urlToPath(url));
       }
     }

@@ -253,5 +253,10 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     protected void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change) {
       //we don't need to update task window length
     }
+
+    @Override
+    protected boolean useLength() {
+      return true;
+    }
   }
 }

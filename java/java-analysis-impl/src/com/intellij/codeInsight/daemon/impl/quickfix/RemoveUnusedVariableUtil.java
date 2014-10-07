@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -104,7 +105,25 @@ public class RemoveUnusedVariableUtil {
     sideEffects.add(element);
     return true;
   }
-  PsiElement[] children = element.getChildren();
+
+    IElementType tokenType = null;
+    PsiExpression operand = null;
+    if (element instanceof PsiPrefixExpression) {
+      operand = ((PsiPrefixExpression)element).getOperand();
+      tokenType = ((PsiPrefixExpression)element).getOperationTokenType();
+    } else if (element instanceof PsiPostfixExpression) {
+      operand = ((PsiPostfixExpression)element).getOperand();
+      tokenType = ((PsiPostfixExpression)element).getOperationTokenType();
+    }
+
+    if (JavaTokenType.MINUSMINUS.equals(tokenType) || JavaTokenType.PLUSPLUS.equals(tokenType)) {
+      operand = PsiUtil.deparenthesizeExpression(operand);
+      if (!(operand instanceof PsiReferenceExpression && ((PsiReferenceExpression)operand).resolve() == variable)) {
+        sideEffects.add(element);
+        return true;
+      }
+    }
+    PsiElement[] children = element.getChildren();
 
     for (PsiElement child : children) {
       checkSideEffects(child, variable, sideEffects);

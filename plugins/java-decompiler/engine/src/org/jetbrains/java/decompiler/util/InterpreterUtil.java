@@ -29,8 +29,10 @@ import java.util.zip.ZipFile;
 public class InterpreterUtil {
   public static final boolean IS_WINDOWS = System.getProperty("os.name", "").startsWith("Windows");
 
+  public static final int[] EMPTY_INT_ARRAY = new int[0];
+
   private static final int CHANNEL_WINDOW_SIZE = IS_WINDOWS ? 64 * 1024 * 1024 - (32 * 1024) : 64 * 1024 * 1024;  // magic number for Windows
-  private static final int BUFFER_SIZE = 16* 1024;
+  private static final int BUFFER_SIZE = 16 * 1024;
 
   public static void copyFile(File in, File out) throws IOException {
     FileInputStream inStream = new FileInputStream(in);
@@ -62,29 +64,27 @@ public class InterpreterUtil {
   }
 
   public static byte[] getBytes(ZipFile archive, ZipEntry entry) throws IOException {
-    return readAndClose(archive.getInputStream(entry), entry.getSize());
+    return readAndClose(archive.getInputStream(entry), (int)entry.getSize());
   }
 
   public static byte[] getBytes(File file) throws IOException {
-    return readAndClose(new FileInputStream(file), file.length());
+    return readAndClose(new FileInputStream(file), (int)file.length());
   }
 
-  private static byte[] readAndClose(InputStream stream, long length) throws IOException {
-
+  private static byte[] readAndClose(InputStream stream, int length) throws IOException {
     try {
-      byte[] bytes = new byte[(int) length];
-      DataInputStream dataStream = new DataInputStream(stream);
-
-      try {
-        dataStream.readFully(bytes);
-      } catch (EOFException ex) {
-        throw new IOException("premature end of stream", ex);
-      } finally {
-        dataStream.close();
+      byte[] bytes = new byte[length];
+      int n = 0, off = 0;
+      while (n < length) {
+        int count = stream.read(bytes, off + n, length - n);
+        if (count < 0) {
+          throw new IOException("premature end of stream");
+        }
+        n += count;
       }
-
       return bytes;
-    } finally {
+    }
+    finally {
       stream.close();
     }
   }

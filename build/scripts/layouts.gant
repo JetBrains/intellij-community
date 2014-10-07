@@ -145,7 +145,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       }
 
       jar("bootstrap.jar") { module("bootstrap") }
-      
+
       jar("jps-launcher.jar") { module("jps-launcher") }
 
       jar("resources.jar") {
@@ -557,7 +557,14 @@ public def layoutCommunityPlugins(String home) {
       }
     }
 
-    layoutPlugin("java-decompiler")
+    pluginDir("java-decompiler") {
+      dir("lib") {
+        jar("java-decompiler.jar") {
+          module("java-decompiler-engine")
+          module("java-decompiler-plugin")
+        }
+      }
+    }
   }
 }
 

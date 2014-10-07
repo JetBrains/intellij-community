@@ -87,8 +87,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   @NotNull
   private String createPopupTitle(@NotNull Repo currentRepository) {
     String title = myVcs.getDisplayName() + " Branches";
-    if (myRepositoryManager.moreThanOneRoot() &&
-        (myMultiRootBranchConfig.diverged() || myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC)) {
+    if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC) {
       title += " in " + DvcsUtil.getShortRepositoryName(currentRepository);
     }
     return title;
@@ -101,7 +100,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   private void notifyAboutSyncedBranches() {
     String description =
-      "You have several " + myVcs.getDisplayName() + "roots in the project and they all are checked out at the same branch. " +
+      "You have several " + myVcs.getDisplayName() + " roots in the project and they all are checked out at the same branch. " +
       "We've enabled synchronous branch control for the project. <br/>" +
       "If you wish to control branches in different roots separately, " +
       "you may <a href='settings'>disable</a> the setting.";

@@ -510,6 +510,10 @@ public class GitBranchUtil {
         rootCandidate = root;
       }
     }
+    LOG.debug("The best candidate: " + rootCandidate);
+    if (rootCandidate == null) {
+      rootCandidate = gitRoots[0];
+    }
     LOG.debug("Returning the best candidate: " + rootCandidate);
     return rootCandidate;
   }

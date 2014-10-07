@@ -18,14 +18,10 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author mike
@@ -59,13 +55,16 @@ public interface StateStorageManager {
 
   void clearStateStorage(@NotNull String file);
 
-  @NotNull
+  @Nullable
   ExternalizationSession startExternalization();
 
-  @NotNull
-  SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
+  /**
+   * return null if nothing to save
+   */
+  @Nullable
+  StateStorage.SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
 
-  void finishSave(@NotNull SaveSession saveSession);
+  void finishSave(@NotNull StateStorage.SaveSession saveSession);
 
   @Nullable
   StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
@@ -84,21 +83,9 @@ public interface StateStorageManager {
   @Nullable
   com.intellij.openapi.components.impl.stores.StreamProvider getStreamProvider();
 
-  void reset();
-
   interface ExternalizationSession {
     void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);
 
     void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
-  }
-
-  interface SaveSession {
-    // returns set of component which were changed, null if changes are much more than just component state
-    @Nullable
-    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files);
-
-    void collectAllStorageFiles(@NotNull List<VirtualFile> files);
-
-    void save() throws StateStorageException;
   }
 }

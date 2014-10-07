@@ -1,5 +1,6 @@
 <idea-plugin version="2">
-  <!-- Components and extensions declared in this file work in the Python plugin, both Community and full versions. -->
+  <!-- Components and extensions declared in this file work ONLY in the Python plugin,
+       both Community and Professional versions. -->
 
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>

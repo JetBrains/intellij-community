@@ -61,7 +61,7 @@ public abstract class ZenCodingGenerator {
 
   public static List<ZenCodingGenerator> getInstances() {
     List<ZenCodingGenerator> generators = new ArrayList<ZenCodingGenerator>();
-    Collections.addAll(generators, XmlZenCodingGeneratorImpl.INSTANCE);
+    generators.add(XmlZenCodingGeneratorImpl.INSTANCE);
     Collections.addAll(generators, EP_NAME.getExtensions());
     return generators;
   }

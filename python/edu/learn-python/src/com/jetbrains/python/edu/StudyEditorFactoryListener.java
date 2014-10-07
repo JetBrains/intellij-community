@@ -1,19 +1,22 @@
 package com.jetbrains.python.edu;
 
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotifications;
 import com.jetbrains.python.edu.course.StudyStatus;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
@@ -37,9 +40,6 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
 
     @Override
     public void mouseClicked(EditorMouseEvent e) {
-      if (!myTaskFile.isValid()) {
-        return;
-      }
       Editor editor = e.getEditor();
       Point point = e.getMouseEvent().getPoint();
       LogicalPosition pos = editor.xyToLogicalPosition(point);
@@ -75,18 +75,16 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                 StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
                 TaskFile taskFile = taskManager.getTaskFile(openedFile);
                 if (taskFile != null) {
-                  EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(document, new InvalidTaskFileModificationHandler());
+                  EditorActionManager.getInstance()
+                    .setReadonlyFragmentModificationHandler(document, new TaskWindowDeleteHandler(editor));
                   taskFile.navigateToFirstTaskWindow(editor);
                   editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
-                  StudyDocumentListener listener = new StudyDocumentListener(taskFile, project);
+                  StudyDocumentListener listener = new StudyDocumentListener(taskFile);
                   StudyEditor.addDocumentListener(document, listener);
                   document.addDocumentListener(listener);
                   taskFile.drawAllWindows(editor);
-                  if (!taskFile.isValid()) {
-                    document.createGuardedBlock(0, document.getTextLength());
-                    EditorNotifications.getInstance(project).updateNotifications(openedFile);
-                    editor.getMarkupModel().removeAllHighlighters();
-                  }
+                  taskFile.createGuardedBlocks(document, editor);
+                  editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
                 }
               }
             }
@@ -109,11 +107,17 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
     editor.getSelectionModel().removeSelection();
   }
 
-  private static class InvalidTaskFileModificationHandler implements ReadonlyFragmentModificationHandler {
+  private static class TaskWindowDeleteHandler implements ReadonlyFragmentModificationHandler {
+
+    private final Editor myEditor;
+
+    public TaskWindowDeleteHandler(@NotNull final Editor editor) {
+      myEditor = editor;
+    }
 
     @Override
     public void handle(ReadOnlyFragmentModificationException e) {
-      Messages.showErrorDialog("It's not allowed to modify invalid task files", "Invalid Task File Modification");
+      HintManager.getInstance().showErrorHint(myEditor, "It's not allowed to delete task windows");
     }
   }
 }

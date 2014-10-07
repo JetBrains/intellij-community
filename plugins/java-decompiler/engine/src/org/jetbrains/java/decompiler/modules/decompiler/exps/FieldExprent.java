@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
@@ -93,7 +94,8 @@ public class FieldExprent extends Exprent {
     return new FieldExprent(name, classname, isStatic, instance == null ? null : instance.copy(), descriptor);
   }
 
-  public String toJava(int indent) {
+  @Override
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     StringBuilder buf = new StringBuilder();
 
 
@@ -136,7 +138,7 @@ public class FieldExprent extends Exprent {
       }
       else {
         StringBuilder buff = new StringBuilder();
-        boolean casted = ExprProcessor.getCastedExprent(instance, new VarType(CodeConstants.TYPE_OBJECT, 0, classname), buff, indent, true);
+        boolean casted = ExprProcessor.getCastedExprent(instance, new VarType(CodeConstants.TYPE_OBJECT, 0, classname), buff, indent, true, tracer);
         String res = buff.toString();
 
         if (casted || instance.getPrecedence() > getPrecedence()) {
@@ -156,6 +158,8 @@ public class FieldExprent extends Exprent {
     }
 
     buf.append(name);
+
+    tracer.addMapping(bytecode);
 
     return buf.toString();
   }
