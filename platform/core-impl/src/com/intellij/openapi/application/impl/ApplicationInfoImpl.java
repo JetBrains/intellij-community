@@ -19,7 +19,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExternalizable, ApplicationComponent {
+public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExternalizable, NamedComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.ApplicationInfoImpl");
 
   private String myCodeName = null;
@@ -175,14 +175,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
   @NonNls private static final String STEPS_PROVIDER = "provider";
 
-  public void initComponent() { }
-
-  public void disposeComponent() { }
-
+  @Override
   public Calendar getBuildDate() {
     return myBuildDate;
   }
 
+  @Override
   public Calendar getMajorReleaseBuildDate() {
     return myMajorReleaseBuildDate != null ? myMajorReleaseBuildDate : myBuildDate;
   }
@@ -211,14 +209,17 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return getBuild().asString();
   }
 
+  @Override
   public String getMajorVersion() {
     return myMajorVersion;
   }
 
+  @Override
   public String getMinorVersion() {
     return myMinorVersion;
   }
 
+  @Override
   public String getVersionName() {
     final String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
     if (myEAP && !StringUtil.isEmptyOrSpaces(myCodeName)) {
@@ -227,6 +228,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return fullName;
   }
 
+  @Override
   @NonNls
   public String getHelpURL() {
     return "jar:file:///" + getHelpJarPath() + "!/" + myHelpRootName;
@@ -247,14 +249,17 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
   }
 
+  @Override
   public String getSplashImageUrl() {
     return mySplashImageUrl;
   }
 
+  @Override
   public Color getSplashTextColor() {
     return mySplashTextColor;
   }
 
+  @Override
   public String getAboutImageUrl() {
     return myAboutImageUrl;
   }
@@ -279,10 +284,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myProgressTailIcon;
   }
 
+  @Override
   public String getIconUrl() {
     return myIconUrl;
   }
 
+  @Override
   public String getSmallIconUrl() {
     return mySmallIconUrl;
   }
@@ -293,18 +300,22 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myBigIconUrl;
   }
 
+  @Override
   public String getOpaqueIconUrl() {
     return myOpaqueIconUrl;
   }
 
+  @Override
   public String getToolWindowIconUrl() {
     return myToolWindowIconUrl;
   }
 
+  @Override
   public String getWelcomeScreenCaptionUrl() {
     return myWelcomeScreenCaptionUrl;
   }
 
+  @Override
   public String getWelcomeScreenDeveloperSloganUrl() {
     return myWelcomeScreenDeveloperSloganUrl;
   }
@@ -325,30 +336,37 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myEditorBackgroundImageUrl;
   }
 
+  @Override
   public String getPackageCode() {
     return myPackageCode;
   }
 
+  @Override
   public boolean isEAP() {
     return myEAP;
   }
 
+  @Override
   public UpdateUrls getUpdateUrls() {
     return myUpdateUrls;
   }
 
+  @Override
   public String getDocumentationUrl() {
     return myDocumentationUrl;
   }
 
+  @Override
   public String getSupportUrl() {
     return mySupportUrl;
   }
 
+  @Override
   public String getEAPFeedbackUrl() {
     return myEAPFeedbackUrl;
   }
 
+  @Override
   public String getReleaseFeedbackUrl() {
     return myReleaseFeedbackUrl;
   }
@@ -358,18 +376,22 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myPluginManagerUrl;
   }
 
+  @Override
   public String getPluginsListUrl() {
     return myPluginsListUrl;
   }
 
+  @Override
   public String getPluginsDownloadUrl() {
     return myPluginsDownloadUrl;
   }
 
+  @Override
   public String getBuiltinPluginsUrl() {
     return myBuiltinPluginsUrl;
   }
 
+  @Override
   public String getWebHelpUrl() {
     return myWebHelpUrl;
   }
@@ -384,14 +406,17 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myHasContextHelp;
   }
 
+  @Override
   public String getWhatsNewUrl() {
     return myWhatsNewUrl;
   }
 
+  @Override
   public String getWinKeymapUrl() {
     return myWinKeymapUrl;
   }
 
+  @Override
   public String getMacKeymapUrl() {
     return myMacKeymapUrl;
   }
@@ -405,6 +430,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myAboutLinkColor;
   }
 
+  @Override
   public String getFullApplicationName() {
     @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(getVersionName());
@@ -423,6 +449,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return buffer.toString();
   }
 
+  @Override
   public boolean showLicenseeInfo() {
     return myShowLicensee;
   }
@@ -478,6 +505,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return ourShadowInstance;
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     Element versionElement = parentNode.getChild(ELEMENT_VERSION);
     if (versionElement != null) {
@@ -737,14 +765,17 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return new Color((int)rgb, rgb > 0xffffff);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     throw new WriteExternalException();
   }
 
+  @Override
   public List<PluginChooserPage> getPluginChooserPages() {
     return myPluginChooserPages;
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return ApplicationNamesInfo.getComponentName();
@@ -761,10 +792,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       }
     }
 
+    @Override
     public String getCheckingUrl() {
       return myCheckingUrl;
     }
 
+    @Override
     public String getPatchesUrl() {
       return myPatchesUrl;
     }
@@ -781,14 +814,17 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myDependentPlugin = e.getAttributeValue("depends");
     }
 
+    @Override
     public String getTitle() {
       return myTitle;
     }
 
+    @Override
     public String getCategory() {
       return myCategory;
     }
 
+    @Override
     public String getDependentPlugin() {
       return myDependentPlugin;
     }
