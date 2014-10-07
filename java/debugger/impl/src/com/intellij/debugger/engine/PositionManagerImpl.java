@@ -152,7 +152,7 @@ public class PositionManagerImpl implements PositionManager {
         return SourcePosition.createFromLine(psiFile, -1);
       }
 
-      final MethodFinder finder = new MethodFinder(location.declaringType().name(), methodSignature);
+      final MethodFinder finder = new MethodFinder(location.declaringType().name(), methodName, methodSignature);
       psiFile.accept(finder);
 
       final PsiMethod compiledMethod = finder.getCompiledMethod();
@@ -382,11 +382,13 @@ public class PositionManagerImpl implements PositionManager {
   private class MethodFinder extends JavaRecursiveElementVisitor {
     private final String myClassName;
     private PsiClass myCompiledClass;
+    private final String myMethodName;
     private final String myMethodSignature;
     private PsiMethod myCompiledMethod;
 
-    public MethodFinder(final String className, final String methodSignature) {
+    public MethodFinder(final String className, final String methodName, final String methodSignature) {
       myClassName = className;
+      myMethodName = methodName;
       myMethodSignature = methodSignature;
     }
 
@@ -409,9 +411,8 @@ public class PositionManagerImpl implements PositionManager {
 
         if(containingClass != null &&
            containingClass.equals(myCompiledClass) &&
-           methodName.equals(methodName) &&
+           methodName.equals(myMethodName) &&
            JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(myMethodSignature)) {
-
           myCompiledMethod = method;
         }
       }
