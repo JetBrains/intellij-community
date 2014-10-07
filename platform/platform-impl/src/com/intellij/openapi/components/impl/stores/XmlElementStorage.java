@@ -300,6 +300,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
       try {
         doSave(getElement(myCopiedStorageData, isCollapsePathsOnSave(), myNewLiveStates));
+        myLoadedData = myCopiedStorageData;
       }
       catch (IOException e) {
         throw new StateStorageException(e);
