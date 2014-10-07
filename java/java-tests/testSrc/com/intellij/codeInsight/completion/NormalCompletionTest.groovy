@@ -1428,6 +1428,10 @@ class XInternalError {}
     myFixture.assertPreferredCompletionItems(0, "arraycopy")
   }
 
+  public void testMulticaretCompletionFromNonPrimaryCaretWithTab() {
+    doTest '\t'
+  }
+
   public void "test complete lowercase class name"() {
     myFixture.addClass("package foo; public class myClass {}")
     myFixture.configureByText "a.java", """

@@ -18,12 +18,13 @@ package git4idea;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.overwrite;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.GitCucumberWorld.virtualCommits;
 import static git4idea.test.GitExecutor.git;
@@ -42,10 +43,10 @@ public class CommitDetails {
 
   private static class Change {
 
-    public void apply() {
+    public void apply() throws IOException {
       switch (myType) {
         case MODIFIED:
-          echo(myFile, myContent);
+          overwrite(myFile, myContent);
           break;
         case ADDED:
           touch(myFile, myContent);
@@ -159,7 +160,7 @@ public class CommitDetails {
     int secondSpace = change.indexOf(' ', firstSpace + 1);
     return new Change(parseType(change.substring(0, firstSpace)),
                       change.substring(firstSpace + 1, secondSpace),
-                      change.substring(secondSpace + 1));
+                      StringUtil.unescapeStringCharacters(StringUtil.unquoteString(change.substring(secondSpace + 1))));
   }
 
   private static Change.Type parseType(String type) {
@@ -181,7 +182,7 @@ public class CommitDetails {
   /**
    * @return real commit details.
    */
-  public CommitDetails apply() {
+  public CommitDetails apply() throws IOException {
     for (Change change : myChanges) {
       change.apply();
     }

@@ -921,12 +921,8 @@
     <keyboard-shortcut first-keystroke="control shift PERIOD"/>
   </action>
 
-  <action id="StructuralSearchPlugin.StructuralSearchAction">
-    <keyboard-shortcut first-keystroke="control shift S"/>
-  </action>
-  <action id="StructuralSearchPlugin.StructuralReplaceAction">
-    <keyboard-shortcut first-keystroke="control shift M"/>
-  </action>
+  <action id="StructuralSearchPlugin.StructuralSearchAction"/>
+  <action id="StructuralSearchPlugin.StructuralReplaceAction"/>
   <action id="DuplicatesForm.SendToLeft">
     <keyboard-shortcut first-keystroke="control 1"/>
   </action>

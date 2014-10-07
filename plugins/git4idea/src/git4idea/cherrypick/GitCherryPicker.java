@@ -21,6 +21,8 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.*;
@@ -42,12 +44,18 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -80,18 +88,19 @@ public class GitCherryPicker {
   }
 
   public void cherryPick(@NotNull Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots) {
-    List<GitCommitWrapper> successfulCommits = new ArrayList<GitCommitWrapper>();
+    List<GitCommitWrapper> successfulCommits = ContainerUtil.newArrayList();
+    List<GitCommitWrapper> alreadyPicked = ContainerUtil.newArrayList();
     DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       for (Map.Entry<GitRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
         GitRepository repository = entry.getKey();
-        boolean result = cherryPick(repository, entry.getValue(), successfulCommits);
+        boolean result = cherryPick(repository, entry.getValue(), successfulCommits, alreadyPicked);
         repository.update();
         if (!result) {
           return;
         }
       }
-      notifySuccess(successfulCommits);
+      notifyResult(successfulCommits, alreadyPicked);
     }
     finally {
       DvcsUtil.workingTreeChangeFinished(myProject);
@@ -100,7 +109,7 @@ public class GitCherryPicker {
 
   // return true to continue with other roots, false to break execution
   private boolean cherryPick(@NotNull GitRepository repository, @NotNull List<VcsFullCommitDetails> commits,
-                             @NotNull List<GitCommitWrapper> successfulCommits) {
+                             @NotNull List<GitCommitWrapper> successfulCommits, @NotNull List<GitCommitWrapper> alreadyPicked) {
     for (VcsFullCommitDetails commit : commits) {
       GitSimpleEventDetector conflictDetector = new GitSimpleEventDetector(CHERRY_PICK_CONFLICT);
       GitSimpleEventDetector localChangesOverwrittenDetector = new GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK);
@@ -115,7 +124,7 @@ public class GitCherryPicker {
         }
         else {
           boolean committed = updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(repository, commitWrapper,
-                                                                                                  successfulCommits);
+                                                                                                  successfulCommits, alreadyPicked);
           if (!committed) {
             notifyCommitCancelled(commitWrapper, successfulCommits);
             return false;
@@ -129,7 +138,7 @@ public class GitCherryPicker {
 
         if (mergeCompleted) {
           boolean committed = updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(repository, commitWrapper,
-                                                                                                  successfulCommits);
+                                                                                                  successfulCommits, alreadyPicked);
           if (!committed) {
             notifyCommitCancelled(commitWrapper, successfulCommits);
             return false;
@@ -156,6 +165,10 @@ public class GitCherryPicker {
                     commitWrapper, successfulCommits);
         return false;
       }
+      else if (isNothingToCommitMessage(result)) {
+        alreadyPicked.add(commitWrapper);
+        return true;
+      }
       else {
         notifyError(result.getErrorOutputAsHtmlString(), commitWrapper, successfulCommits);
         return false;
@@ -164,24 +177,30 @@ public class GitCherryPicker {
     return true;
   }
 
+  private static boolean isNothingToCommitMessage(@NotNull GitCommandResult result) {
+    if (!result.getErrorOutputAsJoinedString().isEmpty()) {
+      return false;
+    }
+    String stdout = result.getOutputAsJoinedString();
+    return stdout.contains("nothing to commit") || stdout.contains("previous cherry-pick is now empty");
+  }
+
   private boolean updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(@NotNull GitRepository repository,
                                                                                       @NotNull GitCommitWrapper commit,
-                                                                                      @NotNull List<GitCommitWrapper> successfulCommits) {
+                                                                                      @NotNull List<GitCommitWrapper> successfulCommits,
+                                                                                      @NotNull List<GitCommitWrapper> alreadyPicked) {
     CherryPickData data = updateChangeListManager(commit.getCommit());
+    if (data == null) {
+      alreadyPicked.add(commit);
+      return true;
+    }
     boolean committed = showCommitDialogAndWaitForCommit(repository, commit, data.myChangeList, data.myCommitMessage);
     if (committed) {
-      removeChangeList(data);
+      myChangeListManager.removeChangeList(data.myChangeList);
       successfulCommits.add(commit);
       return true;
     }
     return false;
-  }
-
-  private void removeChangeList(CherryPickData list) {
-    myChangeListManager.setDefaultChangeList(list.myPreviouslyDefaultChangeList);
-    if (!myChangeListManager.getDefaultChangeList().equals(list.myChangeList)) {
-      myChangeListManager.removeChangeList(list.myChangeList);
-    }
   }
 
   private void notifyConflictWarning(@NotNull GitRepository repository, @NotNull GitCommitWrapper commit,
@@ -206,16 +225,16 @@ public class GitCherryPicker {
     VcsNotifier.getInstance(myProject).notifyMinorWarning("Cherry-pick cancelled", description, null);
   }
 
+  @Nullable
   private CherryPickData updateChangeListManager(@NotNull final VcsFullCommitDetails commit) {
     final Collection<FilePath> paths = ChangesUtil.getPaths(commit.getChanges());
     refreshChangedFiles(paths);
     final String commitMessage = createCommitMessage(commit);
-    LocalChangeList previouslyDefaultChangeList = myChangeListManager.getDefaultChangeList();
     LocalChangeList changeList = createChangeListAfterUpdate(commit, paths, commitMessage);
-    return new CherryPickData(changeList, commitMessage, previouslyDefaultChangeList);
+    return changeList == null ? null : new CherryPickData(changeList, commitMessage);
   }
 
-  @NotNull
+  @Nullable
   private LocalChangeList createChangeListAfterUpdate(@NotNull final VcsFullCommitDetails commit, @NotNull final Collection<FilePath> paths,
                                                       @NotNull final String commitMessage) {
     final AtomicReference<LocalChangeList> changeList = new AtomicReference<LocalChangeList>();
@@ -224,7 +243,7 @@ public class GitCherryPicker {
       public void run() {
         myChangeListManager.invokeAfterUpdate(new Runnable() {
                                                 public void run() {
-                                                  changeList.set(createChangeList(commit, commitMessage));
+                                                  changeList.set(createChangeListIfThereAreChanges(commit, commitMessage));
                                                 }
                                               }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "Cherry-pick",
                                               new Consumer<VcsDirtyScopeManager>() {
@@ -346,9 +365,37 @@ public class GitCherryPicker {
     return description;
   }
 
-  private void notifySuccess(@NotNull List<GitCommitWrapper> successfulCommits) {
-    String description = getCommitsDetails(successfulCommits);
-    VcsNotifier.getInstance(myProject).notifySuccess("Cherry-pick successful", description);
+  private void notifyResult(@NotNull List<GitCommitWrapper> successfulCommits, @NotNull List<GitCommitWrapper> alreadyPicked) {
+    if (alreadyPicked.isEmpty()) {
+      VcsNotifier.getInstance(myProject).notifySuccess("Cherry-pick successful", getCommitsDetails(successfulCommits));
+    }
+    else if (!successfulCommits.isEmpty()) {
+      String title = String.format("Cherry-picked %d commits from %d", successfulCommits.size(),
+                                   successfulCommits.size() + alreadyPicked.size());
+      String description = getCommitsDetails(successfulCommits) + "<hr/>" + formAlreadyPickedDescription(alreadyPicked, true);
+      VcsNotifier.getInstance(myProject).notifySuccess(title, description);
+    }
+    else {
+      VcsNotifier.getInstance(myProject).notifyImportantWarning("Nothing to cherry-pick",
+                                                                formAlreadyPickedDescription(alreadyPicked, false));
+    }
+  }
+
+  @NotNull
+  private static String formAlreadyPickedDescription(@NotNull List<GitCommitWrapper> alreadyPicked, boolean but) {
+
+    String hashes = StringUtil.join(alreadyPicked, new Function<GitCommitWrapper, String>() {
+      @Override
+      public String fun(GitCommitWrapper commit) {
+        return commit.getCommit().getId().toShortString();
+      }
+    }, ", ");
+    if (but) {
+      String wasnt = alreadyPicked.size() == 1 ? "wasn't" : "weren't";
+      String it = alreadyPicked.size() == 1 ? "it" : "them";
+      return String.format("%s %s picked, because all changes from %s have already been applied.", hashes, wasnt, it);
+    }
+    return String.format("All changes from %s have already been applied", hashes);
   }
 
   @NotNull
@@ -373,19 +420,69 @@ public class GitCherryPicker {
       }
     }));
     VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(virtualFiles, VirtualFile.class));
+    VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(filePaths, null);
   }
 
-  @NotNull
-  private LocalChangeList createChangeList(@NotNull VcsFullCommitDetails commit, @NotNull String commitMessage) {
-    Collection<Change> changes = commit.getChanges();
-    if (!changes.isEmpty()) {
-      String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
-      final LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
-      myChangeListManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
-      myChangeListManager.setDefaultChangeList(changeList);
+  @Nullable
+  private LocalChangeList createChangeListIfThereAreChanges(@NotNull VcsFullCommitDetails commit, @NotNull String commitMessage) {
+    Collection<Change> originalChanges = commit.getChanges();
+    if (originalChanges.isEmpty()) {
+      LOG.info("Empty commit " + commit.getId());
+      return null;
+    }
+    if (noChangesAfterCherryPick(originalChanges)) {
+      LOG.info("No changes after cherry-picking " + commit.getId());
+      return null;
+    }
+
+    String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
+    LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
+    changeList = (LocalChangeList)moveChanges(originalChanges, changeList);
+    if (changeList != null && !changeList.getChanges().isEmpty()) {
       return changeList;
     }
-    return myChangeListManager.getDefaultChangeList();
+    LOG.warn("No changes were moved to the changelist. Changes from commit: " + originalChanges +
+             "\nAll changes: " + myChangeListManager.getAllChanges());
+    myChangeListManager.removeChangeList(changeList);
+    return null;
+  }
+
+  private boolean noChangesAfterCherryPick(@NotNull Collection<Change> originalChanges) {
+    final Collection<Change> allChanges = myChangeListManager.getAllChanges();
+    return !ContainerUtil.exists(originalChanges, new Condition<Change>() {
+      @Override
+      public boolean value(Change change) {
+        return allChanges.contains(change);
+      }
+    });
+  }
+
+  @Nullable
+  private ChangeList moveChanges(@NotNull Collection<Change> originalChanges, @NotNull LocalChangeList targetChangeList) {
+    // 1. We have to listen to CLM changes, because moveChangesTo is asynchronous
+    // 2. We have to collect the real target change list, because the original target list (passed to moveChangesTo) is not updated in time.
+    final CountDownLatch moveChangesWaiter = new CountDownLatch(1);
+    final AtomicReference<ChangeList> resultingChangeList = new AtomicReference<ChangeList>();
+    ChangeListAdapter listener = new ChangeListAdapter() {
+      @Override
+      public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+        resultingChangeList.set(toList);
+        moveChangesWaiter.countDown();
+      }
+    };
+    try {
+      myChangeListManager.addChangeListListener(listener);
+      myChangeListManager.moveChangesTo(targetChangeList, originalChanges.toArray(new Change[originalChanges.size()]));
+      moveChangesWaiter.await(100, TimeUnit.SECONDS);
+      return resultingChangeList.get();
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+      return null;
+    }
+    finally {
+      myChangeListManager.removeChangeListListener(listener);
+    }
   }
 
   @NotNull
@@ -403,14 +500,12 @@ public class GitCherryPicker {
   }
 
   private static class CherryPickData {
-    private final LocalChangeList myChangeList;
-    private final String myCommitMessage;
-    private final LocalChangeList myPreviouslyDefaultChangeList;
+    @NotNull private final LocalChangeList myChangeList;
+    @NotNull private final String myCommitMessage;
 
-    private CherryPickData(LocalChangeList list, String message, LocalChangeList previouslyDefaultChangeList) {
+    private CherryPickData(@NotNull LocalChangeList list, @NotNull String message) {
       myChangeList = list;
       myCommitMessage = message;
-      myPreviouslyDefaultChangeList = previouslyDefaultChangeList;
     }
   }
 

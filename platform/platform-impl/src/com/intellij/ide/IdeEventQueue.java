@@ -56,8 +56,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Vladimir Kondratyev
@@ -131,7 +133,7 @@ public class IdeEventQueue extends EventQueue {
 
   private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
   private final Set<EventDispatcher> myPostProcessors = new LinkedHashSet<EventDispatcher>();
-  private final Set<Runnable> myReady = new HashSet<Runnable>();
+  private final Set<Runnable> myReady = ContainerUtil.newHashSet();
 
   private boolean myKeyboardBusy;
   private boolean myDispatchingFocusEvent;
@@ -329,7 +331,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static class InertialMouseRouter {
-    private static int MOUSE_WHEEL_RESTART_THRESHOLD = 50;
+    private static final int MOUSE_WHEEL_RESTART_THRESHOLD = 50;
     private static Component wheelDestinationComponent = null;
     private static long lastMouseWheel = 0;
 
@@ -556,7 +558,7 @@ public class IdeEventQueue extends EventQueue {
     }
     else if (e instanceof MouseEvent) {
       MouseEvent me = (MouseEvent)e;
-      if (myMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
+      if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
         final MouseEvent toDispatch =
           new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,
                          me.isPopupTrigger(), me.getButton());
@@ -590,9 +592,8 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public boolean wasRootRecentlyClicked(Component component) {
-    if (component == null || lastClickEvent == null || lastClickEvent.getComponent() == null)
-      return false;
-    return SwingUtilities.getRoot(lastClickEvent.getComponent()) == SwingUtilities.getRoot(component);
+    return component != null && lastClickEvent != null && lastClickEvent.getComponent() != null &&
+           SwingUtilities.getRoot(lastClickEvent.getComponent()) == SwingUtilities.getRoot(component);
   }
 
   private static void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {
