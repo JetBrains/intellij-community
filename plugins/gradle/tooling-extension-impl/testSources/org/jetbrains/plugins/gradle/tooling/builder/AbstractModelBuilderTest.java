@@ -123,14 +123,19 @@ public abstract class AbstractModelBuilderTest {
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTime, TimeUnit.SECONDS);
     ProjectConnection connection = connector.connect();
 
-    final ProjectImportAction projectImportAction = new ProjectImportAction(false);
-    projectImportAction.addExtraProjectModelClasses(getModels());
-    BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
-    File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
-    assertNotNull(initScript);
-    buildActionExecutor.withArguments("--recompile-scripts", GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
-    allModels = buildActionExecutor.run();
-    assertNotNull(allModels);
+    try {
+      final ProjectImportAction projectImportAction = new ProjectImportAction(false);
+      projectImportAction.addExtraProjectModelClasses(getModels());
+      BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
+      File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
+      assertNotNull(initScript);
+      buildActionExecutor.setJvmArguments("-Xmx64m", "-XX:MaxPermSize=64m");
+      buildActionExecutor.withArguments("--info", "--recompile-scripts", GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
+      allModels = buildActionExecutor.run();
+      assertNotNull(allModels);
+    } finally {
+      connection.close();
+    }
   }
 
   @NotNull
