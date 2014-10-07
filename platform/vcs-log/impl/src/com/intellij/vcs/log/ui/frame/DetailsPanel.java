@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -45,6 +46,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -235,8 +238,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myLoadingIcon = new AsyncProcessIcon("Loading...");
       myBranchesList = new JBTextField("");
       myBranchesList.setEditable(false);
-      myBranchesList.setBorder(null);
-      myBranchesList.setBackground(UIUtil.getPanelBackground());
+      myBranchesList.setBorder(IdeBorderFactory.createEmptyBorder()); // setting border to null may mean "use default border" while setting empty border means we do not want a border
+      if (UIUtil.isUnderIntelliJLaF()) {
+        myBranchesList.setBackground(UIUtil.getPanelBackground());
+      } else if (UIUtil.isUnderGTKLookAndFeel()) {
+        // setting border to empty does not help with gtk l&f
+        // so I just cover it completely with my line border
+        myBranchesList.setBorder(new LineBorder(UIUtil.getTextFieldBackground(), 3));
+      }
 
       setOpaque(false);
       setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
