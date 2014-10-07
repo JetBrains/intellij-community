@@ -50,10 +50,5 @@
     </component>
   </project-components>
 
-  <module-components>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.impl.VcsManagerPerModuleConfiguration</implementation-class>
-    </component>
-  </module-components>
 </components>
 
