@@ -151,8 +151,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       }
       decompiler.decompileContext();
 
-      saver.myResult.addBanner(BANNER);
-      return saver.myResult.toString();
+      return saver.myResult.addBanner(BANNER).toString();
     }
     catch (Exception e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

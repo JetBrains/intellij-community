@@ -15,6 +15,8 @@
  */
 package org.jetbrains.java.decompiler.main;
 
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+
 import java.util.*;
 
 /**
@@ -24,6 +26,7 @@ import java.util.*;
  */
 public class TextBuffer {
   private final String myLineSeparator = DecompilerContext.getNewLineSeparator();
+  private final String myIndent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
   private final StringBuilder myStringBuilder;
   private Map<Integer, Integer> myLineToOffsetMapping = null;
 
@@ -57,13 +60,21 @@ public class TextBuffer {
     return this;
   }
 
-  public void addBanner(String banner) {
+  public TextBuffer appendIndent(int length) {
+    while (length-- > 0) {
+      append(myIndent);
+    }
+    return this;
+  }
+
+  public TextBuffer addBanner(String banner) {
     myStringBuilder.insert(0, banner);
     if (myLineToOffsetMapping != null) {
       for (Integer line : myLineToOffsetMapping.keySet()) {
         myLineToOffsetMapping.put(line, myLineToOffsetMapping.get(line) + banner.length());
       }
     }
+    return this;
   }
 
   @Override
@@ -138,7 +149,7 @@ public class TextBuffer {
     myStringBuilder.setLength(position);
   }
 
-  public void append(TextBuffer buffer) {
+  public TextBuffer append(TextBuffer buffer) {
     if (buffer.myLineToOffsetMapping != null && !buffer.myLineToOffsetMapping.isEmpty()) {
       checkMapCreated();
       for (Map.Entry<Integer, Integer> entry : buffer.myLineToOffsetMapping.entrySet()) {
@@ -146,6 +157,7 @@ public class TextBuffer {
       }
     }
     myStringBuilder.append(buffer.myStringBuilder);
+    return this;
   }
 
   private void checkMapCreated() {

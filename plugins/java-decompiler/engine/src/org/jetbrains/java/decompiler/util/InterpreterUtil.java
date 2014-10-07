@@ -92,17 +92,12 @@ public class InterpreterUtil {
 
   public static String getIndentString(int length) {
     if (length == 0) return "";
-    TextBuffer buf = new TextBuffer();
-    appendIndent(buf, length);
-    return buf.toString();
-  }
-
-  public static void appendIndent(TextBuffer buffer, int length) {
-    if (length == 0) return;
+    StringBuilder buf = new StringBuilder();
     String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
     while (length-- > 0) {
-      buffer.append(indent);
+      buf.append(indent);
     }
+    return buf.toString();
   }
 
   public static boolean equalSets(Collection<?> c1, Collection<?> c2) {
