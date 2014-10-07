@@ -189,7 +189,7 @@ libraryLicense(name: "JavaCVS", attachedTo: "javacvs-src", version: "no version 
 libraryLicense(name: "JAXB", libraryName: "JAXB", version: "2.2.4-1", license: "CDDL 1.1", url: "http://jaxb.java.net/", licenseUrl: "http://glassfish.java.net/public/CDDL+GPL_1_1.html")
 libraryLicense(name: "Jaxen", version: "", license: "modified Apache", url: "http://www.jaxen.org/", licenseUrl: "http://www.jaxen.org/license.html")
 libraryLicense(name: "JavaHelp", version: "2.0_02", license: "included as license/javahelp_license.html in IntelliJ IDEA distribution", url: "http://java.sun.com/products/javahelp/")
-libraryLicense(name: "Java-WebSocket", version: "1.3.0", license: "MIT", url: "https://github.com/TooTallNate/Java-WebSocket", licenseUrl:"https://github.com/TooTallNate/Java-WebSocket/blob/master/LICENSE")
+libraryLicense(name: "Java-WebSocket", libraryName: "java_websocket.jar", version: "1.3.0", license: "MIT", url: "https://github.com/TooTallNate/Java-WebSocket", licenseUrl:"https://github.com/TooTallNate/Java-WebSocket/blob/master/LICENSE")
 libraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License", url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5")
 libraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/", licenseUrl: "http://www.jdom.org/docs/faq.html#a0030")
 libraryLicense(name: "javawriter", libraryName: "javawriter", license: "Apache 2.0", url: "https://github.com/square/javawriter")

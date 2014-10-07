@@ -102,39 +102,39 @@ public class DoStatement extends Statement {
 
     if (isLabeled()) {
       buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
 
     switch (looptype) {
       case LOOP_DO:
         buf.append(indstr).append("while(true) {").append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
         buf.append(indstr).append("}").append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
         break;
       case LOOP_DOWHILE:
         buf.append(indstr).append("do {").append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
         buf.append(indstr).append("} while(").append(conditionExprent.get(0).toJava(indent, tracer)).append(");").append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
         break;
       case LOOP_WHILE:
         buf.append(indstr).append("while(").append(conditionExprent.get(0).toJava(indent, tracer)).append(") {").append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
         buf.append(indstr).append("}").append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
         break;
       case LOOP_FOR:
         buf.append(indstr).append("for(").append(initExprent.get(0) == null ? "" : initExprent.get(0).toJava(indent, tracer)).append("; ")
           .append(conditionExprent.get(0).toJava(indent, tracer)).append("; ").append(incExprent.get(0).toJava(indent, tracer)).append(") {")
           .append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
         buf.append(indstr).append("}").append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
     }
 
     return buf.toString();

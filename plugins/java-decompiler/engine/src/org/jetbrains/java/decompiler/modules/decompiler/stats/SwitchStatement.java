@@ -119,11 +119,11 @@ public class SwitchStatement extends Statement {
 
     if (isLabeled()) {
       buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
 
     buf.append(indstr).append(headexprent.get(0).toJava(indent, tracer)).append(" {").append(new_line_separator);
-    tracer.incrementSourceLine();
+    tracer.incrementCurrentSourceLine();
 
     VarType switch_type = headexprent.get(0).getExprType();
 
@@ -136,14 +136,14 @@ public class SwitchStatement extends Statement {
       for (int j = 0; j < edges.size(); j++) {
         if (edges.get(j) == default_edge) {
           buf.append(indstr).append("default:").append(new_line_separator);
-          tracer.incrementSourceLine();
+          tracer.incrementCurrentSourceLine();
         }
         else {
           ConstExprent value = (ConstExprent)values.get(j).copy();
           value.setConsttype(switch_type);
 
           buf.append(indstr).append("case ").append(value.toJava(indent, tracer)).append(":").append(new_line_separator);
-          tracer.incrementSourceLine();
+          tracer.incrementCurrentSourceLine();
         }
       }
 
@@ -151,7 +151,7 @@ public class SwitchStatement extends Statement {
     }
 
     buf.append(indstr).append("}").append(new_line_separator);
-    tracer.incrementSourceLine();
+    tracer.incrementCurrentSourceLine();
 
     return buf.toString();
   }

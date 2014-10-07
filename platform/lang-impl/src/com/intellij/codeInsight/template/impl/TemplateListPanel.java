@@ -31,6 +31,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.*;
@@ -398,28 +399,38 @@ public class TemplateListPanel extends JPanel implements Disposable {
         return evt.getPropertyName().equals("ancestor") && evt.getNewValue() != null && evt.getOldValue() == null;
       }
 
-      private void resizeComboToFitCustomShortcut() {
-        myExpandByCombo.setPrototypeDisplayValue(null);
-        myExpandByCombo.setPrototypeDisplayValue(CUSTOM);
-      }
     });
 
     myOpenKeymapLabel.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
         Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel));
-        final KeymapPanel keymapPanel = allSettings == null ? null : allSettings.find(KeymapPanel.class);
-        if (keymapPanel != null) {
-          allSettings.select(keymapPanel).doWhenDone(new Runnable() {
-            public void run() {
-              keymapPanel.selectAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
-            }
-          });
+        final KeymapPanel keymapPanel = allSettings == null ? new KeymapPanel() : allSettings.find(KeymapPanel.class);
+        if (keymapPanel == null) return;
+
+        Runnable selectAction = new Runnable() {
+          public void run() {
+            keymapPanel.selectAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
+          }
+        };
+        if (allSettings != null) {
+          allSettings.select(keymapPanel).doWhenDone(selectAction);
+        } else {
+          ShowSettingsUtil.getInstance().editConfigurable(myOpenKeymapLabel, keymapPanel, selectAction);
+          resizeComboToFitCustomShortcut();
         }
       }
     });
 
     return panel;
+  }
+
+  @SuppressWarnings("unchecked")
+  private void resizeComboToFitCustomShortcut() {
+    myExpandByCombo.setPrototypeDisplayValue(null);
+    myExpandByCombo.setPrototypeDisplayValue(CUSTOM);
+    myExpandByCombo.revalidate();
+    myExpandByCombo.repaint();
   }
 
   @Nullable

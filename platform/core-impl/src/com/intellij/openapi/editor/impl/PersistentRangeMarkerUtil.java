@@ -48,11 +48,6 @@ public class PersistentRangeMarkerUtil {
       return false;
     }
 
-    if (rangeMarker.getStartOffset() == rangeMarker.getEndOffset() && e.getOffset() == rangeMarker.getStartOffset() && e.getOldLength() == 0) {
-      //One-point range marker
-      return true;
-    }
-
     if (e.getOffset() >= rangeMarker.getEndOffset() || e.getOffset() + e.getOldLength() <= rangeMarker.getStartOffset()) {
       // Don't perform complex processing if the change doesn't affect target range.
       return false;

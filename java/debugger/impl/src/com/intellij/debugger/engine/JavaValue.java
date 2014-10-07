@@ -138,9 +138,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               presentation = new TypedStringValuePresentation(value, type);
             }
             else {
+              @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
               EvaluateException exception = myValueDescriptor.getEvaluateException();
               if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer && exception == null) {
-                presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(value.substring(0,Math.min(value.length(), XValueNode.MAX_VALUE_LENGTH))), type);
+                presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(truncateToMaxLength(value)), type);
+              }
+              else if (myValueDescriptor.getLastRenderer() instanceof CompoundReferenceRenderer && exception == null) {
+                presentation = new XRegularValuePresentation(truncateToMaxLength(value), type);
               }
               else {
                 presentation = new JavaValuePresentation(value, type, exception != null ? exception.getMessage() : null);
@@ -178,6 +182,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         });
       }
     });
+  }
+
+  private static String truncateToMaxLength(String value) {
+    return value.substring(0, Math.min(value.length(), XValueNode.MAX_VALUE_LENGTH));
   }
 
   private static class JavaValuePresentation extends XValuePresentation implements XValueCompactPresentation {

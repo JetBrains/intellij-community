@@ -1,6 +1,7 @@
 package org.jetbrains.java.decompiler.main.collectors;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class BytecodeMappingTracer {
@@ -16,12 +17,18 @@ public class BytecodeMappingTracer {
     current_sourceline = initial_source_line;
   }
 
-  public void incrementSourceLine() {
+  public void incrementCurrentSourceLine() {
     current_sourceline++;
   }
 
-  public void incrementSourceLine(int number_lines) {
+  public void incrementCurrentSourceLine(int number_lines) {
     current_sourceline += number_lines;
+  }
+
+  public void shiftSourceLines(int shift) {
+    for(Entry<Integer, Integer> entry : mapping.entrySet()) {
+      entry.setValue(entry.getValue() + shift);
+    }
   }
 
   public void addMapping(int bytecode_offset) {
@@ -38,15 +45,25 @@ public class BytecodeMappingTracer {
     }
   }
 
+  public void addTracer(BytecodeMappingTracer tracer) {
+    if(tracer != null) {
+      for(Entry<Integer, Integer> entry : tracer.mapping.entrySet()) {
+        if(!mapping.containsKey(entry.getKey())) {
+          mapping.put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+  }
+
   public HashMap<Integer, Integer> getMapping() {
     return mapping;
   }
 
-  public int getCurrentSourceline() {
+  public int getCurrentSourceLine() {
     return current_sourceline;
   }
 
-  public void setCurrentSourceline(int current_sourceline) {
+  public void setCurrentSourceLine(int current_sourceline) {
     this.current_sourceline = current_sourceline;
   }
 

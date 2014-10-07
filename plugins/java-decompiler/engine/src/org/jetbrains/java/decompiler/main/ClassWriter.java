@@ -182,8 +182,8 @@ public class ClassWriter {
       int start_class_def = buffer.length();
       writeClassDefinition(node, buffer, indent);
 
-      // count lines in class definition the easiest way
-      total_offset_lines = buffer.substring(start_class_def).toString().split(lineSeparator, -1).length - 1;
+//      // count lines in class definition the easiest way
+//      total_offset_lines = buffer.substring(start_class_def).toString().split(lineSeparator, -1).length - 1;
 
       boolean hasContent = false;
 
@@ -220,6 +220,9 @@ public class ClassWriter {
         buffer.append(lineSeparator);
       }
 
+      // FIXME: fields don't matter at the moment
+      total_offset_lines = buffer.substring(start_class_def).toString().split(lineSeparator, -1).length - 1;
+
       // methods
       for (StructMethod mt : cl.getMethods()) {
         boolean hide = mt.isSynthetic() && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
@@ -237,7 +240,7 @@ public class ClassWriter {
           hasContent = true;
           DecompilerContext.getBytecodeSourceMapper().addTracer(cl.qualifiedName,
                                   InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()), method_tracer);
-          total_offset_lines = method_tracer.getCurrentSourceline();
+          total_offset_lines = (method_tracer.getCurrentSourceLine() + 1); // zero-based line index
         }
         else {
           buffer.setLength(position);
@@ -805,7 +808,7 @@ public class ClassWriter {
         if (root != null && !methodWrapper.decompiledWithErrors) { // check for existence
           try {
 
-            tracer.setCurrentSourceline(buffer.substring(start_index_method).split(lineSeparator, -1).length - 1);
+            tracer.incrementCurrentSourceLine(buffer.substring(start_index_method).split(lineSeparator, -1).length - 1);
 
             String code = root.toJava(indent + 1, tracer);
 
@@ -836,7 +839,7 @@ public class ClassWriter {
 
     // save total lines
     // TODO: optimize
-    tracer.setCurrentSourceline(buffer.substring(start_index_method).split(lineSeparator, -1).length - 1);
+    tracer.setCurrentSourceLine(buffer.substring(start_index_method).split(lineSeparator, -1).length - 1);
 
     return !hideMethod;
   }

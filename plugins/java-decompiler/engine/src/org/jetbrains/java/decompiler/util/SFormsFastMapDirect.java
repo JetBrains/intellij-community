@@ -38,9 +38,9 @@ public class SFormsFastMapDirect {
   private SFormsFastMapDirect(boolean initialize) {
     if (initialize) {
       for (int i = 2; i >= 0; i--) {
-        @SuppressWarnings("unchecked") FastSparseSet<Integer>[] empty = new FastSparseSet[0];
+        @SuppressWarnings("unchecked") FastSparseSet<Integer>[] empty = FastSparseSet.EMPTY_ARRAY;
         elements[i] = empty;
-        next[i] = new int[0];
+        next[i] = InterpreterUtil.EMPTY_INT_ARRAY;
       }
     }
   }
@@ -99,8 +99,8 @@ public class SFormsFastMapDirect {
         while (pointer != 0);
       }
       else {
-        mapelements[i] = new FastSparseSet[0];
-        mapnext[i] = new int[0];
+        mapelements[i] = FastSparseSet.EMPTY_ARRAY;
+        mapnext[i] = InterpreterUtil.EMPTY_INT_ARRAY;
       }
     }
 
