@@ -30,6 +30,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
@@ -72,7 +73,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Denis Zhdanov
  * @since 8/9/13 3:37 PM
  */
-public class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager {
+public class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
 
   private static final Logger LOG = Logger.getInstance("#" + RemoteExternalSystemCommunicationManager.class.getName());
 
@@ -264,5 +265,10 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
   @Override
   public void clear() {
     mySupport.stopAll(true); 
+  }
+
+  @Override
+  public void dispose() {
+    shutdown(false);
   }
 }
