@@ -21,6 +21,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
@@ -33,6 +34,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
@@ -63,6 +65,12 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
     final Project project = e.getProject();
     if (project == null) return;
     Language previous = ScratchpadManager.getInstance(project).getLatestLanguage();
+    if (previous == null) {
+      PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
+      if (file != null) {
+        previous = file.getLanguage();
+      }
+    }
     ListPopup popup = buildLanguagePopup(previous, new Consumer<Language>() {
       @Override
       public void consume(Language language) {
