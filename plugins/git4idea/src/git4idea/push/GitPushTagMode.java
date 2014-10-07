@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  */
-public class GitPushTagMode implements VcsPushOptionValue {
+public final class GitPushTagMode implements VcsPushOptionValue {
 
   public static GitPushTagMode ALL = new GitPushTagMode("All", "--tags");
   public static GitPushTagMode FOLLOW = new GitPushTagMode("Current Branch", "--follow-tags");
@@ -28,7 +28,13 @@ public class GitPushTagMode implements VcsPushOptionValue {
   @NotNull private final String myTitle;
   @NotNull private final String myArgument;
 
-  public GitPushTagMode(@NotNull String title, @NotNull String argument) {
+  // for deserialization
+  @SuppressWarnings("UnusedDeclaration")
+  public GitPushTagMode() {
+    this(ALL.getTitle(), ALL.getArgument());
+  }
+
+  private GitPushTagMode(@NotNull String title, @NotNull String argument) {
     myTitle = title;
     myArgument = argument;
   }
@@ -46,5 +52,25 @@ public class GitPushTagMode implements VcsPushOptionValue {
   @NotNull
   public String getArgument() {
     return myArgument;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GitPushTagMode mode = (GitPushTagMode)o;
+
+    if (!myArgument.equals(mode.myArgument)) return false;
+    if (!myTitle.equals(mode.myTitle)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myTitle.hashCode();
+    result = 31 * result + myArgument.hashCode();
+    return result;
   }
 }
