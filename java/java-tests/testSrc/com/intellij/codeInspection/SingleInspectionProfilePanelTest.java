@@ -55,6 +55,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     assertEquals(1, InspectionProfileTest.countInitializedTools(model));
 
     assertEquals("foo", getInspection(profile).myAdditionalJavadocTags);
+    panel.disposeUI();
   }
 
   public void testModifyInstantiatedTool() throws Exception {
@@ -82,6 +83,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     assertEquals(1, InspectionProfileTest.countInitializedTools(model));
 
     assertEquals("bar", getInspection(profile).myAdditionalJavadocTags);
+    panel.disposeUI();
   }
 
   public void testDoNotChangeSettingsOnCancel() throws Exception {
