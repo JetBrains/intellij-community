@@ -72,7 +72,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
 
   @Override
   public boolean isWritable() {
-    return true;
+    return myBeforeFile.isWritable();
   }
 
   @Override
@@ -87,7 +87,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile getParent() {
-    return null;
+    return myBeforeFile.getParent();
   }
 
   @Override
@@ -109,17 +109,17 @@ public class TestDataGroupVirtualFile extends VirtualFile {
 
   @Override
   public long getTimeStamp() {
-    return 0;
+    return myBeforeFile.getTimeStamp();
   }
 
   @Override
   public long getLength() {
-    return 0;
+    return myBeforeFile.getLength();
   }
 
   @Override
   public long getModificationStamp() {
-    return 0;
+    return myBeforeFile.getModificationStamp();
   }
 
   @Override
