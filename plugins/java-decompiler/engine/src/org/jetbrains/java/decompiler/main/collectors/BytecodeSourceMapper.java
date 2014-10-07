@@ -59,7 +59,7 @@ public class BytecodeSourceMapper {
         buffer.append(indentstr1 + "method " + method_entry.getKey() + "{" + lineSeparator);
 
         for(Entry<Integer, Integer> line : method_mapping.entrySet()) {
-          buffer.append(indentstr2 + line.getKey() + indentstr2 + line.getValue() + lineSeparator);
+          buffer.append(indentstr2 + line.getKey() + indentstr2 + (line.getValue() +offset_total) + lineSeparator);
         }
         buffer.append(indentstr1 + "}" + lineSeparator);
         is_first_method = false;

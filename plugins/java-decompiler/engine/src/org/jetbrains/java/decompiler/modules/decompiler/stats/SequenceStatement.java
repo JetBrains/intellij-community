@@ -114,7 +114,7 @@ public class SequenceStatement extends Statement {
       indstr = InterpreterUtil.getIndentString(indent);
       indent++;
       buf.append(indstr).append("label").append(this.id).append(": {").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
 
     boolean notempty = false;
@@ -125,7 +125,7 @@ public class SequenceStatement extends Statement {
 
       if (i > 0 && notempty) {
         buf.append(new_line_separator);
-        tracer.incrementSourceLine();
+        tracer.incrementCurrentSourceLine();
       }
 
       String str = ExprProcessor.jmpWrapper(st, indent, false, tracer);
@@ -136,7 +136,7 @@ public class SequenceStatement extends Statement {
 
     if (islabeled) {
       buf.append(indstr).append("}").append(new_line_separator);
-      tracer.incrementSourceLine();
+      tracer.incrementCurrentSourceLine();
     }
 
     return buf.toString();

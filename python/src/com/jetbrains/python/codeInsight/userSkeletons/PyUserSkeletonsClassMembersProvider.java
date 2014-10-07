@@ -16,7 +16,7 @@
 package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -37,7 +37,7 @@ import java.util.List;
 public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderBase implements PyOverridingAncestorsClassMembersProvider {
   @NotNull
   @Override
-  public Collection<PyDynamicMember> getMembers(@NotNull PyClassType classType, PsiElement location) {
+  public Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location) {
     final PyClass cls = classType.getPyClass();
     final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeleton(cls);
     if (skeleton != null) {
@@ -73,24 +73,24 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
     return null;
   }
 
-  private static Collection<PyDynamicMember> getClassMembers(@NotNull PyClass cls) {
-    final List<PyDynamicMember> result = new ArrayList<PyDynamicMember>();
-    for (PyFunction function : cls.getMethods()) {
+  private static Collection<PyCustomMember> getClassMembers(@NotNull PyClass cls) {
+    final List<PyCustomMember> result = new ArrayList<PyCustomMember>();
+    for (PyFunction function : cls.getMethods(false)) {
       final String name = function.getName();
       if (name != null) {
-        result.add(new PyDynamicMember(name, function));
+        result.add(new PyCustomMember(name, function));
       }
     }
     for (PyTargetExpression attribute : cls.getInstanceAttributes()) {
       final String name = attribute.getName();
       if (name != null) {
-        result.add(new PyDynamicMember(name, attribute));
+        result.add(new PyCustomMember(name, attribute));
       }
     }
     for (PyTargetExpression attribute : cls.getClassAttributes()) {
       final String name = attribute.getName();
       if (name != null) {
-        result.add(new PyDynamicMember(name, attribute));
+        result.add(new PyCustomMember(name, attribute));
       }
     }
     return result;
