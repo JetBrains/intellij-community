@@ -48,10 +48,8 @@ public class ClassesProcessor {
   public ClassesProcessor(StructContext context) {
 
     HashMap<String, Object[]> mapInnerClasses = new HashMap<String, Object[]>();
-
     HashMap<String, HashSet<String>> mapNestedClassReferences = new HashMap<String, HashSet<String>>();
     HashMap<String, HashSet<String>> mapEnclosingClassReferences = new HashMap<String, HashSet<String>>();
-
     HashMap<String, String> mapNewSimpleNames = new HashMap<String, String>();
 
     boolean bDecompileInner = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_INNER);
@@ -113,11 +111,9 @@ public class ClassesProcessor {
                   if (arrold == null) {
                     mapInnerClasses.put(innername, arr);
                   }
-                  else {
-                    if (!InterpreterUtil.equalObjectArrays(arrold, arr)) {
-                      DecompilerContext.getLogger()
-                        .writeMessage("Inconsistent inner class entries for " + innername + "!", IFernflowerLogger.Severity.WARN);
-                    }
+                  else if (!InterpreterUtil.equalObjectArrays(arrold, arr)) {
+                    String message = "Inconsistent inner class entries for " + innername + "!";
+                    DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
                   }
 
                   // reference to the nested class
@@ -174,15 +170,13 @@ public class ClassesProcessor {
                   continue;
                 }
 
-                if (setVisited.contains(nestedClass)) {
+                if (!setVisited.add(nestedClass)) {
                   continue;
                 }
-                setVisited.add(nestedClass);
 
                 ClassNode nestednode = mapRootClasses.get(nestedClass);
                 if (nestednode == null) {
-                  DecompilerContext.getLogger().writeMessage("Nested class " + nestedClass + " missing!",
-                                                             IFernflowerLogger.Severity.WARN);
+                  DecompilerContext.getLogger().writeMessage("Nested class " + nestedClass + " missing!", IFernflowerLogger.Severity.WARN);
                   continue;
                 }
 
@@ -207,13 +201,13 @@ public class ClassesProcessor {
 
                   if (interfaces.length > 0) {
                     if (interfaces.length > 1) {
-                      DecompilerContext.getLogger()
-                        .writeMessage("Inconsistent anonymous class definition: " + cl.qualifiedName, IFernflowerLogger.Severity.WARN);
+                      String message = "Inconsistent anonymous class definition: " + cl.qualifiedName;
+                      DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
                     }
-                    nestednode.anonimousClassType = new VarType(cl.getInterface(0), true);
+                    nestednode.anonymousClassType = new VarType(cl.getInterface(0), true);
                   }
                   else {
-                    nestednode.anonimousClassType = new VarType(cl.superClass.getString(), true);
+                    nestednode.anonymousClassType = new VarType(cl.superClass.getString(), true);
                   }
                 }
                 else if (nestednode.type == ClassNode.CLASS_LOCAL) {
@@ -366,7 +360,7 @@ public class ClassesProcessor {
 
     public HashMap<String, VarVersionPaar> mapFieldsToVars = new HashMap<String, VarVersionPaar>();
 
-    public VarType anonimousClassType;
+    public VarType anonymousClassType;
 
     public List<ClassNode> nested = new ArrayList<ClassNode>();
 
@@ -401,7 +395,7 @@ public class ClassesProcessor {
       lambda_information.content_method_key =
         InterpreterUtil.makeUniqueKey(lambda_information.content_method_name, lambda_information.content_method_descriptor);
 
-      anonimousClassType = new VarType(lambda_class_name, true);
+      anonymousClassType = new VarType(lambda_class_name, true);
 
       boolean is_method_reference = (content_class_name != classStruct.qualifiedName);
       if (!is_method_reference) { // content method in the same class, check synthetic flag
