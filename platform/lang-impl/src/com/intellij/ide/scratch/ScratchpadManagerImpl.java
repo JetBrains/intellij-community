@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.scratch;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,12 +25,14 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 public class ScratchpadManagerImpl extends ScratchpadManager implements Disposable {
   private final Project myProject;
   private Integer myIndex = 0;
-  private Language myLatestLanguage;
 
   public ScratchpadManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -45,7 +48,8 @@ public class ScratchpadManagerImpl extends ScratchpadManager implements Disposab
   @NotNull
   @Override
   public VirtualFile createScratchFile(@NotNull final Language language) {
-    myLatestLanguage = language;
+    updateHistory(myProject, language);
+    
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
@@ -55,14 +59,24 @@ public class ScratchpadManagerImpl extends ScratchpadManager implements Disposab
     });
   }
 
+  private static void updateHistory(Project project, Language language) {
+    String[] values = PropertiesComponent.getInstance(project).getValues(ScratchpadManager.class.getName());
+    ArrayList<String> lastUsed = new ArrayList<String>(5);
+    lastUsed.add(language.getID());
+    if (values != null) {
+      for (String value : values) {
+        if (!lastUsed.contains(value)) {
+          lastUsed.add(value);
+        }
+        if (lastUsed.size() == 5) break;
+      }
+    }
+    PropertiesComponent.getInstance(project).setValues(ScratchpadManager.class.getName(), ArrayUtil.toStringArray(lastUsed));
+  }
+
   @NotNull
   private static String calculatePrefix(@NotNull Project project) {
     return project.getLocationHash();
-  }
-
-  @Override
-  public Language getLatestLanguage() {
-    return myLatestLanguage;
   }
 
   @NotNull
