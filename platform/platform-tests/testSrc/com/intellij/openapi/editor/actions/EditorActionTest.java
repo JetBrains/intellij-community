@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
@@ -118,5 +120,14 @@ public class EditorActionTest extends AbstractEditorTest {
     init("<caret> ", TestFileType.TEXT);
     executeAction("EditorIndentLineOrSelection");
     checkResultByText("    <caret> ");
+  }
+
+  public void testBackspaceWithStickySelection() throws Exception {
+    init("te<caret>xt", TestFileType.TEXT);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_STICKY_SELECTION);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+    checkResultByText("te<caret>t");
+    assertFalse(((EditorEx)myEditor).isStickySelection());
   }
 }
