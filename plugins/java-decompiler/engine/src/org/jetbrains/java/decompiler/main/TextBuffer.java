@@ -17,7 +17,10 @@ package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Allows to connect text with resulting lines
@@ -171,5 +174,14 @@ public class TextBuffer {
       throw new IllegalStateException("insert not yet supported with Line mapping");
     }
     myStringBuilder.insert(offset, s);
+  }
+
+  public int count(String substring, int from) {
+    int count = 0, length = substring.length(), p = from;
+    while ((p = myStringBuilder.indexOf(substring, p)) > 0) {
+      ++count;
+      p += length;
+    }
+    return count;
   }
 }

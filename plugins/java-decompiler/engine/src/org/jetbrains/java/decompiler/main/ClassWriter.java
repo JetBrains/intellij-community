@@ -220,7 +220,7 @@ public class ClassWriter {
       }
 
       // FIXME: fields don't matter at the moment
-      total_offset_lines = buffer.substring(start_class_def).toString().split(lineSeparator, -1).length - 1;
+      total_offset_lines = buffer.count(lineSeparator, start_class_def);
 
       // methods
       for (StructMethod mt : cl.getMethods()) {
@@ -812,8 +812,7 @@ public class ClassWriter {
 
         if (root != null && !methodWrapper.decompiledWithErrors) { // check for existence
           try {
-
-            tracer.incrementCurrentSourceLine(buffer.substring(start_index_method).split(lineSeparator, -1).length - 1);
+            tracer.incrementCurrentSourceLine(buffer.count(lineSeparator, start_index_method));
 
             String code = root.toJava(indent + 1, tracer);
 
@@ -842,7 +841,7 @@ public class ClassWriter {
 
     // save total lines
     // TODO: optimize
-    tracer.setCurrentSourceLine(buffer.substring(start_index_method).split(lineSeparator, -1).length - 1);
+    tracer.setCurrentSourceLine(buffer.count(lineSeparator, start_index_method));
 
     return !hideMethod;
   }
