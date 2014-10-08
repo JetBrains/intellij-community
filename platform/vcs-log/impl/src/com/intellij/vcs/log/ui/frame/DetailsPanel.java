@@ -236,6 +236,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myBranchesList = new JBTextField("");
       myBranchesList.setEditable(false);
       myBranchesList.setBorder(null);
+      myBranchesList.setBackground(UIUtil.getPanelBackground());
 
       setOpaque(false);
       setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
