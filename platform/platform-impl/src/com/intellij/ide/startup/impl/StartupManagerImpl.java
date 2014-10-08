@@ -52,7 +52,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
 
   private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
-  private final List<Runnable> myStartupActivities = new LinkedList<Runnable>();
+  private final List<Runnable> myStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
 
   private final List<Runnable> myDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
   private final List<Runnable> myNotDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
@@ -110,18 +110,26 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public void runStartupActivities() {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @SuppressWarnings("SynchronizeOnThis")
       public void run() {
         HeavyProcessLatch.INSTANCE.processStarted();
         try {
           runActivities(myPreStartupActivities);
-          myPreStartupActivitiesPassed = true;
 
-          myStartupActivitiesRunning = true;
+          // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
+          synchronized (StartupManagerImpl.this) {
+            myPreStartupActivitiesPassed = true;
+
+            myStartupActivitiesRunning = true;
+          }
+
           runActivities(myStartupActivities);
 
-          myStartupActivitiesRunning = false;
+          synchronized (StartupManagerImpl.this) {
+            myStartupActivitiesRunning = false;
 
-          myStartupActivitiesPassed = true;
+            myStartupActivitiesPassed = true;
+          }
         }
         finally {
           HeavyProcessLatch.INSTANCE.processFinished();
