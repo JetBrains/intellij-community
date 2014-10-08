@@ -38,7 +38,7 @@ import java.util.*;
  * @author Svetlana.Zemlyanskaya
  */
 public class StdArrangementExtendableSettings extends StdArrangementSettings implements ArrangementExtendableSettings {
-  @NotNull private final Set<ArrangementRuleAlias> myRulesAliases = new THashSet<ArrangementRuleAlias>();
+  @NotNull private final Set<StdArrangementRuleAliasToken> myRulesAliases = new THashSet<StdArrangementRuleAliasToken>();
 
   // cached values
   @NotNull private final List<ArrangementSectionRule> myExtendedSectionRules = new ArrayList<ArrangementSectionRule>();
@@ -49,19 +49,19 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
 
   public StdArrangementExtendableSettings(@NotNull List<ArrangementGroupingRule> groupingRules,
                                           @NotNull List<ArrangementSectionRule> sectionRules,
-                                          @NotNull Collection<ArrangementRuleAlias> rulesAliases) {
+                                          @NotNull Collection<StdArrangementRuleAliasToken> rulesAliases) {
     super(groupingRules, sectionRules);
     myRulesAliases.addAll(rulesAliases);
   }
 
   @Override
-  public Set<ArrangementRuleAlias> getRuleAliases() {
+  public Set<StdArrangementRuleAliasToken> getRuleAliases() {
     return myRulesAliases;
   }
 
-  private Set<ArrangementRuleAlias> cloneTokenDefinitions() {
-    final Set<ArrangementRuleAlias> definitions = new THashSet<ArrangementRuleAlias>();
-    for (ArrangementRuleAlias definition : myRulesAliases) {
+  private Set<StdArrangementRuleAliasToken> cloneTokenDefinitions() {
+    final Set<StdArrangementRuleAliasToken> definitions = new THashSet<StdArrangementRuleAliasToken>();
+    for (StdArrangementRuleAliasToken definition : myRulesAliases) {
       definitions.add(definition.clone());
     }
     return definitions;
@@ -70,9 +70,9 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
   @Override
   public List<ArrangementSectionRule> getExtendedSectionRules() {
     if (myExtendedSectionRules.isEmpty()) {
-      final Map<String, ArrangementRuleAlias> tokenIdToDefinition = new THashMap<String, ArrangementRuleAlias>(myRulesAliases.size());
-      for (ArrangementRuleAlias alias : myRulesAliases) {
-        final String id = alias.getAliasToken().getId();
+      final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition = new THashMap<String, StdArrangementRuleAliasToken>(myRulesAliases.size());
+      for (StdArrangementRuleAliasToken alias : myRulesAliases) {
+        final String id = alias.getId();
         tokenIdToDefinition.put(id, alias);
       }
 
@@ -90,7 +90,7 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
 
   public void appendExpandedRules(@NotNull final StdArrangementMatchRule rule,
                                   @NotNull final List<StdArrangementMatchRule> rules,
-                                  @NotNull final Map<String, ArrangementRuleAlias> tokenIdToDefinition) {
+                                  @NotNull final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition) {
     final List<StdArrangementMatchRule> sequence = getRuleSequence(rule, tokenIdToDefinition);
     if (sequence == null || sequence.isEmpty()) {
       rules.add(rule);
@@ -107,12 +107,12 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
 
   @Nullable
   private List<StdArrangementMatchRule> getRuleSequence(@NotNull final StdArrangementMatchRule rule,
-                                                        @NotNull final Map<String, ArrangementRuleAlias> tokenIdToDefinition) {
+                                                        @NotNull final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition) {
     final List<StdArrangementMatchRule> seqRule = ContainerUtil.newSmartList();
     rule.getMatcher().getCondition().invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        final ArrangementRuleAlias token = tokenIdToDefinition.get(condition.getType().getId());
+        final StdArrangementRuleAliasToken token = tokenIdToDefinition.get(condition.getType().getId());
         if (token != null && !token.getDefinitionRules().isEmpty()) {
           seqRule.addAll(token.getDefinitionRules());
         }

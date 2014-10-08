@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +68,18 @@ public class ArrangementStandardSettingsManager {
   @Nullable private final List<CompositeArrangementSettingsToken> myGroupingTokens;
   @Nullable private final List<CompositeArrangementSettingsToken> myMatchingTokens;
 
+  @NotNull private Collection<StdArrangementRuleAliasToken> myRuleAliases;
+  @NotNull private Set<ArrangementSettingsToken> myRuleAliasMutex;
+  @Nullable private CompositeArrangementSettingsToken myRuleAliasToken;
+
   public ArrangementStandardSettingsManager(@NotNull ArrangementStandardSettingsAware delegate,
-                                            @NotNull ArrangementColorsProvider colorsProvider)
+                                            @NotNull ArrangementColorsProvider colorsProvider) {
+    this(delegate, colorsProvider, ContainerUtil.<StdArrangementRuleAliasToken>emptyList());
+  }
+
+  public ArrangementStandardSettingsManager(@NotNull ArrangementStandardSettingsAware delegate,
+                                            @NotNull ArrangementColorsProvider colorsProvider,
+                                            @NotNull Collection<StdArrangementRuleAliasToken> aliases)
   {
     myDelegate = delegate;
     myColorsProvider = colorsProvider;
@@ -87,6 +98,20 @@ public class ArrangementStandardSettingsManager {
       parseWidths(myMatchingTokens, renderer);
       buildWeights(myMatchingTokens);
     }
+
+    final Set<ArrangementSettingsToken> aliasTokens = ContainerUtil.newHashSet();
+    aliasTokens.addAll(aliases);
+
+    myRuleAliases = aliases;
+    myRuleAliasMutex = aliasTokens;
+    if (!myRuleAliases.isEmpty()) {
+      myRuleAliasToken = new CompositeArrangementSettingsToken(StdArrangementTokens.General.ALIAS, aliasTokens);
+    }
+  }
+
+  @NotNull
+  public Collection<StdArrangementRuleAliasToken> getRuleAliases() {
+    return myRuleAliases;
   }
 
   @NotNull
@@ -139,10 +164,19 @@ public class ArrangementStandardSettingsManager {
    */
   @Nullable
   public List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
-    return myMatchingTokens;
+    if (myMatchingTokens == null || myRuleAliasToken == null) {
+      return myMatchingTokens;
+    }
+
+    final List<CompositeArrangementSettingsToken> allTokens = ContainerUtil.newArrayList(myMatchingTokens);
+    allTokens.add(myRuleAliasToken);
+    return allTokens;
   }
   
   public boolean isEnabled(@NotNull ArrangementSettingsToken token, @Nullable ArrangementMatchCondition current) {
+    if (myRuleAliasMutex.contains(token)) {
+      return true;
+    }
     return myDelegate.isEnabled(token, current);
   }
 
@@ -157,7 +191,12 @@ public class ArrangementStandardSettingsManager {
 
   @NotNull
   public Collection<Set<ArrangementSettingsToken>> getMutexes() {
-    return myMutexes;
+    if (myRuleAliasMutex.isEmpty()) {
+      return myMutexes;
+    }
+    final List<Set<ArrangementSettingsToken>> allMutexes = ContainerUtil.newArrayList(myMutexes);
+    allMutexes.add(myRuleAliasMutex);
+    return allMutexes;
   }
 
   public int getWidth(@NotNull ArrangementSettingsToken token) {

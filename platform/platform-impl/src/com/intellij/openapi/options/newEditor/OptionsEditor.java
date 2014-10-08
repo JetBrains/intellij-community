@@ -1018,7 +1018,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
             select(configurable, null);
           }
         };
-        label.setBorder(BorderFactory.createEmptyBorder(1, 17, 1, 1));
+        label.setBorder(BorderFactory.createEmptyBorder(1, 17, 3, 1));
         box.add(label);
       }
     }

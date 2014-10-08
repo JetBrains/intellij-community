@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,32 +25,44 @@ import java.util.List;
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public class ArrangementRuleAlias implements Cloneable {
-  /**
-   * Token to be used in matching rules ui
-   */
-  private ArrangementSettingsToken myAliasToken;
+public class StdArrangementRuleAliasToken extends StdArrangementSettingsToken implements Cloneable {
+  private String myName;
 
   /**
    * All usages of alias token will be replaced by this sequence of rules
    */
   private List<StdArrangementMatchRule> myDefinitionRules;
 
-  public ArrangementRuleAlias() {
+  public StdArrangementRuleAliasToken(@NotNull String name) {
+    this(name, ContainerUtil.<StdArrangementMatchRule>emptyList());
   }
 
-  public ArrangementRuleAlias(@NotNull ArrangementSettingsToken aliasToken,
-                              @NotNull List<StdArrangementMatchRule> definitionRules) {
-    myAliasToken = aliasToken;
+  public StdArrangementRuleAliasToken(@NotNull String name,
+                                      @NotNull List<StdArrangementMatchRule> definitionRules) {
+    this(createIdByName(name), name, definitionRules);
     myDefinitionRules = definitionRules;
   }
 
-  public ArrangementSettingsToken getAliasToken() {
-    return myAliasToken;
+
+  public StdArrangementRuleAliasToken(@NotNull String id, @NotNull String name,
+                                      @NotNull List<StdArrangementMatchRule> definitionRules) {
+    super(id, createRepresentationValue(name), StdArrangementTokenType.ALIAS);
+    myName = name;
+    myDefinitionRules = definitionRules;
   }
 
-  public void setAliasToken(@NotNull ArrangementSettingsToken aliasToken) {
-    myAliasToken = aliasToken;
+  @NotNull
+  private static String createRepresentationValue(@NotNull String name) {
+    return "by " + name;
+  }
+
+  private static String createIdByName(@NotNull String name) {
+    return name.replaceAll("\\s+", "_");
+  }
+
+
+  public String getName() {
+    return myName;
   }
 
   public List<StdArrangementMatchRule> getDefinitionRules() {
@@ -60,13 +73,19 @@ public class ArrangementRuleAlias implements Cloneable {
     myDefinitionRules = definitionRules;
   }
 
+  public void setTokenName(@NotNull String name) {
+    myId = name.replaceAll("\\s+", "_");
+    myRepresentationName = createRepresentationValue(name);
+    myName = name;
+  }
+
   @Override
-  protected ArrangementRuleAlias clone() {
+  protected StdArrangementRuleAliasToken clone() {
     final List<StdArrangementMatchRule> newValue = new ArrayList<StdArrangementMatchRule>(myDefinitionRules.size());
     for (StdArrangementMatchRule rule : myDefinitionRules) {
       newValue.add(rule.clone());
     }
-    return new ArrangementRuleAlias(myAliasToken, newValue);
+    return new StdArrangementRuleAliasToken(getName(), newValue);
   }
 
   @Override
@@ -74,9 +93,9 @@ public class ArrangementRuleAlias implements Cloneable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    ArrangementRuleAlias token = (ArrangementRuleAlias)o;
+    StdArrangementRuleAliasToken token = (StdArrangementRuleAliasToken)o;
 
-    if (myAliasToken != null ? !myAliasToken.equals(token.myAliasToken) : token.myAliasToken != null) return false;
+    if (!super.equals(o)) return false;
     if (myDefinitionRules != null ? !myDefinitionRules.equals(token.myDefinitionRules) : token.myDefinitionRules != null) return false;
 
     return true;
@@ -84,7 +103,7 @@ public class ArrangementRuleAlias implements Cloneable {
 
   @Override
   public int hashCode() {
-    int result = myAliasToken != null ? myAliasToken.hashCode() : 0;
+    int result = super.hashCode();
     result = 31 * result + (myDefinitionRules != null ? myDefinitionRules.hashCode() : 0);
     return result;
   }

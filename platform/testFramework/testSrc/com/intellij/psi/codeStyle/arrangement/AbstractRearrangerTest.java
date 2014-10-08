@@ -80,8 +80,8 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
     return ArrangementSectionRule.create(start, end, rules);
   }
 
-  protected static ArrangementRuleAlias alias(@NotNull String id, @NotNull StdArrangementMatchRule... rules) {
-    return new ArrangementRuleAlias(ArrangementUtil.createRuleAliasToken(id, id), ContainerUtil.newArrayList(rules));
+  protected static StdArrangementRuleAliasToken alias(@NotNull String id, @NotNull StdArrangementMatchRule... rules) {
+    return new StdArrangementRuleAliasToken(id, id, ContainerUtil.newArrayList(rules));
   }
 
   @NotNull
@@ -192,7 +192,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
     });
 
     @SuppressWarnings("unchecked")
-    List<ArrangementRuleAlias> aliases = (List<ArrangementRuleAlias>)args.get("aliases");
+    List<StdArrangementRuleAliasToken> aliases = (List<StdArrangementRuleAliasToken>)args.get("aliases");
     CommonCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings().getCommonSettings(language);
     final StdArrangementSettings arrangementSettings =
       aliases == null ?

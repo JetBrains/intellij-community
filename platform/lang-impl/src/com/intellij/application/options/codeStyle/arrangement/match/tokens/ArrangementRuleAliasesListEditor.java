@@ -22,8 +22,7 @@ import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementRuleAlias;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
@@ -35,48 +34,44 @@ import java.util.Set;
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<ArrangementRuleAlias> {
-  private static final Namer<ArrangementRuleAlias> NAMER = new Namer<ArrangementRuleAlias>() {
+public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdArrangementRuleAliasToken> {
+  private static final Namer<StdArrangementRuleAliasToken> NAMER = new Namer<StdArrangementRuleAliasToken>() {
     @Override
-    public String getName(ArrangementRuleAlias token) {
-      return token.getAliasToken().getRepresentationValue();
+    public String getName(StdArrangementRuleAliasToken token) {
+      return token.getName();
     }
 
     @Override
-    public boolean canRename(ArrangementRuleAlias item) {
+    public boolean canRename(StdArrangementRuleAliasToken item) {
       return false;
     }
 
     @Override
-    public void setName(ArrangementRuleAlias token, String name) {
-      token.setAliasToken(ArrangementUtil.createRuleAliasToken(name.replaceAll("\\s+", "_"), name.replaceAll("\\s+", " ")));
+    public void setName(StdArrangementRuleAliasToken token, String name) {
+      token.setTokenName(name.replaceAll("\\s+", " "));
     }
   };
-  private static final Factory<ArrangementRuleAlias> FACTORY = new Factory<ArrangementRuleAlias>() {
+  private static final Factory<StdArrangementRuleAliasToken> FACTORY = new Factory<StdArrangementRuleAliasToken>() {
     @Override
-    public ArrangementRuleAlias create() {
-      return new ArrangementRuleAlias();
+    public StdArrangementRuleAliasToken create() {
+      return new StdArrangementRuleAliasToken("");
     }
   };
-  private static final Cloner<ArrangementRuleAlias> CLONER = new Cloner<ArrangementRuleAlias>() {
+  private static final Cloner<StdArrangementRuleAliasToken> CLONER = new Cloner<StdArrangementRuleAliasToken>() {
     @Override
-    public ArrangementRuleAlias cloneOf(ArrangementRuleAlias original) {
-      final ArrangementRuleAlias token = copyOf(original);
-      token.setAliasToken(original.getAliasToken());
-      return token;
+    public StdArrangementRuleAliasToken cloneOf(StdArrangementRuleAliasToken original) {
+      return copyOf(original);
     }
 
     @Override
-    public ArrangementRuleAlias copyOf(ArrangementRuleAlias original) {
-      final ArrangementRuleAlias token = new ArrangementRuleAlias();
-      token.setDefinitionRules(original.getDefinitionRules());
-      return token;
+    public StdArrangementRuleAliasToken copyOf(StdArrangementRuleAliasToken original) {
+      return new StdArrangementRuleAliasToken(original.getName(), original.getDefinitionRules());
     }
   };
-  private static final Equality<ArrangementRuleAlias> COMPARER = new Equality<ArrangementRuleAlias>() {
+  private static final Equality<StdArrangementRuleAliasToken> COMPARER = new Equality<StdArrangementRuleAliasToken>() {
     @Override
-    public boolean equals(ArrangementRuleAlias o1, ArrangementRuleAlias o2) {
-      return Comparing.equal(o1.getAliasToken().getId(), o2.getAliasToken().getId());
+    public boolean equals(StdArrangementRuleAliasToken o1, StdArrangementRuleAliasToken o2) {
+      return Comparing.equal(o1.getId(), o2.getId());
     }
   };
 
@@ -86,7 +81,7 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<Arran
 
   protected ArrangementRuleAliasesListEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
                                              @NotNull ArrangementColorsProvider colorsProvider,
-                                             @NotNull List<ArrangementRuleAlias> items,
+                                             @NotNull List<StdArrangementRuleAliasToken> items,
                                              @NotNull Set<String> usedTokenIds) {
     super(NAMER, FACTORY, CLONER, COMPARER, items, false);
     mySettingsManager = settingsManager;
@@ -97,13 +92,13 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<Arran
   }
 
   @Override
-  protected UnnamedConfigurable createConfigurable(ArrangementRuleAlias item) {
+  protected UnnamedConfigurable createConfigurable(StdArrangementRuleAliasToken item) {
     return new ArrangementRuleAliasConfigurable(mySettingsManager, myColorsProvider, item);
   }
 
   @Override
-  protected boolean canDelete(ArrangementRuleAlias item) {
-    return !myUsedTokenIds.contains(item.getAliasToken().getId());
+  protected boolean canDelete(StdArrangementRuleAliasToken item) {
+    return !myUsedTokenIds.contains(item.getId());
   }
 
   @Nls

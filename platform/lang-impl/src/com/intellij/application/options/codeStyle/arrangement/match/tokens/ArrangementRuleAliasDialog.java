@@ -20,15 +20,15 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementRuleAlias;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -41,11 +41,11 @@ public class ArrangementRuleAliasDialog extends DialogWrapper {
   public ArrangementRuleAliasDialog(@Nullable Project project,
                                     @NotNull ArrangementStandardSettingsManager settingsManager,
                                     @NotNull ArrangementColorsProvider colorsProvider,
-                                    @NotNull Collection<ArrangementRuleAlias> tokens,
+                                    @NotNull Collection<StdArrangementRuleAliasToken> tokens,
                                     @NotNull Set<String> tokensInUse) {
     super(project, false);
 
-    final ArrayList<ArrangementRuleAlias> tokenList = ContainerUtil.newArrayList(tokens);
+    final List<StdArrangementRuleAliasToken> tokenList = ContainerUtil.newArrayList(tokens);
     myEditor = new ArrangementRuleAliasesListEditor(settingsManager, colorsProvider, tokenList, tokensInUse);
     if (!tokenList.isEmpty()) {
       myEditor.selectItem(tokenList.get(0));
@@ -59,7 +59,7 @@ public class ArrangementRuleAliasDialog extends DialogWrapper {
     return myModified;
   }
 
-  public Collection<ArrangementRuleAlias> getRuleAliases() {
+  public Collection<StdArrangementRuleAliasToken> getRuleAliases() {
     return myEditor.getItems();
   }
 

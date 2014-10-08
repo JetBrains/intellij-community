@@ -15,23 +15,26 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementRuleAlias;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementExtendableSettings;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -49,6 +52,8 @@ import static org.junit.Assert.*;
  * @since 9/18/12 9:24 AM
  */
 public class ArrangementSettingsSerializationTest {
+  private static final String VISIBILITY = "visibility";
+  private static final String MODIFIERS = "modifiers";
 
   private static Element doSerializationTest(@NotNull StdArrangementSettings settings, @NotNull StdArrangementSettings defaultSettings) {
     Element holder = new Element("holder");
@@ -87,7 +92,7 @@ public class ArrangementSettingsSerializationTest {
 
   private static StdArrangementExtendableSettings extendableSettings(@NotNull List<ArrangementGroupingRule> groupings,
                                                                      @NotNull List<ArrangementSectionRule> sections,
-                                                                     @NotNull Collection<ArrangementRuleAlias> tokens) {
+                                                                     @NotNull Collection<StdArrangementRuleAliasToken> tokens) {
     return new StdArrangementExtendableSettings(groupings, sections, tokens);
   }
 
@@ -95,19 +100,15 @@ public class ArrangementSettingsSerializationTest {
     return new StdArrangementSettings(ContainerUtil.<ArrangementGroupingRule>emptyList(), ContainerUtil.<ArrangementSectionRule>emptyList());
   }
 
-  private static ArrangementSettingsToken customToken(@NotNull String name) {
-    return ArrangementUtil.createRuleAliasToken(name, name);
-  }
-
-  private static ArrangementRuleAlias visibilityToken() {
+  private static StdArrangementRuleAliasToken visibilityToken() {
     final ArrayList<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
     rules.add(rule(false, PUBLIC));
     rules.add(rule(false, PROTECTED));
     rules.add(rule(false, PRIVATE));
-    return new ArrangementRuleAlias(customToken("visibility"), rules);
+    return new StdArrangementRuleAliasToken(VISIBILITY, VISIBILITY, rules);
   }
 
-  private static ArrangementRuleAlias modifiersToken() {
+  private static StdArrangementRuleAliasToken modifiersToken() {
     final ArrayList<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
     rules.add(rule(false, PUBLIC, STATIC));
     rules.add(rule(false, PROTECTED, STATIC));
@@ -115,7 +116,7 @@ public class ArrangementSettingsSerializationTest {
     rules.add(rule(false, PUBLIC));
     rules.add(rule(false, PROTECTED));
     rules.add(rule(false, PRIVATE));
-    return new ArrangementRuleAlias(customToken("modifiers"), rules);
+    return new StdArrangementRuleAliasToken(MODIFIERS, MODIFIERS, rules);
   }
 
   @Test
@@ -244,7 +245,7 @@ public class ArrangementSettingsSerializationTest {
 
   @Test
   public void testDefaultCustomTokenSerialize() {
-    final Set<ArrangementRuleAlias> tokens = ContainerUtil.newHashSet(visibilityToken());
+    final Set<StdArrangementRuleAliasToken> tokens = ContainerUtil.newHashSet(visibilityToken());
     final ArrayList<ArrangementGroupingRule> groupings =
       ContainerUtil.newArrayList(new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
     final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD));
@@ -255,86 +256,182 @@ public class ArrangementSettingsSerializationTest {
   }
 
   @Test
-  public void testCustomTokenSerializeLessThanDefault() {
-    final Set<ArrangementRuleAlias> tokens = ContainerUtil.newHashSet(visibilityToken());
+  public void testCustomTokenSerializeLessThanDefault() throws IOException {
+    final Set<StdArrangementRuleAliasToken> tokens = ContainerUtil.newHashSet(visibilityToken());
     final ArrayList<ArrangementGroupingRule> groupings = ContainerUtil.newArrayList(
       new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
     final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD));
     final StdArrangementExtendableSettings settings = extendableSettings(groupings, rules, tokens);
 
-    final Set<ArrangementRuleAlias> defaultTokens = ContainerUtil.newHashSet(visibilityToken(), modifiersToken());
+    final Set<StdArrangementRuleAliasToken> defaultTokens = ContainerUtil.newHashSet(visibilityToken(), modifiersToken());
     final StdArrangementExtendableSettings defaultSettings = extendableSettings(groupings, rules, defaultTokens);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    assertTrue(holder.getChildren().size() == 1);
-    final Element tokenElement = holder.getChildren().get(0);
-    assertEquals(tokenElement.getName(), "tokens");
-    assertTrue(tokenElement.getChildren().size() == 1);
-    final List<Element> tokenElements = tokenElement.getChildren();
-    final Element element = tokenElements.get(0);
-    assertEquals(element.getName(), "token");
-    assertTrue(StringUtil.equals(element.getAttributeValue("id"), "visibility"));
+    final String expected = "<holder>\n" +
+                            "  <tokens>\n" +
+                            "    <token id=\"visibility\" name=\"visibility\">\n" +
+                            "      <rules>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PUBLIC>true</PUBLIC>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PROTECTED>true</PROTECTED>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PRIVATE>true</PRIVATE>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "      </rules>\n" +
+                            "    </token>\n" +
+                            "  </tokens>\n" +
+                            "</holder>";
+    assertXmlOutputEquals(expected, holder);
   }
 
   @Test
-  public void testCustomTokenSerializeMoreThanDefault() {
-    final Set<ArrangementRuleAlias> tokens = ContainerUtil.newHashSet(visibilityToken(), modifiersToken());
+  public void testCustomTokenSerializeMoreThanDefault() throws IOException {
+    final Set<StdArrangementRuleAliasToken> tokens = ContainerUtil.newHashSet(visibilityToken(), modifiersToken());
     final ArrayList<ArrangementGroupingRule> groupings = ContainerUtil.newArrayList(
       new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
     final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD));
     final StdArrangementExtendableSettings settings = extendableSettings(groupings, rules, tokens);
 
-    final Set<ArrangementRuleAlias> defaultTokens = ContainerUtil.newHashSet(visibilityToken());
+    final Set<StdArrangementRuleAliasToken> defaultTokens = ContainerUtil.newHashSet(visibilityToken());
     final StdArrangementExtendableSettings defaultSettings = extendableSettings(groupings, rules, defaultTokens);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    assertTrue(holder.getChildren().size() == 1);
-    final Element tokenElement = holder.getChildren().get(0);
-    assertEquals(tokenElement.getName(), "tokens");
-    assertTrue(tokenElement.getChildren().size() == 2);
-    final List<Element> tokenElements = tokenElement.getChildren();
-    final Element first = tokenElements.get(0);
-    final Element second = tokenElements.get(1);
-    assertEquals(first.getName(), "token");
-    assertEquals(second.getName(), "token");
-    assertTrue(StringUtil.equals(first.getAttributeValue("id"), "visibility") ||
-               StringUtil.equals(second.getAttributeValue("id"), "visibility"));
-    assertTrue(StringUtil.equals(first.getAttributeValue("id"), "modifiers") ||
-               StringUtil.equals(second.getAttributeValue("id"), "modifiers"));
+    final String expected = "<holder>\n" +
+                            "  <tokens>\n" +
+                            "    <token id=\"modifiers\" name=\"modifiers\">\n" +
+                            "      <rules>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PUBLIC>true</PUBLIC>\n" +
+                            "              <STATIC>true</STATIC>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PROTECTED>true</PROTECTED>\n" +
+                            "              <STATIC>true</STATIC>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PRIVATE>true</PRIVATE>\n" +
+                            "              <STATIC>true</STATIC>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PUBLIC>true</PUBLIC>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PROTECTED>true</PROTECTED>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PRIVATE>true</PRIVATE>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "      </rules>\n" +
+                            "    </token>\n" +
+                            "    <token id=\"visibility\" name=\"visibility\">\n" +
+                            "      <rules>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PUBLIC>true</PUBLIC>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PROTECTED>true</PROTECTED>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "        <rule>\n" +
+                            "          <match>\n" +
+                            "            <AND>\n" +
+                            "              <PRIVATE>true</PRIVATE>\n" +
+                            "            </AND>\n" +
+                            "          </match>\n" +
+                            "        </rule>\n" +
+                            "      </rules>\n" +
+                            "    </token>\n" +
+                            "  </tokens>\n" +
+                            "</holder>";
+    assertXmlOutputEquals(expected, holder);
   }
 
   @Test
-  public void testUseCustomTokenSerialize() {
-    final Set<ArrangementRuleAlias> tokens = ContainerUtil.newHashSet(visibilityToken(), modifiersToken());
+  public void testUseCustomTokenSerialize() throws IOException {
+    final StdArrangementRuleAliasToken visibility = visibilityToken();
+    final StdArrangementRuleAliasToken modifiers = modifiersToken();
+    final Set<StdArrangementRuleAliasToken> tokens = ContainerUtil.newHashSet(visibility, modifiers);
     final ArrayList<ArrangementGroupingRule> groupings = ContainerUtil.newArrayList(
       new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
-    final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD, customToken("visibility")));
+    final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD, visibility));
     final StdArrangementExtendableSettings settings = extendableSettings(groupings, rules, tokens);
 
     final ArrayList<ArrangementSectionRule> defaultRules = ContainerUtil.newArrayList(section(true, FIELD));
     final StdArrangementExtendableSettings defaultSettings = extendableSettings(groupings, defaultRules, tokens);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    assertTrue(holder.getChildren().size() == 1);
-    final Element tokenElement = holder.getChildren().get(0);
-    assertEquals(tokenElement.getName(), "rules");
-    assertTrue(tokenElement.getChildren().size() == 1);
-    assertEquals(tokenElement.getChildren().get(0).getName(), "section");
-    final Element rule = tokenElement.getChildren().get(0).getChildren().get(0);
-    assertEquals(rule.getName(), "rule");
-    assertEquals(rule.getChildren().get(0).getName(), "match");
-    final Element and = rule.getChildren().get(0).getChildren().get(0);
-    assertEquals(and.getName(), "AND");
-    assertTrue(StringUtil.equals(and.getChildren().get(0).getName(), "visibility") ||
-               StringUtil.equals(and.getChildren().get(1).getName(), "visibility"));
+    final String expected = "<holder>\n" +
+                            "  <rules>\n" +
+                            "    <section>\n" +
+                            "      <rule>\n" +
+                            "        <match>\n" +
+                            "          <AND>\n" +
+                            "            <FIELD>true</FIELD>\n" +
+                            "            <visibility />\n" +
+                            "          </AND>\n" +
+                            "        </match>\n" +
+                            "        <order>BY_NAME</order>\n" +
+                            "      </rule>\n" +
+                            "    </section>\n" +
+                            "  </rules>\n" +
+                            "</holder>";
+    assertXmlOutputEquals(expected, holder);
   }
 
   @Test
   public void testCustomTokenSerializeAndDeserialize() {
-    final Set<ArrangementRuleAlias> tokens = ContainerUtil.newHashSet(visibilityToken(), modifiersToken());
+    final StdArrangementRuleAliasToken visibility = visibilityToken();
+    final StdArrangementRuleAliasToken modifiers = modifiersToken();
+    final Set<StdArrangementRuleAliasToken> tokens = ContainerUtil.newHashSet(visibility, modifiers);
     final ArrayList<ArrangementGroupingRule> groupings = ContainerUtil.newArrayList(
       new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
-    final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD, customToken("visibility")));
+    final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD, visibility));
     final StdArrangementExtendableSettings settings = extendableSettings(groupings, rules, tokens);
     final StdArrangementExtendableSettings defaultSettings = new StdArrangementExtendableSettings();
     doSerializationTest(settings, defaultSettings);
@@ -345,5 +442,14 @@ public class ArrangementSettingsSerializationTest {
     public TestArrangementSettingsSerializer(@NotNull StdArrangementSettings defaultSettings) {
       super(defaultSettings);
     }
+  }
+
+  private static void assertXmlOutputEquals(String expected, Element root) throws IOException {
+    StringWriter writer = new StringWriter();
+    Format format = Format.getPrettyFormat();
+    format.setLineSeparator("\n");
+    new XMLOutputter(format).output(root, writer);
+    String actual = writer.toString();
+    assertEquals(expected, actual);
   }
 }
