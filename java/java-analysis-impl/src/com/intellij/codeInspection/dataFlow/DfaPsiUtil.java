@@ -79,6 +79,11 @@ public class DfaPsiUtil {
     if (resultType != null) {
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
       for (PsiAnnotation annotation : resultType.getAnnotations()) {
+        if (!annotation.isValid()) {
+          PsiUtilCore.ensureValid(owner);
+          PsiUtil.ensureValidType(resultType, owner + " of " + owner.getClass());
+          PsiUtilCore.ensureValid(annotation); //should fail
+        }
         String qualifiedName = annotation.getQualifiedName();
         if (nnn.getNullables().contains(qualifiedName)) {
           return Nullness.NULLABLE;
