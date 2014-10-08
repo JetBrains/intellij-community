@@ -15,11 +15,9 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +31,6 @@ import java.util.List;
  */
 public class ArrangementRuleAliasControl extends ArrangementMatchingRulesControl {
   @NotNull public static final DataKey<ArrangementRuleAliasControl> KEY = DataKey.create("Arrangement.Alias.Rule.Control");
-  @NotNull private static final Logger LOG = Logger.getInstance("#" + ArrangementRuleAliasControl.class.getName());
 
   public ArrangementRuleAliasControl(@NotNull ArrangementStandardSettingsManager settingsManager,
                                      @NotNull ArrangementColorsProvider colorsProvider,
@@ -62,13 +59,6 @@ public class ArrangementRuleAliasControl extends ArrangementMatchingRulesControl
 
     for (StdArrangementMatchRule rule : sequences) {
       getModel().add(rule);
-    }
-
-    if (ArrangementConstants.LOG_ALIAS_RULE_MODIFICATION) {
-      LOG.info("Arrangement rules sequences is refreshed. Given rules:");
-      for (StdArrangementMatchRule rule : sequences) {
-        LOG.info("  " + rule.toString());
-      }
     }
   }
 }
