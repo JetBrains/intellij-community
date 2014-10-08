@@ -236,6 +236,7 @@ public class ClassesProcessor {
       return;
     }
 
+    DecompilerContext.getLogger().startReadingClass(cl.qualifiedName);
     try {
       ImportCollector importCollector = new ImportCollector(root);
       DecompilerContext.setImportCollector(importCollector);
@@ -291,6 +292,7 @@ public class ClassesProcessor {
     }
     finally {
       destroyWrappers(root);
+      DecompilerContext.getLogger().endReadingClass();
     }
   }
 

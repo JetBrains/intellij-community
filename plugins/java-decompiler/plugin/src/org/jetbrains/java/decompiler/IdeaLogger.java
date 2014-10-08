@@ -27,8 +27,11 @@ public class IdeaLogger extends IFernflowerLogger {
     }
   }
 
+  private String myClass = null;
+
   @Override
   public void writeMessage(String message, Severity severity) {
+    if (myClass != null) message = message + " [" + myClass + "]";
     if (severity == Severity.ERROR) LOG.error(message);
     else if (severity == Severity.WARN) LOG.warn(message);
     else if (severity == Severity.INFO) LOG.info(message);
@@ -42,6 +45,18 @@ public class IdeaLogger extends IFernflowerLogger {
   }
 
   @Override
+  public void startReadingClass(String className) {
+    LOG.debug("decompiling class " + className);
+    myClass = className;
+  }
+
+  @Override
+  public void endReadingClass() {
+    LOG.debug("... class decompiled");
+    myClass = null;
+  }
+
+  @Override
   public void startClass(String className) {
     LOG.debug("processing class " + className);
   }
@@ -52,16 +67,6 @@ public class IdeaLogger extends IFernflowerLogger {
   }
 
   @Override
-  public void startWriteClass(String className) {
-    LOG.debug("writing class " + className);
-  }
-
-  @Override
-  public void endWriteClass() {
-    LOG.debug("... class written");
-  }
-
-  @Override
   public void startMethod(String methodName) {
     LOG.debug("processing method " + methodName);
   }
@@ -69,5 +74,15 @@ public class IdeaLogger extends IFernflowerLogger {
   @Override
   public void endMethod() {
     LOG.debug("... method processed");
+  }
+
+  @Override
+  public void startWriteClass(String className) {
+    LOG.debug("writing class " + className);
+  }
+
+  @Override
+  public void endWriteClass() {
+    LOG.debug("... class written");
   }
 }
