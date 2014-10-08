@@ -44,6 +44,14 @@ public class StringSearcher {
   }
 
   public StringSearcher(@NotNull String pattern, boolean caseSensitive, boolean forwardDirection, boolean handleEscapeSequences) {
+    this(pattern, caseSensitive, forwardDirection, handleEscapeSequences, true);
+  }
+
+  public StringSearcher(@NotNull String pattern,
+                        boolean caseSensitive,
+                        boolean forwardDirection,
+                        boolean handleEscapeSequences,
+                        boolean lookForJavaIdentifiersOnlyIfPossible) {
     myHandleEscapeSequences = handleEscapeSequences;
     LOG.assertTrue(!pattern.isEmpty());
     myPattern = pattern;
@@ -52,9 +60,10 @@ public class StringSearcher {
     myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase(Locale.US).toCharArray();
     myPatternLength = myPatternArray.length;
     Arrays.fill(mySearchTable, -1);
-    myJavaIdentifier = pattern.isEmpty() ||
+    myJavaIdentifier = lookForJavaIdentifiersOnlyIfPossible &&
+                       (pattern.isEmpty() ||
                        Character.isJavaIdentifierPart(pattern.charAt(0)) &&
-                       Character.isJavaIdentifierPart(pattern.charAt(pattern.length() - 1));
+                       Character.isJavaIdentifierPart(pattern.charAt(pattern.length() - 1)));
   }
 
   @NotNull
