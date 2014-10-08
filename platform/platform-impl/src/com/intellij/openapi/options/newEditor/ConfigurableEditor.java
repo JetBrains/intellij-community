@@ -305,7 +305,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
                 openLink(current);
               }
             };
-            label.setBorder(BorderFactory.createEmptyBorder(1, 17, 1, 1));
+            label.setBorder(BorderFactory.createEmptyBorder(1, 17, 3, 1));
             panel.add(label);
           }
         }
