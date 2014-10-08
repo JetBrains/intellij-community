@@ -1,6 +1,6 @@
 # Installation
 
-Available for all IntelliJ Platform based products (build number greater than 138.2442). Settings | Plugins | Browse repositories -> type in Settings Repository.
+Available for all IntelliJ Platform based products (build number greater than 140.2). Settings | Plugins | Browse repositories -> type in Settings Repository.
 
 Don't try to install plugin from disk — otherwise you have to be aware of compatibility.
 
@@ -17,3 +17,6 @@ On first sync you will be prompted to specify username/password. In case of GitH
 If you still want to use username/password instead of access token or your Git hosting provider doesn't support it, recommended to configure [git credentials helper](https://help.github.com/articles/caching-your-github-password-in-git).
 
 OS X Keychain is supported. It means that your credentials could be shared between all IntelliJ Platform based products (you will be prompted to grant access if origin application differs from requestor application (credentials were saved in IntelliJ IDEA, but requested from WebStorm).
+
+## How to report issues
+Use [JetBrains YouTrack](https://youtrack.jetbrains.com) — project IntelliJ IDEA, subsystem IDE Configuration, assignee Vladimir Krivosheev ([issue template](https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Assignee+develar&c=Subsystem+IDE+Configuration)).

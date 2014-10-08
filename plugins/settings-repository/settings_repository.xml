@@ -1,0 +1,18 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="settings-repository">
+    <output-path>$PROJECT_DIR$/out/artifacts</output-path>
+    <root id="archive" name="settings-repository.zip">
+      <element id="directory" name="settings-repository">
+        <element id="directory" name="lib">
+          <element id="archive" name="settings-repository.jar">
+            <element id="module-output" name="settings-repository" />
+          </element>
+          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/org.eclipse.jgit-3.5.0-rc1.jar" />
+          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/osxkeychain.jar" />
+          <element id="file-copy" path="$PROJECT_DIR$/community/build/kotlinc/lib/kotlin-runtime.jar" />
+          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/osxkeychain.so" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>
