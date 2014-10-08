@@ -21,7 +21,6 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.reference.RefClass;
-import com.intellij.codeInspection.reference.RefFile;
 import com.intellij.codeInspection.reference.RefJavaVisitor;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
@@ -57,7 +56,7 @@ public class ClassWithTooManyDependenciesInspection
       @Override
       public void visitClass(@NotNull RefClass refClass) {
         super.visitClass(refClass);
-        if (!(refClass.getOwner() instanceof RefFile)) {
+        if (refClass.getOwner() instanceof RefClass) {
           return;
         }
         final Set<RefClass> dependencies =
