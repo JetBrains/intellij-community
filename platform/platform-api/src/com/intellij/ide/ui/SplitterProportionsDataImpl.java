@@ -41,6 +41,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
   @NonNls private static final String ATTRIBUTE_PROPORTIONS = "proportions";
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
+  @Override
   public void saveSplitterProportions(Component root) {
     proportions.clear();
     doSaveSplitterProportions(root);
@@ -59,6 +60,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
     }
   }
 
+  @Override
   public void restoreSplitterProportions(Component root) {
     restoreSplitterProportions(root, 0);
   }
@@ -77,6 +79,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
     return index;
   }
 
+  @Override
   public void externalizeToDimensionService(String key) {
     for (int i = 0; i < proportions.size(); i++) {
       float proportion = proportions.get(i).floatValue();
@@ -85,6 +88,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
       DimensionService.getInstance().setExtendedState(serviceKey, value);
     }
   }
+  @Override
   public void externalizeFromDimensionService(String key) {
     proportions.clear();
     for (int i = 0; ;i++) {
@@ -96,6 +100,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
     }
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     proportions.clear();
     String prop = element.getAttributeValue(ATTRIBUTE_PROPORTIONS);
@@ -109,6 +114,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     StringBuilder result = new StringBuilder();
     String sep = "";
