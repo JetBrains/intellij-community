@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface InspectionSuppressor {
   /**
@@ -27,5 +28,5 @@ public interface InspectionSuppressor {
   /**
    * @see com.intellij.codeInspection.BatchSuppressableTool#getBatchSuppressActions(com.intellij.psi.PsiElement)
    */
-  SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, String toolShortName);
+  SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, String toolShortName);
 }
