@@ -25,8 +25,8 @@ public class SingleRepositoryNode extends RepositoryNode {
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   private final LoadingIcon myEmptyIcon;
 
-  public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
-    super(repositoryPanel, true);
+  public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull CheckBoxModel model) {
+    super(repositoryPanel, model, true);
     myRepositoryPanel = repositoryPanel;
     myEmptyIcon = LoadingIcon.createEmpty(myLoadingIcon.getIconWidth(), myLoadingIcon.getIconHeight());
   }
@@ -34,11 +34,6 @@ public class SingleRepositoryNode extends RepositoryNode {
   @Override
   public boolean isCheckboxVisible() {
     return false;
-  }
-
-  @Override
-  public boolean isChecked() {
-    return true;
   }
 
   @Override
