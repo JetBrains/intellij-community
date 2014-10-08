@@ -51,8 +51,7 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
-    myEvaluationContext.getDebugProcess().getManagerThread().schedule(
-      new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
+    JavaValue.scheduleCommand(myEvaluationContext, node, new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
         public void contextAction() throws Exception {
           final XValueChildrenList children = new XValueChildrenList();

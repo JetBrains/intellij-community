@@ -114,8 +114,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Override
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
     final SuspendContextImpl suspendContext = myEvaluationContext.getSuspendContext();
-    if (suspendContext.isResumed()) return;
-    myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    scheduleCommand(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
@@ -157,7 +156,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               node.setFullValueEvaluator(new XFullValueEvaluator() {
                 @Override
                 public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
-                  myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+                  scheduleCommand(new SuspendContextCommandImpl(suspendContext) {
                     @Override
                     public Priority getPriority() {
                       return Priority.NORMAL;
@@ -286,8 +285,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
-    if (checkContextNotResumed(node)) return;
-    myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
+    scheduleCommand(myEvaluationContext, node, new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
@@ -348,19 +346,26 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     });
   }
 
-  protected boolean checkContextNotResumed(XCompositeNode node) {
-    if (myEvaluationContext.getSuspendContext().isResumed()) {
-      node.setErrorMessage(DebuggerBundle.message("error.context.has.changed"));
-      return true;
+  boolean scheduleCommand(SuspendContextCommandImpl command) {
+    return scheduleCommand(myEvaluationContext, null, command);
+  }
+
+  protected static boolean scheduleCommand(EvaluationContextImpl evaluationContext,
+                                        @Nullable XCompositeNode node,
+                                        SuspendContextCommandImpl command) {
+    if (evaluationContext.getSuspendContext().isResumed()) {
+      if (node != null) {
+        node.setErrorMessage(DebuggerBundle.message("error.context.has.changed"));
+      }
+      return false;
     }
-    return false;
+    evaluationContext.getDebugProcess().getManagerThread().schedule(command);
+    return true;
   }
 
   @Override
   public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
-    final SuspendContextImpl suspendContext = myEvaluationContext.getSuspendContext();
-    if (suspendContext.isResumed()) return;
-    myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    scheduleCommand(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
