@@ -23,7 +23,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementRuleAlias;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,12 +36,12 @@ import java.util.List;
  * @author Svetlana.Zemlyanskaya
  */
 public class ArrangementRuleAliasConfigurable implements UnnamedConfigurable {
-  private ArrangementRuleAlias myToken;
+  private StdArrangementRuleAliasToken myToken;
   private ArrangementRuleAliasesPanel myTokenRulesPanel;
 
   public ArrangementRuleAliasConfigurable(@NotNull ArrangementStandardSettingsManager settingsManager,
                                           @NotNull ArrangementColorsProvider colorsProvider,
-                                          @NotNull ArrangementRuleAlias token) {
+                                          @NotNull StdArrangementRuleAliasToken token) {
     myToken = token;
     myTokenRulesPanel = new ArrangementRuleAliasesPanel(settingsManager, colorsProvider);
     myTokenRulesPanel.setRuleSequences(token.getDefinitionRules());
