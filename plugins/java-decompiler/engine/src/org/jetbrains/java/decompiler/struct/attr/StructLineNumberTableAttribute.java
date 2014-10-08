@@ -15,12 +15,11 @@
  */
 package org.jetbrains.java.decompiler.struct.attr;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.IOException;
-import java.util.*;
 
 /**
  * u2 line_number_table_length;
@@ -31,37 +30,33 @@ import java.util.*;
  * Created by Egor on 05.10.2014.
  */
 public class StructLineNumberTableAttribute extends StructGeneralAttribute {
-  private List<Pair<Integer, Integer>> myLineInfo = Collections.emptyList();
+  private int[] myLineInfo = InterpreterUtil.EMPTY_INT_ARRAY;
 
   @Override
   public void initContent(ConstantPool pool) throws IOException {
     DataInputFullStream data = stream();
 
-    int len = data.readUnsignedShort();
+    int len = data.readUnsignedShort() * 2;
     if (len > 0) {
-      myLineInfo = new ArrayList<Pair<Integer, Integer>>(len);
-      for (int i = 0; i < len; i++) {
-        int startPC = data.readUnsignedShort();
-        int lineNumber = data.readUnsignedShort();
-        myLineInfo.add(Pair.create(startPC, lineNumber));
+      myLineInfo = new int[len];
+      for (int i = 0; i < len; i += 2) {
+        myLineInfo[i] = data.readUnsignedShort();
+        myLineInfo[i + 1] = data.readUnsignedShort();
       }
     }
-    else {
-      myLineInfo = Collections.emptyList();
+    else if (myLineInfo.length > 0) {
+      myLineInfo = InterpreterUtil.EMPTY_INT_ARRAY;
     }
   }
 
   public int getFirstLine() {
-    if (!myLineInfo.isEmpty()) {
-      return myLineInfo.get(0).getSecond();
-    }
-    return -1;
+    return myLineInfo.length > 0 ? myLineInfo[1] : -1;
   }
 
   public int findLineNumber(int pc) {
-    for (Pair<Integer, Integer> pair : myLineInfo) {
-      if (pc >= pair.getFirst()) {
-        return pair.getSecond();
+    for (int i = 0; i < myLineInfo.length; i += 2) {
+      if (pc >= myLineInfo[i]) {
+        return myLineInfo[i + 1];
       }
     }
     return -1;

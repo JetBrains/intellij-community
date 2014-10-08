@@ -39,14 +39,17 @@ public class CompletionInitializationContext {
   public static @NonNls final String DUMMY_IDENTIFIER = CompletionUtilCore.DUMMY_IDENTIFIER;
   public static @NonNls final String DUMMY_IDENTIFIER_TRIMMED = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
   private final Editor myEditor;
+  @NotNull
+  private final Caret myCaret;
   private final PsiFile myFile;
   private final CompletionType myCompletionType;
   private final int myInvocationCount;
   private final OffsetMap myOffsetMap;
   private String myDummyIdentifier = DUMMY_IDENTIFIER;
 
-  public CompletionInitializationContext(final Editor editor, final Caret caret, final PsiFile file, final CompletionType completionType, int invocationCount) {
+  public CompletionInitializationContext(final Editor editor, final @NotNull Caret caret, final PsiFile file, final CompletionType completionType, int invocationCount) {
     myEditor = editor;
+    myCaret = caret;
     myFile = file;
     myCompletionType = completionType;
     myInvocationCount = invocationCount;
@@ -90,6 +93,11 @@ public class CompletionInitializationContext {
   @NotNull
   public Editor getEditor() {
     return myEditor;
+  }
+
+  @NotNull
+  public Caret getCaret() {
+    return myCaret;
   }
 
   @NotNull

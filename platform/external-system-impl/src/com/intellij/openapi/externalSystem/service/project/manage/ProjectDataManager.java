@@ -86,6 +86,8 @@ public class ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   public <T> void importData(@NotNull Collection<DataNode<?>> nodes, @NotNull Project project, boolean synchronous) {
+    if(project.isDisposed()) return;
+
     Map<Key<?>, List<DataNode<?>>> grouped = ExternalSystemApiUtil.group(nodes);
     for (Map.Entry<Key<?>, List<DataNode<?>>> entry : grouped.entrySet()) {
       // Simple class cast makes ide happy but compiler fails.
@@ -99,6 +101,8 @@ public class ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   public <T> void importData(@NotNull Key<T> key, @NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
+    if(project.isDisposed()) return;
+
     ensureTheDataIsReadyToUse(nodes);
     List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
     if (services == null) {
@@ -148,11 +152,13 @@ public class ProjectDataManager {
   }
 
   public void updateExternalProjectData(@NotNull Project project, @NotNull ExternalProjectInfo externalProjectInfo) {
-    ExternalProjectsDataStorage.getInstance(project).add(externalProjectInfo);
+    if(!project.isDisposed()) {
+      ExternalProjectsDataStorage.getInstance(project).add(externalProjectInfo);
+    }
   }
 
   @Nullable
   public ExternalProjectInfo getExternalProjectData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
-    return ExternalProjectsDataStorage.getInstance(project).get(projectSystemId, externalProjectPath);
+    return !project.isDisposed() ? ExternalProjectsDataStorage.getInstance(project).get(projectSystemId, externalProjectPath) : null;
   }
 }

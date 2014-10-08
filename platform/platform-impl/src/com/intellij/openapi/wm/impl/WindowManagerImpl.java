@@ -67,7 +67,8 @@ import java.util.Set;
  */
 @State(
   name = "WindowManager",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/window.manager.xml")})
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/window.manager.xml", roamingType = RoamingType.DISABLED)}
+)
 public final class WindowManagerImpl extends WindowManagerEx implements NamedComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
 

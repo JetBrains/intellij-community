@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
@@ -45,11 +46,7 @@ import java.util.Set;
 
 @State(
   name = ModuleRunConfigurationManager.COMPONENT_NAME,
-  storages = {
-    @Storage(
-      file = "$MODULE_FILE$"
-    )
-  }
+  storages = @Storage(file = StoragePathMacros.MODULE_FILE)
 )
 public final class ModuleRunConfigurationManager extends ModuleAdapter implements ModuleComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);

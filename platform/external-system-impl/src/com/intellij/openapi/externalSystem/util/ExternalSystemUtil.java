@@ -247,8 +247,13 @@ public class ExternalSystemUtil {
     final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
     final int[] counter = new int[1];
 
-    ExternalProjectRefreshCallback callback =
-      new MyMultiExternalProjectRefreshCallback(spec.getProject(), projectDataManager, counter, spec.getExternalSystemId());
+    final ExternalProjectRefreshCallback callback;
+    if (spec.getCallback() == null) {
+      callback = new MyMultiExternalProjectRefreshCallback(spec.getProject(), projectDataManager, counter, spec.getExternalSystemId());
+    }
+    else {
+      callback = spec.getCallback();
+    }
 
     Map<String, Long> modificationStamps =
       manager.getLocalSettingsProvider().fun(spec.getProject()).getExternalConfigModificationStamps();

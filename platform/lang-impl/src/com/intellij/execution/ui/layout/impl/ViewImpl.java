@@ -16,9 +16,9 @@
 
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.Tab;
 import com.intellij.execution.ui.layout.View;
-import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -49,10 +49,6 @@ public class ViewImpl implements View {
   public ViewImpl(RunnerLayout settings, Element element) {
     XmlSerializer.deserializeInto(this, element);
     assignTab(settings.getOrCreateTab(myTabIndex));
-  }
-
-  public void write(final Element content) {
-    content.addContent(XmlSerializer.serialize(this));
   }
 
   @Override

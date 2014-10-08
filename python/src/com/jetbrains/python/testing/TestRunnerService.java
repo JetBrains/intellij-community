@@ -18,6 +18,7 @@ package com.jetbrains.python.testing;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -29,8 +30,9 @@ import java.util.List;
 /**
  * User: catherine
  */
-@State(name = "TestRunnerService",
-       storages = {@Storage(file = "$MODULE_FILE$")}
+@State(
+  name = "TestRunnerService",
+  storages = @Storage(file = StoragePathMacros.MODULE_FILE)
 )
 public class TestRunnerService implements PersistentStateComponent<TestRunnerService> {
   private List<String> myConfigurations = new ArrayList<String>();

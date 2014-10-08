@@ -84,10 +84,14 @@ class ContractInferenceInterpreter {
   }
 
   List<MethodContract> inferContracts() {
-    final boolean notNull = NullableNotNullManager.isNotNull(myMethod);
+    List<MethodContract> contracts = doInferContracts();
+    if (contracts.isEmpty()) return contracts;
+    
     PsiTypeElement typeElement = myMethod.getReturnTypeElement();
     final PsiType returnType = typeElement == null ? null : typeElement.getType();
-    return ContainerUtil.filter(doInferContracts(), new Condition<MethodContract>() {
+    final boolean notNull = !(returnType instanceof PsiPrimitiveType) &&
+                            NullableNotNullManager.getInstance(myMethod.getProject()).isNotNull(myMethod, false);
+    return ContainerUtil.filter(contracts, new Condition<MethodContract>() {
       @Override
       public boolean value(MethodContract contract) {
         if (notNull && contract.returnValue == NOT_NULL_VALUE) {

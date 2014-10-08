@@ -152,6 +152,12 @@ public class GradleExecutionHelper {
       commandLineArgs.add(GradleConstants.OFFLINE_MODE_CMD_OPTION);
     }
 
+    final Application application = ApplicationManager.getApplication();
+    if(application != null && application.isUnitTestMode()) {
+      commandLineArgs.add("--info");
+      commandLineArgs.add("--recompile-scripts");
+    }
+
     if (!commandLineArgs.isEmpty()) {
       LOG.info("Passing command-line args to Gradle Tooling API: " + commandLineArgs);
       // filter nulls and empty strings
@@ -224,7 +230,7 @@ public class GradleExecutionHelper {
         }
       }
       catch (Throwable e) {
-        // ignore
+        LOG.debug("Gradle connection close error", e);
       }
     }
   }

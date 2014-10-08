@@ -30,9 +30,9 @@ import org.gradle.wrapper.GradleWrapperMain;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.remote.GradleJavaHelper;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -73,6 +73,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   public void setUp() throws Exception {
     super.setUp();
     myProjectSettings = new GradleProjectSettings();
+    GradleSettings.getInstance(myProject).setGradleVmOptions("-Xmx64m -XX:MaxPermSize=64m");
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
     configureWrapper();
   }
