@@ -61,7 +61,6 @@ public class ArrangementConstants {
   public static final int TEXT_UPDATE_DELAY_MILLIS        = 1000;
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
-  public static final boolean LOG_ALIAS_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.sequence.modification"));
 
   private ArrangementConstants() {
   }

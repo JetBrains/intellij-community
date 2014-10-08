@@ -44,7 +44,7 @@ public class ArrangementRuleAliasesPanel extends JPanel implements DataProvider 
   public ArrangementRuleAliasesPanel(@NotNull ArrangementStandardSettingsManager settingsManager,
                                      @NotNull ArrangementColorsProvider colorsProvider) {
     super(new GridBagLayout());
-
+    setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
     JBScrollPane scrollPane = new JBScrollPane();
     final JViewport viewport = scrollPane.getViewport();
     ArrangementMatchingRulesControl.RepresentationCallback callback = new ArrangementMatchingRulesControl.RepresentationCallback() {
