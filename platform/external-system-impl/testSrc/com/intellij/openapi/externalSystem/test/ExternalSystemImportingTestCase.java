@@ -17,11 +17,17 @@ package com.intellij.openapi.externalSystem.test;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
@@ -29,10 +35,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -44,6 +53,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -377,9 +387,46 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     projects.add(projectSettings);
     systemSettings.setLinkedProjectsSettings(projects);
 
+    final Ref<Couple<String>> error = Ref.create();
     ExternalSystemUtil.refreshProjects(
-      new ImportSpecBuilder(myProject, getExternalSystemId()).use(ProgressExecutionMode.MODAL_SYNC)
+      new ImportSpecBuilder(myProject, getExternalSystemId())
+        .use(ProgressExecutionMode.MODAL_SYNC)
+        .callback(new ExternalProjectRefreshCallback() {
+          @Override
+          public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+            if (externalProject == null) {
+              System.err.println("Got null External project after import");
+              return;
+            }
+            ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
+              @Override
+              public void execute() {
+                ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
+                  @Override
+                  public void run() {
+                    ServiceManager.getService(ProjectDataManager.class).importData(
+                      externalProject.getKey(), Collections.singleton(externalProject), myProject, true);
+                  }
+                });
+              }
+            });
+            System.out.println("External project was successfully imported");
+          }
+
+          @Override
+          public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+            error.set(Couple.of(errorMessage, errorDetails));
+          }
+        })
     );
+
+    if (!error.isNull()) {
+      String failureMsg = "Import failed: " + error.get().first;
+      if (StringUtil.isNotEmpty(error.get().second)) {
+        failureMsg += "\nError details: \n" + error.get().second;
+      }
+      fail(failureMsg);
+    }
   }
 
   protected abstract ExternalProjectSettings getCurrentExternalProjectSettings();
