@@ -103,7 +103,18 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     GROUPING_RULES.put(DEPENDENT_METHODS, ContainerUtilRt.newArrayList(BREADTH_FIRST, DEPTH_FIRST));
   }
 
-  private static final StdArrangementSettings DEFAULT_SETTINGS;
+  private static final StdArrangementRuleAliasToken VISIBILITY = new StdArrangementRuleAliasToken("visibility");
+
+  static {
+    final ArrayList<StdArrangementMatchRule> visibility = new ArrayList<StdArrangementMatchRule>();
+    and(visibility, PUBLIC);
+    and(visibility, PACKAGE_PRIVATE);
+    and(visibility, PROTECTED);
+    and(visibility, PRIVATE);
+    VISIBILITY.setDefinitionRules(visibility);
+  }
+
+  private static final StdArrangementExtendableSettings DEFAULT_SETTINGS;
 
   static {
     List<ArrangementGroupingRule> groupingRules = ContainerUtilRt.newArrayList(new ArrangementGroupingRule(GETTERS_AND_SETTERS));
@@ -130,7 +141,9 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     and(matchRules, CLASS, STATIC);
     and(matchRules, CLASS);
 
-    DEFAULT_SETTINGS = StdArrangementSettings.createByMatchRules(groupingRules, matchRules);
+    List<StdArrangementRuleAliasToken> aliasTokens = ContainerUtilRt.newArrayList();
+    aliasTokens.add(VISIBILITY);
+    DEFAULT_SETTINGS = StdArrangementExtendableSettings.createByMatchRules(groupingRules, matchRules, aliasTokens);
   }
 
   private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER = new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
