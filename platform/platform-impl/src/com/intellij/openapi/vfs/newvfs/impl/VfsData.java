@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -146,8 +148,9 @@ public class VfsData {
 
     segment.setNameId(id, nameId);
 
-    if (segment.myObjectArray.get(offset) != null) {
-      throw new AssertionError("File already created");
+    Object existingData = segment.myObjectArray.get(offset);
+    if (existingData != null) {
+      throw new AssertionError("File already created: " + existingData + "; parentId=" + FSRecords.getParent(id));
     }
     segment.myObjectArray.set(offset, data);
   }
@@ -286,6 +289,15 @@ public class VfsData {
 
     List<String> getAdoptedNames() {
       return myAdoptedNames == null ? Collections.<String>emptyList() : ContainerUtil.newArrayList(myAdoptedNames);
+    }
+
+    @Override
+    public String toString() {
+      return "DirectoryData{" +
+             "myUserMap=" + myUserMap +
+             ", myChildrenIds=" + Arrays.toString(myChildrenIds) +
+             ", myAdoptedNames=" + myAdoptedNames +
+             '}';
     }
   }
 
