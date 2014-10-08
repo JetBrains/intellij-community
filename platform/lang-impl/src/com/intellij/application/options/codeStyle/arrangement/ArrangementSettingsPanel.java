@@ -42,6 +42,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 
@@ -155,7 +156,12 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   private StdArrangementSettings createSettings() {
     final List<ArrangementGroupingRule> groupingRules = myGroupingRulesPanel.getRules();
-    return new StdArrangementSettings(groupingRules, myMatchingRulesPanel.getSections());
+    final List<ArrangementSectionRule> sections = myMatchingRulesPanel.getSections();
+    final Collection<ArrangementRuleAlias> tokens = myMatchingRulesPanel.getRulesAliases();
+    if (tokens != null) {
+      return new StdArrangementExtendableSettings(groupingRules, sections, tokens);
+    }
+    return new StdArrangementSettings(groupingRules, sections);
   }
 
   @Override
@@ -169,6 +175,10 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       List<ArrangementGroupingRule> groupings = s.getGroupings();
       myGroupingRulesPanel.setRules(ContainerUtilRt.newArrayList(groupings));
       myMatchingRulesPanel.setSections(copy(s.getSections()));
+      if (s instanceof StdArrangementExtendableSettings) {
+        myMatchingRulesPanel.setRulesAliases(((StdArrangementExtendableSettings)s).getRuleAliases());
+      }
+
       if (myForceArrangementPanel != null) {
         myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE);
       }

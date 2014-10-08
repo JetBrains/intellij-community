@@ -314,4 +314,20 @@ public class ArrangementUtil {
     return matchRules;
   }
   //endregion
+
+  //region Arrangement Custom Tokens
+  public static List<ArrangementSectionRule> getExtendedSectionRules(@NotNull ArrangementSettings settings) {
+    return settings instanceof ArrangementExtendableSettings ?
+           ((ArrangementExtendableSettings)settings).getExtendedSectionRules() : settings.getSections();
+  }
+
+  @NotNull
+  public static ArrangementSettingsToken createRuleAliasToken(@NotNull String id, @NotNull String name) {
+    return StdArrangementSettingsToken.token(id, name, StdArrangementTokenType.ALIAS);
+  }
+
+  public static boolean isAliasedCondition(@NotNull ArrangementAtomMatchCondition condition) {
+    return StdArrangementTokenType.ALIAS.is(condition.getType());
+  }
+  //endregion
 }

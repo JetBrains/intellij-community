@@ -31,9 +31,7 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -80,6 +78,10 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
   protected static ArrangementSectionRule section(@Nullable String start, @Nullable String end, @NotNull StdArrangementMatchRule... rules) {
     return ArrangementSectionRule.create(start, end, rules);
+  }
+
+  protected static ArrangementRuleAlias alias(@NotNull String id, @NotNull StdArrangementMatchRule... rules) {
+    return new ArrangementRuleAlias(ArrangementUtil.createRuleAliasToken(id, id), ContainerUtil.newArrayList(rules));
   }
 
   @NotNull
@@ -189,8 +191,14 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
       }
     });
 
+    @SuppressWarnings("unchecked")
+    List<ArrangementRuleAlias> aliases = (List<ArrangementRuleAlias>)args.get("aliases");
     CommonCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings().getCommonSettings(language);
-    settings.setArrangementSettings(new StdArrangementSettings(groupingRules, sectionRules));
+    final StdArrangementSettings arrangementSettings =
+      aliases == null ?
+      new StdArrangementSettings(groupingRules, sectionRules) :
+      new StdArrangementExtendableSettings(groupingRules, sectionRules, aliases);
+    settings.setArrangementSettings(arrangementSettings);
     ArrangementEngine engine = ServiceManager.getService(myFixture.getProject(), ArrangementEngine.class);
     engine.arrange(myFixture.getEditor(), myFixture.getFile(), info.ranges);
 

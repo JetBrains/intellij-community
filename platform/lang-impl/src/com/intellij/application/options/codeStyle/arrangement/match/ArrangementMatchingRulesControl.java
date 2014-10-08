@@ -55,7 +55,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
   @NotNull private final TIntArrayList mySelectedRows = new TIntArrayList();
 
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
-  @NotNull private final ArrangementMatchingRuleEditor        myEditor;
+  @NotNull protected ArrangementMatchingRuleEditor        myEditor;
   @NotNull private final RepresentationCallback           myRepresentationCallback;
   @NotNull private final MatchingRulesRendererBase        myRenderer;
 

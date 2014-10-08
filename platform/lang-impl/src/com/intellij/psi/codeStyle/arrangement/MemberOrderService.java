@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,8 @@ public class MemberOrderService {
     entriesWithNew.add(memberEntry);
     //TODO: check insert new element
     final List<? extends ArrangementMatchRule> rulesByPriority = arrangementSettings.getRulesSortedByPriority();
-    List<ArrangementEntry> arranged = ArrangementEngine.arrange(entriesWithNew, arrangementSettings.getSections(), rulesByPriority, null);
+    final List<ArrangementSectionRule> extendedSectionRules = ArrangementUtil.getExtendedSectionRules(arrangementSettings);
+    List<ArrangementEntry> arranged = ArrangementEngine.arrange(entriesWithNew, extendedSectionRules, rulesByPriority, null);
     int i = arranged.indexOf(memberEntry);
     
     if (i <= 0) {
