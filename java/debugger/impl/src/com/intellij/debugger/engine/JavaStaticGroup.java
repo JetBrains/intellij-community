@@ -20,11 +20,14 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
+import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.*;
 import com.sun.jdi.Field;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -42,6 +45,19 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
     myStaticDescriptor = staticDescriptor;
     myEvaluationContext = evaluationContext;
     myNodeManager = nodeManager;
+  }
+
+  @Nullable
+  @Override
+  public String getComment() {
+    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+    return classRenderer.renderTypeName(myStaticDescriptor.getType().name());
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Nodes.Static;
   }
 
   @Override
