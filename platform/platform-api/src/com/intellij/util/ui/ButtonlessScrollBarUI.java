@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -23,10 +24,12 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
@@ -85,6 +88,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   private NSScrollerHelper.Style myMacScrollerStyle;
   private Animator myMouseOverScrollbarExpandAnimator;
+  private Alarm myMacScrollbarFadeTimer;
   private Animator myMacScrollbarFadeAnimator;
   private double myMacScrollbarFadeLevel = 0;
   private boolean myMacScrollbarHidden;
@@ -92,10 +96,56 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   protected ButtonlessScrollBarUI() {
     myAdjustmentListener = new AdjustmentListener() {
+      Point oldViewportPosition = null;
+      Dimension oldViewportDimension = null;
+
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
-        resetRegularThumbAnimator();
-        resetMacScrollbarFadeout();
+        JScrollPane scrollpane = (JScrollPane)SwingUtilities.getAncestorOfClass(JScrollPane.class, scrollbar);
+        JViewport viewport = scrollpane == null ? null : scrollpane.getViewport();
+
+        if (viewport == null) {
+          oldViewportPosition = null;
+          return;
+        }
+
+        boolean vertical = isVertical();
+        Point position = viewport.getViewPosition();
+        // we don't take viewport's size here since it often changes on scrollbar appearance.
+        // instead, we want to only react on visible area resizes
+        Dimension dimension = scrollpane.getSize();
+
+        boolean scrolled = false;
+        if (oldViewportPosition != null) {
+          int scrollH = position.x - oldViewportPosition.x;
+          int scrollV = position.y - oldViewportPosition.y;
+          scrolled = (scrollH == 0 && scrollV != 0 && vertical) || (scrollV == 0 && scrollH != 0 && !vertical);
+        }
+        oldViewportPosition = position;
+
+        boolean resized = false;
+        if (oldViewportDimension != null) {
+          int resizedH = dimension.width - oldViewportDimension.width;
+          int resizedV = dimension.height - oldViewportDimension.height;
+          resized = (resizedV != 0 && vertical) || (resizedH != 0 && !vertical);
+        }
+        oldViewportDimension = dimension;
+        
+        if (scrolled) {
+          // hide the opposite scrollbar when user scrolls 
+          JScrollBar other = vertical ? scrollpane.getHorizontalScrollBar()
+                                      : scrollpane.getVerticalScrollBar();
+          ScrollBarUI otherUI = other == null ? null : other.getUI();
+          if (otherUI instanceof ButtonlessScrollBarUI) {
+            ((ButtonlessScrollBarUI)otherUI).startMacScrollbarFadeout(true);
+          }
+
+          startRegularThumbAnimator();
+          startMacScrollbarFadeout();
+        }
+        else if (resized) {
+          startMacScrollbarFadeout();
+        }
       }
     };
 
@@ -105,7 +155,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         boolean inside = isOverThumb(e.getPoint());
         if (inside != myMouseIsOverThumb) {
           myMouseIsOverThumb = inside;
-          resetRegularThumbAnimator();
+          startRegularThumbAnimator();
         }
       }
     };
@@ -116,8 +166,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         // only restart animations when fading hasn't started yet
         if (myMacScrollbarFadeLevel == 0) {
           myMouseOverScrollbar = true;
-          resetMacScrollbarExpandAnimator();
-          resetMacScrollbarFadeout();
+          startMacScrollbarExpandAnimator();
+          startMacScrollbarFadeout();
         }
       }
       
@@ -125,13 +175,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       public void mouseExited(MouseEvent e) {
         if (myMouseIsOverThumb) {
           myMouseIsOverThumb = false;
-          resetRegularThumbAnimator();
+          startRegularThumbAnimator();
         }
 
         if (myMouseOverScrollbar) {
           myMouseOverScrollbar = false;
-          resetMacScrollbarExpandAnimator();
-          resetMacScrollbarFadeout();
+          startMacScrollbarExpandAnimator();
+          startMacScrollbarFadeout();
         }
       }
     };
@@ -140,13 +190,17 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
         if (e.getChanged() == scrollbar) {
+          // scrollbar is added to the screen resources
           if ((HierarchyEvent.DISPLAYABILITY_CHANGED & e.getChangeFlags()) != 0) {
             updateGlobalListeners(false);
           }
+        }
 
+        if (e.getChanged() == scrollbar.getParent()) {
+          // when scrollpane is shown first time, we 'blink' the scollbars
           if ((HierarchyEvent.SHOWING_CHANGED & e.getChangeFlags()) != 0) {
-            resetRegularThumbAnimator();
-            resetMacScrollbarFadeout();
+            startRegularThumbAnimator();
+            startMacScrollbarFadeout();
           }
         }
       }
@@ -161,7 +215,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
             Point loc = ((MouseEvent)event).getLocationOnScreen();
             SwingUtilities.convertPointFromScreen(loc, scrollpane);
             if (scrollpane.contains(loc) && !myMacScrollbarHidden && myMacScrollbarFadeLevel == 0) {
-              resetMacScrollbarFadeout();
+              startMacScrollbarFadeout();
             }
           }
         }
@@ -229,7 +283,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return Math.max(0, incrButton.getHeight());
   }
 
-  private void resetRegularThumbAnimator() {
+  private void startRegularThumbAnimator() {
     if (isMacOverlayScrollbar()) return;
     
     myThumbFadeAnimator.reset();
@@ -242,7 +296,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  private void resetMacScrollbarExpandAnimator() {
+  private void startMacScrollbarExpandAnimator() {
     if (!isMacOverlayScrollbar()) return;
     
     if (myMouseOverScrollbarExpandLevel == 0) {
@@ -254,9 +308,22 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  private void resetMacScrollbarFadeout() {
+  private void startMacScrollbarFadeout() {
+    startMacScrollbarFadeout(false);
+  }
+
+  private void startMacScrollbarFadeout(boolean now) {
     if (!isMacOverlayScrollbar()) return;
-    
+
+    myMacScrollbarFadeTimer.cancelAllRequests();
+
+    if (now) {
+      if (!myMacScrollbarHidden && !myMacScrollbarFadeAnimator.isRunning()) {
+        myMacScrollbarFadeAnimator.resume();
+      }
+      return;
+    }
+
     myMacScrollbarFadeAnimator.suspend();
     myMacScrollbarFadeAnimator.reset();
     myMacScrollbarHidden = false;
@@ -267,7 +334,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       sb.repaint();
 
       if (!myMouseOverScrollbar && !sb.getValueIsAdjusting()) {
-        myMacScrollbarFadeAnimator.resume();
+        myMacScrollbarFadeTimer.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            myMacScrollbarFadeAnimator.resume();
+          }
+        }, 700, ModalityState.any());
       }
     }
   }
@@ -323,8 +395,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     scrollbar.addHierarchyListener(myHierarchyListener);
     updateGlobalListeners(false);
 
-    resetRegularThumbAnimator();
-    resetMacScrollbarFadeout();
+    startRegularThumbAnimator();
+    startMacScrollbarFadeout();
   }
   
   private static final Method setValueFrom = ReflectionUtil.getDeclaredMethod(TrackListener.class, "setValueFrom", MouseEvent.class);
@@ -411,15 +483,16 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       public void paintNow(int frame, int totalFrames, int cycle) {
         int delay = totalFrames / 2;
         int frameAfterDelay = frame - delay;
-        
+
         if (frameAfterDelay > 0) {
           myMouseOverScrollbarExpandLevel = frameAfterDelay / (float)(totalFrames - delay);
           if (scrollbar != null) scrollbar.repaint();
         }
       }
-    };  
+    };
 
-    myMacScrollbarFadeAnimator = new Animator("Mac scrollbar fade animator", 30, 1000, false) {
+    myMacScrollbarFadeTimer = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    myMacScrollbarFadeAnimator = new Animator("Mac scrollbar fade animator", 30, 300, false) {
       @Override
       protected void paintCycleEnd() {
         myMacScrollbarHidden = true;
@@ -431,7 +504,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
       @Override
       public void paintNow(int frame, int totalFrames, int cycle) {
-        int delay = (int)(totalFrames / 1.5);
+        int delay = (int)(0);
         int frameAfterDelay = frame - delay;
 
         if (frameAfterDelay > 0) {
@@ -468,6 +541,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     Disposer.dispose(myThumbFadeAnimator);
     Disposer.dispose(myMouseOverScrollbarExpandAnimator);
+    Disposer.dispose(myMacScrollbarFadeTimer);
     Disposer.dispose(myMacScrollbarFadeAnimator);
   }
 
