@@ -111,7 +111,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          new LegalNoticeDialog(project, file).show();
+          if (!myLegalNoticeAccepted) {
+            new LegalNoticeDialog(project, file).show();
+          }
         }
       }, ModalityState.NON_MODAL);
     }
