@@ -118,7 +118,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   }
 
   private static final int ourMaxNumberOfTimesToObserveZeroSpace = 2;
-  private static int ourNumberOfTimesToObserveZeroSpace = ourMaxNumberOfTimesToObserveZeroSpace;
 
   private static void startDiskSpaceMonitoring() {
     if (SystemProperties.getBooleanProperty("idea.no.system.path.space.monitoring", false)) {
@@ -141,7 +140,15 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             ourFreeSpaceCalculation.set(future = ApplicationManager.getApplication().executeOnPooledThread(new Callable<Long>() {
               @Override
               public Long call() throws Exception {
-                return file.getUsableSpace();
+                // file.getUsableSpace() can fail and return 0 e.g. after MacOSX restart or awakening from sleep
+                // so several times try to recalculate usable space on receiving 0 to be sure
+                long fileUsableSpace = file.getUsableSpace();
+                for(int i = 0; fileUsableSpace == 0 && i < ourMaxNumberOfTimesToObserveZeroSpace; ++i) {
+                  Thread.sleep(5000);
+                  fileUsableSpace = file.getUsableSpace();
+                }
+
+                return fileUsableSpace;
               }
             }));
           }
@@ -152,18 +159,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
           try {
             final long fileUsableSpace = future.get();
-
-            // file.getUsableSpace() can fail and return 0 e.g. after MacOSX restart or returning from sleep
-            // so several times try to recalculate usable space on receiving 0 to be sure
-            if (fileUsableSpace == 0 && ourNumberOfTimesToObserveZeroSpace > 0) {
-              --ourNumberOfTimesToObserveZeroSpace;
-              JobScheduler.getScheduler().schedule(this, 5, TimeUnit.SECONDS);
-              return;
-            } else if (fileUsableSpace != 0 && ourNumberOfTimesToObserveZeroSpace != ourMaxNumberOfTimesToObserveZeroSpace) {
-              // be ready for next sleep
-              ourNumberOfTimesToObserveZeroSpace = ourMaxNumberOfTimesToObserveZeroSpace;
-            }
-
             final long timeout = Math.max(5, (fileUsableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS);
             ourFreeSpaceCalculation.set(null);
 
