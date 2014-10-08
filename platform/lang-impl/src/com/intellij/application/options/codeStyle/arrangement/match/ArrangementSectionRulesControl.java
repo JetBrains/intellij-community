@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.match.tokens.ArrangementRuleAliasDialog;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,13 +25,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.application.options.codeStyle.arrangement.match.ArrangementSectionRuleManager.ArrangementSectionRuleData;
 
@@ -42,12 +50,19 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
   @NotNull public static final DataKey<ArrangementSectionRulesControl> KEY = DataKey.create("Arrangement.Rule.Match.Control");
   @NotNull private static final Logger LOG = Logger.getInstance("#" + ArrangementSectionRulesControl.class.getName());
   @Nullable private final ArrangementSectionRuleManager mySectionRuleManager;
+  @Nullable private ArrangementExtendableSettingsManager myRuleAliasesManager;
 
-  public ArrangementSectionRulesControl(@NotNull Language language, @NotNull ArrangementStandardSettingsManager settingsManager,
+  private ArrangementStandardSettingsManager mySettingsManager;
+  private ArrangementColorsProvider myColorsProvider;
+
+  public ArrangementSectionRulesControl(@NotNull Language language,
+                                        @NotNull ArrangementStandardSettingsManager settingsManager,
                                         @NotNull ArrangementColorsProvider colorsProvider,
                                         @NotNull RepresentationCallback callback) {
     super(settingsManager, colorsProvider, callback);
     mySectionRuleManager = ArrangementSectionRuleManager.getInstance(language, settingsManager, colorsProvider, this);
+    mySettingsManager = settingsManager;
+    myColorsProvider = colorsProvider;
   }
 
   private static void appendBufferedSectionRules(@NotNull List<ArrangementSectionRule> result,
@@ -145,6 +160,18 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
     }
   }
 
+  @Nullable
+  public Collection<ArrangementRuleAlias> getRulesAliases() {
+    return myRuleAliasesManager == null ? null : myRuleAliasesManager.getRuleAliases();
+  }
+
+  public void setRulesAliases(@Nullable Collection<ArrangementRuleAlias> aliases) {
+    if (aliases != null) {
+      myRuleAliasesManager = new ArrangementExtendableSettingsManager(mySettingsManager.getDelegate(), myColorsProvider, aliases);
+      myEditor = new ArrangementMatchingRuleEditor(myRuleAliasesManager, myColorsProvider, this);
+    }
+  }
+
   public void showEditor(int rowToEdit) {
     if (mySectionRuleManager != null && mySectionRuleManager.isSectionRule(getModel().getElementAt(rowToEdit))) {
       mySectionRuleManager.showEditor(rowToEdit);
@@ -152,6 +179,35 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
     else {
       super.showEditor(rowToEdit);
     }
+  }
+
+  @NotNull
+  public ArrangementRuleAliasDialog createRuleAliasEditDialog() {
+    final Set<String> tokenIds = new THashSet<String>();
+    final List<ArrangementSectionRule> sections = getSections();
+    for (ArrangementSectionRule section : sections) {
+      for (StdArrangementMatchRule rule : section.getMatchRules()) {
+        rule.getMatcher().getCondition().invite(new ArrangementMatchConditionVisitor() {
+          @Override
+          public void visit(@NotNull ArrangementAtomMatchCondition condition) {
+            if (ArrangementUtil.isAliasedCondition(condition)) {
+              tokenIds.add(condition.getType().getId());
+            }
+          }
+
+          @Override
+          public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
+            for (ArrangementMatchCondition operand : condition.getOperands()) {
+              operand.invite(this);
+            }
+          }
+        });
+      }
+    }
+
+    final Collection<ArrangementRuleAlias> aliases = getRulesAliases();
+    assert aliases != null;
+    return new ArrangementRuleAliasDialog(null, mySettingsManager, myColorsProvider, aliases, tokenIds);
   }
 
   private class MatchingRulesRenderer extends MatchingRulesRendererBase {

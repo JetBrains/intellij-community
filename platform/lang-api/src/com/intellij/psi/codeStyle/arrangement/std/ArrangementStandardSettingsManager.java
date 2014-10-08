@@ -89,6 +89,11 @@ public class ArrangementStandardSettingsManager {
     }
   }
 
+  @NotNull
+  public ArrangementStandardSettingsAware getDelegate() {
+    return myDelegate;
+  }
+
   private void parseWidths(@NotNull Collection<CompositeArrangementSettingsToken> compositeTokens,
                            @NotNull SimpleColoredComponent renderer)
   {

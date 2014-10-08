@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.match;
+package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementRuleAlias;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
@@ -37,22 +36,18 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author Denis Zhdanov
- * @since 10/30/12 5:28 PM
+ * @author Svetlana.Zemlyanskaya
  */
-public class ArrangementMatchingRulesPanel extends JPanel implements DataProvider {
+public class ArrangementRuleAliasesPanel extends JPanel implements DataProvider {
+  @NotNull protected final ArrangementRuleAliasControl myControl;
 
-  @NotNull protected final ArrangementSectionRulesControl myControl;
-
-  public ArrangementMatchingRulesPanel(@NotNull Language language,
-                                       @NotNull ArrangementStandardSettingsManager settingsManager,
-                                       @NotNull ArrangementColorsProvider colorsProvider)
-  {
+  public ArrangementRuleAliasesPanel(@NotNull ArrangementStandardSettingsManager settingsManager,
+                                     @NotNull ArrangementColorsProvider colorsProvider) {
     super(new GridBagLayout());
-    
+
     JBScrollPane scrollPane = new JBScrollPane();
     final JViewport viewport = scrollPane.getViewport();
-    ArrangementSectionRulesControl.RepresentationCallback callback = new ArrangementSectionRulesControl.RepresentationCallback() {
+    ArrangementMatchingRulesControl.RepresentationCallback callback = new ArrangementMatchingRulesControl.RepresentationCallback() {
       @Override
       public void ensureVisible(@NotNull Rectangle r) {
         Rectangle visibleRect = viewport.getViewRect();
@@ -71,51 +66,35 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
         }
       }
     };
-    myControl = createRulesControl(language, settingsManager, colorsProvider, callback);
+    myControl = new ArrangementRuleAliasControl(settingsManager, colorsProvider, callback);
     scrollPane.setViewportView(myControl);
     CustomizationUtil.installPopupHandler(
-      myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.MATCHING_RULES_CONTROL_PLACE
+      myControl, ArrangementConstants.ALIAS_RULE_CONTEXT_MENU, ArrangementConstants.ALIAS_RULE_CONTROL_PLACE
     );
 
     TitleWithToolbar top = new TitleWithToolbar(
-      ApplicationBundle.message("arrangement.settings.section.match"),
-      ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR,
-      ArrangementConstants.MATCHING_RULES_CONTROL_TOOLBAR_PLACE,
+      ApplicationBundle.message("arrangement.settings.section.rule.sequence"),
+      ArrangementConstants.ALIAS_RULE_CONTROL_TOOLBAR,
+      ArrangementConstants.ALIAS_RULE_CONTROL_TOOLBAR_PLACE,
       myControl
     );
     add(top, new GridBag().coverLine().fillCellHorizontally().weightx(1));
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
-  protected ArrangementSectionRulesControl createRulesControl(@NotNull Language language,
-                                                               @NotNull ArrangementStandardSettingsManager settingsManager,
-                                                               @NotNull ArrangementColorsProvider colorsProvider,
-                                                               @NotNull ArrangementSectionRulesControl.RepresentationCallback callback) {
-    return new ArrangementSectionRulesControl(language, settingsManager, colorsProvider, callback);
-  }
-
   @NotNull
-  public List<ArrangementSectionRule> getSections() {
-    return myControl.getSections();
+  public List<StdArrangementMatchRule> getRuleSequences() {
+    return myControl.getRuleSequences();
   }
 
-  public void setSections(@Nullable List<ArrangementSectionRule> rules) {
-    myControl.setSections(rules);
-  }
-
-  @Nullable
-  public Collection<ArrangementRuleAlias> getRulesAliases() {
-    return myControl.getRulesAliases();
-  }
-
-  public void setRulesAliases(@Nullable Collection<ArrangementRuleAlias> aliases) {
-    myControl.setRulesAliases(aliases);
+  public void setRuleSequences(@Nullable Collection<StdArrangementMatchRule> rules) {
+    myControl.setRuleSequences(rules);
   }
 
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (ArrangementSectionRulesControl.KEY.is(dataId)) {
+    if (ArrangementRuleAliasControl.KEY.is(dataId)) {
       return myControl;
     }
     return null;
