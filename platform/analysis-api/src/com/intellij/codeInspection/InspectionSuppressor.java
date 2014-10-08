@@ -28,5 +28,6 @@ public interface InspectionSuppressor {
   /**
    * @see com.intellij.codeInspection.BatchSuppressableTool#getBatchSuppressActions(com.intellij.psi.PsiElement)
    */
-  SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, String toolShortName);
+  @NotNull
+  SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolShortName);
 }
