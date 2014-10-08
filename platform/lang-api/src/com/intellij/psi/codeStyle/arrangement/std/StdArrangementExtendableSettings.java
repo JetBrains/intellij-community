@@ -54,6 +54,16 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
     myRulesAliases.addAll(rulesAliases);
   }
 
+  public static StdArrangementExtendableSettings createByMatchRules(@NotNull List<ArrangementGroupingRule> groupingRules,
+                                                                    @NotNull List<StdArrangementMatchRule> matchRules,
+                                                                    @NotNull Collection<StdArrangementRuleAliasToken> rulesAliases) {
+    final List<ArrangementSectionRule> sectionRules = new ArrayList<ArrangementSectionRule>();
+    for (StdArrangementMatchRule rule : matchRules) {
+      sectionRules.add(ArrangementSectionRule.create(rule));
+    }
+    return new StdArrangementExtendableSettings(groupingRules, sectionRules, rulesAliases);
+  }
+
   @Override
   public Set<StdArrangementRuleAliasToken> getRuleAliases() {
     return myRulesAliases;
