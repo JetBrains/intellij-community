@@ -577,9 +577,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private class GitCheckinOptions extends DvcsCommitAdditionalComponent implements CheckinChangeListSpecificComponent {
     private final GitVcs myVcs;
     private final ComboBox myAuthorField;
-
     @Nullable private Date myAuthorDate;
-    @Nullable private String myAuthor;
 
     GitCheckinOptions(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
       super(project, panel);
@@ -618,9 +616,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           EditorEx editor = (EditorEx)comboboxEditor.getEditor();
           assert editor != null;
           SpellCheckingEditorCustomization.getInstance(false).customize(editor);
-
-          myAuthorField.insertItemAt(myAuthor == null ? "" : myAuthor, 0);
-          myAuthorField.setSelectedIndex(0);
         }
       };
       myAuthorField.setMinimumAndPreferredWidth(100);
@@ -668,7 +663,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void refresh() {
       super.refresh();
-      myAuthor = null;
+      myAuthorField.setSelectedItem(null);
       myAuthorDate = null;
       reset();
     }
@@ -697,8 +692,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Object data = list.getData();
       if (data instanceof VcsFullCommitDetails) {
         VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
-        myAuthor = String.format("%s <%s>", commit.getAuthor().getName(), commit.getAuthor().getEmail());
-        myAuthorDate = new Date(commit.getAuthorTime());
+        String author = String.format("%s <%s>", commit.getAuthor().getName(), commit.getAuthor().getEmail());
+        myAuthorField.setSelectedItem(author);
+        myAuthorDate = new Date(commit.getTimestamp());
+      }
+      else {
+        myAuthorField.setSelectedItem(null);
+        myAuthorDate = null;
       }
     }
   }
