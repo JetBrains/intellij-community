@@ -1424,6 +1424,10 @@ public class PsiUtil {
     return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
   }
 
+  public static boolean isLocalOrParameter(@Nullable PsiElement variable) {
+    return variable instanceof GrVariable && !(variable instanceof GrField);
+  }
+
   @Nullable
   public static PsiElement getPreviousNonWhitespaceToken(PsiElement e) {
     PsiElement next = PsiTreeUtil.prevLeaf(e);
