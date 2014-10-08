@@ -112,7 +112,7 @@ public class LookupOffsets extends DocumentAdapter {
 
   int getLookupStart(String disposeTrace) {
     if (!myLookupStartMarker.isValid()) {
-      throw new AssertionError("Invalid lookup start: " + myEditor + ", " + myLookupStartMarker + disposeTrace + ";\n" + myStartDisposeTrace);
+      throw new AssertionError("Invalid lookup start: " + myLookupStartMarker + ", " + myEditor + ", disposeTrace=" + disposeTrace + ";\n" + myStartDisposeTrace);
     }
     return myLookupStartMarker.getStartOffset();
   }
