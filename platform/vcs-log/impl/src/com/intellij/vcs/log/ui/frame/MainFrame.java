@@ -212,7 +212,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     mainGroup.add(myFilterUi.getActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, mainGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
     toolbar.setTargetComponent(this);
     return toolbar.getComponent();
   }
