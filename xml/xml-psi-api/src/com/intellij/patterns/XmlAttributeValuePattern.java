@@ -42,16 +42,15 @@ public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValu
   }
 
   public XmlAttributeValuePattern withLocalName(@NonNls String... names) {
-    if (names.length == 1) {
-      return withLocalName(StandardPatterns.string().equalTo(names[0]));
-    }
-
-    return withLocalName(StandardPatterns.string().oneOf(names));
+    return names.length == 1
+           ? withLocalName(StandardPatterns.string().equalTo(names[0]))
+           : withLocalName(StandardPatterns.string().oneOf(names));
   }
 
   public XmlAttributeValuePattern withLocalNameIgnoreCase(@NonNls String... names) {
     return withLocalName(StandardPatterns.string().oneOfIgnoreCase(names));
   }
+
 
   public XmlAttributeValuePattern withLocalName(ElementPattern<String> namePattern) {
     return with(new PsiNamePatternCondition<XmlAttributeValue>("withLocalName", namePattern) {
@@ -69,6 +68,28 @@ public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValu
             prev = prev.getPrevSibling();
             if (!(prev instanceof XmlToken) || ((XmlToken)prev).getTokenType() != XmlTokenType.XML_NAME) return null;
             return prev.getText();
+          }
+        }
+        return null;
+      }
+    });
+  }
+
+  public XmlAttributeValuePattern withNamespace(@NonNls String... names) {
+    return names.length == 1
+           ? withNamespace(StandardPatterns.string().equalTo(names[0]))
+           : withNamespace(StandardPatterns.string().oneOf(names));
+  }
+
+
+  public XmlAttributeValuePattern withNamespace(ElementPattern<String> namePattern) {
+    return with(new PsiNamePatternCondition<XmlAttributeValue>("withNamespace", namePattern) {
+      @Override
+      public String getPropertyValue(@NotNull final Object o) {
+        if (o instanceof XmlAttributeValue) {
+          final PsiElement parent = ((XmlAttributeValue)o).getParent();
+          if (parent instanceof XmlAttribute) {
+            return ((XmlAttribute)parent).getNamespace();
           }
         }
         return null;
