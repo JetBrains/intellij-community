@@ -22,6 +22,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -50,7 +51,7 @@ public class MessageCounter {
           ContainerUtil.<NotificationSource, TObjectIntHashMap<NotificationCategory>>newHashMap()
         ),
         source,
-        new TObjectIntHashMap<NotificationCategory>()
+        new MyTObjectIntHashMap<NotificationCategory>()
       );
     if (!counter.increment(category)) counter.put(category, 1);
   }
@@ -71,7 +72,7 @@ public class MessageCounter {
           ContainerUtil.<NotificationSource, TObjectIntHashMap<NotificationCategory>>newHashMap()
         ),
         notificationSource,
-        new TObjectIntHashMap<NotificationCategory>()
+        new MyTObjectIntHashMap<NotificationCategory>()
       );
       counter.clear();
     }
@@ -109,6 +110,20 @@ public class MessageCounter {
     }
 
     return count;
+  }
+
+  @Override
+  public String toString() {
+    return "MessageCounter{" +
+           "map=" + map +
+           '}';
+  }
+
+  private static class MyTObjectIntHashMap<K> extends TObjectIntHashMap<K> {
+    @Override
+    public String toString() {
+      return Arrays.toString(_set);
+    }
   }
 }
 
