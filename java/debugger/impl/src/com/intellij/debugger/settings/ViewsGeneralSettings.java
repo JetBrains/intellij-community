@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,56 +16,36 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(
-  name="ViewsSettings",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/debugger.frameview.xml"
-    )}
+  name = "ViewsSettings",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/debugger.frameview.xml")
 )
-public class ViewsGeneralSettings implements PersistentStateComponent<Element> {
+public class ViewsGeneralSettings implements PersistentStateComponent<ViewsGeneralSettings> {
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
   public boolean AUTOSCROLL_TO_NEW_LOCALS = true;
-
-  public ViewsGeneralSettings() {
-  }
 
   public static ViewsGeneralSettings getInstance() {
     return ServiceManager.getService(ViewsGeneralSettings.class);
   }
 
   @Override
-  public void loadState(Element element) {
-    try {
-      DefaultJDOMExternalizer.readExternal(this, element);
-    }
-    catch (InvalidDataException ignored) {
-    }
+  public void loadState(ViewsGeneralSettings state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 
   @Override
-  public Element getState() {
-    Element element = new Element("ViewsGeneralSettings");
-    try {
-      DefaultJDOMExternalizer.writeExternal(this, element);
-    }
-    catch (WriteExternalException ignored) {
-    }
-    return element;
+  public ViewsGeneralSettings getState() {
+    return this;
   }
 
   public boolean equals(Object object) {
-    if(!(object instanceof ViewsGeneralSettings)) return false;
-    ViewsGeneralSettings generalSettings = ((ViewsGeneralSettings) object);
+    if (!(object instanceof ViewsGeneralSettings)) return false;
+    ViewsGeneralSettings generalSettings = ((ViewsGeneralSettings)object);
     return SHOW_OBJECTID == generalSettings.SHOW_OBJECTID &&
            HIDE_NULL_ARRAY_ELEMENTS == generalSettings.HIDE_NULL_ARRAY_ELEMENTS &&
            AUTOSCROLL_TO_NEW_LOCALS == generalSettings.AUTOSCROLL_TO_NEW_LOCALS;
   }
-
 }
