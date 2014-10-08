@@ -237,6 +237,7 @@ public class GitCherryPicker {
   @Nullable
   private LocalChangeList createChangeListAfterUpdate(@NotNull final VcsFullCommitDetails commit, @NotNull final Collection<FilePath> paths,
                                                       @NotNull final String commitMessage) {
+    final CountDownLatch waiter = new CountDownLatch(1);
     final AtomicReference<LocalChangeList> changeList = new AtomicReference<LocalChangeList>();
     myPlatformFacade.invokeAndWait(new Runnable() {
       @Override
@@ -244,17 +245,26 @@ public class GitCherryPicker {
         myChangeListManager.invokeAfterUpdate(new Runnable() {
                                                 public void run() {
                                                   changeList.set(createChangeListIfThereAreChanges(commit, commitMessage));
+                                                  waiter.countDown();
                                                 }
-                                              }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "Cherry-pick",
+                                              }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "Cherry-pick",
                                               new Consumer<VcsDirtyScopeManager>() {
                                                 public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
                                                   vcsDirtyScopeManager.filePathsDirty(paths, null);
                                                 }
-                                              }, ModalityState.NON_MODAL
-        );
+                                              }, ModalityState.NON_MODAL);
       }
     }, ModalityState.NON_MODAL);
-
+    try {
+      boolean success = waiter.await(100, TimeUnit.SECONDS);
+      if (!success) {
+        LOG.error("Couldn't await for change list manager refresh");
+      }
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+      return null;
+    }
 
     return changeList.get();
   }
@@ -475,7 +485,10 @@ public class GitCherryPicker {
     try {
       myChangeListManager.addChangeListListener(listener);
       myChangeListManager.moveChangesTo(targetChangeList, originalChanges.toArray(new Change[originalChanges.size()]));
-      moveChangesWaiter.await(100, TimeUnit.SECONDS);
+      boolean success = moveChangesWaiter.await(100, TimeUnit.SECONDS);
+      if (!success) {
+        LOG.error("Couldn't await for changes move.");
+      }
       return resultingChangeList.get();
     }
     catch (InterruptedException e) {
