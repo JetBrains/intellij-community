@@ -157,7 +157,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   private StdArrangementSettings createSettings() {
     final List<ArrangementGroupingRule> groupingRules = myGroupingRulesPanel.getRules();
     final List<ArrangementSectionRule> sections = myMatchingRulesPanel.getSections();
-    final Collection<ArrangementRuleAlias> tokens = myMatchingRulesPanel.getRulesAliases();
+    final Collection<StdArrangementRuleAliasToken> tokens = myMatchingRulesPanel.getRulesAliases();
     if (tokens != null) {
       return new StdArrangementExtendableSettings(groupingRules, sections, tokens);
     }

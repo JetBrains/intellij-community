@@ -23,7 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementRuleAlias;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
@@ -104,11 +104,11 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
   }
 
   @Nullable
-  public Collection<ArrangementRuleAlias> getRulesAliases() {
+  public Collection<StdArrangementRuleAliasToken> getRulesAliases() {
     return myControl.getRulesAliases();
   }
 
-  public void setRulesAliases(@Nullable Collection<ArrangementRuleAlias> aliases) {
+  public void setRulesAliases(@Nullable Collection<StdArrangementRuleAliasToken> aliases) {
     myControl.setRulesAliases(aliases);
   }
 

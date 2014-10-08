@@ -16,7 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementRuleAlias;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +29,7 @@ import java.util.Set;
  */
 public interface ArrangementExtendableSettings extends ArrangementSettings {
 
-  Set<ArrangementRuleAlias> getRuleAliases();
+  Set<StdArrangementRuleAliasToken> getRuleAliases();
 
   /**
    * Use this method to get all rules with replaced custom aliases

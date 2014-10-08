@@ -49,11 +49,11 @@ import static com.intellij.application.options.codeStyle.arrangement.match.Arran
 public class ArrangementSectionRulesControl extends ArrangementMatchingRulesControl {
   @NotNull public static final DataKey<ArrangementSectionRulesControl> KEY = DataKey.create("Arrangement.Rule.Match.Control");
   @NotNull private static final Logger LOG = Logger.getInstance("#" + ArrangementSectionRulesControl.class.getName());
-  @Nullable private final ArrangementSectionRuleManager mySectionRuleManager;
-  @Nullable private ArrangementExtendableSettingsManager myRuleAliasesManager;
+  @NotNull private final ArrangementColorsProvider myColorsProvider;
+  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
 
-  private ArrangementStandardSettingsManager mySettingsManager;
-  private ArrangementColorsProvider myColorsProvider;
+  @Nullable private final ArrangementSectionRuleManager mySectionRuleManager;
+  @Nullable private ArrangementStandardSettingsManager myExtendedSettingsManager;
 
   public ArrangementSectionRulesControl(@NotNull Language language,
                                         @NotNull ArrangementStandardSettingsManager settingsManager,
@@ -161,14 +161,14 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
   }
 
   @Nullable
-  public Collection<ArrangementRuleAlias> getRulesAliases() {
-    return myRuleAliasesManager == null ? null : myRuleAliasesManager.getRuleAliases();
+  public Collection<StdArrangementRuleAliasToken> getRulesAliases() {
+    return myExtendedSettingsManager == null ? null : myExtendedSettingsManager.getRuleAliases();
   }
 
-  public void setRulesAliases(@Nullable Collection<ArrangementRuleAlias> aliases) {
+  public void setRulesAliases(@Nullable Collection<StdArrangementRuleAliasToken> aliases) {
     if (aliases != null) {
-      myRuleAliasesManager = new ArrangementExtendableSettingsManager(mySettingsManager.getDelegate(), myColorsProvider, aliases);
-      myEditor = new ArrangementMatchingRuleEditor(myRuleAliasesManager, myColorsProvider, this);
+      myExtendedSettingsManager = new ArrangementStandardSettingsManager(mySettingsManager.getDelegate(), myColorsProvider, aliases);
+      myEditor = new ArrangementMatchingRuleEditor(myExtendedSettingsManager, myColorsProvider, this);
     }
   }
 
@@ -205,7 +205,7 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
       }
     }
 
-    final Collection<ArrangementRuleAlias> aliases = getRulesAliases();
+    final Collection<StdArrangementRuleAliasToken> aliases = getRulesAliases();
     assert aliases != null;
     return new ArrangementRuleAliasDialog(null, mySettingsManager, myColorsProvider, aliases, tokenIds);
   }
