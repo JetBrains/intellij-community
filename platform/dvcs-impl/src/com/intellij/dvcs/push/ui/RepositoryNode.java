@@ -36,13 +36,15 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
 
   @NotNull protected final LoadingIcon myLoadingIcon;
   @NotNull protected final AtomicBoolean myLoading = new AtomicBoolean();
+  @NotNull private final CheckBoxModel myCheckBoxModel;
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   @Nullable private Future<AtomicReference<OutgoingResult>> myFuture;
   protected final int myLoadingIconWidth;
 
-  public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, boolean enabled) {
+  public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull CheckBoxModel model, boolean enabled) {
     super(repositoryPanel);
+    myCheckBoxModel = model;
     setChecked(false);
     setEnabled(enabled);
     myRepositoryPanel = repositoryPanel;
@@ -50,6 +52,16 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     Dimension size = new JCheckBox().getPreferredSize();
     myLoadingIconWidth = size.width;
     myLoadingIcon = LoadingIcon.create(myLoadingIconWidth, size.height);
+  }
+
+  @Override
+  public boolean isChecked() {
+    return myCheckBoxModel.isChecked();
+  }
+
+  @Override
+  public void setChecked(boolean checked) {
+    myCheckBoxModel.setChecked(checked);
   }
 
   public boolean isCheckboxVisible() {
@@ -127,5 +139,4 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
   public boolean isLoading() {
     return myLoading.get();
   }
-
 }
