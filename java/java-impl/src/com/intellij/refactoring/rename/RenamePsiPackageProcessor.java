@@ -71,38 +71,39 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
         final String oldName = psiPackage.getQualifiedName();
         final String newName = getNewName();
         if (!Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(newName))) {
-          final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-          final PsiDirectory[] directories = psiPackage.getDirectories();
-          invokeRefactoring(new MoveDirectoryWithClassesProcessor(myProject, directories, null, isSearchInComments(),
-                                                                  isSearchInNonJavaFiles(), false, null) {
-            @Override
-            public TargetDirectoryWrapper getTargetDirectory(final PsiDirectory dir) {
-              final VirtualFile sourceRoot = index.getSourceRootForFile(dir.getVirtualFile());
-              LOG.assertTrue(sourceRoot != null);
-              return new TargetDirectoryWrapper(dir.getManager().findDirectory(sourceRoot), newName.replaceAll("\\.", "\\/"));
-            }
-
-            @Override
-            public void performRefactoring(UsageInfo[] usages) {
-              super.performRefactoring(usages);
-              for (PsiDirectory directory : directories) {
-                directory.delete();
-              }
-            }
-
-            @Override
-            protected String getTargetName() {
-              return newName;
-            }
-
-            @Override
-            protected String getCommandName() {
-              return "Rename package";
-            }
-          });
+          invokeRefactoring(createRenameMoveProcessor(newName, psiPackage, isSearchInComments(), isSearchInNonJavaFiles()));
         } else {
           super.doAction();
         }
+      }
+    };
+  }
+
+  public static MoveDirectoryWithClassesProcessor createRenameMoveProcessor(final String newName,
+                                                                            final PsiPackage psiPackage,
+                                                                            final boolean searchInComments,
+                                                                            final boolean searchInNonJavaFiles) {
+    final Project project = psiPackage.getProject();
+    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    final PsiDirectory[] directories = psiPackage.getDirectories();
+
+    return new MoveDirectoryWithClassesProcessor(project, directories, null, searchInComments,
+                                                 searchInNonJavaFiles, false, null) {
+      @Override
+      public TargetDirectoryWrapper getTargetDirectory(final PsiDirectory dir) {
+        final VirtualFile sourceRoot = index.getSourceRootForFile(dir.getVirtualFile());
+        LOG.assertTrue(sourceRoot != null);
+        return new TargetDirectoryWrapper(dir.getManager().findDirectory(sourceRoot), newName.replaceAll("\\.", "\\/"));
+      }
+
+      @Override
+      protected String getTargetName() {
+        return newName;
+      }
+
+      @Override
+      protected String getCommandName() {
+        return "Rename package";
       }
     };
   }
