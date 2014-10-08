@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
@@ -23,6 +25,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -36,7 +40,11 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
@@ -233,6 +241,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (type != null) {
           return type;
         }
+        type = getTypeFromUsedAttributes(context);
+        if (type != null) {
+          return type;
+        }
       }
       return null;
     }
@@ -419,6 +431,85 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public void subtreeChanged() {
     super.subtreeChanged();
     myQualifiedName = null;
+  }
+
+  @Nullable
+  private PyType getTypeFromUsedAttributes(@NotNull final TypeEvalContext context) {final Set<String> seenAttrs = collectUsedAttributes();
+
+    final Set<PyClass> candidates = Sets.newHashSet();
+    for (String attribute : seenAttrs) {
+      candidates.addAll(PyClassAttributesIndex.find(attribute, getProject()));
+    }
+
+    final Set<PyClass> suitableClasses = Sets.newHashSet();
+    for (PyClass candidate : candidates) {
+      final Set<String> availableAttrs = Sets.newHashSet(PyUtil.getAllDeclaredAttributeNames(candidate));
+      for (PyClass parent : candidate.getAncestorClasses(context)) {
+        availableAttrs.addAll(PyUtil.getAllDeclaredAttributeNames(parent));
+      }
+      if (availableAttrs.containsAll(seenAttrs)) {
+        suitableClasses.add(candidate);
+      }
+    }
+
+    for (PyClass candidate : Lists.newArrayList(suitableClasses)) {
+      for (PyClass ancestor : candidate.getAncestorClasses()) {
+        if (suitableClasses.contains(ancestor)) {
+          suitableClasses.remove(candidate);
+        }
+      }
+    }
+
+    return PyUnionType.union(ContainerUtil.map(suitableClasses, new Function<PyClass, PyType>() {
+      @Override
+      public PyType fun(PyClass cls) {
+        return new PyClassTypeImpl(cls, false);
+      }
+    }));
+  }
+
+  @NotNull
+  public Set<String> collectUsedAttributes() {
+    final QualifiedName qualifiedName = asQualifiedName();
+    if (qualifiedName == null) {
+      return Collections.emptySet();
+    }
+    final Set<String> result = Sets.newHashSet();
+
+    final ScopeOwner definitionScope = ScopeUtil.getScopeOwner(getReference().resolve());
+    ScopeOwner scope = ScopeUtil.getScopeOwner(this);
+    while (scope != null) {
+      final ScopeOwner inspectedScope = scope;
+      scope.accept(new PyRecursiveElementVisitor() {
+        @Override
+        public void visitPyElement(PyElement node) {
+          if (node instanceof ScopeOwner && node != inspectedScope) {
+            return;
+          }
+          if (node instanceof PyQualifiedExpression) {
+            ContainerUtil.addIfNotNull(result, getAttributeOfQualifier(((PyQualifiedExpression)node), qualifiedName));
+          }
+          super.visitPyElement(node);
+        }
+      });
+      if (scope == definitionScope) {
+        break;
+      }
+      scope = ScopeUtil.getScopeOwner(scope);
+    }
+    return result;
+  }
+
+  @Nullable
+  private String getAttributeOfQualifier(@NotNull PyQualifiedExpression expression, @NotNull QualifiedName expectedQualifier) {
+    if (!expression.isQualified()) {
+      return null;
+    }
+    final QualifiedName qualifiedName = expression.asQualifiedName();
+    if (qualifiedName != null && qualifiedName.removeTail(1).equals(expectedQualifier)) {
+      return qualifiedName.getLastComponent();
+    }
+    return null;
   }
 
   private static class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {
