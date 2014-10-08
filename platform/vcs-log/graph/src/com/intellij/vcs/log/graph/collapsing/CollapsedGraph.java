@@ -26,12 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 public class CollapsedGraph {
 
-  public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph) {
-    UnsignedBitSet visibleNodesId = new UnsignedBitSet();
+  public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph, @NotNull UnsignedBitSet initVisibility) {
+    UnsignedBitSet visibleNodesId = initVisibility.clone();
     Flags delegateNodesVisibility = createDelegateNodesVisibility(delegateGraph, visibleNodesId);
     UpdatableIntToIntMap nodesMap = ListIntToIntMap.newInstance(delegateNodesVisibility);
     GraphAdditionEdges graphAdditionEdges = GraphAdditionEdges.newInstance(createGetNodeIndexById(delegateGraph, visibleNodesId, nodesMap),
