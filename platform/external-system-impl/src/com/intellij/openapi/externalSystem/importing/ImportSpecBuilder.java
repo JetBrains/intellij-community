@@ -17,8 +17,10 @@ package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -31,6 +33,7 @@ public class ImportSpecBuilder {
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
   private boolean myForceWhenUptodate;
   private boolean myWhenAutoImportEnabled;
+  @Nullable private ExternalProjectRefreshCallback myCallback;
   //private boolean isPreviewMode;
   //private boolean isReportRefreshError;
 
@@ -59,6 +62,11 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  public ImportSpecBuilder callback(@Nullable ExternalProjectRefreshCallback callback) {
+    myCallback = callback;
+    return this;
+  }
+
   //public ImportSpecBuilder usePreviewMode() {
   //  isPreviewMode = true;
   //  return this;
@@ -69,6 +77,7 @@ public class ImportSpecBuilder {
     mySpec.setWhenAutoImportEnabled(myWhenAutoImportEnabled);
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setForceWhenUptodate(myForceWhenUptodate);
+    mySpec.setCallback(myCallback);
     //mySpec.setPreviewMode(isPreviewMode);
     //mySpec.setReportRefreshError(isReportRefreshError);
     return mySpec;
