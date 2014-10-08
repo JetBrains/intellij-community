@@ -358,14 +358,21 @@ public class XFramesView extends XDebugView {
     private void addFrameListElements(final List<?> values, final boolean last) {
       if (myExecutionStack != null && myExecutionStack == mySelectedStack) {
         DefaultListModel model = myFramesList.getModel();
-        if (!model.isEmpty() && model.getElementAt(model.getSize() - 1) == null) {
-          model.removeElementAt(model.getSize() - 1);
+        int insertIndex = model.size();
+        boolean loadingPresent = !model.isEmpty() && model.getElementAt(model.getSize() - 1) == null;
+        if (loadingPresent) {
+          insertIndex--;
         }
         for (Object value : values) {
           //noinspection unchecked
-          model.addElement(value);
+          model.add(insertIndex++, value);
         }
-        if (!last) {
+        if (last) {
+          if (loadingPresent) {
+            model.removeElementAt(model.getSize() - 1);
+          }
+        }
+        else if (!loadingPresent) {
           //noinspection unchecked
           model.addElement(null);
         }
@@ -403,6 +410,7 @@ public class XFramesView extends XDebugView {
           myFramesList.getModel().get(mySelectedFrameIndex) != null) {
         myFramesList.setSelectedIndex(mySelectedFrameIndex);
         processFrameSelection(mySession);
+        myListenersEnabled = true;
       }
     }
 
