@@ -89,6 +89,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myPrimaryElement = element;
 
     assertNonCompileElement(element);
+    assertValidName(element, newName);
 
     mySearchInComments = isSearchInComments;
     mySearchTextOccurrences = isSearchTextOccurrences;
@@ -221,6 +222,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   public static void assertNonCompileElement(PsiElement element) {
     LOG.assertTrue(!(element instanceof PsiCompiledElement), element);
+  }
+  
+  private void assertValidName(PsiElement element, String newName) {
+    LOG.assertTrue(RenameUtil.isValidName(myProject, element, newName), "element: " + element + ", newName: " + newName);
   }
 
   private boolean findRenamedVariables(final List<UsageInfo> variableUsages) {
