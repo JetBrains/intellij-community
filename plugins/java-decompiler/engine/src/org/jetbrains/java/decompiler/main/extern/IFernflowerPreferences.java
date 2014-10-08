@@ -54,6 +54,8 @@ public interface IFernflowerPreferences {
   String NEW_LINE_SEPARATOR = "nls";
   String INDENT_STRING = "ind";
 
+  String BANNER = "ban";
+
   String LINE_SEPARATOR_WIN = "\r\n";
   String LINE_SEPARATOR_LIN = "\n";
 
@@ -82,6 +84,8 @@ public interface IFernflowerPreferences {
 
     put(BYTECODE_SOURCE_MAPPING, "0");
     put(USE_DEBUG_LINE_NUMBERS, "0");
+
+    put(BANNER, "");
 
     put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     put(MAX_PROCESSING_METHOD, "0");

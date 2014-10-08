@@ -17,7 +17,6 @@ package org.jetbrains.java.decompiler.main.decompiler;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.Fernflower;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -182,12 +181,12 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   }
 
   @Override
-  public void saveClassFile(String path, String qualifiedName, String entryName, TextBuffer content) {
+  public void saveClassFile(String path, String qualifiedName, String entryName, String content) {
     File file = new File(getAbsolutePath(path), entryName);
     try {
       Writer out = new OutputStreamWriter(new FileOutputStream(file), "UTF8");
       try {
-        out.write(content.toString());
+        out.write(content);
       }
       finally {
         out.close();

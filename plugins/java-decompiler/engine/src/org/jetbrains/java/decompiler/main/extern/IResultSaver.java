@@ -15,8 +15,6 @@
  */
 package org.jetbrains.java.decompiler.main.extern;
 
-import org.jetbrains.java.decompiler.main.TextBuffer;
-
 import java.util.jar.Manifest;
 
 public interface IResultSaver {
@@ -24,7 +22,7 @@ public interface IResultSaver {
 
   void copyFile(String source, String path, String entryName);
 
-  void saveClassFile(String path, String qualifiedName, String entryName, TextBuffer content);
+  void saveClassFile(String path, String qualifiedName, String entryName, String content);
 
   void createArchive(String path, String archiveName, Manifest manifest);
 

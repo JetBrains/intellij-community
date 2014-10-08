@@ -80,11 +80,12 @@ public class Fernflower implements IDecompiledData {
   }
 
   @Override
-  public TextBuffer getClassContent(StructClass cl) {
+  public String getClassContent(StructClass cl) {
     try {
       TextBuffer buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
+      buffer.append(DecompilerContext.getProperty(IFernflowerPreferences.BANNER).toString());
       classesProcessor.writeClass(cl, buffer);
-      return buffer;
+      return buffer.toString();
     }
     catch (Throwable ex) {
       DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName + " couldn't be fully decompiled.", ex);

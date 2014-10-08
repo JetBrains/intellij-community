@@ -48,7 +48,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -84,6 +83,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     myOptions.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
     myOptions.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
     myOptions.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "1");
+    myOptions.put(IFernflowerPreferences.BANNER, BANNER);
     //myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1");
 
     Project project = DefaultProjectFactory.getInstance().getDefaultProject();
@@ -151,7 +151,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       }
       decompiler.decompileContext();
 
-      return saver.myResult.addBanner(BANNER).toString();
+      return saver.myResult;
     }
     catch (Exception e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -187,11 +187,11 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
   }
 
   private static class MyResultSaver implements IResultSaver {
-    private TextBuffer myResult = null;
+    private String myResult = "";
 
     @Override
-    public void saveClassFile(String path, String qualifiedName, String entryName, TextBuffer content) {
-      if (myResult == null || myResult.length() == 0) {
+    public void saveClassFile(String path, String qualifiedName, String entryName, String content) {
+      if (myResult.isEmpty()) {
         myResult = content;
       }
     }
