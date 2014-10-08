@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -243,8 +242,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
             }
           }
           // couldn't join => need to reload everything; if 5000 commits is still not enough, it's worth reporting:
-          LOG.error("Couldn't join " + commitCount / 5 + " recent commits to the log (" + permanentGraph.getAllCommits().size() + " commits)",
-                    new Attachment("recent_commits", myLoadedInfo.toLogString(myHashMap.asIndexGetter(), currentRefs, myProviders)));
+          LOG.info("Couldn't join " + commitCount / 5 + " recent commits to the log (" +
+                   permanentGraph.getAllCommits().size() + " commits)");
         }
 
         return loadFullLog();
