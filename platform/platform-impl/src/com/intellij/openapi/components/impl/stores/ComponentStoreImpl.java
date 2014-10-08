@@ -256,6 +256,12 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       StateStorage stateStorage = getStateStorageManager().getStateStorage(storageSpec);
       if (stateStorage != null && stateStorage.hasState(component, name, stateClass, reloadData)) {
         state = stateStorage.getState(component, name, stateClass, state);
+        if (state instanceof Element) {
+          // actually, our DefaultStateSerializer.deserializeState doesn't perform merge states if state is Element,
+          // storages are ordered by priority (first has higher priority), so, in this case we must just use first state
+          // https://youtrack.jetbrains.com/issue/IDEA-130930. More robust solution must be implemented later.
+          break;
+        }
       }
     }
 
