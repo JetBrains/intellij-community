@@ -398,6 +398,8 @@
             <action id="TabsPlacementLeft"   text="Left"   class="com.intellij.ide.actions.TabsPlacementAction$Left" />
             <action id="TabsPlacementRight"  text="Right"  class="com.intellij.ide.actions.TabsPlacementAction$Right" />
             <action id="TabsPlacementNone"   text="None"   class="com.intellij.ide.actions.TabsPlacementAction$None" />
+            <separator/>
+            <action id="ShowTabsInSingleRow" text="Show Tabs In Single Row" class="com.intellij.ide.actions.ShowTabsInSingleRowAction"/>
           </group>
           <action id="TabsAlphabeticalMode" class="com.intellij.ide.actions.TabsAlphabeticalModeSwitcher" text="Sort Tabs By Filename"/>
           <action id="AddNewTabToTheEndMode" class="com.intellij.ide.actions.TabsAddedToTheEndSwitcher"/>
