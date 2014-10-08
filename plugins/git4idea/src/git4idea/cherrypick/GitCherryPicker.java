@@ -436,14 +436,14 @@ public class GitCherryPicker {
     }
 
     String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
-    LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
-    changeList = (LocalChangeList)moveChanges(originalChanges, changeList);
-    if (changeList != null && !changeList.getChanges().isEmpty()) {
-      return changeList;
+    LocalChangeList createdChangeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
+    LocalChangeList actualChangeList = moveChanges(originalChanges, createdChangeList);
+    if (actualChangeList != null && !actualChangeList.getChanges().isEmpty()) {
+      return createdChangeList;
     }
     LOG.warn("No changes were moved to the changelist. Changes from commit: " + originalChanges +
              "\nAll changes: " + myChangeListManager.getAllChanges());
-    myChangeListManager.removeChangeList(changeList);
+    myChangeListManager.removeChangeList(createdChangeList);
     return null;
   }
 
@@ -458,16 +458,18 @@ public class GitCherryPicker {
   }
 
   @Nullable
-  private ChangeList moveChanges(@NotNull Collection<Change> originalChanges, @NotNull LocalChangeList targetChangeList) {
+  private LocalChangeList moveChanges(@NotNull Collection<Change> originalChanges, @NotNull final LocalChangeList targetChangeList) {
     // 1. We have to listen to CLM changes, because moveChangesTo is asynchronous
     // 2. We have to collect the real target change list, because the original target list (passed to moveChangesTo) is not updated in time.
     final CountDownLatch moveChangesWaiter = new CountDownLatch(1);
-    final AtomicReference<ChangeList> resultingChangeList = new AtomicReference<ChangeList>();
+    final AtomicReference<LocalChangeList> resultingChangeList = new AtomicReference<LocalChangeList>();
     ChangeListAdapter listener = new ChangeListAdapter() {
       @Override
       public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-        resultingChangeList.set(toList);
-        moveChangesWaiter.countDown();
+        if (toList instanceof LocalChangeList && targetChangeList.getId().equals(((LocalChangeList)toList).getId())) {
+          resultingChangeList.set((LocalChangeList)toList);
+          moveChangesWaiter.countDown();
+        }
       }
     };
     try {
