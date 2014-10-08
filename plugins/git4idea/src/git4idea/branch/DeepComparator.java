@@ -102,7 +102,7 @@ public class DeepComparator implements Disposable {
         stopAndUnhighlight();
 
         // highlight again
-        Map<GitRepository, GitBranch> repositories = getRepositories(myUi.getDataPack().getLogProviders(), comparedBranch);
+        Map<GitRepository, GitBranch> repositories = getRepositories(dataPack.getLogProviders(), comparedBranch);
         if (repositories.equals(repositoriesWithCurrentBranches)) { // but not if current branch changed
           highlightInBackground(comparedBranch, provider);
         }
