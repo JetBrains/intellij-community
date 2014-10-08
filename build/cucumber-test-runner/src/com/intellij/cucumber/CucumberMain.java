@@ -17,11 +17,11 @@ package com.intellij.cucumber;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ui.UIUtil;
 import cucumber.io.MultiLoader;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
-
-import java.awt.*;
 
 /**
  * @author Dennis.Ushakov
@@ -36,7 +36,8 @@ public class CucumberMain {
     final Ref<Throwable> errorRef = new Ref<Throwable>();
     final Ref<Runtime> runtimeRef = new Ref<Runtime>();
     try {
-      EventQueue.invokeAndWait(new Runnable() {
+      UsefulTestCase.replaceIdeEventQueueSafely();
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
           try {
@@ -46,7 +47,8 @@ public class CucumberMain {
             runtimeRef.set(runtime);
             runtime.writeStepdefsJson();
             runtime.run();
-          } catch (Throwable throwable) {
+          }
+          catch (Throwable throwable) {
             errorRef.set(throwable);
             Logger.getInstance(CucumberMain.class).error(throwable);
           }
