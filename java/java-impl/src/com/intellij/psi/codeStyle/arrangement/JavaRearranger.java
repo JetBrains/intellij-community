@@ -389,14 +389,14 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   private static void and(@NotNull List<StdArrangementMatchRule> matchRules, @NotNull ArrangementSettingsToken... conditions) {
       if (conditions.length == 1) {
         matchRules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
-          conditions[0], conditions[0]
+          conditions[0]
         ))));
         return;
       }
 
       ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition();
       for (ArrangementSettingsToken condition : conditions) {
-        composite.addOperand(new ArrangementAtomMatchCondition(condition, condition));
+        composite.addOperand(new ArrangementAtomMatchCondition(condition));
       }
       matchRules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(composite)));
     }
