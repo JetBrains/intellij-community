@@ -109,20 +109,18 @@ public class ToolsImpl implements Tools {
   @Override
   public InspectionToolWrapper getInspectionTool(PsiElement element) {
     if (myTools != null) {
-      final Project project = element != null ? element.getProject() : null;
+      final PsiFile containingFile = element == null ? null : element.getContainingFile();
+      final Project project = containingFile == null ? null : containingFile.getProject();
       for (ScopeToolState state : myTools) {
         if (element == null) {
           return state.getTool();
         }
-        else {
-          final NamedScope scope = state.getScope(project);
-          if (scope != null) {
-            final PackageSet packageSet = scope.getValue();
-            if (packageSet != null) {
-              final PsiFile containingFile = element.getContainingFile();
-              if (containingFile != null && packageSet.contains(containingFile, DependencyValidationManager.getInstance(project))) {
-                return state.getTool();
-              }
+        NamedScope scope = state.getScope(project);
+        if (scope != null) {
+          final PackageSet packageSet = scope.getValue();
+          if (packageSet != null) {
+            if (containingFile != null && packageSet.contains(containingFile, DependencyValidationManager.getInstance(project))) {
+              return state.getTool();
             }
           }
         }
