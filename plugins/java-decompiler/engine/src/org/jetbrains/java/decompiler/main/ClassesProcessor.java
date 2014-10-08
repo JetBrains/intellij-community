@@ -41,6 +41,8 @@ import java.util.Map.Entry;
 
 public class ClassesProcessor {
 
+  public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
+
   private Map<String, ClassNode> mapRootClasses = new HashMap<String, ClassNode>();
 
   public ClassesProcessor(StructContext context) {
@@ -258,7 +260,7 @@ public class ClassesProcessor {
 
       new NestedMemberAccess().propagateMemberAccess(root);
 
-      StringBuilder classBuffer = new StringBuilder();
+      StringBuilder classBuffer = new StringBuilder(AVERAGE_CLASS_SIZE);
       new ClassWriter().classToJava(root, classBuffer, 0);
 
       String lineSeparator = DecompilerContext.getNewLineSeparator();

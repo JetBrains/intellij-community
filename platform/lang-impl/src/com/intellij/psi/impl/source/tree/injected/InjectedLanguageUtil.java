@@ -160,6 +160,9 @@ public class InjectedLanguageUtil {
     return true;
   }
 
+  /**
+   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   */
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
 
@@ -167,6 +170,9 @@ public class InjectedLanguageUtil {
     return getEditorForInjectedLanguageNoCommit(editor, file, offset);
   }
 
+  /**
+   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   */
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable Caret caret, @Nullable PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorWindow || caret == null) return editor;
 
@@ -174,6 +180,9 @@ public class InjectedLanguageUtil {
     return getInjectedEditorForInjectedFile(editor, caret, injectedFile);
   }
 
+  /**
+   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   */
   public static Caret getCaretForInjectedLanguageNoCommit(@Nullable Caret caret, @Nullable PsiFile file) {
     if (caret == null || file == null || caret instanceof InjectedCaret) return caret;
 
@@ -216,6 +225,9 @@ public class InjectedLanguageUtil {
     return null;
   }
 
+  /**
+   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   */
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file, final int offset) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
     PsiFile injectedFile = findInjectedPsiNoCommit(file, offset);
@@ -251,12 +263,18 @@ public class InjectedLanguageUtil {
     return EditorWindowImpl.create(documentWindow, (EditorImpl)hostEditor, injectedFile);
   }
 
+  /**
+   * Invocation of this method on uncommitted <code>host</code> can lead to unexpected results, including throwing an exception!
+   */
   @Nullable
   public static PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {
     PsiElement injected = findInjectedElementNoCommit(host, offset);
     return injected == null ? null : injected.getContainingFile();
   }
 
+  /**
+   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   */
   // consider injected elements
   public static PsiElement findElementAtNoCommit(@NotNull PsiFile file, int offset) {
     FileViewProvider viewProvider = file.getViewProvider();
@@ -342,6 +360,9 @@ public class InjectedLanguageUtil {
     return registrar;
   }
 
+  /**
+   * Invocation of this method on uncommitted <code>hostFile</code> can lead to unexpected results, including throwing an exception!
+   */
   public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
     if (hostFile instanceof PsiCompiledElement) return null;
     Project project = hostFile.getProject();
