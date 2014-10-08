@@ -18,6 +18,7 @@ package com.intellij.find.findUsages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService;
@@ -38,7 +39,7 @@ public class FindUsagesHelper {
     final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new NullableComputable<TextRange>() {
       @Override
       public TextRange compute() {
-        if (!element.isValid()) return null;
+        if (!element.isValid() || element instanceof PsiCompiledElement) return null;
         return element.getTextRange();
       }
     });
