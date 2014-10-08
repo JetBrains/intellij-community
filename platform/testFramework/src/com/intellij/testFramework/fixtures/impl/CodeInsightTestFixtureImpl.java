@@ -1160,6 +1160,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
+    UsefulTestCase.replaceIdeEventQueueSafely();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {

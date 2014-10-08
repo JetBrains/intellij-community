@@ -74,7 +74,6 @@ import java.util.List;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 /**
@@ -338,7 +337,7 @@ public abstract class UsefulTestCase extends TestCase {
     super.runBare();
   }
 
-  public static void replaceIdeEventQueueSafely() throws InterruptedException, InvocationTargetException {
+  public static void replaceIdeEventQueueSafely() {
     if (Toolkit.getDefaultToolkit().getSystemEventQueue() instanceof IdeEventQueue) {
       return;
     }
@@ -348,14 +347,19 @@ public abstract class UsefulTestCase extends TestCase {
 
     // in JDK 1.6 java.awt.EventQueue.push() causes slow painful death of current EDT
     // so we have to wait through its agony to termination
-    SwingUtilities.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        IdeEventQueue.getInstance();
-      }
-    });
-    SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
-    SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+    try {
+      SwingUtilities.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          IdeEventQueue.getInstance();
+        }
+      });
+      SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+      SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
