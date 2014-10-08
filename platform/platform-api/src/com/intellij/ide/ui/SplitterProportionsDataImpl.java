@@ -25,21 +25,22 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.SmartList;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Tag("splitter-proportions")
 public class SplitterProportionsDataImpl implements SplitterProportionsData {
-  private List<Float> proportions = new ArrayList<Float>();
   private static final String DATA_VERSION = "1";
   @NonNls private static final String ATTRIBUTE_PROPORTIONS = "proportions";
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
+
+  private List<Float> proportions = new SmartList<Float>();
 
   @Override
   public void saveSplitterProportions(Component root) {
@@ -133,5 +134,10 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
 
   public void setProportions(final List<Float> proportions) {
     this.proportions = proportions;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof SplitterProportionsDataImpl && ((SplitterProportionsDataImpl)obj).getProportions().equals(proportions);
   }
 }
