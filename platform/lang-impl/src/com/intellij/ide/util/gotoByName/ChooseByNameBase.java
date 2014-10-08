@@ -1514,7 +1514,7 @@ public abstract class ChooseByNameBase {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 @Override
                 public void run() {
-                  if (myProject.isDisposed()) return;
+                  if (myProject != null && myProject.isDisposed()) return;
 
                   ApplicationAdapter listener = new ApplicationAdapter() {
                     @Override
