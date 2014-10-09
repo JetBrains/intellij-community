@@ -84,12 +84,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myDataPack = initialDataPack;
 
     myRefsPanel = new RefsPanel(colorManager);
-    myHashAuthorPanel = new DataPanel(logDataHolder.getProject(), false) {
-      @Override
-      public Dimension getPreferredSize() {
-        return super.getPreferredSize();
-      }
-    };
+    myHashAuthorPanel = new DataPanel(logDataHolder.getProject(), false);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane();
     myMessageDataPanel = new DataPanel(logDataHolder.getProject(), true) {
