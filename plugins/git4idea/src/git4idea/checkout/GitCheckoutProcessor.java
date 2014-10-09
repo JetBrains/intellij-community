@@ -49,6 +49,6 @@ public class GitCheckoutProcessor extends VcsCheckoutProcessor {
     Project project = frame == null || frame.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : frame.getProject();
     return GitCheckoutProvider.doClone(project,
                                        ServiceManager.getService(Git.class),
-                                       directoryName, parentDirectory.getPath(), parameters);
+                                       directoryName, parentDirectory.getPath(), parameters.get("url"));
   }
 }
