@@ -373,7 +373,7 @@ public class GeneralCommandLine implements UserDataHolder {
     @Override
     public String put(String key, String value) {
       if (key == null || value == null) {
-        LOG.error(new Exception("Dogs and nulls are not allowed"));
+        LOG.error(new Exception("Nulls are not allowed"));
         return null;
       }
       else {
