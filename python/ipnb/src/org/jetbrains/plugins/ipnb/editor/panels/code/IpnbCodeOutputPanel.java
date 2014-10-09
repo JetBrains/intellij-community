@@ -17,6 +17,7 @@ public class IpnbCodeOutputPanel<K extends IpnbOutputCell> extends IpnbPanel<JCo
 
   protected JComponent createViewPanel() {
     JTextArea textArea = new JTextArea(myCell.getSourceAsString());
+    textArea.setLineWrap(true);
     textArea.setEditable(false);
     return textArea;
   }
