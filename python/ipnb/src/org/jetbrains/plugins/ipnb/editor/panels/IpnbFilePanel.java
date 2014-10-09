@@ -191,6 +191,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
 
   public void cutCell() {
     myBufferPanel = getSelectedCell();
+    if (myBufferPanel == null) return;
     selectNextOrPrev(myBufferPanel);
     final int index = myIpnbPanels.indexOf(myBufferPanel);
     if (index < 0) return;
