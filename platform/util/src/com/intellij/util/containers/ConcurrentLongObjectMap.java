@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Enumeration;
 
 /**
  * Base interface for concurrent int key -> value:V map
@@ -44,8 +45,6 @@ public interface ConcurrentLongObjectMap<V> {
   void clear();
   @NotNull
   Iterable<LongEntry<V>> entries();
-  @NotNull
-  Collection<V> values();
 
   @NotNull
   long[] keys();
@@ -60,6 +59,10 @@ public interface ConcurrentLongObjectMap<V> {
   int size();
 
   boolean isEmpty();
+  @NotNull
+  public Enumeration<V> elements();
+  @NotNull
+  Collection<V> values();
   boolean containsValue(@NotNull V value);
   V putIfAbsent(long key, @NotNull V value);
 
