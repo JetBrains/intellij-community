@@ -214,6 +214,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   }
 
   private void updateCellType(@NotNull final String selectedItem, @NotNull final IpnbEditablePanel selectedCell) {
+    selectedCell.updateCellSource();
     if (selectedCell instanceof IpnbHeadingPanel) {
       final IpnbHeadingCell cell = ((IpnbHeadingPanel)selectedCell).getCell();
       if (selectedItem.startsWith(headingCellType)) {

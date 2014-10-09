@@ -244,6 +244,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
       myIpnbPanels.remove(index);
       myIpnbPanels.add(index, panel);
     }
+    if (from instanceof IpnbCodePanel) {
+      panel.switchToEditing();
+    }
     setSelectedCell(panel);
     remove(from);
     revalidate();
