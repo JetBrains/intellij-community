@@ -106,7 +106,7 @@
     <orderEntry type="library" name="Kryo" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="commons-io-1.4" level="project" />
+    <orderEntry type="library" exported="" name="commons-io-1.4" level="project" />
   </component>
 </module>
 
