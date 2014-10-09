@@ -137,7 +137,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       String mask = file.getNameWithoutExtension() + "$";
       for (VirtualFile child : file.getParent().getChildren()) {
         if (child.getNameWithoutExtension().startsWith(mask) && file.getFileType() == StdFileTypes.CLASS) {
-          files.put(child.getPath(), child);
+          files.put(FileUtil.toSystemIndependentName(child.getPath()), child);
         }
       }
       MyBytecodeProvider provider = new MyBytecodeProvider(files);
@@ -175,7 +175,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       try {
         String path = FileUtil.toSystemIndependentName(externalPath);
         VirtualFile file = myFiles.get(path);
-        assert file != null : path;
+        assert file != null : path + " not in " + myFiles.keySet();
         return file.contentsToByteArray();
       }
       catch (IOException e) {
