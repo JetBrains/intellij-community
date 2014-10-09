@@ -111,6 +111,8 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
         assertEquals(2, myFixture.doHighlighting().size());
         myFixture.getEditor().getCaretModel().moveToOffset(offset(16, 28));  // int r: usage, declaration
         assertEquals(2, myFixture.doHighlighting().size());
+        myFixture.getEditor().getCaretModel().moveToOffset(offset(19, 24));  // throws: declaration, m4() call
+        assertEquals(2, myFixture.doHighlighting().size());
       }
     });
   }
