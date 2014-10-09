@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,15 +64,6 @@ public class PyEvaluator {
     }
     if (expr instanceof PySequenceExpression) {
       return evaluateSequenceExpression((PySequenceExpression)expr);
-    }
-    if (expr instanceof PyQualifiedExpression) { // support bool
-      final String referencedName = ((PyQualifiedExpression)expr).getReferencedName();
-      if (PyNames.TRUE.equals(referencedName)) {
-        return true;
-      }
-      if (PyNames.FALSE.equals(referencedName)) {
-        return true;
-      }
     }
     final Boolean booleanExpression = getBooleanExpression(expr);
     if (booleanExpression != null) { // support bool
