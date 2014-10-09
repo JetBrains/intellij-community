@@ -32,7 +32,7 @@ import java.util.concurrent.locks.LockSupport;
 // added cacheOrGet convenience method
 // Null values are NOT allowed
 
-public class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
+class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
     /* ---------------- Constants -------------- */
 
