@@ -87,6 +87,10 @@ public class Registry  {
     return get(key).asString();
   }
 
+  public static float floatValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) {
+    return get(key).asFloat();
+  }
+
   public static Color getColor(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key, Color defaultValue) throws MissingResourceException {
     return get(key).asColor(defaultValue);
   }

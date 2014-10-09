@@ -40,6 +40,7 @@ public class RegistryValue {
   private String myStringCachedValue;
   private Integer myIntCachedValue;
   private Double myDoubleCachedValue;
+  private Float myFloatCachedValue;
   private Boolean myBooleanCachedValue;
 
   RegistryValue(@NotNull Registry registry, @NotNull String key) {
@@ -82,6 +83,14 @@ public class RegistryValue {
     }
 
     return myDoubleCachedValue.doubleValue();
+  }
+
+  public float asFloat() {
+    if (myFloatCachedValue == null) {
+      myFloatCachedValue = Float.valueOf(get(myKey, "0.0", true));
+    }
+
+    return myFloatCachedValue.floatValue();
   }
 
   public Color asColor(Color defaultValue) {

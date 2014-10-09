@@ -18,6 +18,11 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowContentUiType;
+import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.WindowInfo;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +41,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   /**
    * Default window weight.
    */
-  static final float DEFAULT_WEIGHT= 0.33f;
+  private static final String TOOLWINDOW_WEIGHT_PROPERTY = "idea.toolwindow.defaultWeight";
+  static final float DEFAULT_WEIGHT = Registry.floatValue(TOOLWINDOW_WEIGHT_PROPERTY);
   static final float DEFAULT_SIDE_WEIGHT = 0.5f;
 
   private boolean myActive;
@@ -189,7 +195,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   }
 
   /**
-   * @return internal weight of tool window. "weigth" means how much of internal desktop
+   * @return internal weight of tool window. "weight" means how much of internal desktop
    * area the tool window is occupied. The weight has sense if the tool window is docked or
    * sliding.
    */

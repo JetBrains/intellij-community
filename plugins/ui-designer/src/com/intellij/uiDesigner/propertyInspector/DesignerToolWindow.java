@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -38,7 +39,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class DesignerToolWindow implements LightToolWindowContent {
-  private final MyToolWindowPanel myToolWindowPanel = new MyToolWindowPanel();
+  private final MyToolWindowPanel myToolWindowPanel = new MyToolWindowPanel(Registry.floatValue("idea.designer.toolwindow.defaultWeight"));
   private ComponentTree myComponentTree;
   private ComponentTreeBuilder myComponentTreeBuilder;
   private PropertyInspector myPropertyInspector;
@@ -124,8 +125,8 @@ public class DesignerToolWindow implements LightToolWindowContent {
   }
 
   private class MyToolWindowPanel extends Splitter implements DataProvider {
-    MyToolWindowPanel() {
-      super(true, 0.33f);
+    MyToolWindowPanel(float weight) {
+      super(true, weight);
     }
 
     @Nullable
