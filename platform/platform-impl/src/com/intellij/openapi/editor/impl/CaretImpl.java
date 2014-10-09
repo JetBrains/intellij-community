@@ -281,7 +281,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         if (!editorSettings.isVirtualSpace() && lineShift == 0 && columnShift == 1) {
           int lastLine = document.getLineCount() - 1;
           if (lastLine < 0) lastLine = 0;
-          if (EditorModificationUtil.calcAfterLineEnd(myEditor) >= 0 &&
+          if (newColumnNumber > EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber) &&
               newLineNumber < myEditor.logicalToVisualPosition(new LogicalPosition(lastLine, 0)).line) {
             newColumnNumber = 0;
             newLineNumber++;
