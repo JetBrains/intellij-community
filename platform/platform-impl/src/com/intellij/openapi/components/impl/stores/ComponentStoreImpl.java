@@ -76,7 +76,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         @Override
         public void run() {
           if (component instanceof PersistentStateComponent) {
-            initPersistentComponent((PersistentStateComponent<?>)component, false);
+            initPersistentComponent((PersistentStateComponent<?>)component, false, false);
           }
           else {
             initJdomExternalizable((JDOMExternalizable)component);
@@ -233,13 +233,17 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
   }
 
-  private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData) {
+  private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData, boolean isReinit) {
     State spec = getStateSpec(component);
     final String name = spec.name();
     ComponentRoamingManager.getInstance().setRoamingType(name, spec.roamingType());
 
-    doAddComponent(name, component);
-    if (optimizeTestLoading()) return name;
+    if (!isReinit) {
+      doAddComponent(name, component);
+    }
+    if (optimizeTestLoading()) {
+      return name;
+    }
 
     Class<T> stateClass = getComponentStateClass(component);
 
@@ -430,7 +434,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return false;
     }
     else {
-      initPersistentComponent(component, reloadData);
+      initPersistentComponent(component, reloadData, true);
       return true;
     }
   }
