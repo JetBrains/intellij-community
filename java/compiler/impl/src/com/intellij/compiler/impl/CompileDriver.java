@@ -460,18 +460,22 @@ public class CompileDriver {
     final long duration = System.currentTimeMillis() - compileContext.getStartCompilationStamp();
     if (!myProject.isDisposed()) {
       // refresh on output roots is required in order for the order enumerator to see all roots via VFS
-      final Set<File> outputs = new HashSet<File>();
       final Module[] affectedModules = compileContext.getCompileScope().getAffectedModules();
-      for (final String path : CompilerPathsEx.getOutputPaths(affectedModules)) {
-        outputs.add(new File(path));
+
+      if (_status != ExitStatus.UP_TO_DATE && _status != ExitStatus.CANCELLED) {
+        // have to refresh in case of errors too, because run configuration may be set to ignore errors
+        final Set<File> outputs = new HashSet<File>();
+        for (final String path : CompilerPathsEx.getOutputPaths(affectedModules)) {
+          outputs.add(new File(path));
+        }
+        if (!outputs.isEmpty()) {
+          final ProgressIndicator indicator = compileContext.getProgressIndicator();
+          indicator.setText("Synchronizing output directories...");
+          CompilerUtil.refreshOutputDirectories(outputs, _status == ExitStatus.CANCELLED);
+          indicator.setText("");
+        }
       }
-      final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      if (!outputs.isEmpty()) {
-        final ProgressIndicator indicator = compileContext.getProgressIndicator();
-        indicator.setText("Synchronizing output directories...");
-        CompilerUtil.refreshOutputDirectories(outputs, _status == ExitStatus.CANCELLED);
-        indicator.setText("");
-      }
+
       if (compileContext.isAnnotationProcessorsEnabled() && !myProject.isDisposed()) {
         final Set<File> genSourceRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
         final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
@@ -485,7 +489,7 @@ public class CompileDriver {
         }
         if (!genSourceRoots.isEmpty()) {
           // refresh generates source roots asynchronously; needed for error highlighting update
-          lfs.refreshIoFiles(genSourceRoots, true, true, null);
+          LocalFileSystem.getInstance().refreshIoFiles(genSourceRoots, true, true, null);
         }
       }
     }
@@ -496,38 +500,40 @@ public class CompileDriver {
         try {
           errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
           warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
-          if (!myProject.isDisposed()) {
-            final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
-            final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
-            if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
-              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
-            }
-
-            final String wrappedMessage = _status != ExitStatus.UP_TO_DATE? "<a href='#'>" + statusMessage + "</a>" : statusMessage;
-            final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
-              "", wrappedMessage,
-              messageType.toNotificationType(),
-              new MessagesActivationListener(compileContext)
-            ).setImportant(false);
-            compileContext.getBuildSession().registerCloseAction(new Runnable() {
-              @Override
-              public void run() {
-                notification.expire();
-              }
-            });
-            notification.notify(myProject);
-
-            if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
-              final String msg = DateFormatUtil.formatDateTime(new Date()) + " - " + statusMessage;
-              compileContext.addMessage(CompilerMessageCategory.INFORMATION, msg, null, -1, -1);
-            }
-          }
         }
         finally {
           if (callback != null) {
             callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount, compileContext);
           }
         }
+
+        if (!myProject.isDisposed()) {
+          final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
+          final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
+          if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
+            ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
+          }
+
+          final String wrappedMessage = _status != ExitStatus.UP_TO_DATE? "<a href='#'>" + statusMessage + "</a>" : statusMessage;
+          final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
+            "", wrappedMessage,
+            messageType.toNotificationType(),
+            new MessagesActivationListener(compileContext)
+          ).setImportant(false);
+          compileContext.getBuildSession().registerCloseAction(new Runnable() {
+            @Override
+            public void run() {
+              notification.expire();
+            }
+          });
+          notification.notify(myProject);
+
+          if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
+            final String msg = DateFormatUtil.formatDateTime(new Date()) + " - " + statusMessage;
+            compileContext.addMessage(CompilerMessageCategory.INFORMATION, msg, null, -1, -1);
+          }
+        }
+
       }
     });
     return duration;
