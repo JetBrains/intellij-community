@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * Adapted from java.util.concurrent.ConcurrentHashMap to long keys
+ * Adapted from java.util.concurrent.ConcurrentHashMap to int keys
  * @author Doug Lea
  * @param <V> the type of mapped values
  */

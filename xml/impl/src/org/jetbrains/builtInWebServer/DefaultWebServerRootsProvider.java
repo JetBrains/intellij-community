@@ -86,26 +86,36 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
 
   @Nullable
   @Override
-  public PathInfo getRoot(@NotNull VirtualFile file, @NotNull Project project) {
+  public PathInfo getRoot(@NotNull final VirtualFile file, @NotNull Project project) {
     AccessToken token = ReadAction.start();
     try {
       VirtualFile root;
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      if (fileIndex.isInSourceContent(file)) {
-        root = fileIndex.getSourceRootForFile(file);
+
+      VirtualFile notExcludedParent = file;
+      while (notExcludedParent != null && fileIndex.isExcluded(notExcludedParent)) {
+        notExcludedParent = notExcludedParent.getParent();
       }
-      else if (fileIndex.isInContent(file)) {
-        root = fileIndex.getContentRootForFile(file);
+
+      if (notExcludedParent == null) {
+        return null;
       }
-      else if (fileIndex.isInLibraryClasses(file)) {
-        root = fileIndex.getClassRootForFile(file);
+
+      if (fileIndex.isInSourceContent(notExcludedParent)) {
+        root = fileIndex.getSourceRootForFile(notExcludedParent);
+      }
+      else if (fileIndex.isInContent(notExcludedParent)) {
+        root = fileIndex.getContentRootForFile(notExcludedParent);
+      }
+      else if (fileIndex.isInLibraryClasses(notExcludedParent)) {
+        root = fileIndex.getClassRootForFile(notExcludedParent);
       }
       else {
-        // excluded
+        // not in project
         return null;
       }
       assert root != null : file.getPresentableUrl();
-      return new PathInfo(file, root, getModuleNameQualifier(project, fileIndex.getModuleForFile(file)));
+      return new PathInfo(file, root, getModuleNameQualifier(project, fileIndex.getModuleForFile(notExcludedParent)));
     }
     finally {
       token.finish();
