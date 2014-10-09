@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -43,7 +44,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
   @NotNull private final String mySource;
 
   public IpnbCodeSourcePanel(@NotNull final Project project, @NotNull final IpnbCodePanel parent, @NotNull final IpnbCodeCell cell) {
-    super(cell);
+    super(cell, new BorderLayout());
     myProject = project;
     myParent = parent;
     mySource = cell.getSourceAsString();
@@ -116,7 +117,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     panel.add(component);
 
     component.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, component.getPreferredSize().height));
-    //setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1, true));
+    setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1));
     return panel;
   }
 }

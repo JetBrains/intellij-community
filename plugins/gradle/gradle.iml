@@ -87,15 +87,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library name="commons-io">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-io-1.4.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module-library">
       <library name="GradleJnaPosix">
         <CLASSES>
@@ -115,6 +106,7 @@
     <orderEntry type="library" name="Kryo" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="commons-io-1.4" level="project" />
   </component>
 </module>
 
