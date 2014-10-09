@@ -576,9 +576,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private class GitCheckinOptions extends DvcsCommitAdditionalComponent implements CheckinChangeListSpecificComponent {
     private final GitVcs myVcs;
-    private final ComboBox myAuthor;
-
-    private Date myAuthorDate;
+    private final ComboBox myAuthorField;
+    @Nullable private Date myAuthorDate;
 
     GitCheckinOptions(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
       super(project, panel);
@@ -606,27 +605,24 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       List<String> list = new ArrayList<String>(authors);
       Collections.sort(list);
 
-      myAuthor = new ComboBox(ArrayUtil.toObjectArray(list)) {
+      myAuthorField = new ComboBox(ArrayUtil.toObjectArray(list)) {
         @Override
         public void addNotify() {
           super.addNotify();
 
           // adding in addNotify to make sure the editor is ready for further customization
-          StringComboboxEditor comboboxEditor = new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, myAuthor, true);
-          myAuthor.setEditor(comboboxEditor);
+          StringComboboxEditor comboboxEditor = new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, myAuthorField, true);
+          myAuthorField.setEditor(comboboxEditor);
           EditorEx editor = (EditorEx)comboboxEditor.getEditor();
           assert editor != null;
           SpellCheckingEditorCustomization.getInstance(false).customize(editor);
         }
       };
-      myAuthor.setMinimumAndPreferredWidth(100);
-
-      myAuthor.insertItemAt("", 0);
-      myAuthor.setSelectedItem("");
-      myAuthor.setEditable(true);
-      authorLabel.setLabelFor(myAuthor);
-      myAuthor.setToolTipText(GitBundle.getString("commit.author.tooltip"));
-      myPanel.add(myAuthor, c);
+      myAuthorField.setMinimumAndPreferredWidth(100);
+      myAuthorField.setEditable(true);
+      authorLabel.setLabelFor(myAuthorField);
+      myAuthorField.setToolTipText(GitBundle.getString("commit.author.tooltip"));
+      myPanel.add(myAuthorField, c);
     }
 
     @Override
@@ -667,13 +663,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void refresh() {
       super.refresh();
-      myAuthor.setSelectedItem("");
+      myAuthorField.setSelectedItem(null);
+      myAuthorDate = null;
       reset();
     }
 
     @Override
     public void saveState() {
-      String author = (String)myAuthor.getEditor().getItem();
+      String author = (String)myAuthorField.getEditor().getItem();
       if (StringUtil.isEmptyOrSpaces(author)) {
         myNextCommitAuthor = null;
       }
@@ -696,8 +693,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       if (data instanceof VcsFullCommitDetails) {
         VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
         String author = String.format("%s <%s>", commit.getAuthor().getName(), commit.getAuthor().getEmail());
-        myAuthor.getEditor().setItem(author);
+        myAuthorField.setSelectedItem(author);
         myAuthorDate = new Date(commit.getTimestamp());
+      }
+      else {
+        myAuthorField.setSelectedItem(null);
+        myAuthorDate = null;
       }
     }
   }
