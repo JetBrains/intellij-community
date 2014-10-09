@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -122,7 +123,12 @@ public class DeepComparator implements Disposable {
     }
 
     myTask = new MyTask(myProject, myUi, repositories, dataProvider, branchToCompare);
-    myTask.queue();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myTask.queue();
+      }
+    });
   }
 
   @NotNull
