@@ -1,11 +1,7 @@
 package org.jetbrains.plugins.ipnb;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.MarkdownUtil;
 import com.petebevin.markdown.MarkdownProcessor;
 import net.sourceforge.jeuclid.MathMLParserSupport;
 import net.sourceforge.jeuclid.context.LayoutContextImpl;
@@ -33,61 +29,28 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.List;
 
 public class IpnbUtils {
   private static final Logger LOG = Logger.getInstance(IpnbUtils.class);
   private static final MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
   private static final String ourImagePrefix = "http:\\image";
   private static final Font ourFont = new Font(Font.SERIF, Font.PLAIN, 16);
-  private static final String ourBodyRule = "body { font-family: \"Helvetica Neue\",Helvetica,Arial,sans-serif;; " +
+  private static final String ourBodyRule = "body { font-family: \"DejaVu\"; " +
                                          "font-size: " + ourFont.getSize() + "pt; " +
                                          "width: " + IpnbEditorUtil.PANEL_WIDTH + "px;}";
 
-  private static final String ourCodeRule = "code { font-family: \"Helvetica Neue\",Helvetica,Arial,sans-serif; " +
+  private static final String ourCodeRule = "code { font-family: \"DejaVu\"; " +
                                          "font-size: " + ourFont.getSize() + "pt;}";
 
+  private static final String ourAlertRule = ".alert{ background-color: #fcf8e3;" +
+                                                     "color: #c09853;" +
+                                                     "padding: 8px 35px 8px 14px;" +
+                                                     "border: 1px solid #fbeed5;}";
 
-  public static String markdown2Html(@NotNull final String description) {
-    // TODO: add links to the dependant notebook pages (see: index.ipynb)
-    //TODO: relative picture links (see: index.ipynb in IPython.kernel) We should use absolute file:/// path
-    final List<String> lines = ContainerUtil.newArrayList(description.split("\n|\r|\r\n"));
-    final List<String> processedLines = new ArrayList<String>();
-    boolean isInCode = false;
-    for (String line : lines) {
-      String processedLine = line;
-      if (line.startsWith(" ")) {
-        processedLine = line.substring(1);
-      }
-
-      if (processedLine.contains("```")) isInCode = !isInCode;
-      if (isInCode) {
-        processedLine = processedLine
-          .replace("&", "&amp;");
-      }
-      else {
-        processedLine = processedLine
-          .replaceAll("([\\w])_([\\w])", "$1&underline;$2");
-      }
-      processedLines.add(processedLine);
-    }
-    MarkdownUtil.replaceHeaders(processedLines);
-    MarkdownUtil.removeImages(processedLines);
-    MarkdownUtil.generateLists(processedLines);
-    MarkdownUtil.replaceCodeBlock(processedLines);
-    final String[] lineArray = ArrayUtil.toStringArray(processedLines);
-    final String normalizedMarkdown = StringUtil.join(lineArray, "\n");
-    String html = ourMarkdownProcessor.markdown(normalizedMarkdown);
-    html = html
-      .replace("<pre><code>", "<pre>").replace("</code></pre>", "</pre>")
-      .replace("<em>", "<i>").replace("</em>", "</i>")
-      .replace("<strong>", "<b>").replace("</strong>", "</b>")
-      .replace("&underline;", "_")
-      .trim();
-    return html;
+    public static String markdown2Html(@NotNull final String description) {
+      return ourMarkdownProcessor.markdown(description);
   }
 
   public static void addLatexToPanel(@NotNull final String source, @NotNull final JPanel panel) {
@@ -97,6 +60,7 @@ public class IpnbUtils {
     final StyleSheet sheet = ((HTMLDocument)editorPane.getDocument()).getStyleSheet();
     sheet.addRule(ourBodyRule);
     sheet.addRule(ourCodeRule);
+    sheet.addRule(ourAlertRule);
 
     editorPane.setEditable(false);
 
