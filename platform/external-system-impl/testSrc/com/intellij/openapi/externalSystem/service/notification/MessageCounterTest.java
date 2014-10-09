@@ -52,8 +52,8 @@ public class MessageCounterTest {
     assertEquals(counter.toString(), 0, counter.getCount(GROUP2, NotificationSource.PROJECT_SYNC, NotificationCategory.ERROR, OTHER_BUILD_SYSTEM));
     assertEquals(counter.toString(), 1, counter.getCount(GROUP2, NotificationSource.PROJECT_SYNC, NotificationCategory.WARNING, OTHER_BUILD_SYSTEM));
 
-    assertEquals(counter.toString(), 0, counter.getCount(null, NotificationSource.PROJECT_SYNC, NotificationCategory.INFO, OTHER_BUILD_SYSTEM));
-    assertEquals(counter.toString(), 0, counter.getCount(null, NotificationSource.PROJECT_SYNC, NotificationCategory.ERROR, OTHER_BUILD_SYSTEM));
+    assertEquals(counter.toString(), 1, counter.getCount(null, NotificationSource.PROJECT_SYNC, NotificationCategory.INFO, OTHER_BUILD_SYSTEM));
+    assertEquals(counter.toString(), 1, counter.getCount(null, NotificationSource.PROJECT_SYNC, NotificationCategory.ERROR, OTHER_BUILD_SYSTEM));
     assertEquals(counter.toString(), 1, counter.getCount(null, NotificationSource.PROJECT_SYNC, NotificationCategory.WARNING, OTHER_BUILD_SYSTEM));
     assertEquals(counter.toString(), 3, counter.getCount(null, NotificationSource.PROJECT_SYNC, null, OTHER_BUILD_SYSTEM));
 
