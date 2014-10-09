@@ -157,8 +157,21 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "dict | MutableMapping | set");
   }
 
-
-
+  public void testFunctionType() {
+    doTestType("class A:\n" +
+               "    def method_a(self):\n" +
+               "        pass\n" +
+               "class B:\n" +
+               "    def method_b(self):\n" +
+               "        pass\n" +
+               "def func(a, b):\n" +
+               "    a.method_a\n" +
+               "    b.method_b\n" +
+               "    return a\n" +
+               "x = func\n" +
+               "x" ,
+               "(a: A, b: B) -> A");
+  }
 
   private void doTestType(@NotNull String text, @NotNull String expectedType) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);

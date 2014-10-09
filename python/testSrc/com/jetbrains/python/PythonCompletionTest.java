@@ -25,7 +25,7 @@ import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +45,19 @@ public class PythonCompletionTest extends PyTestCase {
     myFixture.configureByFile("a.py");
     myFixture.completeBasic();
     myFixture.checkResultByFile("completion/" + getTestName(true) + "/a.after.py");
+  }
+
+  private List<String> doTestByText(String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.completeBasic();
+    return myFixture.getLookupElementStrings();
+  }
+
+  @Nullable
+  private List<String> doTestByFile() {
+    myFixture.configureByFile("completion/" + getTestName(true) + ".py");
+    myFixture.completeBasic();
+    return myFixture.getLookupElementStrings();
   }
 
   public void testLocalVar() {
@@ -267,16 +280,6 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest3K() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest();
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
-  }
-
   public void testSuperMethod() {  // PY-170
     doTest();
   }
@@ -474,12 +477,6 @@ public class PythonCompletionTest extends PyTestCase {
                              "a.<caret>").contains("mro"));
   }
 
-  private List<String> doTestByText(String text) {
-    myFixture.configureByText(PythonFileType.INSTANCE, text);
-    myFixture.completeBasic();
-    return myFixture.getLookupElementStrings();
-  }
-
   public void testDunderAllReference() {  // PY-5502
     doTest();
   }
@@ -660,9 +657,7 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   private void assertUnderscoredMethodSpecialAttributesSuggested() {
-    myFixture.configureByFile("completion/" + getTestName(true) + ".py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
+    final List<String> suggested = doTestByFile();
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
     assertDoesntContain(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
@@ -700,11 +695,22 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   private void assertUnderscoredFunctionAttributesSuggested() {
-    myFixture.configureByFile("completion/" + getTestName(true) + ".py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
+    final List<String> suggested = doTestByFile();
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
     assertDoesntContain(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
+  }
+
+  public void testFromUsedMethodsOfString() {
+    final List<String> suggested = doTestByFile();
+    assertNotNull(suggested);
+    // append comes from bytearray
+    assertContainsElements(suggested, "lower", "capitalize", "join", "append");
+  }
+
+  public void testFromUsedAttributesOfClass() {
+    final List<String> suggested = doTestByFile();
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "other_method", "name", "unique_method");
   }
 }
