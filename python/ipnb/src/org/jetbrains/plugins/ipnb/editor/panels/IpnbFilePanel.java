@@ -199,6 +199,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     myIpnbFile.removeCell(index);
 
     remove(myBufferPanel);
+    if (myIpnbPanels.isEmpty()) {
+      createAndAddCell();
+    }
   }
 
   public void copyCell() {
