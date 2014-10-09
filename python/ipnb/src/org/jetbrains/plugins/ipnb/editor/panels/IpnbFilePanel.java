@@ -274,7 +274,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
         selectPrev(mySelectedCell);
         if (index > 0) {
           final Rectangle cellBounds = mySelectedCell.getBounds();
-          if (cellBounds.getY() + cellBounds.getHeight() <= rect.getY()) {
+          if (cellBounds.getY() <= rect.getY()) {
             myIncrement = rect.y - cellBounds.y;
             getParent().dispatchEvent(e);
           }
@@ -284,7 +284,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
         selectNext(mySelectedCell);
         if (index < myIpnbPanels.size() - 1) {
           final Rectangle cellBounds = mySelectedCell.getBounds();
-          if (cellBounds.getY() > rect.getY() + rect.getHeight()) {
+          if (cellBounds.getY() + cellBounds.getHeight() > rect.getY() + rect.getHeight()) {
             myIncrement = cellBounds.y + cellBounds.height - rect.y - rect.height;
             getParent().dispatchEvent(e);
           }

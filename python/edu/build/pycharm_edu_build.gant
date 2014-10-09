@@ -219,7 +219,6 @@ private layoutPlugins(layouts) {
     layouts.layoutPlugin("course-creator")
     layouts.layoutPlugin("ipnb") {
       fileset(dir: "$pythonCommunityHome/ipnb/lib")
-      fileset(file: "${home}/community/plugins/gradle/lib/commons-io-1.4.jar")
     }
   }
 

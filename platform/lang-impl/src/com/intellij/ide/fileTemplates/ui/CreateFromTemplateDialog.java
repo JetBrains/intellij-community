@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@ package com.intellij.ide.fileTemplates.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.CreateFileAction;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -112,8 +115,14 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
   private void doCreate(@Nullable final String fileName)  {
     try {
-      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, fileName, myAttrPanel.getProperties(myDefaultProperties),
-                                                             myDirectory);
+      final CreateFileAction.MkDirs mkDirs = ApplicationManager.getApplication().runWriteAction(new Computable<CreateFileAction.MkDirs>() {
+        @Override
+        public CreateFileAction.MkDirs compute() {
+          return new CreateFileAction.MkDirs(fileName, myDirectory);
+        }
+      });
+      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, mkDirs.newName, myAttrPanel.getProperties(myDefaultProperties),
+                                                             mkDirs.directory);
     }
     catch (Exception e) {
       showErrorDialog(e);

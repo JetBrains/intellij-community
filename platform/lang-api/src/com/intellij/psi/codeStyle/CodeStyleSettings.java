@@ -718,11 +718,11 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   private static void logIndentOptions(@NotNull PsiFile file,
                                        @NotNull FileIndentOptionsProvider provider,
                                        @NotNull IndentOptions options) {
-    LOG.info("Indent options returned by " + provider.getClass().getName() +
-             " for " + file.getName() +
-             ": indent size=" + options.INDENT_SIZE +
-             ", use tabs=" + options.USE_TAB_CHARACTER +
-             ", tab size=" + options.TAB_SIZE);
+    LOG.debug("Indent options returned by " + provider.getClass().getName() +
+              " for " + file.getName() +
+              ": indent size=" + options.INDENT_SIZE +
+              ", use tabs=" + options.USE_TAB_CHARACTER +
+              ", tab size=" + options.TAB_SIZE);
   }
   
   @Nullable

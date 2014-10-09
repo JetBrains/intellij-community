@@ -589,4 +589,20 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "};"
     );
   }
+  
+  public void testCommentBetweenAnnotationAndModifierList() {
+    getSettings().KEEP_LINE_BREAKS = false;
+    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
+    doClassTest("@Override\n" +
+                "//FIX me this stupid stuff\n" +
+                "public void run() {\n" +
+                "        int a = 2;\n" +
+                "}",
+
+                "@Override\n" +
+                "//FIX me this stupid stuff\n" +
+                "public void run() {\n" +
+                "    int a = 2;\n" +
+                "}");
+  }
 }
