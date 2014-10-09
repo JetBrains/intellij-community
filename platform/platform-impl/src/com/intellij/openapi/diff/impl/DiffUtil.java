@@ -27,6 +27,7 @@ import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.impl.util.FocusDiffSide;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
@@ -153,4 +154,7 @@ public class DiffUtil {
     }
   }
 
+  public static boolean isDiffEditor(@NotNull Editor editor) {
+    return editor.getUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY) != null;
+  }
 }

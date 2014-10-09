@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +37,10 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     Project project = e.getProject();
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+    if (DiffUtil.isDiffEditor(editor)) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
