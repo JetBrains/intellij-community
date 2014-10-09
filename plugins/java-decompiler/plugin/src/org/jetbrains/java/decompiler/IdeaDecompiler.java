@@ -136,7 +136,8 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       files.put(file.getPath(), file);
       String mask = file.getNameWithoutExtension() + "$";
       for (VirtualFile child : file.getParent().getChildren()) {
-        if (child.getNameWithoutExtension().startsWith(mask) && file.getFileType() == StdFileTypes.CLASS) {
+        String name = child.getNameWithoutExtension();
+        if (name.startsWith(mask) && name.length() > mask.length() && file.getFileType() == StdFileTypes.CLASS) {
           files.put(FileUtil.toSystemIndependentName(child.getPath()), child);
         }
       }
