@@ -169,7 +169,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       component.readExternal(element);
     }
     catch (InvalidDataException e) {
-      throw new InvalidComponentDataException(e);
+      throw new RuntimeException(e);
     }
 
     validateUnusedMacros(componentName, true);
