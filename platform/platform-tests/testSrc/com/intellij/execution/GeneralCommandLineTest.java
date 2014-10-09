@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
+import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -156,7 +158,7 @@ public class GeneralCommandLineTest {
     assumeTrue(SystemInfo.isWindows);
 
     String string = "http://localhost/wtf?a=b&c=d";
-    String echo = ExecUtil.execAndReadLine(ExecUtil.getWindowsShellName(), "/c", "echo", string);
+    String echo = ExecUtil.execAndReadLine(new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/c", "echo", string));
     assertEquals('"' + string + '"', echo);
   }
 
@@ -194,9 +196,23 @@ public class GeneralCommandLineTest {
 
   @Test
   public void hackyEnvMap () throws Exception {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+    Map<String, String> env = new GeneralCommandLine().getEnvironment();
+
     //noinspection ConstantConditions
-    commandLine.getEnvironment().putAll(null);
+    env.putAll(null);
+
+    try {
+      env.put("key1", null);
+      fail("null values should be rejected");
+    }
+    catch (AssertionError ignored) { }
+
+    try {
+      Map<String, String> indirect = newHashMap(pair("key2", (String)null));
+      env.putAll(indirect);
+      fail("null values should be rejected");
+    }
+    catch (AssertionError ignored) { }
   }
 
   @Test
