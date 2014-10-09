@@ -40,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -70,19 +71,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Override
   public boolean checkVersion() {
-    final ApplicationNamesInfo appNamesInfo = ApplicationNamesInfo.getInstance();
     if (originalVersion >= 0 && originalVersion < ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
       final VirtualFile projectFile = getProjectFile();
       LOG.assertTrue(projectFile != null);
-      String name = projectFile.getNameWithoutExtension();
-
       String message = ProjectBundle.message("project.convert.old.prompt", projectFile.getName(),
-                                             appNamesInfo.getProductName(),
-                                             name + OLD_PROJECT_SUFFIX + projectFile.getExtension());
+                                             ApplicationNamesInfo.getInstance().getProductName(),
+                                             projectFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + projectFile.getExtension());
       if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
 
       List<String> conversionProblems = getConversionProblemsStorage();
-      if (conversionProblems != null && !conversionProblems.isEmpty()) {
+      if (!ContainerUtil.isEmpty(conversionProblems)) {
         StringBuilder buffer = new StringBuilder();
         buffer.append(ProjectBundle.message("project.convert.problems.detected"));
         for (String s : conversionProblems) {
@@ -90,10 +88,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           buffer.append(s);
         }
         buffer.append(ProjectBundle.message("project.convert.problems.help"));
-        final int result = Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
+        if (Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
                                                ProjectBundle.message("project.convert.problems.help.button"),
-                                                 CommonBundle.getCloseButtonText(), Messages.getWarningIcon());
-        if (result == Messages.OK) {
+                                                 CommonBundle.getCloseButtonText(), Messages.getWarningIcon()) == Messages.OK) {
           HelpManager.getInstance().invokeHelp("project.migrationProblems");
         }
       }
@@ -128,7 +125,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     if (originalVersion > ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
       String message =
-        ProjectBundle.message("project.load.new.version.warning", myProject.getName(), appNamesInfo.getProductName());
+        ProjectBundle.message("project.load.new.version.warning", myProject.getName(), ApplicationNamesInfo.getInstance().getProductName());
 
       if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
     }
