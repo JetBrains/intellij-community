@@ -111,21 +111,21 @@ public class DeepComparator implements Disposable {
     });
   }
 
-  public void highlightInBackground(@NotNull String branchToCompare, @NotNull VcsLogDataProvider dataProvider) {
+  public void highlightInBackground(@NotNull final String branchToCompare, @NotNull final VcsLogDataProvider dataProvider) {
     if (myTask != null) {
       LOG.error("Shouldn't be possible");
       return;
     }
 
-    Map<GitRepository, GitBranch> repositories = getRepositories(myUi.getDataPack().getLogProviders(), branchToCompare);
-    if (repositories.isEmpty()) {
-      return;
-    }
-
-    myTask = new MyTask(myProject, myUi, repositories, dataProvider, branchToCompare);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        Map<GitRepository, GitBranch> repositories = getRepositories(myUi.getDataPack().getLogProviders(), branchToCompare);
+        if (repositories.isEmpty()) {
+          return;
+        }
+
+        myTask = new MyTask(myProject, myUi, repositories, dataProvider, branchToCompare);
         myTask.queue();
       }
     });
