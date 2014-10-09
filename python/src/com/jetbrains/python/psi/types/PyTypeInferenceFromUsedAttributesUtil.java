@@ -10,6 +10,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,9 @@ public class PyTypeInferenceFromUsedAttributesUtil {
 
     final Set<PyClass> suitableClasses = Sets.newHashSet();
     for (PyClass candidate : candidates) {
+      if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
+        continue;
+      }
       final Set<String> availableAttrs = Sets.newHashSet(getAllDeclaredAttributeNames(candidate));
       for (PyClass parent : candidate.getAncestorClasses(context)) {
         availableAttrs.addAll(getAllDeclaredAttributeNames(parent));
