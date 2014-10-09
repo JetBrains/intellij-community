@@ -103,7 +103,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -622,7 +623,7 @@ public class BuildManager implements ApplicationComponent{
               data = new ProjectData(new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE));
               myProjectDataMap.put(projectPath, data);
             }
-            if (isRebuild || (isAutomake && Registry.is("compiler.automake.force.fs.rescan"))) {
+            if (isRebuild) {
               data.dropChanges();
             }
             if (IS_UNIT_TEST_MODE) {
