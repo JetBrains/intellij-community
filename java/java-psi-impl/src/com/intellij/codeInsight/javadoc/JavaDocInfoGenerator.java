@@ -639,13 +639,15 @@ public class JavaDocInfoGenerator {
           String text = o.toString();
           PsiType type = variable.getType();
           if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            text = "\"" + StringUtil.escapeLineBreak(StringUtil.shortenPathWithEllipsis(text, 120)) + "\"";
+            text = "\"" + StringUtil.escapeStringCharacters(StringUtil.shortenPathWithEllipsis(text, 120)) + "\"";
           }
-          else if (type.equalsToText("char")) text = "'" + text + "'";
+          else if (type.equalsToText("char")) {
+            text = "'" + text + "'";
+          }
           try {
             return instance.getElementFactory().createExpressionFromText(text, variable);
           } catch (IncorrectOperationException ex) {
-            LOG.error(text, ex);
+            LOG.info("type:" + type.getCanonicalText() + "; text: " + text, ex);
           }
         }
       }
@@ -2052,7 +2054,7 @@ public class JavaDocInfoGenerator {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       myBuffer.append(expression.getMethodExpression().getText()).append("(");
-      expression.getArgumentList().acceptChildren(this);
+      expression.getArgumentList().accept(this);
       myBuffer.append(")");
     }
 

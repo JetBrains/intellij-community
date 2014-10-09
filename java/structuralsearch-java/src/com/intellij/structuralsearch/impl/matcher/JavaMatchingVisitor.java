@@ -1,11 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -15,10 +16,8 @@ import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.HierarchyNodeIterator;
-import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.containers.ContainerUtil;
@@ -836,8 +835,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
     final String text = stripTypeParameters(el.getText());
-    if (text.indexOf('.') == -1 || !(el2 instanceof PsiJavaReference)) {
-      return MatchUtils.compareWithNoDifferenceToPackage(text, stripTypeParameters(el2.getText()));
+    final boolean equalsIgnorePackage = MatchUtils.compareWithNoDifferenceToPackage(text, stripTypeParameters(el2.getText()));
+    if (equalsIgnorePackage || !(el2 instanceof PsiJavaReference)) {
+      return equalsIgnorePackage;
     }
     else {
       PsiElement element2 = ((PsiJavaReference)el2).resolve();

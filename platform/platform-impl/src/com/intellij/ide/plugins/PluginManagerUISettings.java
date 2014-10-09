@@ -20,10 +20,12 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -38,7 +40,14 @@ import javax.swing.*;
   }
 )
 public class PluginManagerUISettings implements PersistentStateComponent<Element>, PerformInBackgroundOption {
-  private static final SkipDefaultValuesSerializationFilters FILTERS = new SkipDefaultValuesSerializationFilters();
+  private static final SkipDefaultValuesSerializationFilters FILTERS = new SkipDefaultValuesSerializationFilters() {
+    @Override
+    protected void configure(@NotNull Object o) {
+      if (o instanceof SplitterProportionsDataImpl) {
+        ((SplitterProportionsDataImpl)o).getProportions().add(0.5f);
+      }
+    }
+  };
 
   public int AVAILABLE_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
 
@@ -71,7 +80,9 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
 
     final Element availableProportions = new Element(AVAILABLE_PROPORTIONS);
     XmlSerializer.serializeInto(myAvailableSplitterProportionsData, availableProportions, FILTERS);
-    element.addContent(availableProportions);
+    if (!JDOMUtil.isEmpty(availableProportions)) {
+      element.addContent(availableProportions);
+    }
     return element;
   }
 

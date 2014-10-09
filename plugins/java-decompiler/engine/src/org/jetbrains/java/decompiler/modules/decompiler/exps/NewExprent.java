@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -94,7 +95,7 @@ public class NewExprent extends Exprent {
     if (anonymous) {
       ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newtype.value);
 
-      return node.anonimousClassType;
+      return node.anonymousClassType;
     }
     else {
       return newtype;
@@ -172,7 +173,7 @@ public class NewExprent extends Exprent {
 
   @Override
   public String toJava(int indent, BytecodeMappingTracer tracer) {
-    StringBuilder buf = new StringBuilder();
+    TextBuffer buf = new TextBuffer();
 
     if (anonymous) {
 
@@ -220,7 +221,7 @@ public class NewExprent extends Exprent {
               }
             }
 
-            StringBuilder buff = new StringBuilder();
+            TextBuffer buff = new TextBuffer();
             ExprProcessor.getCastedExprent(param, invsuper.getDescriptor().params[i], buff, indent, true, tracer);
 
             buf.append(buff);
@@ -232,13 +233,13 @@ public class NewExprent extends Exprent {
       if (!enumconst) {
         String enclosing = null;
         if (!lambda && constructor != null) {
-          enclosing = getQualifiedNewInstance(child.anonimousClassType.value, constructor.getLstParameters(), indent, tracer);
+          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getLstParameters(), indent, tracer);
         }
 
-        String typename = ExprProcessor.getCastTypeName(child.anonimousClassType);
+        String typename = ExprProcessor.getCastTypeName(child.anonymousClassType);
 
         if (enclosing != null) {
-          ClassNode anonimousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonimousClassType.value);
+          ClassNode anonimousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonymousClassType.value);
           if (anonimousNode != null) {
             typename = anonimousNode.simpleName;
           }
@@ -317,7 +318,7 @@ public class NewExprent extends Exprent {
                   buf.append(", ");
                 }
 
-                StringBuilder buff = new StringBuilder();
+                TextBuffer buff = new TextBuffer();
                 ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buff, indent, true, tracer);
 
                 buf.append(buff);
@@ -373,7 +374,7 @@ public class NewExprent extends Exprent {
             if (i > 0) {
               buf.append(", ");
             }
-            StringBuilder buff = new StringBuilder();
+            TextBuffer buff = new TextBuffer();
             ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buff, indent, false, tracer);
 
             buf.append(buff);

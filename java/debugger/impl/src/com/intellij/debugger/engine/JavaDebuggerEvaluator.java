@@ -85,7 +85,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
         descriptor.setContext(evalContext);
         @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
         EvaluateException exception = descriptor.getEvaluateException();
-        if (exception != null) {
+        if (exception != null && descriptor.getValue() == null) {
           callback.errorOccurred(exception.getMessage());
           return;
         }

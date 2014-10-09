@@ -1,10 +1,10 @@
 package org.jetbrains.java.decompiler.main.collectors;
 
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
+
 import java.util.HashMap;
 import java.util.Map.Entry;
-
-import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class BytecodeSourceMapper {
 
@@ -37,12 +37,9 @@ public class BytecodeSourceMapper {
     }
   }
 
-  public void dumpMapping(StringBuilder buffer) {
+  public void dumpMapping(TextBuffer buffer) {
 
     String lineSeparator = DecompilerContext.getNewLineSeparator();
-    String indentstr1 = InterpreterUtil.getIndentString(1);
-    String indentstr2 = InterpreterUtil.getIndentString(2);
-
 
     for(Entry<String, HashMap<String, HashMap<Integer, Integer>>> class_entry : mapping.entrySet()) {
       HashMap<String, HashMap<Integer, Integer>> class_mapping = class_entry.getValue();
@@ -54,17 +51,17 @@ public class BytecodeSourceMapper {
         HashMap<Integer, Integer> method_mapping = method_entry.getValue();
 
         if(!is_first_method) {
-          buffer.append(lineSeparator);
+          buffer.appendLineSeparator();
         }
-        buffer.append(indentstr1 + "method " + method_entry.getKey() + "{" + lineSeparator);
+        buffer.appendIndent(1).append("method " + method_entry.getKey() + "{" + lineSeparator);
 
         for(Entry<Integer, Integer> line : method_mapping.entrySet()) {
-          buffer.append(indentstr2 + line.getKey() + indentstr2 + (line.getValue() +offset_total) + lineSeparator);
+          buffer.appendIndent(2).append(line.getKey().toString()).appendIndent(2).append((line.getValue() + offset_total) + lineSeparator);
         }
-        buffer.append(indentstr1 + "}" + lineSeparator);
+        buffer.appendIndent(1).append("}").appendLineSeparator();
         is_first_method = false;
       }
-      buffer.append("}" + lineSeparator);
+      buffer.append("}").appendLineSeparator();
     }
   }
 

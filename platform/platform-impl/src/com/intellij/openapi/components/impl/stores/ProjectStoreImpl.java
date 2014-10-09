@@ -39,7 +39,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtilRt;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -49,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
 import java.util.List;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
@@ -526,11 +525,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     @Override
     public Storage[] selectStorages(final Storage[] storages, final PersistentStateComponent<?> component, final StateStorageOperation operation) {
       if (operation == StateStorageOperation.READ) {
-        OrderedSet<Storage> result = new OrderedSet<Storage>();
-
-        for (Storage storage : storages) {
+        List<Storage> result = new SmartList<Storage>();
+        for (int i = storages.length - 1; i >= 0; i--) {
+          Storage storage = storages[i];
           if (storage.scheme() == myScheme) {
-            result.add(0, storage);
+            result.add(storage);
           }
         }
 
@@ -543,7 +542,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         return result.toArray(new Storage[result.size()]);
       }
       else if (operation == StateStorageOperation.WRITE) {
-        List<Storage> result = new ArrayList<Storage>();
+        List<Storage> result = new SmartList<Storage>();
         for (Storage storage : storages) {
           if (storage.scheme() == myScheme) {
             result.add(storage);

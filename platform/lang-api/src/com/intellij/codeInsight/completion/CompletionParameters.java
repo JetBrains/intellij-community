@@ -34,7 +34,7 @@ public final class CompletionParameters {
 
   CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
                        @NotNull CompletionType completionType, int offset, final int invocationCount, @NotNull Editor editor) {
-    assert offset >= position.getTextRange().getStartOffset();
+    assert position.getTextRange().containsOffset(offset) : position;
     myPosition = position;
     assert position.isValid();
     myOriginalFile = originalFile;

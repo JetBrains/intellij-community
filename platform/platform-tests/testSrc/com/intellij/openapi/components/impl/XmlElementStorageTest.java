@@ -97,8 +97,8 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    protected MySaveSession createSaveSession(@NotNull StorageData storageData) {
-      return new MySaveSession(storageData) {
+    protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
+      return new XmlElementStorageSaveSession(storageData) {
         @Override
         protected void doSave(@Nullable Element element) {
           mySavedElement = element == null ? null : element.clone();

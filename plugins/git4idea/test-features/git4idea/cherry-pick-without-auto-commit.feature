@@ -15,8 +15,6 @@ Feature: Git Cherry-Pick When Auto-Commit is deselected
   Scenario: Simple cherry-pick
     When I cherry-pick the commit f5027a3
     Then commit dialog should be shown
-    And active changelist is 'fix #1 (cherry picked from commit f5027a3)'
-
 
   Scenario: Simple cherry-pick, agree to commit
     When I cherry-pick the commit f5027a3 and commit
@@ -34,7 +32,7 @@ Feature: Git Cherry-Pick When Auto-Commit is deselected
   Scenario: Simple cherry-pick, cancel commit
     When I cherry-pick the commit f5027a3 and don't commit
     Then nothing is committed
-    And active changelist is 'fix #1 (cherry picked from commit f5027a3)'
+    And there is changelist 'fix #1 (cherry picked from commit f5027a3)'
     And no notification is shown
 
   Scenario: Cherry-pick 2 commits
@@ -67,7 +65,7 @@ Feature: Git Cherry-Pick When Auto-Commit is deselected
       (cherry picked from commit f5027a3)
       """
     And working tree is dirty
-    And active changelist is 'fix #2 (cherry picked from commit abc1234)'
+    And there is changelist 'fix #2 (cherry picked from commit abc1234)'
     And warning notification is shown 'Cherry-pick cancelled'
       """
       abc1234 fix #2

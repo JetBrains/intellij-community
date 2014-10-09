@@ -76,7 +76,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         @Override
         public void run() {
           if (component instanceof PersistentStateComponent) {
-            initPersistentComponent((PersistentStateComponent<?>)component, false);
+            initPersistentComponent((PersistentStateComponent<?>)component, false, false);
           }
           else {
             initJdomExternalizable((JDOMExternalizable)component);
@@ -233,13 +233,17 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
   }
 
-  private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData) {
+  private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData, boolean isReinit) {
     State spec = getStateSpec(component);
     final String name = spec.name();
     ComponentRoamingManager.getInstance().setRoamingType(name, spec.roamingType());
 
-    doAddComponent(name, component);
-    if (optimizeTestLoading()) return name;
+    if (!isReinit) {
+      doAddComponent(name, component);
+    }
+    if (optimizeTestLoading()) {
+      return name;
+    }
 
     Class<T> stateClass = getComponentStateClass(component);
 
@@ -256,6 +260,12 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       StateStorage stateStorage = getStateStorageManager().getStateStorage(storageSpec);
       if (stateStorage != null && stateStorage.hasState(component, name, stateClass, reloadData)) {
         state = stateStorage.getState(component, name, stateClass, state);
+        if (state instanceof Element) {
+          // actually, our DefaultStateSerializer.deserializeState doesn't perform merge states if state is Element,
+          // storages are ordered by priority (first has higher priority), so, in this case we must just use first state
+          // https://youtrack.jetbrains.com/issue/IDEA-130930. More robust solution must be implemented later.
+          break;
+        }
       }
     }
 
@@ -424,7 +434,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return false;
     }
     else {
-      initPersistentComponent(component, reloadData);
+      initPersistentComponent(component, reloadData, true);
       return true;
     }
   }

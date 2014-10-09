@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,9 +163,9 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
       };
     dialog.show();
     int res = dialog.getExitCode();
-    if (res == RemoveUnusedVariableUtil.CANCEL) return false;
+    if (res == RemoveUnusedVariableUtil.RemoveMode.CANCEL.ordinal()) return false;
     try {
-      if (res == RemoveUnusedVariableUtil.MAKE_STATEMENT) {
+      if (res == RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT.ordinal()) {
         final PsiStatement statementFromText = factory.createStatementFromText(qualifierExpression.getText() + ";", null);
         final PsiStatement statement = PsiTreeUtil.getParentOfType(myExpression, PsiStatement.class);
         statement.getParent().addBefore(statementFromText, statement);

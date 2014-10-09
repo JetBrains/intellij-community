@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        close(RemoveUnusedVariableUtil.DELETE_ALL);
+        close(RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL.ordinal());
       }
 
     };
@@ -76,7 +76,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          close(RemoveUnusedVariableUtil.MAKE_STATEMENT);
+          close(RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT.ordinal());
         }
       };
       actions.add(makeStmtAction);
@@ -110,7 +110,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    close(RemoveUnusedVariableUtil.CANCEL);
+    close(RemoveUnusedVariableUtil.RemoveMode.CANCEL.ordinal());
   }
 
   @Override

@@ -98,7 +98,7 @@ public class JBMacMessages extends MacMessagesEmulation {
     if (window == null) {
       window = getForemostWindow(null);
     }
-    new SheetMessage(window, title, message, UIUtil.getInformationIcon(), new String [] {okText}, null, null, okText);
+    new SheetMessage(window, title, message, UIUtil.getInformationIcon(), new String [] {okText}, null, okText, okText);
   }
 
   @Override

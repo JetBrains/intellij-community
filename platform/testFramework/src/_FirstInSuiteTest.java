@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.psi.impl.DocumentCommitThread;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import junit.framework.TestCase;
-import sun.awt.AWTAutoShutdown;
+
+import javax.swing.*;
 
 /**
  * This is should be first test in all tests so we can measure how long tests are starting up.
@@ -28,18 +26,20 @@ import sun.awt.AWTAutoShutdown;
 @SuppressWarnings("JUnitTestClassNamingConvention")
 public class _FirstInSuiteTest extends TestCase {
   public void testNothing() throws Exception {
+    SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        System.out.println("EDT is "+Thread.currentThread());
+      }
+    });
     // in tests EDT inexplicably shuts down sometimes during the first access,
     // which leads to nasty problems in ApplicationImpl which assumes there is only one EDT.
     // so we try to forcibly terminate EDT here to urge JVM to re-spawn new shiny permanent EDT-1
-    UIUtil.invokeAndWaitIfNeeded(EmptyRunnable.getInstance());
-    final Thread mainThread = Thread.currentThread();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    UsefulTestCase.replaceIdeEventQueueSafely();
+    SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        AWTAutoShutdown.getInstance().notifyThreadBusy(mainThread);
-        LightPlatformTestCase.initApplication();
-        DocumentCommitThread.getInstance();
-        Thread.currentThread().interrupt(); // exit current EDT, ignore all queued events since they are in a wrong thread by now
+        System.out.println("EDT is "+Thread.currentThread());
       }
     });
   }

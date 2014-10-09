@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -99,6 +101,15 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
 
   public void setSections(@Nullable List<ArrangementSectionRule> rules) {
     myControl.setSections(rules);
+  }
+
+  @Nullable
+  public Collection<StdArrangementRuleAliasToken> getRulesAliases() {
+    return myControl.getRulesAliases();
+  }
+
+  public void setRulesAliases(@Nullable Collection<StdArrangementRuleAliasToken> aliases) {
+    myControl.setRulesAliases(aliases);
   }
 
   @Nullable

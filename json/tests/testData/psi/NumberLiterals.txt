@@ -63,11 +63,7 @@ JsonFile: NumberLiterals.json
     PsiElement(,)(',')
     PsiWhiteSpace('\n\n  ')
     JsonNumberLiteral
-      PsiElement(NUMBER)('1')
-    PsiErrorElement:',' or ']' expected, got 'e'
-      <empty list>
-    JsonReferenceExpression
-      PsiElement(INDENTIFIER)('e')
+      PsiElement(NUMBER)('1e')
     PsiElement(,)(',')
     PsiWhiteSpace('\n  ')
     JsonReferenceExpression
@@ -135,11 +131,7 @@ JsonFile: NumberLiterals.json
     PsiElement(,)(',')
     PsiWhiteSpace('\n  ')
     JsonNumberLiteral
-      PsiElement(NUMBER)('1.2')
-    PsiErrorElement:',' or ']' expected, got 'e'
-      <empty list>
-    JsonReferenceExpression
-      PsiElement(INDENTIFIER)('e')
+      PsiElement(NUMBER)('1.2e')
     PsiElement(,)(',')
     PsiWhiteSpace('\n  ')
     PsiErrorElement:'.' unexpected

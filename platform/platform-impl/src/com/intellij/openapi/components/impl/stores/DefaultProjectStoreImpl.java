@@ -71,8 +71,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      protected MySaveSession createSaveSession(@NotNull StorageData storageData) {
-        return new MySaveSession(storageData) {
+      protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
+        return new XmlElementStorageSaveSession(storageData) {
           @Override
           protected void doSave(@Nullable Element element) {
             // we must set empty element instead of null as indicator - ProjectManager state is ready to save

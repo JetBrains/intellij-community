@@ -26,8 +26,8 @@ import java.util.Map;
 
 @State(
   name = "RunnerLayoutSettings",
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/runner.layout.xml")})
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/runner.layout.xml", roamingType = RoamingType.DISABLED)
+)
 public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
   public static RunnerLayoutSettings getInstance() {
     return ServiceManager.getService(RunnerLayoutSettings.class);

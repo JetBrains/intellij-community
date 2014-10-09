@@ -678,7 +678,7 @@ def layoutAndroid(String androidHome) {
     layoutPlugin("android") {
       fileset(dir: "${androidHome}/android/lib") {
         include(name: "**/*.jar")
-        exclude(name: "**/ddmlib_1.jar")
+        exclude(name: "**/fest-*.jar")
         exclude(name: "src/*.jar")
       }
 
@@ -794,6 +794,7 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         include(name: "jgoodies-forms.jar")
         include(name: "ecj*.jar")
         include(name: "jsr166e.jar")
+        include(name: "netty-all-*.jar")
       }
       fileset(dir: "$home/jps/lib") {
         include(name: "optimizedFileManager.jar")

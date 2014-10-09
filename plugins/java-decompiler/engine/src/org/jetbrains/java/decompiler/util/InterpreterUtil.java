@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.util;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 
 import java.io.*;
@@ -92,16 +93,11 @@ public class InterpreterUtil {
   public static String getIndentString(int length) {
     if (length == 0) return "";
     StringBuilder buf = new StringBuilder();
-    appendIndent(buf, length);
-    return buf.toString();
-  }
-
-  public static void appendIndent(StringBuilder buffer, int length) {
-    if (length == 0) return;
     String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
     while (length-- > 0) {
-      buffer.append(indent);
+      buf.append(indent);
     }
+    return buf.toString();
   }
 
   public static boolean equalSets(Collection<?> c1, Collection<?> c2) {

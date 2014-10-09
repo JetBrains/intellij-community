@@ -38,7 +38,7 @@ public class SuppressManagerImpl extends SuppressManager {
   }
 
   @Override
-  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, String toolShortName) {
+  public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, String toolShortName) {
     return createBatchSuppressActions(HighlightDisplayKey.find(toolShortName));
   }
 

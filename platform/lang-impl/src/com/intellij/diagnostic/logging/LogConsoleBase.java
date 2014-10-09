@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -421,7 +422,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     console.clear();
     myModel.processingStarted();
 
-    final String[] lines = myOriginalDocument.toString().split("\n");
+    final String[] lines = myOriginalDocument != null ? myOriginalDocument.toString().split("\n") : ArrayUtil.EMPTY_STRING_ARRAY;;
     int offset = 0;
     boolean caretPositioned = false;
 

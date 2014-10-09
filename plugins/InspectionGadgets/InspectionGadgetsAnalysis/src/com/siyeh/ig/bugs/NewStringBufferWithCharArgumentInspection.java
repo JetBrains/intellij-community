@@ -92,7 +92,7 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
       }
       final PsiExpression argument = arguments[0];
       final String text = argument.getText();
-      final String newArgument = '"' + StringUtil.escapeStringCharacters(text.substring(1, text.length() - 1)) + '"';
+      final String newArgument = '"' + StringUtil.escapeStringCharacters(StringUtil.stripQuotesAroundValue(text)) + '"';
       PsiReplacementUtil.replaceExpression(argument, newArgument);
     }
   }

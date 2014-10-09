@@ -415,7 +415,7 @@ public abstract class PluginManagerMain implements Disposable {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (PluginInstaller.prepareToInstall(plugins, allPlugins)) {
+            if (PluginInstaller.prepareToInstall(plugins, allPlugins, indicator)) {
               ApplicationManager.getApplication().invokeLater(onSuccess);
               result[0] = true;
             }

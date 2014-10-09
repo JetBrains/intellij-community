@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,15 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RemoveUnusedVariableFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix");
@@ -83,7 +86,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       references.add(myVariable);
       // check for side effects
       for (PsiElement element : references) {
-        Boolean result = RemoveUnusedVariableUtil.processUsage(element, myVariable, sideEffects, RemoveUnusedVariableUtil.CANCEL);
+        Boolean result = RemoveUnusedVariableUtil.processUsage(element, myVariable, sideEffects, RemoveUnusedVariableUtil.RemoveMode.CANCEL);
         if (result == null) return;
         canCopeWithSideEffects[0] &= result;
       }
@@ -92,7 +95,8 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       LOG.error(e);
     }
 
-    final int deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects[0]);
+    final RemoveUnusedVariableUtil.RemoveMode
+      deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects[0]);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -107,17 +111,17 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     });
   }
 
-  public static int showSideEffectsWarning(List<PsiElement> sideEffects,
+  public static RemoveUnusedVariableUtil.RemoveMode showSideEffectsWarning(List<PsiElement> sideEffects,
                                            PsiVariable variable,
                                            Editor editor,
                                            boolean canCopeWithSideEffects,
                                            @NonNls String beforeText,
                                            @NonNls String afterText) {
-    if (sideEffects.isEmpty()) return RemoveUnusedVariableUtil.DELETE_ALL;
+    if (sideEffects.isEmpty()) return RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return canCopeWithSideEffects
-             ? RemoveUnusedVariableUtil.MAKE_STATEMENT
-             : RemoveUnusedVariableUtil.DELETE_ALL;
+             ? RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT
+             : RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
     }
     Project project = editor.getProject();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
@@ -128,10 +132,11 @@ public class RemoveUnusedVariableFix implements IntentionAction {
 
     SideEffectWarningDialog dialog = new SideEffectWarningDialog(project, false, variable, beforeText, afterText, canCopeWithSideEffects);
     dialog.show();
-    return dialog.getExitCode();
+    int code = dialog.getExitCode();
+    return RemoveUnusedVariableUtil.RemoveMode.values()[code];
   }
 
-  private static int showSideEffectsWarning(List<PsiElement> sideEffects,
+  private static RemoveUnusedVariableUtil.RemoveMode showSideEffectsWarning(List<PsiElement> sideEffects,
                                             PsiVariable variable,
                                             Editor editor,
                                             boolean canCopeWithSideEffects) {

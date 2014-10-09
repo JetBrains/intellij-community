@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -414,9 +413,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
     StateStorageManagerExternalizationSession myExternalizationSession = (StateStorageManagerExternalizationSession)externalizationSession;
+    if (myExternalizationSession.mySessions.isEmpty()) {
+      return null;
+    }
+
     List<SaveSession> saveSessions = null;
-    for (StateStorage stateStorage : myExternalizationSession.mySessions.keySet()) {
-      SaveSession saveSession = stateStorage.startSave(myExternalizationSession.mySessions.get(stateStorage));
+    for (Map.Entry<StateStorage, StateStorage.ExternalizationSession> entry : myExternalizationSession.mySessions.entrySet()) {
+      SaveSession saveSession = entry.getKey().startSave(entry.getValue());
       if (saveSession != null) {
         if (saveSessions == null) {
           saveSessions = new SmartList<SaveSession>();
@@ -448,7 +451,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   private final class StateStorageManagerExternalizationSession implements ExternalizationSession {
-    final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new SmartHashMap<StateStorage, StateStorage.ExternalizationSession>();
+    final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>();
 
     @Override
     public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {

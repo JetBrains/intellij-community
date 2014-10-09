@@ -32,6 +32,7 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -82,6 +83,8 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     myOptions.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
     myOptions.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
     myOptions.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "1");
+    myOptions.put(IFernflowerPreferences.BANNER, BANNER);
+    //myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1");
 
     Project project = DefaultProjectFactory.getInstance().getDefaultProject();
     CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
@@ -141,13 +144,14 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       MyBytecodeProvider provider = new MyBytecodeProvider(files);
       MyResultSaver saver = new MyResultSaver();
 
+      myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, Registry.is("decompiler.use.line.table") ? "1" : "0");
       BaseDecompiler decompiler = new BaseDecompiler(provider, saver, myOptions, myLogger);
       for (String path : files.keySet()) {
         decompiler.addSpace(new File(path), true);
       }
       decompiler.decompileContext();
 
-      return BANNER + saver.myResult;
+      return saver.myResult;
     }
     catch (Exception e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

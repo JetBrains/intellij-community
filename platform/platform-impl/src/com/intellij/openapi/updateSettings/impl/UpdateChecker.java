@@ -334,9 +334,9 @@ public final class UpdateChecker {
     return hosts;
   }
 
-  public static boolean checkPluginsHost(final String host, final Map<PluginId, PluginDownloader> downloaded) throws Exception {
+  public static boolean checkPluginsHost(final String host, final Map<PluginId, PluginDownloader> downloaded, @NotNull ProgressIndicator progressIndicator) throws Exception {
     try {
-      return checkPluginsHost(host, downloaded, null, true, null, null);
+      return checkPluginsHost(host, downloaded, null, true, progressIndicator, null);
     }
     catch (ProcessCanceledException e) {
       return false;
@@ -356,19 +356,15 @@ public final class UpdateChecker {
                                           final boolean collectToUpdate,
                                           final @Nullable ProgressIndicator indicator,
                                           final BuildNumber buildNumber) throws Exception {
-    InputStream inputStream = loadVersionInfo(host);
-    if (inputStream == null) return false;
     final Document document;
     try {
-      document = JDOMUtil.loadDocument(inputStream);
+      document = JDOMUtil.loadDocument(RepositoryHelper.getConnectionInputStream(loadVersionInfo(host)));
     }
     catch (JDOMException e) {
       return false;
     }
 
-    inputStream = loadVersionInfo(host);
-    if (inputStream == null) return false;
-    final List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
+    final List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(loadVersionInfo(host), indicator);
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ((PluginNode)descriptor).setRepositoryName(host);
       prepareToInstall(PluginDownloader.createDownloader(descriptor, buildNumber), buildNumber, downloaded, incompatiblePlugins, collectToUpdate,
@@ -412,29 +408,19 @@ public final class UpdateChecker {
 
       if (collectToUpdate) {
         final String finalPluginUrl = getPluginUrl(pluginFile);
-        final Runnable updatePluginRunnable = new Runnable() {
-          public void run() {
-            try {
-              final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-              if (progressIndicator != null) {
-                progressIndicator.setText2(finalPluginUrl);
-              }
-              final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion, null, null, buildNumber);
-              prepareToInstall(downloader, buildNumber, downloaded, incompatiblePlugins, collectToUpdate, indicator);
-            }
-            catch (IOException e) {
-              LOG.info(e);
-            }
-          }
-        };
         if (ApplicationManager.getApplication().isDispatchThread()) {
-          String title = IdeBundle.message("update.uploading.plugin.progress.title");
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(updatePluginRunnable, title, true, null);
+          ProgressManager.getInstance().run(new Task.Modal(null, IdeBundle.message("update.uploading.plugin.progress.title"), true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              updatePlugins(finalPluginUrl, pluginId, pluginVersion, buildNumber, downloaded, incompatiblePlugins, true, indicator);
+            }
+          });
         }
         else {
-          updatePluginRunnable.run();
+          updatePlugins(finalPluginUrl, pluginId, pluginVersion, buildNumber, downloaded, incompatiblePlugins, true, indicator);
         }
-      } else {
+      }
+      else {
         final PluginDownloader downloader = new PluginDownloader(pluginId, pluginUrl, pluginVersion);
         downloader.setDescription(description);
         downloader.setDepends(dependsPlugins);
@@ -442,6 +428,24 @@ public final class UpdateChecker {
       }
     }
     return success;
+  }
+
+  private static void updatePlugins(String finalPluginUrl,
+                                    String pluginId,
+                                    String pluginVersion,
+                                    BuildNumber buildNumber,
+                                    Map<PluginId, PluginDownloader> downloaded,
+                                    Collection<IdeaPluginDescriptor> incompatiblePlugins, boolean collectToUpdate, ProgressIndicator indicator) {
+    try {
+      if (indicator != null) {
+        indicator.setText2(finalPluginUrl);
+      }
+      PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion, null, null, buildNumber);
+      prepareToInstall(downloader, buildNumber, downloaded, incompatiblePlugins, collectToUpdate, indicator);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
   }
 
   @NotNull
@@ -502,6 +506,7 @@ public final class UpdateChecker {
 
     if (newChannelReady(channelToPropose)) {
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           new NewChannelDialog(channelToPropose).show();
         }
@@ -606,34 +611,28 @@ public final class UpdateChecker {
     }
   }
 
-  private static InputStream loadVersionInfo(final String url) throws Exception {
-    final InputStream[] inputStreams = new InputStream[]{null};
-    final Exception[] exception = new Exception[]{null};
+  @NotNull
+  private static URLConnection loadVersionInfo(@NotNull final String url) throws Exception {
+    final Ref<URLConnection> connectionRef = Ref.create();
+    final Ref<Exception> exception = Ref.create();
     Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         try {
-          final String urlToCheck;
+          String urlToCheck;
           if (!StandardFileSystems.FILE_PROTOCOL.equals(new URL(url).getProtocol())) {
             urlToCheck = url + (url.contains("?") ? "&" : "?") + "build=" + ApplicationInfo.getInstance().getBuild().asString();
-          } else {
+          }
+          else {
             urlToCheck = url;
           }
 
-          URLConnection connection;
-          if (ApplicationManager.getApplication() != null) {
-            connection = HttpConfigurable.getInstance().openConnection(urlToCheck);
-          }
-          else {
-            connection = new URL(urlToCheck).openConnection();
-            connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
-            connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
-          }
+          URLConnection connection = RepositoryHelper.openConnection(urlToCheck, true).first;
           connection.connect();
-
-          inputStreams[0] = connection.getInputStream();
+          connectionRef.set(connection);
         }
         catch (IOException e) {
-          exception[0] = e;
+          exception.set(e);
         }
       }
     });
@@ -641,15 +640,18 @@ public final class UpdateChecker {
     try {
       downloadThreadFuture.get(5, TimeUnit.SECONDS);
     }
-    catch (TimeoutException ignored) { }
+    catch (TimeoutException ignored) {
+    }
 
     if (!downloadThreadFuture.isDone()) {
       downloadThreadFuture.cancel(true);
       throw new ConnectionException(IdeBundle.message("updates.timeout.error"));
     }
 
-    if (exception[0] != null) throw exception[0];
-    return inputStreams[0];
+    if (!exception.isNull()) {
+      throw exception.get();
+    }
+    return connectionRef.get();
   }
 
   public static String getInstallationUID(final PropertiesComponent propertiesComponent) {
@@ -734,6 +736,7 @@ public final class UpdateChecker {
     final DownloadPatchResult[] result = new DownloadPatchResult[]{DownloadPatchResult.CANCELED};
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         try {
           doDownloadAndInstallPatch(newVersion, ProgressManager.getInstance().getProgressIndicator());

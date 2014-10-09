@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -57,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.io.File;
@@ -335,11 +337,37 @@ public abstract class UsefulTestCase extends TestCase {
     super.runBare();
   }
 
+  public static void replaceIdeEventQueueSafely() {
+    if (Toolkit.getDefaultToolkit().getSystemEventQueue() instanceof IdeEventQueue) {
+      return;
+    }
+    if (SwingUtilities.isEventDispatchThread()) {
+      throw new RuntimeException("must not call under EDT");
+    }
+
+    // in JDK 1.6 java.awt.EventQueue.push() causes slow painful death of current EDT
+    // so we have to wait through its agony to termination
+    try {
+      SwingUtilities.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          IdeEventQueue.getInstance();
+        }
+      });
+      SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+      SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Override
   public void runBare() throws Throwable {
     if (!shouldRunTest()) return;
 
     if (runInDispatchThread()) {
+      replaceIdeEventQueueSafely();
       final Throwable[] exception = {null};
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override

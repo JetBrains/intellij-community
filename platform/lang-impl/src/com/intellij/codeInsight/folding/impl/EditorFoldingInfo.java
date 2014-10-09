@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,16 +90,16 @@ public class EditorFoldingInfo {
   }
 
   public void dispose() {
-    for (FoldRegion region : myFoldRegionToSmartPointerMap.keySet()) {
-      region.dispose();
-    }
     myFoldRegionToSmartPointerMap.clear();
   }
 
   public static void resetInfo(@NotNull Editor editor) {
     EditorFoldingInfo info = editor.getUserData(KEY);
     if (info != null) {
-      info.dispose();
+      for (FoldRegion region : info.myFoldRegionToSmartPointerMap.keySet()) {
+        region.dispose();
+      }
+      info.myFoldRegionToSmartPointerMap.clear();
     }
     FoldingModel foldingModel = editor.getFoldingModel();
     if (foldingModel instanceof FoldingModelEx) {

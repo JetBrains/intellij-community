@@ -33,6 +33,6 @@ public class JsonFileImpl extends PsiFileBase implements JsonFile {
   @Override
   public String toString() {
     final VirtualFile virtualFile = getVirtualFile();
-    return String.format("JsonFile: " + (virtualFile != null? virtualFile.getName() : "<unknown>"));
+    return "JsonFile: " + (virtualFile != null? virtualFile.getName() : "<unknown>");
   }
 }

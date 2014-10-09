@@ -45,6 +45,7 @@ public interface IFernflowerPreferences {
   String LAMBDA_TO_ANONYMOUS_CLASS = "lac";
 
   String BYTECODE_SOURCE_MAPPING = "bsm";
+  String USE_DEBUG_LINE_NUMBERS = "udl";
 
   String LOG_LEVEL = "log";
   String MAX_PROCESSING_METHOD = "mpm";
@@ -52,6 +53,8 @@ public interface IFernflowerPreferences {
   String USER_RENAMER_CLASS = "urc";
   String NEW_LINE_SEPARATOR = "nls";
   String INDENT_STRING = "ind";
+
+  String BANNER = "ban";
 
   String LINE_SEPARATOR_WIN = "\r\n";
   String LINE_SEPARATOR_LIN = "\n";
@@ -80,6 +83,9 @@ public interface IFernflowerPreferences {
     put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
 
     put(BYTECODE_SOURCE_MAPPING, "0");
+    put(USE_DEBUG_LINE_NUMBERS, "0");
+
+    put(BANNER, "");
 
     put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     put(MAX_PROCESSING_METHOD, "0");

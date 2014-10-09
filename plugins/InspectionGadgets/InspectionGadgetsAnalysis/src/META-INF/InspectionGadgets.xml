@@ -507,7 +507,7 @@
                      key="utility.class.without.private.constructor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.classlayout.UtilityClassWithoutPrivateConstructorInspection"/>
-    <globalInspection shortName="MethodReturnAlwaysConstant" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="MethodReturnAlwaysConstant" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="method.return.always.constant.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.classlayout.MethodReturnAlwaysConstantInspection"/>
@@ -778,33 +778,33 @@
                      key="redundant.local.variable.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.data.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection"/>
-    <globalInspection shortName="BooleanMethodIsAlwaysInverted" bundle="messages.InspectionsBundle"
+    <globalInspection language="JAVA" shortName="BooleanMethodIsAlwaysInverted" bundle="messages.InspectionsBundle"
                       key="boolean.method.is.always.inverted.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.data.flow.issues" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection"/>
 
     <!--group.names.dependency.issues-->
-    <globalInspection shortName="ClassWithTooManyDependencies" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ClassWithTooManyDependencies" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="class.with.too.many.dependencies.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.dependency.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.dependency.ClassWithTooManyDependenciesInspection"/>
-    <globalInspection shortName="ClassWithTooManyDependents" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ClassWithTooManyDependents" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="class.with.too.many.dependents.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.dependency.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.dependency.ClassWithTooManyDependentsInspection"/>
-    <globalInspection shortName="ClassWithTooManyTransitiveDependencies" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ClassWithTooManyTransitiveDependencies" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="class.with.too.many.transitive.dependencies.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.dependency.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.dependency.ClassWithTooManyTransitiveDependenciesInspection"/>
-    <globalInspection shortName="ClassWithTooManyTransitiveDependents" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ClassWithTooManyTransitiveDependents" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="class.with.too.many.transitive.dependents.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.dependency.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.dependency.ClassWithTooManyTransitiveDependentsInspection"/>
-    <globalInspection shortName="CyclicClassDependency" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="CyclicClassDependency" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="cyclic.class.dependency.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.dependency.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.dependency.CyclicClassDependencyInspection"/>
-    <globalInspection shortName="CyclicPackageDependency" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="CyclicPackageDependency" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="cyclic.package.dependency.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.dependency.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.dependency.CyclicPackageDependencyInspection"/>
@@ -1613,19 +1613,19 @@
                      implementationClass="com.siyeh.ig.methodmetrics.ThrownExceptionsPerMethodInspection"/>
 
     <!--group.names.modularization.issues-->
-    <globalInspection shortName="ClassIndependentOfModule" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ClassIndependentOfModule" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="class.independent.of.module.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.modularization.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.modularization.ClassIndependentOfModuleInspection"/>
-    <globalInspection shortName="ClassOnlyUsedInOneModule" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ClassOnlyUsedInOneModule" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="class.only.used.in.one.module.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.modularization.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.modularization.ClassOnlyUsedInOneModuleInspection"/>
-    <globalInspection shortName="ModuleWithTooManyClasses" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ModuleWithTooManyClasses" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="module.with.too.many.classes.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.modularization.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection"/>
-    <globalInspection shortName="ModuleWithTooFewClasses" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ModuleWithTooFewClasses" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="module.with.too.few.classes.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.modularization.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection"/>
@@ -1723,7 +1723,7 @@
                      key="overloaded.vararg.method.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.OverloadedVarargsMethodInspection"/>
-    <globalInspection shortName="PackageNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="PackageNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="package.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.naming.PackageNamingConventionInspection"/>
@@ -1860,29 +1860,29 @@
                      implementationClass="com.siyeh.ig.numeric.UnpredictableBigDecimalConstructorCallInspection"/>
 
     <!--group.names.packaging.issues-->
-    <globalInspection shortName="ClassOnlyUsedInOnePackage" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ClassOnlyUsedInOnePackage" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="class.only.used.in.one.package.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.packaging.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.packaging.ClassOnlyUsedInOnePackageInspection"/>
-    <globalInspection shortName="ClassUnconnectedToPackage" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ClassUnconnectedToPackage" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="class.unconnected.to.package.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.packaging.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.packaging.ClassUnconnectedToPackageInspection"/>
-    <globalInspection shortName="DisjointPackage" bundle="com.siyeh.InspectionGadgetsBundle" key="disjoint.package.display.name"
+    <globalInspection language="JAVA" shortName="DisjointPackage" bundle="com.siyeh.InspectionGadgetsBundle" key="disjoint.package.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.packaging.issues" enabledByDefault="false"
                       level="WARNING" implementationClass="com.siyeh.ig.packaging.DisjointPackageInspection"/>
-    <globalInspection shortName="EmptyDirectory" bundle="com.siyeh.InspectionGadgetsBundle" key="empty.directory.display.name"
+    <globalInspection language="JAVA" shortName="EmptyDirectory" bundle="com.siyeh.InspectionGadgetsBundle" key="empty.directory.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.packaging.issues" enabledByDefault="false"
                       level="WARNING" implementationClass="com.siyeh.ig.packaging.EmptyDirectoryInspection"/>
-    <globalInspection shortName="PackageInMultipleModules" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="PackageInMultipleModules" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="package.in.multiple.modules.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.packaging.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.packaging.PackageInMultipleModulesInspection"/>
-    <globalInspection shortName="PackageWithTooManyClasses" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="PackageWithTooManyClasses" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="package.with.too.many.classes.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.packaging.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.packaging.PackageWithTooManyClassesInspection"/>
-    <globalInspection shortName="PackageWithTooFewClasses" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="PackageWithTooFewClasses" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="package.with.too.few.classes.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.packaging.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.packaging.PackageWithTooFewClassesInspection"/>
@@ -2072,7 +2072,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.portability.UseOfSunClassesInspection"/>
 
     <!--group.names.declaration.redundancy-->
-    <globalInspection shortName="ElementOnlyUsedFromTestCode" bundle="com.siyeh.InspectionGadgetsBundle"
+    <globalInspection language="JAVA" shortName="ElementOnlyUsedFromTestCode" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="element.only.used.from.test.code.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.redundancy.ElementOnlyUsedFromTestCodeInspection"/>

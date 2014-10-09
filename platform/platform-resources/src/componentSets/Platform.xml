@@ -1,11 +1,6 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.openapi.application.ApplicationInfo</interface-class>
-      <implementation-class>com.intellij.openapi.application.impl.ApplicationInfoImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
       <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
     </component>

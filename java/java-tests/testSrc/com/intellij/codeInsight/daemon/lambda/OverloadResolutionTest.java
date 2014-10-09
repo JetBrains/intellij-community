@@ -42,6 +42,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   public void testVoidValueCompatibilityOfImplicitlyTypedLambda() throws Exception {
     doTest();
   }
+  
+  public void testVoidValueCompatibilityCachedControlFlow() throws Exception {
+    doTest();
+  }
 
   public void testIDEA102800() throws Exception {
     doTest();

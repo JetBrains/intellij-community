@@ -221,12 +221,12 @@ public class NestedClassProcessor {
 
         if (!hasEnclosing) {
           if (child.type == ClassNode.CLASS_ANONYMOUS) {
-            DecompilerContext.getLogger()
-              .writeMessage("Unreferenced anonymous class " + child.classStruct.qualifiedName + "!", IFernflowerLogger.Severity.WARN);
+            String message = "Unreferenced anonymous class " + child.classStruct.qualifiedName + "!";
+            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
           }
           else if (child.type == ClassNode.CLASS_LOCAL) {
-            DecompilerContext.getLogger()
-              .writeMessage("Unreferenced local class " + child.classStruct.qualifiedName + "!", IFernflowerLogger.Severity.WARN);
+            String message = "Unreferenced local class " + child.classStruct.qualifiedName + "!";
+            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
           }
         }
       }
@@ -275,8 +275,8 @@ public class NestedClassProcessor {
 
           HashMap<String, List<VarFieldPair>> mask = getMaskLocalVars(nd.wrapper);
           if (mask.isEmpty()) {
-            DecompilerContext.getLogger()
-              .writeMessage("Nested class " + nd.classStruct.qualifiedName + " has no constructor!", IFernflowerLogger.Severity.WARN);
+            String message = "Nested class " + nd.classStruct.qualifiedName + " has no constructor!";
+            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
           }
           else {
             mapVarMasks.put(nd.classStruct.qualifiedName, mask);

@@ -78,7 +78,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   public final synchronized boolean checkContentIsEqualTo(CharSequence sequence) {
     final Document document = getDocument();
-    return document != null && Comparing.equal(document.getImmutableCharSequence(), sequence);
+    return document instanceof DocumentEx &&
+           Comparing.equal(document.getImmutableCharSequence(), sequence) &&
+           !((DocumentEx)document).isInBulkUpdate();
   }
 
   public EditorColorsScheme getScheme() {
