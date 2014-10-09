@@ -344,7 +344,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (SwingUtilities.isEventDispatchThread()) {
       throw new RuntimeException("must not call under EDT");
     }
-
+    UIUtil.pump();
     // in JDK 1.6 java.awt.EventQueue.push() causes slow painful death of current EDT
     // so we have to wait through its agony to termination
     try {

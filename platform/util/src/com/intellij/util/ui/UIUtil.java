@@ -1650,7 +1650,7 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
@@ -1664,6 +1664,16 @@ public class UIUtil {
       catch (Exception e) {
         LOG.error(e); //?
       }
+    }
+  }
+  private static Thread getEventQueueThread() {
+    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    try {
+      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
+      return (Thread)method.invoke(eventQueue);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
