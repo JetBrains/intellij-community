@@ -148,17 +148,23 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
   }
 
   private void addCell(IpnbEditableCell cell, IpnbEditablePanel panel) {
-    final IpnbEditablePanel selectedCell = getSelectedCell();
-    final int index = myIpnbPanels.indexOf(selectedCell);
-    myIpnbFile.addCell(cell, index+1);
-    myIpnbPanels.add(index + 1, panel);
-
     final GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
     c.gridy = 0;
     c.gridwidth = 1;
     c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
+
+    if (myIpnbPanels.isEmpty()) {
+      final int width = IpnbEditorUtil.PANEL_WIDTH + IpnbEditorUtil.PROMPT_SIZE.width;
+      final JLabel label = new JLabel("<html><body style='width: " + width + "px'></body></html>");
+      add(label, c);
+    }
+    final IpnbEditablePanel selectedCell = getSelectedCell();
+    final int index = myIpnbPanels.indexOf(selectedCell);
+    myIpnbFile.addCell(cell, index + 1);
+    myIpnbPanels.add(index + 1, panel);
+
 
     final JPanel promptPanel = new JPanel();
     promptPanel.setPreferredSize(new Dimension(IpnbEditorUtil.PROMPT_SIZE.width, 1));
@@ -261,7 +267,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     myIpnbPanels.add(comp);
   }
 
-  private JPanel createEmptyPanel() {
+  private static JPanel createEmptyPanel() {
     JPanel panel = new JPanel();
     panel.setBackground(IpnbEditorUtil.getBackground());
     return panel;
