@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -40,5 +42,5 @@ public abstract class VcsCheckoutProcessor {
   @NotNull
   public abstract String getId();
 
-  public abstract boolean checkout(@NotNull String url, @NotNull VirtualFile parentDirectory, @NotNull String directoryName);
+  public abstract boolean checkout(@NotNull Map<String, String> parameters, @NotNull VirtualFile parentDirectory, @NotNull String directoryName);
 }
