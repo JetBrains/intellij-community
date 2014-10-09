@@ -35,13 +35,34 @@ public abstract class ArrayChunk {
     data = new Object[rows][columns];
   }
 
-    abstract int getRows();
+  public int getRows() {
+    return rows;
+  }
 
-    abstract int getColumns();
+  public int getColumns(){
+    return columns;
+  }
 
-    abstract Object[][] getData();
+  public Object[][] getData() {
+    return data;
+  }
 
-    abstract String getPresentation();
+  public String getPresentation() {
+    return "";
+  }
 
-    abstract void fillData(Runnable callback);
+  abstract void fillData(Runnable callback);
+
+  public boolean contains(int row, int col) {
+    return rOffset <= row && row < rOffset + rows && cOffset <= col && col < cOffset + columns;
+  }
+
+  public boolean equals(Object o) {
+    return o instanceof ArrayChunk &&
+           baseSlice == ((ArrayChunk)o).baseSlice &&
+           columns == ((ArrayChunk)o).columns &&
+           rows == ((ArrayChunk)o).rows &&
+           cOffset == ((ArrayChunk)o).cOffset &&
+           rOffset == ((ArrayChunk)o).rOffset;
+  }
 }

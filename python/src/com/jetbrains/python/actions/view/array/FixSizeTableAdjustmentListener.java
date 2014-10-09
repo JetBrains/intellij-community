@@ -223,4 +223,28 @@ public abstract class FixSizeTableAdjustmentListener<T extends ArrayChunk> imple
   abstract T createChunk(String baseSlice, int rows, int columns, int rOffset, int cOffset);
 
   abstract String getBaseSlice();
+
+  public void setRowLimit(int rowLimit) {
+    myRowLimit = rowLimit;
+  }
+
+  public void setColLimit(int colLimit) {
+    myColLimit = colLimit;
+  }
+
+  public void setViewRows(int viewRows) {
+    myViewRows = viewRows;
+  }
+
+  public void setViewCols(int viewCols) {
+    myViewCols = viewCols;
+  }
+
+  public void setColOffset(int colOffset) {
+    myColOffset = colOffset;
+  }
+
+  public void setRowOffset(int rowOffset) {
+    myRowOffset = rowOffset;
+  }
 }
