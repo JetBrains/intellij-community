@@ -27,6 +27,8 @@ import com.intellij.openapi.wm.IdeFrame;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -39,14 +41,14 @@ public class GitCheckoutProcessor extends VcsCheckoutProcessor {
   }
 
   @Override
-  public boolean checkout(@NotNull final String url,
-                          @NotNull final VirtualFile parentDirectory, @NotNull final String directoryName) {
+  public boolean checkout(@NotNull final Map<String, String> parameters,
+                          @NotNull final VirtualFile parentDirectory, @NotNull String directoryName) {
 
-    ProgressManager.getInstance().getProgressIndicator().setText(DvcsBundle.message("cloning.repository", url));
+    ProgressManager.getInstance().getProgressIndicator().setText(DvcsBundle.message("cloning.repository", parameters));
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     Project project = frame == null || frame.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : frame.getProject();
     return GitCheckoutProvider.doClone(project,
                                        ServiceManager.getService(Git.class),
-                                       directoryName, parentDirectory.getPath(), url);
+                                       directoryName, parentDirectory.getPath(), parameters.get("url"));
   }
 }

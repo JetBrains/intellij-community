@@ -43,4 +43,9 @@ public class _FirstInSuiteTest extends TestCase {
       }
     });
   }
+
+  // performance tests
+  public void testNothingPerformance() throws Exception {
+    testNothing();
+  }
 }

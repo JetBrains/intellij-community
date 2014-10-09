@@ -105,7 +105,8 @@ public class ResolverProcessor extends GrScopeProcessorWithHints {
     String text;
     if (element instanceof LightElement) {
       final PsiElement context = element.getContext();
-      text = context != null ? context.getText() : null;
+      text = context instanceof LightElement ? context.toString() : 
+             context != null ? context.getText() : null;
     }
     else {
       text = element.getText();

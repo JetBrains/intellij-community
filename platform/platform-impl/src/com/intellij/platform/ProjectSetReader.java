@@ -75,7 +75,7 @@ public class ProjectSetReader {
                                  new Function<JsonElement, Pair<String,String>>() {
                                    @Override
                                    public Pair<String, String> fun(JsonElement o) {
-                                     return Pair.create(next.getKey(), o.getAsString());
+                                     return Pair.create(next.getKey(), getString(o));
                                    }
                                  });
       }
@@ -84,7 +84,7 @@ public class ProjectSetReader {
           @Override
           public Pair<String, String> fun(Map.Entry<String, JsonElement> entry) {
             JsonElement value = entry.getValue();
-            return Pair.create(entry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString());
+            return Pair.create(entry.getKey(), getString(value));
           }
         });
       }
@@ -98,6 +98,10 @@ public class ProjectSetReader {
         runProcessor(processors, context, iterator);
       }
     });
+  }
+
+  public static String getString(JsonElement value) {
+    return value instanceof JsonPrimitive ? value.getAsString() : value.toString();
   }
 
   private static final Logger LOG = Logger.getInstance(ProjectSetReader.class);

@@ -1650,7 +1650,7 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
@@ -1664,6 +1664,16 @@ public class UIUtil {
       catch (Exception e) {
         LOG.error(e); //?
       }
+    }
+  }
+  private static Thread getEventQueueThread() {
+    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    try {
+      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
+      return (Thread)method.invoke(eventQueue);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -1782,12 +1792,21 @@ public class UIUtil {
 
   @Nullable
   public static Component findNearestOpaque(JComponent c) {
+    return findParentByCondition(c, new Condition<Component>() {
+      @Override
+      public boolean value(Component component) {
+        return component.isOpaque();
+      }
+    });
+  }
+
+  @Nullable
+  public static Component findParentByCondition(@NotNull JComponent c, Condition<Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
-      if (eachParent.isOpaque()) return eachParent;
+      if (condition.value(eachParent)) return eachParent;
       eachParent = eachParent.getParent();
     }
-
     return null;
   }
 
@@ -3041,5 +3060,26 @@ public class UIUtil {
     textField.setHorizontalAlignment(SwingConstants.TRAILING);
 
     textField.setColumns(4);
+  }
+
+  public static <T> Border makeChameleonBorder(final Border border, final Condition<T> conditionToShow, final T checker) {
+    return new Border() {
+      @Override
+      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        if (conditionToShow.value(checker)) {
+          border.paintBorder(c, g, x, y, width, height);
+        }
+      }
+
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return border.getBorderInsets(c);
+      }
+
+      @Override
+      public boolean isBorderOpaque() {
+        return border.isBorderOpaque() && conditionToShow.value(checker);
+      }
+    };
   }
 }

@@ -76,7 +76,7 @@ public class XFramesView extends XDebugView {
     myFramesList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        if (myListenersEnabled && !e.getValueIsAdjusting()) {
+        if (myListenersEnabled && !e.getValueIsAdjusting() && mySelectedFrameIndex != myFramesList.getSelectedIndex()) {
           processFrameSelection(getSession(e));
         }
       }

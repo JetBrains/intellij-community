@@ -24,7 +24,6 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -605,13 +604,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
     finally {
       try {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        SwingUtilities.invokeAndWait(new Runnable() {
           @Override
           public void run() {
             cleanupApplicationCaches(getProject());
             resetAllFields();
           }
-        }, ModalityState.NON_MODAL);
+        });
       }
       catch (Throwable e) {
         // Ignore

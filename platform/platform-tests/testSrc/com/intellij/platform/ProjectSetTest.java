@@ -35,10 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -92,9 +89,9 @@ public class ProjectSetTest extends LightPlatformTestCase {
       }
 
       @Override
-      public boolean checkout(@NotNull String url,
+      public boolean checkout(@NotNull Map<String, String> parameters,
                               @NotNull VirtualFile parentDirectory, @NotNull String directoryName) {
-        pairs.add(Pair.create(url, directoryName));
+        pairs.add(Pair.create(parameters.get("url"), directoryName));
         return true;
       }
     }, myTestRootDisposable);
@@ -110,8 +107,8 @@ public class ProjectSetTest extends LightPlatformTestCase {
         return o2.first.compareTo(o1.first);
       }
     });
-    assertEquals(Pair.create("schema://foo.bar/path", "path"), pairs.get(1));
-    assertEquals(Pair.create("schema://foo.bar1/path1", "path/custom"), pairs.get(0));
+    assertEquals(Pair.create("schema://foo.bar/path", "test"), pairs.get(1));
+    assertEquals(Pair.create("schema://foo.bar1/path1", "test/custom"), pairs.get(0));
   }
 
   public void testOpenProject() throws IOException {
