@@ -321,8 +321,8 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @NotNull
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
-                                                   final StateStorageOperation operation) throws StateStorageException {
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+                                                   @NotNull StateStorageOperation operation) {
     final State stateSpec = getStateSpec(persistentStateComponent);
     final Storage[] storages = stateSpec.storages();
     if (storages.length == 1) {
@@ -340,14 +340,9 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return LastStorageChooserForWrite.INSTANCE.selectStorages(storages, persistentStateComponent, operation);
     }
     else {
-      try {
-        @SuppressWarnings("unchecked")
-        StateStorageChooser<PersistentStateComponent<T>> storageChooser = ReflectionUtil.newInstance(storageChooserClass);
-        return storageChooser.selectStorages(storages, persistentStateComponent, operation);
-      }
-      catch (RuntimeException e) {
-        throw new StateStorageException(e);
-      }
+      @SuppressWarnings("unchecked")
+      StateStorageChooser<PersistentStateComponent<T>> storageChooser = ReflectionUtil.newInstance(storageChooserClass);
+      return storageChooser.selectStorages(storages, persistentStateComponent, operation);
     }
   }
 
