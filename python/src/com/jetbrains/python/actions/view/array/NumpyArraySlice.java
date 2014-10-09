@@ -175,16 +175,6 @@ class NumpyArraySlice extends ArrayChunk {
     return rows == 1;
   }
 
-  @Override
-  int getRows() {
-    return rows;
-  }
-
-  @Override
-  int getColumns() {
-    return columns;
-  }
-
   public Object[][] getData() {
     return myDataEvaluator.getData();
   }
@@ -195,6 +185,14 @@ class NumpyArraySlice extends ArrayChunk {
     }
     myFormat = newFormat;
     myDataEvaluator.evaluateData(callback);
+  }
+
+  public int getRowOffset() {
+    return rOffset;
+  }
+
+  public int getColOffset() {
+    return cOffset;
   }
 }
 

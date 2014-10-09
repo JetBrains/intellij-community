@@ -54,6 +54,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   private String myDtypeKind;
   private int[] myShape;
   private ArrayTableCellRenderer myTableCellRenderer;
+  private FixSizeTableAdjustmentListener myTableAdjustmentListener;
 
   private final static int COLUMNS_IN_DEFAULT_SLICE = 40;
   private final static int ROWS_IN_DEFAULT_SLICE = 40;
@@ -78,10 +79,10 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     myTableCellRenderer = new ArrayTableCellRenderer(Double.MIN_VALUE, Double.MIN_VALUE, myDtypeKind);
 
     //add table dynamic scrolling
-    FixSizeTableAdjustmentListener tableAdjustmentListener =
-      new FixSizeTableAdjustmentListener<NumpyArraySlice>(myTable, getMaxRow(), getMaxColumn(),
-                                                          Math.min(getMaxRow(), COLUMNS_IN_DEFAULT_SLICE),
-                                                          Math.min(getMaxColumn(), ROWS_IN_DEFAULT_SLICE),
+    myTableAdjustmentListener =
+      new FixSizeTableAdjustmentListener<NumpyArraySlice>(myTable, getMaxRow(myShape), getMaxColumn(myShape),
+                                                          Math.min(getMaxRow(myShape), COLUMNS_IN_DEFAULT_SLICE),
+                                                          Math.min(getMaxColumn(myShape), ROWS_IN_DEFAULT_SLICE),
                                                           ROWS_IN_DEFAULT_CHUNK, COLUMNS_IN_DEFAULT_CHUNK) {
         @NotNull
         @Override
@@ -95,8 +96,8 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
         }
       };
 
-    myComponent.getScrollPane().getHorizontalScrollBar().addAdjustmentListener(tableAdjustmentListener);
-    myComponent.getScrollPane().getVerticalScrollBar().addAdjustmentListener(tableAdjustmentListener);
+    myComponent.getScrollPane().getHorizontalScrollBar().addAdjustmentListener(myTableAdjustmentListener);
+    myComponent.getScrollPane().getVerticalScrollBar().addAdjustmentListener(myTableAdjustmentListener);
 
 
     //add color checkbox listener
@@ -256,7 +257,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       }
     };
 
-    if (getMaxRow() * getMaxColumn() > HUGE_ARRAY_SIZE) {
+    if (getMaxRow(myShape) * getMaxColumn(myShape) > HUGE_ARRAY_SIZE) {
       //ndarray too big, calculating min and max would slow down debugging
       myTableCellRenderer.setMin(1.);
       myTableCellRenderer.setMax(1.);
@@ -366,13 +367,21 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     if (myLastPresentation != null && arraySlice.getPresentation().equals(myLastPresentation.getPresentation())) {
       return;
     }
-    myLastPresentation = arraySlice;
 
     DebuggerUIUtil.invokeLater(new Runnable() {
       @Override
       public void run() {
         myTable.setPaintBusy(true);
         myTable.setModel(new DefaultTableModel());
+        RowNumberTable rowTable = ((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable();
+        rowTable.setRowShift(0);
+
+        myTableAdjustmentListener.setRowOffset(arraySlice.getRowOffset());
+        myTableAdjustmentListener.setColOffset(arraySlice.getColOffset());
+        myTableAdjustmentListener.setRowLimit(getMaxRow(myShape));
+        myTableAdjustmentListener.setColLimit(getMaxColumn(myShape));
+        myTableAdjustmentListener.setViewRows(Math.min(getMaxColumn(myShape), ROWS_IN_DEFAULT_SLICE));
+        myTableAdjustmentListener.setViewCols(Math.min(getMaxRow(myShape), COLUMNS_IN_DEFAULT_SLICE));
       }
     });
 
@@ -383,13 +392,21 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
           Object[][] data = arraySlice.getData();
 
           DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
-          myTable.setModel(model);
-          myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
-          myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
-          myTable.setPaintBusy(false);
 
-          myComponent.getSliceTextField().setText(arraySlice.getPresentation());
-          myComponent.getFormatTextField().setText(getDefaultFormat());
+          DebuggerUIUtil.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
+              myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
+              myTable.setPaintBusy(false);
+
+              myComponent.getSliceTextField().setText(arraySlice.getPresentation());
+              myComponent.getFormatTextField().setText(getDefaultFormat());
+            }
+          });
+
+          myTable.setModel(model);
+          myLastPresentation = arraySlice;
         }
       });
     }
@@ -519,7 +536,12 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       }
 
       if (myDtypeKind.equals("b") || myDtypeKind.equals("c")) {
-        myComponent.getFormatTextField().getComponent().setEnabled(false);
+        DebuggerUIUtil.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            myComponent.getFormatTextField().getComponent().setEnabled(false);
+          }
+        });
         return "%s";
       }
     }
@@ -527,6 +549,8 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   }
 
   private void doReslice(final String newSlice, int[] shape) {
+    showError(null);
+
     if (shape == null) {
       XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
         @Override
@@ -536,7 +560,6 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
             if (!is2DShape(shape)) {
               errorOccurred("Incorrect slice shape " + ((PyDebugValue)result).getValue() + ".");
             }
-
             doReslice(newSlice, shape);
           }
           catch (InvalidAttributeValueException e) {
@@ -570,6 +593,8 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   }
 
   private void doApplyFormat(String format) {
+    showError(null);
+
     myLastPresentation.applyFormat(format, new Runnable() {
       @Override
       public void run() {
@@ -602,16 +627,16 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     return typeCommand;
   }
 
-  public int getMaxRow() {
-    if (myShape != null && myShape.length >= 2) {
-      return myShape[myShape.length - 2];
+  public int getMaxRow(int[] shape) {
+    if (shape != null && shape.length >= 2) {
+      return shape[shape.length - 2];
     }
     return 0;
   }
 
-  public int getMaxColumn() {
-    if (myShape != null && myShape.length >= 2) {
-      return myShape[myShape.length - 1];
+  public int getMaxColumn(int[] shape) {
+    if (shape != null && shape.length >= 2) {
+      return shape[shape.length - 1];
     }
     return 0;
   }
