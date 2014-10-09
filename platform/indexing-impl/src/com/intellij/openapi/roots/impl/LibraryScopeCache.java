@@ -28,6 +28,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -52,6 +53,10 @@ public class LibraryScopeCache {
     mySdkScopes.clear();
   }
 
+  public GlobalSearchScope getLibrariesOnlyScope() {
+    return getScopeForLibraryUsedIn(Collections.<Module>emptyList());
+  }
+  
   public GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn) {
     GlobalSearchScope scope = myLibraryScopes.get(modulesLibraryIsUsedIn);
     if (scope != null) {
