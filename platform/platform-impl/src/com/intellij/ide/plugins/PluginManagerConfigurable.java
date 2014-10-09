@@ -102,7 +102,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
           final List<? extends RowSorter.SortKey> sortKeys = rowSorter.getSortKeys();
           if (sortKeys.size() > 0) {
             final RowSorter.SortKey sortKey = sortKeys.get(0);
-            myUISettings.AVAILABLE_SORT_MODE = sortKey.getColumn();
             myUISettings.AVAILABLE_SORT_COLUMN_ORDER = sortKey.getSortOrder().ordinal();
           }
         }
