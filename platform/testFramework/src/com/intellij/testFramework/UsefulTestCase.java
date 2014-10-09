@@ -57,6 +57,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -344,6 +345,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (SwingUtilities.isEventDispatchThread()) {
       throw new RuntimeException("must not call under EDT");
     }
+    AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
     UIUtil.pump();
     // in JDK 1.6 java.awt.EventQueue.push() causes slow painful death of current EDT
     // so we have to wait through its agony to termination

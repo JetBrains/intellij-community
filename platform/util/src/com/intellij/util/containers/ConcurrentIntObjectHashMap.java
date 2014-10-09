@@ -718,8 +718,6 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * <p>The view's iterators and spliterators are
    * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
    * <p/>
-   * <p>The view's {@code spliterator} reports {@link Spliterator#CONCURRENT}
-   * and {@link Spliterator#NONNULL}.
    *
    * @return the collection view
    */
@@ -742,8 +740,6 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * <p>The view's iterators and spliterators are
    * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
    * <p/>
-   * <p>The view's {@code spliterator} reports {@link Spliterator#CONCURRENT},
-   * {@link Spliterator#DISTINCT}, and {@link Spliterator#NONNULL}.
    *
    * @return the set view
    */
@@ -947,6 +943,8 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @return an enumeration of the values in this table
    * @see #values()
    */
+  @NotNull
+  @Override
   public Enumeration<V> elements() {
     Node<V>[] t;
     int f = (t = table) == null ? 0 : t.length;

@@ -56,16 +56,18 @@ public interface ConcurrentIntObjectMap<V> {
    *         rather than alive values because otherwise it would be too expensive
    */
   int size();
+
   boolean isEmpty();
   @NotNull
   Enumeration<V> elements();
   @NotNull
   Collection<V> values();
-  V putIfAbsent(int key, @NotNull V value);
   boolean containsValue(@NotNull V value);
+  V putIfAbsent(int key, @NotNull V value);
 
-  public interface IntEntry<V> {
+  interface IntEntry<V> {
     int getKey();
-    @NotNull V getValue();
+    @NotNull
+    V getValue();
   }
 }
