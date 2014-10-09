@@ -1078,7 +1078,7 @@
                      groupPath="Groovy"
                      groupKey="groovy.dfa.issues"
                      key="variable.can.be.final"
-                     enabledByDefault="true"
+                     enabledByDefault="false"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GroovyVariableCanBeFinalInspection"/>
 
