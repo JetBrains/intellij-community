@@ -35,7 +35,7 @@
         SINGLE_QUOTED_STRING="regexp:'([^\\\'\r\n]|\\[^\r\n])*'?"
 //        STRING='regexp:"([^\\"\r\n]|\\([\\"/bfnrt]|u[a-fA-F0-9]{4}))*"?'
 
-        NUMBER='regexp:-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?'
+        NUMBER='regexp:-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d*)?'
         TRUE='true'
         FALSE='false'
         NULL='null'
