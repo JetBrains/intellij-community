@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -206,10 +205,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
   @Nullable
   private static Element getJdomState(final Object component, @NotNull String componentName, @NotNull StateStorage defaultsStorage) {
-    ComponentRoamingManager roamingManager = ComponentRoamingManager.getInstance();
-    if (component instanceof RoamingTypeDisabled) {
-      roamingManager.setRoamingType(componentName, RoamingType.DISABLED);
-    }
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }
 
@@ -230,14 +225,10 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         }
       }
     }
-
   }
 
   private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData, boolean isReinit) {
-    State spec = getStateSpec(component);
-    final String name = spec.name();
-    ComponentRoamingManager.getInstance().setRoamingType(name, spec.roamingType());
-
+    String name = getStateSpec(component).name();
     if (!isReinit) {
       doAddComponent(name, component);
     }
@@ -246,11 +237,9 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     Class<T> stateClass = getComponentStateClass(component);
-
     T state = null;
     //todo: defaults merging
-
-    final StateStorage defaultsStorage = getDefaultsStorage();
+    StateStorage defaultsStorage = getDefaultsStorage();
     if (defaultsStorage != null) {
       state = defaultsStorage.getState(component, name, stateClass, null);
     }
