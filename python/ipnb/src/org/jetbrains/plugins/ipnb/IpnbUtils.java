@@ -131,12 +131,16 @@ public class IpnbUtils {
       if (charAt == '`') {
         backQuoted = !backQuoted;
         if (source.length() > i + 2 && source.charAt(i + 1) == '`' && source.charAt(i + 2) == '`') {
-          markdown.append(escaped ? "</pre>" : "<pre>");
+          markdown.append(escaped ? "</code>" : "<code>");
           escaped = !escaped;
           //noinspection AssignmentToForLoopParameter
           i += 2;
           continue;
         }
+      }
+      if (escaped && charAt == '\n') {
+        markdown.append("<br/>");
+        continue;
       }
 
       if (!escaped && !backQuoted) {
