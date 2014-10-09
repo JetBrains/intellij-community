@@ -87,7 +87,15 @@ public class URIReferenceProvider extends PsiReferenceProvider {
       return refs.toArray(new PsiReference[refs.size()]);
     }
 
+    PsiReference reference = getUrlReference(element, s);
+    if (reference != null) return new PsiReference[] { reference };
 
+    s = s.substring(XmlUtil.getPrefixLength(s));
+    return new FileReferenceSet(s,element,text.indexOf(s), this,true).getAllReferences();
+  }
+
+  static PsiReference getUrlReference(PsiElement element, String s) {
+    PsiElement parent = element.getParent();
     if (XmlUtil.isUrlText(s, element.getProject()) ||
         (parent instanceof XmlAttribute &&
           ( ((XmlAttribute)parent).isNamespaceDeclaration() ||
@@ -102,12 +110,9 @@ public class URIReferenceProvider extends PsiReferenceProvider {
         if (!namespaceSoftRef && parent instanceof XmlAttribute && ((XmlAttribute)parent).isNamespaceDeclaration()) {
           namespaceSoftRef = parent.getContainingFile().getContext() != null;
         }
-        return new URLReference[] { new URLReference(element, null, namespaceSoftRef)};
+        return new URLReference(element, null, namespaceSoftRef);
       }
     }
-
-    s = s.substring(XmlUtil.getPrefixLength(s));
-    return new FileReferenceSet(s,element,text.indexOf(s), this,true).getAllReferences();
+    return null;
   }
-
 }
