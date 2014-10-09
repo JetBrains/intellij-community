@@ -89,7 +89,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myPrimaryElement = element;
 
     assertNonCompileElement(element);
-    assertValidName(element, newName);
+    //assertValidName(element, newName);
 
     mySearchInComments = isSearchInComments;
     mySearchTextOccurrences = isSearchTextOccurrences;
