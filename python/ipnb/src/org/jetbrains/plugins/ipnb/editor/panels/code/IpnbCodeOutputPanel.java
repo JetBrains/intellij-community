@@ -5,11 +5,12 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class IpnbCodeOutputPanel<K extends IpnbOutputCell> extends IpnbPanel<JComponent, K> {
 
   public IpnbCodeOutputPanel(@NotNull final K cell) {
-    super(cell);
+    super(cell, new BorderLayout());
     myViewPanel = createViewPanel();
     add(myViewPanel);
   }
