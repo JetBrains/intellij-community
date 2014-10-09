@@ -48,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.annotation.Annotation;
 import java.util.List;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
@@ -57,7 +56,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls static final String OPTION_WORKSPACE = "workspace";
 
-  static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
   private static int originalVersion = -1;
 
   protected ProjectImpl myProject;
@@ -567,66 +565,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Override
   protected StateStorageChooser<PersistentStateComponent<?>> getDefaultStateStorageChooser() {
     return myStateStorageChooser;
-  }
-
-  @NotNull
-  @Override
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
-                                                   final StateStorageOperation operation) throws StateStorageException {
-    Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, operation);
-
-    if (operation == StateStorageOperation.READ) {
-      Storage[] upd = new Storage[result.length + 1];
-      System.arraycopy(result, 0, upd, 0, result.length);
-      upd[result.length] = DEFAULT_STORAGE_ANNOTATION;
-      result = upd;
-    }
-
-    return result;
-  }
-
-  @SuppressWarnings("ClassExplicitlyAnnotation")
-  private static class MyStorage implements Storage {
-    @Override
-    public String id() {
-      return "___Default___";
-    }
-
-    @Override
-    public boolean isDefault() {
-      return true;
-    }
-
-    @Override
-    public String file() {
-      return StoragePathMacros.PROJECT_FILE;
-    }
-
-    @Override
-    public StorageScheme scheme() {
-      return  StorageScheme.DEFAULT;
-    }
-
-    @Override
-    public RoamingType roamingType() {
-      return RoamingType.PER_USER;
-    }
-
-    @Override
-    public Class<? extends StateStorage> storageClass() {
-      return StateStorage.class;
-    }
-
-    @Override
-    public Class<? extends StateSplitter> stateSplitter() {
-      return StateSplitter.class;
-    }
-
-    @NotNull
-    @Override
-    public Class<? extends Annotation> annotationType() {
-      throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
-    }
   }
 
   @NotNull
