@@ -104,7 +104,7 @@ public class MessageCounter {
           }
         }
         else {
-          count = counter.get(notificationCategory);
+          count += counter.get(notificationCategory);
         }
       }
     }
