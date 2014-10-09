@@ -157,11 +157,11 @@ public class SideEffectChecker {
 
     PsiFile file = aClass.getContainingFile();
     PsiDirectory directory = file.getContainingDirectory();
-    PsiPackage classPackage = JavaDirectoryService.getInstance().getPackage(directory);
+    PsiPackage classPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
     String packageName = classPackage == null ? null : classPackage.getQualifiedName();
 
     // all Throwable descendants from java.lang are side effects free
-    if ("java.lang".equals(packageName) || "java.io".equals(packageName)) {
+    if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName) || "java.io".equals(packageName)) {
       PsiClass throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
       if (throwableClass != null && com.intellij.psi.util.InheritanceUtil.isInheritorOrSelf(aClass, throwableClass, true)) {
         return true;
