@@ -35,7 +35,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLog log = e.getRequiredData(VcsLogDataKeys.VSC_LOG);
+    VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
     List<VcsFullCommitDetails> details = log.getSelectedDetails();
     MultiMap<Repo, VcsFullCommitDetails> grouped = groupByRootWithCheck(project, details);
     assert grouped != null;
@@ -45,7 +45,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   @Override
   public void update(AnActionEvent e) {
     Project project = e.getProject();
-    VcsLog log = e.getData(VcsLogDataKeys.VSC_LOG);
+    VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     if (project == null || log == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;

@@ -81,7 +81,7 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
                                         heavyCommit.getRoot(), heavyCommit.getSubject(), heavyCommit.getAuthor(),
                                         heavyCommit.getAuthorEmail(), heavyCommit.getCommitter(), heavyCommit.getCommitterEmail(), heavyCommit.getAuthorTime());
     }
-    VcsLog log = e.getData(VcsLogDataKeys.VSC_LOG);
+    VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     if (log == null) {
       return null;
     }
