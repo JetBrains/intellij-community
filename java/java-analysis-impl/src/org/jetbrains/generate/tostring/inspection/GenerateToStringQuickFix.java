@@ -17,12 +17,12 @@ package org.jetbrains.generate.tostring.inspection;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.GenerateToStringActionHandler;
-import org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl;
 
 /**
  * Quick fix to run Generate toString() to fix any code inspection problems.
@@ -30,8 +30,6 @@ import org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl;
 public class GenerateToStringQuickFix implements LocalQuickFix {
 
   public static final GenerateToStringQuickFix INSTANCE = new GenerateToStringQuickFix();
-
-  private final GenerateToStringActionHandler myHandler = new GenerateToStringActionHandlerImpl();
 
   private GenerateToStringQuickFix() {}
 
@@ -57,6 +55,7 @@ public class GenerateToStringQuickFix implements LocalQuickFix {
     if (clazz == null) {
       return; // no class to fix
     }
-    myHandler.executeActionQuickFix(project, clazz);
+    GenerateToStringActionHandler handler = ServiceManager.getService(GenerateToStringActionHandler.class);
+    handler.executeActionQuickFix(project, clazz);
   }
 }
