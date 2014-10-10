@@ -636,7 +636,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see #getTimeStamp()
    */
   public long getModificationStamp() {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(this.getClass().getName());
   }
 
   /**
