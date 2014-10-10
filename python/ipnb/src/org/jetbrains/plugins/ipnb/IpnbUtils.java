@@ -3,6 +3,8 @@ package org.jetbrains.plugins.ipnb;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.MarkdownUtil;
 import com.petebevin.markdown.MarkdownProcessor;
 import net.sourceforge.jeuclid.MathMLParserSupport;
 import net.sourceforge.jeuclid.context.LayoutContextImpl;
@@ -30,9 +32,9 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.regex.Pattern;
 
 public class IpnbUtils {
   private static final Logger LOG = Logger.getInstance(IpnbUtils.class);
@@ -64,7 +66,9 @@ public class IpnbUtils {
   public static String markdown2Html(@NotNull String description) {
     description = StringUtil.replace(description, "class=\"alert alert-success\"", "class=\"alert-success\"");
     description = StringUtil.replace(description, "class=\"alert alert-error\"", "class=\"alert-error\"");
-    return ourMarkdownProcessor.markdown(description);
+    ArrayList<String> lines = ContainerUtil.newArrayList(description.split("\n|\r|\r\n"));
+    MarkdownUtil.replaceHeaders(lines);
+    return ourMarkdownProcessor.markdown(StringUtil.join(lines, "\n"));
   }
 
   public static void addLatexToPanel(@NotNull final String source, @NotNull final JPanel panel) {
