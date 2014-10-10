@@ -597,7 +597,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void registerScrollBarRepaintCallback(@Nullable RepaintCallback callback) {
+  public void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback) {
     myVerticalScrollBar.registerRepaintCallback(callback);
   }
 
@@ -4779,7 +4779,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
-    @Nullable private RepaintCallback myRepaintCallback;
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
@@ -4804,9 +4803,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void paint(@NotNull Graphics g) {
       super.paint(g);
-      if (myRepaintCallback != null) {
-        myRepaintCallback.call(g);
-      }
     }
 
     /**
@@ -4877,8 +4873,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return myEditorComponent.getScrollableBlockIncrement(vr, SwingConstants.VERTICAL, direction);
     }
 
-    public void registerRepaintCallback(@Nullable RepaintCallback callback) {
-      myRepaintCallback = callback;
+    public void registerRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback) {
+      if (myPersistentUI instanceof ButtonlessScrollBarUI) {
+        ((ButtonlessScrollBarUI)myPersistentUI).registerRepaintCallback(callback);
+      }
     }
   }
 
