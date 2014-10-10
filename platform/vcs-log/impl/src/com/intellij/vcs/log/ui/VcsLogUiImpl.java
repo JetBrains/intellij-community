@@ -328,6 +328,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     });
   }
 
+  @Override
   public void setBranchesPanelVisible(boolean visible) {
     myMainFrame.setBranchesPanelVisible(visible);
   }

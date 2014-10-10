@@ -38,9 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
 public class VcsLogManager implements Disposable {
 
   public static final ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
@@ -63,7 +60,7 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public JComponent initContent(@NotNull Collection<VcsRoot> roots) {
+  public JComponent initContent(@NotNull Collection<VcsRoot> roots, @NotNull String contentTabName) {
     final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots);
 
     Consumer<VisiblePack> visiblePackConsumer = new Consumer<VisiblePack>() {
@@ -82,7 +79,7 @@ public class VcsLogManager implements Disposable {
     VcsLogDataHolder logDataHolder = new VcsLogDataHolder(myProject, this, logProviders, mySettings, myUiProperties, visiblePackConsumer);
     myUi = new VcsLogUiImpl(logDataHolder, myProject, mySettings,
                             new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, logDataHolder.getFilterer());
-    myLogRefresher = new PostponeableLogRefresher(myProject, logDataHolder);
+    myLogRefresher = new PostponeableLogRefresher(myProject, logDataHolder, contentTabName);
     refreshLogOnVcsEvents(logProviders);
     logDataHolder.initialize();
 
@@ -151,14 +148,16 @@ public class VcsLogManager implements Disposable {
     @NotNull private final VcsLogDataHolder myDataHolder;
     @NotNull private final ToolWindowManagerImpl myToolWindowManager;
     @NotNull private final ToolWindowImpl myToolWindow;
+    @NotNull private final String myTabName;
     @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
 
     @NotNull private final Set<VirtualFile> myRootsToRefresh = new ConcurrentHashSet<VirtualFile>();
 
-    public PostponeableLogRefresher(@NotNull Project project, @NotNull VcsLogDataHolder dataHolder) {
+    public PostponeableLogRefresher(@NotNull Project project, @NotNull VcsLogDataHolder dataHolder, @NotNull String contentTabName) {
       myDataHolder = dataHolder;
       myToolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
       myToolWindow = (ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
+      myTabName = contentTabName;
 
       Disposer.register(myToolWindow.getContentManager(), this);
 
@@ -186,7 +185,7 @@ public class VcsLogManager implements Disposable {
     private boolean isOurContentPaneShowing() {
       if (myToolWindowManager.isToolWindowRegistered(TOOLWINDOW_ID) && myToolWindow.isVisible()) {
         Content content = myToolWindow.getContentManager().getSelectedContent();
-        return content != null && content.getTabName().equals(VcsLogContentProvider.TAB_NAME);
+        return content != null && content.getTabName().equals(myTabName);
       }
       return false;
     }

@@ -31,4 +31,6 @@ public interface VcsLogUi {
   void addFilterChangeListener(@NotNull VcsLogFilterChangeListener listener);
   void removeFilterChangeListener(@NotNull VcsLogFilterChangeListener listener);
 
+  void setBranchesPanelVisible(boolean visible);
+
 }
