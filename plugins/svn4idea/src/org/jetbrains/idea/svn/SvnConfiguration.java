@@ -76,7 +76,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
-  private IdeaSVNConfigFile myConfigFile;
+  private IdeaSVNConfigFile myServersFile;
 
   public boolean isCommandLine() {
     return UseAcceleration.commandLine.equals(getUseAcceleration());
@@ -93,8 +93,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   public long getHttpTimeout() {
-    initServers();
-    final String timeout = myConfigFile.getDefaultGroup().getTimeout();
+    final String timeout = getServersFile().getDefaultGroup().getTimeout();
     try {
       return Long.parseLong(timeout) * 1000;
     } catch (NumberFormatException e) {
@@ -107,19 +106,21 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return new DiffOptions(isIgnoreSpacesInMerge(), isIgnoreSpacesInMerge(), isIgnoreSpacesInMerge());
   }
 
-  private void initServers() {
-    if (myConfigFile == null) {
-      myConfigFile = new IdeaSVNConfigFile(new File(getConfigurationDirectory(), IdeaSVNConfigFile.SERVERS_FILE_NAME));
+  @NotNull
+  private IdeaSVNConfigFile getServersFile() {
+    if (myServersFile == null) {
+      myServersFile = new IdeaSVNConfigFile(new File(getConfigurationDirectory(), IdeaSVNConfigFile.SERVERS_FILE_NAME));
     }
-    myConfigFile.updateGroups();
+    myServersFile.updateGroups();
+
+    return myServersFile;
   }
 
   // uses configuration directory property - it should be saved first
   public void setHttpTimeout(final long value) {
-    initServers();
     long cut = value / 1000;
-    myConfigFile.setValue("global", SvnServerFileKeys.TIMEOUT, String.valueOf(cut));
-    myConfigFile.save();
+    getServersFile().setValue("global", SvnServerFileKeys.TIMEOUT, String.valueOf(cut));
+    getServersFile().save();
   }
 
   public static SvnConfiguration getInstance(final Project project) {
@@ -406,8 +407,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     }
 
     systemManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), IdeaSVNConfigFile.SERVERS_FILE_NAME))));
-    initServers();
-    userManager.set(new SvnServerFileManagerImpl(myConfigFile));
+    userManager.set(new SvnServerFileManagerImpl(getServersFile()));
   }
 
   public boolean isAutoUpdateAfterCommit() {
