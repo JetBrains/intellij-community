@@ -12,6 +12,7 @@ import uk.ac.ed.ph.snuggletex.tokens.FlowToken;
 
 import java.util.List;
 
+import static uk.ac.ed.ph.snuggletex.definitions.Globals.ALL_MODES;
 import static uk.ac.ed.ph.snuggletex.definitions.Globals.MATH_MODE_ONLY;
 import static uk.ac.ed.ph.snuggletex.definitions.LaTeXMode.MATH;
 import static uk.ac.ed.ph.snuggletex.definitions.TextFlowContext.START_NEW_XHTML_BLOCK;
@@ -44,7 +45,7 @@ public final class IpnbTexPackageDefinitions {
           builder.appendMathMLOperatorElement(parentElement, "\u03c0");
         }
       }, null);
-      ourPackage.addEnvironment("eqnarray", MATH_MODE_ONLY, MATH, Interpretation.TABULAR, new EqnArrayHandler(), START_NEW_XHTML_BLOCK);
+      ourPackage.addEnvironment("eqnarray", ALL_MODES, MATH, Interpretation.TABULAR, new EqnArrayHandler(), START_NEW_XHTML_BLOCK);
 
       ourPackage.loadMathCharacterDefinitions(ourMathCharacters);
     }
