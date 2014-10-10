@@ -61,10 +61,7 @@ public class IpnbUtils {
                                                   "padding: 8px 35px 8px 14px;" +
                                                   "border: 1px solid #eed3d7;}";
 
-  private static Pattern ourRegex = Pattern.compile("(https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])");
-
   public static String markdown2Html(@NotNull String description) {
-    description = ourRegex.matcher(description).replaceAll("<a href=\"$1\">$1</a>");
     description = StringUtil.replace(description, "class=\"alert alert-success\"", "class=\"alert-success\"");
     description = StringUtil.replace(description, "class=\"alert alert-error\"", "class=\"alert-error\"");
     return ourMarkdownProcessor.markdown(description);
