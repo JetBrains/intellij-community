@@ -236,7 +236,7 @@ public class GitCherryPickAction extends DumbAwareAction {
   }
 
   private static VcsLog getVcsLog(@NotNull AnActionEvent event) {
-    return event.getData(VcsLogDataKeys.VSC_LOG);
+    return event.getData(VcsLogDataKeys.VCS_LOG);
   }
 
   // TODO remove after removing the old Vcs Log implementation
