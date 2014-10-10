@@ -191,25 +191,25 @@ public class XmlResourceResolver implements XMLEntityResolver {
     return psiFile;
   }
 
-  public PsiFile getBaseFile(String baseSystemId) {
-    PsiFile baseFile;VirtualFile vFile = null;
-    baseFile = resolve(null,baseSystemId);
+  private PsiFile getBaseFile(String baseSystemId) {
 
-    if (baseFile == null) {
-        // Find relative to myFile
-      File workingFile = new File("");
-      String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
-      String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
-      vFile = UriUtil.findRelative(id, myFile);
+    PsiFile baseFile = resolve(null, baseSystemId);
+    if (baseFile != null) return baseFile;
 
-      if (vFile == null) {
-        vFile = UriUtil.findRelative(baseSystemId, myFile);
+    // Find relative to myFile
+    File workingFile = new File("");
+    String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
+    String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
+    VirtualFile vFile = UriUtil.findRelative(id, myFile);
 
-        if (vFile == null) {
-          try {
-            vFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.convertFromUrl(new URL(baseSystemId)));
-          } catch(MalformedURLException ignore) {}
-        }
+    if (vFile == null) {
+      vFile = UriUtil.findRelative(baseSystemId, myFile);
+    }
+    if (vFile == null) {
+      try {
+        vFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.convertFromUrl(new URL(baseSystemId)));
+      }
+      catch (MalformedURLException ignore) {
       }
     }
 
