@@ -23,9 +23,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
@@ -77,6 +79,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
   private IdeaSVNConfigFile myServersFile;
+  private SVNConfigFile myConfigFile;
 
   public boolean isCommandLine() {
     return UseAcceleration.commandLine.equals(getUseAcceleration());
@@ -114,6 +117,25 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     myServersFile.updateGroups();
 
     return myServersFile;
+  }
+
+  @NotNull
+  public SVNConfigFile getConfigFile() {
+    if (myConfigFile == null) {
+      myConfigFile = new SVNConfigFile(new File(getConfigurationDirectory(), IdeaSVNConfigFile.CONFIG_FILE_NAME));
+    }
+    
+    return myConfigFile;
+  }
+
+  @NotNull
+  public String getSshTunnelSetting() {
+    // TODO: Check SVNCompositeConfigFile - to utilize both system and user settings
+    return StringUtil.notNullize(getConfigFile().getPropertyValue("tunnels", "ssh"));
+  }
+
+  public void setSshTunnelSetting(@Nullable String value) {
+    getConfigFile().setPropertyValue("tunnels", "ssh", value, true);
   }
 
   // uses configuration directory property - it should be saved first
@@ -537,5 +559,11 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   public enum SSLProtocols {
     sslv3, tlsv1, all
+  }
+
+  public enum SshConnectionType {
+    PASSWORD,
+    PRIVATE_KEY,
+    SUBVERSION_CONFIG
   }
 }
