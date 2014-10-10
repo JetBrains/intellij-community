@@ -127,7 +127,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         if (oldViewportDimension != null) {
           int resizedH = dimension.width - oldViewportDimension.width;
           int resizedV = dimension.height - oldViewportDimension.height;
-          resized = (resizedV != 0 && vertical) || (resizedH != 0 && !vertical);
+          resized = (vertical && resizedV != 0) || (!vertical && resizedH != 0);
         }
         oldViewportDimension = dimension;
         
