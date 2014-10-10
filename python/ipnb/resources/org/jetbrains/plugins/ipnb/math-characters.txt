@@ -1,0 +1,3 @@
+## This is hand-edited. Add all of the non-auto-generated definitions
+3A6:varPhi:ALPHA
+3C6:varphi:ALPHA
