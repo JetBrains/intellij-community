@@ -3,14 +3,18 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 import org.w3c.dom.Element;
 import uk.ac.ed.ph.snuggletex.SnugglePackage;
 import uk.ac.ed.ph.snuggletex.dombuilding.CommandHandler;
+import uk.ac.ed.ph.snuggletex.dombuilding.EqnArrayHandler;
 import uk.ac.ed.ph.snuggletex.internal.DOMBuilder;
 import uk.ac.ed.ph.snuggletex.internal.SnuggleParseException;
+import uk.ac.ed.ph.snuggletex.semantics.Interpretation;
 import uk.ac.ed.ph.snuggletex.tokens.CommandToken;
 import uk.ac.ed.ph.snuggletex.tokens.FlowToken;
 
 import java.util.List;
 
 import static uk.ac.ed.ph.snuggletex.definitions.Globals.MATH_MODE_ONLY;
+import static uk.ac.ed.ph.snuggletex.definitions.LaTeXMode.MATH;
+import static uk.ac.ed.ph.snuggletex.definitions.TextFlowContext.START_NEW_XHTML_BLOCK;
 
 public final class IpnbTexPackageDefinitions {
 
@@ -38,5 +42,6 @@ public final class IpnbTexPackageDefinitions {
           builder.appendMathMLOperatorElement(parentElement, "\u03c0");
         }
       }, null);
+      ourPackage.addEnvironment("eqnarray", MATH_MODE_ONLY, MATH, Interpretation.TABULAR, new EqnArrayHandler(), START_NEW_XHTML_BLOCK);
     }
 }
