@@ -27,7 +27,7 @@ import com.intellij.openapi.project.DumbAware;
 
 import java.awt.event.KeyEvent;
 
-abstract class DiffWalkerAction extends AnAction implements DumbAware {
+public abstract class DiffWalkerAction extends AnAction implements DumbAware {
   protected DiffWalkerAction() {
     setEnabledInModalContext(true);
   }
