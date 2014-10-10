@@ -19,12 +19,14 @@ import static uk.ac.ed.ph.snuggletex.definitions.TextFlowContext.START_NEW_XHTML
 public final class IpnbTexPackageDefinitions {
 
     private static final SnugglePackage ourPackage;
-    
-    public static SnugglePackage getPackage() {
+
+  public static SnugglePackage getPackage() {
         return ourPackage;
     }
-    
-    static {
+
+  private static String ourLocation = "org/jetbrains/plugins/ipnb/math-characters.txt";
+
+  static {
       ourPackage = new SnugglePackage("Ipnb");
 
       ourPackage.addComplexCommandSameArgMode("dot", false, 1, MATH_MODE_ONLY, new CommandHandler() {
@@ -43,5 +45,7 @@ public final class IpnbTexPackageDefinitions {
         }
       }, null);
       ourPackage.addEnvironment("eqnarray", MATH_MODE_ONLY, MATH, Interpretation.TABULAR, new EqnArrayHandler(), START_NEW_XHTML_BLOCK);
+
+      ourPackage.loadMathCharacterDefinitions(ourLocation);
     }
 }
