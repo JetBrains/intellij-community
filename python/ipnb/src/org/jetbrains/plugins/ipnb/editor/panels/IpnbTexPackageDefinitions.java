@@ -24,7 +24,7 @@ public final class IpnbTexPackageDefinitions {
         return ourPackage;
     }
 
-  private static String ourLocation = "org/jetbrains/plugins/ipnb/math-characters.txt";
+  private static String ourMathCharacters = "org/jetbrains/plugins/ipnb/math-characters.txt";
 
   static {
       ourPackage = new SnugglePackage("Ipnb");
@@ -46,6 +46,6 @@ public final class IpnbTexPackageDefinitions {
       }, null);
       ourPackage.addEnvironment("eqnarray", MATH_MODE_ONLY, MATH, Interpretation.TABULAR, new EqnArrayHandler(), START_NEW_XHTML_BLOCK);
 
-      ourPackage.loadMathCharacterDefinitions(ourLocation);
+      ourPackage.loadMathCharacterDefinitions(ourMathCharacters);
     }
 }
