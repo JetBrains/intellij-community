@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,14 +52,16 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
                                                @NotNull FileTemplate template,
                                                @NotNull PsiDirectory dir,
                                                @Nullable String defaultTemplateProperty) {
-    CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(name, dir);
-    name = mkdirs.newName;
-    dir = mkdirs.directory;
+    if (name != null) {
+      CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(name, dir);
+      name = mkdirs.newName;
+      dir = mkdirs.directory;
+    }
+    
     PsiElement element;
     Project project = dir.getProject();
     try {
-      element = FileTemplateUtil
-        .createFromTemplate(template, name, FileTemplateManager.getInstance().getDefaultProperties(project), dir);
+      element = FileTemplateUtil.createFromTemplate(template, name, FileTemplateManager.getInstance().getDefaultProperties(project), dir);
       final PsiFile psiFile = element.getContainingFile();
 
       final VirtualFile virtualFile = psiFile.getVirtualFile();
