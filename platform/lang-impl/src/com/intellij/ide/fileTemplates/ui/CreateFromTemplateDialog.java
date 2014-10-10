@@ -115,16 +115,22 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
   }
 
-  private void doCreate(@Nullable final String fileName)  {
+  private void doCreate(@Nullable String fileName)  {
     try {
-      final CreateFileAction.MkDirs mkDirs = ApplicationManager.getApplication().runWriteAction(new Computable<CreateFileAction.MkDirs>() {
-        @Override
-        public CreateFileAction.MkDirs compute() {
-          return new CreateFileAction.MkDirs(fileName, myDirectory);
-        }
-      });
-      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, mkDirs.newName, myAttrPanel.getProperties(myDefaultProperties),
-                                                             mkDirs.directory);
+      String newName = fileName;
+      PsiDirectory directory = myDirectory;
+      if (fileName != null) {
+        final String finalFileName = fileName;
+        CreateFileAction.MkDirs mkDirs = ApplicationManager.getApplication().runWriteAction(new Computable<CreateFileAction.MkDirs>() {
+            @Override
+            public CreateFileAction.MkDirs compute() {
+              return new CreateFileAction.MkDirs(finalFileName, myDirectory);
+            }
+          });
+        newName = mkDirs.newName;
+        directory = mkDirs.directory;
+      }
+      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, newName, myAttrPanel.getProperties(myDefaultProperties), directory);
     }
     catch (Exception e) {
       showErrorDialog(e);
