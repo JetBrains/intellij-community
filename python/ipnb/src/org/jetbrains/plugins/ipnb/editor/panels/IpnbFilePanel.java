@@ -59,6 +59,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
       public void run() {
         try {
           myIpnbFile = IpnbParser.parseIpnbFile(vFile);
+          if (myIpnbFile.getCells().isEmpty()) {
+            final IpnbCodeCell cell = new IpnbCodeCell("python", new String[]{""}, null, new ArrayList<IpnbOutputCell>());
+            myIpnbFile.addCell(cell, 0);
+          }
           layoutFile();
           addMouseListener(new MouseAdapter() {
             @Override
