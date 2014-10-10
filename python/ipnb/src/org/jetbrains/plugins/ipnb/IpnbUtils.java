@@ -137,8 +137,8 @@ public class IpnbUtils {
           markdown.append(charAt);
         }
         if (formula.length() != 0) {
-          addFormula(formula.toString(), editorPane, imageIndex);
-          result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\">");
+          addFormula(formula.toString(), editorPane, imageIndex, result);
+
           imageIndex += 1;
           formula = new StringBuilder();
         }
@@ -151,8 +151,7 @@ public class IpnbUtils {
 
     }
     if (formula.length() != 0) {
-      addFormula(formula.toString(), editorPane, imageIndex);
-      result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\">");
+      addFormula(formula.toString(), editorPane, imageIndex, result);
     }
     if (markdown.length() != 0) {
       result.append(markdown.toString());
@@ -160,7 +159,7 @@ public class IpnbUtils {
     return markdown2Html(result.toString());
   }
 
-  private static void addFormula(@NotNull final String formulaText, JEditorPane editorPane, int imageIndex) {
+  private static void addFormula(@NotNull final String formulaText, JEditorPane editorPane, int imageIndex, StringBuilder result) {
     final SnuggleEngine engine = new SnuggleEngine();
     engine.getPackages().add(0, IpnbTexPackageDefinitions.getPackage());
 
@@ -207,5 +206,10 @@ public class IpnbUtils {
     catch (ParserConfigurationException e) {
       LOG.error(e);
     }
+    if (formulaText.startsWith("$$") || formulaText.startsWith("\\begin")) {
+      result.append("<p style = \"text-align:center;\"><img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\"/></p>");
+    }
+    else
+      result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\">");
   }
 }
