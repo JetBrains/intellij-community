@@ -19,8 +19,7 @@ package org.jetbrains.plugins.groovy.util;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
@@ -34,22 +33,22 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHomeConfigurable.SdkHomeBean> {
+public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHomeBean> {
   private final PsiModificationTrackerImpl myTracker;
-  private SdkHomeConfigurable.SdkHomeBean mySdkHome;
+  private SdkHomeBean mySdkHome;
 
   protected SdkHomeSettings(Project project) {
     myTracker = (PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker();
   }
 
   @Override
-  public SdkHomeConfigurable.SdkHomeBean getState() {
+  public SdkHomeBean getState() {
     return mySdkHome;
   }
 
   @Override
-  public void loadState(SdkHomeConfigurable.SdkHomeBean state) {
-    SdkHomeConfigurable.SdkHomeBean oldState = mySdkHome;
+  public void loadState(SdkHomeBean state) {
+    SdkHomeBean oldState = mySdkHome;
     mySdkHome = state;
     if (oldState != null) {
       myTracker.incCounter();
@@ -57,7 +56,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
   }
 
   @Nullable
-  private static VirtualFile calcHome(final SdkHomeConfigurable.SdkHomeBean state) {
+  private static VirtualFile calcHome(final SdkHomeBean state) {
     if (state == null) {
       return null;
     }
@@ -67,7 +66,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
       return null;
     }
 
-    return LocalFileSystem.getInstance().findFileByPath(sdk_home);
+    return StandardFileSystems.local().findFileByPath(sdk_home);
   }
 
   @Nullable
@@ -89,10 +88,10 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
       return Collections.emptyList();
     }
 
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile file : lib.getChildren()) {
       if ("jar".equals(file.getExtension())) {
-        ContainerUtil.addIfNotNull(JarFileSystem.getInstance().getJarRootForLocalFile(file), result);
+        ContainerUtil.addIfNotNull(StandardFileSystems.getJarRootForLocalFile(file), result);
       }
     }
     return result;
