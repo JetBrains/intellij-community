@@ -24,6 +24,10 @@ import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 
 /**
@@ -53,6 +57,8 @@ public class ArrayTableForm {
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     myTable.setRowSelectionAllowed(false);
     myTable.getTableHeader().setReorderingAllowed(false);
+    myTable.setTableHeader(new CustomTableHeader(myTable));
+    myTable.getTableHeader().setDefaultRenderer(new ColumnHeaderRenderer());
 
     myScrollPane = new JBScrollPane();
     JTable rowTable = new RowNumberTable(myTable) {
@@ -74,7 +80,7 @@ public class ArrayTableForm {
     myFormatTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE);
   }
 
-  public class JBTableWithRows extends JBTable {
+  public static class JBTableWithRows extends JBTable {
     private RowNumberTable myRowNumberTable;
     private EditorTextField mySliceField;
 
@@ -132,5 +138,59 @@ public class ArrayTableForm {
 
   public JBScrollPane getScrollPane() {
     return myScrollPane;
+  }
+
+  public static class CustomTableHeader extends JTableHeader {
+
+    public CustomTableHeader(JTable table) {
+      super();
+      setColumnModel(table.getColumnModel());
+      table.getColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+          repaint();
+        }
+      });
+    }
+
+    @Override
+    public void columnSelectionChanged(ListSelectionEvent e) {
+      repaint();
+    }
+  }
+
+  public static class ColumnHeaderRenderer extends DefaultTableHeaderCellRenderer {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
+      super.getTableCellRendererComponent(table, value, selected, focused, row, column);
+      int selectedColumn = table.getSelectedColumn();
+      if (selectedColumn == column) {
+        setFont(getFont().deriveFont(Font.BOLD));
+      }
+      return this;
+    }
+  }
+
+  public static class DefaultTableHeaderCellRenderer extends DefaultTableCellRenderer {
+
+    public DefaultTableHeaderCellRenderer() {
+      setHorizontalAlignment(CENTER);
+      setHorizontalTextPosition(LEFT);
+      setVerticalAlignment(BOTTOM);
+      setOpaque(false);
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value,
+                                                   boolean isSelected, boolean hasFocus, int row, int column) {
+      super.getTableCellRendererComponent(table, value,
+                                          isSelected, hasFocus, row, column);
+      JTableHeader tableHeader = table.getTableHeader();
+      if (tableHeader != null) {
+        setForeground(tableHeader.getForeground());
+      }
+      setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+      return this;
+    }
   }
 }

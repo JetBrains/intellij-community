@@ -20,6 +20,7 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.regex.Matcher;
@@ -40,7 +41,9 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
   private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d^j]*)([+-]?[.\\d]*j)?");
 
   public ArrayTableCellRenderer(double min, double max, String type) {
-    setHorizontalAlignment(SwingConstants.CENTER);
+    setHorizontalAlignment(CENTER);
+    setHorizontalTextPosition(LEFT);
+    setVerticalAlignment(BOTTOM);
     myMin = min;
     myMax = max;
     myType = type;
@@ -51,9 +54,14 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value,
-                                                 boolean isSelected, boolean hasFocus, int rowIndex, int vColIndex) {
+                                                 boolean isSelected, boolean hasFocus, int row, int col) {
+    super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
     if (value != null) {
       setText(value.toString());
+    }
+
+    if (hasFocus) {
+      this.setBorder(new LineBorder(JBColor.BLUE, 2));
     }
 
     if (myMax != myMin) {
