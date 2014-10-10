@@ -39,6 +39,8 @@ public interface RepositoryManager<T extends Repository> {
   @Nullable
   T getRepositoryForRoot(@Nullable VirtualFile root);
 
+  boolean isExternal(@NotNull T repository);
+
   /**
    * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git or Hg repository.
    */

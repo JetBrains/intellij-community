@@ -106,6 +106,17 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
   }
 
   @Override
+  public boolean isExternal(@NotNull T repository) {
+    try {
+      REPO_LOCK.readLock().lock();
+      return !myRepositories.containsValue(repository) && myExternalRepositories.containsValue(repository);
+    }
+    finally {
+      REPO_LOCK.readLock().unlock();
+    }
+  }
+
+  @Override
   @Nullable
   public T getRepositoryForFile(@NotNull VirtualFile file) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);

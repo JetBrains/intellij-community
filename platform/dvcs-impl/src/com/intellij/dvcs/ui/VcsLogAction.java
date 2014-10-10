@@ -15,12 +15,16 @@
  */
 package com.intellij.dvcs.ui;
 
+import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
@@ -33,7 +37,7 @@ import java.util.List;
 public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
     List<VcsFullCommitDetails> details = log.getSelectedDetails();
@@ -43,7 +47,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     if (project == null || log == null) {
@@ -57,7 +61,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      e.getPresentation().setVisible(true);
+      e.getPresentation().setVisible(isVisible(project, grouped));
       e.getPresentation().setEnabled(!grouped.isEmpty() && isEnabled(grouped));
     }
   }
@@ -65,6 +69,19 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   protected abstract void actionPerformed(@NotNull Project project, @NotNull MultiMap<Repo, VcsFullCommitDetails> grouped);
 
   protected abstract boolean isEnabled(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped);
+
+  protected boolean isVisible(@NotNull final Project project, @NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
+    return ContainerUtil.and(grouped.keySet(), new Condition<Repo>() {
+      @Override
+      public boolean value(Repo repo) {
+        RepositoryManager<Repo> manager = getRepositoryManager(project);
+        return !manager.isExternal(repo);
+      }
+    });
+  }
+
+  @NotNull
+  protected abstract AbstractRepositoryManager<Repo> getRepositoryManager(@NotNull Project project);
 
   @Nullable
   protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
