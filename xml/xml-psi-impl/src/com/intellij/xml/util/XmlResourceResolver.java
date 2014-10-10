@@ -22,6 +22,7 @@ import com.intellij.javaee.UriUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,40 +94,13 @@ public class XmlResourceResolver implements XMLEntityResolver {
     final int length = XmlUtil.getPrefixLength(_systemId);
     final String systemId = _systemId.substring(length);
 
-    final PsiFile[] result = new PsiFile[] { null };
-    final Runnable action = new Runnable() {
+    final Computable<PsiFile> action = new Computable<PsiFile>() {
       @Override
-      public void run() {
-        PsiFile baseFile = null;
-        VirtualFile vFile = null;
+      public PsiFile compute() {
 
+        PsiFile baseFile = myFile;
         if (baseSystemId != null) {
-          baseFile = resolve(null,baseSystemId);
-
-          if (baseFile == null) {
-              // Find relative to myFile
-            File workingFile = new File("");
-            String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
-            String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
-            vFile = UriUtil.findRelative(id, myFile);
-
-            if (vFile == null) {
-              vFile = UriUtil.findRelative(baseSystemId, myFile);
-
-              if (vFile == null) {
-                try {
-                  vFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.convertFromUrl(new URL(baseSystemId)));
-                } catch(MalformedURLException ignore) {}
-              }
-            }
-          }
-
-          if (vFile != null && !vFile.isDirectory() && !(vFile.getFileSystem() instanceof HttpFileSystem)) {
-            baseFile = PsiManager.getInstance(myProject).findFile(vFile);
-          }
-        }
-        if (baseFile == null) {
-          baseFile = myFile;
+          baseFile = getBaseFile(baseSystemId);
         }
 
         String version = null;
@@ -163,11 +137,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
           File workingFile = new File("");
           String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/') + "/";
 
-          String relativePath = StringUtil.replace(
-            systemId,
-            workingDir,
-            ""
-          );
+          String relativePath = StringUtil.replace(systemId, workingDir, "");
 
           if (relativePath.equals(systemId)) {
             // on Windows systemId consisting of idea install path could become encoded DOS short name (e.g. idea%7f1.504)
@@ -203,12 +173,11 @@ public class XmlResourceResolver implements XMLEntityResolver {
         if (LOG.isDebugEnabled()) {
           LOG.debug("resolveEntity: psiFile='" + (psiFile != null ? psiFile.getVirtualFile() : null) + "'");
         }
-        result[0] = psiFile;
+        return psiFile;
       }
     };
-    ApplicationManager.getApplication().runReadAction(action);
 
-    final PsiFile psiFile = result[0];
+    final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(action);
     if (psiFile != null) {
       final VirtualFile file = psiFile.getVirtualFile();
       if (file != null) {
@@ -220,6 +189,34 @@ public class XmlResourceResolver implements XMLEntityResolver {
       }
     }
     return psiFile;
+  }
+
+  public PsiFile getBaseFile(String baseSystemId) {
+    PsiFile baseFile;VirtualFile vFile = null;
+    baseFile = resolve(null,baseSystemId);
+
+    if (baseFile == null) {
+        // Find relative to myFile
+      File workingFile = new File("");
+      String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
+      String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
+      vFile = UriUtil.findRelative(id, myFile);
+
+      if (vFile == null) {
+        vFile = UriUtil.findRelative(baseSystemId, myFile);
+
+        if (vFile == null) {
+          try {
+            vFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.convertFromUrl(new URL(baseSystemId)));
+          } catch(MalformedURLException ignore) {}
+        }
+      }
+    }
+
+    if (vFile != null && !vFile.isDirectory() && !(vFile.getFileSystem() instanceof HttpFileSystem)) {
+      baseFile = PsiManager.getInstance(myProject).findFile(vFile);
+    }
+    return baseFile;
   }
 
   @Override
