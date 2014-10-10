@@ -288,11 +288,10 @@ public class MatcherImpl {
 
   private boolean findMatches(MatchOptions options, CompiledPattern compiledPattern) {
     LanguageFileType languageFileType = (LanguageFileType)options.getFileType();
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(languageFileType.getLanguage());
+    final Language patternLanguage = languageFileType.getLanguage();
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(patternLanguage);
     assert profile != null;
-    PsiElement node = compiledPattern.getNodes().current();
-    final Language ourPatternLanguage = node != null ? profile.getLanguage(node) : ((LanguageFileType)options.getFileType()).getLanguage();
-    final Language ourPatternLanguage2 = ourPatternLanguage == StdLanguages.XML ? StdLanguages.XHTML:null;
+    final Language patternLanguage2 = patternLanguage == StdLanguages.XML ? StdLanguages.XHTML:null;
     SearchScope searchScope = compiledPattern.getScope();
     boolean ourOptimizedScope = searchScope != null;
     if (!ourOptimizedScope) searchScope = options.getScope();
@@ -304,7 +303,7 @@ public class MatcherImpl {
         public boolean processFile(final VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
             ++totalFilesToScan;
-            scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir, profile, ourPatternLanguage, ourPatternLanguage2));
+            scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir, profile, patternLanguage, patternLanguage2));
           }
           return true;
         }
@@ -330,7 +329,7 @@ public class MatcherImpl {
 
         PsiFile file = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
 
-        if (profile.isMyFile(file, language, ourPatternLanguage, ourPatternLanguage2)) {
+        if (profile.isMyFile(file, language, patternLanguage, patternLanguage2)) {
           scheduler.addOneTask(new MatchOnePsiFile(psiElement));
         }
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
