@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.regex.Pattern;
 
 public class IpnbUtils {
   private static final Logger LOG = Logger.getInstance(IpnbUtils.class);
@@ -49,8 +50,11 @@ public class IpnbUtils {
                                                      "padding: 8px 35px 8px 14px;" +
                                                      "border: 1px solid #fbeed5;}";
 
-    public static String markdown2Html(@NotNull final String description) {
-      return ourMarkdownProcessor.markdown(description);
+  private static Pattern ourRegex = Pattern.compile("(https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])");
+
+  public static String markdown2Html(@NotNull String description) {
+    description = ourRegex.matcher(description).replaceAll("<a href=\"$1\">$1</a>");
+    return ourMarkdownProcessor.markdown(description);
   }
 
   public static void addLatexToPanel(@NotNull final String source, @NotNull final JPanel panel) {
@@ -75,6 +79,7 @@ public class IpnbUtils {
       }
     });
     editorPane.addHyperlinkListener(new BrowserHyperlinkListener());
+    //TODO: jump to the section (see User Interface#Utilities)
     panel.add(editorPane);
   }
 
