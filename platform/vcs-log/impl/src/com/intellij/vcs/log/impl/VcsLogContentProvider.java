@@ -15,13 +15,22 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogSettings;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -34,13 +43,49 @@ import java.util.Arrays;
 public class VcsLogContentProvider implements ChangesViewContentProvider, NotNullFunction<Project, Boolean> {
 
   public static final String TAB_NAME = "Log";
+  private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
 
   @NotNull private final VcsLogManager myLogManager;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
-  public VcsLogContentProvider(@NotNull VcsLogManager logManager, @NotNull ProjectLevelVcsManager manager) {
-    myLogManager = logManager;
+  public VcsLogContentProvider(@NotNull Project project,
+                               @NotNull ProjectLevelVcsManager manager,
+                               @NotNull VcsLogSettings settings,
+                               @NotNull VcsLogUiProperties uiProperties) {
     myVcsManager = manager;
+    myLogManager = new VcsLogManager(project, settings, uiProperties);
+  }
+
+  @Nullable
+  public static VcsLogManager findLogManager(@NotNull Project project) {
+    final ChangesViewContentEP[] eps = project.getExtensions(ChangesViewContentEP.EP_NAME);
+    ChangesViewContentEP ep = ContainerUtil.find(eps, new Condition<ChangesViewContentEP>() {
+      @Override
+      public boolean value(ChangesViewContentEP ep) {
+        return ep.getClassName().equals(VcsLogContentProvider.class.getName());
+      }
+    });
+    if (ep == null) {
+      LOG.warn("Proper content provider ep not found among [" + toString(eps) + "]");
+      return null;
+    }
+    ChangesViewContentProvider instance = ep.getInstance(project);
+    if (!(instance instanceof VcsLogContentProvider)) {
+      LOG.error("Class name matches, but the class doesn't. class name: " + ep.getClassName() + ", class: " + ep.getClass());
+      return null;
+    }
+    VcsLogContentProvider provider = (VcsLogContentProvider)instance;
+    return provider.myLogManager;
+  }
+
+  @NotNull
+  private static String toString(@NotNull ChangesViewContentEP[] eps) {
+    return StringUtil.join(eps, new Function<ChangesViewContentEP, String>() {
+      @Override
+      public String fun(ChangesViewContentEP ep) {
+        return String.format("%s-%s-%s", ep.tabName, ep.className, ep.predicateClassName);
+      }
+    }, ",");
   }
 
   @NotNull
@@ -54,7 +99,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
 
   @Override
   public JComponent initContent() {
-    return myLogManager.initContent(Arrays.asList(myVcsManager.getAllVcsRoots()));
+    return myLogManager.initContent(Arrays.asList(myVcsManager.getAllVcsRoots()), TAB_NAME);
   }
 
   @Override
