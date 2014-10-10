@@ -50,6 +50,7 @@ import java.io.File;
 
 public class SvnConfigurable implements Configurable {
 
+  public static final String DISPLAY_NAME = SvnVcs.VCS_DISPLAY_NAME;
   private final Project myProject;
   private JCheckBox myUseDefaultCheckBox;
   private TextFieldWithBrowseButton myConfigurationDirectoryText;
@@ -197,7 +198,7 @@ public class SvnConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return SvnVcs.VCS_DISPLAY_NAME;
+    return DISPLAY_NAME;
   }
 
   public String getHelpTopic() {

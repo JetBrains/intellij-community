@@ -18,15 +18,11 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.ExecutableValidator;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnApplicationSettings;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -49,8 +45,8 @@ public class SvnExecutableChecker extends ExecutableValidator {
 
   @NotNull
   @Override
-  protected Configurable getConfigurable() {
-    return getVcs().getConfigurable();
+  protected String getConfigurableDisplayName() {
+    return SvnConfigurable.DISPLAY_NAME;
   }
 
   @NotNull
