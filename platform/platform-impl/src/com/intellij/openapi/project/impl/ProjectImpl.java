@@ -343,7 +343,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
           if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
             File nameFile = new File(ideaDir.getPath(), NAME_FILE);
             try {
-              FileUtil.writeToFile(nameFile, getName().getBytes("UTF-8"), false);
+              FileUtil.writeToFile(nameFile, getName());
               myOldName = null;
             }
             catch (IOException e) {

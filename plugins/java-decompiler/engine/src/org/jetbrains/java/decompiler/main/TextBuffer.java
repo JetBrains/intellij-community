@@ -32,6 +32,7 @@ public class TextBuffer {
   private final String myIndent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
   private final StringBuilder myStringBuilder;
   private Map<Integer, Integer> myLineToOffsetMapping = null;
+  private boolean myTrackLines = true;
 
   public TextBuffer() {
     myStringBuilder = new StringBuilder();
@@ -41,8 +42,12 @@ public class TextBuffer {
     myStringBuilder = new StringBuilder(size);
   }
 
+  public void setTrackLines(boolean trackLines) {
+    myTrackLines = false;
+  }
+
   public void setCurrentLine(int line) {
-    if (line >= 0) {
+    if (myTrackLines && line >= 0) {
       checkMapCreated();
       myLineToOffsetMapping.put(line, myStringBuilder.length()+1);
     }
@@ -70,16 +75,6 @@ public class TextBuffer {
     return this;
   }
 
-  public TextBuffer addBanner(String banner) {
-    myStringBuilder.insert(0, banner);
-    if (myLineToOffsetMapping != null) {
-      for (Integer line : myLineToOffsetMapping.keySet()) {
-        myLineToOffsetMapping.put(line, myLineToOffsetMapping.get(line) + banner.length());
-      }
-    }
-    return this;
-  }
-
   @Override
   public String toString() {
     String original = myStringBuilder.toString();
@@ -101,9 +96,10 @@ public class TextBuffer {
           String line = srcLines[currentLine];
           int lineEnd = currentLineStartOffset + line.length() + myLineSeparator.length();
           if (markOffset >= currentLineStartOffset && markOffset <= lineEnd) {
-            int requiredLinesNumber = markLine - dumpedLines;
-            dumpedLines = markLine;
-            appendLines(res, srcLines, previousMarkLine, currentLine, requiredLinesNumber);
+            int requiredLine = markLine - 1;
+            int linesToAdd = requiredLine - dumpedLines;
+            dumpedLines = requiredLine;
+            appendLines(res, srcLines, previousMarkLine, currentLine, linesToAdd);
             previousMarkLine = currentLine;
             break;
           }
@@ -121,7 +117,7 @@ public class TextBuffer {
 
   private void appendLines(StringBuilder res, String[] srcLines, int from, int to, int requiredLineNumber) {
     if (to - from > requiredLineNumber) {
-      int separatorsRequired = to - from - requiredLineNumber - 1;
+      int separatorsRequired = requiredLineNumber - 1;
       for (int i = from; i < to; i++) {
         res.append(srcLines[i]);
         if (separatorsRequired-- > 0) {
@@ -163,17 +159,26 @@ public class TextBuffer {
     return this;
   }
 
+  private void shiftMapping(int startOffset, int shiftOffset) {
+    if (myLineToOffsetMapping != null) {
+      for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
+        if (entry.getValue() >= startOffset) {
+          myLineToOffsetMapping.put(entry.getKey(), entry.getValue() + shiftOffset);
+        }
+      }
+    }
+  }
+
   private void checkMapCreated() {
     if (myLineToOffsetMapping == null) {
       myLineToOffsetMapping = new HashMap<Integer, Integer>();
     }
   }
 
-  public void insert(int offset, String s) {
-    if (myLineToOffsetMapping != null) {
-      throw new IllegalStateException("insert not yet supported with Line mapping");
-    }
+  public TextBuffer insert(int offset, String s) {
     myStringBuilder.insert(offset, s);
+    shiftMapping(offset, s.length());
+    return this;
   }
 
   public int count(String substring, int from) {

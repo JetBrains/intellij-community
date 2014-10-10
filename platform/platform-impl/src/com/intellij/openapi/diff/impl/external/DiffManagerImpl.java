@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.mergeTool.MergeTool;
 import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.editor.Editor;
@@ -75,7 +76,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   public static final Key<Boolean> EDITOR_IS_DIFF_KEY = new Key<Boolean>("EDITOR_IS_DIFF_KEY");
   private static final MarkupEditorFilter DIFF_EDITOR_FILTER = new MarkupEditorFilter() {
     public boolean avaliableIn(Editor editor) {
-      return editor.getUserData(EDITOR_IS_DIFF_KEY) != null;
+      return DiffUtil.isDiffEditor(editor);
     }
   };
   private ComparisonPolicy myComparisonPolicy;

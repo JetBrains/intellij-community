@@ -65,7 +65,7 @@ public class XmlSerializer {
       throw e;
     }
     catch (Exception e) {
-      throw new XmlSerializationException(e);
+      throw new XmlSerializationException("Cannot deserialize class " + aClass.getName(), e);
     }
   }
 
