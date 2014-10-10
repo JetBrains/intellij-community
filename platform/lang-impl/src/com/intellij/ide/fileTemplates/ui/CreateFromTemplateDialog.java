@@ -24,6 +24,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -41,6 +42,7 @@ import java.awt.*;
 import java.util.Properties;
 
 public class CreateFromTemplateDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog");
   @NotNull private final PsiDirectory myDirectory;
   @NotNull private final Project myProject;
   private PsiElement myCreatedElement;
@@ -140,6 +142,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   }
 
   private void showErrorDialog(final Exception e) {
+    LOG.info(e);
     Messages.showMessageDialog(myProject, filterMessage(e.getMessage()), getErrorMessage(), Messages.getErrorIcon());
   }
 
