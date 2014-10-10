@@ -64,7 +64,8 @@ import java.util.List;
 
 import static com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter.ConfigurableId;
 
-public class ProjectStructureConfigurable extends BaseConfigurable implements SearchableConfigurable, Place.Navigator {
+public class ProjectStructureConfigurable extends BaseConfigurable implements SearchableConfigurable, Place.Navigator,
+                                                                              Configurable.NoMargin, Configurable.NoScroll {
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
