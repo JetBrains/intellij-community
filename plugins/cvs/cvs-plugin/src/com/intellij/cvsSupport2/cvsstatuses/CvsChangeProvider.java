@@ -219,16 +219,10 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void showBranchImOn(final ChangelistBuilder builder, final VcsDirtyScope scope) {
     final List<VirtualFile> dirs = ObjectsConvertor.fp2vf(scope.getRecursivelyDirtyDirectories());
-    final Collection<VirtualFile> roots = new ArrayList<VirtualFile>(scope.getAffectedContentRoots());
-
-    for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
-      final VirtualFile root = iterator.next();
-      if (! dirs.contains(root)) iterator.remove();
-    }
-
-    if (roots.isEmpty()) return;
-    for (VirtualFile root : roots) {
-      checkTopLevelForBeingSwitched(root, builder);
+    for (VirtualFile root : myVcsManager.getRootsUnderVcs(myVcs)) {
+      if (dirs.contains(root)) {
+        checkTopLevelForBeingSwitched(root, builder);
+      }
     }
   }
 
