@@ -146,6 +146,7 @@ public class IpnbUtils {
 
       if (inEnd && charAt == '}') {
         inMultiStringCode -= 1;
+        inEnd = false;
       }
 
     }
