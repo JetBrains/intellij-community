@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
@@ -85,6 +86,11 @@ public class ContextUtil {
 
     if(element == null) {
       return null;
+    }
+
+    // further code is java specific, actually
+    if (element.getLanguage().getAssociatedFileType() != DefaultCodeFragmentFactory.getInstance().getFileType()) {
+      return element;
     }
 
     final StackFrameProxyImpl frameProxy = (StackFrameProxyImpl)context.getFrameProxy();

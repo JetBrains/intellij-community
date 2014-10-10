@@ -309,7 +309,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   protected String getConnectionMessage() {
-    return "Connecting to debugger...";
+    return "Waiting for connection...";
   }
 
   protected String getConnectionTitle() {
@@ -730,7 +730,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       return XDebuggerBundle.message("debugger.state.message.connected");
     }
     else {
-      return "Waiting for connection...";
+      return getConnectionMessage();
     }
   }
 

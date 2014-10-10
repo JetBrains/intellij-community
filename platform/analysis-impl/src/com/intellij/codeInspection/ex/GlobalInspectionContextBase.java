@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -441,10 +441,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     };
 
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || !application.isWriteAccessAllowed()) {
-      cleanupRunnable.run();
-    } else {
+    if (application.isWriteAccessAllowed()) {
       application.invokeLater(cleanupRunnable);
+    }
+    else {
+      cleanupRunnable.run();
     }
   }
 

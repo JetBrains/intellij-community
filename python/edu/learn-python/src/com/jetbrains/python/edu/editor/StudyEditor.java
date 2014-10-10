@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -47,8 +48,8 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * Implementation of StudyEditor which has panel with special buttons and task text
@@ -167,7 +168,7 @@ public class StudyEditor implements TextEditor {
     taskTextPane.setContentType("text/html");
     taskTextPane.setEditable(false);
     taskTextPane.setText(taskText);
-    taskTextPane.addHyperlinkListener(new BrowserHyperlinkListener());
+    taskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     int fontSize = editorColorsScheme.getEditorFontSize();
     String fontName = editorColorsScheme.getEditorFontName();
@@ -406,6 +407,26 @@ public class StudyEditor implements TextEditor {
   public void navigateTo(@NotNull Navigatable navigatable) {
     if (myDefaultEditor instanceof TextEditor) {
       ((TextEditor)myDefaultEditor).navigateTo(navigatable);
+    }
+  }
+
+  public static void deleteGuardedBlocks(@NotNull final Document document) {
+    if (document instanceof DocumentImpl) {
+      DocumentImpl documentImpl = (DocumentImpl)document;
+      List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
+      for (final RangeMarker block : blocks) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                document.removeGuardedBlock(block);
+              }
+            });
+          }
+        });
+      }
     }
   }
 }

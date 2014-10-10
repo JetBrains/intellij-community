@@ -15,6 +15,8 @@
  */
 package com.intellij.util.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.ImageObserver;
@@ -25,12 +27,12 @@ import java.awt.image.ImageObserver;
  * @author Konstantin Bulenkov
  */
 public class JBImageIcon extends ImageIcon {
-  public JBImageIcon(Image image) {
+  public JBImageIcon(@NotNull Image image) {
     super(image);
   }
 
   @Override
-  public final synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
+  public synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
     final ImageObserver observer = getImageObserver();
 
     UIUtil.drawImage(g, getImage(), x, y, observer == null ? c : observer);

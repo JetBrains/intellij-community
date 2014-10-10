@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,38 +22,28 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 public interface FileEditorManagerListener extends EventListener{
-  Topic<FileEditorManagerListener> FILE_EDITOR_MANAGER = new Topic<FileEditorManagerListener>("file editor events", FileEditorManagerListener.class);
+  Topic<FileEditorManagerListener> FILE_EDITOR_MANAGER =
+    new Topic<FileEditorManagerListener>("file editor events", FileEditorManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
-  /**
-   * TODO[vova] write javadoc
-   */
   void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file);
 
-  /**
-   * TODO[vova] write javadoc
-   */
   void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file);
 
-  /**
-   * TODO[vova] write javadoc
-   */
   void selectionChanged(@NotNull FileEditorManagerEvent event);
 
   interface Before extends EventListener {
-    Topic<Before> FILE_EDITOR_MANAGER = new Topic<Before>("file editor before events", Before.class);
+    Topic<Before> FILE_EDITOR_MANAGER =
+      new Topic<Before>("file editor before events", Before.class, Topic.BroadcastDirection.TO_PARENT);
 
     void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file);
     void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file);
 
     class Adapter implements Before {
       @Override
-      public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      }
+      public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }
 
       @Override
-      public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      }
+      public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }
     }
-
   }
 }

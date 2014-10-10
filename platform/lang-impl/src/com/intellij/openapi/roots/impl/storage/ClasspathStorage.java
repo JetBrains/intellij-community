@@ -17,11 +17,7 @@
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -36,10 +32,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +47,10 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -58,8 +59,6 @@ import java.util.*;
  * Time: 1:42:06 PM
  */
 public class ClasspathStorage implements StateStorage {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.storage.ClasspathStorage");
-
   @NonNls public static final String SPECIAL_STORAGE = "special";
 
   public static final String DEFAULT_STORAGE_DESCR = ProjectBundle.message("project.roots.classpath.format.default.descr");
@@ -67,21 +66,17 @@ public class ClasspathStorage implements StateStorage {
   @NonNls public static final String CLASSPATH_DIR_OPTION = JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE;
 
   @NonNls private static final String COMPONENT_TAG = "component";
-  private Object mySession;
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
-
 
   public ClasspathStorage(Module module) {
     myConverter = getProvider(ClassPathStorageUtil.getStorageType(module)).createConverter(module);
-    final MessageBus messageBus = module.getMessageBus();
-    final VirtualFileTracker virtualFileTracker =
-      (VirtualFileTracker)module.getPicoContainer().getComponentInstanceOfType(VirtualFileTracker.class);
-    if (virtualFileTracker != null && messageBus != null) {
+    final VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
+    if (virtualFileTracker != null) {
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
       try {
         myConverter.getFileSet().listFiles(files);
         for (VirtualFile file : files) {
-          final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
+          final Listener listener = module.getProject().getMessageBus().syncPublisher(PROJECT_STORAGE_TOPIC);
           virtualFileTracker.addTracker(file.getUrl(), new VirtualFileAdapter() {
             @Override
             public void contentsChanged(@NotNull final VirtualFileEvent event) {
@@ -102,7 +97,7 @@ public class ClasspathStorage implements StateStorage {
 
   @Override
   @Nullable
-  public <T> T getState(final Object component, @NotNull final String componentName, Class<T> stateClass, @Nullable T mergeInto)
+  public <T> T getState(final Object component, @NotNull final String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto)
     throws StateStorageException {
     assert component instanceof ModuleRootManager;
     assert componentName.equals("NewModuleRootManager");
@@ -142,12 +137,11 @@ public class ClasspathStorage implements StateStorage {
   }
 
   @Override
-  public boolean hasState(final Object component, @NotNull final String componentName, final Class<?> aClass, final boolean reloadData)
-    throws StateStorageException {
+  public boolean hasState(@Nullable final Object component, @NotNull final String componentName, final Class<?> aClass, final boolean reloadData) {
     return true;
   }
 
-  public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state) throws StateStorageException {
+  public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
     assert component instanceof ModuleRootManager;
     assert componentName.equals("NewModuleRootManager");
     assert state.getClass() == ModuleRootManagerImpl.ModuleRootManagerState.class;
@@ -166,52 +160,23 @@ public class ClasspathStorage implements StateStorage {
   @Override
   @NotNull
   public ExternalizationSession startExternalization() {
-    final ExternalizationSession session = new ExternalizationSession() {
+
+    return new ExternalizationSession() {
       @Override
-      public void setState(@NotNull final Object component, final String componentName, @NotNull final Object state, final Storage storageSpec)
-        throws StateStorageException {
-        assert mySession == this;
+      public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
         ClasspathStorage.this.setState(component, componentName, state);
       }
     };
+  }
 
-    mySession = session;
-    return session;
+  @Nullable
+  @Override
+  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
+    return new MySaveSession();
   }
 
   @Override
-  @NotNull
-  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
-    assert mySession == externalizationSession;
-
-    final SaveSession session = new MySaveSession();
-
-    mySession = session;
-    return session;
-  }
-
-  private static void convert2Io(List<File> list, ArrayList<VirtualFile> virtualFiles) {
-    for (VirtualFile virtualFile : virtualFiles) {
-      list.add(VfsUtilCore.virtualToIoFile(virtualFile));
-    }
-  }
-
-  @Override
-  public void finishSave(@NotNull final SaveSession saveSession) {
-    try {
-      LOG.assertTrue(mySession == saveSession);
-    }
-    finally {
-      mySession = null;
-    }
-  }
-
-  @Override
-  public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
-  }
-
-  public boolean needsSave() throws StateStorageException {
-    return getFileSet().hasChanged();
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
   }
 
   public void save() throws StateStorageException {
@@ -253,6 +218,7 @@ public class ClasspathStorage implements StateStorage {
 
   @NotNull
   public static String getModuleDir(@NotNull Module module) {
+    //noinspection ConstantConditions
     return new File(module.getModuleFilePath()).getParent();
   }
 
@@ -404,46 +370,9 @@ public class ClasspathStorage implements StateStorage {
   }
 
   private class MySaveSession implements SaveSession, SafeWriteRequestor {
-    public boolean needsSave() throws StateStorageException {
-      assert mySession == this;
-      return ClasspathStorage.this.needsSave();
-    }
-
     @Override
-    public void save() throws StateStorageException {
-      assert mySession == this;
+    public void save() {
       ClasspathStorage.this.save();
-    }
-
-    @Override
-    @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public Collection<File> getStorageFilesToSave() throws StateStorageException {
-      if (needsSave()) {
-        final List<File> list = new ArrayList<File>();
-        final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
-        getFileSet().listModifiedFiles(virtualFiles);
-        convert2Io(list, virtualFiles);
-        return list;
-      }
-      else {
-        return Collections.emptyList();
-      }
-    }
-
-    @NotNull
-    @Override
-    public List<File> getAllStorageFiles() {
-      List<File> list = new ArrayList<File>();
-      ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
-      getFileSet().listFiles(virtualFiles);
-      convert2Io(list, virtualFiles);
-      return list;
     }
   }
 }

@@ -18,6 +18,9 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.analysis.PackagesScopesProvider;
 import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -323,5 +326,20 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   }
   public void testPublicClassInRightFile2() throws Exception {
     doTest(BASE_PATH + "/publicClassInRightFile/x/Y.java", BASE_PATH + "/publicClassInRightFile", false, false);
+  }
+
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    boolean needUnusedSymbol = getTestName(true).toLowerCase().contains("unused");
+    return needUnusedSymbol ? new LocalInspectionTool[]{new UnusedSymbolLocalInspection()} : new LocalInspectionTool[0];
+  }
+
+  public void testUnusedPublicMethodReferencedViaSubclass() throws Exception {
+    UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
+    enableInspectionTool(deadCodeInspection);
+    //String ref = getTestDataPath() + BASE_PATH + "/unusedPublicMethodRefViaSubclass/x/X.java";
+    allowTreeAccessForAllFiles();
+
+    doTest(BASE_PATH + "/unusedPublicMethodRefViaSubclass/x/I.java", BASE_PATH + "/unusedPublicMethodRefViaSubclass", true, false);
   }
 }

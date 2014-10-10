@@ -49,6 +49,7 @@ import com.intellij.testFramework.vcs.MockChangeListManagerGate;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.TestClientRunner;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
@@ -379,10 +380,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected static void sleep(final int millis) {
-    try {
-      Thread.sleep(millis);
-    }
-    catch (InterruptedException ignore) { }
+    TimeoutUtil.sleep(millis);
   }
 
   public String prepareBranchesStructure() throws Exception {

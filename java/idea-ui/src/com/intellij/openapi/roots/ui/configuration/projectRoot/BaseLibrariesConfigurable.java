@@ -50,10 +50,11 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
-  protected String myLevel;
+  protected final String myLevel;
 
-  protected BaseLibrariesConfigurable(final @NotNull Project project) {
+  protected BaseLibrariesConfigurable(final @NotNull Project project, @NotNull String libraryTableLevel) {
     super(project);
+    myLevel = libraryTableLevel;
   }
 
   public static BaseLibrariesConfigurable getInstance(@NotNull Project project, @NotNull String tableLevel) {

@@ -112,6 +112,8 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
   static Map<String, ExternalSourceSet> getSourceSets(Project project) {
     final IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
     boolean inheritOutputDirs = ideaPlugin?.model?.module?.inheritOutputDirs ?: false
+    def ideaOutDir = ideaPlugin?.model?.module?.outputDir
+    def ideaTestOutDir = ideaPlugin?.model?.module?.testOutputDir
 
     def result = [:] as Map<String, ExternalSourceSet>
     if (!project.hasProperty("sourceSets") || !(project.sourceSets instanceof SourceSetContainer)) {
@@ -143,6 +145,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
 
       if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)) {
+        if (!inheritOutputDirs && ideaTestOutDir != null) {
+          javaDirectorySet.outputDir = ideaTestOutDir
+          resourcesDirectorySet.outputDir = ideaTestOutDir
+        }
         resourcesDirectorySet.excludes = testResourcesExcludes + sourceSet.resources.excludes;
         resourcesDirectorySet.includes = testResourcesIncludes + sourceSet.resources.includes;
         resourcesDirectorySet.filters = testFilterReaders
@@ -150,6 +156,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         sources.put(ExternalSystemSourceType.TEST_RESOURCE, resourcesDirectorySet)
       }
       else {
+        if (!inheritOutputDirs && SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name) && ideaOutDir != null) {
+          javaDirectorySet.outputDir = ideaOutDir
+          resourcesDirectorySet.outputDir = ideaOutDir
+        }
         resourcesDirectorySet.excludes = resourcesExcludes + sourceSet.resources.excludes;
         resourcesDirectorySet.includes = resourcesIncludes + sourceSet.resources.includes;
         resourcesDirectorySet.filters = filterReaders

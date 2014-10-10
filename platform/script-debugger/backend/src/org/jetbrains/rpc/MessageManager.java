@@ -1,8 +1,23 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.rpc;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -16,7 +31,7 @@ import java.util.Arrays;
 public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> {
   public static final Logger LOG = Logger.getInstance(MessageManager.class);
 
-  private final ConcurrentIntObjectMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>> callbackMap = new StripedLockIntObjectConcurrentHashMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>>();
+  private final ConcurrentIntObjectMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>> callbackMap = ContainerUtil.createConcurrentIntObjectMap();
   private final Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler;
 
   private volatile boolean closed;

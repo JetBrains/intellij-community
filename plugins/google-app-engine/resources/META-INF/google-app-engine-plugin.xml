@@ -10,7 +10,7 @@
     <applicationService serviceInterface="com.intellij.appengine.facet.AppEngineWebIntegration"
                         serviceImplementation="com.intellij.appengine.facet.impl.AppEngineCommunityWebIntegration"/>
 
-    <frameworkSupport implementation="com.intellij.appengine.facet.AppEngineSupportProvider"/>
+    <framework.type implementation="com.intellij.appengine.facet.AppEngineFrameworkType"/>
     <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
     <project.converterProvider implementation="com.intellij.appengine.converter.AppEngineFacetConverterProvider"/>

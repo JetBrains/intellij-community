@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -151,11 +152,7 @@ public class SvnBusyOnAddTest extends TestCase {
       }).start();
 
       semaphoreMain.waitFor();
-      try {
-        Thread.sleep(5);
-      } catch (InterruptedException e) {
-        //
-      }
+      TimeoutUtil.sleep(5);
       SVNWCClient client = new SVNWCClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
       client.doAdd(ioFile.getParentFile(), true, false, true, true);
       semaphore.up();

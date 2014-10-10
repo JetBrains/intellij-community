@@ -16,7 +16,6 @@
 package com.jetbrains.python.run;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.openapi.project.Project;
@@ -24,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,7 +149,7 @@ public class ProcessRunner {
       env.putAll(userDefinedEnv);
     }
     //Inline parent env variables occurrences
-    EnvironmentVariablesComponent.inlineParentOccurrences(env);
+    EnvironmentUtil.inlineParentOccurrences(env);
 
     return cmdLine;
   }

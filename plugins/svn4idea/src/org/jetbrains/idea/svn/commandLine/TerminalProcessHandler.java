@@ -71,15 +71,28 @@ public class TerminalProcessHandler extends SvnProcessHandler {
       currentLine = filterCombinedText(currentLine);
 
       // check if current line presents some interactive output
-      boolean handled = false;
-      for (InteractiveCommandListener listener : myInteractiveListeners) {
-        handled |= listener.handlePrompt(currentLine, outputType);
-      }
-
+      boolean handled = handlePrompt(currentLine, outputType);
       if (!handled) {
         notify(currentLine, outputType, lastLine);
       }
     }
+  }
+
+  protected boolean handlePrompt(String text, Key outputType) {
+    // if process has separate output and error streams => try to handle prompts only from error stream output
+    boolean shouldHandleWithListeners = !processHasSeparateErrorStream() || ProcessOutputTypes.STDERR.equals(outputType);
+
+    return shouldHandleWithListeners && handlePromptWithListeners(text, outputType);
+  }
+
+  private boolean handlePromptWithListeners(String text, Key outputType) {
+    boolean result = false;
+
+    for (InteractiveCommandListener listener : myInteractiveListeners) {
+      result |= listener.handlePrompt(text, outputType);
+    }
+
+    return result;
   }
 
   @NotNull

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 
 
@@ -33,9 +34,9 @@ public class RootStatement extends Statement {
     first.setParent(this);
   }
 
-  public String toJava(int indent) {
-    return ExprProcessor.listToJava(varDefinitions, indent) +
-           first.toJava(indent);
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
+    return ExprProcessor.listToJava(varDefinitions, indent, tracer) +
+           first.toJava(indent, tracer);
   }
 
   public Statement getDummyExit() {

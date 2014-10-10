@@ -32,6 +32,7 @@ public class ClassValueConverterImpl extends ClassValueConverter {
   static {
     REFERENCE_PROVIDER.setSoft(true);
     REFERENCE_PROVIDER.setAllowEmpty(true);
+    REFERENCE_PROVIDER.setOption(JavaClassReferenceProvider.ALLOW_DOLLAR_NAMES, Boolean.TRUE);
   }
 
   @NotNull

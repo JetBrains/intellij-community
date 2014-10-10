@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -719,13 +720,17 @@ public class EditorWindow {
       else {
         Integer initialIndex = editor.getFile().getUserData(INITIAL_INDEX_KEY);
         int indexToInsert = 0;
-        if (initialIndex == null) {
-          int selectedIndex = myTabbedPane.getSelectedIndex();
-          if (selectedIndex >= 0) {
-            indexToInsert = selectedIndex + 1;
-          }
+        if (Registry.is("ide.editor.tabs.open.at.the.end")) {
+          indexToInsert = myTabbedPane.getTabCount();
         } else {
-          indexToInsert = initialIndex;
+          if (initialIndex == null) {
+            int selectedIndex = myTabbedPane.getSelectedIndex();
+            if (selectedIndex >= 0) {
+              indexToInsert = selectedIndex + 1;
+            }
+          } else {
+            indexToInsert = initialIndex;
+          }
         }
 
         final VirtualFile file = editor.getFile();

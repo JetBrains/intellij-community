@@ -16,6 +16,8 @@
 
 package com.intellij.util.xmlb;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -48,12 +50,11 @@ class CollectionBinding extends AbstractCollectionBinding  {
     return target;
   }
 
+  @NotNull
   @Override
-  Iterable getIterable(Object o) {
-    if (o instanceof Set) {
-      return new TreeSet((Set)o);
-    }
-    return (Collection)o;
+  Collection<Object> getIterable(@NotNull Object o) {
+    //noinspection unchecked
+    return o instanceof Set ? new TreeSet((Set)o) : (Collection<Object>)o;
   }
 
   @Override

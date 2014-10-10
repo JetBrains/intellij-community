@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,10 +86,8 @@ public class ReplacePromptDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
     Icon icon = Messages.getQuestionIcon();
-    if (icon != null){
-      JLabel iconLabel = new JLabel(icon);
-      panel.add(iconLabel, BorderLayout.WEST);
-    }
+    JLabel iconLabel = new JLabel(icon);
+    panel.add(iconLabel, BorderLayout.WEST);
     JLabel label = new JLabel(getMessage());
     label.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
     label.setForeground(JBColor.foreground());

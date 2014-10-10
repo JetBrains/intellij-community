@@ -67,7 +67,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull final ProgressIndicator progress) {
-    final HighlightUsagesHandlerBase<PsiElement> handler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile);
+    @SuppressWarnings("unchecked") HighlightUsagesHandlerBase<PsiElement> handler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile);
     if (handler != null) {
       List<PsiElement> targets = handler.getTargets();
       handler.computeUsages(targets);

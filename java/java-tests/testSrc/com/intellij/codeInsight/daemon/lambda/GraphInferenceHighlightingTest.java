@@ -239,6 +239,18 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testCallToGenericMethodsOfNonGenericClassInsideRawInheritor() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA130549() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA130547() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

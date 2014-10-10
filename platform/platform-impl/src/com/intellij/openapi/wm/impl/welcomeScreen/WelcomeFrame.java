@@ -76,7 +76,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
       }
     });
 
-    myBalloonLayout = new BalloonLayoutImpl(rootPane.getLayeredPane(), new Insets(8, 8, 8, 8));
+    myBalloonLayout = new BalloonLayoutImpl(rootPane, new Insets(8, 8, 8, 8));
 
     myScreen = screen;
     setupCloseAction();

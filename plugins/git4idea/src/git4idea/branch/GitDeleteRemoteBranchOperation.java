@@ -27,7 +27,6 @@ import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
-import git4idea.push.GitSimplePushResult;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -171,13 +169,6 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private GitCommandResult pushDeletionNatively(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String url,
                                                 @NotNull String branchName) {
     return myGit.push(repository, remoteName, url,":" + branchName);
-  }
-
-  @NotNull
-  private static GitCommandResult convertSimplePushResultToCommandResult(@NotNull GitSimplePushResult result) {
-    boolean success = result.getType() == GitSimplePushResult.Type.SUCCESS;
-    return new GitCommandResult(success, -1, success ? Collections.<String>emptyList() : Collections.singletonList(result.getOutput()),
-                                success ? Collections.singletonList(result.getOutput()) : Collections.<String>emptyList(), null);
   }
 
   @Nullable

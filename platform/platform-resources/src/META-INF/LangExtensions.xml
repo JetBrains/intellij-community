@@ -71,12 +71,9 @@
                         serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
     <exportable serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"/>
 
-    <applicationService serviceInterface="com.intellij.codeEditor.printing.PrintSettings"
-                        serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
-    <exportable serviceInterface="com.intellij.codeEditor.printing.PrintSettings"/>
+    <applicationService serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
-    <exportable serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"/>
 
     <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
                         serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
@@ -111,6 +108,7 @@
 
     <applicationService serviceInterface="com.intellij.find.FindSettings"
                         serviceImplementation="com.intellij.find.impl.FindSettingsImpl"/>
+    <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.CodeInsightSettings"
                         serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
@@ -153,6 +151,8 @@
 
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
+    <applicationService serviceInterface="com.intellij.psi.search.PredefinedSearchScopeProvider"
+                        serviceImplementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl"/>
 
     <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
                         serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
@@ -360,8 +360,8 @@
                     serviceImplementation="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
 
     <!-- Editor -->
-    <applicationConfigurable groupId="editor" groupWeight="190" instance="com.intellij.application.options.editor.EditorOptions" id="editor" key="title.editor"
-                             bundle="messages.ApplicationBundle" order="after appearance"
+    <applicationConfigurable groupId="editor" groupWeight="190" instance="com.intellij.application.options.editor.EditorOptions" id="preferences.editor" key="title.editor"
+                             bundle="messages.ApplicationBundle" order="after preferences.lookFeel"
                              childrenEPName="com.intellij.editorOptionsProvider"/>
 
     <projectService serviceInterface="com.intellij.semantic.SemService" serviceImplementation="com.intellij.semantic.SemServiceImpl"/>
@@ -375,7 +375,7 @@
     <applicationConfigurable groupId="editor" groupWeight="120" instance="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable" id="preferences.fileTypes"
                              key="filetype.settings.title" bundle="messages.FileTypesBundle"/>
 
-    <applicationConfigurable groupId="editor" key="intention.settings" bundle="messages.CodeInsightBundle" instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="intentions"/>
+    <applicationConfigurable groupId="editor" key="intention.settings" bundle="messages.CodeInsightBundle" instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="preferences.intentionPowerPack"/>
 
     <!-- Live Templates -->
     <applicationConfigurable groupId="editor" groupWeight="130" instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable" id="editing.templates"
@@ -522,9 +522,6 @@
 
     <completion.skip implementation="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor$Skipper"
                      id="skipLiveTemplate"/>
-
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInspection.magicConstant.MagicCompletionContributor"
-                            id="magicCompletion" order="first, before liveTemplates"/>
 
     <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings"
                         serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
@@ -754,7 +751,7 @@
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper" order="last"/>
 
     <projectConfigurable groupId="editor" groupWeight="140" key="file.encodings.configurable" bundle="messages.IdeBundle" instance="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
-    <projectConfigurable groupId="appearance" instance="com.intellij.ui.tabs.FileColorsConfigurable" id="fileColors" displayName="File Colors"/>
+    <projectConfigurable groupId="appearance" instance="com.intellij.ui.tabs.FileColorsConfigurable" id="reference.settings.ide.settings.file-colors" displayName="File Colors"/>
 
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.ActionTracer"/>
@@ -891,6 +888,12 @@
 
     <projectService serviceInterface="com.intellij.execution.ExecutionManager" serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
+    <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
+    <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>
+    <projectService serviceInterface="com.intellij.openapi.preview.PreviewManager"
+                    serviceImplementation="com.intellij.openapi.preview.impl.PreviewManagerImpl"/>
+
+    <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider" order="last"/>
   </extensions>
 </idea-plugin>
 

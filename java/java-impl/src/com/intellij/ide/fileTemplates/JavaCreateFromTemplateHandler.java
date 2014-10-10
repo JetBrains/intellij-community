@@ -17,7 +17,6 @@ package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
@@ -41,8 +40,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
                                                 String extension) throws IncorrectOperationException {
     if (extension == null) extension = StdFileTypes.JAVA.getDefaultExtension();
     final String name = "myClass" + "." + extension;
-    final FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(name);
-    final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, type, content);
+    final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, StdFileTypes.JAVA, content);
     if (!(psiFile instanceof PsiJavaFile)){
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }

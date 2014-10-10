@@ -87,9 +87,7 @@ public class Rediffers {
     public void beforeDocumentChange(DocumentEvent event) {}
 
     public void documentChanged(DocumentEvent event) {
-      int newLines = StringUtil.getLineBreakCount(event.getNewFragment());
-      int oldLines = StringUtil.getLineBreakCount(event.getOldFragment());
-      if (newLines != oldLines) myPanel.invalidateDiff();
+      if (event.getOldLength() != event.getNewLength()) myPanel.invalidateDiff();
       requestRediff();
     }
 

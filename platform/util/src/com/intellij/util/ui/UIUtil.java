@@ -197,6 +197,27 @@ public class UIUtil {
   @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
 
   public static Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
+  private static Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+  private static final AbstractAction REDO_ACTION = new AbstractAction() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      Object source = e.getSource();
+      UndoManager manager = source instanceof JComponent ? getClientProperty((JComponent)source, UNDO_MANAGER) : null;
+      if (manager != null && manager.canRedo()) {
+        manager.redo();
+      }
+    }
+  };
+  private static final AbstractAction UNDO_ACTION = new AbstractAction() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      Object source = e.getSource();
+      UndoManager manager = source instanceof JComponent ? getClientProperty((JComponent)source, UNDO_MANAGER) : null;
+      if (manager != null && manager.canUndo()) {
+        manager.undo();
+      }
+    }
+  };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
 
@@ -318,6 +339,10 @@ public class UIUtil {
     for (PropertyChangeListener each : toolkit.getPropertyChangeListeners(name)) {
       toolkit.removePropertyChangeListener(name, each);
     }
+  }
+
+  public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
+    return (T)component.getClientProperty(key);
   }
 
   public static String getHtmlBody(String text) {
@@ -1625,7 +1650,7 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
@@ -1639,6 +1664,16 @@ public class UIUtil {
       catch (Exception e) {
         LOG.error(e); //?
       }
+    }
+  }
+  private static Thread getEventQueueThread() {
+    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    try {
+      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
+      return (Thread)method.invoke(eventQueue);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -1757,12 +1792,21 @@ public class UIUtil {
 
   @Nullable
   public static Component findNearestOpaque(JComponent c) {
+    return findParentByCondition(c, new Condition<Component>() {
+      @Override
+      public boolean value(Component component) {
+        return component.isOpaque();
+      }
+    });
+  }
+
+  @Nullable
+  public static Component findParentByCondition(@NotNull JComponent c, Condition<Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
-      if (eachParent.isOpaque()) return eachParent;
+      if (condition.value(eachParent)) return eachParent;
       eachParent = eachParent.getParent();
     }
-
     return null;
   }
 
@@ -1914,7 +1958,7 @@ public class UIUtil {
 
   public static Font getTitledBorderFont() {
     Font defFont = getLabelFont();
-    return defFont.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
+    return defFont.deriveFont(defFont.getSize() - 1f);
   }
 
   /**
@@ -1978,7 +2022,7 @@ public class UIUtil {
         if (component instanceof JScrollPane) {
           if (!hasNonPrimitiveParents(c, component)) {
             final JScrollPane scrollPane = (JScrollPane)component;
-            Integer keepBorderSides = (Integer)scrollPane.getClientProperty(KEEP_BORDER_SIDES);
+            Integer keepBorderSides = getClientProperty(scrollPane, KEEP_BORDER_SIDES);
             if (keepBorderSides != null) {
               if (scrollPane.getBorder() instanceof LineBorder) {
                 Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
@@ -2867,28 +2911,21 @@ public class UIUtil {
     return false;
   }
 
-  public static void addUndoRedoActions(JTextComponent textComponent) {
-    final UndoManager undoManager = new UndoManager();
+  public static void resetUndoRedoActions(@NotNull JTextComponent textComponent) {
+    UndoManager undoManager = getClientProperty(textComponent, UNDO_MANAGER);
+    if (undoManager != null) {
+      undoManager.discardAllEdits();
+    }
+  }
+
+  public static void addUndoRedoActions(@NotNull final JTextComponent textComponent) {
+    UndoManager undoManager = new UndoManager();
+    textComponent.putClientProperty(UNDO_MANAGER, undoManager);
     textComponent.getDocument().addUndoableEditListener(undoManager);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK), "undoKeystroke");
-    textComponent.getActionMap().put("undoKeystroke", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (undoManager.canUndo()) {
-          undoManager.undo();
-        }
-      }
-    });
-    textComponent.getInputMap().put(
-      KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
-    textComponent.getActionMap().put("redoKeystroke", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-         if (undoManager.canRedo()) {
-           undoManager.redo();
-         }
-      }
-    });
+    textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
+    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
+    textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
   }
 
   public static void playSoundFromResource(final String resourceName) {
@@ -2973,8 +3010,7 @@ public class UIUtil {
 
   @NotNull
   public static String rightArrow() {
-    char rightArrow = '\u2192';
-    return getLabelFont().canDisplay(rightArrow) ? String.valueOf(rightArrow) : "->";
+    return FontUtil.rightArrow(getLabelFont());
   }
 
   public static EmptyBorder getTextAlignBorder(@NotNull JToggleButton alignSource) {
@@ -3008,7 +3044,7 @@ public class UIUtil {
   }
 
   public static Color getSidePanelColor() {
-    return new JBColor(new Color(0xD2D6DD), new Color(60, 68, 71));
+    return new JBColor(0xD2D6DD, 0x3C4447);
   }
 
   /**
@@ -3024,5 +3060,26 @@ public class UIUtil {
     textField.setHorizontalAlignment(SwingConstants.TRAILING);
 
     textField.setColumns(4);
+  }
+
+  public static <T> Border makeChameleonBorder(final Border border, final Condition<T> conditionToShow, final T checker) {
+    return new Border() {
+      @Override
+      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        if (conditionToShow.value(checker)) {
+          border.paintBorder(c, g, x, y, width, height);
+        }
+      }
+
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return border.getBorderInsets(c);
+      }
+
+      @Override
+      public boolean isBorderOpaque() {
+        return border.isBorderOpaque() && conditionToShow.value(checker);
+      }
+    };
   }
 }

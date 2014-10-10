@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.OrderPanelListener;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -77,7 +76,6 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   @Override
   public void saveData() {
     myPanel.stopEditing();
-    flushChangesToModel();
   }
 
   @Override
@@ -99,14 +97,6 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   @Override
   public JComponent createComponentImpl() {
     myPanel = new ClasspathPanelImpl(getState());
-
-    myPanel.addListener(new OrderPanelListener() {
-      @Override
-      public void entryMoved() {
-        flushChangesToModel();
-      }
-    });
-
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
     panel.add(myPanel, BorderLayout.CENTER);
@@ -131,9 +121,8 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     return panel;
   }
 
+  @Deprecated
   public void flushChangesToModel() {
-    List<OrderEntry> entries = myPanel.getEntries();
-    getModel().rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
   }
 
   public void selectOrderEntry(@NotNull final OrderEntry entry) {
@@ -170,8 +159,6 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     if (myPanel != null) {
       myPanel.forceInitFromModel();
     }
-
-    flushChangesToModel();
   }
 
   private class ClasspathFormatPanel extends JPanel {

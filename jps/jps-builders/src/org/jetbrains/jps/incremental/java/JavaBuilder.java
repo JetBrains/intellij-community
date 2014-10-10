@@ -351,34 +351,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Set<JpsModule> modules = chunk.getModules();
     ProcessorConfigProfile profile = null;
     if (modules.size() == 1) {
-      final JpsModule module = modules.iterator().next();
-      profile = compilerConfig.getAnnotationProcessingProfile(module);
+      profile = compilerConfig.getAnnotationProcessingProfile(modules.iterator().next());
     }
     else {
-      // perform cycle-related validations
-      Pair<String, LanguageLevel> pair = null;
-      for (JpsModule module : modules) {
-        final LanguageLevel moduleLevel = javaExt.getLanguageLevel(module);
-        if (pair == null) {
-          pair = Pair.create(module.getName(), moduleLevel); // first value
-        }
-        else {
-          if (!Comparing.equal(pair.getSecond(), moduleLevel)) {
-            final String message = "Modules " + pair.getFirst()+ " and " +module.getName() + " must have the same language level because of cyclic dependencies between them";
-            diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
-            return true;
-          }
-        }
-      }
-
-      // check that all chunk modules are excluded from annotation processing
-      for (JpsModule module : modules) {
-        final ProcessorConfigProfile prof = compilerConfig.getAnnotationProcessingProfile(module);
-        if (prof.isEnabled()) {
-          final String message = "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" + chunk.getName() + "] are excluded from annotation processing";
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
-          return true;
-        }
+      String message = validateCycle(chunk, javaExt, compilerConfig, modules);
+      if (message != null) {
+        diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
+        return true;
       }
     }
 
@@ -422,7 +401,40 @@ public class JavaBuilder extends ModuleLevelBuilder {
       counter.await();
     }
   }
-                                                                            
+
+  @Nullable
+  public static String validateCycle(ModuleChunk chunk,
+                                     JpsJavaExtensionService javaExt,
+                                     JpsJavaCompilerConfiguration compilerConfig, Set<JpsModule> modules) {
+    Pair<String, LanguageLevel> pair = null;
+    for (JpsModule module : modules) {
+      final LanguageLevel moduleLevel = javaExt.getLanguageLevel(module);
+      if (pair == null) {
+        pair = Pair.create(module.getName(), moduleLevel); // first value
+      }
+      else {
+        if (!Comparing.equal(pair.getSecond(), moduleLevel)) {
+          return "Modules " +
+                 pair.getFirst() +
+                 " and " +
+                 module.getName() +
+                 " must have the same language level because of cyclic dependencies between them";
+        }
+      }
+    }
+
+    // check that all chunk modules are excluded from annotation processing
+    for (JpsModule module : modules) {
+      final ProcessorConfigProfile prof = compilerConfig.getAnnotationProcessingProfile(module);
+      if (prof.isEnabled()) {
+        return "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" +
+               chunk.getName() +
+               "] are excluded from annotation processing";
+      }
+    }
+    return null;
+  }
+
   private static boolean shouldForkCompilerProcess(CompileContext context, ModuleChunk chunk, JavaCompilingTool tool) {
     final int compilerSdkVersion = getCompilerSdkVersion(context);
     if (compilerSdkVersion < 9) {

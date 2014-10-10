@@ -23,7 +23,7 @@ public class Utils {
   }
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {
-    EditorConfigNotifier.getInstance().error(project, configValue, "\"" + configValue + "\" is not a valid value for " + configKey + " for file " + filePath);
+    EditorConfigNotifier.getInstance().error(project, configValue, "\"" + configValue + "\" is not a valid value" + (!configKey.isEmpty() ? " for " + configKey : "") + " for file " + filePath);
   }
 
   public static void appliedConfigMessage(Project project, String configValue, String configKey, String filePath) {

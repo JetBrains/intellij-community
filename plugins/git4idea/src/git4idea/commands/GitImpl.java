@@ -23,13 +23,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.GitBranch;
-import git4idea.GitCommit;
-import git4idea.GitExecutionException;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
-import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
@@ -377,22 +373,38 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult push(@NotNull final GitRepository repository, @NotNull final String remote, @NotNull final String url,
-                               @NotNull final String spec, final boolean updateTracking,
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @Nullable String url, @NotNull String spec,
+                               boolean updateTracking, @NotNull GitLineHandlerListener... listeners) {
+    return doPush(repository, remote, url, spec, false, updateTracking, null, listeners);
+  }
+
+  @NotNull
+  private GitCommandResult doPush(@NotNull final GitRepository repository, @NotNull final String remote, @Nullable final String url,
+                               @NotNull final String spec, final boolean force, final boolean updateTracking,
+                               @Nullable final String tagMode,
                                @NotNull final GitLineHandlerListener... listeners) {
     return runCommand(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
         final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
-        h.setUrl(url);
+        if (url != null) {
+          h.setUrl(url);
+        }
         h.setSilent(false);
         h.setStdoutSuppressed(false);
         addListeners(h, listeners);
         h.addProgressParameter();
+        h.addParameters("--porcelain");
         h.addParameters(remote);
         h.addParameters(spec);
         if (updateTracking) {
           h.addParameters("--set-upstream");
+        }
+        if (force) {
+          h.addParameters("--force");
+        }
+        if (tagMode != null) {
+          h.addParameters(tagMode);
         }
         return h;
       }
@@ -401,19 +413,27 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @Nullable String url, @NotNull String spec,
                                @NotNull GitLineHandlerListener... listeners) {
     return push(repository, remote, url, spec, false, listeners);
   }
 
   @Override
   @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull String url,
-                               @NotNull GitLineHandlerListener... listeners) {
-    GitRemote remote = pushSpec.getRemote();
-    GitBranch remoteBranch = pushSpec.getDest();
-    String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
-    return push(repository, remote.getName(), url, pushSpec.getSource().getName() + ":" + destination, listeners);
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitLocalBranch source, @NotNull GitRemoteBranch target,
+                               boolean force, boolean updateTracking, @Nullable String tagMode, GitLineHandlerListener... listeners) {
+    GitRemote remote = target.getRemote();
+    Collection<String> pushUrls = remote.getPushUrls(); // TODO handle the case with multiple pushurls with different protocols
+    String url;
+    if (pushUrls.isEmpty()) {
+      LOG.error("No urls or pushUrls are defined for " + remote);
+      url = null;
+    }
+    else {
+      url = pushUrls.iterator().next();
+    }
+    String spec = source.getFullName() + ":" + target.getNameForRemoteOperations();
+    return doPush(repository, remote.getName(), url, spec, force, updateTracking, tagMode, listeners);
   }
 
   @NotNull

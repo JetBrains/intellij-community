@@ -406,7 +406,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         @Override
         public RelativePoint recalculateLocation(Balloon object) {
           Component c = getAnchor(pane);
-          return new RelativePoint(c, new Point(c.getWidth() - 150, c.getHeight() - 50));
+          return new RelativePoint(c, new Point(c.getWidth() - 150, c.getHeight() - 45));
         }
       }, Balloon.Position.above);
     }
@@ -415,7 +415,9 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   @NotNull
   private static Component getAnchor(@NotNull JRootPane pane) {
     Component splitters = UIUtil.findComponentOfType(pane, EditorsSplitters.class);
-    return splitters == null ? FileEditorManagerEx.getInstanceEx(ProjectUtil.guessCurrentProject(pane)).getSplitters() : splitters;
+    if (splitters != null) return splitters;
+    FileEditorManagerEx ex = FileEditorManagerEx.getInstanceEx(ProjectUtil.guessCurrentProject(pane));
+    return ex == null ? pane : ex.getSplitters();
   }
 
   public Couple<String> setText(@Nullable final String text, @Nullable final String requestor) {

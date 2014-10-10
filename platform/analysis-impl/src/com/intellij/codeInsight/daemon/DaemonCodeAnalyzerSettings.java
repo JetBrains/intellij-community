@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.xmlb.annotations.Transient;
 
 public class DaemonCodeAnalyzerSettings {
   public static DaemonCodeAnalyzerSettings getInstance() {
@@ -27,16 +27,18 @@ public class DaemonCodeAnalyzerSettings {
   public boolean NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = true;
   public int AUTOREPARSE_DELAY = 300;
   public boolean SHOW_ADD_IMPORT_HINTS = true;
-  @NonNls public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
+  public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
   public boolean SUPPRESS_WARNINGS = true;
   public boolean SHOW_METHOD_SEPARATORS = false;
   public int ERROR_STRIPE_MARK_MIN_HEIGHT = 3;
   public boolean SHOW_SMALL_ICONS_IN_GUTTER = true;
 
+  @Transient
   public boolean isCodeHighlightingChanged(DaemonCodeAnalyzerSettings oldSettings) {
     return false;
   }
 
+  @Transient
   public boolean isImportHintEnabled() {
     return SHOW_ADD_IMPORT_HINTS;
   }
@@ -45,6 +47,7 @@ public class DaemonCodeAnalyzerSettings {
     SHOW_ADD_IMPORT_HINTS = isImportHintEnabled;
   }
 
+  @Transient
   public boolean isSuppressWarnings() {
     return SUPPRESS_WARNINGS;
   }

@@ -174,6 +174,11 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     //noinspection unchecked
     return EMPTY;
   }
+
+  @NotNull
+  public static <K, V> MostlySingularMultiMap<K, V> newMap() {
+    return new MostlySingularMultiMap<K, V>();
+  }
   private static final MostlySingularMultiMap EMPTY = new EmptyMap();
 
   private static class EmptyMap extends MostlySingularMultiMap {

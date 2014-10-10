@@ -86,13 +86,19 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-    VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
-      editorManager.closeFile(openFile);
+    try {
+      if (myProject != null) {
+        FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
+        VirtualFile[] openFiles = editorManager.getOpenFiles();
+        for (VirtualFile openFile : openFiles) {
+          editorManager.closeFile(openFile);
+        }
+      }
     }
-    myEditor = null;
-    super.tearDown();
+    finally {
+      myEditor = null;
+      super.tearDown();
+    }
   }
 
   @Override

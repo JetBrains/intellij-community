@@ -84,8 +84,10 @@
       </dict>
 
       <key>VMOptions</key>
-      <string>-XX:ErrorFile=$HOME/java_error_in_@@executable@@_%p.log -Djava.library.path=$APP_PACKAGE/Contents/bin:$DYLD_LIBRARY_PATH @@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
+      <string>@@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
 
+      <key>WorkingDirectory</key>
+      <string>$APP_PACKAGE/Contents/bin</string>
     </dict>
   </dict>
 </plist>

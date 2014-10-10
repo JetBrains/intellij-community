@@ -30,6 +30,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   private JCheckBox myCbSmartTabs;
   private JTextField myContinuationIndentField;
   private JLabel myContinuationIndentLabel;
+  private JCheckBox myCbKeepIndentsOnEmptyLines;
 
   @Override
   protected void addTabOptions() {
@@ -46,6 +47,9 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     myContinuationIndentField = createIndentTextField();
     myContinuationIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.continuation.indent"));
     add(myContinuationIndentLabel, myContinuationIndentField);
+
+    myCbKeepIndentsOnEmptyLines = new JCheckBox(ApplicationBundle.message("checkbox.indent.keep.indents.on.empty.lines"));
+    add(myCbKeepIndentsOnEmptyLines);
   }
 
   @Override
@@ -53,6 +57,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     boolean isModified = super.isModified(settings, options);
     isModified |= isFieldModified(myCbSmartTabs, options.SMART_TABS);
     isModified |= isFieldModified(myContinuationIndentField, options.CONTINUATION_INDENT_SIZE);
+    isModified |= isFieldModified(myCbKeepIndentsOnEmptyLines, options.KEEP_INDENTS_ON_EMPTY_LINES);
     return isModified;
   }
 
@@ -61,6 +66,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     super.apply(settings, options);
     options.CONTINUATION_INDENT_SIZE = getFieldValue(myContinuationIndentField, 0, options.CONTINUATION_INDENT_SIZE);
     options.SMART_TABS = isSmartTabValid(options.INDENT_SIZE, options.TAB_SIZE) && myCbSmartTabs.isSelected();
+    options.KEEP_INDENTS_ON_EMPTY_LINES = myCbKeepIndentsOnEmptyLines.isSelected();
   }
 
   @Override
@@ -68,6 +74,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     super.reset(settings, options);
     myContinuationIndentField.setText(String.valueOf(options.CONTINUATION_INDENT_SIZE));
     myCbSmartTabs.setSelected(options.SMART_TABS);
+    myCbKeepIndentsOnEmptyLines.setSelected(options.KEEP_INDENTS_ON_EMPTY_LINES);
   }
 
   @Override

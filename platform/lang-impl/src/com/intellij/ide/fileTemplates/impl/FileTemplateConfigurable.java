@@ -56,6 +56,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -247,7 +248,15 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     });
 
     ((EditorEx)editor).setHighlighter(createHighlighter());
-    mySplitter.setFirstComponent(editor.getComponent());
+    
+    JPanel topPanel = new JPanel(new BorderLayout());
+    HyperlinkLabel hyperlinkLabel = new HyperlinkLabel();
+    hyperlinkLabel.setHyperlinkText("", "Apache Velocity", " template language is used");
+    hyperlinkLabel.setHyperlinkTarget(
+      "http://velocity.apache.org/engine/devel/user-guide.html#Velocity_Template_Language_VTL:_An_Introduction");
+    topPanel.add(hyperlinkLabel, BorderLayout.SOUTH);
+    topPanel.add(editor.getComponent(), BorderLayout.CENTER);
+    mySplitter.setFirstComponent(topPanel);
     return editor;
   }
 

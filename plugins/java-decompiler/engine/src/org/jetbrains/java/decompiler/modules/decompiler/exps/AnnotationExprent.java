@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
@@ -45,7 +46,8 @@ public class AnnotationExprent extends Exprent {
     this.parvalues = parvalues;
   }
 
-  public String toJava(int indent) {
+  @Override
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
@@ -59,7 +61,7 @@ public class AnnotationExprent extends Exprent {
     if (!parnames.isEmpty()) {
       buffer.append("(");
       if (parnames.size() == 1 && "value".equals(parnames.get(0))) {
-        buffer.append(parvalues.get(0).toJava(indent + 1));
+        buffer.append(parvalues.get(0).toJava(indent + 1, tracer));
       }
       else {
         String indstr1 = InterpreterUtil.getIndentString(indent + 1);
@@ -68,7 +70,7 @@ public class AnnotationExprent extends Exprent {
           buffer.append(new_line_separator).append(indstr1);
           buffer.append(parnames.get(i));
           buffer.append(" = ");
-          buffer.append(parvalues.get(i).toJava(indent + 2));
+          buffer.append(parvalues.get(i).toJava(indent + 2, tracer));
 
           if (i < parnames.size() - 1) {
             buffer.append(",");

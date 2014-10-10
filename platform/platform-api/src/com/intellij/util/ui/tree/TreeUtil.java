@@ -191,7 +191,7 @@ public final class TreeUtil {
   }
 
   @NotNull
-  public static TreePath getPathFromRoot(TreeNode node) {
+  public static TreePath getPathFromRoot(@NotNull TreeNode node) {
     final ArrayList<TreeNode> path = new ArrayList<TreeNode>();
     do {
       path.add(node);

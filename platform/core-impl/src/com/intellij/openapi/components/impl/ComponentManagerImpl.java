@@ -108,7 +108,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
       Class[] componentInterfaces = myComponentsRegistry.getComponentInterfaces();
       for (Class componentInterface : componentInterfaces) {
-        ProgressIndicatorProvider.checkCanceled();
+        ProgressIndicator indicator = getProgressIndicator();
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
         createComponent(componentInterface);
       }
     }
@@ -248,7 +251,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     Class[] componentClasses = myComponentsRegistry.getComponentInterfaces();
     List<Object> components = new ArrayList<Object>(componentClasses.length);
     for (Class<?> interfaceClass : componentClasses) {
-      ProgressIndicatorProvider.checkCanceled();
+      ProgressIndicator indicator = getProgressIndicator();
+      if (indicator != null) {
+        indicator.checkCanceled();
+      }
       Object component = getComponent(interfaceClass);
       if (component != null) components.add(component);
     }

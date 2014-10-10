@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,7 +32,7 @@ public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     super.actionPerformed(e);
     FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.scheme.quickswitch");
   }
@@ -41,7 +41,7 @@ public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements
     return true;
   }
 
-  private DefaultActionGroup getGroup() {
+  private static DefaultActionGroup getGroup() {
     return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_CHANGE_SCHEME);
   }
 }

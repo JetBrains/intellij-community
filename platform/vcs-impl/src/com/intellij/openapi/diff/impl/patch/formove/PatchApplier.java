@@ -41,7 +41,7 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.Consumer;
@@ -72,7 +72,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   @Nullable private final String myLeftConflictPanelTitle;
   @Nullable private final String myRightConflictPanelTitle;
 
-  public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
+  public PatchApplier(@NotNull Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
                       @Nullable final Consumer<Collection<FilePath>> toTargetListsMover,
                       final CustomBinaryPatchApplier<BinaryType> customForBinaries, final CommitContext commitContext,
                       boolean reverseConflict, @Nullable String leftConflictPanelTitle, @Nullable String rightConflictPanelTitle) {
@@ -87,6 +87,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     myRightConflictPanelTitle = rightConflictPanelTitle;
     myRemainingPatches = new ArrayList<FilePatch>();
     myVerifier = new PathsVerifier<BinaryType>(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
+      @Override
       @Nullable
       public VirtualFile getFile(FilePatch patch, String path) {
         return PathMerger.getFile(myBaseDirectory, path);
@@ -174,11 +175,13 @@ public class PatchApplier<BinaryType extends FilePatch> {
       final ApplyPatchStatus applyStatus;
       try {
         applyStatus = ApplicationManager.getApplication().runReadAction(new Computable<ApplyPatchStatus>() {
+          @Override
           public ApplyPatchStatus compute() {
             final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
             try {
               setConfirmationToDefault();
               CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+                @Override
                 public void run() {
                   if (! createFiles()) {
                     refStatus.set(ApplyPatchStatus.FAILURE);
@@ -258,6 +261,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(null);
     try {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        @Override
         public void run() {
           for (PatchApplier applier : group) {
             if (! applier.createFiles()) {
@@ -287,7 +291,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
     directlyAffected.addAll(trigger.getAffected());
     final Consumer<Collection<FilePath>> mover = localChangeList == null ? null : createMover(project, localChangeList);
-    PatchApplier.refreshPassedFilesAndMoveToChangelist(project, null, directlyAffected, indirectlyAffected, mover, false);
+    refreshPassedFilesAndMoveToChangelist(project, null, directlyAffected, indirectlyAffected, mover, false);
     showApplyStatus(project, result);
     return result;
   }
@@ -360,7 +364,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     return myVerifier.getAllAffected();
   }
 
-  public static void refreshPassedFilesAndMoveToChangelist(final Project project, final ContinuationContext context,
+  public static void refreshPassedFilesAndMoveToChangelist(@NotNull final Project project, final ContinuationContext context,
       final Collection<FilePath> directlyAffected, final Collection<VirtualFile> indirectlyAffected,
       final Consumer<Collection<FilePath>> targetChangelistMover, final boolean systemOperation) {
     if (context != null) {
@@ -368,6 +372,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
 
     final Runnable scheduleProjectFilesReload = systemOperation ? EmptyRunnable.getInstance() : new Runnable() {
+      @Override
       public void run() {
         final Runnable projectFilesReload =
           MergeVersion.MergeDocumentVersion.prepareToReportChangedProjectFiles(project, ObjectsConvertor.fp2vf(directlyAffected));
@@ -381,7 +386,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
         if (projectFilesReloadTaskDescriptor != null) {
           if (context != null) {
             context.last(projectFilesReloadTaskDescriptor);
-          } else {
+          }
+          else {
             SwingUtilities.invokeLater(projectFilesReload);
           }
         }
@@ -393,6 +399,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
     }
     RefreshQueue.getInstance().refresh(false, true, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
@@ -413,6 +420,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
                 }, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
               VcsBundle.message("change.lists.manager.move.changes.to.list"),
               new Consumer<VcsDirtyScopeManager>() {
+                @Override
                 public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
                   vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
                   vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
@@ -491,7 +499,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     return status;
   }
 
-  protected static void showApplyStatus(final Project project, final ApplyPatchStatus status) {
+  protected static void showApplyStatus(@NotNull Project project, final ApplyPatchStatus status) {
     if (status == ApplyPatchStatus.ALREADY_APPLIED) {
       showError(project, VcsBundle.message("patch.apply.already.applied"), false);
     }
@@ -508,7 +516,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   private boolean makeWritable(final List<VirtualFile> filesToMakeWritable) {
-    final VirtualFile[] fileArray = VfsUtil.toVirtualFileArray(filesToMakeWritable);
+    final VirtualFile[] fileArray = VfsUtilCore.toVirtualFileArray(filesToMakeWritable);
     final ReadonlyStatusHandler.OperationStatus readonlyStatus = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(fileArray);
     return (! readonlyStatus.hasReadonlyFiles());
   }
@@ -537,6 +545,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
     final String title = VcsBundle.message("patch.apply.dialog.title");
     final Runnable messageShower = new Runnable() {
+      @Override
       public void run() {
         if (error) {
           Messages.showErrorDialog(project, message, title);
@@ -547,6 +556,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       }
     };
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+        @Override
         public void run() {
           messageShower.run();
         }

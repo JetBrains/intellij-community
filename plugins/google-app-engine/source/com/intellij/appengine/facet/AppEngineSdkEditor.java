@@ -19,6 +19,7 @@ import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.sdk.AppEngineSdkManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,11 +35,10 @@ public class AppEngineSdkEditor {
   private ComboboxWithBrowseButton myPathEditor;
 
   public AppEngineSdkEditor(final @Nullable Project project) {
-    myPathEditor = new ComboboxWithBrowseButton();
-    final ComboboxWithBrowseButton pathEditor = myPathEditor;
+    myPathEditor = new ComboboxWithBrowseButton(new ComboBox(100));
     myPathEditor.addBrowseFolderListener(project, new ComponentWithBrowseButton.BrowseFolderActionListener<JComboBox>("Google App Engine SDK",
                                      "Specify Google App Engine Java SDK home",
-                                     pathEditor, project,
+                                     myPathEditor, project,
                                      FileChooserDescriptorFactory.createSingleFolderDescriptor(),
                                      TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT));
     final JComboBox comboBox = myPathEditor.getComboBox();

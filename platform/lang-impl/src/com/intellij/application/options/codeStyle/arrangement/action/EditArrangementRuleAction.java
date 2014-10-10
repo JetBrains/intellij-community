@@ -37,13 +37,13 @@ public class EditArrangementRuleAction extends AbstractArrangementRuleAction imp
 
   @Override
   public void update(AnActionEvent e) {
-    ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
+    ArrangementMatchingRulesControl control = getRulesControl(e);
     e.getPresentation().setEnabled(control != null && control.getSelectedModelRows().size() == 1);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
+    ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
       return;
     }

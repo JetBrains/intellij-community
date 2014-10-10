@@ -55,7 +55,7 @@ public class DfaTypeValue extends DfaValue {
 
       DfaTypeValue result = new DfaTypeValue(type, nullness, myFactory);
       conditions.add(result);
-      return new DfaTypeValue(type, nullness, myFactory);
+      return result;
     }
 
   }

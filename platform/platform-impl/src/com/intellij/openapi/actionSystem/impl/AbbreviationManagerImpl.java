@@ -16,14 +16,11 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.AbbreviationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import gnu.trove.THashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -33,8 +30,7 @@ import java.util.*;
   name = "AbbreviationManager",
   storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/abbreviations.xml", roamingType = RoamingType.PER_PLATFORM)}
 )
-public class AbbreviationManagerImpl extends AbbreviationManager implements
-                                                                 ExportableComponent, PersistentStateComponent<Element> {
+public class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
   private final Map<String, List<String>> myAbbreviation2ActionId = new THashMap<String, List<String>>();
   private final Map<String, LinkedHashSet<String>> myActionId2Abbreviations = new THashMap<String, LinkedHashSet<String>>();
   private final Map<String, LinkedHashSet<String>> myPluginsActionId2Abbreviations = new THashMap<String, LinkedHashSet<String>>();
@@ -107,18 +103,6 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements
         }
       }
     }
-  }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("abbreviations")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return "Actions";
   }
 
   @Override

@@ -25,6 +25,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -248,7 +249,8 @@ class LookupUi {
   }
 
   void refreshUi(boolean selectionVisible, boolean itemsChanged, boolean reused, boolean onExplicitAction) {
-    if (myLookup.getEditor().getComponent().getRootPane() == null) {
+    Editor editor = myLookup.getEditor();
+    if (editor.getComponent().getRootPane() == null || editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
       return;
     }
 
@@ -264,7 +266,7 @@ class LookupUi {
       myLookup.myResizePending = false;
       myLookup.pack();
     }
-    HintManagerImpl.updateLocation(myLookup, myLookup.getEditor(), rectangle.getLocation());
+    HintManagerImpl.updateLocation(myLookup, editor, rectangle.getLocation());
 
     if (reused || selectionVisible || onExplicitAction) {
       myLookup.ensureSelectionVisible(false);

@@ -48,7 +48,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     return new ClsFileImpl(this);
   }
 
-  public static boolean isInnerClass(VirtualFile vFile) {
+  public static boolean isInnerClass(@NotNull VirtualFile vFile) {
     String name = vFile.getNameWithoutExtension();
     int index = name.lastIndexOf('$', name.length());
     if (index > 0 && index < name.length() - 1) {

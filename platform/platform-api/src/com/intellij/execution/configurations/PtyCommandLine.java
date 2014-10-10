@@ -42,15 +42,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   protected Process startProcess(@NotNull List<String> commands) throws IOException {
     if (SystemInfo.isUnix) {
       try {
-        Map<String, String> env = Maps.newHashMap();
-        setupEnvironment(env);
-
-        if (isRedirectErrorStream()) {
-          LOG.error("Launching process with PTY and redirected error stream is unsupported yet");
-        }
-
-        File workDirectory = getWorkDirectory();
-        return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, workDirectory != null ? workDirectory.getPath() : null, true);
+        return startProcessWithPty(commands, true);
       }
       catch (Throwable e) {
         LOG.error("Couldn't run process with PTY", e);
@@ -58,5 +50,18 @@ public class PtyCommandLine extends GeneralCommandLine {
     }
 
     return super.startProcess(commands);
+  }
+
+  @NotNull
+  public Process startProcessWithPty(@NotNull List<String> commands, boolean console) throws IOException {
+    Map<String, String> env = Maps.newHashMap();
+    setupEnvironment(env);
+
+    if (isRedirectErrorStream()) {
+      LOG.error("Launching process with PTY and redirected error stream is unsupported yet");
+    }
+
+    File workDirectory = getWorkDirectory();
+    return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, workDirectory != null ? workDirectory.getPath() : null, console);
   }
 }

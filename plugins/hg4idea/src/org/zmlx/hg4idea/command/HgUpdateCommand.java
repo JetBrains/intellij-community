@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -73,15 +74,22 @@ public class HgUpdateCommand {
 
     final HgPromptCommandExecutor executor = new HgPromptCommandExecutor(project);
     executor.setShowOutput(true);
-    HgCommandResult result =
-      executor.executeInCurrentThread(repo, "update", arguments);
-    if (!clean && hasUncommittedChangesConflict(result)) {
-      final String message = "<html>Your uncommitted changes couldn't be merged into the requested changeset.<br>" +
-                             "Would you like to perform force update and discard them?";
-      if (showDiscardChangesConfirmation(project, message) == Messages.OK) {
-        arguments.add("-C");
-        result = executor.executeInCurrentThread(repo, "update", arguments);
+    HgCommandResult result;
+    DvcsUtil.workingTreeChangeStarted(project);
+    try {
+      result =
+        executor.executeInCurrentThread(repo, "update", arguments);
+      if (!clean && hasUncommittedChangesConflict(result)) {
+        final String message = "<html>Your uncommitted changes couldn't be merged into the requested changeset.<br>" +
+                               "Would you like to perform force update and discard them?";
+        if (showDiscardChangesConfirmation(project, message) == Messages.OK) {
+          arguments.add("-C");
+          result = executor.executeInCurrentThread(repo, "update", arguments);
+        }
       }
+    }
+    finally {
+      DvcsUtil.workingTreeChangeFinished(project);
     }
 
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);

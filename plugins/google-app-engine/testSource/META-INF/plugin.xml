@@ -1,8 +1,0 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <name>Google App Engine Integration Test</name>
-  <id>com.intellij.appengine-test</id>
-  <description>
-      This fake plugin descriptor is used to run tests
-  </description>
-  <xi:include href="/META-INF/google-app-engine-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-</idea-plugin>

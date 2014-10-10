@@ -295,11 +295,15 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
 
     public PsiDirectory findOrCreateTargetDirectory() throws IncorrectOperationException{
       if (myTargetDirectory == null) {
-        final PsiDirectory root = myParentDirectory.findOrCreateTargetDirectory();
+        PsiDirectory root = myParentDirectory.findOrCreateTargetDirectory();
 
-        myTargetDirectory = root.findSubdirectory(myRelativePath);
-        if (myTargetDirectory == null) {
-          myTargetDirectory = root.createSubdirectory(myRelativePath);
+        final String[] pathComponents = myRelativePath.split("/");
+        for (String component : pathComponents) {
+          myTargetDirectory = root.findSubdirectory(component);
+          if (myTargetDirectory == null) {
+            myTargetDirectory = root.createSubdirectory(component);
+          }
+          root = myTargetDirectory;
         }
       }
       return myTargetDirectory;

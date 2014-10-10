@@ -15,19 +15,24 @@
  */
 package com.intellij.appengine.actions;
 
-import com.intellij.CommonBundle;
+import com.intellij.appengine.cloud.AppEngineCloudType;
+import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.appengine.facet.AppEngineFacet;
-import com.intellij.appengine.util.AppEngineUtil;
+import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.facet.ProjectFacetManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
-import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.RemoteServersManager;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -35,52 +40,52 @@ import java.util.List;
  * @author nik
  */
 public class UploadApplicationAction extends AnAction {
+  public static final String LAST_RUN_CONFIGURATION_PROPERTY = "JAVA_APP_ENGINE_LAST_RUN_CONFIGURATION";
+
   @Override
   public void update(AnActionEvent e) {
     final Project project = e.getProject();
-    e.getPresentation().setVisible(project != null && !ProjectFacetManager.getInstance(project).getFacets(AppEngineFacet.ID).isEmpty());
-  }
+    e.getPresentation().setEnabledAndVisible(
+      project != null && !ProjectFacetManager.getInstance(project).getFacets(AppEngineFacet.ID).isEmpty());
 
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getProject();
     if (project != null) {
-      final List<Artifact> artifacts = AppEngineUtil.collectAppEngineArtifacts(project, true);
-      if (artifacts.isEmpty()) {
-        Messages.showErrorDialog(project, "No Web or EAR artifacts with AppEngine found in the project", CommonBundle.getErrorTitle());
-        return;
-      }
-      Artifact artifact;
-      if (artifacts.size() == 1) {
-        artifact = artifacts.get(0);
+      String text;
+      RunnerAndConfigurationSettings configurationToRun = getConfigurationToRun(project);
+      if (configurationToRun == null) {
+        text = getTemplatePresentation().getText();
       }
       else {
-        final UploadApplicationDialog dialog = new UploadApplicationDialog(project);
-        dialog.show();
-        artifact = dialog.getSelectedArtifact();
-        if (!dialog.isOK() || artifact == null) {
-          return;
-        }
+        text = "Upload App Engine Application '" + configurationToRun.getName() + "'";
       }
-      final AppEngineUploader uploader = AppEngineUploader.createUploader(project, artifact, null, new ServerRuntimeInstance.DeploymentOperationCallback() {
-        @Override
-        public void succeeded(@NotNull DeploymentRuntime deploymentRuntime) {
-
-        }
-
-        @Override
-        public void errorOccurred(@NotNull final String errorMessage) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(project, errorMessage, CommonBundle.getErrorTitle());
-            }
-          });
-        }
-      }, null);
-      if (uploader != null) {
-        uploader.startUploading();
-      }
+      e.getPresentation().setText(text);
     }
   }
 
+  @Nullable
+  private static RunnerAndConfigurationSettings getConfigurationToRun(@NotNull Project project) {
+    List<RunnerAndConfigurationSettings> configurations = DeploymentConfigurationManager.getInstance(project).getDeploymentConfigurations(AppEngineCloudType.getInstance());
+    String lastName = PropertiesComponent.getInstance(project).getValue(LAST_RUN_CONFIGURATION_PROPERTY);
+    if (lastName != null) {
+      for (RunnerAndConfigurationSettings configuration : configurations) {
+        if (configuration.getName().equals(lastName)) {
+          return configuration;
+        }
+      }
+    }
 
+    return ContainerUtil.getFirstItem(configurations);
+  }
+
+  public void actionPerformed(AnActionEvent e) {
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    RunnerAndConfigurationSettings configurationToRun = getConfigurationToRun(project);
+    if (configurationToRun != null) {
+      ProgramRunnerUtil.executeConfiguration(project, configurationToRun, DefaultRunExecutor.getRunExecutorInstance());
+    }
+    else {
+      AppEngineCloudType serverType = AppEngineCloudType.getInstance();
+      List<RemoteServer<AppEngineServerConfiguration>> servers = RemoteServersManager.getInstance().getServers(serverType);
+      DeploymentConfigurationManager.getInstance(project).createAndRunConfiguration(serverType, ContainerUtil.getFirstItem(servers));
+    }
+  }
 }

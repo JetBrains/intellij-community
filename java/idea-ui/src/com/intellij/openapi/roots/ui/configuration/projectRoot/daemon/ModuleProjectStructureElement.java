@@ -59,8 +59,10 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     for (OrderEntry entry : entries) {
       if (!entry.isValid()){
         if (entry instanceof JdkOrderEntry && ((JdkOrderEntry)entry).getJdkName() == null) {
-          problemsHolder.registerProblem(ProjectBundle.message("project.roots.module.jdk.problem.message"), null, ProjectStructureProblemType.error("module-sdk-not-defined"), createPlace(entry),
-                                         null);
+          if (!(entry instanceof InheritedJdkOrderEntry)) {
+            problemsHolder.registerProblem(ProjectBundle.message("project.roots.module.jdk.problem.message"), null, ProjectStructureProblemType.error("module-sdk-not-defined"), createPlace(entry),
+                                           null);
+          }
         }
         else {
           problemsHolder.registerProblem(ProjectBundle.message("project.roots.library.problem.message", StringUtil.escapeXml(entry.getPresentableName())), null,

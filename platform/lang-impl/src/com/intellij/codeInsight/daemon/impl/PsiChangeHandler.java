@@ -40,12 +40,12 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -100,7 +100,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   }
 
   private void updateChangesForDocument(@NotNull final Document document) {
-    if (DaemonListeners.isUnderIgnoredAction(null)) return;
+    if (DaemonListeners.isUnderIgnoredAction(null) || myProject.isDisposed()) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
     if (toUpdate == null) {
       // The document has been changed, but psi hasn't
@@ -111,7 +111,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
       PsiElement file = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
       if (file == null) return;
 
-      toUpdate = ContainerUtil.newArrayList(Pair.create(file, true));
+      toUpdate = Collections.singletonList(Pair.create(file, true));
     }
     Application application = ApplicationManager.getApplication();
     final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();

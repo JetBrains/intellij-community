@@ -378,7 +378,8 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
           // don't allow to remove start/end section indication
           final Set<ArrangementSettingsToken> mutexes = ArrangementSectionRuleManager.getSectionMutexes();
           if (!mutexes.contains(component.getToken())) {
-            removeCondition(component);
+            component.handleMouseClickOnSelected();
+            refreshConditions();
           }
         }
         else {
@@ -417,7 +418,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
         continue;
       }
       ArrangementUiComponent c = myComponents.get(key);
-      if (c != null && c.isEnabled()) {
+      if (c != null && c.isEnabled() && !c.alwaysCanBeActive()) {
         removeCondition(c);
       }
     }
@@ -425,6 +426,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
 
   private void removeCondition(@NotNull ArrangementUiComponent component) {
     component.setSelected(false);
+    component.setData(true);
     refreshConditions();
   }
 

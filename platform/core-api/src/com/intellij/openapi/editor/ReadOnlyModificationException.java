@@ -17,7 +17,8 @@ package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NotNull;
 
-public class ReadOnlyModificationException extends RuntimeException {
+public class
+  ReadOnlyModificationException extends RuntimeException {
   private final Document myDocument;
 
   public ReadOnlyModificationException(@NotNull Document document) {

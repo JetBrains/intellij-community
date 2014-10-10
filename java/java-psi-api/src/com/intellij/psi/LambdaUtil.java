@@ -411,26 +411,9 @@ public class LambdaUtil {
     return typeByExpression instanceof PsiMethodReferenceType || typeByExpression instanceof PsiLambdaExpressionType || typeByExpression instanceof PsiLambdaParameterType;
   }
 
-  public static List<PsiReturnStatement> getReturnStatements(PsiLambdaExpression lambdaExpression) {
+  public static PsiReturnStatement[] getReturnStatements(PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
-    final List<PsiReturnStatement> result = new ArrayList<PsiReturnStatement>();
-    if (body != null) {
-      body.accept(new JavaRecursiveElementVisitor() {
-        @Override
-        public void visitReturnStatement(PsiReturnStatement statement) {
-          result.add(statement);
-        }
-
-        @Override
-        public void visitClass(PsiClass aClass) {
-        }
-
-        @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {
-        }
-      });
-    }
-    return result;
+    return body instanceof PsiCodeBlock ? PsiUtil.findReturnStatements((PsiCodeBlock)body) : PsiReturnStatement.EMPTY_ARRAY;
   }
 
   public static List<PsiExpression> getReturnExpressions(PsiLambdaExpression lambdaExpression) {

@@ -287,6 +287,7 @@ public class IdeSettingsDialog extends DialogWrapper implements DataProvider {
       myEditor.apply();
       myEditor.revalidate();
       myEditor.repaint();
+      updateStatus();
     }
   }
 }

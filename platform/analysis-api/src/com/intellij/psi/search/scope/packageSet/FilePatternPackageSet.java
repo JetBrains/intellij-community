@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.regex.Pattern;
 
@@ -56,12 +57,12 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
       if (modulePattern.startsWith("group:")) {
         int idx = modulePattern.indexOf(':', 6);
         if (idx == -1) idx = modulePattern.length();
-        myModuleGroupPattern = Pattern.compile(StringUtil.escapeToRegexp(modulePattern.substring(6, idx)));
+        myModuleGroupPattern = Pattern.compile(StringUtil.replace(escapeToRegexp(modulePattern.substring(6, idx)), "*", ".*"));
         if (idx < modulePattern.length() - 1) {
-          myModulePattern = Pattern.compile(StringUtil.escapeToRegexp(modulePattern.substring(idx + 1)));
+          myModulePattern = Pattern.compile(StringUtil.replace(escapeToRegexp(modulePattern.substring(idx + 1)), "*", ".*"));
         }
       } else {
-        myModulePattern = Pattern.compile(StringUtil.escapeToRegexp(modulePattern));
+        myModulePattern = Pattern.compile(StringUtil.replace(escapeToRegexp(modulePattern), "*", ".*"));
       }
     }
     myFilePattern = filePattern != null ? Pattern.compile(convertToRegexp(filePattern, '/')) : null;
@@ -109,10 +110,25 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     return modulePattern == null && moduleGroupPattern == null;
   }
 
+  @NotNull
+  private static String escapeToRegexp(@NotNull CharSequence text) {
+    StringBuilder builder = new StringBuilder(text.length());
+    for (int i = 0; i < text.length(); i++) {
+      final char c = text.charAt(i);
+      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_' || c == '*') {
+        builder.append(c);
+      }
+      else {
+        builder.append('\\').append(c);
+      }
+    }
 
-  //public for tests only
+    return builder.toString();
+  }
+
+  @TestOnly
   public static String convertToRegexp(String aspectsntx, char separator) {
-    StringBuffer buf = new StringBuffer(aspectsntx.length());
+    StringBuilder buf = new StringBuilder(aspectsntx.length());
     int cur = 0;
     boolean isAfterSeparator = false;
     boolean isAfterAsterix = false;

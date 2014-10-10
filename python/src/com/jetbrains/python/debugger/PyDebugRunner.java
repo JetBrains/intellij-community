@@ -118,7 +118,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     return -1;
   }
 
-  protected static void createConsoleCommunicationAndSetupActions(@NotNull final Project project,
+  public static void createConsoleCommunicationAndSetupActions(@NotNull final Project project,
                                                                   @NotNull final ExecutionResult result,
                                                                   @NotNull PyDebugProcess debugProcess) {
     ExecutionConsole console = result.getExecutionConsole();

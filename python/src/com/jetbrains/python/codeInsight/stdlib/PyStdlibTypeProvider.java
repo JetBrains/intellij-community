@@ -135,21 +135,26 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
       }
       else if ("__builtin__.tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {
-        final PyBinaryExpression expression = (PyBinaryExpression)callSite;
-        final PyTupleType leftTupleType = as(context.getType(expression.getLeftExpression()), PyTupleType.class);
-        if (expression.getRightExpression() != null) {
-          final PyTupleType rightTupleType = as(context.getType(expression.getRightExpression()), PyTupleType.class);
-          if (leftTupleType != null && rightTupleType != null) {
-            final PyType[] elementTypes = new PyType[leftTupleType.getElementCount() + rightTupleType.getElementCount()];
-            for (int i = 0; i < leftTupleType.getElementCount(); i++) {
-              elementTypes[i] = leftTupleType.getElementType(i);
-            }
-            for (int i = 0; i < rightTupleType.getElementCount(); i++) {
-              elementTypes[i + leftTupleType.getElementCount()] = rightTupleType.getElementType(i);
-            }
-            return PyTupleType.create(function, elementTypes);
-          }
+        return getTupleConcatenationResultType(((PyBinaryExpression)callSite), context);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getTupleConcatenationResultType(@NotNull PyBinaryExpression addition, @NotNull TypeEvalContext context) {
+    final PyTupleType leftTupleType = as(context.getType(addition.getLeftExpression()), PyTupleType.class);
+    if (addition.getRightExpression() != null) {
+      final PyTupleType rightTupleType = as(context.getType(addition.getRightExpression()), PyTupleType.class);
+      if (leftTupleType != null && rightTupleType != null) {
+        final PyType[] elementTypes = new PyType[leftTupleType.getElementCount() + rightTupleType.getElementCount()];
+        for (int i = 0; i < leftTupleType.getElementCount(); i++) {
+          elementTypes[i] = leftTupleType.getElementType(i);
         }
+        for (int i = 0; i < rightTupleType.getElementCount(); i++) {
+          elementTypes[i + leftTupleType.getElementCount()] = rightTupleType.getElementType(i);
+        }
+        return PyTupleType.create(addition, elementTypes);
       }
     }
     return null;

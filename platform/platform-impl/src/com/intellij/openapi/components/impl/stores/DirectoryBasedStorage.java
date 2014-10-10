@@ -24,19 +24,21 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.PicoContainer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Set;
 
 //todo: support missing plugins
 //todo: support storage data
@@ -48,42 +50,41 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   private final StateSplitter mySplitter;
   private final FileTypeManager myFileTypeManager;
 
-  private Object mySession;
   private DirectoryStorageData myStorageData = null;
 
   public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
                                @NotNull String dir,
                                @NotNull StateSplitter splitter,
                                @NotNull Disposable parentDisposable,
-                               @NotNull PicoContainer picoContainer) {
+                               @Nullable final Listener listener) {
     myPathMacroSubstitutor = pathMacroSubstitutor;
     myDir = new File(dir);
     mySplitter = splitter;
     Disposer.register(parentDisposable, this);
 
-    VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
-    MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
-
-    if (virtualFileTracker != null && messageBus != null) {
+    VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
+    if (virtualFileTracker != null && listener != null) {
       final String path = myDir.getAbsolutePath();
       final String fileUrl = LocalFileSystem.PROTOCOL_PREFIX + path.replace(File.separatorChar, '/');
-      final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
       virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
         @Override
         public void contentsChanged(@NotNull final VirtualFileEvent event) {
-          if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
+          if (!StringUtilRt.endsWithIgnoreCase(event.getFile().getNameSequence(), ".xml")) return;
+          assert listener != null;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
 
         @Override
         public void fileDeleted(@NotNull final VirtualFileEvent event) {
-          if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
+          if (!StringUtilRt.endsWithIgnoreCase(event.getFile().getNameSequence(), ".xml")) return;
+          assert listener != null;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
 
         @Override
         public void fileCreated(@NotNull final VirtualFileEvent event) {
-          if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
+          if (!StringUtilRt.endsWithIgnoreCase(event.getFile().getNameSequence(), ".xml")) return;
+          assert listener != null;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
       }, false, this);
@@ -93,11 +94,30 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   @Override
-  @Nullable
-  public <T> T getState(final Object component, @NotNull final String componentName, Class<T> stateClass, @Nullable T mergeInto)
-    throws StateStorageException {
-    if (myStorageData == null) myStorageData = loadState();
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
+    boolean containsSelf = false;
+    for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+      if (pair.second == this && StringUtilRt.endsWithIgnoreCase(pair.first.getNameSequence(), ".xml")) {
+        containsSelf = true;
+        break;
+      }
+    }
 
+    if (!containsSelf) {
+      return;
+    }
+
+    // todo reload only changed file, compute diff
+    myStorageData = loadState();
+    result.addAll(myStorageData.getComponentNames());
+  }
+
+  @Override
+  @Nullable
+  public <T> T getState(final Object component, @NotNull final String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) {
+    if (myStorageData == null) {
+      myStorageData = loadState();
+    }
 
     if (!myStorageData.containsComponent(componentName)) {
       return DefaultStateSerializer.deserializeState(new Element(StorageData.COMPONENT), stateClass, mergeInto);
@@ -106,17 +126,20 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     return myStorageData.getMergedState(componentName, stateClass, mySplitter, mergeInto);
   }
 
-  private DirectoryStorageData loadState() throws StateStorageException {
+  private DirectoryStorageData loadState() {
     DirectoryStorageData storageData = new DirectoryStorageData();
     storageData.loadFrom(LocalFileSystem.getInstance().findFileByIoFile(myDir), myPathMacroSubstitutor);
     return storageData;
   }
 
-
   @Override
-  public boolean hasState(final Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
-    if (!myDir.exists()) return false;
-    if (reloadData) myStorageData = null;
+  public boolean hasState(@Nullable final Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) {
+    if (!myDir.exists()) {
+      return false;
+    }
+    if (reloadData) {
+      myStorageData = null;
+    }
     return true;
   }
 
@@ -131,53 +154,30 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         LOG.error(e);
       }
     }
-    final ExternalizationSession session = new MyExternalizationSession(myStorageData.clone());
-
-    mySession = session;
-    return session;
+    return new MyExternalizationSession(myStorageData.clone());
   }
 
+  @Nullable
   @Override
-  @NotNull
-  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
-    assert mySession == externalizationSession;
-
-    final MySaveSession session =
-      new MySaveSession(((MyExternalizationSession)externalizationSession).myStorageData, myPathMacroSubstitutor);
-    mySession = session;
-    return session;
-  }
-
-  @Override
-  public void finishSave(@NotNull final SaveSession saveSession) {
-    try {
-      LOG.assertTrue(mySession == saveSession);
-    } finally {
-      mySession = null;
-    }
-  }
-
-  @Override
-  public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
-    myStorageData = loadState();
+  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
+    return new MySaveSession(((MyExternalizationSession)externalizationSession).myStorageData, myPathMacroSubstitutor);
   }
 
   @Override
   public void dispose() {
   }
 
-  private class MySaveSession implements SaveSession, SafeWriteRequestor {
+  private class MySaveSession implements SaveSession {
     private final DirectoryStorageData myStorageData;
     private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
 
-    private MySaveSession(final DirectoryStorageData storageData, final TrackingPathMacroSubstitutor pathMacroSubstitutor) {
+    private MySaveSession(@NotNull DirectoryStorageData storageData, @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor) {
       myStorageData = storageData;
       myPathMacroSubstitutor = pathMacroSubstitutor;
     }
 
     @Override
     public void save() throws StateStorageException {
-      assert mySession == this;
       final Set<String> currentNames = new SmartHashSet<String>();
       File[] children = myDir.listFiles();
       if (children != null) {
@@ -199,7 +199,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           }
 
           if (file.lastModified() <= myStorageData.getLastTimeStamp()) {
-            StorageUtil.save(file, element, MySaveSession.this, false, null);
+            StorageUtil.save(file, element, MySaveSession.this, false, LocalFileSystem.getInstance().findFileByIoFile(file));
             myStorageData.updateLastTimestamp(file);
           }
         }
@@ -236,82 +236,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
       myStorageData.clear();
     }
-
-    @Override
-    @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      boolean containsSelf = false;
-
-      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        if (pair.second == DirectoryBasedStorage.this) {
-          VirtualFile file = pair.first;
-          if ("xml".equalsIgnoreCase(file.getExtension())) {
-            containsSelf = true;
-            break;
-          }
-        }
-      }
-
-      if (!containsSelf) return Collections.emptySet();
-
-      if (myStorageData.getComponentNames().size() == 0) {
-        // no state yet, so try to initialize it now
-        final DirectoryStorageData storageData = loadState();
-        return new HashSet<String>(storageData.getComponentNames());
-      }
-
-      return new HashSet<String>(myStorageData.getComponentNames());
-    }
-
-    @Override
-    @NotNull
-    public Collection<File> getStorageFilesToSave() throws StateStorageException {
-      assert mySession == this;
-
-      if (!myDir.exists()) return getAllStorageFiles();
-      assert myDir.isDirectory() : myDir.getPath();
-
-      final List<File> filesToSave = new ArrayList<File>();
-      final Set<String> currentChildNames = new SmartHashSet<String>();
-      File[] children = myDir.listFiles();
-      if (children != null) {
-        for (File child : children) {
-          if (!myFileTypeManager.isFileIgnored(child.getName())) {
-            currentChildNames.add(child.getName());
-          }
-        }
-      }
-
-      myStorageData.process(new DirectoryStorageData.StorageDataProcessor() {
-        @Override
-        public void process(final String componentName, final File file, final Element element) {
-          if (currentChildNames.contains(file.getName())) {
-            currentChildNames.remove(file.getName());
-
-            if (myPathMacroSubstitutor != null) {
-              myPathMacroSubstitutor.collapsePaths(element);
-            }
-
-            VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-            if (virtualFile == null || !StorageUtil.contentEquals(element, virtualFile)) {
-              filesToSave.add(file);
-            }
-          }
-        }
-      });
-
-      for (String childName : currentChildNames) {
-        filesToSave.add(new File(myDir, childName));
-      }
-
-      return filesToSave;
-    }
-
-    @Override
-    @NotNull
-    public List<File> getAllStorageFiles() {
-      return new SmartList<File>(myStorageData.getAllStorageFiles().keySet());
-    }
   }
 
   private class MyExternalizationSession implements ExternalizationSession {
@@ -322,29 +246,30 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     }
 
     @Override
-    public void setState(@NotNull final Object component, final String componentName, @NotNull final Object state, final Storage storageSpec) {
-      assert mySession == this;
-      setState(componentName, state, storageSpec);
-    }
-
-    private void setState(final String componentName, @NotNull Object state, final Storage storageSpec) {
+    public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
+      Element element;
       try {
-        final Element element = DefaultStateSerializer.serializeState(state, storageSpec);
-        if (element != null) {
-          for (Pair<Element, String> pair : mySplitter.splitState(element)) {
-            Element e = pair.first;
-            String name = pair.second;
-
-            Element statePart = new Element(StorageData.COMPONENT);
-            statePart.setAttribute(StorageData.NAME, componentName);
-            statePart.addContent(e.detach());
-
-            myStorageData.put(componentName, new File(myDir, name), statePart, false);
-          }
-        }
+        element = DefaultStateSerializer.serializeState(state, storageSpec);
       }
       catch (WriteExternalException e) {
         throw new StateStorageException(e);
+      }
+      catch (Throwable e) {
+        LOG.info("Unable to serialize component state!", e);
+        return;
+      }
+
+      if (element != null) {
+        for (Pair<Element, String> pair : mySplitter.splitState(element)) {
+          Element e = pair.first;
+          String name = pair.second;
+
+          Element statePart = new Element(StorageData.COMPONENT);
+          statePart.setAttribute(StorageData.NAME, componentName);
+          statePart.addContent(e.detach());
+
+          myStorageData.put(componentName, new File(myDir, name), statePart, false);
+        }
       }
     }
   }

@@ -61,7 +61,6 @@ public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
     Collections.addAll(myFilters, filters);
   }
 
-  @Override
   public Reader transform(Reader original) {
     Reader value = original;
     for (ResourceRootFilter filter : myFilters) {

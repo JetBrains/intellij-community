@@ -20,9 +20,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -56,32 +56,25 @@ class StateMerger {
       for (DfaMemoryStateImpl state : ContainerUtil.concat(statesByFact.get(fact), statesWithNegations)) {
         statesByUnrelatedFacts.putValue(getUnrelatedFacts(fact, state), state);
       }
-      
-      Set<DfaMemoryStateImpl> removedStates = ContainerUtil.newIdentityTroveSet();
-      List<DfaMemoryStateImpl> result = ContainerUtil.newArrayList();
+
+      Replacements replacements = new Replacements(states);
       for (Set<Fact> key : statesByUnrelatedFacts.keySet()) {
-        Collection<DfaMemoryStateImpl> group = statesByUnrelatedFacts.get(key);
-        if (group.size() > 1) {
-          DfaMemoryStateImpl copy = group.iterator().next().createCopy();
-          fact.removeFromState(copy);
-          if (fact.myType == FactType.equality) {
-            restoreOtherInequalities(fact, group, copy);
+        final Collection<DfaMemoryStateImpl> group = statesByUnrelatedFacts.get(key);
+        final Set<DfaVariableValue> unknowns = getAllUnknownVariables(group);
+        replacements.stripAndMerge(group, new Function<DfaMemoryStateImpl, DfaMemoryStateImpl>() {
+          @Override
+          public DfaMemoryStateImpl fun(DfaMemoryStateImpl original) {
+            DfaMemoryStateImpl copy = withUnknownVariables(original, unknowns);
+            fact.removeFromState(copy);
+            if (fact.myType == FactType.equality) {
+              restoreOtherInequalities(fact, group, copy);
+            }
+            return copy;
           }
-          mergeUnknowns(copy, group);
-          
-          removedStates.addAll(group);
-          result.add(copy);
-        }
+        });
       }
 
-      if (!result.isEmpty()) {
-        for (DfaMemoryStateImpl state : states) {
-          if (!removedStates.contains(state)) {
-            result.add(state);
-          }
-        }
-        return result;
-      }
+      if (replacements.hasMerges()) return replacements.getMergeResult();
     }
     return null;
   }
@@ -129,26 +122,20 @@ class StateMerger {
     return otherInequalities;
   }
 
-  private static void mergeUnknowns(DfaMemoryStateImpl mergedState, Collection<DfaMemoryStateImpl> complementaryStates) {
-    for (DfaMemoryStateImpl removedState : complementaryStates) {
-      for (DfaVariableValue unknownVar : removedState.getUnknownVariables()) {
-        mergedState.doFlush(unknownVar, true);
-      }
+  private static Set<DfaVariableValue> getAllUnknownVariables(Collection<DfaMemoryStateImpl> complementary) {
+    final Set<DfaVariableValue> toFlush = ContainerUtil.newLinkedHashSet();
+    for (DfaMemoryStateImpl removedState : complementary) {
+      toFlush.addAll(removedState.getUnknownVariables());
     }
+    return toFlush;
   }
 
-  private static List<DfaMemoryStateImpl> getMergeResult(List<DfaMemoryStateImpl> statesBeforeMerge,
-                                                         final THashSet<DfaMemoryStateImpl> mergedStates,
-                                                         DfaMemoryStateImpl mergeResult) {
-    List<DfaMemoryStateImpl> result = ContainerUtil.newArrayList();
-    result.add(mergeResult);
-    result.addAll(ContainerUtil.filter(statesBeforeMerge, new Condition<DfaMemoryStateImpl>() {
-      @Override
-      public boolean value(DfaMemoryStateImpl state) {
-        return !mergedStates.contains(state);
-      }
-    }));
-    return result;
+  private static DfaMemoryStateImpl withUnknownVariables(DfaMemoryStateImpl original, Set<DfaVariableValue> toFlush) {
+    DfaMemoryStateImpl copy = original.createCopy();
+    for (DfaVariableValue value : toFlush) {
+      copy.doFlush(value, true);
+    }
+    return copy;
   }
 
   @Nullable
@@ -159,6 +146,7 @@ class StateMerger {
       byHash.putValue(state.getPartialHashCode(false, true), state);
     }
 
+    Replacements replacements = new Replacements(states);
     for (Integer key : byHash.keySet()) {
       Collection<DfaMemoryStateImpl> similarStates = byHash.get(key);
       if (similarStates.size() < 2) continue;
@@ -171,16 +159,11 @@ class StateMerger {
             return state1.equalsByRelations(state2) && state1.equalsByVariableStates(state2);
           }
         });
-        if (complementary.size() > 1) {
-          DfaMemoryStateImpl copy = state1.createCopy();
-          mergeUnknowns(copy, complementary);
-          return getMergeResult(states, ContainerUtil.newIdentityTroveSet(complementary), copy);
-        }
+        if (mergeUnknowns(replacements, complementary)) break;
       }
-      
     }
 
-    return null;
+    return replacements.getMergeResult();
   }
   
   @Nullable
@@ -191,10 +174,12 @@ class StateMerger {
       byHash.putValue(state.getPartialHashCode(false, false), state);
     }
 
+    Replacements replacements = new Replacements(states);
     for (Integer key : byHash.keySet()) {
       Collection<DfaMemoryStateImpl> similarStates = byHash.get(key);
       if (similarStates.size() < 2) continue;
       
+      groupLoop:
       for (final DfaMemoryStateImpl state1 : similarStates) {
         ProgressManager.checkCanceled();
         for (final DfaVariableValue var : state1.getChangedVariables()) {
@@ -205,25 +190,33 @@ class StateMerger {
           List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, new Condition<DfaMemoryStateImpl>() {
             @Override
             public boolean value(DfaMemoryStateImpl state2) {
-              return state1.equalsByRelations(state2) && 
+              return state1.equalsByRelations(state2) &&
                      areEquivalentModuloVar(state1, state2, var) &&
                      areVarStatesEqualModuloNullability(state1, state2, var);
             }
           });
-          if (complementary.size() > 1) {
-            DfaMemoryStateImpl copy = state1.createCopy();
-            mergeUnknowns(copy, complementary);
-            return getMergeResult(states, ContainerUtil.newIdentityTroveSet(complementary), copy);
-          }
+          if (mergeUnknowns(replacements, complementary)) break groupLoop;
         }
-
       }
-      
     }
 
-    return null;
+    return replacements.getMergeResult();
   }
-  
+
+  private static boolean mergeUnknowns(Replacements replacements, List<DfaMemoryStateImpl> complementary) {
+    if (complementary.size() < 2) return false;
+
+    final Set<DfaVariableValue> toFlush = getAllUnknownVariables(complementary);
+    if (toFlush.isEmpty()) return false;
+
+    return replacements.stripAndMerge(complementary, new Function<DfaMemoryStateImpl, DfaMemoryStateImpl>() {
+      @Override
+      public DfaMemoryStateImpl fun(DfaMemoryStateImpl original) {
+        return withUnknownVariables(original, toFlush);
+      }
+    });
+  }
+
   private boolean areEquivalentModuloVar(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue var) {
     DfaMemoryStateImpl copy1 = copyWithoutVar(state1, var);
     DfaMemoryStateImpl copy2 = copyWithoutVar(state2, var);
@@ -380,4 +373,51 @@ class StateMerger {
       }
     }
   }
+
+  private static class Replacements {
+    private final List<DfaMemoryStateImpl> myAllStates;
+    private final Set<DfaMemoryStateImpl> myRemovedStates = ContainerUtil.newIdentityTroveSet();
+    private final List<DfaMemoryStateImpl> myMerged = ContainerUtil.newArrayList();
+
+    Replacements(List<DfaMemoryStateImpl> allStates) {
+      myAllStates = allStates;
+    }
+
+    boolean hasMerges() { return !myMerged.isEmpty(); }
+
+    @Nullable
+    List<DfaMemoryStateImpl> getMergeResult() {
+      if (hasMerges()) {
+        List<DfaMemoryStateImpl> result = ContainerUtil.newArrayList(myMerged);
+        for (DfaMemoryStateImpl state : myAllStates) {
+          if (!myRemovedStates.contains(state)) {
+            result.add(state);
+          }
+        }
+        return result;
+      }
+      return null;
+    }
+
+    boolean stripAndMerge(Collection<DfaMemoryStateImpl> group,
+                               Function<DfaMemoryStateImpl, DfaMemoryStateImpl> stripper) {
+      if (group.size() <= 1) return false;
+
+      boolean hasMerges = false;
+      MultiMap<DfaMemoryStateImpl, DfaMemoryStateImpl> strippedToOriginals = MultiMap.create();
+      for (DfaMemoryStateImpl original : group) {
+        strippedToOriginals.putValue(stripper.fun(original), original);
+      }
+      for (Map.Entry<DfaMemoryStateImpl, Collection<DfaMemoryStateImpl>> entry : strippedToOriginals.entrySet()) {
+        Collection<DfaMemoryStateImpl> merged = entry.getValue();
+        if (merged.size() > 1) {
+          myRemovedStates.addAll(merged);
+          myMerged.add(entry.getKey());
+          hasMerges = true;
+        }
+      }
+      return hasMerges;
+    }
+  }
+
 }

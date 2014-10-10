@@ -33,6 +33,8 @@ import java.awt.event.MouseEvent;
  * @author Konstantin Bulenkov
  */
 public class OnePixelDivider extends Divider {
+  public static final Color BACKGROUND = new JBColor(Gray._153.withAlpha(128), Gray._100.withAlpha(128));
+
   private boolean myVertical;
   private Splitter mySplitter;
   private boolean myResizeEnabled;
@@ -51,7 +53,7 @@ public class OnePixelDivider extends Divider {
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
     //setOpaque(false);
     setOrientation(vertical);
-    setBackground(new JBColor(Gray._153.withAlpha(128), Gray._100.withAlpha(128)));
+    setBackground(BACKGROUND);
   }
 
   @Override

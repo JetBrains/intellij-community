@@ -312,7 +312,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      RunManagerEx.getInstanceEx(myProject).setActiveConfiguration(myConfiguration);
+      RunManager.getInstance(myProject).setSelectedConfiguration(myConfiguration);
       updateButton(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation());
     }
 

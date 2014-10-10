@@ -550,6 +550,7 @@
     </extensionPoint>
 
     <extensionPoint name="fileTypeIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider"/>
+    <extensionPoint name="fileIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileIndentOptionsProvider"/>
     <extensionPoint name="referenceImporter" interface="com.intellij.codeInsight.daemon.ReferenceImporter"/>
     <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer"/>
 
@@ -814,6 +815,8 @@
 
     <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP"/>
     <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider" interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
+
+    <extensionPoint name="previewPanelProvider" interface="com.intellij.openapi.preview.PreviewPanelProvider" area="IDEA_PROJECT"/>
   </extensionPoints>
 </idea-plugin>
 

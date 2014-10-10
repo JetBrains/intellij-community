@@ -21,6 +21,7 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.ComponentVersionProvider;
+import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformLangTestCase;
@@ -28,10 +29,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.JDOMBuilder.attr;
@@ -98,24 +97,11 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
-      return new MySaveSession(externalizationSession) {
+    protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
+      return new XmlElementStorageSaveSession(storageData) {
         @Override
-        protected void doSave() throws StateStorageException {
-          Element elementToSave = getElementToSave();
-          mySavedElement = elementToSave == null ? null : elementToSave.clone();
-        }
-
-        @NotNull
-        @Override
-        public Collection<File> getStorageFilesToSave() throws StateStorageException {
-          return needsSave() ? getAllStorageFiles() : Collections.<File>emptyList();
-        }
-
-        @NotNull
-        @Override
-        public List<File> getAllStorageFiles() {
-          throw new UnsupportedOperationException("Method getAllStorageFiles not implemented in " + getClass());
+        protected void doSave(@Nullable Element element) {
+          mySavedElement = element == null ? null : element.clone();
         }
       };
     }

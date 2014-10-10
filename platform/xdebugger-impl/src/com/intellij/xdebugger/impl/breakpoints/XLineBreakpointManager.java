@@ -81,6 +81,7 @@ public class XLineBreakpointManager {
       EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
       editorEventMulticaster.addDocumentListener(new MyDocumentListener(), project);
       editorEventMulticaster.addEditorMouseListener(new MyEditorMouseListener(), project);
+      editorEventMulticaster.addEditorMouseMotionListener(new MyEditorMouseMotionListener(), project);
 
       final MyDependentBreakpointListener myDependentBreakpointListener = new MyDependentBreakpointListener();
       myDependentBreakpointManager.addListener(myDependentBreakpointListener);
@@ -252,7 +253,21 @@ public class XLineBreakpointManager {
     }
   }
 
+  private boolean myDragDetected = false;
+
+  private class MyEditorMouseMotionListener extends EditorMouseMotionAdapter {
+    @Override
+    public void mouseDragged(EditorMouseEvent e) {
+      myDragDetected = true;
+    }
+  }
+
   private class MyEditorMouseListener extends EditorMouseAdapter {
+    @Override
+    public void mousePressed(EditorMouseEvent e) {
+      myDragDetected = false;
+    }
+
     @Override
     public void mouseClicked(final EditorMouseEvent e) {
       final Editor editor = e.getEditor();
@@ -263,7 +278,9 @@ public class XLineBreakpointManager {
           || MarkupEditorFilterFactory.createIsDiffFilter().avaliableIn(editor)
           || (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA && e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA)
           || ConsoleViewUtil.isConsoleViewEditor(editor)
-          ||!isFromMyProject(editor)) {
+          || !isFromMyProject(editor)
+          || (editor.getSelectionModel().hasSelection() && myDragDetected)
+        ) {
         return;
       }
 

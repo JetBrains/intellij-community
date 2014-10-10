@@ -15,15 +15,13 @@
  */
 package com.intellij.dvcs.push;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
-import java.awt.event.ActionListener;
 
 public abstract class VcsPushOptionsPanel extends JPanel {
 
+  @Nullable
   public abstract VcsPushOptionValue getValue();
 
-  /**
-   * @param listener handle valueChange event
-   */
-  public abstract void addValueChangeListener(ActionListener listener);
 }

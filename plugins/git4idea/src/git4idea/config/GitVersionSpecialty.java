@@ -112,6 +112,13 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 7, 12, 1));
     }
+  },
+
+  SUPPORTS_FOLLOW_TAGS {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 8, 3, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

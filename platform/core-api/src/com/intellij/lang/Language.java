@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,14 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
@@ -42,11 +43,9 @@ import java.util.*;
 public abstract class Language extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
 
-  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages =
-    Collections.synchronizedMap(new THashMap<Class<? extends Language>, Language>());
-  private static final Map<String, List<Language>> ourRegisteredMimeTypes =
-    Collections.synchronizedMap(new THashMap<String, List<Language>>());
-  private static final Map<String, Language> ourRegisteredIDs = new THashMap<String, Language>();
+  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = ContainerUtil.newConcurrentMap();
+  private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = ContainerUtil.newConcurrentMap();
+  private static final Map<String, Language> ourRegisteredIDs = ContainerUtil.newConcurrentMap();
   private final Language myBaseLanguage;
   private final String myID;
   private final String[] myMimeTypes;
@@ -87,13 +86,7 @@ public abstract class Language extends UserDataHolderBase {
       }
       List<Language> languagesByMimeType = ourRegisteredMimeTypes.get(mimeType);
       if (languagesByMimeType == null) {
-        synchronized (ourRegisteredMimeTypes) {
-          languagesByMimeType = ourRegisteredMimeTypes.get(mimeType);
-          if (languagesByMimeType == null) {
-            languagesByMimeType = Collections.synchronizedList(new ArrayList<Language>());
-            ourRegisteredMimeTypes.put(mimeType, languagesByMimeType);
-          }
-        }
+        languagesByMimeType = ConcurrencyUtil.cacheOrGet(ourRegisteredMimeTypes, mimeType, ContainerUtil.<Language>createConcurrentList());
       }
       languagesByMimeType.add(this);
     }
@@ -105,6 +98,7 @@ public abstract class Language extends UserDataHolderBase {
   /**
    * @return collection of all languages registered so far.
    */
+  @NotNull
   public static Collection<Language> getRegisteredLanguages() {
     final Collection<Language> languages = ourRegisteredLanguages.values();
     return Collections.unmodifiableCollection(new ArrayList<Language>(languages));
@@ -114,7 +108,7 @@ public abstract class Language extends UserDataHolderBase {
    * @param klass <code>java.lang.Class</code> of the particular language. Serves key purpose.
    * @return instance of the <code>klass</code> language registered if any.
    */
-  public static <T extends Language> T findInstance(Class<T> klass) {
+  public static <T extends Language> T findInstance(@NotNull Class<T> klass) {
     //noinspection unchecked
     return (T)ourRegisteredLanguages.get(klass);
   }
@@ -125,11 +119,12 @@ public abstract class Language extends UserDataHolderBase {
    */
   @NotNull
   public static Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {
-    List<Language> result = mimeType != null ? ourRegisteredMimeTypes.get(mimeType) : null;
-    return result != null ? Collections.unmodifiableCollection(result) : Collections.<Language>emptyList();
+    List<Language> result = mimeType == null ? null : ourRegisteredMimeTypes.get(mimeType);
+    return result == null ? Collections.<Language>emptyList() : Collections.unmodifiableCollection(result);
   }
 
 
+  @Override
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "Language: " + myID;
@@ -177,6 +172,7 @@ public abstract class Language extends UserDataHolderBase {
     return myBaseLanguage;
   }
 
+  @NotNull
   public String getDisplayName() {
     return getID();
   }
@@ -198,7 +194,7 @@ public abstract class Language extends UserDataHolderBase {
     return false;
   }
 
-  public final boolean isKindOf(String anotherLanguageId) {
+  public final boolean isKindOf(@NotNull String anotherLanguageId) {
     Language l = this;
     while (l != null) {
       if (l.getID().equals(anotherLanguageId)) return true;
@@ -207,23 +203,18 @@ public abstract class Language extends UserDataHolderBase {
     return false;
   }
 
+  @NotNull
   public List<Language> getDialects() {
     return myDialects;
   }
 
   @Nullable
   public static Language findLanguageByID(String id) {
-    final Collection<Language> languages = getRegisteredLanguages();
-    for (Language language : languages) {
-      if (language.getID().equals(id)) {
-        return language;
-      }
-    }
-    return null;
+    return id == null ? null : ourRegisteredIDs.get(id);
   }
 
   /** Fake language identifier without registering */
-  protected Language(String id, @SuppressWarnings("UnusedParameters") boolean register) {
+  protected Language(@NotNull String id, @SuppressWarnings("UnusedParameters") boolean register) {
     myID = id;
     myBaseLanguage = null;
     myMimeTypes = null;

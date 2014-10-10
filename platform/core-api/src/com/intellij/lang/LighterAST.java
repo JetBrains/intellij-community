@@ -15,6 +15,8 @@
  */
 package com.intellij.lang;
 
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,4 +46,19 @@ public abstract class LighterAST {
 
   @NotNull
   public abstract List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent);
+
+  public static @Nullable LighterAST getLighterASTFromFileAST(@NotNull FileASTNode node, @NotNull Language language) {
+    final IFileElementType contentType = LanguageParserDefinitions.INSTANCE.forLanguage(language).getFileNodeType();
+    assert contentType instanceof ILightStubFileElementType;
+
+    final LighterAST tree;
+    if (!node.isParsed()) {
+      final ILightStubFileElementType<?> type = (ILightStubFileElementType)contentType;
+      tree = new FCTSBackedLighterAST(node.getCharTable(), type.parseContentsLight(node));
+    }
+    else {
+      tree = new TreeBackedLighterAST(node);
+    }
+    return tree;
+  }
 }

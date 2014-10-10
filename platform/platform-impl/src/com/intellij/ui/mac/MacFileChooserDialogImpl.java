@@ -147,6 +147,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
         }
       }
       finally {
+        invoke(contextInfo, "setDelegate:", ID.NIL);
         Foundation.cfRelease(self);
         Foundation.cfRelease(contextInfo);
         JDK7WindowReorderingWorkaround.enableReordering();
@@ -339,7 +340,6 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       bar.disableUpdates();
     }
 
-    // Release in OPEN_PANEL_DID_END panel
     final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
     ourImplMap.put(delegate, impl);
 

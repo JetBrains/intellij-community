@@ -123,6 +123,9 @@ public class JavaDebugProcess extends XDebugProcess {
             });
           }
         }
+        else if (event == DebuggerSession.EVENT_ATTACHED) {
+          getSession().rebuildViews(); // to refresh variables views message
+        }
       }
     });
 
@@ -422,6 +425,12 @@ public class JavaDebugProcess extends XDebugProcess {
 
   public NodeManagerImpl getNodeManager() {
     return myNodeManager;
+  }
+
+  @Override
+  public String getCurrentStateMessage() {
+    String description = myJavaSession.getStateDescription();
+    return description != null ? description : super.getCurrentStateMessage();
   }
 
   @Nullable

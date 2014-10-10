@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.push;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.VcsError;
+import com.intellij.dvcs.push.ui.PushTargetTextField;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;

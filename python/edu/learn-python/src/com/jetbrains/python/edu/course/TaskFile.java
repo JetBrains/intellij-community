@@ -3,6 +3,11 @@ package com.jetbrains.python.edu.course;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -97,7 +102,6 @@ public class TaskFile implements Stateful {
     }
   }
 
-
   /**
    * @param pos position in editor
    * @return task window located in specified position or null if there is no task window in this position
@@ -171,7 +175,7 @@ public class TaskFile implements Stateful {
    */
   public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine) {
     for (TaskWindow w : taskWindows) {
-      if ((w.getLine() == line) && (w.getStart() >= oldEndOffsetInLine)) {
+      if ((w.getLine() == line) && (w.getStart() > oldEndOffsetInLine)) {
         int distance = w.getStart() - oldEndOffsetInLine;
         boolean coveredByPrevTW = false;
         int prevIndex = w.getIndex() - 1;
@@ -256,5 +260,31 @@ public class TaskFile implements Stateful {
 
   public boolean hasFailedTaskWindows() {
     return taskWindows.size() > 0 && getStatus() == StudyStatus.Failed;
+  }
+
+  /**
+   * Marks symbols adjacent to task windows as read-only fragments
+   */
+  public void createGuardedBlocks(@NotNull final Document document, @NotNull final Editor editor) {
+    if (document instanceof DocumentImpl) {
+      DocumentImpl documentImpl = (DocumentImpl)document;
+      List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
+      for (TaskWindow taskWindow : taskWindows) {
+        int start = taskWindow.getRealStartOffset(document);
+        int end = start + taskWindow.getLength();
+        if (start != 0) {
+          createGuardedBlock(editor, blocks, start - 1, start);
+        }
+        if (end != document.getTextLength()) {
+          createGuardedBlock(editor, blocks, end, end + 1);
+        }
+      }
+    }
+  }
+
+  private static void createGuardedBlock(Editor editor, List<RangeMarker> blocks, int start, int end) {
+    RangeHighlighter rh = editor.getMarkupModel()
+      .addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, null, HighlighterTargetArea.EXACT_RANGE);
+    blocks.add(rh);
   }
 }

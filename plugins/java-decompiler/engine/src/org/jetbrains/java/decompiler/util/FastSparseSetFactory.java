@@ -88,6 +88,7 @@ public class FastSparseSetFactory<E> {
 
 
   public static class FastSparseSet<E> implements Iterable<E> {
+    public static final FastSparseSet[] EMPTY_ARRAY = new FastSparseSet[0];
 
     private FastSparseSetFactory<E> factory;
 

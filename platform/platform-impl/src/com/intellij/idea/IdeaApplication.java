@@ -45,6 +45,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.Splash;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -87,7 +88,12 @@ public class IdeaApplication {
     }
 
     if (Main.isCommandLine()) {
-      new CommandLineApplication(isInternal, isUnitTest, headless);
+      if (CommandLineApplication.ourInstance == null) {
+        new CommandLineApplication(isInternal, isUnitTest, headless);
+      }
+      if (isUnitTest) {
+        myLoaded = true;
+      }
     }
     else {
       Splash splash = null;
@@ -116,7 +122,7 @@ public class IdeaApplication {
   private static void patchSystem() {
     System.setProperty("sun.awt.noerasebackground", "true");
 
-    Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
+    IdeEventQueue.getInstance(); // replace system event queue
 
     if (Patches.SUN_BUG_ID_6209673) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
@@ -135,7 +141,8 @@ public class IdeaApplication {
     new JFrame().pack(); // this peer will prevent shutting down our application
   }
 
-  protected ApplicationStarter getStarter() {
+  @NotNull
+  public ApplicationStarter getStarter() {
     if (myArgs.length > 0) {
       PluginManagerCore.getPlugins();
 

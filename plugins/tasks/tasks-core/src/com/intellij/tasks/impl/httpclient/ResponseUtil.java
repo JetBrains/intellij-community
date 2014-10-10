@@ -109,7 +109,6 @@ public class ResponseUtil {
     @Override
     public T handleResponse(HttpResponse response) throws IOException {
       int statusCode = response.getStatusLine().getStatusCode();
-      LOG.info("Status code: " + statusCode);
       if (!isSuccessful(statusCode)) {
         if (statusCode == HttpStatus.SC_NOT_FOUND && myIgnoreNotFound) {
           return null;
@@ -155,7 +154,6 @@ public class ResponseUtil {
         }
         throw RequestFailedException.forStatusCode(statusCode);
       }
-      LOG.info("Status code: " + statusCode);
       try {
         if (LOG.isDebugEnabled()) {
           String content = getResponseContentAsString(response);

@@ -20,6 +20,7 @@ import com.jetbrains.python.edu.course.Course;
 import com.jetbrains.python.edu.course.TaskWindow;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import icons.StudyIcons;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -86,7 +87,7 @@ public class StudyShowHintAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     StudyUtils.updateAction(e);
   }
 }

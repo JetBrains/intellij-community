@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.main;
 
+import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
 import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
@@ -45,6 +46,7 @@ public class DecompilerContext {
   private ClassesProcessor classProcessor;
   private PoolInterceptor poolInterceptor;
   private IFernflowerLogger logger;
+  private BytecodeSourceMapper bytecodeSourceMapper;
 
   private DecompilerContext(Map<String, Object> properties) {
     this.properties = properties;
@@ -124,6 +126,14 @@ public class DecompilerContext {
 
   public static void setPoolInterceptor(PoolInterceptor poolinterceptor) {
     getCurrentContext().poolInterceptor = poolinterceptor;
+  }
+
+  public static BytecodeSourceMapper getBytecodeSourceMapper() {
+    return getCurrentContext().bytecodeSourceMapper;
+  }
+
+  public static void setBytecodeSourceMapper(BytecodeSourceMapper bytecodeSourceMapper) {
+    getCurrentContext().bytecodeSourceMapper = bytecodeSourceMapper;
   }
 
   public static IFernflowerLogger getLogger() {

@@ -1,5 +1,6 @@
 package com.jetbrains.python.newProject.actions;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
@@ -322,7 +323,13 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         String warningText = frameworkName + " will be installed on selected interpreter";
         myInstallFramework = true;
         final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-        if (!packageManager.hasManagement(PySdkUtil.isRemote(sdk))) {
+        boolean hasManagement = false;
+        try {
+          hasManagement = packageManager.hasManagement(PySdkUtil.isRemote(sdk));
+        }
+        catch (ExecutionException ignored) {
+        }
+        if (!hasManagement) {
           warningText = "Python packaging tools and " + warningText;
         }
         setWarningText(warningText);

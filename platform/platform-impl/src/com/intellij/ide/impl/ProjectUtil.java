@@ -205,7 +205,7 @@ public class ProjectUtil {
    */
   public static int confirmOpenNewProject(boolean isNewProject) {
     final GeneralSettings settings = GeneralSettings.getInstance();
-    int confirmOpenNewProject = settings.getConfirmOpenNewProject();
+    int confirmOpenNewProject = ApplicationManager.getApplication().isUnitTestMode() ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : settings.getConfirmOpenNewProject();
     if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK) {
       if (isNewProject) {
         int exitCode = Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),

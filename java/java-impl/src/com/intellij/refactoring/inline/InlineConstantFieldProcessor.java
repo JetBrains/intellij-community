@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringEventData;
-import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
@@ -107,7 +107,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       usages.add(info);
     }
     if (mySearchInCommentsAndStrings || mySearchForTextOccurrences) {
-      TextOccurrencesUtil.UsageInfoFactory nonCodeUsageFactory = new NonCodeUsageInfoFactory(myField, myField.getName()){
+      UsageInfoFactory nonCodeUsageFactory = new NonCodeUsageInfoFactory(myField, myField.getName()){
         @Override
         public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
           if (PsiTreeUtil.isAncestor(myField, usage, false)) return null;

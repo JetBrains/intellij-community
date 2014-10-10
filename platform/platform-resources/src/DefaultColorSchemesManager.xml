@@ -26,6 +26,8 @@
 
       <option name="ADDED_LINES_COLOR" value="edfced"/>
       <option name="MODIFIED_LINES_COLOR" value="e0f0ff"/>
+      <option name="DELETED_LINES_COLOR" value="cbcbcb"/>
+      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="ffffff"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
     </colors>
 

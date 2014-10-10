@@ -28,6 +28,8 @@ import org.intellij.plugins.relaxNG.model.descriptors.RngNsDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 /**
  * @author Eugene.Kudelevsky
  */
@@ -65,6 +67,12 @@ public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements R
   @Override
   @NotNull
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument doc) {
-    return ArrayUtil.mergeArrays(super.getRootElementsDescriptors(doc), HtmlUtil.getCustomTagDescriptors(doc));
+    final XmlElementDescriptor[] descriptors = super.getRootElementsDescriptors(doc);
+    /**
+     * HTML 5 descriptor list contains not only HTML elements, but also SVG and MathML. To prevent conflicts
+     * we need to prioritize HTML ones {@link org.intellij.html.RelaxedHtmlFromRngElementDescriptor#compareTo(Object)}
+     */
+    Arrays.sort(descriptors);
+    return ArrayUtil.mergeArrays(descriptors, HtmlUtil.getCustomTagDescriptors(doc));
   }
 }

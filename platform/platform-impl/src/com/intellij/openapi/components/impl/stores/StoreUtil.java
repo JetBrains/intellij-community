@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,19 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import java.io.IOException;
+import com.intellij.diagnostic.IdeErrorsDialog;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.components.StateStorage.SaveSession;
+import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.store.ComponentSaveSession;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -24,15 +36,38 @@ public class StoreUtil {
   private StoreUtil() {
   }
 
-  public static void doSave(IComponentStore stateStore) throws IOException {
-    IComponentStore.SaveSession session = null;
+  public static void doSave(@NotNull IComponentStore stateStore) {
+    ComponentSaveSession session = stateStore.startSave();
+    if (session == null) {
+      return;
+    }
+
+    ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
     try {
-      session = stateStore.startSave();
-      session.save();
+      List<Pair<SaveSession, VirtualFile>> readonlyFiles = new SmartList<Pair<SaveSession, VirtualFile>>();
+      session.save(readonlyFiles);
+    }
+    catch (Throwable e) {
+      PluginId pluginId = IdeErrorsDialog.findPluginId(e);
+      if (pluginId == null) {
+        //noinspection InstanceofCatchParameter
+        if (e instanceof RuntimeException) {
+          throw ((RuntimeException)e);
+        }
+        else {
+          throw new StateStorageException(e);
+        }
+      }
+      else {
+        throw new PluginException(e, pluginId);
+      }
     }
     finally {
-      if (session != null) {
+      try {
         session.finishSave();
+      }
+      finally {
+        ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
       }
     }
   }

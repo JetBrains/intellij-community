@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindBundle;
-import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
@@ -23,13 +22,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -47,9 +43,7 @@ import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
-import com.intellij.usages.*;
 import com.intellij.util.Alarm;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -125,10 +119,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     model = new SearchModel(createConfiguration());
 
     init();
-  }
-
-  protected UsageViewContext createUsageViewContext(Configuration configuration) {
-    return new UsageViewContext(searchContext, configuration);
   }
 
   public void setUseLastConfiguration(boolean useLastConfiguration) {
@@ -489,71 +479,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     }.execute();
   }
 
-  protected void runAction(final Configuration config, final SearchContext searchContext) {
-    createUsageView(searchContext, config);
-  }
-
-  protected void createUsageView(final SearchContext searchContext, final Configuration config) {
-    UsageViewManager manager = UsageViewManager.getInstance(searchContext.getProject());
-
-    final UsageViewContext context = createUsageViewContext(config);
-    final UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
-    presentation.setScopeText(config.getMatchOptions().getScope().getDisplayName());
-    context.configure(presentation);
-
-    final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
-    processPresentation.setShowNotFoundMessage(true);
-    processPresentation.setShowPanelIfOnlyOneUsage(true);
-
-    processPresentation.setProgressIndicatorFactory(
-      new Factory<ProgressIndicator>() {
-        @Override
-        public ProgressIndicator create() {
-          FindProgressIndicator indicator = new FindProgressIndicator(searchContext.getProject(), presentation.getScopeText());
-          indicator.addStateDelegate(new AbstractProgressIndicatorExBase(){
-            @Override
-            public void cancel() {
-              super.cancel();
-              context.getCommand().stopAsyncSearch();
-            }
-          });
-          return indicator;
-        }
-      }
-    );
-
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-
-    manager.searchAndShowUsages(
-      new UsageTarget[]{
-        context.getTarget()
-      },
-      new Factory<UsageSearcher>() {
-        @Override
-        public UsageSearcher create() {
-          return new UsageSearcher() {
-            @Override
-            public void generate(@NotNull final Processor<Usage> processor) {
-              context.getCommand().findUsages(processor);
-            }
-          };
-        }
-      },
-      processPresentation,
-      presentation,
-      new UsageViewManager.UsageViewStateListener() {
-        @Override
-        public void usageViewCreated(@NotNull UsageView usageView) {
-          context.setUsageView(usageView);
-          context.configureActions();
-        }
-
-        @Override
-        public void findingUsagesFinished(final UsageView usageView) {
-        }
-      }
-    );
+  protected void startSearching() {
+    new SearchCommand(model.getConfig(), searchContext).startSearching();
   }
 
   protected String getDefaultTitle() {
@@ -887,7 +814,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       }
       existingTemplatesComponent.addConfigurationToHistory(model.getConfig());
 
-      runAction(model.getConfig(), searchContext);
+      startSearching();
     }
     catch (MalformedPatternException ex) {
       reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, ex.getMessage());

@@ -214,12 +214,17 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   @NotNull
-  private List<HighlightSeverity> getOrderAsList(@NotNull OrderMap orderMap) {
+  private static List<HighlightSeverity> getOrderAsList(@NotNull final OrderMap orderMap) {
     List<HighlightSeverity> list = new ArrayList<HighlightSeverity>();
     for (Object o : orderMap.keys()) {
       list.add((HighlightSeverity)o);
     }
-    Collections.sort(list, this);
+    Collections.sort(list, new Comparator<HighlightSeverity>() {
+      @Override
+      public int compare(HighlightSeverity o1, HighlightSeverity o2) {
+        return SeverityRegistrar.compare(o1, o2, orderMap);
+      }
+    });
     return list;
   }
 
@@ -284,7 +289,10 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
 
   @Override
   public int compare(final HighlightSeverity s1, final HighlightSeverity s2) {
-    OrderMap orderMap = getOrderMap();
+    return compare(s1, s2, getOrderMap());
+  }
+
+  private static int compare(HighlightSeverity s1, HighlightSeverity s2, OrderMap orderMap) {
     int o1 = orderMap.getOrder(s1, -1);
     int o2 = orderMap.getOrder(s2, -1);
     return o1 - o2;

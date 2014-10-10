@@ -26,10 +26,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -46,6 +49,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -149,16 +153,22 @@ public class TodoCheckinHandler extends CheckinHandler {
     final Collection<Change> changes = myCheckinProjectPanel.getSelectedChanges();
     final TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, myTodoFilter, true);
 
-    final Runnable runnable = new Runnable() {
+    final Ref<Boolean> completed = Ref.create(Boolean.FALSE);
+    ProgressManager.getInstance().run(new Task.Modal(myProject, "Looking for new and edited TODO items...", true) {
       @Override
-      public void run() {
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
         worker.execute();
-        }
-    };
-    final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, "Looking for new and edited TODO items...", true, myProject);
-    if (completed && (worker.getAddedOrEditedTodos().isEmpty() && worker.getInChangedTodos().isEmpty() &&
-      worker.getSkipped().isEmpty())) return ReturnResult.COMMIT;
-    if (! completed) return ReturnResult.CANCEL;
+      }
+
+      @Override
+      public void onSuccess() {
+        completed.set(Boolean.TRUE);
+      }
+    });
+    if (completed.get() && (worker.getAddedOrEditedTodos().isEmpty() && worker.getInChangedTodos().isEmpty() &&
+        worker.getSkipped().isEmpty())) return ReturnResult.COMMIT;
+    if (!completed.get()) return ReturnResult.CANCEL;
     return showResults(worker, executor);
   }
 

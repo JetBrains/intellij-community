@@ -90,12 +90,7 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
       Collections.addAll(classList, ((PsiClassOwner)file).getClasses());
     }
     final PsiClass[] classes = classList.toArray(new PsiClass[classList.size()]);
-    new WriteCommandAction(myFixture.getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        new MoveClassesOrPackagesProcessor(getProject(), classes, new SingleSourceRootMoveDestination(PackageWrapper.create(pkg), psiDirectory), true, true, null).run();
-      }
-    }.execute();
+    new MoveClassesOrPackagesProcessor(getProject(), classes, new SingleSourceRootMoveDestination(PackageWrapper.create(pkg), psiDirectory), true, true, null).run();
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();

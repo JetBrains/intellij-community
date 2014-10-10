@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -266,6 +267,23 @@ public class IJSwingUtilities extends JBSwingUtilities {
       JPopupMenu jpm = jc.getComponentPopupMenu();
       if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
         updateComponentTreeUI(jpm);
+      }
+    }
+  }
+
+  public static void moveMousePointerOn(Component component) {
+    if (component != null && component.isShowing()) {
+      UISettings settings = ApplicationManager.getApplication() == null ? null : UISettings.getInstance();
+      if (settings != null && settings.MOVE_MOUSE_ON_DEFAULT_BUTTON) {
+        Point point = component.getLocationOnScreen();
+        int dx = component.getWidth() / 2;
+        int dy = component.getHeight() / 2;
+        try {
+          new Robot().mouseMove(point.x + dx, point.y + dy);
+        }
+        catch (AWTException ignored) {
+          // robot is not available
+        }
       }
     }
   }

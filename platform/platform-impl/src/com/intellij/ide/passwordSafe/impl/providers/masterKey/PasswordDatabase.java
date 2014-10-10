@@ -17,10 +17,7 @@
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -35,8 +32,8 @@ import java.util.TreeMap;
  */
 @State(
   name = "PasswordDatabase",
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/security.xml")})
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/security.xml", roamingType = RoamingType.DISABLED)}
+)
 public class PasswordDatabase implements PersistentStateComponent<PasswordDatabase.State> {
   /**
    * The name of logger
@@ -249,6 +246,6 @@ public class PasswordDatabase implements PersistentStateComponent<PasswordDataba
     /**
      * The password database
      */
-    public String[][] PASSWORDS = new String[0][];
+    public String[][] PASSWORDS = new String[2][];
   }
 }

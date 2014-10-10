@@ -17,7 +17,6 @@ package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -28,7 +27,7 @@ import gnu.trove.TIntArrayList;
  * @author Denis Zhdanov
  * @since 8/26/12 7:41 PM
  */
-public class RemoveArrangementRuleAction extends AnAction implements DumbAware {
+public class RemoveArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
 
   public RemoveArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.remove.text"));
@@ -38,13 +37,13 @@ public class RemoveArrangementRuleAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-   ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
+    ArrangementMatchingRulesControl control = getRulesControl(e);
     e.getPresentation().setEnabled(control != null && !control.getSelectedModelRows().isEmpty() && control.getEditingRow() == -1);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
+    ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
       return;
     }

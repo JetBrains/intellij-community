@@ -1,8 +1,10 @@
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback;
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +45,9 @@ public interface DebuggerViewSupport {
   boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context);
 
   void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable);
+
+  @NotNull
+  ThreeState computeInlineDebuggerData(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XInlineDebuggerDataCallback callback);
 
   // return null if you don't need to add additional properties
   @Nullable

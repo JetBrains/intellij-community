@@ -47,7 +47,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
   public ImportsFormatter(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
     myPostProcessor = new PostFormatProcessorHelper(settings);
     myDocumentModel = FormattingDocumentModelImpl.createOn(file);
-    myIndentOptions = settings.getIndentOptions(file.getFileType());
+    myIndentOptions = settings.getIndentOptionsByFile(file);
   }
 
   @Override public void visitXmlTag(XmlTag tag) {

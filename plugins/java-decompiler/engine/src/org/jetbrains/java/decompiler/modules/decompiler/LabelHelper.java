@@ -420,22 +420,24 @@ public class LabelHelper {
     }
   }
 
-  private static void processStatementLabel(Statement stat) {
-    processStatementLabel(stat, new HashSet<Statement>(), new HashSet<Statement>());
-  }
+  private static HashSet<Statement>[] processStatementLabel(Statement stat) {
 
-  private static void processStatementLabel(Statement stat, Set<Statement> setBreak, Set<Statement> setContinue) {
+    HashSet<Statement> setBreak = new HashSet<Statement>();
+    HashSet<Statement> setContinue = new HashSet<Statement>();
+
     if (stat.getExprents() == null) {
       for (Statement st : stat.getStats()) {
-        processStatementLabel(st, setBreak, setContinue);
+        HashSet<Statement>[] arr = processStatementLabel(st);
+
+        setBreak.addAll(arr[0]);
+        setContinue.addAll(arr[1]);
       }
 
-      boolean shieldtype = (stat.type == Statement.TYPE_DO || stat.type == Statement.TYPE_SWITCH);
-
-      for (StatEdge edge : stat.getLabelEdges()) {
-        if (edge.explicit) {
-          if (shieldtype && ((edge.getType() == StatEdge.TYPE_BREAK && setBreak.contains(edge.getSource())) ||
-                             (edge.getType() == StatEdge.TYPE_CONTINUE && setContinue.contains(edge.getSource())))) {
+      boolean shieldType = (stat.type == Statement.TYPE_DO || stat.type == Statement.TYPE_SWITCH);
+      if (shieldType) {
+        for (StatEdge edge : stat.getLabelEdges()) {
+          if (edge.explicit && ((edge.getType() == StatEdge.TYPE_BREAK && setBreak.contains(edge.getSource())) ||
+                                (edge.getType() == StatEdge.TYPE_CONTINUE && setContinue.contains(edge.getSource())))) {
             edge.labeled = false;
           }
         }
@@ -451,6 +453,8 @@ public class LabelHelper {
 
     setBreak.add(stat);
     setContinue.add(stat);
+
+    return new HashSet[] { setBreak, setContinue };
   }
 
   public static void replaceContinueWithBreak(Statement stat) {

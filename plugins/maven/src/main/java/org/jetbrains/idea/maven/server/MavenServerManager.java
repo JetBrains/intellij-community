@@ -310,11 +310,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
     String root = pluginFileOrDir.getParent();
 
-    boolean useMaven2 = this.useMaven2;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      useMaven2 = true;
-    }
-
     if (pluginFileOrDir.isDirectory()) {
       classpath.add(new File(root, "maven-server-api"));
 

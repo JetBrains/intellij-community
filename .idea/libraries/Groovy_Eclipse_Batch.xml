@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Groovy-Eclipse-Batch">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/plugins/groovy/lib/groovy-eclipse-batch-2.3.4-01.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

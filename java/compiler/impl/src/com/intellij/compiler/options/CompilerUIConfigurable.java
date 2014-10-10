@@ -28,13 +28,12 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,23 +47,6 @@ import static com.intellij.compiler.options.CompilerOptionsFilter.Setting;
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerUIConfigurable");
 
-  public static final  Function<String, List<String>>      LINE_PARSER             = new Function<String, List<String>>() {
-    @Override
-    public List<String> fun(String text) {
-      final ArrayList<String> result = ContainerUtilRt.newArrayList();
-      final StringTokenizer tokenizer = new StringTokenizer(text, ";", false);
-      while (tokenizer.hasMoreTokens()) {
-        result.add(tokenizer.nextToken());
-      }
-      return result;
-    }
-  };
-  public static final  Function<List<String>, String>      LINE_JOINER             = new Function<List<String>, String>() {
-    @Override
-    public String fun(List<String> strings) {
-      return StringUtil.join(strings, ";");
-    }
-  };
   private static final Set<Setting> EXTERNAL_BUILD_SETTINGS = EnumSet.of(
     Setting.EXTERNAL_BUILD, Setting.AUTO_MAKE, Setting.PARALLEL_COMPILATION, Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE,
     Setting.HEAP_SIZE, Setting.COMPILER_VM_OPTIONS
@@ -327,7 +309,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   }
 
   private void createUIComponents() {
-    myResourcePatternsField = new RawCommandLineEditor(LINE_PARSER, LINE_JOINER);
+    myResourcePatternsField = new RawCommandLineEditor(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
     myResourcePatternsField.setDialogCaption("Resource patterns");
   }
 }

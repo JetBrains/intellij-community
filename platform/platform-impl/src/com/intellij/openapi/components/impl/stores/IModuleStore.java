@@ -20,8 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface IModuleStore extends IComponentStore {
-
-  void setModuleFilePath(final String filePath);
+  void setModuleFilePath(@NotNull String filePath);
 
   @Nullable
   VirtualFile getModuleFile();

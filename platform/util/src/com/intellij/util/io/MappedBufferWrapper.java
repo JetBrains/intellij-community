@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.TimeoutUtil;
 import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
@@ -88,11 +89,7 @@ public abstract class MappedBufferWrapper extends ByteBufferWrapper {
       }
       catch (Throwable e) {
         LOG.info(e);
-        try {
-          //noinspection BusyWait
-          Thread.sleep(10);
-        }
-        catch (InterruptedException ignored) { }
+        TimeoutUtil.sleep(10);
       }
     }
     return false;

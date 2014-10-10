@@ -1,13 +1,15 @@
 package com.intellij.json;
 
+import com.intellij.formatting.WrapType;
+import com.intellij.json.formatter.JsonCodeStyleSettings;
+import com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterTestCase;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestLoggerFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
@@ -57,16 +59,53 @@ public class JsonFormattingTest extends FormatterTestCase {
   }
 
   public void testWrapping() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.setRightMargin(JsonLanguage.INSTANCE, 20);
+    getSettings().setRightMargin(JsonLanguage.INSTANCE, 20);
     doTest();
+  }
+
+  // WEB-13587
+  public void testAlignPropertiesOnColon() throws Exception {
+    checkPropertyAlignment(PropertyAlignment.ALIGN_ON_COLON);
+  }
+
+  // WEB-13587
+  public void testAlignPropertiesOnValue() throws Exception {
+    checkPropertyAlignment(PropertyAlignment.ALIGN_ON_VALUE);
+  }
+
+  private void checkPropertyAlignment(@NotNull PropertyAlignment alignmentType) throws Exception {
+    final JsonCodeStyleSettings settings = getCustomJsonSettings();
+    final PropertyAlignment oldAlignment = settings.PROPERTY_ALIGNMENT;
+    settings.PROPERTY_ALIGNMENT = alignmentType;
+    try {
+      doTest();
+    }
+    finally {
+      settings.PROPERTY_ALIGNMENT = oldAlignment;
+    }
+  }
+
+  public void testChopDownArrays() throws Exception {
+    final JsonCodeStyleSettings customSettings = getCustomJsonSettings();
+    final int oldArrayWrapping = customSettings.ARRAY_WRAPPING;
+    customSettings.ARRAY_WRAPPING = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+
+    final int oldMargin = getSettings().getRightMargin(JsonLanguage.INSTANCE);
+    getSettings().setRightMargin(JsonLanguage.INSTANCE, 40);
+    try {
+      doTest();
+    }
+    finally {
+      getSettings().setRightMargin(JsonLanguage.INSTANCE, oldMargin);
+      customSettings.ARRAY_WRAPPING = oldArrayWrapping;
+    }
   }
 
   // Moved from JavaScript
 
   public void testWeb3830() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
-    final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getCommonJsonSettings().getIndentOptions();
+    assertNotNull(indentOptions);
     final int indent = indentOptions.INDENT_SIZE;
     final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
     final int tabSize = indentOptions.TAB_SIZE;
@@ -84,7 +123,8 @@ public class JsonFormattingTest extends FormatterTestCase {
   }
 
   public void testReformatJSon() throws Exception {
-    final CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getCommonJsonSettings().getIndentOptions();
+    assertNotNull(indentOptions);
     final int oldIndentSize = indentOptions.INDENT_SIZE;
     try {
       indentOptions.INDENT_SIZE = 4;
@@ -96,7 +136,8 @@ public class JsonFormattingTest extends FormatterTestCase {
   }
 
   public void testReformatJSon2() throws Exception {
-    final CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getCommonJsonSettings().getIndentOptions();
+    assertNotNull(indentOptions);
     final int oldIndentSize = indentOptions.INDENT_SIZE;
     try {
       indentOptions.INDENT_SIZE = 4;
@@ -105,5 +146,15 @@ public class JsonFormattingTest extends FormatterTestCase {
     finally {
       indentOptions.INDENT_SIZE = oldIndentSize;
     }
+  }
+
+  @NotNull
+  private CommonCodeStyleSettings getCommonJsonSettings() {
+    return getSettings().getCommonSettings(JsonLanguage.INSTANCE);
+  }
+
+  @NotNull
+  private JsonCodeStyleSettings getCustomJsonSettings() {
+    return getSettings().getCustomSettings(JsonCodeStyleSettings.class);
   }
 }

@@ -380,9 +380,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
       }
       if (extension.hasSnapshotMapping() && (isCurrentVersionCorrupted || versionChanged)) {
-        FileUtil.delete(IndexInfrastructure.getPersistentIndexRootDir(name));
+        FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
       }
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(name));
       IndexingStamp.rewriteVersion(versionFile, version);
     }
 
@@ -458,10 +458,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         catch (Exception ignored) {
         }
 
-        FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
+        FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(name));
 
         if (extension.hasSnapshotMapping() && (!contentHashesEnumeratorOk || instantiatedStorage)) {
-          FileUtil.delete(IndexInfrastructure.getPersistentIndexRootDir(name));
+          FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name)); // todo there is possibility of corruption of storage and content hashes
         }
         IndexingStamp.rewriteVersion(versionFile, version);
       }
@@ -1564,7 +1564,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       indicesToDrop.remove(key.toString());
     }
     for (String s : indicesToDrop) {
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(ID.create(s)));
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(ID.create(s)));
     }
   }
 

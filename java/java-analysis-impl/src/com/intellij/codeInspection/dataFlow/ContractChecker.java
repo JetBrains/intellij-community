@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -100,6 +101,13 @@ class ContractChecker extends DataFlowRunner {
       if (((ReturnInstruction)instruction).isViaException()) {
         ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
       }
+    }
+
+    if (instruction instanceof MethodCallInstruction &&
+        ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL &&
+        myContract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION) {
+      ContainerUtil.addIfNotNull(myFailures, ((MethodCallInstruction)instruction).getCallExpression());
+      return DfaInstructionState.EMPTY_ARRAY;
     }
 
     return super.acceptInstruction(visitor, instructionState);

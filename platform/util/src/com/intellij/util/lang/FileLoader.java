@@ -35,8 +35,8 @@ class FileLoader extends Loader {
     myRootDirAbsolutePath = myRootDir.getAbsolutePath();
   }
 
-  private void buildPackageCache(final File dir, ClasspathCache cache) {
-    cache.addResourceEntry(getRelativeResourcePath(dir), this);
+  private void buildPackageCache(final File dir, ClasspathCache.LoaderData loaderData) {
+    loaderData.addResourceEntry(getRelativeResourcePath(dir));
 
     final File[] files = dir.listFiles();
     if (files == null) {
@@ -48,14 +48,14 @@ class FileLoader extends Loader {
       final boolean isClass = file.getPath().endsWith(UrlClassLoader.CLASS_EXTENSION);
       if (isClass) {
         if (!containsClasses) {
-          cache.addResourceEntry(getRelativeResourcePath(file), this);
+          loaderData.addResourceEntry(getRelativeResourcePath(file));
           containsClasses = true;
         }
-        cache.addNameEntry(file.getName(), this);
+        loaderData.addNameEntry(file.getName());
       }
       else {
-        cache.addNameEntry(file.getName(), this);
-        buildPackageCache(file, cache);
+        loaderData.addNameEntry(file.getName());
+        buildPackageCache(file, loaderData);
       }
     }
   }
@@ -110,7 +110,7 @@ class FileLoader extends Loader {
   }
 
   @Override
-  void buildCache(final ClasspathCache cache) throws IOException {
+  void buildCache(ClasspathCache.LoaderData loaderData) throws IOException {
     File index = new File(myRootDir, "classpath.index");
     if (index.exists()) {
       BufferedReader reader = new BufferedReader(new FileReader(index));
@@ -118,8 +118,8 @@ class FileLoader extends Loader {
         do {
           String line = reader.readLine();
           if (line == null) break;
-          cache.addResourceEntry(line, this);
-          cache.addNameEntry(line, this);
+          loaderData.addResourceEntry(line);
+          loaderData.addNameEntry(line);
         }
         while (true);
       }
@@ -128,9 +128,9 @@ class FileLoader extends Loader {
       }
     }
     else {
-      cache.addResourceEntry("foo.class", this);
-      cache.addResourceEntry("bar.properties", this);
-      buildPackageCache(myRootDir, cache);
+      loaderData.addResourceEntry("foo.class");
+      loaderData.addResourceEntry("bar.properties");
+      buildPackageCache(myRootDir, loaderData);
     }
   }
 

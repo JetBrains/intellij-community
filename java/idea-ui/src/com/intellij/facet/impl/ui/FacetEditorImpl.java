@@ -79,9 +79,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
       final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(myDisposable);
       for (FacetEditorTab editorTab : myEditorTabs) {
         JComponent c = editorTab.createComponent();
-        if (c != null) {
-          UIUtil.addInsets(c, UIUtil.PANEL_SMALL_INSETS);
-        }
+        UIUtil.addInsets(c, UIUtil.PANEL_SMALL_INSETS);
         tabbedPane.addTab(editorTab.getDisplayName(), c);
       }
       tabbedPane.addChangeListener(new ChangeListener() {
@@ -96,6 +94,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     }
     else if (myEditorTabs.length == 1) {
       editorComponent = myEditorTabs[0].createComponent();
+      UIUtil.addInsets(editorComponent, new Insets(0, 5, 0, 0));
     }
     else {
       editorComponent = new JPanel();

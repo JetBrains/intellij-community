@@ -314,16 +314,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       }
     }
 
-    // remove Static Web group in IDEA Community if no specific templates found (IDEA-120593)
-    if (PlatformUtils.isIdeaCommunity()) {
-      for (TemplatesGroup group : myTemplatesMap.keySet()) {
-        if (WebModuleTypeBase.WEB_MODULE.equals(group.getId()) && myTemplatesMap.get(group).isEmpty()) {
-          myTemplatesMap.remove(group);
-          break;
-        }
-      }
-    }
-
     List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(myTemplatesMap.keySet());
 
     // sorting by module type popularity
@@ -366,6 +356,18 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         iterator.add(subGroup);
       }
     }
+
+    // remove Static Web group in IDEA Community if no specific templates found (IDEA-120593)
+    if (PlatformUtils.isIdeaCommunity()) {
+      for (ListIterator<TemplatesGroup> iterator = groups.listIterator(); iterator.hasNext(); ) {
+        TemplatesGroup group = iterator.next();
+        if (WebModuleTypeBase.WEB_MODULE.equals(group.getId()) && myTemplatesMap.get(group).isEmpty()) {
+          iterator.remove();
+          break;
+        }
+      }
+    }
+
     return groups;
   }
 
@@ -685,5 +687,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   @Override
   public JTextField getModuleNameField() {
     return null;
+  }
+
+  @Override
+  public String getHelpId() {
+    return "Project_Category_and_Options";
   }
 }

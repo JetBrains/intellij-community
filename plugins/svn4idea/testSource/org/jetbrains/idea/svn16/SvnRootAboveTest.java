@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.junit.Test;
 
@@ -177,11 +178,6 @@ public class SvnRootAboveTest extends Svn16TestCase {
   }
 
   private void sleep100() {
-    try {
-      Thread.sleep(100);
-    }
-    catch (InterruptedException e) {
-      //
-    }
+    TimeoutUtil.sleep(100);
   }
 }

@@ -1,6 +1,7 @@
 package com.jetbrains.env.python;
 
 import com.google.common.collect.Sets;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -9,7 +10,6 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.packaging.*;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
@@ -45,11 +45,7 @@ public class PyPackagingTest extends PyEnvTestCase {
         try {
           packages = PyPackageManager.getInstance(sdk).getPackages(false);
         }
-        catch (PyExternalProcessException e) {
-          final int retcode = e.getRetcode();
-          if (retcode != PyPackageManagerImpl.ERROR_NO_PIP && retcode != PyPackageManagerImpl.ERROR_NO_SETUPTOOLS) {
-            fail(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()));
-          }
+        catch (ExecutionException ignored) {
         }
         if (packages != null) {
           assertTrue(packages.size() > 0);
@@ -67,11 +63,6 @@ public class PyPackagingTest extends PyEnvTestCase {
       public void runTestOn(String sdkHome) throws Exception {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         try {
-          final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
-          // virtualenv >= 0.10 supports Python >= 2.6
-          if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
-            return;
-          }
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
           final File venvDir = new File(tempDir, "venv");
           final String venvSdkHome = PyPackageManager.getInstance(sdk).createVirtualEnv(venvDir.toString(),
@@ -84,16 +75,16 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackage setuptools = findPackage("setuptools", packages);
           assertNotNull(setuptools);
           assertEquals("setuptools", setuptools.getName());
-          assertEquals(PyPackageManagerImpl.SETUPTOOLS_VERSION, setuptools.getVersion());
+          assertEquals(PyPackageManager.SETUPTOOLS, setuptools.getVersion());
           final PyPackage pip = findPackage("pip", packages);
           assertNotNull(pip);
           assertEquals("pip", pip.getName());
-          assertEquals(PyPackageManagerImpl.PIP_VERSION, pip.getVersion());
+          assertEquals(PyPackageManager.PIP, pip.getVersion());
         }
         catch (IOException e) {
           throw new RuntimeException(e);
         }
-        catch (PyExternalProcessException e) {
+        catch (ExecutionException e) {
           throw new RuntimeException(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()), e);
         }
       }
@@ -124,13 +115,12 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackage pip1 = findPackage("pip", packages1);
           assertNotNull(pip1);
           assertEquals("pip", pip1.getName());
-          assertEquals(PyPackageManagerImpl.PIP_VERSION, pip1.getVersion());
           manager.uninstall(list(pip1));
           final List<PyPackage> packages3 = manager.getPackages(false);
           final PyPackage pip2 = findPackage("pip", packages3);
           assertNull(pip2);
         }
-        catch (PyExternalProcessException e) {
+        catch (ExecutionException e) {
           new RuntimeException(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()), e);
         }
         catch (IOException e) {

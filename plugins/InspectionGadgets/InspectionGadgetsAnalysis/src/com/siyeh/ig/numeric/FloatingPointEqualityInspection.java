@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,25 @@ public class FloatingPointEqualityInspection extends BaseInspection {
       if (!TypeUtils.hasFloatingPointType(lhs) && !TypeUtils.hasFloatingPointType(rhs)) {
         return;
       }
-      if (ExpressionUtils.isZero(lhs) || ExpressionUtils.isZero(rhs)) {
+      if (isInfinityOrZero(lhs) || isInfinityOrZero(rhs)) {
         return;
       }
       registerError(expression);
+    }
+
+    private static boolean isInfinityOrZero(PsiExpression expression) {
+      final Object value = ExpressionUtils.computeConstantExpression(expression);
+      if (value instanceof Double) {
+        final Double aDouble = (Double)value;
+        final double v = aDouble.doubleValue();
+        return v == Double.NEGATIVE_INFINITY || v == Double.POSITIVE_INFINITY || v == 0.0;
+      }
+      else if (value instanceof Float) {
+        final Float aFloat = (Float)value;
+        final float f = aFloat.floatValue();
+        return f == Float.NEGATIVE_INFINITY || f == Float.POSITIVE_INFINITY || f == 0.0f;
+      }
+      return false;
     }
   }
 }

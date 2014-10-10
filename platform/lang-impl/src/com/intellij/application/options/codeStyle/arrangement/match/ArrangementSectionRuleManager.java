@@ -19,7 +19,6 @@ import com.intellij.application.options.codeStyle.arrangement.color.ArrangementC
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
@@ -54,14 +53,14 @@ public class ArrangementSectionRuleManager {
 
   private Commenter myCommenter;
 
-  private ArrangementMatchingRulesControl myControl;
+  private ArrangementSectionRulesControl myControl;
   private ArrangementMatchingRuleEditor myEditor;
 
   @Nullable
   public static ArrangementSectionRuleManager getInstance(@NotNull Language language,
                                                           @NotNull ArrangementStandardSettingsManager settingsManager,
                                                           @NotNull ArrangementColorsProvider colorsProvider,
-                                                          @NotNull ArrangementMatchingRulesControl control) {
+                                                          @NotNull ArrangementSectionRulesControl control) {
     if (settingsManager.isSectionRulesSupported()) {
       return new ArrangementSectionRuleManager(language, settingsManager, colorsProvider, control);
     }
@@ -71,7 +70,7 @@ public class ArrangementSectionRuleManager {
   private ArrangementSectionRuleManager(@NotNull Language language,
                                         @NotNull ArrangementStandardSettingsManager settingsManager,
                                         @NotNull ArrangementColorsProvider colorsProvider,
-                                        @NotNull ArrangementMatchingRulesControl control) {
+                                        @NotNull ArrangementSectionRulesControl control) {
     myCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
     myControl = control;
     final List<CompositeArrangementSettingsToken> tokens = ContainerUtil.newArrayList();

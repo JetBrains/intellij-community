@@ -38,10 +38,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
@@ -61,6 +58,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.breakpoints.*;
+import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
@@ -546,7 +544,6 @@ public class XDebugSessionImpl implements XDebugSession {
     mySuspendContext = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
-    adjustMouseTrackingCounter(myTopFramePosition, -1);
     myTopFramePosition = null;
     myActiveNonLineBreakpoint = null;
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -799,7 +796,6 @@ public class XDebugSessionImpl implements XDebugSession {
     if (myTopFramePosition != null) {
       myDebuggerManager.setActiveSession(this, myTopFramePosition, false, getPositionIconRenderer(true));
     }
-    adjustMouseTrackingCounter(myTopFramePosition, 1);
 
     if (myShowTabOnSuspend.compareAndSet(true, false)) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -812,25 +808,6 @@ public class XDebugSessionImpl implements XDebugSession {
     }
 
     myDispatcher.getMulticaster().sessionPaused();
-  }
-
-  private void adjustMouseTrackingCounter(final XSourcePosition position, final int increment) {
-    if (position == null || ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    // need to always invoke later to maintain order of increment/decrement
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        Editor editor = XDebuggerUtilImpl.createEditor(new OpenFileDescriptor(myProject, position.getFile()));
-        if (editor != null) {
-          JComponent component = editor.getComponent();
-          Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
-          Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
-          component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
-        }
-      }
-    });
   }
 
   @Override
@@ -867,7 +844,6 @@ public class XDebugSessionImpl implements XDebugSession {
       mySessionTab.detachFromSession();
     }
 
-    adjustMouseTrackingCounter(myTopFramePosition, -1);
     myTopFramePosition = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
@@ -891,6 +867,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myStopped = true;
     myDebuggerManager.removeSession(this);
     myDispatcher.getMulticaster().sessionStopped();
+    myProject.putUserData(XDebuggerEditorLinePainter.CACHE, null);
   }
 
   public boolean isInactiveSlaveBreakpoint(final XBreakpoint<?> breakpoint) {

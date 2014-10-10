@@ -18,8 +18,11 @@ package org.jetbrains.java.decompiler;
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertTrue;
 
@@ -30,9 +33,15 @@ public class DecompilerTestFixture {
   private ConsoleDecompiler decompiler;
 
   public void setUp() throws IOException {
+    setUp(Collections.<String, Object>emptyMap());
+  }
+
+  public void setUp(final Map<String, Object> options) throws IOException {
     testDataDir = new File("testData");
     if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
     if (!isTestDataDir(testDataDir)) testDataDir = new File("plugins/java-decompiler/engine/testData");
+    if (!isTestDataDir(testDataDir)) testDataDir = new File("../community/plugins/java-decompiler/engine/testData");
+    if (!isTestDataDir(testDataDir)) testDataDir = new File("../plugins/java-decompiler/engine/testData");
     assertTrue("current dir: " + new File("").getAbsolutePath(), isTestDataDir(testDataDir));
 
     //noinspection SSBasedInspection
@@ -47,6 +56,7 @@ public class DecompilerTestFixture {
       put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
       put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
       put(IFernflowerPreferences.LITERALS_AS_IS, "1");
+      putAll(options);
     }});
   }
 

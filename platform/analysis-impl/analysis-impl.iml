@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="resources-en" />
     <orderEntry type="module" module-name="projectModel-impl" />
     <orderEntry type="module" module-name="editor-ui-ex" />
-    <orderEntry type="module" module-name="indexing-api" />
+    <orderEntry type="module" module-name="indexing-impl" />
   </component>
 </module>
 

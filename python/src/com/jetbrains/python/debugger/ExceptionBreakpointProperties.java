@@ -18,7 +18,6 @@ package com.jetbrains.python.debugger;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.jetbrains.python.debugger.pydev.ExceptionBreakpointCommandFactory;
-import com.sun.istack.internal.NotNull;
 
 /**
  * @author traff

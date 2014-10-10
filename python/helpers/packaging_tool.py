@@ -35,7 +35,7 @@ def error(message, retcode):
 def error_no_pip():
     tb = sys.exc_traceback
     if tb is not None and tb.tb_next is None:
-        error("Python package management tool 'pip' not found", ERROR_NO_PIP)
+        error("Python packaging tool 'pip' not found", ERROR_NO_PIP)
     else:
         error(traceback.format_exc(), ERROR_EXCEPTION)
 
@@ -44,7 +44,7 @@ def do_list():
     try:
         import pkg_resources
     except ImportError:
-        error("Python package management tool 'setuptools' or 'distribute' not found", ERROR_NO_SETUPTOOLS)
+        error("Python packaging tool 'setuptools' not found", ERROR_NO_SETUPTOOLS)
     for pkg in pkg_resources.working_set:
         requires = ':'.join([str(x) for x in pkg.requires()])
         sys.stdout.write('\t'.join([pkg.project_name, pkg.version, pkg.location, requires])+chr(10))
@@ -75,21 +75,21 @@ def do_pyvenv(path, system_site_packages):
     venv.create(path, system_site_packages=system_site_packages)
 
 
-def untarDirectory(name):
+def do_untar(name):
     import tempfile
 
     directory_name = tempfile.mkdtemp("pycharm-management")
 
     import tarfile
 
-    filename = name + ".tar.gz"
-    tar = tarfile.open(filename)
+    tar = tarfile.open(name)
     for item in tar:
         tar.extract(item, directory_name)
 
     sys.stdout.write(directory_name+chr(10))
     sys.stdout.flush()
     return 0
+
 
 def mkdtemp_ifneeded():
     try:
@@ -133,7 +133,7 @@ def main():
             if len(sys.argv) < 2:
                 usage()
             name = sys.argv[2]
-            retcode = untarDirectory(name)
+            retcode = do_untar(name)
         elif cmd == 'uninstall':
             if len(sys.argv) < 2:
                 usage()

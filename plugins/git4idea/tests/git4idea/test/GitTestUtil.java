@@ -15,6 +15,8 @@
  */
 package git4idea.test;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -26,6 +28,7 @@ import git4idea.config.GitVersion;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManagerImpl;
+import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 
@@ -114,5 +117,23 @@ public class GitTestUtil {
   public static void assumeSupportedGitVersion(@NotNull GitVcs vcs) {
     GitVersion version = vcs.getVersion();
     assumeTrue("Unsupported Git version: " + version, version.isSupported());
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> T overrideService(@NotNull Project project, Class<? super T> serviceInterface, Class<T> serviceImplementation) {
+    String key = serviceInterface.getName();
+    MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
+    picoContainer.unregisterComponent(key);
+    picoContainer.registerComponentImplementation(key, serviceImplementation);
+    return (T) ServiceManager.getService(project, serviceInterface);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> T overrideService(Class<? super T> serviceInterface, Class<T> serviceImplementation) {
+    String key = serviceInterface.getName();
+    MutablePicoContainer picoContainer = (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
+    picoContainer.unregisterComponent(key);
+    picoContainer.registerComponentImplementation(key, serviceImplementation);
+    return (T) ServiceManager.getService(serviceInterface);
   }
 }

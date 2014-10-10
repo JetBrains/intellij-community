@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -72,12 +73,7 @@ public abstract class RepeatSvnActionThroughBusy {
       catch (VcsException e) {
         if (ourBusyExceptionProcessor.process(e)) {
           if (myCnt > 0) {
-            try {
-              Thread.sleep(myTimeout * (REPEAT - myCnt + 1));
-            }
-            catch (InterruptedException e1) {
-              //
-            }
+            TimeoutUtil.sleep(myTimeout * (REPEAT - myCnt + 1));
             -- myCnt;
             continue;
           }

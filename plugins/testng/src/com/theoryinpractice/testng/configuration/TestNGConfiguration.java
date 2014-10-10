@@ -269,7 +269,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     } else {
       suffix = "";
     }
-    Set<String> patterns = new LinkedHashSet<String>();
+    LinkedHashSet<String> patterns = new LinkedHashSet<String>();
     for (PsiClass pattern : classes) {
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + suffix);
     }
@@ -373,7 +373,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     }
     final Element patternsElement = element.getChild(PATTERNS_EL_NAME);
     if (patternsElement != null) {
-      final Set<String> tests = new LinkedHashSet<String>();
+      final LinkedHashSet<String> tests = new LinkedHashSet<String>();
       for (Object o : patternsElement.getChildren(PATTERN_EL_NAME)) {
         Element patternElement = (Element)o;
         tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));

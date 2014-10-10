@@ -391,6 +391,9 @@ public class BraceMatchingUtil {
       if (matcher instanceof XmlAwareBraceMatcher) {
         return (XmlAwareBraceMatcher)matcher;
       }
+      else if (matcher instanceof PairedBraceMatcherAdapter) {
+        return (BraceMatcher)matcher;
+      }
       else {
         return new PairedBraceMatcherAdapter(matcher, lang);
       }

@@ -23,6 +23,16 @@ class Some {
       else if (line.startsWith("8")) field8 = someString();
       else if (line.startsWith("9")) field9 = someString();
     }
+    System.out.println(field1);
+    System.out.println(field2);
+    System.out.println(field3);
+    System.out.println(field4);
+    System.out.println(field5);
+    System.out.println(field6);
+    System.out.println(field7);
+    System.out.println(field8);
+    System.out.println(field9);
+
   }
   
   @NotNull String someString() { return ""; }

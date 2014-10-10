@@ -23,14 +23,14 @@ class AccessorBindingWrapper implements Binding {
   private final Accessor myAccessor;
   private final Binding myBinding;
 
-
   public AccessorBindingWrapper(final Accessor accessor, final Binding binding) {
     myAccessor = accessor;
     myBinding = binding;
   }
 
+  @Nullable
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
+  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
       throw new XmlSerializationException("Property " + myAccessor + " of object " + o + " (" + o.getClass() + ") must not be null");

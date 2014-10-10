@@ -63,15 +63,6 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
     super(title, project, scope, PsiClass.class, createFilter(classFilter), baseClass, initialClass, isShowMembers, true);
   }
 
-  @Override
-  @Nullable
-  protected PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
-    Object userObject = node.getUserObject();
-    if (!(userObject instanceof ClassTreeNode)) return null;
-    ClassTreeNode descriptor = (ClassTreeNode)userObject;
-    return descriptor.getPsiClass();
-  }
-
   public static TreeJavaClassChooserDialog withInnerClasses(String title,
                                                             @NotNull Project project,
                                                             GlobalSearchScope scope,
@@ -98,6 +89,15 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
         }
       };
     }
+  }
+
+  @Override
+  @Nullable
+  protected PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
+    Object userObject = node.getUserObject();
+    if (!(userObject instanceof ClassTreeNode)) return null;
+    ClassTreeNode descriptor = (ClassTreeNode)userObject;
+    return descriptor.getPsiClass();
   }
 
   @NotNull
@@ -146,11 +146,13 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
     private final PsiClass myBase;
     private final boolean myAcceptsSelf;
     private final boolean myAcceptsInner;
+    @NotNull
     private final Condition<? super PsiClass> myAdditionalCondition;
 
     public InheritanceJavaClassFilterImpl(PsiClass base,
                                           boolean acceptsSelf,
                                           boolean acceptInner,
+                                          @Nullable
                                           Condition<? super PsiClass> additionalCondition) {
       myAcceptsSelf = acceptsSelf;
       myAcceptsInner = acceptInner;

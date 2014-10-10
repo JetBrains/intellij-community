@@ -21,6 +21,57 @@ def patch_qt():
     
     _patched_qt = True
     
+    
+    # Ok, we have an issue here:
+    # PyDev-452: Selecting PyQT API version using sip.setapi fails in debug mode
+    # http://pyqt.sourceforge.net/Docs/PyQt4/incompatible_apis.html
+    # Mostly, if the user uses a different API version (i.e.: v2 instead of v1), 
+    # that has to be done before importing PyQt4/5 modules (PySide doesn't have this issue
+    # as it only implements v2).
+    
+    patch_qt_on_import = None
+    try:
+        import PySide
+    except:
+        try:
+            import PyQt4
+            patch_qt_on_import = 'PyQt4'
+        except:
+            try:
+                import PyQt5
+                patch_qt_on_import = 'PyQt5'
+            except:
+                return
+            
+    if patch_qt_on_import:
+        _patch_import_to_patch_pyqt_on_import(patch_qt_on_import)
+    else:
+        _internal_patch_qt()
+    
+
+def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import):
+    # I don't like this approach very much as we have to patch __import__, but I like even less
+    # asking the user to configure something in the client side...
+    # So, our approach is to patch PyQt4/5 right before the user tries to import it (at which
+    # point he should've set the sip api version properly already anyways).
+    
+    dotted = patch_qt_on_import + '.'
+    original_import = __import__
+    
+    def patched_import(name, *args, **kwargs):
+        if patch_qt_on_import == name or name.startswith(dotted):
+            builtins.__import__ = original_import
+            _internal_patch_qt() # Patch it only when the user would import the qt module
+        return original_import(name, *args, **kwargs)
+    
+    try:
+        import builtins
+    except ImportError:
+        import __builtin__ as builtins
+    builtins.__import__ = patched_import 
+    
+    
+def _internal_patch_qt():
     try:
         from PySide import QtCore
     except:

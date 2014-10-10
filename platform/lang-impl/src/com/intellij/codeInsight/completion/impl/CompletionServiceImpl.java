@@ -85,11 +85,13 @@ public class CompletionServiceImpl extends CompletionService{
   public CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<CompletionResult> consumer,
                                              @NotNull final CompletionContributor contributor) {
     final PsiElement position = parameters.getPosition();
-    final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
-    final int lengthOfTextBeforePosition = parameters.getOffset();
+    final int offset = parameters.getOffset();
+    assert position.getTextRange().containsOffset(offset) : position;
+    //noinspection deprecation
+    final String prefix = CompletionData.findPrefixStatic(position, offset);
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
     CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
-    return new CompletionResultSetImpl(consumer, lengthOfTextBeforePosition, matcher, contributor,parameters, sorter, null);
+    return new CompletionResultSetImpl(consumer, offset, matcher, contributor,parameters, sorter, null);
   }
 
   @Override
@@ -261,6 +263,7 @@ public class CompletionServiceImpl extends CompletionService{
         sorter = sorter.weigh(new LookupElementWeigher(id, true, false) {
           @Override
           public Comparable weigh(@NotNull LookupElement element) {
+            //noinspection unchecked
             return weigher.weigh(element, location);
           }
         });

@@ -22,9 +22,9 @@ import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.VcsLogSettings;
-import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -60,7 +60,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiImpl vcsLogUI, @NotNull Project project,
                    @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLog log,
-                   @NotNull DataPack initialDataPack) {
+                   @NotNull VisiblePack initialDataPack) {
     // collect info
     myLogDataHolder = logDataHolder;
     myUI = vcsLogUI;
@@ -124,7 +124,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
    * Components may want to update their fields and/or rebuild.
    * @param dataPack new data pack.
    */
-  public void updateDataPack(@NotNull DataPack dataPack) {
+  public void updateDataPack(@NotNull VisiblePack dataPack) {
     myFilterUi.updateDataPack(dataPack);
     myDetailsPanel.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack);
@@ -212,7 +212,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     mainGroup.add(myFilterUi.getActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, mainGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
     toolbar.setTargetComponent(this);
     return toolbar.getComponent();
   }
@@ -336,7 +336,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return !myUI.areLongEdgesHidden();
+      return !myUI.getDataPack().getVisibleGraph().getActionController().areLongEdgesHidden();
     }
 
     @Override

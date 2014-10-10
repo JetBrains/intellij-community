@@ -12,8 +12,8 @@
   psiImplUtilClass = 'com.intellij.json.psi.impl.JsonPsiImplUtils'
   tokenTypeClass = 'com.intellij.json.JsonTokenType'
 
-  implements = "com.intellij.json.psi.JsonElement"
-  extends = "com.intellij.json.psi.impl.JsonElementImpl"
+  implements("value") = "com.intellij.json.psi.JsonElement"
+  extends("value") = "com.intellij.json.psi.impl.JsonElementImpl"
 
     tokens = [
         L_CURLY='{'
@@ -35,7 +35,7 @@
         SINGLE_QUOTED_STRING="regexp:'([^\\\'\r\n]|\\[^\r\n])*'?"
 //        STRING='regexp:"([^\\"\r\n]|\\([\\"/bfnrt]|u[a-fA-F0-9]{4}))*"?'
 
-        NUMBER='regexp:-?\d+(\.\d+([eE][+-]?\d+)?)?'
+        NUMBER='regexp:-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d*)?'
         TRUE='true'
         FALSE='false'
         NULL='null'
@@ -91,13 +91,21 @@ private array_element ::= value (','|&']') {
   pin=1
 }
 
-string_literal ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING
+string_literal ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING {
+  methods=[
+    isQuotedString
+    getTextFragments
+  ]
+  mixin="com.intellij.json.psi.impl.JsonStringLiteralMixin"
+}
 number_literal ::= NUMBER
 boolean_literal ::= TRUE | FALSE
 null_literal ::= NULL
 
 literal ::= string_literal | number_literal | boolean_literal | null_literal {
-  methods=[isQuotedString]
+  methods=[
+    isQuotedString
+  ]
   mixin="com.intellij.json.psi.impl.JsonLiteralMixin"
 }
 

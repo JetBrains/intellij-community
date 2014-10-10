@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
       group.add(new AnAction("<project>", "",
                              manager.USE_PER_PROJECT_SETTINGS ? ourCurrentAction : ourNotCurrentAction) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           manager.USE_PER_PROJECT_SETTINGS = true;
         }
       });
@@ -75,7 +75,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
     group.add(new AnAction(scheme.getName(), "",
                            scheme == currentScheme && !manager.USE_PER_PROJECT_SETTINGS ? ourCurrentAction : ourNotCurrentAction) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (addScheme) {
           CodeStyleSchemes.getInstance().addScheme(scheme);
         }
@@ -93,7 +93,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(CommonDataKeys.PROJECT.getData(e.getDataContext()) != null);
   }

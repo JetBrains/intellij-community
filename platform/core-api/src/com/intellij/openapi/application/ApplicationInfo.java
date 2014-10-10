@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.BuildNumber;
 
 import java.awt.*;
@@ -52,7 +53,7 @@ public abstract class ApplicationInfo {
   }
 
   public static ApplicationInfo getInstance() {
-    return ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
+    return ServiceManager.getService(ApplicationInfo.class);
   }
 
   public static boolean helpAvailable() {

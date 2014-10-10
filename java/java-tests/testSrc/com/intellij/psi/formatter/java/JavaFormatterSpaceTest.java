@@ -558,4 +558,51 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testClassObjectAccessExpression_BeforeDot() {
+    String before = "Test       \n         .class";
+
+    getSettings().KEEP_LINE_BREAKS = true;
+    doMethodTest(before, "Test\n        .class");
+
+    getSettings().KEEP_LINE_BREAKS = false;
+    doMethodTest(before, "Test.class");
+  }
+
+  public void testClassObjectAccessExpression_AfterDot() {
+    String before = "Test.      \n     class";
+
+    getSettings().KEEP_LINE_BREAKS = true;
+    doMethodTest(before, "Test.\n        class");
+
+    getSettings().KEEP_LINE_BREAKS = false;
+    doMethodTest(before, "Test.class");
+  }
+
+  public void testMultipleFieldDeclaration_InAnonymousClass() {
+    doMethodTest(
+      "new Object() {\n" +
+      "boolean one, two;\n" +
+      "};",
+      "new Object() {\n" +
+      "    boolean one, two;\n" +
+      "};"
+    );
+  }
+  
+  public void testCommentBetweenAnnotationAndModifierList() {
+    getSettings().KEEP_LINE_BREAKS = false;
+    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
+    doClassTest("@Override\n" +
+                "//FIX me this stupid stuff\n" +
+                "public void run() {\n" +
+                "        int a = 2;\n" +
+                "}",
+
+                "@Override\n" +
+                "//FIX me this stupid stuff\n" +
+                "public void run() {\n" +
+                "    int a = 2;\n" +
+                "}");
+  }
 }

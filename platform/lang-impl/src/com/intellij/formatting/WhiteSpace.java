@@ -59,6 +59,7 @@ class WhiteSpace {
   private CharSequence myInitial;
   private int          myFlags;
   private boolean      myForceSkipTabulationsUsage;
+  private boolean      myIsBeforeCodeBlockEnd;
 
   private static final byte FIRST = 1;
   private static final byte SAFE = 0x2;
@@ -272,7 +273,10 @@ class WhiteSpace {
    *                    {@link WhiteSpace} object
    */
   public String generateWhiteSpace(CommonCodeStyleSettings.IndentOptions options) {
-    return new IndentInfo(getLineFeeds(), myIndentSpaces, mySpaces, myForceSkipTabulationsUsage).generateNewWhiteSpace(options);
+    return
+      new IndentInfo(getLineFeeds(), myIndentSpaces, mySpaces, myForceSkipTabulationsUsage)
+        .setIndentEmptyLines(myIsBeforeCodeBlockEnd)
+        .generateNewWhiteSpace(options);
   }
 
   /**
@@ -747,6 +751,12 @@ class WhiteSpace {
 
     assert getLineFeeds() == lineFeeds;
     assert (flags & 0x7F) == (myFlags & 0x7F);
+  }
+
+  @NotNull
+  public WhiteSpace setBeforeCodeBlockEnd(boolean isBeforeCodeBlockEnd) {
+    myIsBeforeCodeBlockEnd = isBeforeCodeBlockEnd;
+    return this;
   }
 
   public TextRange getTextRange() {

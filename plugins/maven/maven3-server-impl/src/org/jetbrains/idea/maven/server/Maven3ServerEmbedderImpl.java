@@ -40,6 +40,7 @@ import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.profiles.activation.*;
 import org.apache.maven.project.*;
+import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -69,6 +70,8 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.sonatype.aether.RepositorySystemSession;
+import org.sonatype.aether.graph.Dependency;
+import org.sonatype.aether.repository.LocalRepositoryManager;
 import org.sonatype.aether.util.DefaultRepositorySystemSession;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
@@ -97,6 +100,9 @@ import java.util.concurrent.atomic.AtomicReference;
  org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2 <-> org.apache.maven.model.interpolation.StringSearchModelInterpolator
 */
 public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
+
+  private final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("maven3.use.compat.resolver") != null;
+
   @NotNull private final DefaultPlexusContainer myContainer;
   @NotNull private final Settings myMavenSettings;
 
@@ -410,23 +416,41 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
           project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
           //
 
-          ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
-          resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
-          resolutionRequest.setArtifact(project.getArtifact());
-          resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
-          resolutionRequest.setLocalRepository(myLocalRepository);
-          resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
-          resolutionRequest.setListeners(listeners);
+          if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
+            ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
+            resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
+            resolutionRequest.setArtifact(project.getArtifact());
+            resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
+            resolutionRequest.setLocalRepository(myLocalRepository);
+            resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
+            resolutionRequest.setListeners(listeners);
 
-          resolutionRequest.setResolveRoot(false);
-          resolutionRequest.setResolveTransitively(true);
+            resolutionRequest.setResolveRoot(false);
+            resolutionRequest.setResolveTransitively(true);
 
-          ArtifactResolver resolver = getComponent(ArtifactResolver.class);
-          ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
+            ArtifactResolver resolver = getComponent(ArtifactResolver.class);
+            ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
 
-          project.setArtifacts(result.getArtifacts());
+            project.setArtifacts(result.getArtifacts());
           // end copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ref.set(new MavenExecutionResult(project, exceptions));
+            ref.set(new MavenExecutionResult(project, exceptions));
+          }
+          else {
+            final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
+            final List<Dependency> dependencies = dependencyResolutionResult.getDependencies();
+
+            Set<Artifact> artifacts = new LinkedHashSet<Artifact>(dependencies.size());
+            for (Dependency dependency : dependencies) {
+              final Artifact artifact = RepositoryUtils.toArtifact(dependency.getArtifact());
+              artifact.setScope(dependency.getScope());
+              artifact.setOptional(dependency.isOptional());
+              artifacts.add(artifact);
+              resolveAsModule(artifact);
+            }
+
+            project.setArtifacts(artifacts);
+            ref.set(new MavenExecutionResult(project, dependencyResolutionResult, exceptions));
+          }
         }
         catch (Exception e) {
           ref.set(handleException(e));
@@ -435,6 +459,54 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     });
 
     return ref.get();
+  }
+
+  private boolean resolveAsModule(Artifact a) {
+    MavenWorkspaceMap map = myWorkspaceMap;
+    if (map == null) return false;
+
+    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(MavenModelConverter.createMavenId(a));
+    if (resolved == null) return false;
+
+    a.setResolved(true);
+    a.setFile(resolved.getFile(a.getType()));
+    a.selectVersion(resolved.originalId.getVersion());
+    return true;
+  }
+
+  /**
+   * copied from {@link org.apache.maven.project.DefaultProjectBuilder#resolveDependencies(org.apache.maven.project.MavenProject, org.sonatype.aether.RepositorySystemSession)}
+   */
+  private DependencyResolutionResult resolveDependencies(MavenProject project, RepositorySystemSession session) {
+    DependencyResolutionResult resolutionResult;
+
+    try {
+      ProjectDependenciesResolver dependencyResolver = getComponent(ProjectDependenciesResolver.class);
+      DefaultDependencyResolutionRequest resolution = new DefaultDependencyResolutionRequest(project, session);
+      resolutionResult = dependencyResolver.resolve(resolution);
+    }
+    catch (DependencyResolutionException e) {
+      resolutionResult = e.getResult();
+    }
+
+    Set<Artifact> artifacts = new LinkedHashSet<Artifact>();
+    if (resolutionResult.getDependencyGraph() != null) {
+      RepositoryUtils.toArtifacts(artifacts, resolutionResult.getDependencyGraph().getChildren(),
+                                  Collections.singletonList(project.getArtifact().getId()), null);
+
+      // Maven 2.x quirk: an artifact always points at the local repo, regardless whether resolved or not
+      LocalRepositoryManager lrm = session.getLocalRepositoryManager();
+      for (Artifact artifact : artifacts) {
+        if (!artifact.isResolved()) {
+          String path = lrm.getPathForLocalArtifact(RepositoryUtils.toArtifact(artifact));
+          artifact.setFile(new File(lrm.getRepository().getBasedir(), path));
+        }
+      }
+    }
+    project.setResolvedArtifacts(artifacts);
+    project.setArtifacts(artifacts);
+
+    return resolutionResult;
   }
 
   /**
@@ -570,10 +642,24 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
     MavenModel model = null;
     try {
-      model = MavenModelConverter
-        .convertModel(mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
-                      mavenProject.getArtifacts(), (rootNode == null ? Collections.emptyList() : rootNode.getChildren()),
-                      mavenProject.getExtensionArtifacts(), getLocalRepositoryFile());
+      if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
+        //noinspection unchecked
+        final List<DependencyNode> dependencyNodes = rootNode == null ? Collections.emptyList() : rootNode.getChildren();
+        model = MavenModelConverter.convertModel(
+          mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
+          mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), getLocalRepositoryFile());
+      }
+      else {
+        final DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
+        final org.sonatype.aether.graph.DependencyNode dependencyGraph =
+          dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
+
+        final List<org.sonatype.aether.graph.DependencyNode> dependencyNodes =
+          dependencyGraph != null ? dependencyGraph.getChildren() : Collections.<org.sonatype.aether.graph.DependencyNode>emptyList();
+        model = AetherModelConverter.convertModelWithAetherDependencyTree(
+          mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
+          mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), getLocalRepositoryFile());
+      }
     }
     catch (Exception e) {
       validate(mavenProject.getFile(), Collections.singleton(e), problems, null);

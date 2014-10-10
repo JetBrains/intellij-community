@@ -30,13 +30,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
+public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, PairedBraceMatcher {
   private final PairedBraceMatcher myMatcher;
   private final Language myLanguage;
 
   public PairedBraceMatcherAdapter(final PairedBraceMatcher matcher, Language language) {
     myMatcher = matcher;
     myLanguage = language;
+  }
+
+  @Override
+  public BracePair[] getPairs() {
+    return myMatcher.getPairs();
   }
 
   @Override

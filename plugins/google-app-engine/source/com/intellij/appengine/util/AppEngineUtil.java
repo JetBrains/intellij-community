@@ -70,7 +70,7 @@ public class AppEngineUtil {
     final List<Artifact> artifacts = new ArrayList<Artifact>();
     if (project.isDefault()) return artifacts;
     for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
-      if (AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType().contains(artifact.getArtifactType()) &&
+      if (AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactTypes().contains(artifact.getArtifactType()) &&
           (!withAppEngineFacetOnly || findAppEngineFacet(project, artifact) != null)) {
         artifacts.add(artifact);
       }

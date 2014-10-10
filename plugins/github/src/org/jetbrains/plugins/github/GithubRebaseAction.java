@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.components.ServiceManager;
@@ -228,7 +229,7 @@ public class GithubRebaseAction extends DumbAwareAction {
                                           @NotNull final ProgressIndicator indicator) {
     final Git git = ServiceManager.getService(project, Git.class);
     final GitPlatformFacade facade = ServiceManager.getService(project, GitPlatformFacade.class);
-    GitUtil.workingTreeChangeStarted(project);
+    DvcsUtil.workingTreeChangeStarted(project);
     GitPreservingProcess process =
       new GitPreservingProcess(project, facade, git, Collections.singletonList(gitRepository), "Rebasing", "upstream/master", indicator,
                                new Runnable() {
@@ -239,7 +240,7 @@ public class GithubRebaseAction extends DumbAwareAction {
                                }
       );
     process.execute();
-    GitUtil.workingTreeChangeFinished(project);
+    DvcsUtil.workingTreeChangeFinished(project);
   }
 
   private static void doRebaseCurrentBranch(@NotNull final Project project,

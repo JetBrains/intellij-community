@@ -19,21 +19,21 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.CurrentUserHolder;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -69,7 +69,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private final Map<String, StateStorage> myPathToStorage = new THashMap<String, StateStorage>();
   private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   private final String myRootTagName;
-  private Object mySession;
   private final PicoContainer myPicoContainer;
 
   private TObjectLongHashMap<String> myComponentVersions;
@@ -113,7 +112,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Override
   @Nullable
-  public StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorageException {
+  public StateStorage getStateStorage(@NotNull Storage storageSpec) {
     String key = getStorageSpecId(storageSpec);
 
     myStorageLock.lock();
@@ -155,6 +154,37 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @NotNull
   @Override
+  public Couple<Collection<FileBasedStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted) {
+    myStorageLock.lock();
+    try {
+      return Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted));
+    }
+    finally {
+      myStorageLock.unlock();
+    }
+  }
+
+  @NotNull
+  private Collection<FileBasedStorage> getCachedFileStorages(@NotNull Collection<String> fileSpecs) {
+    if (fileSpecs.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<FileBasedStorage> result = null;
+    for (String fileSpec : fileSpecs) {
+      StateStorage storage = myStorages.get(fileSpec);
+      if (storage instanceof FileBasedStorage) {
+        if (result == null) {
+          result = new SmartList<FileBasedStorage>();
+        }
+        result.add((FileBasedStorage)storage);
+      }
+    }
+    return result == null ? Collections.<FileBasedStorage>emptyList() : result;
+  }
+
+  @NotNull
+  @Override
   public Collection<String> getStorageFileNames() {
     myStorageLock.lock();
     try {
@@ -189,7 +219,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Nullable
-  private StateStorage createStateStorage(Storage storageSpec) throws StateStorageException {
+  private StateStorage createStateStorage(Storage storageSpec) {
     if (!storageSpec.storageClass().equals(StateStorage.class)) {
       String key = UUID.randomUUID().toString();
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
@@ -222,38 +252,47 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Nullable
-  private StateStorage createDirectoryStateStorage(String file, Class<? extends StateSplitter> splitterClass) throws StateStorageException {
-    final StateSplitter splitter;
-    try {
-      splitter = ReflectionUtil.newInstance(splitterClass);
-    }
-    catch (RuntimeException e) {
-      throw new StateStorageException(e);
-    }
-    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandMacros(file), splitter, this, myPicoContainer);
+  private StateStorage createDirectoryStateStorage(String file, Class<? extends StateSplitter> splitterClass) {
+    StateSplitter splitter = ReflectionUtil.newInstance(splitterClass);
+    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandMacros(file), splitter, this, createStorageTopicListener());
   }
 
   @Nullable
-  private StateStorage createFileStateStorage(@NotNull final String fileSpec, @Nullable RoamingType roamingType) {
+  private StateStorage createFileStateStorage(@NotNull String fileSpec, @Nullable RoamingType roamingType) {
     String expandedFile = expandMacros(fileSpec);
 
     if (!ourHeadlessEnvironment && PathUtilRt.getFileName(expandedFile).lastIndexOf('.') < 0) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 
-    if (roamingType != RoamingType.PER_USER && fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
+    if (roamingType == RoamingType.PER_USER && fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
       roamingType = RoamingType.DISABLED;
     }
 
     beforeFileBasedStorageCreate();
     return new FileBasedStorage(expandedFile, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, this,
-                                myPicoContainer, getStreamProvider(), this) {
+                                createStorageTopicListener(), getStreamProvider(), this) {
       @Override
       @NotNull
       protected StorageData createStorageData() {
-        return StateStorageManagerImpl.this.createStorageData(fileSpec);
+        return StateStorageManagerImpl.this.createStorageData(myFileSpec);
+      }
+
+      @Override
+      protected boolean isUseXmlProlog() {
+        return StateStorageManagerImpl.this.isUseXmlProlog();
       }
     };
+  }
+
+  @Nullable
+  protected StateStorage.Listener createStorageTopicListener() {
+    MessageBus messageBus = (MessageBus)myPicoContainer.getComponentInstanceOfType(MessageBus.class);
+    return messageBus == null ? null : messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
+  }
+
+  protected boolean isUseXmlProlog() {
+    return true;
   }
 
   protected void beforeFileBasedStorageCreate() {
@@ -332,7 +371,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myPathMacroSubstitutor;
   }
 
-  protected abstract StorageData createStorageData(String storageSpec);
+  protected abstract StorageData createStorageData(@NotNull String storageSpec);
 
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
 
@@ -367,136 +406,115 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @NotNull
   @Override
   public ExternalizationSession startExternalization() {
-    if (mySession != null) {
-      LOG.error("Starting duplicate externalization session: " + mySession);
-    }
-    ExternalizationSession session = new MyExternalizationSession();
-    mySession = session;
-    return session;
+    return new StateStorageManagerExternalizationSession();
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
-    assert mySession == externalizationSession;
-    SaveSession session = createSaveSession(externalizationSession);
-    mySession = session;
-    return session;
-  }
-
-  @NotNull
-  protected MySaveSession createSaveSession(final ExternalizationSession externalizationSession) {
-    return new MySaveSession((MyExternalizationSession)externalizationSession);
-  }
-
-  @Override
-  public void finishSave(@NotNull final SaveSession saveSession) {
-    try {
-      assert mySession == saveSession : "mySession=" + mySession + " saveSession=" + saveSession;
-      ((MySaveSession)saveSession).finishSave();
+  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
+    StateStorageManagerExternalizationSession myExternalizationSession = (StateStorageManagerExternalizationSession)externalizationSession;
+    if (myExternalizationSession.mySessions.isEmpty()) {
+      return null;
     }
-    finally {
-      mySession = null;
-      save();
+
+    List<SaveSession> saveSessions = null;
+    for (Map.Entry<StateStorage, StateStorage.ExternalizationSession> entry : myExternalizationSession.mySessions.entrySet()) {
+      SaveSession saveSession = entry.getKey().startSave(entry.getValue());
+      if (saveSession != null) {
+        if (saveSessions == null) {
+          saveSessions = new SmartList<SaveSession>();
+        }
+        saveSessions.add(saveSession);
+      }
     }
+    return saveSessions == null ? null : new StateStorageSaveSession(saveSessions);
   }
 
   @Override
-  public void reset() {
-    mySession = null;
+  public void finishSave(@NotNull SaveSession saveSession) {
+    if (!isDirty) {
+      return;
+    }
+
+    String filePath = getNotNullVersionsFilePath();
+    if (filePath != null) {
+      File file = new File(filePath);
+      FileUtilRt.createParentDirs(file);
+      try {
+        JDOMUtil.writeParent(createComponentVersionsXml(getComponentVersions()), file, "\n");
+        isDirty = false;
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
   }
 
-  protected class MyExternalizationSession implements ExternalizationSession {
-    CompoundExternalizationSession myCompoundExternalizationSession = new CompoundExternalizationSession();
+  private final class StateStorageManagerExternalizationSession implements ExternalizationSession {
+    final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>();
 
     @Override
-    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
-      throws StateStorageException {
-      assert mySession == this;
-
+    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       for (Storage storageSpec : storageSpecs) {
         StateStorage stateStorage = getStateStorage(storageSpec);
-        if (stateStorage == null) continue;
+        if (stateStorage == null) {
+          continue;
+        }
 
-        final StateStorage.ExternalizationSession extSession = myCompoundExternalizationSession.getExternalizationSession(stateStorage);
-        extSession.setState(component, componentName, state, storageSpec);
+        StateStorage.ExternalizationSession session = getExternalizationSession(stateStorage);
+        if (session != null) {
+          session.setState(component, componentName, state, storageSpec);
+        }
       }
     }
 
     @Override
-    public void setStateInOldStorage(@NotNull Object component, @NotNull final String componentName, @NotNull Object state) throws StateStorageException {
-      assert mySession == this;
+    public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
       if (stateStorage != null) {
-        myCompoundExternalizationSession.getExternalizationSession(stateStorage).setState(component, componentName, state, null);
+        StateStorage.ExternalizationSession session = getExternalizationSession(stateStorage);
+        if (session != null) {
+          session.setState(component, componentName, state, null);
+        }
       }
+    }
+
+    @Nullable
+    private StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStorage) {
+      StateStorage.ExternalizationSession session = mySessions.get(stateStorage);
+      if (session == null) {
+        session = stateStorage.startExternalization();
+        if (session != null) {
+          mySessions.put(stateStorage, session);
+        }
+      }
+      return session;
     }
   }
 
   @Override
   @Nullable
-  public StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException {
+  public StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
     String oldStorageSpec = getOldStorageSpec(component, componentName, operation);
     //noinspection deprecation
     return oldStorageSpec == null ? null : getStateStorage(oldStorageSpec, component instanceof RoamingTypeDisabled ? RoamingType.DISABLED : RoamingType.PER_USER);
   }
 
   @Nullable
-  protected abstract String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation)
-    throws StateStorageException;
+  protected abstract String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
-  protected class MySaveSession implements SaveSession {
-    CompoundSaveSession myCompoundSaveSession;
+  private final static class StateStorageSaveSession implements SaveSession {
+    private final List<SaveSession> mySaveSessions;
 
-    public MySaveSession(final MyExternalizationSession externalizationSession) {
-      myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
+    public StateStorageSaveSession(@NotNull List<SaveSession> saveSessions) {
+      mySaveSessions = saveSessions;
     }
 
     @Override
-    @NotNull
-    public List<File> getAllStorageFilesToSave() throws StateStorageException {
-      assert mySession == this;
-      return myCompoundSaveSession.getAllStorageFilesToSave();
-    }
-
-    @Override
-    @NotNull
-    public List<File> getAllStorageFiles() {
-      return myCompoundSaveSession.getAllStorageFiles();
-    }
-
-    @Override
-    public void save() throws StateStorageException {
-      assert mySession == this;
-      myCompoundSaveSession.save();
-    }
-
-    public void finishSave() {
-      try {
-        LOG.assertTrue(mySession == this);
+    public void save() {
+      for (SaveSession saveSession : mySaveSessions) {
+        saveSession.save();
       }
-      finally {
-        myCompoundSaveSession.finishSave();
-      }
-    }
-
-    //returns set of component which were changed, null if changes are much more than just component state.
-    @Override
-    @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      Set<String> result = new THashSet<String>();
-      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        final StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(pair.second);
-        if (saveSession == null) {
-          continue;
-        }
-        final Set<String> changes = saveSession.analyzeExternalChanges(changedFiles);
-        if (changes == null) {
-          return null;
-        }
-        result.addAll(changes);
-      }
-      return result;
     }
   }
 
@@ -514,25 +532,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   public void setStreamProvider(@Nullable StreamProvider streamProvider) {
     myStreamProvider = streamProvider;
-  }
-
-  public void save() {
-    if (!isDirty) {
-      return;
-    }
-
-    String filePath = getNotNullVersionsFilePath();
-    if (filePath != null) {
-      File file = new File(filePath);
-      FileUtilRt.createParentDirs(file);
-      try {
-        JDOMUtil.writeParent(createComponentVersionsXml(getComponentVersions()), file, "\n");
-        isDirty = false;
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-    }
   }
 
   private TObjectLongHashMap<String> getComponentVersions() {

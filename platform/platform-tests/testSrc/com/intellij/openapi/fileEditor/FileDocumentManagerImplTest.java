@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,12 +42,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
+
+import static org.junit.Assert.assertNotEquals;
 
 public class FileDocumentManagerImplTest extends PlatformLangTestCase {
   private FileDocumentManagerImpl myDocumentManager;
+  private Boolean myReloadFromDisk;
 
-  public Boolean myReloadFromDisk;
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -148,7 +150,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
     assertEquals(1, unsavedDocuments.length);
     assertSame(document, unsavedDocuments[0]);
-    assertTrue(Arrays.equals("test".getBytes("UTF-8"), file.contentsToByteArray()));
+    assertEquals("test", new String(file.contentsToByteArray(), "UTF-8"));
   }
 
   public void testGetUnsavedDocuments_afterSaveAllDocuments() throws Exception {
@@ -216,7 +218,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
       final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
       assertEquals(1, unsavedDocuments.length);
       assertSame(document, unsavedDocuments[0]);
-      assertTrue(Arrays.equals("test".getBytes("UTF-8"), file.contentsToByteArray()));
+      assertEquals("test", new String(file.contentsToByteArray(), "UTF-8"));
     }
     finally {
       myDocumentManager.dropAllUnsavedDocuments();
@@ -231,7 +233,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
     WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
       @Override
       public void run() {
-        myDocumentManager.getDocument(file).insertString(0, "xxx");
+        ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx");
       }
     });
 
@@ -252,7 +254,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
     WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
       @Override
       public void run() {
-        myDocumentManager.getDocument(file).insertString(0, "xxx");
+        ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx");
       }
     });
 
@@ -294,7 +296,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
     myDocumentManager.saveDocument(document);
     assertTrue(stamp != file.getModificationStamp());
     assertEquals(document.getModificationStamp(), file.getModificationStamp());
-    assertTrue(Arrays.equals("xxx test".getBytes("UTF-8"), file.contentsToByteArray()));
+    assertEquals("xxx test", new String(file.contentsToByteArray(), "UTF-8"));
   }
 
   public void testSaveAllDocuments_DocumentWasChanged() throws Exception {
@@ -309,10 +311,9 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
       }
     });
 
-
     myDocumentManager.saveAllDocuments();
-    assertTrue(stamp != file.getModificationStamp());
-    assertTrue(Arrays.equals("xxx test".getBytes("UTF-8"), file.contentsToByteArray()));
+    assertNotEquals(stamp, file.getModificationStamp());
+    assertEquals("xxx test", new String(file.contentsToByteArray(), "UTF-8"));
   }
 
   public void testGetFile() throws Exception {
@@ -341,7 +342,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
     });
 
     myDocumentManager.saveAllDocuments();
-    assertTrue(Arrays.equals("xxx test\rtest".getBytes("UTF-8"), file.contentsToByteArray()));
+    assertEquals("xxx test\rtest", new String(file.contentsToByteArray(), "UTF-8"));
   }
 
   public void testContentChanged_noDocument() throws Exception {
@@ -531,7 +532,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
 
     assertEquals("old test", document.getText());
     assertEquals(file.getModificationStamp(), document.getModificationStamp());
-    assertTrue(Arrays.equals("old test".getBytes("UTF-8"), file.contentsToByteArray()));
+    assertEquals("old test", new String(file.contentsToByteArray(), "UTF-8"));
     assertEquals(documentStamp, document.getModificationStamp());
   }
 
@@ -631,6 +632,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
     assertNotNull(virtualFile.getPath(), original);
 
     final PsiFile file = getPsiFile(original);
+    assertNotNull(file);
     FileDocumentManagerListener saveListener = new FileDocumentManagerAdapter() {
       @Override
       public void beforeDocumentSaving(@NotNull Document document) {
@@ -650,6 +652,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
     };
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, saveListener);
     final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    assertNotNull(document);
     WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
       @Override
       public void run() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,14 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeRootPane;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author Anna Kozlova
@@ -32,18 +34,21 @@ import com.intellij.openapi.wm.impl.IdeRootPane;
  */
 public class ActivateNavigationBarAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-    if (project != null && UISettings.getInstance().SHOW_NAVIGATION_BAR){
+    if (project != null && UISettings.getInstance().SHOW_NAVIGATION_BAR) {
       final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
-      final IdeRootPane ideRootPane = ((IdeRootPane)frame.getRootPane());
-      final NavBarPanel navBarPanel = (NavBarPanel)ideRootPane.findByName(NavBarRootPaneExtension.NAV_BAR).getComponent();
-      navBarPanel.rebuildAndSelectTail(true);
+      final IdeRootPane ideRootPane = (IdeRootPane)frame.getRootPane();
+      JComponent component = ideRootPane.findByName(NavBarRootPaneExtension.NAV_BAR).getComponent();
+      if (component instanceof NavBarPanel) {
+        final NavBarPanel navBarPanel = (NavBarPanel)component;
+        navBarPanel.rebuildAndSelectTail(true);
+      }
     }
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     UISettings settings = UISettings.getInstance();
     final boolean enabled = project != null && settings.SHOW_NAVIGATION_BAR && !settings.PRESENTATION_MODE;

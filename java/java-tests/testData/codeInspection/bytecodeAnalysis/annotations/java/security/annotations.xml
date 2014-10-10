@@ -14,11 +14,6 @@
   <item name="java.security.Identity java.lang.String printKeys()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.security.Identity java.lang.String toString(boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;true-&gt;!null&quot;"/>
-    </annotation>
-  </item>
   <item name="java.security.Identity java.security.Certificate[] certificates()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

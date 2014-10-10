@@ -103,13 +103,13 @@ class TeamcityTestResult(TestResult):
     TestResult.addSuccess(self, test)
 
   def addError(self, test, err):
-    self.init_suite(test)
+    location = self.init_suite(test)
     self.current_failed = True
     TestResult.addError(self, test, err)
 
     err = self._exc_info_to_string(err, test)
 
-    self.messages.testStarted(self.getTestName(test))
+    self.messages.testStarted(self.getTestName(test), location=location)
     self.messages.testError(self.getTestName(test),
                             message='Error', details=err)
 
@@ -119,7 +119,7 @@ class TeamcityTestResult(TestResult):
     return error_value.split('assert')[-1].strip()
 
   def addFailure(self, test, err):
-    self.init_suite(test)
+    location = self.init_suite(test)
     self.current_failed = True
     TestResult.addFailure(self, test, err)
 
@@ -141,7 +141,7 @@ class TeamcityTestResult(TestResult):
       first = second = ""
     err = self._exc_info_to_string(err, test)
 
-    self.messages.testStarted(self.getTestName(test))
+    self.messages.testStarted(self.getTestName(test), location=location)
     self.messages.testFailed(self.getTestName(test),
                              message='Failure', details=err, expected=first, actual=second)
 

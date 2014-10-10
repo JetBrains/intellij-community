@@ -17,6 +17,7 @@
 package com.intellij.util.xmlb;
 
 import org.jdom.Text;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
@@ -29,8 +30,9 @@ public class DateBinding extends PrimitiveValueBinding {
     super(Date.class);
   }
 
+  @Nullable
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
+  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
     return new Text(Long.toString(((Date)o).getTime()));
   }
 

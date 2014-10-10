@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@ import java.util.Comparator;
 
 public class PsiElementOrderComparator implements Comparator<PsiElement> {
 
-  private static final PsiElementOrderComparator INSTANCE =
-    new PsiElementOrderComparator();
+  private static final PsiElementOrderComparator INSTANCE = new PsiElementOrderComparator();
+
+  private PsiElementOrderComparator() {}
 
   @Override
   public int compare(PsiElement element1, PsiElement element2) {

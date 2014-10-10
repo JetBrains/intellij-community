@@ -58,7 +58,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
 
   protected GitRejectedPushUpdateDialog(@NotNull Project project,
                                         @NotNull Collection<GitRepository> repositories,
-                                        @NotNull GitPusher.UpdateSettings initialSettings) {
+                                        @NotNull PushUpdateSettings initialSettings) {
     super(project);
     myProject = project;
     myRepositories = repositories;

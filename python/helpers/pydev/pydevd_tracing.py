@@ -13,6 +13,8 @@ except:
 import sys #@Reimport
 import traceback
 
+_original_settrace = sys.settrace
+
 class TracingFunctionHolder:
     '''This class exists just to keep some variables (so that we don't keep them in the global namespace). 
     '''

@@ -92,6 +92,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
       public void actionPerformed(ActionEvent e) {
         HttpConfigurable.editConfigurable(myPanel);
         enableButtons();
+        doApply();
       }
     });
 

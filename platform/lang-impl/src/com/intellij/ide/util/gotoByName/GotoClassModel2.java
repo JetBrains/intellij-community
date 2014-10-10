@@ -22,7 +22,6 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
@@ -102,9 +101,13 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
 
   @Override
   public String getFullName(final Object element) {
-    for(ChooseByNameContributor c: getContributors()) {
+    if (element instanceof PsiElement && !((PsiElement)element).isValid()) {
+      return null;
+    }
+
+    for (ChooseByNameContributor c : getContributors()) {
       if (c instanceof GotoClassContributor) {
-        String result = ((GotoClassContributor) c).getQualifiedName((NavigationItem) element);
+        String result = ((GotoClassContributor)c).getQualifiedName((NavigationItem)element);
         if (result != null) return result;
       }
     }

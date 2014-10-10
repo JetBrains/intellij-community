@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2005 Sascha Weinreuter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,17 +19,14 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.xpath.xslt.XsltConfig;
-import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,121 +35,143 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, ApplicationComponent {
+@State(
+  name = "XSLT-Support.Configuration",
+  storages = {
+    @Storage(
+      file = StoragePathMacros.APP_CONFIG + "/other.xml"
+    )}
+)
+class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<XsltConfigImpl>, ApplicationComponent {
+  public boolean SHOW_LINKED_FILES = true;
 
-    public boolean SHOW_LINKED_FILES = true;
+  @Nullable
+  @Override
+  public XsltConfigImpl getState() {
+    return this;
+  }
 
-    public void readExternal(Element element) throws InvalidDataException {
-        DefaultJDOMExternalizer.readExternal(this, element);
+  @Override
+  public void loadState(XsltConfigImpl state) {
+    XmlSerializerUtil.copyBean(state, this);
+  }
+
+  @Override
+  @SuppressWarnings({"StringEquality"})
+  public void initComponent() {
+    final Language xmlLang = StdFileTypes.XML.getLanguage();
+
+    //            intentionManager.addAction(new DeleteUnusedParameterFix());
+    //            intentionManager.addAction(new DeleteUnusedVariableFix());
+
+    final XsltFormattingModelBuilder builder = new XsltFormattingModelBuilder(LanguageFormatting.INSTANCE.forLanguage(xmlLang));
+    LanguageFormatting.INSTANCE.addExplicitExtension(xmlLang, builder);
+
+    try {
+      // TODO: put this into com.intellij.refactoring.actions.IntroduceParameterAction, just like IntroduceVariableAction
+      ActionManager.getInstance().getAction("IntroduceParameter").setInjectedContext(true);
+    }
+    catch (Exception e) {
+      Logger.getInstance(XsltConfigImpl.class.getName()).error(e);
+    }
+  }
+
+  @Override
+  public void disposeComponent() {
+  }
+
+  @Override
+  @NotNull
+  @NonNls
+  public String getComponentName() {
+    return "XSLT-Support.Configuration";
+  }
+
+  @Override
+  public boolean isShowLinkedFiles() {
+    return SHOW_LINKED_FILES;
+  }
+
+  public static class UIImpl extends JPanel implements SearchableConfigurable {
+    private final JCheckBox myShowLinkedFiles;
+
+    private final XsltConfigImpl myConfig;
+
+    public UIImpl(XsltConfigImpl config) {
+      myConfig = config;
+      setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+      myShowLinkedFiles = new JCheckBox("Show Associated Files in Project View");
+      myShowLinkedFiles.setMnemonic('A');
+      myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
+
+      add(myShowLinkedFiles);
+
+      final JPanel jPanel = new JPanel(new BorderLayout());
+      jPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
+
+      final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+      jPanel.add(panel, BorderLayout.SOUTH);
+      jPanel.setAlignmentX(0);
+      add(jPanel);
     }
 
-    public void writeExternal(Element element) throws WriteExternalException {
-        DefaultJDOMExternalizer.writeExternal(this, element);
+    @Override
+    @Nls
+    public String getDisplayName() {
+      return "XSLT";
     }
 
-    @SuppressWarnings({ "StringEquality" })
-    public void initComponent() {
-      final Language xmlLang = StdFileTypes.XML.getLanguage();
+    @Override
+    @NotNull
+    @NonNls
+    public String getHelpTopic() {
+      return "settings.xslt";
+    }
 
-//            intentionManager.addAction(new DeleteUnusedParameterFix());
-//            intentionManager.addAction(new DeleteUnusedVariableFix());
+    @Override
+    public void disposeUIResources() {
+    }
 
-      final XsltFormattingModelBuilder builder = new XsltFormattingModelBuilder(LanguageFormatting.INSTANCE.forLanguage(xmlLang));
-      LanguageFormatting.INSTANCE.addExplicitExtension(xmlLang, builder);
+    @Override
+    public JComponent createComponent() {
+      return this;
+    }
 
-      try {
-        // TODO: put this into com.intellij.refactoring.actions.IntroduceParameterAction, just like IntroduceVariableAction
-        ActionManager.getInstance().getAction("IntroduceParameter").setInjectedContext(true);
-      } catch (Exception e) {
-        Logger.getInstance(XsltConfigImpl.class.getName()).error(e);
+    @Override
+    public boolean isModified() {
+      return myConfig.SHOW_LINKED_FILES != myShowLinkedFiles.isSelected();
+    }
+
+    @Override
+    public void apply() {
+      boolean oldValue = myConfig.SHOW_LINKED_FILES;
+
+      myConfig.SHOW_LINKED_FILES = myShowLinkedFiles.isSelected();
+
+      // TODO: make this a ConfigListener
+      if (oldValue != myConfig.SHOW_LINKED_FILES) {
+        final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        for (Project project : projects) {
+          ProjectView.getInstance(project).refresh();
+        }
       }
     }
 
-    public void disposeComponent() {
+    @Override
+    public void reset() {
+      myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
     }
 
+    @Override
     @NotNull
-    @NonNls
-    public String getComponentName() {
-        return "XSLT-Support.Configuration";
+    public String getId() {
+      return getHelpTopic();
     }
 
-  public boolean isShowLinkedFiles() {
-        return SHOW_LINKED_FILES;
+    @Override
+    public Runnable enableSearch(String option) {
+      return null;
     }
-
-  public static class UIImpl extends JPanel implements UI {
-        private final JCheckBox myShowLinkedFiles;
-
-        private final XsltConfigImpl myConfig;
-
-        public UIImpl(XsltConfigImpl config) {
-            myConfig = config;
-            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-
-            myShowLinkedFiles = new JCheckBox("Show Associated Files in Project View");
-            myShowLinkedFiles.setMnemonic('A');
-            myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
-
-            add(myShowLinkedFiles);
-
-            final JPanel jPanel = new JPanel(new BorderLayout());
-            jPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
-
-            final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-            jPanel.add(panel, BorderLayout.SOUTH);
-            jPanel.setAlignmentX(0);
-            add(jPanel);
-        }
-
-        @Nls
-        public String getDisplayName() {
-            return "XSLT";
-        }
-
-    @Nullable
-        @NonNls
-        public String getHelpTopic() {
-            return "settings.xslt";
-        }
-
-        public void disposeUIResources() {
-        }
-
-        public JComponent createComponent() {
-            return this;
-        }
-
-        public boolean isModified() {
-            return myConfig.SHOW_LINKED_FILES != myShowLinkedFiles.isSelected();
-        }
-
-        public void apply() {
-            boolean oldValue = myConfig.SHOW_LINKED_FILES;
-
-            myConfig.SHOW_LINKED_FILES = myShowLinkedFiles.isSelected();
-
-            // TODO: make this a ConfigListener
-            if (oldValue != myConfig.SHOW_LINKED_FILES) {
-                final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-                for (Project project : projects) {
-                    ProjectView.getInstance(project).refresh();
-                }
-            }
-        }
-
-        public void reset() {
-            myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
-        }
-
-        @NotNull
-        public String getId() {
-          return getHelpTopic();
-        }
-
-        public Runnable enableSearch(String option) {
-          return null;
-        }
-    }
-
+  }
 }

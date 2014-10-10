@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.edu;
 
-import com.intellij.application.options.InitialConfigurationDialog;
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -25,6 +25,7 @@ import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -55,7 +56,6 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Set;
 
 /**
@@ -67,6 +67,8 @@ public class PyCharmEduInitialConfigurator {
 
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
 
+  private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
+                                                                    "Terminal.html", "ConfiguringTerminal.html");
 
   public static class First {
 
@@ -131,7 +133,6 @@ public class PyCharmEduInitialConfigurator {
               if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
                 GeneralSettings.getInstance().setShowTipsOnStartup(false);
                 propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-                showInitialConfigurationDialog();
 
                 patchKeymap();
               }
@@ -193,6 +194,13 @@ public class PyCharmEduInitialConfigurator {
       }
     }
 
+    // unregister unrelated tips
+    for (TipAndTrickBean tip : Extensions.getExtensions(TipAndTrickBean.EP_NAME)) {
+      if (UNRELATED_TIPS.contains(tip.fileName)) {
+        rootArea.getExtensionPoint(TipAndTrickBean.EP_NAME).unregisterExtension(tip);
+      }
+    }
+
     for (IntentionActionBean ep : Extensions.getExtensions(IntentionManager.EP_INTENTION_ACTIONS)) {
       if ("org.intellij.lang.regexp.intention.CheckRegExpIntentionAction".equals(ep.className)) {
         rootArea.getExtensionPoint(IntentionManager.EP_INTENTION_ACTIONS).unregisterExtension(ep);
@@ -229,13 +237,4 @@ public class PyCharmEduInitialConfigurator {
     }
   }
 
-  private static void showInitialConfigurationDialog() {
-    final JFrame frame = WindowManager.getInstance().findVisibleFrame();
-    new InitialConfigurationDialog(frame, "Python") {
-      @Override
-      protected boolean canCreateLauncherScript() {
-        return false;
-      }
-    }.show();
-  }
 }

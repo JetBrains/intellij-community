@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,4 +64,16 @@ public interface QualifiedNameResolver {
   Module getModule();
 
   QualifiedNameResolver withMembers();
+
+  /**
+   * Resolves to some toplevel symbol like class or function.
+   * i.e.: "foo.package.MyClass".
+   * <strong>Module is required!</strong>
+   * Call {@link #fromModule(com.intellij.openapi.module.Module)} first!
+   * @param aClass expected class
+   * @param <T> expected class
+   * @return element if found
+   */
+  @Nullable
+  <T extends PsiNamedElement> T resolveTopLevelMember(@NotNull Class<T> aClass);
 }

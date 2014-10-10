@@ -39,6 +39,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -88,6 +89,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
   private final Editor myEditor;
+  @NotNull
+  private final Caret myCaret;
   private final CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
   private final LookupImpl myLookup;
@@ -96,6 +99,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     @Override
     public void run() {
       updateLookup();
+      myQueue.setMergingTimeSpan(300);
     }
   };
   private final Semaphore myFreezeSemaphore;
@@ -131,6 +135,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final int myStartCaret;
 
   public CompletionProgressIndicator(final Editor editor,
+                                     @NotNull Caret caret,
                                      CompletionParameters parameters,
                                      CodeCompletionHandlerBase handler,
                                      Semaphore freezeSemaphore,
@@ -138,6 +143,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                      boolean hasModifiers,
                                      LookupImpl lookup) {
     myEditor = editor;
+    myCaret = caret;
     myParameters = parameters;
     myHandler = handler;
     myFreezeSemaphore = freezeSemaphore;
@@ -167,7 +173,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     };
     LookupManager.getInstance(getProject()).addPropertyChangeListener(myLookupManagerListener);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 300, true, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 100, true, myEditor.getContentComponent());
     myQueue.setPassThrough(false);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -572,6 +578,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public Editor getEditor() {
     return myEditor;
+  }
+
+  @NotNull
+  public Caret getCaret() {
+    return myCaret;
   }
 
   public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {

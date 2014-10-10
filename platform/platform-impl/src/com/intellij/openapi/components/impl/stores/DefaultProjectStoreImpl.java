@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,19 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Couple;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 
 //todo: extends from base store class
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
@@ -39,7 +36,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   private final ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
-  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, final ProjectManagerImpl projectManager) {
+  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, @NotNull ProjectManagerImpl projectManager) {
     super(project);
 
     myProjectManager = projectManager;
@@ -62,12 +59,9 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       _d = myElement;
     }
 
-    final ComponentManager componentManager = getComponentManager();
-    final PathMacroManager pathMacroManager = PathMacroManager.getInstance(componentManager);
-
+    ComponentManager componentManager = getComponentManager();
     final Element element = _d;
-
-    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, pathMacroManager.createTrackingSubstitutor(), componentManager,
+    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(), componentManager,
                                                             ROOT_TAG_NAME, null,
                                                             ComponentVersionProvider.EMPTY) {
       @Override
@@ -77,38 +71,28 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
-        return new DefaultSaveSession(externalizationSession);
+      protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
+        return new XmlElementStorageSaveSession(storageData) {
+          @Override
+          protected void doSave(@Nullable Element element) {
+            // we must set empty element instead of null as indicator - ProjectManager state is ready to save
+            myProjectManager.setDefaultProjectRootElement(element == null ? new Element("empty") : element);
+          }
+
+          // we must not collapse paths here, because our solution is just a big hack
+          // by default, getElementToSave() returns collapsed paths -> setDefaultProjectRootElement -> project manager writeExternal -> save -> compare old and new - diff because old has expanded, but new collapsed
+          // -> needless save
+          @Override
+          protected boolean isCollapsePathsOnSave() {
+            return false;
+          }
+        };
       }
 
       @Override
       @NotNull
       protected StorageData createStorageData() {
         return new BaseStorageData(ROOT_TAG_NAME);
-      }
-
-      class DefaultSaveSession extends MySaveSession {
-        public DefaultSaveSession(MyExternalizationSession externalizationSession) {
-          super(externalizationSession);
-        }
-
-        @Override
-        protected void doSave() throws StateStorageException {
-          Element element = getElementToSave();
-          myProjectManager.setDefaultProjectRootElement(element == null ? null : element);
-        }
-
-        @NotNull
-        @Override
-        public Collection<File> getStorageFilesToSave() throws StateStorageException {
-          return Collections.emptyList();
-        }
-
-        @NotNull
-        @Override
-        public List<File> getAllStorageFiles() {
-          return Collections.emptyList();
-        }
       }
     };
 
@@ -137,6 +121,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return storage;
       }
 
+      @NotNull
+      @Override
+      public Couple<Collection<FileBasedStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted) {
+        return new Couple<Collection<FileBasedStorage>>(Collections.<FileBasedStorage>emptyList(), Collections.<FileBasedStorage>emptyList());
+      }
+
       @Override
       @Nullable
       public StateStorage getFileStateStorage(@NotNull String fileSpec) {
@@ -147,21 +137,21 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public void clearStateStorage(@NotNull String file) {
       }
 
-      @NotNull
+      @Nullable
       @Override
       public ExternalizationSession startExternalization() {
-        return new MyExternalizationSession(storage);
+        StateStorage.ExternalizationSession externalizationSession = storage.startExternalization();
+        return externalizationSession == null ? null : new MyExternalizationSession(externalizationSession);
       }
 
-      @NotNull
+      @Nullable
       @Override
-      public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
-        return new MySaveSession(storage, externalizationSession);
+      public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
+        return storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
       }
 
       @Override
       public void finishSave(@NotNull SaveSession saveSession) {
-        storage.finishSave(((MySaveSession)saveSession).saveSession);
       }
 
       @NotNull
@@ -178,8 +168,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @Override
       @Nullable
-      public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation)
-        throws StateStorageException {
+      public StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
         return storage;
       }
 
@@ -204,10 +193,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public Collection<String> getStorageFileNames() {
         throw new UnsupportedOperationException("Method getStorageFileNames not implemented in " + getClass());
       }
-
-      @Override
-      public void reset() {
-      }
     };
   }
 
@@ -220,51 +205,18 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   private static class MyExternalizationSession implements StateStorageManager.ExternalizationSession {
     @NotNull final StateStorage.ExternalizationSession externalizationSession;
 
-    public MyExternalizationSession(@NotNull XmlElementStorage storage) {
-      externalizationSession = storage.startExternalization();
+    public MyExternalizationSession(@NotNull StateStorage.ExternalizationSession externalizationSession) {
+      this.externalizationSession = externalizationSession;
     }
 
     @Override
-    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
-    throws StateStorageException {
+    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       externalizationSession.setState(component, componentName, state, null);
     }
 
     @Override
-    public void setStateInOldStorage(@NotNull final Object component, @NotNull final String componentName, @NotNull final Object state) throws StateStorageException {
+    public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       externalizationSession.setState(component, componentName, state, null);
-    }
-  }
-
-  private static class MySaveSession implements StateStorageManager.SaveSession {
-    @NotNull private final StateStorage.SaveSession saveSession;
-
-    public MySaveSession(@NotNull XmlElementStorage storage, @NotNull StateStorageManager.ExternalizationSession externalizationSession) {
-      saveSession = storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
-    }
-
-    //returns set of component which were changed, null if changes are much more than just component state.
-    @Override
-    @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files) {
-      throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
-    }
-
-    @NotNull
-    @Override
-    public List<File> getAllStorageFilesToSave() throws StateStorageException {
-      return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public List<File> getAllStorageFiles() {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public void save() throws StateStorageException {
-      saveSession.save();
     }
   }
 }

@@ -17,7 +17,7 @@ package com.intellij.concurrency;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
@@ -73,6 +73,13 @@ public class JobUtilTest extends PlatformLangTestCase {
   private static int busySleep(int ms) {
     long end = System.currentTimeMillis() + ms;
     while (System.currentTimeMillis() < end);
+    return COUNT.incrementAndGet();
+  }
+  private static int busySleep(int ms, Runnable whileWait) {
+    long end = System.currentTimeMillis() + ms;
+    while (System.currentTimeMillis() < end)  {
+      whileWait.run();
+    }
     return COUNT.incrementAndGet();
   }
 
@@ -200,6 +207,7 @@ public class JobUtilTest extends PlatformLangTestCase {
     if (exception.get() != null) throw exception.get();
   }
 
+  private static class MyException extends RuntimeException {}
   public void testExceptionalCompletion() throws Throwable {
     final List<Object> objects = Collections.nCopies(100000000, null);
     COUNT.set(0);
@@ -209,35 +217,31 @@ public class JobUtilTest extends PlatformLangTestCase {
         public boolean process(Object o) {
           if (COUNT.incrementAndGet() == 100000) {
             System.out.println("PCE");
-            throw new ProcessCanceledException();
+            throw new MyException();
           }
           return true;
         }
       });
-      fail("PCE must have been thrown");
+      fail("exception must have been thrown");
     }
-    catch (ProcessCanceledException e) {
+    catch (MyException e) {
       // caught OK
     }
   }
   public void testNotNormalCompletion() throws Throwable {
     final List<Object> objects = Collections.nCopies(100000000, null);
     COUNT.set(0);
-    try {
-      boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, new Processor<Object>() {
-        @Override
-        public boolean process(Object o) {
-          if (COUNT.incrementAndGet() == 100000) {
-            System.out.println("PCE");
-            return false;
-          }
-          return true;
+    boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, new Processor<Object>() {
+      @Override
+      public boolean process(Object o) {
+        if (COUNT.incrementAndGet() == 100000) {
+          System.out.println("PCE");
+          return false;
         }
-      });
-      assertFalse(success);
-    }
-    catch (ProcessCanceledException e) {
-    }
+        return true;
+      }
+    });
+    assertFalse(success);
   }
 
   public void testJobUtilCompletesEvenIfCannotGrabReadAction() throws Throwable {
@@ -275,7 +279,7 @@ public class JobUtilTest extends PlatformLangTestCase {
               public boolean process(Integer integer) {
                 if (busySleep(1) == 1000) {
                   System.out.println("PCE");
-                  throw new RuntimeException("xxx");
+                  throw new MyException();
                 }
                 return true;
               }
@@ -284,12 +288,9 @@ public class JobUtilTest extends PlatformLangTestCase {
             return true;
           }
         });
+        fail("exception must have been thrown");
       }
-      catch (ProcessCanceledException e) {
-        // OK
-      }
-      catch (RuntimeException e) {
-        assertEquals("xxx", e.getMessage());
+      catch (MyException ignored) {
       }
       long finish = System.currentTimeMillis();
       System.out.println("Elapsed: "+(finish-start)+"ms");
@@ -326,6 +327,30 @@ public class JobUtilTest extends PlatformLangTestCase {
     }
     finally {
       latch.countDown();
+    }
+  }
+
+  public void testProcessorReturningFalseDoesNotCrashTheOtherThread() {
+    final AtomicInteger delay = new AtomicInteger(0);
+    final Runnable checkCanceled = new Runnable() {
+      @Override
+      public void run() {
+        ProgressManager.checkCanceled();
+      }
+    };
+    Processor<String> processor = new Processor<String>() {
+      @Override
+      public boolean process(String s) {
+        busySleep(delay.incrementAndGet() % 10 + 10, checkCanceled);
+        return delay.get() % 100 != 0;
+      }
+    };
+    for (int i=0; i<100; i++) {
+      ProgressIndicator indicator = new EmptyProgressIndicator();
+      boolean result = JobLauncher.getInstance()
+        .invokeConcurrentlyUnderProgress(Collections.nCopies(10000, ""), indicator, false, false, processor);
+      assertFalse(indicator.isCanceled());
+      assertFalse(result);
     }
   }
 }

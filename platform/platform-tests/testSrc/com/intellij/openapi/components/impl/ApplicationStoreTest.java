@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.LightPlatformLangTestCase;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -130,20 +131,20 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     }
   }
 
-  class MyComponentStore extends ComponentStoreImpl implements Disposable {
+  static class MyComponentStore extends ComponentStoreImpl implements Disposable {
     private final StateStorageManager stateStorageManager;
 
     MyComponentStore(@NotNull final String testAppConfigPath) {
       TrackingPathMacroSubstitutor macroSubstitutor = new ApplicationPathMacroManager().createTrackingSubstitutor();
       stateStorageManager = new StateStorageManagerImpl(macroSubstitutor, "application", this, ApplicationManager.getApplication().getPicoContainer()) {
         @Override
-        protected StorageData createStorageData(String storageSpec) {
+        protected StorageData createStorageData(@NotNull String storageSpec) {
           return new FileBasedStorage.FileStorageData("application");
         }
 
         @Nullable
         @Override
-        protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
+        protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
           return null;
         }
 
@@ -182,6 +183,12 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     @Override
     protected StateStorage getDefaultsStorage() {
       return null;
+    }
+
+    @NotNull
+    @Override
+    protected MessageBus getMessageBus() {
+      return ApplicationManager.getApplication().getMessageBus();
     }
   }
 

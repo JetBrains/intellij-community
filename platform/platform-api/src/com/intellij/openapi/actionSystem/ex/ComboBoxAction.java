@@ -363,6 +363,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
+    public Dimension getMinimumSize() {
+      return new Dimension(super.getMinimumSize().width, getPreferredSize().height);
+    }
+
+    @Override
     public Font getFont() {
       return SystemInfo.isMac ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont();
     }

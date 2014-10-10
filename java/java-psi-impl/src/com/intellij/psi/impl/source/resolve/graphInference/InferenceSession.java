@@ -549,7 +549,7 @@ public class InferenceSession {
       final Processor<Pair<PsiType, PsiType>> differentParameterizationProcessor = new Processor<Pair<PsiType, PsiType>>() {
         @Override
         public boolean process(Pair<PsiType, PsiType> pair) {
-          return pair.first == null || pair.second == null || pair.first.equals(pair.second);
+          return pair.first == null || pair.second == null || !TypesDistinctProver.provablyDistinct(pair.first, pair.second);
         }
       };
       if (InferenceIncorporationPhase.findParameterizationOfTheSameGenericClass(bounds, differentParameterizationProcessor)) return true;

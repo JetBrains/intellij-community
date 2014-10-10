@@ -84,7 +84,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   static JavaValue create(JavaValue parent,
                           @NotNull ValueDescriptorImpl valueDescriptor,
-                          EvaluationContextImpl evaluationContext,
+                          @NotNull EvaluationContextImpl evaluationContext,
                           NodeManagerImpl nodeManager,
                           boolean contextSet) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -92,7 +92,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   static JavaValue create(@NotNull ValueDescriptorImpl valueDescriptor,
-                          EvaluationContextImpl evaluationContext,
+                          @NotNull EvaluationContextImpl evaluationContext,
                           NodeManagerImpl nodeManager) {
     return create(null, valueDescriptor, evaluationContext, nodeManager, false);
   }
@@ -114,8 +114,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Override
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
     final SuspendContextImpl suspendContext = myEvaluationContext.getSuspendContext();
-    if (suspendContext.isResumed()) return;
-    myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    scheduleCommand(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
@@ -138,19 +137,26 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               presentation = new TypedStringValuePresentation(value, type);
             }
             else {
+              @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
               EvaluateException exception = myValueDescriptor.getEvaluateException();
               if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer && exception == null) {
-                presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(value.substring(0,Math.min(value.length(), XValueNode.MAX_VALUE_LENGTH))), type);
+                presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(truncateToMaxLength(value)), type);
+              }
+              else if (myValueDescriptor.getLastRenderer() instanceof CompoundReferenceRenderer && exception == null) {
+                presentation = new XRegularValuePresentation(truncateToMaxLength(value), type);
               }
               else {
                 presentation = new JavaValuePresentation(value, type, exception != null ? exception.getMessage() : null);
               }
             }
-            if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
+            if (myValueDescriptor.getLastRenderer() instanceof FullValueEvaluatorProvider) {
+              node.setFullValueEvaluator(((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer()).getFullValueEvaluator(myEvaluationContext, myValueDescriptor));
+            }
+            else if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
               node.setFullValueEvaluator(new XFullValueEvaluator() {
                 @Override
                 public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
-                  myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+                  scheduleCommand(new SuspendContextCommandImpl(suspendContext) {
                     @Override
                     public Priority getPriority() {
                       return Priority.NORMAL;
@@ -158,7 +164,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
                     @Override
                     public void contextAction() throws Exception {
-                      final String valueAsString = DebuggerUtilsEx.getValueOrErrorAsString(myEvaluationContext, myValueDescriptor.getValue());
+                      final String valueAsString = myValueDescriptor.getValueText();
                       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
                         @Override
                         public void run() {
@@ -175,6 +181,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         });
       }
     });
+  }
+
+  private static String truncateToMaxLength(String value) {
+    return value.substring(0, Math.min(value.length(), XValueNode.MAX_VALUE_LENGTH));
   }
 
   private static class JavaValuePresentation extends XValuePresentation implements XValueCompactPresentation {
@@ -275,8 +285,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
-    if (checkContextNotResumed(node)) return;
-    myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
+    scheduleCommand(myEvaluationContext, node, new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
@@ -337,19 +346,26 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     });
   }
 
-  protected boolean checkContextNotResumed(XCompositeNode node) {
-    if (myEvaluationContext.getSuspendContext().isResumed()) {
-      node.setErrorMessage(DebuggerBundle.message("error.context.has.changed"));
-      return true;
+  boolean scheduleCommand(SuspendContextCommandImpl command) {
+    return scheduleCommand(myEvaluationContext, null, command);
+  }
+
+  protected static boolean scheduleCommand(EvaluationContextImpl evaluationContext,
+                                        @Nullable XCompositeNode node,
+                                        SuspendContextCommandImpl command) {
+    if (evaluationContext.getSuspendContext().isResumed()) {
+      if (node != null) {
+        node.setErrorMessage(DebuggerBundle.message("error.context.has.changed"));
+      }
+      return false;
     }
-    return false;
+    evaluationContext.getDebugProcess().getManagerThread().schedule(command);
+    return true;
   }
 
   @Override
   public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
-    final SuspendContextImpl suspendContext = myEvaluationContext.getSuspendContext();
-    if (suspendContext.isResumed()) return;
-    myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    scheduleCommand(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;

@@ -24,10 +24,12 @@ public class SeverityState {
 
   private final HighlightSeverity mySeverity;
   private final boolean myEnabledForEditing;
+  private final boolean myDisabled;
 
-  public SeverityState(HighlightSeverity severity, boolean enabledForEditing) {
+  public SeverityState(HighlightSeverity severity, boolean enabledForEditing, boolean disabled) {
     mySeverity = severity;
     myEnabledForEditing = enabledForEditing;
+    myDisabled = disabled;
   }
 
   public HighlightSeverity getSeverity() {
@@ -36,5 +38,9 @@ public class SeverityState {
 
   public boolean isEnabledForEditing() {
     return myEnabledForEditing;
+  }
+
+  public boolean isDisabled() {
+    return myDisabled;
   }
 }

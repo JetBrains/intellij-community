@@ -28,8 +28,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -170,13 +172,29 @@ public class TreeTable extends JBTable {
     final int selColumn = columnModel.getSelectionModel().getAnchorSelectionIndex();
     boolean treeHasFocus = selColumn == -1 || selColumn >= 0 && isTreeColumn(selColumn);
     boolean oneRowSelected = getSelectedRowCount() == 1;
+    int rowToSelect = -1;
     if(treeHasFocus && oneRowSelected && ((keyCode == KeyEvent.VK_LEFT) || (keyCode == KeyEvent.VK_RIGHT))){
       TreePath selectionPath = myTree.getSelectionPath();
       myTree._processKeyEvent(e);
-      myTree.setSelectionPath(selectionPath);
+      if (myTree.isExpanded(selectionPath)) {
+        myTree.setSelectionPath(selectionPath);
+      } else if (keyCode == KeyEvent.VK_LEFT) {
+        rowToSelect = myTree.getRowForPath(myTree.getSelectionPath());
+        if (!getScrollableTracksViewportHeight()) {
+          int visibleYPosition = getVisibleRect().y;
+          final Rectangle cellRect = getCellRect(rowToSelect, 0, false);
+          int selectedRowYPosition = cellRect.y;
+          if (selectedRowYPosition < visibleYPosition) {
+            scrollRectToVisible(cellRect);
+          }
+        }
+      }
     }
     else{
       super.processKeyEvent(e);
+    }
+    if (rowToSelect > -1) {
+      getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
     }
   }
 
@@ -267,14 +285,18 @@ public class TreeTable extends JBTable {
 
           clearSelection();
           if (min != -1 && max != -1) {
+            List<TreePath> selectionPaths = new ArrayList<TreePath>();
             for (int counter = min; counter <= max; counter++) {
               if (listSelectionModel.isSelectedIndex(counter)) {
                 TreePath selPath = myTree.getPathForRow(counter);
 
                 if (selPath != null) {
-                  addSelectionPath(selPath);
+                  selectionPaths.add(selPath);
                 }
               }
+            }
+            if (!selectionPaths.isEmpty()) {
+              addSelectionPaths(selectionPaths.toArray(new TreePath[selectionPaths.size()]));
             }
           }
         }

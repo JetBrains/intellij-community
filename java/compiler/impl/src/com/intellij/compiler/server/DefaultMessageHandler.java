@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
@@ -254,12 +255,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     if (isDumb) {
       // wait some time
       for (int idx = 0; idx < 5; idx++) {
-        try {
-          //noinspection BusyWait
-          Thread.sleep(10L);
-        }
-        catch (InterruptedException ignored) {
-        }
+        TimeoutUtil.sleep(10L);
         isDumb = dumbService.isDumb();
         if (!isDumb) {
           break;

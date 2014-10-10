@@ -217,6 +217,9 @@ private layoutPlugins(layouts) {
       }
     }
     layouts.layoutPlugin("course-creator")
+    layouts.layoutPlugin("ipnb") {
+      fileset(dir: "$pythonCommunityHome/ipnb/lib")
+    }
   }
 
   layouts.layoutCommunityPlugins(ch)

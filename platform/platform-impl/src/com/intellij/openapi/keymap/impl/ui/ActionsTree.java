@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,13 +198,11 @@ public class ActionsTree {
 
     ActionManager actionManager = ActionManager.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
-    Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, true, filter != null && filter.length() > 0 ?
-                                                                                                      ActionsTreeUtil.isActionFiltered(filter, true) :
-                                                                                                      (shortcut != null ? ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut) : null));
+    Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, true,
+                                                      ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut, filter, true));
     if ((filter != null && filter.length() > 0 || shortcut != null) && mainGroup.initIds().isEmpty()){
-      mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, false, filter != null && filter.length() > 0 ?
-                                                                                                   ActionsTreeUtil.isActionFiltered(filter, false) :
-                                                                                                   ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut));
+      mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, false,
+                                                  ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut, filter, false));
     }
     myRoot = ActionsTreeUtil.createNode(mainGroup);
     myMainGroup = mainGroup;

@@ -22,23 +22,39 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.proxy.CommonProxy;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClients;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
+import java.security.KeyManagementException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -165,12 +181,129 @@ public class AuthenticationService {
     });
   }
 
-  public boolean acceptSSLServerCertificate(final SVNURL repositoryUrl, final String realm) {
+  @NotNull
+  public AcceptResult acceptCertificate(@NotNull final SVNURL url, @NotNull final String certificateInfo) {
+    // TODO: Probably explicitly construct server url for realm here - like in CertificateTrustManager.
+    String kind = "svn.ssl.server";
+    String realm = url.toDecodedString();
+    Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getDataWithLowerCheck(kind, realm);
+    AcceptResult result;
+
+    if (data != null) {
+      result = (AcceptResult)data;
+    }
+    else {
+      result =
+        AcceptResult.from(getAuthenticationManager().getInnerProvider().acceptServerAuthentication(url, realm, certificateInfo, true));
+
+      if (!AcceptResult.REJECTED.equals(result)) {
+        myVcs.getSvnConfiguration().acknowledge(kind, realm, result);
+      }
+    }
+
+    return result;
+  }
+
+  public boolean acceptSSLServerCertificate(@Nullable SVNURL repositoryUrl, final String realm) throws SvnBindException {
     if (repositoryUrl == null) {
       return false;
     }
 
-    return new SSLServerCertificateAuthenticator(this, repositoryUrl, realm).tryAuthenticate();
+    boolean result;
+
+    if (Registry.is("svn.use.svnkit.for.https.server.certificate.check")) {
+      result = new SSLServerCertificateAuthenticator(this, repositoryUrl, realm).tryAuthenticate();
+    }
+    else {
+      HttpClient client = getClient(repositoryUrl);
+
+      try {
+        client.execute(new HttpGet(repositoryUrl.toDecodedString()));
+        result = true;
+      }
+      catch (IOException e) {
+        throw new SvnBindException(fixMessage(e), e);
+      }
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private static String fixMessage(@NotNull IOException e) {
+    String message = null;
+
+    if (e instanceof SSLHandshakeException) {
+      if (StringUtil.containsIgnoreCase(e.getMessage(), "received fatal alert: handshake_failure")) {
+        message = e.getMessage() + ". Please try to specify SSL protocol manually - SSLv3 or TLSv1";
+      }
+      else if (e.getCause() != null) {
+        // SSLHandshakeException.getMessage() could contain full type name of cause exception - for instance when cause is
+        // CertificateException. We just use cause exception message not to show exception type to the user.
+        message = e.getCause().getMessage();
+      }
+    }
+
+    return message;
+  }
+
+  @NotNull
+  private HttpClient getClient(@NotNull SVNURL repositoryUrl) {
+    // TODO: Implement algorithm of resolving necessary enabled protocols (TLSv1 vs SSLv3) instead of just using values from Settings.
+    SSLContext sslContext = createSslContext(repositoryUrl);
+    List<String> supportedProtocols = getSupportedSslProtocols();
+    SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext, ArrayUtil.toStringArray(supportedProtocols), null,
+                                                                              SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+    HttpConfigurable httpSettings = HttpConfigurable.getInstance();
+
+    // TODO: Seems more suitable here to read timeout values directly from config file - without utilizing SvnAuthenticationManager.
+    return HttpClients.custom()
+      .setSSLSocketFactory(socketFactory)
+      .setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(getAuthenticationManager().getReadTimeout(repositoryUrl)).build())
+      .setDefaultRequestConfig(
+        httpSettings.setProxy(RequestConfig.custom(), haveDataForTmpConfig())
+          .setConnectTimeout(getAuthenticationManager().getConnectTimeout(repositoryUrl))
+          .build())
+      .setDefaultCredentialsProvider(httpSettings.setProxyCredentials(new BasicCredentialsProvider(), haveDataForTmpConfig()))
+      .build();
+  }
+
+  @NotNull
+  private List<String> getSupportedSslProtocols() {
+    List<String> result = ContainerUtil.newArrayList();
+
+    switch (myConfiguration.getSslProtocols()) {
+      case sslv3:
+        result.add("SSLv3");
+        break;
+      case tlsv1:
+        result.add("TLSv1");
+        break;
+      case all:
+        break;
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private SSLContext createSslContext(@NotNull SVNURL url) {
+    SSLContext result = CertificateManager.getSystemSslContext();
+    TrustManager trustManager = new CertificateTrustManager(this, url);
+
+    try {
+      result.init(CertificateManager.getDefaultKeyManagers(), new TrustManager[]{trustManager}, null);
+    }
+    catch (KeyManagementException e) {
+      LOG.error(e);
+    }
+
+    return result;
+  }
+
+  @NotNull
+  public SvnAuthenticationManager getAuthenticationManager() {
+    return isActive() ? myConfiguration.getInteractiveManager(myVcs) : myConfiguration.getPassiveAuthenticationManager(myVcs.getProject());
   }
 
   public void clearPassiveCredentials(String realm, SVNURL repositoryUrl, boolean password) {
@@ -186,6 +319,7 @@ public class AuthenticationService {
     }
   }
 
+  // TODO: rename
   public boolean haveDataForTmpConfig() {
     final HttpConfigurable instance = HttpConfigurable.getInstance();
     return SvnConfiguration.getInstance(myVcs.getProject()).isIsUseDefaultProxy() &&

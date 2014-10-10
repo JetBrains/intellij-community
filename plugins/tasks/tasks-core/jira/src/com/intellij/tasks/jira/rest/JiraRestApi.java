@@ -30,7 +30,6 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   private static final Logger LOG = Logger.getInstance(JiraRestApi.class);
 
   public static JiraRestApi fromJiraVersion(@NotNull JiraVersion jiraVersion, @NotNull JiraRepository repository) {
-    LOG.info("JIRA version is " + jiraVersion);
     if (jiraVersion.getMajorNumber() == 4 && jiraVersion.getMinorNumber() >= 2) {
       return new JiraRestApi20Alpha1(repository);
     }
@@ -57,7 +56,6 @@ public abstract class JiraRestApi extends JiraRemoteApi {
     GetMethod method = getMultipleIssuesSearchMethod(jql, max);
     String response = myRepository.executeMethod(method);
     List<JiraIssue> issues = parseIssues(response);
-    LOG.debug("Total " + issues.size() + " downloaded");
     return ContainerUtil.map(issues, new Function<JiraIssue, Task>() {
       @Override
       public JiraRestTask fun(JiraIssue issue) {

@@ -275,13 +275,6 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /**
-   * @deprecated Use KeymapUtil.createTooltipText()
-   */
-  public static String createTooltipText(String s, @NotNull AnAction action) {
-    throw new IncorrectOperationException("Please use KeymapUtil.createTooltipText()");
-  }
-
-  /**
    * Sets the flag indicating whether the action has an internal or a user-customized icon.
    * @param isDefaultIconSet true if the icon is internal, false if the icon is customized by the user.
    */

@@ -1,0 +1,185 @@
+JsonFile: NumberLiterals.json
+  JsonArray
+    PsiElement([)('[')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('0')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('42')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    PsiErrorElement:'+' unexpected
+      PsiElement(BAD_CHARACTER)('+')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('42')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('-42')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('0')
+    PsiErrorElement:',' or ']' expected, got '42'
+      <empty list>
+    JsonNumberLiteral
+      PsiElement(NUMBER)('42')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n\n  ')
+    PsiErrorElement:'.' unexpected
+      PsiElement(BAD_CHARACTER)('.')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiErrorElement:',' or ']' expected, got '.'
+      PsiElement(BAD_CHARACTER)('.')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    PsiErrorElement:'+' unexpected
+      PsiElement(BAD_CHARACTER)('+')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('-1.2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('0')
+    PsiErrorElement:',' or ']' expected, got '1.2'
+      <empty list>
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1e')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonReferenceExpression
+      PsiElement(INDENTIFIER)('e2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1e2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1E2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1e02')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1e+2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1e-2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    PsiErrorElement:'+' unexpected
+      PsiElement(BAD_CHARACTER)('+')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1e2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('-1e2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('0')
+    PsiErrorElement:',' or ']' expected, got '1e2'
+      <empty list>
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1e2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiErrorElement:',' or ']' expected, got '.'
+      PsiElement(BAD_CHARACTER)('.')
+    JsonReferenceExpression
+      PsiElement(INDENTIFIER)('e2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    PsiErrorElement:'.' unexpected
+      PsiElement(BAD_CHARACTER)('.')
+    JsonReferenceExpression
+      PsiElement(INDENTIFIER)('e2')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiErrorElement:',' or ']' expected, got '.'
+      PsiElement(BAD_CHARACTER)('.')
+    JsonReferenceExpression
+      PsiElement(INDENTIFIER)('e')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2e')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    PsiErrorElement:'.' unexpected
+      PsiElement(BAD_CHARACTER)('.')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('2e3')
+    PsiErrorElement:',' or ']' expected, got '1.2e3'
+      <empty list>
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2e3')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2E3')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2e03')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2e+3')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2e-3')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    PsiErrorElement:'+' unexpected
+      PsiElement(BAD_CHARACTER)('+')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2e3')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('-1.2e3')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('0')
+    PsiErrorElement:',' or ']' expected, got '1.2e3'
+      <empty list>
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1.2e3')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n\n  ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('-0.0e-0')
+    PsiWhiteSpace('\n')
+    PsiElement(])(']')

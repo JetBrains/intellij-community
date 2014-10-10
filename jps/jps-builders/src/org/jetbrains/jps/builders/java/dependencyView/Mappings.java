@@ -351,6 +351,9 @@ public class Mappings {
     }
 
     private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container) {
+      if (m.name == myInitName) {
+        return; // overriding is not defined for constructors
+      }
       final TIntHashSet subClasses = myClassToSubclasses.get(fromClass.name);
       if (subClasses == null) {
         return;
@@ -387,6 +390,9 @@ public class Mappings {
     }
 
     private Collection<Pair<MethodRepr, ClassRepr>> findOverriddenMethods(final MethodRepr m, final ClassRepr c) {
+      if (m.name == myInitName) {
+        return Collections.emptySet(); // overriding is not defined for constructors
+      }
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
       addOverridenMethods(c, MethodRepr.equalByJavaRules(m), result);
       return result;

@@ -32,6 +32,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ import java.util.Set;
 public interface MergeVersion {
   Document createWorkingDocument(Project project);
 
-  void applyText(String text, Project project);
+  void applyText(@NotNull String text, Project project);
 
   @Nullable
   VirtualFile getFile();
@@ -91,7 +92,7 @@ public interface MergeVersion {
     }
 
     @Override
-    public void applyText(final String text, final Project project) {
+    public void applyText(@NotNull final String text, final Project project) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
@@ -105,24 +106,21 @@ public interface MergeVersion {
       });
     }
 
-    protected void doApplyText(String text, Project project) {
+    protected void doApplyText(@NotNull String text, Project project) {
       setDocumentText(myDocument, text, DiffBundle.message("save.merge.result.command.name"), project);
 
       FileDocumentManager.getInstance().saveDocument(myDocument);
-      final VirtualFile file = getFile();
-      reportProjectFileChangeIfNeeded(project, file);
+      reportProjectFileChangeIfNeeded(project, getFile());
     }
 
-    public static void reportProjectFileChangeIfNeeded(Project project, @Nullable VirtualFile file) {
-      if (file != null && !file.isDirectory()) {
-        if (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
-          ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
-        }
+    public static void reportProjectFileChangeIfNeeded(@Nullable Project project, @Nullable VirtualFile file) {
+      if (project != null && file != null && !file.isDirectory() && (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file))) {
+        ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
       }
     }
 
     @Nullable
-    public static Runnable prepareToReportChangedProjectFiles(final Project project, final Collection<VirtualFile> files) {
+    public static Runnable prepareToReportChangedProjectFiles(@NotNull final Project project, final Collection<VirtualFile> files) {
       final Set<VirtualFile> vfs = new HashSet<VirtualFile>();
       for (VirtualFile vf : files) {
         if (vf != null && ! vf.isDirectory()) {
@@ -157,7 +155,7 @@ public interface MergeVersion {
       return importProvider != null && importProvider.lookForProjectsInDirectory();
     }
 
-    protected void doRestoreOriginalContent(Project project) {
+    protected void doRestoreOriginalContent(@Nullable Project project) {
       setDocumentText(myDocument, myTextBeforeMerge, "", project);
     }
 
@@ -181,7 +179,7 @@ public interface MergeVersion {
       return file.getFileType();
     }
 
-    private static void setDocumentText(final Document document, final String text, String name, Project project) {
+    private static void setDocumentText(@NotNull final Document document, @NotNull final String text, @Nullable String name, @Nullable Project project) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
         public void run() {

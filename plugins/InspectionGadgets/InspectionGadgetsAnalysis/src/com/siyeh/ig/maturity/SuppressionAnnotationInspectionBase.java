@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,26 +57,29 @@ public class SuppressionAnnotationInspectionBase extends BaseInspection {
     @Override
     public void visitComment(PsiComment comment) {
       super.visitComment(comment);
-      final String commentText = comment.getText();
       final IElementType tokenType = comment.getTokenType();
       if (!tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT)
           && !tokenType.equals(JavaTokenType.C_STYLE_COMMENT)) {
         return;
       }
-
-      if (commentText.length() > 2) {
-        @NonNls final String strippedComment = commentText.substring(2).trim();
-        if (strippedComment.startsWith(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
-          final String suppressedIds = JavaSuppressionUtil.getSuppressedInspectionIdsIn(comment);
-          final Iterable<String> ids = suppressedIds != null ? StringUtil.tokenize(suppressedIds, "[, ]") : null;
-          if (ids != null) {
-            for (String id : ids) {
-              if (!myAllowedSuppressions.contains(id)) {
-                registerError(comment, comment);
-                break;
-              }
-            }
-          }
+      final String commentText = comment.getText();
+      if (commentText.length() <= 2) {
+        return;
+      }
+      @NonNls final String strippedComment = commentText.substring(2).trim();
+      if (!strippedComment.startsWith(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
+        return;
+      }
+      final String suppressedIds = JavaSuppressionUtil.getSuppressedInspectionIdsIn(comment);
+      if (suppressedIds == null) {
+        registerError(comment, comment, Boolean.FALSE);
+        return;
+      }
+      final Iterable<String> ids = StringUtil.tokenize(suppressedIds, ",");
+      for (String id : ids) {
+        if (!myAllowedSuppressions.contains(id)) {
+          registerError(comment, comment, Boolean.TRUE);
+          break;
         }
       }
     }
@@ -95,7 +98,10 @@ public class SuppressionAnnotationInspectionBase extends BaseInspection {
         if (annotationParent instanceof PsiModifierList) {
           final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)annotationParent);
           if (!myAllowedSuppressions.containsAll(ids)) {
-            registerError(annotation, annotation);
+            registerError(annotation, annotation, Boolean.TRUE);
+          }
+          else if (ids.isEmpty()) {
+            registerError(annotation, annotation, Boolean.FALSE);
           }
         }
       }

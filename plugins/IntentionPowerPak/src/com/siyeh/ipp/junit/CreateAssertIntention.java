@@ -130,12 +130,24 @@ public class CreateAssertIntention extends Intention {
 
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, context);
     final PsiMethod method = methodCallExpression.resolveMethod();
-    if (method != null || hasStaticImports(context) && ImportUtils.addStaticImport("org.junit.Assert", memberName, context)) {
+    if (isJUnitMethod(method) || hasStaticImports(context) && ImportUtils.addStaticImport("org.junit.Assert", memberName, context)) {
       return text + ';';
     }
     else {
       return "org.junit.Assert." + text + ';';
     }
+  }
+
+  private static boolean isJUnitMethod(PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
+    final String qualifiedName = containingClass.getQualifiedName();
+    return "org.junit.Assert".equals(qualifiedName) || "junit.framework.TestCase".equals(qualifiedName);
   }
 
   private static boolean hasStaticImports(PsiElement element) {

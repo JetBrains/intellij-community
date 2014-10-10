@@ -17,6 +17,7 @@ package com.intellij.openapi.util.io.win32;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ public class IdeaWin32 {
 
   static {
     IdeaWin32 instance = null;
-    if (SystemInfo.isWin2kOrNewer && Boolean.parseBoolean(System.getProperty("idea.use.native.fs.for.win", "true"))) {
+    if (SystemInfo.isWin2kOrNewer && SystemProperties.getBooleanProperty("idea.use.native.fs.for.win", true)) {
       try {
         UrlClassLoader.loadPlatformLibrary("IdeaWin32");
         instance = new IdeaWin32();

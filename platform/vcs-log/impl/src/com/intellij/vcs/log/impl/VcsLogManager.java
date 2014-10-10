@@ -64,23 +64,22 @@ public class VcsLogManager implements Disposable {
   public JComponent initContent() {
     final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
 
-    Consumer<DataPack> dataPackUpdateHandler = new Consumer<DataPack>() {
+    Consumer<VisiblePack> visiblePackConsumer = new Consumer<VisiblePack>() {
       @Override
-      public void consume(final DataPack dataPack) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (!Disposer.isDisposed(myUi)) {
-              myUi.setDataPack(dataPack);
-              myProject.getMessageBus().syncPublisher(VcsLogDataHolder.REFRESH_COMPLETED).refresh(dataPack);
+      public void consume(final VisiblePack pack) {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              if (!Disposer.isDisposed(myUi)) {
+                myUi.setVisiblePack(pack);
+              }
             }
-          }
-        });
+          });
       }
     };
-    VcsLogDataHolder logDataHolder = new VcsLogDataHolder(myProject, this, logProviders, mySettings, dataPackUpdateHandler);
+    VcsLogDataHolder logDataHolder = new VcsLogDataHolder(myProject, this, logProviders, mySettings, myUiProperties, visiblePackConsumer);
     myUi = new VcsLogUiImpl(logDataHolder, myProject, mySettings,
-                            new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, EmptyDataPack.getInstance());
+                            new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, logDataHolder.getFilterer());
     myLogRefresher = new PostponeableLogRefresher(myProject, logDataHolder);
     refreshLogOnVcsEvents(logProviders);
     logDataHolder.initialize();

@@ -19,9 +19,12 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,18 +33,15 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
 
-  final List<String> methodNamePatterns = new ArrayList();
-  final List<String> classNames = new ArrayList();
+  final List<String> methodNamePatterns = ContainerUtil.newArrayList();
+  final List<String> classNames = ContainerUtil.newArrayList();
   /**
    * @noinspection PublicField
    */
@@ -148,8 +148,12 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         registerMethodCallError(call, aClass);
         return;
       }
-      
-      if (ControlFlowAnalyzer.isPure(method)) {
+
+      PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
+      boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
+      if (anno != null && 
+          (honorInferred || !AnnotationUtil.isInferredAnnotation(anno)) && 
+          Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"))) {
         registerMethodCallError(call, aClass);
         return;
       }
@@ -179,7 +183,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         pattern = patternCache.get(methodNamePattern);
       }
       else {
-        patternCache = new HashMap(methodNamePatterns.size());
+        patternCache = ContainerUtilRt.newHashMap(methodNamePatterns.size());
         pattern = null;
       }
       if (pattern == null) {
@@ -194,11 +198,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
           return false;
         }
       }
-      if (pattern == null) {
-        return false;
-      }
-      final Matcher matcher = pattern.matcher(methodName);
-      return matcher.matches();
+      return pattern.matcher(methodName).matches();
     }
   }
 }

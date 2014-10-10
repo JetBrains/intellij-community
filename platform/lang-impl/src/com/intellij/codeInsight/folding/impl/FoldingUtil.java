@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class FoldingUtil {
   private FoldingUtil() {}
@@ -47,10 +44,10 @@ public class FoldingUtil {
 
   @Nullable
   public static FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line){
-    FoldRegion result = null;
     if (line < 0 || line >= editor.getDocument().getLineCount()) {
-      return result;
+      return null;
     }
+    FoldRegion result = null;
     FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : regions) {
       if (!region.isValid()) {
@@ -82,4 +79,52 @@ public class FoldingUtil {
     final int offset = editor.getCaretModel().getOffset();
     return range.contains(offset) && range.getStartOffset() != offset;
   }
+
+  /**
+   * Iterates fold regions tree in a depth-first order (pre-order)
+   */
+  public static Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
+    final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+    return new Iterator<FoldRegion>() {
+      private int sectionStart;
+      private int current;
+      private int sectionEnd;
+
+      {
+        advanceSection();
+      }
+
+      private void advanceSection() {
+        sectionStart = sectionEnd;
+        //noinspection StatementWithEmptyBody
+        for (sectionEnd = sectionStart + 1;
+             sectionEnd < allRegions.length && allRegions[sectionEnd].getStartOffset() == allRegions[sectionStart].getStartOffset();
+             sectionEnd++);
+        current = sectionEnd;
+      }
+
+      @Override
+      public boolean hasNext() {
+        return current > sectionStart || sectionEnd < allRegions.length;
+      }
+
+      @Override
+      public FoldRegion next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        if (current <= sectionStart) {
+          advanceSection();
+        }
+        return allRegions[--current];
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
+
+
 }

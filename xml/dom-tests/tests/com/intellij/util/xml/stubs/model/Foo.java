@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.stubs.model;
 
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Stubbed;
 import com.intellij.util.xml.DomElement;
 
@@ -26,6 +27,9 @@ import java.util.List;
  */
 @Stubbed
 public interface Foo extends DomElement {
+
+  @Stubbed
+  GenericDomValue<String> getId();
 
   @Stubbed
   List<Bar> getBars();

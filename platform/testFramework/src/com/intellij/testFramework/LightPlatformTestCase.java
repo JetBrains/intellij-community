@@ -110,6 +110,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
 
@@ -373,7 +374,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
                              @NotNull final Map<String, InspectionToolWrapper> availableInspectionTools) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
-
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
     }
@@ -461,6 +462,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
     }
+    UIUtil.dispatchAllInvocationEvents(); // startup activities
+
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
@@ -664,8 +667,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       return;
     }
 
-    final Throwable[] throwables = new Throwable[1];
+    final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
 
+    replaceIdeEventQueueSafely();
     SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {
@@ -673,8 +677,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           ourTestThread = Thread.currentThread();
           startRunAndTear();
         }
-        catch (Throwable throwable) {
-          throwables[0] = throwable;
+        catch (Throwable e) {
+          throwable.set(e);
         }
         finally {
           ourTestThread = null;
@@ -692,8 +696,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     });
 
-    if (throwables[0] != null) {
-      throw throwables[0];
+    if (throwable.get() != null) {
+      throw throwable.get();
     }
 
     // just to make sure all deferred Runnables to finish

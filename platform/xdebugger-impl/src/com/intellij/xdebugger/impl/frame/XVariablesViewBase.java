@@ -87,7 +87,7 @@ public abstract class XVariablesViewBase extends XDebugView {
       disposeTreeRestorer();
       myTreeRestorer = myTreeState.restoreState(tree);
     }
-    if (position != null) {
+    if (position != null && Registry.is("debugger.valueTooltipAutoShowOnSelection")) {
       registerInlineEvaluator(stackFrame, tree, position, project);
     }
   }

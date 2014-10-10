@@ -26,6 +26,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -46,9 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -88,11 +87,22 @@ public class InspectionManagerEx extends InspectionManagerBase {
   }
 
   @Nullable
-  public static SuppressIntentionAction[] getSuppressActions(@NotNull InspectionProfileEntry tool) {
+  public static SuppressIntentionAction[] getSuppressActions(@NotNull InspectionToolWrapper toolWrapper) {
+    final InspectionProfileEntry tool = toolWrapper.getTool();
     if (tool instanceof CustomSuppressableInspectionTool) {
       return ((CustomSuppressableInspectionTool)tool).getSuppressActions(null);
     }
-    LocalQuickFix[] actions = tool.getBatchSuppressActions(null);
+    final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(Arrays.asList(tool.getBatchSuppressActions(null)));
+    if (actions.isEmpty()) {
+      final Language language = Language.findLanguageByID(toolWrapper.getLanguage());
+      if (language != null) {
+        final List<InspectionSuppressor> suppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguage(language);
+        for (InspectionSuppressor suppressor : suppressors) {
+          final SuppressQuickFix[] suppressActions = suppressor.getSuppressActions(null, tool.getShortName());
+          Collections.addAll(actions, suppressActions);
+        }
+      }
+    }
     return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<LocalQuickFix, SuppressIntentionAction>() {
       @Override
       public SuppressIntentionAction fun(final LocalQuickFix fix) {

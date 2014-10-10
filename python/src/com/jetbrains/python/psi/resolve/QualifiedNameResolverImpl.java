@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.facet.Facet;
@@ -28,10 +29,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -375,5 +379,26 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Override
   public Module getModule() {
     return myContext.getModule();
+  }
+
+  @Nullable
+  @Override
+  public <T extends PsiNamedElement> T resolveTopLevelMember(@NotNull final Class<T> aClass) {
+    Preconditions.checkState(getModule() != null, "Module is not set");
+    final String memberName = myQualifiedName.getLastComponent();
+    if (memberName == null) {
+      return null;
+    }
+    final PyFile file =
+      new QualifiedNameResolverImpl(myQualifiedName.removeLastComponent()).fromModule(getModule()).firstResultOfType(PyFile.class);
+    if (file == null) {
+      return null;
+    }
+    for (final T element : PsiTreeUtil.getChildrenOfTypeAsList(file, aClass)) {
+      if (memberName.equals(element.getName())) {
+        return element;
+      }
+    }
+    return null;
   }
 }

@@ -60,7 +60,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private final XDebugSession mySession;
   private final XDebuggerEditorsProvider myEditorsProvider;
   private EvaluationMode myMode;
-  private final XSourcePosition mySourcePosition;
+  private XSourcePosition mySourcePosition;
   private final SwitchModeAction mySwitchModeAction;
   private final boolean myIsCodeFragmentEvaluationSupported;
 
@@ -139,7 +139,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        getInputEditor().setSourcePosition(mySession.getCurrentPosition());
+        mySourcePosition = mySession.getCurrentPosition();
+        getInputEditor().setSourcePosition(mySourcePosition);
       }
     });
   }

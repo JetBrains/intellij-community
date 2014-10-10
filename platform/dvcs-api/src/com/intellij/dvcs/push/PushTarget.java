@@ -20,4 +20,12 @@ package com.intellij.dvcs.push;
  */
 public interface PushTarget {
 
+  /**
+   * Returns true if pushing to this target is guaranteed to introduce something new: e.g. new branch or tag.
+   * <p/>
+   * Returning false doesn't mean that this target has nothing to push (e.g. commits to push are calculated separately),
+   * it means rather that "we don't know".
+   */
+  boolean hasSomethingToPush();
+
 }

@@ -16,6 +16,7 @@
 package com.intellij.ui.table;
 
 import com.intellij.Patches;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -39,6 +40,7 @@ import java.util.EventObject;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   public static final int PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS = 7;
+  public static final int COLUMN_RESIZE_AREA_WIDTH = 3; // same as in BasicTableHeaderUI
 
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
@@ -728,6 +730,81 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
       }
       return super.getToolTipText(event);
+    }
+
+    @Override
+    protected void processMouseEvent(MouseEvent e) {
+      if (e.getID() == MouseEvent.MOUSE_CLICKED && e.getButton() == MouseEvent.BUTTON1) {
+        int columnToPack = getColumnToPack(e.getPoint());
+        if (columnToPack != -1 && canResize(columnToPack)) {
+          if (e.getClickCount() % 2 == 0) {
+            packColumn(columnToPack);
+          }
+          return; // prevents click events in column resize area
+        }
+      }
+      super.processMouseEvent(e);
+    }
+
+    protected void packColumn(int columnToPack) {
+      TableColumn column = getColumnModel().getColumn(columnToPack);
+      int currentWidth = column.getWidth();
+      int expandedWidth = getExpandedColumnWidth(columnToPack);
+      int newWidth = currentWidth >= expandedWidth ? getPreferredHeaderWidth(columnToPack) : expandedWidth;
+
+      setResizingColumn(column);
+      column.setWidth(newWidth);
+      Dimension tableSize = JBTable.this.getSize();
+      tableSize.width += newWidth - column.getWidth();
+      JBTable.this.setSize(tableSize);
+      // let the table update it's layout with resizing column set
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          setResizingColumn(null);
+        }
+      });
+    }
+
+    protected int getExpandedColumnWidth(int columnToExpand) {
+      int expandedWidth = getPreferredHeaderWidth(columnToExpand);
+      for (int row = 0; row < getRowCount(); row++) {
+        TableCellRenderer cellRenderer = getCellRenderer(row, columnToExpand);
+        if (cellRenderer != null) {
+          Component c = JBTable.this.prepareRenderer(cellRenderer, row, columnToExpand);
+          expandedWidth = Math.max(expandedWidth, c.getPreferredSize().width);
+        }
+      }
+      return expandedWidth;
+    }
+
+    private int getPreferredHeaderWidth(int columnIdx) {
+      TableColumn column = getColumnModel().getColumn(columnIdx);
+      TableCellRenderer renderer = column.getHeaderRenderer();
+      renderer = renderer == null ? getDefaultRenderer() : renderer;
+      Object headerValue = column.getHeaderValue();
+      Component headerCellRenderer = renderer.getTableCellRendererComponent(JBTable.this, headerValue, false, false, -1, columnIdx);
+      return headerCellRenderer.getPreferredSize().width;
+    }
+
+    private int getColumnToPack(Point p) {
+      int viewColumnIdx = JBTable.this.columnAtPoint(p);
+      if (viewColumnIdx == -1) return -1;
+
+      Rectangle headerRect = getHeaderRect(viewColumnIdx);
+
+      boolean atLeftBound = p.x - headerRect.x < COLUMN_RESIZE_AREA_WIDTH;
+      if (atLeftBound) {
+        return viewColumnIdx == 0 ? viewColumnIdx : viewColumnIdx - 1;
+      }
+
+      boolean atRightBound = headerRect.x + headerRect.width - p.x < COLUMN_RESIZE_AREA_WIDTH;
+      return atRightBound ? viewColumnIdx : -1;
+    }
+
+    private boolean canResize(int columnIdx) {
+      TableColumnModel columnModel = getColumnModel();
+      return resizingAllowed && columnModel.getColumn(columnIdx).getResizable();
     }
   }
 }

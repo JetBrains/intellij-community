@@ -36,6 +36,8 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   public void testDelegationWithUnknownArgument() { doTest(); }
   public void testEqualsUnknownValue() { doTest(); }
   public void testMissingFail() { doTest(); }
+  public void testCheckSuperContract() { doTest(); }
+  public void testNestedCallsMayThrow() { doTest(); }
 
   public void testSignatureIssues() { doTest(); }
 }

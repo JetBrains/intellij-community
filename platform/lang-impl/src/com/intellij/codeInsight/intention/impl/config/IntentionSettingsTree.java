@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -124,11 +125,7 @@ public abstract class IntentionSettingsTree {
 
   public void reset(){
     while (((IntentionManagerImpl)IntentionManager.getInstance()).hasActiveRequests()) {
-      try {
-        Thread.sleep(100);
-      }
-      catch (InterruptedException ignored) {
-      }
+      TimeoutUtil.sleep(100);
     }
     resetCheckStatus();    
     reset(IntentionManagerSettings.getInstance().getMetaData());

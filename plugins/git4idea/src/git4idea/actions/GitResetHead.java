@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,12 +57,12 @@ public class GitResetHead extends GitRepositoryAction {
     }
     GitLineHandler h = d.handler();
     affectedRoots.add(d.getGitRoot());
-    GitUtil.workingTreeChangeStarted(project);
+    DvcsUtil.workingTreeChangeStarted(project);
     try {
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("resetting.title"), h.printableCommandLine());
     }
     finally {
-      GitUtil.workingTreeChangeFinished(project);
+      DvcsUtil.workingTreeChangeFinished(project);
     }
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     manager.updateRepository(d.getGitRoot());

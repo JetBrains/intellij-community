@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,150 +15,171 @@
  */
 package git4idea.push;
 
-import com.intellij.openapi.util.text.StringUtil;
-import git4idea.GitBranch;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import static git4idea.util.GitUIUtil.bold;
-import static git4idea.util.GitUIUtil.code;
+import java.util.Comparator;
+import java.util.List;
 
 /**
- * If an error happens, all push is unsuccessful, for all branches.
- * Otherwise we've got separate results for branches.
+ * Result of pushing one repository.
+ * <p/>
+ * Includes information about the number of pushed commits (or -1 if undefined),
+ * and tells whether the repository was updated after the push was rejected.
+ *
+ * @see git4idea.push.GitPushNativeResult
  */
-final class GitPushRepoResult {
+class GitPushRepoResult {
 
   enum Type {
-    NOT_PUSHING,
     SUCCESS,
-    SOME_REJECTED,
+    NEW_BRANCH,
+    UP_TO_DATE,
+    FORCED,
+    REJECTED,
     ERROR,
-    CANCEL,
-    NOT_AUTHORIZED
+    NOT_PUSHED;
   }
 
-  private final Type myType;
-  private final String myOutput;
-  private final Map<GitBranch, GitPushBranchResult> myBranchResults;
+  static Comparator<Type> TYPE_COMPARATOR = new Comparator<Type>() {
+    @Override
+    public int compare(Type o1, Type o2) {
+      return o1.ordinal() - o2.ordinal();
+    }
+  };
 
-  GitPushRepoResult(@NotNull Type type, @NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull String output) {
+  @NotNull private final Type myType;
+  private final int myCommits;
+  @NotNull private final String mySourceBranch;
+  @NotNull private final String myTargetBranch;
+  @NotNull private final String myTargetRemote;
+  @NotNull private final List<String> myPushedTags;
+  @Nullable private final String myError;
+  @Nullable private final GitUpdateResult myUpdateResult;
+
+  @NotNull
+  static GitPushRepoResult convertFromNative(@NotNull GitPushNativeResult result,
+                                             @NotNull List<GitPushNativeResult> tagResults,
+                                             int commits,
+                                             @NotNull GitLocalBranch source,
+                                             @NotNull GitRemoteBranch target) {
+    List<String> tags = ContainerUtil.map(tagResults, new Function<GitPushNativeResult, String>() {
+      @Override
+      public String fun(GitPushNativeResult result) {
+        return result.getSourceRef();
+      }
+    });
+    return new GitPushRepoResult(convertType(result.getType()), commits, source.getFullName(), target.getFullName(),
+                                 target.getRemote().getName(), tags, null, null);
+  }
+
+  @NotNull
+  static GitPushRepoResult error(@NotNull GitLocalBranch source, @NotNull GitRemoteBranch target, @NotNull String error) {
+    return new GitPushRepoResult(Type.ERROR, -1, source.getFullName(), target.getFullName(),
+                                 target.getRemote().getName(), Collections.<String>emptyList(), error, null);
+  }
+
+  @NotNull
+  static GitPushRepoResult notPushed(GitLocalBranch source, GitRemoteBranch target) {
+    return new GitPushRepoResult(Type.NOT_PUSHED, -1, source.getFullName(), target.getFullName(),
+                                 target.getRemote().getName(), Collections.<String>emptyList(), null, null);
+  }
+
+  @NotNull
+  static GitPushRepoResult addUpdateResult(GitPushRepoResult original, GitUpdateResult updateResult) {
+    return new GitPushRepoResult(original.getType(), original.getNumberOfPushedCommits(), original.getSourceBranch(),
+                                 original.getTargetBranch(), original.getTargetRemote(), original.getPushedTags(),
+                                 original.getError(), updateResult);
+  }
+
+  private GitPushRepoResult(@NotNull Type type, int pushedCommits, @NotNull String sourceBranch, @NotNull String targetBranch,
+                            @NotNull String targetRemote,
+                            @NotNull List<String> pushedTags, @Nullable String error, @Nullable GitUpdateResult result) {
     myType = type;
-    myBranchResults = resultsByBranch;
-    myOutput = output;
-  }
-
-  @NotNull
-  static GitPushRepoResult success(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull String output) {
-    return new GitPushRepoResult(Type.SUCCESS, resultsByBranch, output);
-  }
-
-  @NotNull
-  static GitPushRepoResult error(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull String output) {
-    return new GitPushRepoResult(Type.ERROR, resultsByBranch, output);
-  }
-
-  @NotNull
-  static GitPushRepoResult someRejected(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull String output) {
-    return new GitPushRepoResult(Type.SOME_REJECTED, resultsByBranch, output);
-  }
-
-  @NotNull
-  public static GitPushRepoResult cancelled(@NotNull String output) {
-    return new GitPushRepoResult(Type.CANCEL, Collections.<GitBranch, GitPushBranchResult>emptyMap(), output);
-  }
-
-  @NotNull
-  public static GitPushRepoResult notAuthorized(@NotNull String output) {
-    return new GitPushRepoResult(Type.NOT_AUTHORIZED, Collections.<GitBranch, GitPushBranchResult>emptyMap(), output);
-  }
-
-  @NotNull
-  static GitPushRepoResult notPushed() {
-    return new GitPushRepoResult(Type.NOT_PUSHING, Collections.<GitBranch, GitPushBranchResult>emptyMap(), "");
+    myCommits = pushedCommits;
+    mySourceBranch = sourceBranch;
+    myTargetBranch = targetBranch;
+    myTargetRemote = targetRemote;
+    myPushedTags = pushedTags;
+    myError = error;
+    myUpdateResult = result;
   }
 
   @NotNull
   Type getType() {
     return myType;
   }
-  
-  boolean isOneOfErrors() {
-    return myType == Type.ERROR || myType == Type.CANCEL || myType == Type.NOT_AUTHORIZED;
+
+  @Nullable
+  GitUpdateResult getUpdateResult() {
+    return myUpdateResult;
   }
 
-  @NotNull
-  String getOutput() {
-    return myOutput;
-  }
-
-  @NotNull
-  Map<GitBranch, GitPushBranchResult> getBranchResults() {
-    return myBranchResults;
-  }
-
-  @NotNull
-  GitPushRepoResult remove(@NotNull GitBranch branch) {
-    Map<GitBranch, GitPushBranchResult> resultsByBranch = new HashMap<GitBranch, GitPushBranchResult>();
-    for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
-      GitBranch b = entry.getKey();
-      if (!b.equals(branch)) {
-        resultsByBranch.put(b, entry.getValue());
-      }
-    }
-    return new GitPushRepoResult(myType, resultsByBranch, myOutput);
-  }
-
-  boolean isEmpty() {
-    return myBranchResults.isEmpty();
+  int getNumberOfPushedCommits() {
+    return myCommits;
   }
 
   /**
-   * Merges the given results to this result.
-   * In the case of conflict (i.e. different results for a branch), current result is preferred over the previous one.
+   * Returns the branch we were pushing from, in the full-name format, e.g. {@code refs/heads/master}.
    */
-  void mergeFrom(@NotNull GitPushRepoResult repoResult) {
-    for (Map.Entry<GitBranch, GitPushBranchResult> entry : repoResult.myBranchResults.entrySet()) {
-      GitBranch branch = entry.getKey();
-      GitPushBranchResult branchResult = entry.getValue();
-      if (!myBranchResults.containsKey(branch)) {   // otherwise current result is preferred
-        myBranchResults.put(branch, branchResult);
-      }
-    }
+  @NotNull
+  String getSourceBranch() {
+    return mySourceBranch;
+  }
+
+  /**
+   * Returns the branch we were pushing to, in the full-name format, e.g. {@code refs/remotes/origin/master}.
+   */
+  @NotNull
+  String getTargetBranch() {
+    return myTargetBranch;
+  }
+
+  @Nullable
+  String getError() {
+    return myError;
   }
 
   @NotNull
-  String getPerBranchesNonErrorReport() {
-    StringBuilder sb = new StringBuilder();
-    int i = 0;
-    for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
-      GitBranch branch = entry.getKey();
-      GitPushBranchResult branchResult = entry.getValue();
-
-      if (branchResult.isSuccess()) {
-        sb.append(bold(branch.getName()) + ": pushed " + commits(branchResult.getNumberOfPushedCommits()));
-      } 
-      else if (branchResult.isNewBranch()) {
-        sb.append(bold(branch.getName()) + " pushed to new branch " + bold(branchResult.getTargetBranchName()));
-      } 
-      else {
-        sb.append(code(branch.getName())).append(": rejected");
-      }
-      
-      if (i < myBranchResults.size() - 1) {
-        sb.append("<br/>");
-      }
-    }
-    return sb.toString();
+  List<String> getPushedTags() {
+    return myPushedTags;
   }
 
   @NotNull
-  private static String commits(int commitNum) {
-    return commitNum + " " + StringUtil.pluralize("commit", commitNum);
+  public String getTargetRemote() {
+    return myTargetRemote;
   }
 
+  @NotNull
+  private static Type convertType(@NotNull GitPushNativeResult.Type nativeType) {
+    switch (nativeType) {
+      case SUCCESS:
+        return Type.SUCCESS;
+      case FORCED_UPDATE:
+        return Type.FORCED;
+      case NEW_REF:
+        return Type.NEW_BRANCH;
+      case REJECTED:
+        return Type.REJECTED;
+      case UP_TO_DATE:
+        return Type.UP_TO_DATE;
+      case ERROR:
+        return Type.ERROR;
+      case DELETED:
+      default:
+        throw new IllegalArgumentException("Conversion is not supported: " + nativeType);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s (%d, '%s'), update: %s}", myType, myCommits, mySourceBranch, myUpdateResult);
+  }
 
 }

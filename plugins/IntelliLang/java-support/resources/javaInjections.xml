@@ -66,6 +66,15 @@
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("matches").withParameters("java.lang.String", "java.lang.CharSequence").definedInClass("java.util.regex.Pattern"))]]></place>
   </injection>
   <injection language="RegExp" injector-id="java">
+    <display-name>Scanner (java.util)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("useDelimiter").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasNext").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("next").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("findInLine").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("findWithinHorizon").withParameters("java.lang.String", "int").definedInClass("java.util.Scanner"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("skip").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
+  </injection>
+  <injection language="RegExp" injector-id="java">
     <display-name>Pattern.regexp (javax.validation.constraints)</display-name>
       <place><![CDATA[psiMethod().withName("regexp").withParameters().definedInClass("javax.validation.constraints.Pattern")]]></place>
   </injection>

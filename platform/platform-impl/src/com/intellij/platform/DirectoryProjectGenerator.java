@@ -40,6 +40,9 @@ public interface DirectoryProjectGenerator<T> {
   @Nullable
   T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException;
 
+  /**
+   * @return 32x32 icon or null, if no icon is available
+   */
   @Nullable
   Icon getLogo();
 

@@ -103,7 +103,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
                 createRemote = GithubNotifications.showYesNoDialog(project,
                                                                    "Can't Find Remote",
                                                                    "Configure remote for '" + fork.getPath().getUser() + "'?",
-                                                                   ourDoNotAskOption) == Messages.YES;
+                                                                   ourDoNotAskOption);
                 break;
             }
 

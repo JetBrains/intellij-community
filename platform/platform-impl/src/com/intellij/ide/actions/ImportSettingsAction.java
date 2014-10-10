@@ -81,7 +81,7 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
         return;
       }
 
-      MultiMap<File, ExportableComponent> filesToComponents = ExportSettingsAction.getExportableComponentsMap();
+      MultiMap<File, ExportableComponent> filesToComponents = ExportSettingsAction.getExportableComponentsMap(false);
       List<ExportableComponent> components = getComponentsStored(saveFile, ContainerUtil.newArrayList(filesToComponents.values()));
       filesToComponents.values().retainAll(components);
       final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(filesToComponents, false,

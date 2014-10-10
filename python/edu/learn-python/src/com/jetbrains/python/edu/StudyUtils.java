@@ -82,12 +82,14 @@ public class StudyUtils {
   public static void updateAction(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
+    presentation.setVisible(false);
     Project project = e.getProject();
     if (project != null) {
       FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors();
       for (FileEditor editor : editors) {
         if (editor instanceof StudyEditor) {
           presentation.setEnabled(true);
+          presentation.setVisible(true);
         }
       }
     }

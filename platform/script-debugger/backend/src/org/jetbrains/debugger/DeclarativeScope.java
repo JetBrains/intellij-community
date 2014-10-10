@@ -48,6 +48,10 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
   }
 
   protected final void loadScopeObjectProperties(@NotNull ObjectValue value, @NotNull final AsyncResult<List<? extends Variable>> result) {
+    if (valueManager.rejectIfObsolete(result)) {
+      return;
+    }
+
     value.getProperties().doWhenDone(new Consumer<List<Variable>>() {
       @Override
       public void consume(List<Variable> variables) {

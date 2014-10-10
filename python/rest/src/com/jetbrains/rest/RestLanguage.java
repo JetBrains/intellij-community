@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.jetbrains.rest;
 import com.intellij.lang.Language;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.jetbrains.rest.validation.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -32,6 +33,7 @@ public class RestLanguage extends Language implements TemplateLanguage  {
     super("ReST");
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return "Rest language";

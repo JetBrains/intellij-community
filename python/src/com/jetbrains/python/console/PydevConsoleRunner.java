@@ -73,6 +73,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
@@ -491,12 +492,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         }
       }
 
-      try {
-
-        Thread.sleep(200);
-      }
-      catch (InterruptedException ignored) {
-      }
+      TimeoutUtil.sleep(200);
 
       if (process.exitValue() != 0) {
         String error;
@@ -672,11 +668,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           break;
         }
         else {
-          try {
-            Thread.sleep(100);
-          }
-          catch (InterruptedException ignored) {
-          }
+          TimeoutUtil.sleep(100);
         }
       }
     }

@@ -21,10 +21,6 @@
       <interface-class>com.intellij.openapi.keymap.KeymapManager</interface-class>
       <implementation-class>com.intellij.openapi.keymap.impl.KeymapManagerImpl</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.openapi.util.DimensionService</interface-class>
-      <implementation-class>com.intellij.openapi.util.DimensionService</implementation-class>
-    </component>
 
     <component>
       <interface-class>com.intellij.ide.ui.UISettings</interface-class>

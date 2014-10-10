@@ -1,6 +1,6 @@
-package com.intellij.codeInsight;
+package com.intellij.codeInsight
 
-
+import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
@@ -24,6 +24,12 @@ public class XmlXIncludeTest extends LightCodeInsightFixtureTestCase {
   public void testXpointerXi1() throws Exception {
     configure();
     assertSubtagNames("before", "foo", "bar", "after");
+  }
+
+  public void testXmlBase() throws Exception {
+    myFixture.copyDirectoryToProject("xmlBase", "xmlBase")
+    myFixture.enableInspections(XmlPathReferenceInspection.class);
+    myFixture.testHighlighting("xmlBase/XmlBase.xml");
   }
 
   @Override

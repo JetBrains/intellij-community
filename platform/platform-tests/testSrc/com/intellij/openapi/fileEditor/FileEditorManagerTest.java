@@ -17,6 +17,9 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.mock.Mock;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
@@ -114,6 +117,46 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     myManager.createSplitter(SwingConstants.VERTICAL, secondaryWindow);
     myManager.closeFile(file, primaryWindow);
     assertEquals(2, myManager.getWindows().length);
+  }
+
+  public void testStoringCaretStateForFileWithFoldingsWithNoTabs() throws Exception {
+    int savedValue = UISettings.getInstance().EDITOR_TAB_PLACEMENT;
+    UISettings.getInstance().EDITOR_TAB_PLACEMENT = UISettings.TABS_NONE;
+    try {
+      VirtualFile file = getFile("/src/Test.java");
+      assertNotNull(file);
+      FileEditor[] editors = myManager.openFile(file, false);
+      assertEquals(1, editors.length);
+      assertTrue(editors[0] instanceof TextEditor);
+      Editor editor = ((TextEditor)editors[0]).getEditor();
+      final FoldingModel foldingModel = editor.getFoldingModel();
+      assertEquals(2, foldingModel.getAllFoldRegions().length);
+      foldingModel.runBatchFoldingOperation(new Runnable() {
+        @Override
+        public void run() {
+          for (FoldRegion region : foldingModel.getAllFoldRegions()) {
+            region.setExpanded(false);
+          }
+        }
+      });
+      int textLength = editor.getDocument().getTextLength();
+      editor.getCaretModel().moveToOffset(textLength);
+      editor.getSelectionModel().setSelection(textLength - 1, textLength);
+
+      myManager.openFile(getFile("/src/1.txt"), false);
+      assertEquals(0, myManager.getEditors(file).length);
+      editors = myManager.openFile(file, false);
+
+      assertEquals(1, editors.length);
+      assertTrue(editors[0] instanceof TextEditor);
+      editor = ((TextEditor)editors[0]).getEditor();
+      assertEquals(textLength, editor.getCaretModel().getOffset());
+      assertEquals(textLength - 1, editor.getSelectionModel().getSelectionStart());
+      assertEquals(textLength, editor.getSelectionModel().getSelectionEnd());
+    }
+    finally {
+      UISettings.getInstance().EDITOR_TAB_PLACEMENT = savedValue;
+    }
   }
 
   private static final String STRING = "<component name=\"FileEditorManager\">\n" +

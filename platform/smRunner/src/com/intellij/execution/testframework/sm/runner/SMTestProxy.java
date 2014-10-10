@@ -42,6 +42,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Represents a test result tree node.
+ * Not thread-safe. All methods should be called in EDT only.
+ *
  * @author: Roman Chernyatchik
  */
 public class SMTestProxy extends AbstractTestProxy {
@@ -296,6 +299,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public List<? extends SMTestProxy> getChildren() {
+    //ApplicationManager.getApplication().assertIsDispatchThread();
     return myChildren != null ? myChildren : Collections.<SMTestProxy>emptyList();
   }
 

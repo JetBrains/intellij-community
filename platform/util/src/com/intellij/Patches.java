@@ -115,10 +115,10 @@ public class Patches {
 
   /**
    * Java 7 incorrectly calculates screen insets on multi-monitor X Window configurations.
-   * See https://bugs.openjdk.java.net/browse/JDK-7172665.
+   * https://bugs.openjdk.java.net/browse/JDK-8020443
    */
-  public static final boolean SUN_BUG_ID_7172665 =
-    SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.8");
+  public static final boolean SUN_BUG_ID_8020443 =
+    SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.9");
 
   /**
    * XToolkit.getScreenInsets() may be very slow.

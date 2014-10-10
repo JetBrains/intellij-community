@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.config.ExternalizablePropertyContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,11 +64,7 @@ public abstract class AntConfigurationBase extends AntConfiguration {
   public final void ensureInitialized() {
     int attemptCount = 0; // need this in order to make sure we will not block swing thread forever
     while (!isInitialized() && attemptCount < 6000) {
-      try {
-        Thread.sleep(10);
-      }
-      catch (InterruptedException ignored) {
-      }
+      TimeoutUtil.sleep(10);
       attemptCount++;
     }
   }

@@ -16,7 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchNodeComponentFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
@@ -24,8 +24,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -263,6 +261,18 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     for (ArrangementUiComponent component : myComponents) {
       component.setListener(listener);
     } 
+  }
+
+  @Override
+  public void handleMouseClickOnSelected() {
+    for (ArrangementUiComponent component : myComponents) {
+      component.handleMouseClickOnSelected();
+    }
+  }
+
+  @Override
+  public boolean alwaysCanBeActive() {
+    return false;
   }
 
   @Override

@@ -34,15 +34,19 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
@@ -64,29 +68,31 @@ public class JavaStackFrame extends XStackFrame {
   private static final Logger LOG = Logger.getInstance(JavaStackFrame.class);
 
   private final DebugProcessImpl myDebugProcess;
-  private final XSourcePosition myXSourcePosition;
+  @Nullable private final XSourcePosition myXSourcePosition;
   private final NodeManagerImpl myNodeManager;
-  private final StackFrameDescriptorImpl myDescriptor;
+  @NotNull private final StackFrameDescriptorImpl myDescriptor;
   private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
   private JavaDebuggerEvaluator myEvaluator = null;
+  private final String myEqualityObject;
 
   public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy,
-                        @NotNull DebugProcessImpl debugProcess,
-                        @NotNull MethodsTracker tracker,
-                        @NotNull NodeManagerImpl nodeManager) {
-    myDebugProcess = debugProcess;
-    myNodeManager = nodeManager;
-    myDescriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
-    myDescriptor.setContext(null);
-    myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
-    myXSourcePosition = ApplicationManager.getApplication().runReadAction(new Computable<XSourcePosition>() {
-      @Override
-      public XSourcePosition compute() {
-        return myDescriptor.getSourcePosition() != null ? DebuggerUtilsEx.toXSourcePosition(myDescriptor.getSourcePosition()) : null;
-      }
-    });
+                        @NotNull MethodsTracker tracker) {
+    this(new StackFrameDescriptorImpl(stackFrameProxy, tracker), true);
   }
 
+  public JavaStackFrame(@NotNull StackFrameDescriptorImpl descriptor, boolean update) {
+    myDescriptor = descriptor;
+    if (update) {
+      myDescriptor.setContext(null);
+      myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
+    }
+    myEqualityObject = update ? NodeManagerImpl.getContextKeyForFrame(myDescriptor.getFrameProxy()) : null;
+    myDebugProcess = ((DebugProcessImpl)descriptor.getDebugProcess());
+    myNodeManager = myDebugProcess.getXdebugProcess().getNodeManager();
+    myXSourcePosition = myDescriptor.getSourcePosition() != null ? new JavaXSourcePosition(myDescriptor.getSourcePosition()) : null;
+  }
+
+  @NotNull
   public StackFrameDescriptorImpl getDescriptor() {
     return myDescriptor;
   }
@@ -163,25 +169,25 @@ public class JavaStackFrame extends XStackFrame {
   // copied from DebuggerTree
   private void buildVariablesThreadAction(DebuggerContextImpl debuggerContext, XValueChildrenList children, XCompositeNode node) {
     try {
-      final StackFrameDescriptorImpl stackDescriptor = myDescriptor;
-      final StackFrameProxyImpl frame = getStackFrameProxy();
-
       final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
+      if (evaluationContext == null) {
+        return;
+      }
       if (!debuggerContext.isEvaluationPossible()) {
         node.setErrorMessage(MessageDescriptor.EVALUATION_NOT_POSSIBLE.getLabel());
         //myChildren.add(myNodeManager.createNode(MessageDescriptor.EVALUATION_NOT_POSSIBLE, evaluationContext));
       }
 
-      final Location location = frame.location();
+      final Location location = myDescriptor.getLocation();
       LOG.assertTrue(location != null);
 
-      final ObjectReference thisObjectReference = frame.thisObject();
+      final ObjectReference thisObjectReference = myDescriptor.getThisObject();
       if (thisObjectReference != null) {
-        ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(stackDescriptor, thisObjectReference);
+        ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(myDescriptor, thisObjectReference);
         children.add(JavaValue.create(thisDescriptor, evaluationContext, myNodeManager));
       }
       else {
-        StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(stackDescriptor, location.method().declaringType());
+        StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(myDescriptor, location.method().declaringType());
         if (staticDecriptor.isExpandable()) {
           children.addTopGroup(new JavaStaticGroup(staticDecriptor, evaluationContext, myNodeManager));
         }
@@ -195,7 +201,7 @@ public class JavaStackFrame extends XStackFrame {
       // add last method return value if any
       final Pair<Method, Value> methodValuePair = debugProcess.getLastExecutedMethod();
       if (methodValuePair != null) {
-        ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(stackDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
+        ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
       // add context exceptions
@@ -204,7 +210,7 @@ public class JavaStackFrame extends XStackFrame {
         if (debugEvent instanceof ExceptionEvent) {
           final ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
           if (exception != null) {
-            final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(stackDescriptor, exception);
+            final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, exception);
             children.add(JavaValue.create(exceptionDescriptor, evaluationContext, myNodeManager));
           }
         }
@@ -220,7 +226,7 @@ public class JavaStackFrame extends XStackFrame {
             for (Field field : clsType.fields()) {
               if ((!vm.canGetSyntheticAttribute() || field.isSynthetic()) && StringUtil
                 .startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
-                final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(stackDescriptor, thisObjectReference, field);
+                final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myDescriptor, thisObjectReference, field);
                 children.add(JavaValue.create(fieldDescriptor, evaluationContext, myNodeManager));
               }
             }
@@ -238,11 +244,6 @@ public class JavaStackFrame extends XStackFrame {
         node.setErrorMessage(e.getMessage());
         //myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
       }
-    }
-    catch (EvaluateException e) {
-      node.setErrorMessage(e.getMessage());
-      //myChildren.clear();
-      //myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
     }
     catch (InvalidStackFrameException e) {
       LOG.info(e);
@@ -388,6 +389,46 @@ public class JavaStackFrame extends XStackFrame {
   @Nullable
   @Override
   public Object getEqualityObject() {
-    return myDescriptor.getMethod();
+    return myEqualityObject;
+  }
+
+  @Override
+  public String toString() {
+    if (myXSourcePosition != null) {
+      return "JavaFrame " + myXSourcePosition.getFile().getName() + ":" + myXSourcePosition.getLine();
+    }
+    else {
+      return "JavaFrame position unknown";
+    }
+  }
+
+  private static class JavaXSourcePosition implements XSourcePosition {
+    private final SourcePosition mySourcePosition;
+
+    public JavaXSourcePosition(@NotNull SourcePosition sourcePosition) {
+      mySourcePosition = sourcePosition;
+    }
+
+    @Override
+    public int getLine() {
+      return mySourcePosition.getLine();
+    }
+
+    @Override
+    public int getOffset() {
+      return mySourcePosition.getOffset();
+    }
+
+    @NotNull
+    @Override
+    public VirtualFile getFile() {
+      return mySourcePosition.getFile().getVirtualFile();
+    }
+
+    @NotNull
+    @Override
+    public Navigatable createNavigatable(@NotNull Project project) {
+      return XSourcePositionImpl.createOpenFileDescriptor(project, this);
+    }
   }
 }

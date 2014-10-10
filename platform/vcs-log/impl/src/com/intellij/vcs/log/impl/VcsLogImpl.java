@@ -21,7 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
+import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ public class VcsLogImpl implements VcsLog {
     List<Hash> hashes = ContainerUtil.newArrayList();
     JBTable table = myUi.getTable();
     for (int row : table.getSelectedRows()) {
-      Hash hash = ((AbstractVcsLogTableModel)table.getModel()).getHashAtRow(row);
+      Hash hash = ((GraphTableModel)table.getModel()).getHashAtRow(row);
       if (hash != null) {
         hashes.add(hash);
       }
@@ -62,7 +62,7 @@ public class VcsLogImpl implements VcsLog {
     List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
     JBTable table = myUi.getTable();
     for (int row : table.getSelectedRows()) {
-      AbstractVcsLogTableModel model = (AbstractVcsLogTableModel)table.getModel();
+      GraphTableModel model = (GraphTableModel)table.getModel();
       VcsFullCommitDetails commitDetails = model.getFullCommitDetails(row);
       if (commitDetails == null) {
         return ContainerUtil.emptyList();

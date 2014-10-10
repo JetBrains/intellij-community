@@ -19,12 +19,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,14 +70,13 @@ public class TabPostFormatProcessor implements PostFormatProcessor {
       return range;
     }
 
-    LanguageFileType fileType = language.getAssociatedFileType();
-    if (fileType == null) {
-      return range;
-    }
+    if (!source.isValid()) return range;
+    PsiFile file = source.getContainingFile();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(file, range);
 
-    boolean useTabs = settings.useTabCharacter(fileType);
-    boolean smartTabs = settings.isSmartTabs(fileType);
-    int tabWidth = settings.getTabSize(fileType);
+    boolean useTabs = indentOptions.USE_TAB_CHARACTER;
+    boolean smartTabs = indentOptions.SMART_TABS;
+    int tabWidth = indentOptions.TAB_SIZE;
     return processViaPsi(node, range, new TreeHelperImpl(), useTabs, smartTabs, tabWidth);
   }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -102,6 +103,7 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
       return "Buildout";
     }
 
+    @NotNull
     @Override
     public JComponent createComponent() {
       return myPanel;

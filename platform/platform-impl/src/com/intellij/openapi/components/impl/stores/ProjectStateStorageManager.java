@@ -20,6 +20,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -34,7 +35,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
   }
 
   @Override
-  protected StorageData createStorageData(String storageSpec) {
+  protected StorageData createStorageData(@NotNull String storageSpec) {
     if (storageSpec.equals(StoragePathMacros.PROJECT_FILE)) return createIprStorageData();
     if (storageSpec.equals(StoragePathMacros.WORKSPACE_FILE)) return createWsStorageData();
     return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
@@ -50,14 +51,13 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
 
   @Nullable
   @Override
-  protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) throws
-                                                                                                                          StateStorageException {
+  protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
     final ComponentConfig config = myProject.getConfig(component.getClass());
     assert config != null : "Couldn't find old storage for " + component.getClass().getName();
 
     final boolean workspace = isWorkspace(config.options);
     String fileSpec = workspace ? StoragePathMacros.WORKSPACE_FILE : StoragePathMacros.PROJECT_FILE;
-    StateStorage storage = getStateStorage(fileSpec, workspace ? RoamingType.DISABLED :  RoamingType.PER_USER);
+    StateStorage storage = getStateStorage(fileSpec, workspace ? RoamingType.DISABLED : RoamingType.PER_USER);
     if (operation == StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, Element.class, false)) {
       fileSpec = StoragePathMacros.PROJECT_FILE;
     }
@@ -71,5 +71,11 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
 
   private static boolean isWorkspace(final Map options) {
     return options != null && Boolean.parseBoolean((String)options.get(ProjectStoreImpl.OPTION_WORKSPACE));
+  }
+
+  @NotNull
+  @Override
+  protected StateStorage.Listener createStorageTopicListener() {
+    return myProject.getMessageBus().syncPublisher(StateStorage.PROJECT_STORAGE_TOPIC);
   }
 }

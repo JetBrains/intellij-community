@@ -21,18 +21,15 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 
 class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ApplicationStoreImpl");
+  private static final Logger LOG = Logger.getInstance(ApplicationStoreImpl.class);
 
   private static final String XML_EXTENSION = ".xml";
   private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
@@ -52,13 +49,13 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       private boolean myConfigDirectoryRefreshed;
 
       @Override
-      protected StorageData createStorageData(String storageSpec) {
+      protected StorageData createStorageData(@NotNull String storageSpec) {
         return new FileBasedStorage.FileStorageData(ROOT_ELEMENT_NAME);
       }
 
       @Nullable
       @Override
-      protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
+      protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
         if (component instanceof NamedJDOMExternalizable) {
           return StoragePathMacros.APP_CONFIG + "/" + ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
         }
@@ -76,6 +73,11 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
         if (fileSpec.equals(StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + XML_EXTENSION)) return null;
         return super.getMacroSubstitutor(fileSpec);
+      }
+
+      @Override
+      protected boolean isUseXmlProlog() {
+        return false;
       }
 
       @Override
@@ -126,54 +128,16 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   public String getConfigPath() {
     String configPath = myConfigPath;
     if (configPath == null) {
-      // unreal case, but we keep backward compatibility
+      // unrealistic case, but we keep backward compatibility
       configPath = PathManager.getConfigPath();
     }
     return configPath;
   }
 
   @Override
-  public boolean reload(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles,
-                        @NotNull final Collection<String> notReloadableComponents) throws StateStorageException, IOException {
-    final SaveSession saveSession = startSave();
-    final Set<String> componentNames = saveSession.analyzeExternalChanges(changedFiles);
-
-    try {
-      if (componentNames == null) return false;
-
-      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        if (pair.second == null) return false;
-      }
-
-      for (String name : componentNames) {
-        if (!isReloadPossible(Collections.singleton(name))) {
-          notReloadableComponents.add(name);
-        }
-      }
-
-      StorageUtil.logStateDiffInfo(changedFiles, componentNames);
-
-      if (!isReloadPossible(componentNames)) {
-        return false;
-      }
-    }
-    finally {
-      finishSave(saveSession);
-    }
-
-    if (!componentNames.isEmpty()) {
-      myApplication.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
-
-      try {
-        doReload(changedFiles, componentNames);
-        reinitComponents(componentNames, false);
-      }
-      finally {
-        myApplication.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
-      }
-    }
-
-    return true;
+  @NotNull
+  protected MessageBus getMessageBus() {
+    return myApplication.getMessageBus();
   }
 
   @NotNull

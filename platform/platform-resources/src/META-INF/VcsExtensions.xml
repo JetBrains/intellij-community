@@ -25,8 +25,9 @@
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
+    <search.topHitProvider implementation="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProvider"/>
     <projectConfigurable groupId="root" groupWeight="45" dynamic="true" key="version.control.main.configurable.name" bundle="messages.VcsBundle"
-                         provider="com.intellij.openapi.vcs.configurable.VcsManagerConfigurableProvider" id="vcs"/>
+                         provider="com.intellij.openapi.vcs.configurable.VcsManagerConfigurableProvider" id="project.propVCSSupport.Mappings"/>
 
     <changesViewContent tabName="Repository" className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
                         predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>
@@ -60,6 +61,8 @@
     <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
     <search.topHitProvider implementation="com.intellij.openapi.vcs.actions.VcsTopHitProvider"/>
     <actionPromoter implementation="com.intellij.openapi.vcs.actions.VcsActionPromoter"/>
+    <projectSetProcessor implementation="com.intellij.openapi.vcs.VcsProjectSetProcessor"/>
+    <projectSetProcessor implementation="com.intellij.openapi.vcs.OpenProjectSetProcessor"/>
   </extensions>
 </idea-plugin>
 

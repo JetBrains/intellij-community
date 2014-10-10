@@ -12,16 +12,16 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
-
-import java.util.Arrays;
-import java.util.Collections;
 
 public class HgRebaseCommand {
 
@@ -35,28 +35,32 @@ public class HgRebaseCommand {
 
   @Nullable
   public HgCommandResult startRebase() {
-    HgCommandResult result =
-      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Collections.<String>emptyList());
-    repo.update();
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
-    return result;
+    return performRebase(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   @Nullable
   public HgCommandResult continueRebase() {
-    HgCommandResult result =
-      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Arrays.asList("--continue"));
-    repo.update();
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
-    return result;
+    return performRebase("--continue");
   }
 
   @Nullable
   public HgCommandResult abortRebase() {
-    HgCommandResult result =
-      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Arrays.asList("--abort"));
-    repo.update();
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
-    return result;
+    return performRebase("--abort");
+  }
+
+  @Nullable
+  private HgCommandResult performRebase(@NotNull String... args) {
+    DvcsUtil.workingTreeChangeStarted(project);
+    try {
+      HgCommandResult result =
+        new HgCommandExecutor(project)
+          .executeInCurrentThread(repo.getRoot(), "rebase", ContainerUtil.list(args));
+      repo.update();
+      project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
+      return result;
+    }
+    finally {
+      DvcsUtil.workingTreeChangeFinished(project);
+    }
   }
 }

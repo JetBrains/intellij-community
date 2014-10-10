@@ -19,9 +19,10 @@ import com.intellij.codeInspection.ex.Tools;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -36,8 +37,9 @@ public class InspectionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(Project project) {
-    ArrayList<BooleanOptionDescription> result = new ArrayList<BooleanOptionDescription>();
+  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+    if (project == null) return ContainerUtil.emptyList();
+    List<BooleanOptionDescription> result = ContainerUtil.newArrayList();
     List<Tools> tools = InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getAllEnabledInspectionTools(project);
     for (Tools tool : tools) {
       result.add(new ToolOptionDescription(tool, project));

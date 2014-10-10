@@ -22,6 +22,7 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
@@ -79,6 +80,7 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
     return true;
   }
 
+  @NotNull
   @Override
   public List<ArtifactRootDescriptor> getDescriptors() {
     return myDescriptors;
@@ -86,14 +88,15 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
 
   public FileBasedArtifactRootDescriptor createFileBasedRoot(@NotNull File file,
                                                              @NotNull SourceFileFilter filter,
-                                                             final @NotNull DestinationInfo destinationInfo) {
-    FileCopyingHandler handler = createCopyingHandler(file);
+                                                             final @NotNull DestinationInfo destinationInfo, FileCopyingHandler handler) {
     return new FileBasedArtifactRootDescriptor(file, filter, myRootIndex++, myBuildTarget, destinationInfo, handler);
   }
 
-  private FileCopyingHandler createCopyingHandler(File file) {
+  @NotNull
+  @Override
+  public FileCopyingHandler createCopyingHandler(@NotNull File file, @NotNull JpsPackagingElement contextElement) {
     for (ArtifactRootCopyingHandlerProvider provider : myCopyingHandlerProviders) {
-      FileCopyingHandler handler = provider.createCustomHandler(myBuildTarget.getArtifact(), file, myModel, myBuildDataPaths);
+      FileCopyingHandler handler = provider.createCustomHandler(myBuildTarget.getArtifact(), file, contextElement, myModel, myBuildDataPaths);
       if (handler != null) {
         return handler;
       }

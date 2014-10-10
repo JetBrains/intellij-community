@@ -16,6 +16,8 @@
 
 package com.intellij.util.xmlb;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,8 +34,9 @@ class ArrayBinding extends AbstractCollectionBinding  {
     return result.toArray((Object[])Array.newInstance(getElementType(), result.size()));
   }
 
+  @NotNull
   @Override
-  Iterable getIterable(Object o) {
-    return o != null ? Arrays.asList((Object[])o) : null;
+  Collection<Object> getIterable(@NotNull Object o) {
+    return Arrays.asList((Object[])o);
   }
 }

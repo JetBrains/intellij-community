@@ -31,7 +31,7 @@ public class ScratchpadIconProvider implements FileIconProvider {
   @Override
   public Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
     if (file instanceof ScratchpadFileSystem.MyLightVirtualFile) {
-      return LayeredIcon.create(file.getFileType().getIcon(), AllIcons.Actions.New);
+      return LayeredIcon.create(file.getFileType().getIcon(), AllIcons.Actions.Scratch);
     }
     return null;
   }

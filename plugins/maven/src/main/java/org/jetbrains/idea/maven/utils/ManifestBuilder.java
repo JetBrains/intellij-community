@@ -32,9 +32,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.jar.Attributes;
 
 import static org.codehaus.plexus.archiver.jar.Manifest.Attribute;
@@ -124,7 +123,7 @@ public class ManifestBuilder {
   private static Map<String, String> getManifestEntries(Element manifestEntries) {
     boolean hasManifestEntries = manifestEntries != null && manifestEntries.getContentSize() > 0;
     Map<String, String> entries = hasManifestEntries ?
-                                  new HashMap<String, String>(manifestEntries.getContentSize()) :
+                                  new LinkedHashMap<String, String>(manifestEntries.getContentSize()) :
                                   Collections.<String, String>emptyMap();
     if (hasManifestEntries) {
       for (Element element : manifestEntries.getChildren()) {

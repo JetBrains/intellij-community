@@ -33,7 +33,7 @@ public class PrintStreamLogger extends IFernflowerLogger {
   @Override
   public void writeMessage(String message, Severity severity) {
     if (accepts(severity)) {
-      stream.println(InterpreterUtil.getIndentString(indent) + severity.name() + ": " + message);
+      stream.println(severity.prefix + InterpreterUtil.getIndentString(indent) + message);
     }
   }
 
@@ -46,35 +46,49 @@ public class PrintStreamLogger extends IFernflowerLogger {
   }
 
   @Override
+  public void startReadingClass(String className) {
+    writeMessage("Decompiling class " + className, Severity.INFO);
+    ++indent;
+  }
+
+  @Override
+  public void endReadingClass() {
+    --indent;
+    writeMessage("... done", Severity.INFO);
+  }
+
+  @Override
   public void startClass(String className) {
-    writeMessage("Processing class " + className + " ...", Severity.INFO);
+    writeMessage("Processing class " + className, Severity.TRACE);
     ++indent;
   }
 
   @Override
   public void endClass() {
     --indent;
-    writeMessage("... proceeded.", Severity.INFO);
+    writeMessage("... proceeded", Severity.TRACE);
+  }
+
+  @Override
+  public void startMethod(String methodName) {
+    writeMessage("Processing method " + methodName, Severity.TRACE);
+    ++indent;
+  }
+
+  public void endMethod() {
+    --indent;
+    writeMessage("... proceeded", Severity.TRACE);
   }
 
   @Override
   public void startWriteClass(String className) {
-    writeMessage("Writing class " + className + " ...", Severity.INFO);
+    writeMessage("Writing class " + className, Severity.TRACE);
     ++indent;
   }
 
   @Override
   public void endWriteClass() {
     --indent;
-    writeMessage("... written.", Severity.INFO);
-  }
-
-  @Override
-  public void startMethod(String methodName) {
-    writeMessage("Processing method " + methodName + " ...", Severity.INFO);
-  }
-
-  public void endMethod() {
-    writeMessage("... proceeded.", Severity.INFO);
+    writeMessage("... written", Severity.TRACE);
   }
 }

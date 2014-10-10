@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
@@ -106,9 +107,12 @@ public class ConstExprent extends Exprent {
     return new ArrayList<Exprent>();
   }
 
-  public String toJava(int indent) {
+  @Override
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     boolean literal = DecompilerContext.getOption(IFernflowerPreferences.LITERALS_AS_IS);
     boolean ascii = DecompilerContext.getOption(IFernflowerPreferences.ASCII_STRING_CHARACTERS);
+
+    tracer.addMapping(bytecode);
 
     if (consttype.type != CodeConstants.TYPE_NULL && value == null) {
       return ExprProcessor.getCastTypeName(consttype);
@@ -150,7 +154,7 @@ public class ConstExprent extends Exprent {
           else {
             return value.toString();
           }
-          return new FieldExprent(intfield, "java/lang/Integer", true, null, FieldDescriptor.INTEGER_DESCRIPTOR).toJava(0);
+          return new FieldExprent(intfield, "java/lang/Integer", true, null, FieldDescriptor.INTEGER_DESCRIPTOR).toJava(0, tracer);
         case CodeConstants.TYPE_LONG:
           long lval = ((Long)value).longValue();
 
@@ -167,7 +171,7 @@ public class ConstExprent extends Exprent {
           else {
             return value.toString() + "L";
           }
-          return new FieldExprent(longfield, "java/lang/Long", true, null, FieldDescriptor.LONG_DESCRIPTOR).toJava(0);
+          return new FieldExprent(longfield, "java/lang/Long", true, null, FieldDescriptor.LONG_DESCRIPTOR).toJava(0, tracer);
         case CodeConstants.TYPE_DOUBLE:
           double dval = ((Double)value).doubleValue();
 
@@ -204,7 +208,7 @@ public class ConstExprent extends Exprent {
           else {
             return value.toString() + "D";
           }
-          return new FieldExprent(doublefield, "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR).toJava(0);
+          return new FieldExprent(doublefield, "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR).toJava(0, tracer);
         case CodeConstants.TYPE_FLOAT:
           float fval = ((Float)value).floatValue();
 
@@ -241,7 +245,7 @@ public class ConstExprent extends Exprent {
           else {
             return value.toString() + "F";
           }
-          return new FieldExprent(floatfield, "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR).toJava(0);
+          return new FieldExprent(floatfield, "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR).toJava(0, tracer);
         case CodeConstants.TYPE_NULL:
           return "null";
         case CodeConstants.TYPE_OBJECT:

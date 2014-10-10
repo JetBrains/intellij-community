@@ -30,6 +30,10 @@ public class ArrangementConstants {
   @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR = "Arrangement.Rule.Match.Control.ToolBar";
   @NonNls public static final String MATCHING_RULES_CONTROL_TOOLBAR_PLACE        = "Arrangement.Rule.Match.Control.ToolBar.Place";
   @NonNls public static final String MATCHING_RULES_CONTROL_PLACE                = "Arrangement.Rule.Match.Control.Place";
+  @NonNls public static final String ALIAS_RULE_CONTEXT_MENU                     = "Arrangement.Alias.Rule.Context.Menu";
+  @NonNls public static final String ALIAS_RULE_CONTROL_TOOLBAR                  = "Arrangement.Alias.Rule.ToolBar";
+  @NonNls public static final String ALIAS_RULE_CONTROL_TOOLBAR_PLACE            = "Arrangement.Alias.Rule.ToolBar.Place";
+  @NonNls public static final String ALIAS_RULE_CONTROL_PLACE                    = "Arrangement.Alias.Rule.Control.Place";
 
   @NonNls public static final String MATCHING_RULE_ADD                           = "Arrangement.Rule.Add";
   @NonNls public static final String MATCHING_RULE_REMOVE                        = "Arrangement.Rule.Remove";
@@ -38,6 +42,12 @@ public class ArrangementConstants {
   @NonNls public static final String MATCHING_RULE_MOVE_DOWN                     = "Arrangement.Rule.Match.Condition.Move.Down";
   @NonNls public static final String GROUPING_RULE_MOVE_UP                       = "Arrangement.Rule.Group.Condition.Move.Up";
   @NonNls public static final String GROUPING_RULE_MOVE_DOWN                     = "Arrangement.Rule.Group.Condition.Move.Down";
+
+  @NonNls public static final String MATCHING_ALIAS_RULE_ADD                     = "Arrangement.Alias.Rule.Add";
+  @NonNls public static final String MATCHING_ALIAS_RULE_REMOVE                  = "Arrangement.Alias.Rule.Remove";
+  @NonNls public static final String MATCHING_ALIAS_RULE_EDIT                    = "Arrangement.Alias.Rule.Edit";
+  @NonNls public static final String MATCHING_ALIAS_RULE_MOVE_UP                 = "Arrangement.Alias.Rule.Match.Condition.Move.Up";
+  @NonNls public static final String MATCHING_ALIAS_RULE_MOVE_DOWN               = "Arrangement.Alias.Rule.Match.Condition.Move.Down";
 
   public static final int HORIZONTAL_PADDING    = 8;
   public static final int VERTICAL_PADDING      = 4;

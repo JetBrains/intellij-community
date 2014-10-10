@@ -152,6 +152,7 @@ public class IncrementalSearchHandler {
 
         if (documentListener[0] != null){
           document.removeDocumentListener(documentListener[0]);
+          documentListener[0] = null;
         }
 
         if (caretListener[0] != null){

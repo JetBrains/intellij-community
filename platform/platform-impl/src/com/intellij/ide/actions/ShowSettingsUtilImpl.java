@@ -17,12 +17,14 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.options.newEditor.IdeSettingsDialog;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
+import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -56,7 +58,9 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     project = getProject(project);
     final ConfigurableGroup[] filteredGroups = filterEmptyGroups(groups);
     if (Registry.is("ide.new.settings.dialog")) {
-      return new IdeSettingsDialog(project, filteredGroups, toSelect);
+      return ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
+             ? new SettingsDialog(project, filteredGroups, toSelect, null)
+             : new IdeSettingsDialog(project, filteredGroups, toSelect);
     }
     //noinspection deprecation
     return Registry.is("ide.perProjectModality")
@@ -160,8 +164,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     ConfigurableGroup[] group = getConfigurableGroups(project, true);
 
     group = filterEmptyGroups(group);
-    final Configurable configurable2Select = findConfigurable2Select(id2Select, group);
+    final Configurable configurable2Select = id2Select == null ? null : new ConfigurableVisitor.ByID(id2Select).find(group);
 
+    if (ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")) {
+      new SettingsDialog(getProject(project), group, configurable2Select, filter).show();
+      return;
+    }
     final DialogWrapper dialog = getDialog(project, group, configurable2Select);
 
     new UiNotifyConnector.Once(dialog.getContentPane(), new Activatable.Adapter() {
@@ -173,31 +181,6 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       }
     });
     dialog.show();
-  }
-
-  @Nullable
-  private static Configurable findConfigurable2Select(String id2Select, ConfigurableGroup[] group) {
-    for (ConfigurableGroup configurableGroup : group) {
-      for (Configurable configurable : configurableGroup.getConfigurables()) {
-        final Configurable conf = containsId(id2Select, configurable);
-        if (conf != null) return conf;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Configurable containsId(String id2Select, Configurable configurable) {
-    if (configurable instanceof SearchableConfigurable && id2Select.equals(((SearchableConfigurable)configurable).getId())) {
-      return configurable;
-    }
-    if (configurable instanceof SearchableConfigurable.Parent) {
-      for (Configurable subConfigurable : ((SearchableConfigurable.Parent)configurable).getConfigurables()) {
-        final Configurable config = containsId(id2Select, subConfigurable);
-        if (config != null) return config;
-      }
-    }
-    return null;
   }
 
   @Override
@@ -269,12 +252,16 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                                           String dimensionKey,
                                           @Nullable final Runnable advancedInitialization,
                                           boolean showApplyButton) {
-    final SingleConfigurableEditor editor;
+    final DialogWrapper editor;
     if (parent == null) {
-      editor = new SingleConfigurableEditor(project, configurable, dimensionKey, showApplyButton);
+      editor = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
+               ? new SettingsDialog(project, dimensionKey, configurable, showApplyButton)
+               : new SingleConfigurableEditor(project, configurable, dimensionKey, showApplyButton);
     }
     else {
-      editor = new SingleConfigurableEditor(parent, configurable, dimensionKey, showApplyButton);
+      editor = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
+               ? new SettingsDialog(parent, dimensionKey, configurable, showApplyButton)
+               : new SingleConfigurableEditor(parent, configurable, dimensionKey, showApplyButton);
     }
     if (advancedInitialization != null) {
       new UiNotifyConnector.Once(editor.getContentPane(), new Activatable.Adapter() {

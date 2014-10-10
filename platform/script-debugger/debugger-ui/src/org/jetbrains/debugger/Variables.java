@@ -62,9 +62,7 @@ public final class Variables {
         } :  NATURAL_NAME_COMPARATOR);
         sort(functions);
 
-        for (Variable variable : additionalVariables) {
-          properties.add(variable);
-        }
+        addAditionalVariables(variables, additionalVariables, properties, memberFilter);
 
         if (!properties.isEmpty()) {
           node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast);
@@ -88,7 +86,7 @@ public final class Variables {
   }
 
   @Nullable
-  public static List<Variable> sortFilterAndAddValueList(@NotNull List<? extends Variable> variables,
+  public static List<Variable> sortFilterAndAddValueList(@NotNull List<Variable> variables,
                                                          @NotNull XCompositeNode node,
                                                          @NotNull VariableContext context,
                                                          int maxChildrenToAdd,
@@ -114,7 +112,7 @@ public final class Variables {
   }
 
   @NotNull
-  public static List<Variable> filterAndSort(@NotNull List<? extends Variable> variables, @NotNull VariableContext context, boolean filterFunctions) {
+  public static List<Variable> filterAndSort(@NotNull List<Variable> variables, @NotNull VariableContext context, boolean filterFunctions) {
     if (variables.isEmpty()) {
       return Collections.emptyList();
     }
@@ -129,10 +127,22 @@ public final class Variables {
     }
     sort(result);
 
-    for (Variable variable : additionalVariables) {
+    addAditionalVariables(variables, additionalVariables, result, memberFilter);
+    return result;
+  }
+
+  private static void addAditionalVariables(@NotNull List<? extends Variable> variables,
+                                            @NotNull Collection<Variable> additionalVariables,
+                                            @NotNull List<Variable> result,
+                                            @NotNull MemberFilter memberFilter) {
+    ol: for (Variable variable : additionalVariables) {
+      for (Variable frameVariable : variables) {
+        if (memberFilter.getName(frameVariable).equals(memberFilter.getName(variable))) {
+          continue ol;
+        }
+      }
       result.add(variable);
     }
-    return result;
   }
 
   private static void sort(@NotNull List<Variable> result) {

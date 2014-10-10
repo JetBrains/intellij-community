@@ -259,11 +259,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   private void setCurrentChangePlace() {
-    final Pair<FileEditor,FileEditorProvider> selectedEditorWithProvider = getSelectedEditor();
-    if (selectedEditorWithProvider == null) {
+    final PlaceInfo placeInfo = getCurrentPlaceInfo();
+    if (placeInfo == null) {
       return;
     }
-    final PlaceInfo placeInfo = createPlaceInfo(selectedEditorWithProvider.getFirst(), selectedEditorWithProvider.getSecond ());
 
     final VirtualFile file = placeInfo.getFile();
     if (myChangedFilesInCurrentCommand.contains(file)) {
@@ -318,13 +317,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     myStartIndex = 0;
     myCurrentIndex = 0;
-    if (myCurrentChangePlace != null) {
-      myCurrentChangePlace = null;
-    }
-
-    if (myCommandStartPlace != null) {
-      myCommandStartPlace = null;
-    }
+    myCurrentChangePlace = null;
+    myCommandStartPlace = null;
   }
 
   @Override
@@ -424,6 +418,27 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     if (removeInvalidFilesFrom(myChangePlaces)) {
       myCurrentIndex = myStartIndex + myChangePlaces.size();
     }
+  }
+
+  @Override
+  public void navigateNextChange() {
+    removeInvalidFilesFromStacks();
+    if (myCurrentIndex >= myStartIndex + myChangePlaces.size() - 1) return;
+    int index = myCurrentIndex + 1;
+    final PlaceInfo info = myChangePlaces.get(index - myStartIndex);
+
+    executeCommand(new Runnable() {
+      @Override
+      public void run() {
+        gotoPlaceInfo(info);
+      }
+    }, "", null);
+    myCurrentIndex = index;
+  }
+
+  @Override
+  public boolean isNavigateNextChangeAvailable() {
+    return myCurrentIndex < myStartIndex + myChangePlaces.size() - 1;
   }
 
   private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {

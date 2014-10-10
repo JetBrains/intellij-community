@@ -24,11 +24,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -41,6 +40,7 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -172,7 +172,12 @@ public class DumbServiceImpl extends DumbService implements Disposable {
         if (myProject.isDisposed()) {
           return;
         }
-        final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
+        final ProgressIndicatorBase indicator = new ProgressIndicatorBase() {
+          @Override
+          protected void delegateRunningChange(@NotNull AbstractProgressIndicatorExBase.IndicatorAction action) {
+            // don't delegate lifecycle events to the global indicator as several independent tasks may run under it sequentially
+          }
+        };
         myProgresses.put(task, indicator);
         Disposer.register(task, new Disposable() {
           @Override
@@ -181,6 +186,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
             myProgresses.remove(task);
           }
         });
+        myUpdatesQueue.addLast(task);
         // ok to test and set the flag like this, because the change is always done from dispatch thread
         if (!myDumb) {
           // always change dumb status inside write action.
@@ -198,7 +204,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
                 }
 
                 try {
-                  startBackgroundProcess(task, indicator);
+                  startBackgroundProcess();
                 }
                 catch (Throwable e) {
                   LOG.error("Failed to start background index update task", e);
@@ -210,9 +216,6 @@ public class DumbServiceImpl extends DumbService implements Disposable {
           if (!startSuccess) {
             updateFinished();
           }
-        }
-        else {
-          myUpdatesQueue.addLast(task);
         }
       }
     });
@@ -324,32 +327,33 @@ public class DumbServiceImpl extends DumbService implements Disposable {
     }, modalityState, myProject.getDisposed());
   }
 
-  private void startBackgroundProcess(@NotNull final DumbModeTask task, @NotNull final ProgressIndicatorEx indicator) {
+  private void startBackgroundProcess() {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
 
       @Override
       public void run(@NotNull final ProgressIndicator visibleIndicator) {
-        if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
-        
         final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
         final Thread self = Thread.currentThread();
         try {
           HeavyProcessLatch.INSTANCE.processStarted();
           shutdownTracker.registerStopperThread(self);
 
-          indicator.checkCanceled();
-
           if (visibleIndicator instanceof ProgressIndicatorEx) {
-            indicator.addStateDelegate((ProgressIndicatorEx)visibleIndicator);
             ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
           }
 
-          indicator.setIndeterminate(true);
-          indicator.setText(IdeBundle.message("progress.indexing.scanning"));
-
-          task.performInDumbMode(indicator);
-        }
-        catch (ProcessCanceledException ignored) {
+          DumbModeTask task = null;
+          while (true) {
+            Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task);
+            if (pair == null) break;
+            
+            task = pair.first;
+            ProgressIndicatorEx taskIndicator = pair.second;
+            if (visibleIndicator instanceof ProgressIndicatorEx) {
+              taskIndicator.addStateDelegate((ProgressIndicatorEx)visibleIndicator);
+            }
+            runSingleTask(task, taskIndicator);
+          }
         }
         catch (Throwable unexpected) {
           LOG.error(unexpected);
@@ -357,18 +361,44 @@ public class DumbServiceImpl extends DumbService implements Disposable {
         finally {
           shutdownTracker.unregisterStopperThread(self);
           HeavyProcessLatch.INSTANCE.processFinished();
-          taskFinished(task);
         }
       }
     });
   }
 
-  private void taskFinished(@NotNull final DumbModeTask prevTask) {
+  private static void runSingleTask(final DumbModeTask task, final ProgressIndicatorEx taskIndicator) {
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
+    
+    // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks 
+    ProgressManager.getInstance().runProcess(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          taskIndicator.checkCanceled();
+
+          taskIndicator.setIndeterminate(true);
+          taskIndicator.setText(IdeBundle.message("progress.indexing.scanning"));
+
+          task.performInDumbMode(taskIndicator);
+        }
+        catch (ProcessCanceledException ignored) {
+        }
+        catch (Throwable unexpected) {
+          LOG.error(unexpected);
+        }
+      }
+    }, taskIndicator);
+  }
+
+  @Nullable private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable final DumbModeTask prevTask) {
+    final Ref<Pair<DumbModeTask, ProgressIndicatorEx>> result = Ref.create();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
-        Disposer.dispose(prevTask);
+        if (prevTask != null) {
+          Disposer.dispose(prevTask);
+        }
 
         while (true) {
           if (myUpdatesQueue.isEmpty()) {
@@ -383,11 +413,12 @@ public class DumbServiceImpl extends DumbService implements Disposable {
             continue;
           }
           
-          startBackgroundProcess(queuedTask, indicator);
+          result.set(Pair.create(queuedTask, indicator));
           return;
         }
       }
     });
+    return result.get();
   }
 
   private class AppIconProgress extends ProgressIndicatorBase {

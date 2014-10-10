@@ -247,10 +247,12 @@ class Intf {
     List<Object> elements = ['empty']
     def semaphore = new Semaphore()
     semaphore.down()
-    popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, { set ->
-      elements = set as List
-      semaphore.up()
-    } as Consumer<Set<?>>)
+    edt {
+      popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, { set ->
+        elements = set as List
+        semaphore.up()
+      } as Consumer<Set<?>>)
+    }
     if (!semaphore.waitFor(10000)) {
       printThreadDump()
       fail()

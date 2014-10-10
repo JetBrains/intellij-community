@@ -45,6 +45,7 @@ import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
@@ -76,6 +77,7 @@ class FindInProjectTask {
   private final Project myProject;
   private final PsiManager myPsiManager;
   @Nullable private final PsiDirectory myPsiDirectory;
+  private final ProjectFileIndex myProjectFileIndex;
   private final FileIndex myFileIndex;
   private final Condition<VirtualFile> myFileMask;
   private final ProgressIndicator myProgress;
@@ -98,9 +100,8 @@ class FindInProjectTask {
         return ModuleManager.getInstance(project).findModuleByName(moduleName);
       }
     });
-    myFileIndex = myModule == null ?
-                  ProjectRootManager.getInstance(project).getFileIndex() :
-                  ModuleRootManager.getInstance(myModule).getFileIndex();
+    myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    myFileIndex = myModule == null ? myProjectFileIndex : ModuleRootManager.getInstance(myModule).getFileIndex();
 
     final String filter = findModel.getFileFilter();
     final Pattern pattern = FindInProjectUtil.createFileMaskRegExp(filter);
@@ -171,6 +172,7 @@ class FindInProjectTask {
 
     final Multiset<String> stats = HashMultiset.create();
     for (PsiFile file : otherFiles) {
+      //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
       stats.add(StringUtil.notNullize(file.getViewProvider().getVirtualFile().getExtension()).toLowerCase());
     }
 
@@ -326,16 +328,15 @@ class FindInProjectTask {
       }
     }
     else if (myPsiDirectory != null) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
+      VirtualFileVisitor.Option limit = VirtualFileVisitor.limit(myFindModel.isWithSubdirectories() ? -1 : 1);
+      VfsUtilCore.visitChildrenRecursively(myPsiDirectory.getVirtualFile(), new VirtualFileVisitor(limit) {
         @Override
-        public void run() {
-          if (myPsiDirectory.isValid()) {
-            addFilesUnderDirectory(myPsiDirectory, iterator);
-          }
+        public boolean visitFile(@NotNull VirtualFile file) {
+          if (myProjectFileIndex.isExcluded(file)) return false;
+          iterator.processFile(file);
+          return true;
         }
       });
-
-      myFileIndex.iterateContentUnderDirectory(myPsiDirectory.getVirtualFile(), iterator);
     }
     else {
       boolean success = myFileIndex.iterateContent(iterator);
@@ -510,17 +511,4 @@ class FindInProjectTask {
     });
   }
 
-  private void addFilesUnderDirectory(@NotNull PsiDirectory directory, @NotNull ContentIterator iterator) {
-    for (PsiElement child : directory.getChildren()) {
-      if (child instanceof PsiFile) {
-        VirtualFile virtualFile = ((PsiFile)child).getVirtualFile();
-        if (virtualFile != null) {
-          iterator.processFile(virtualFile);
-        }
-      }
-      else if (myFindModel.isWithSubdirectories() && child instanceof PsiDirectory) {
-        addFilesUnderDirectory((PsiDirectory)child, iterator);
-      }
-    }
-  }
 }

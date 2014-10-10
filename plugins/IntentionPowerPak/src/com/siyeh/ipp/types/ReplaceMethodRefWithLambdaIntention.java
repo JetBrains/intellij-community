@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +62,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
     final PsiParameter[] parameters = parameterList.getParameters();
 
     final Map<PsiParameter, String> map = new HashMap<PsiParameter, String>();
+    final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(element.getProject());
     final String paramsString = StringUtil.join(parameters, new Function<PsiParameter, String>() {
       @Override
@@ -77,7 +79,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
         } 
 
         if (baseName != null) {
-          String parameterName = codeStyleManager.suggestUniqueVariableName(baseName, referenceExpression, true);
+          String parameterName = nameGenerator.generateUniqueName(codeStyleManager.suggestUniqueVariableName(baseName, referenceExpression, true));
           map.put(parameter, parameterName);
           return parameterName;
         }

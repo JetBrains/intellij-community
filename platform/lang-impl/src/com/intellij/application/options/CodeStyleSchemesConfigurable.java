@@ -34,7 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.Abstract implements OptionsContainingConfigurable {
+public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.Abstract
+  implements OptionsContainingConfigurable, Configurable.NoMargin, Configurable.NoScroll {
 
   private CodeStyleSchemesPanel myRootSchemesPanel;
   private CodeStyleSchemesModel myModel;
@@ -333,7 +334,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     return result;
   }
 
-  private class CodeStyleConfigurableWrapper implements SearchableConfigurable, NoScroll, OptionsContainingConfigurable {
+  private class CodeStyleConfigurableWrapper implements SearchableConfigurable, NoMargin, NoScroll, OptionsContainingConfigurable {
     private boolean myInitialResetInvoked;
     private CodeStyleMainPanel myPanel;
     private final CodeStyleSettingsProvider myProvider;

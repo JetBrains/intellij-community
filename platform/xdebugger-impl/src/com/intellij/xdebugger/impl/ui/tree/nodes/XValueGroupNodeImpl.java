@@ -29,6 +29,7 @@ public class XValueGroupNodeImpl extends XValueContainerNode<XValueGroup> implem
   public XValueGroupNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, @NotNull XValueGroup group) {
     super(tree, parent, group);
     setLeaf(false);
+    setIcon(group.getIcon());
     myText.append(group.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     String comment = group.getComment();
     if (comment != null) {

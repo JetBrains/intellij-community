@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   private Matcher myMatcher;
   private boolean myFocusBorderEnabled = true;
+  protected int myRightComponentWidth;
 
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
@@ -174,21 +175,31 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     removeAll();
+    myRightComponentWidth = 0;
     DefaultListCellRenderer rightRenderer = getRightCellRenderer(value);
+    Component rightCellRendererComponent = null;
+    JPanel spacer = null;
+    if (rightRenderer != null) {
+      rightCellRendererComponent = rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      add(rightCellRendererComponent, BorderLayout.EAST);
+      spacer = new JPanel();
+      spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+      add(spacer, BorderLayout.CENTER);
+      myRightComponentWidth = rightCellRendererComponent.getPreferredSize().width;
+      myRightComponentWidth += spacer.getPreferredSize().width;
+    }
+
     ListCellRenderer leftRenderer = new LeftRenderer(null, myMatcher);
     final Component leftCellRendererComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    if (rightRenderer != null) {
-      final Component rightCellRendererComponent = rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      rightCellRendererComponent
-        .setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
-      add(rightCellRendererComponent, BorderLayout.EAST);
-      final JPanel spacer = new JPanel();
-      spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
-      spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
-      add(spacer, BorderLayout.CENTER);
-    }
     add(leftCellRendererComponent, BorderLayout.WEST);
-    setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
+    final Color bg = isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground();
+    setBackground(bg);
+    if (rightCellRendererComponent != null) {
+      rightCellRendererComponent.setBackground(bg);
+    }
+    if (spacer != null) {
+      spacer.setBackground(bg);
+    }
     return this;
   }
 

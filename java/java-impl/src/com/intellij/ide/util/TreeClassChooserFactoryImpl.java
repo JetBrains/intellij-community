@@ -72,6 +72,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                                         PsiClass base,
                                                         boolean acceptsSelf,
                                                         boolean acceptInner,
+                                                        @Nullable
                                                         Condition<? super PsiClass> additionalCondition) {
     ClassFilter classFilter = new TreeJavaClassChooserDialog.InheritanceJavaClassFilterImpl(base, acceptsSelf, acceptInner, additionalCondition);
     return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, base, null, false);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -23,12 +22,13 @@ import org.jetbrains.annotations.NotNull;
 @SomeQueue
 public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
   private final ProgressManager myProgressManager;
-  private final Task.Backgroundable myTask;
+  private final Task.Backgroundable myQueuePollTask;
   private volatile boolean myIsStarted;
 
-  public ProgressManagerQueue(final Project project, final String title) {
+  public ProgressManagerQueue(@NotNull Project project, @NotNull String title) {
     myProgressManager = ProgressManager.getInstance();
-    myTask = new Task.Backgroundable(project, title) {
+    myQueuePollTask = new Task.Backgroundable(project, title) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         myQueueWorker.run();
       }
@@ -40,23 +40,25 @@ public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
     runMe();
   }
 
+  @Override
   protected void runMe() {
-    if (! myIsStarted) return;
-    final Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      if (myTask.myProject != null && myTask.myProject.isDisposed()) return;
-      myProgressManager.run(myTask);
+    if (!myIsStarted) return;
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      if (myQueuePollTask.myProject.isDisposed() || isEmpty()) return;
+      myProgressManager.run(myQueuePollTask);
     }
     else {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
-          if (myTask.myProject != null && myTask.myProject.isDisposed()) return;
-          myProgressManager.run(myTask);
+          if (myQueuePollTask.myProject.isDisposed() || isEmpty()) return;
+          myProgressManager.run(myQueuePollTask);
         }
       });
     }
   }
 
+  @Override
   protected void runStuff(final Runnable stuff) {
     try {
       stuff.run();

@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -95,4 +96,17 @@ class ClasspathTableItem<T extends OrderEntry> {
     return null;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ClasspathTableItem item = (ClasspathTableItem)o;
+    return Comparing.equal(myEntry, item.myEntry);
+  }
+
+  @Override
+  public int hashCode() {
+    return myEntry != null ? myEntry.hashCode() : 0;
+  }
 }

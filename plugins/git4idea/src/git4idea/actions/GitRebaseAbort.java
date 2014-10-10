@@ -15,12 +15,12 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
@@ -75,12 +75,12 @@ public class GitRebaseAbort extends GitRepositoryAction {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.REBASE);
     h.setStdoutSuppressed(false);
     h.addParameters("--abort");
-    GitUtil.workingTreeChangeStarted(project);
+    DvcsUtil.workingTreeChangeStarted(project);
     try {
       GitHandlerUtil.doSynchronously(h, getActionName(), h.printableCommandLine());
     }
     finally {
-      GitUtil.workingTreeChangeFinished(project);
+      DvcsUtil.workingTreeChangeFinished(project);
     }
   }
 

@@ -29,7 +29,7 @@ public class SelectAllAction extends EditorHeaderAction implements DumbAware {
     super(editorSearchComponent);
 
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL_OCCURRENCES));
-    getTemplatePresentation().setIcon(AllIcons.Actions.Selectall);
+    getTemplatePresentation().setIcon(AllIcons.Actions.CheckMulticaret);
 
     List<Shortcut> shortcuts = new ArrayList<Shortcut>();
     ContainerUtil.addAll(shortcuts, getShortcutSet().getShortcuts());

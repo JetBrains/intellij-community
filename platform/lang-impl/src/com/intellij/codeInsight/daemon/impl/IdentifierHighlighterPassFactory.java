@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -27,27 +26,41 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author yole
  */
 public class IdentifierHighlighterPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  public static boolean ourTestingIdentifierHighlighting = false;
+  private static final int[] AFTER_PASSES = {Pass.UPDATE_ALL};
+
+  private static boolean ourTestingIdentifierHighlighting = false;
   
   public IdentifierHighlighterPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, -1);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, AFTER_PASSES, false, -1);
   }
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
-    if (editor.isOneLineMode()) return null;
-
-    if (CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
-        (!ApplicationManager.getApplication().isHeadlessEnvironment() || ourTestingIdentifierHighlighting)
-        && file.isPhysical()) {
+    if (!editor.isOneLineMode() &&
+        CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
+        (!ApplicationManager.getApplication().isHeadlessEnvironment() || ourTestingIdentifierHighlighting) &&
+        (file.isPhysical() || file.getOriginalFile().isPhysical())) {
       return new IdentifierHighlighterPass(file.getProject(), file, editor);
     }
+
     return null;
+  }
+
+  @TestOnly
+  public static void doWithHighlightingEnabled(@NotNull Runnable r) {
+    ourTestingIdentifierHighlighting = true;
+    try {
+      r.run();
+    }
+    finally {
+      ourTestingIdentifierHighlighting = false;
+    }
   }
 }

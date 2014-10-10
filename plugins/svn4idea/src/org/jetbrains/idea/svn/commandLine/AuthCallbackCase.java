@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.SVNURL;
  */
 public abstract class AuthCallbackCase {
   protected final SVNURL myUrl;
-  protected boolean myTried = false;
   @NotNull protected final AuthenticationService myAuthenticationService;
 
   AuthCallbackCase(@NotNull AuthenticationService authenticationService, SVNURL url) {

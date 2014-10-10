@@ -27,9 +27,9 @@ import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.idea.ActionsBundle;
@@ -66,7 +66,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PopFrameAction extends DebuggerAction {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final JavaStackFrame stackFrame = getStackFrame(e);
     if(stackFrame == null) {
@@ -209,26 +209,57 @@ public class PopFrameAction extends DebuggerAction {
     return res;
   }
 
-  @Nullable
   private static JavaStackFrame getStackFrame(AnActionEvent e) {
-    //DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    //if(selectedNode != null) {
-    //  NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-    //  if(descriptor instanceof StackFrameDescriptorImpl) {
-    //    if(selectedNode.getNextSibling() != null) {
-    //      StackFrameDescriptorImpl frameDescriptor = ((StackFrameDescriptorImpl)descriptor);
-    //      return frameDescriptor.getFrameProxy();
-    //    }
-    //    return null;
-    //  }
-    //  else if(descriptor instanceof ThreadDescriptorImpl || descriptor instanceof ThreadGroupDescriptorImpl) {
-    //    return null;
-    //  }
-    //}
+    StackFrameDescriptorImpl descriptor = getSelectedStackFrameDescriptor(e);
+    if (descriptor != null) {
+      if (descriptor.getFrameProxy().isBottom()) {
+        return null;
+      }
+      return new JavaStackFrame(descriptor, false);
+    }
+    return getSelectedStackFrame(e);
+  }
 
+  private static StackFrameProxyImpl getStackFrameProxy(AnActionEvent e) {
+    StackFrameDescriptorImpl descriptor = getSelectedStackFrameDescriptor(e);
+    if (descriptor != null) {
+      if (descriptor.getFrameProxy().isBottom()) {
+        return null;
+      }
+      return descriptor.getFrameProxy();
+    }
+    else {
+      JavaStackFrame stackFrame = getSelectedStackFrame(e);
+      if (stackFrame != null) {
+        return stackFrame.getStackFrameProxy();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static StackFrameDescriptorImpl getSelectedStackFrameDescriptor(AnActionEvent e) {
+    DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
+    if(selectedNode != null) {
+      NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
+      if(descriptor instanceof StackFrameDescriptorImpl) {
+        return (StackFrameDescriptorImpl)descriptor;
+        //if(selectedNode.getNextSibling() != null) {
+        //  return (StackFrameDescriptorImpl)descriptor;
+        //}
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static JavaStackFrame getSelectedStackFrame(AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
-      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+      XDebugSession session = e.getData(XDebugSession.DATA_KEY);
+      if (session == null) {
+        session = XDebuggerManager.getInstance(project).getCurrentSession();
+      }
       if (session != null) {
         XStackFrame frame = session.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
@@ -261,13 +292,12 @@ public class PopFrameAction extends DebuggerAction {
     return suspendContext != null && debuggerContext.getThreadProxy() == suspendContext.getThread();
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enable = false;
-    JavaStackFrame stackFrame = getStackFrame(e);
 
-    if(stackFrame != null && isAtBreakpoint(e)) {
-      VirtualMachineProxyImpl virtualMachineProxy = stackFrame.getStackFrameProxy().getVirtualMachine();
-      enable = virtualMachineProxy.canPopFrames();
+    StackFrameProxyImpl proxy = getStackFrameProxy(e);
+    if (proxy != null && isAtBreakpoint(e)) {
+      enable = proxy.getVirtualMachine().canPopFrames();
     }
 
     if(ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {

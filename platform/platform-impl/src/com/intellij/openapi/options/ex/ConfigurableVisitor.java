@@ -131,14 +131,7 @@ public abstract class ConfigurableVisitor {
 
     @Override
     protected boolean accept(Configurable configurable) {
-      if (myType.isInstance(configurable)) {
-        return true;
-      }
-      if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        return myType.isInstance(wrapper.getConfigurable());
-      }
-      return false;
+      return ConfigurableWrapper.cast(myType, configurable) != null;
     }
   }
 }

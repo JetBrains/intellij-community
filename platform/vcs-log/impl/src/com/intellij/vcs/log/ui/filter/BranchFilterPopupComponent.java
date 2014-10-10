@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -44,7 +43,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     myUiProperties = uiProperties;
   }
 
-  void updateDataPack(@NotNull DataPack dataPack) {
+  void updateDataPack(@NotNull VcsLogDataPack dataPack) {
     myDataPack = dataPack;
   }
 

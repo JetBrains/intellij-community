@@ -63,8 +63,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
   @Override
   public CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
                                                                      @NotNull FormatTextRanges ranges,
-                                                                     @NotNull CodeStyleSettings settings)
-  {
+                                                                     @NotNull CodeStyleSettings settings) {
     return null;
   }
 
@@ -113,6 +112,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
       .withinPairInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_PARENTHESES)
       .withinPairInside(LPAR, RPAR, FROM_IMPORT_STATEMENT).spaces(0)
+      .withinPairInside(LPAR, RPAR, GENERATOR_EXPRESSION).spaces(0)
       .before(LBRACKET).spaceIf(pySettings.SPACE_BEFORE_LBRACKET)
 
       .withinPair(LBRACE, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES)

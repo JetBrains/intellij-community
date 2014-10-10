@@ -20,12 +20,10 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Function;
@@ -42,45 +40,40 @@ import java.util.*;
  * @author Gregory.Shrago
  */
 public class DfaUtil {
-  private static final Key<CachedValue<MultiValuesMap<PsiVariable, PsiExpression>>> DFA_VARIABLE_INFO_KEY = Key.create("DFA_VARIABLE_INFO_KEY");
 
-  private DfaUtil() {
-  }
-
-  private static final MultiValuesMap<PsiVariable, PsiExpression> TOO_COMPLEX = new MultiValuesMap<PsiVariable, PsiExpression>();
   @Nullable("null means DFA analysis has failed (too complex to analyze)")
   public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
 
-    CachedValue<MultiValuesMap<PsiVariable, PsiExpression>> cachedValue = context.getUserData(DFA_VARIABLE_INFO_KEY);
-    if (cachedValue == null) {
-      final PsiElement codeBlock = DfaPsiUtil.getEnclosingCodeBlock(variable, context);
-      cachedValue = CachedValuesManager.getManager(context.getProject()).createCachedValue(new CachedValueProvider<MultiValuesMap<PsiVariable, PsiExpression>>() {
+    final PsiElement codeBlock = DfaPsiUtil.getEnclosingCodeBlock(variable, context);
+    if (codeBlock == null) return Collections.emptyList();
+
+    final Map<PsiElement, ValuableInstructionVisitor.PlaceResult> value = getCachedPlaceResults(codeBlock);
+    if (value == null) return null;
+
+    ValuableInstructionVisitor.PlaceResult placeResult = value.get(context);
+    final Collection<FList<PsiExpression>> concatenations = placeResult == null ? null : placeResult.myValues.get(variable);
+    if (concatenations != null) {
+      return ContainerUtil.map(concatenations, new Function<FList<PsiExpression>, PsiExpression>() {
         @Override
-        public Result<MultiValuesMap<PsiVariable, PsiExpression>> compute() {
-          final MultiValuesMap<PsiVariable, PsiExpression> result;
-          if (codeBlock == null) {
-            result = null;
-          }
-          else {
-            final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor(context);
-            RunnerResult runnerResult = new ValuableDataFlowRunner(codeBlock).analyzeMethod(codeBlock, visitor);
-            if (runnerResult == RunnerResult.OK) {
-              result = visitor.myValues;
-            }
-            else {
-              result = TOO_COMPLEX;
-            }
-          }
-          return new Result<MultiValuesMap<PsiVariable, PsiExpression>>(result, variable);
+        public PsiExpression fun(FList<PsiExpression> expressions) {
+          return concatenateExpressions(expressions);
         }
-      }, false);
-      context.putUserData(DFA_VARIABLE_INFO_KEY, cachedValue);
+      });
     }
-    final MultiValuesMap<PsiVariable, PsiExpression> value = cachedValue.getValue();
-    if (value == TOO_COMPLEX) return null;
-    final Collection<PsiExpression> expressions = value == null ? null : value.get(variable);
-    return expressions == null ? Collections.<PsiExpression>emptyList() : expressions;
+    return Collections.emptyList();
+  }
+
+  @Nullable("null means DFA analysis has failed (too complex to analyze)")
+  private static Map<PsiElement, ValuableInstructionVisitor.PlaceResult> getCachedPlaceResults(@NotNull final PsiElement codeBlock) {
+    return CachedValuesManager.getCachedValue(codeBlock, new CachedValueProvider<Map<PsiElement, ValuableInstructionVisitor.PlaceResult>>() {
+      @Override
+      public Result<Map<PsiElement, ValuableInstructionVisitor.PlaceResult>> compute() {
+        final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor();
+        RunnerResult runnerResult = new ValuableDataFlowRunner(codeBlock).analyzeMethod(codeBlock, visitor);
+        return Result.create(runnerResult == RunnerResult.OK ? visitor.myResults : null, codeBlock);
+      }
+    });
   }
 
   @NotNull
@@ -88,16 +81,13 @@ public class DfaUtil {
     if (variable == null || context == null) return Nullness.UNKNOWN;
 
     final PsiElement codeBlock = DfaPsiUtil.getEnclosingCodeBlock(variable, context);
-    if (codeBlock == null) {
+    Map<PsiElement, ValuableInstructionVisitor.PlaceResult> results = codeBlock == null ? null : getCachedPlaceResults(codeBlock);
+    ValuableInstructionVisitor.PlaceResult placeResult = results == null ? null : results.get(context);
+    if (placeResult == null) {
       return Nullness.UNKNOWN;
     }
-    final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor(context);
-    RunnerResult result = new ValuableDataFlowRunner(codeBlock).analyzeMethod(codeBlock, visitor);
-    if (result != RunnerResult.OK) {
-      return Nullness.UNKNOWN;
-    }
-    if (visitor.myNulls.contains(variable) && !visitor.myNotNulls.contains(variable)) return Nullness.NULLABLE;
-    if (visitor.myNotNulls.contains(variable) && !visitor.myNulls.contains(variable)) return Nullness.NOT_NULL;
+    if (placeResult.myNulls.contains(variable) && !placeResult.myNotNulls.contains(variable)) return Nullness.NULLABLE;
+    if (placeResult.myNotNulls.contains(variable) && !placeResult.myNulls.contains(variable)) return Nullness.NOT_NULL;
     return Nullness.UNKNOWN;
   }
 
@@ -124,18 +114,22 @@ public class DfaUtil {
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
-    final MultiValuesMap<PsiVariable, PsiExpression> myValues = new MultiValuesMap<PsiVariable, PsiExpression>(true);
-    final Set<PsiVariable> myNulls = new THashSet<PsiVariable>();
-    final Set<PsiVariable> myNotNulls = new THashSet<PsiVariable>();
-    private final PsiElement myContext;
+    final Map<PsiElement, PlaceResult> myResults = ContainerUtil.newHashMap();
 
-    public ValuableInstructionVisitor(@NotNull PsiElement context) {
-      myContext = context;
+    static class PlaceResult {
+      final MultiValuesMap<PsiVariable, FList<PsiExpression>> myValues = new MultiValuesMap<PsiVariable, FList<PsiExpression>>(true);
+      final Set<PsiVariable> myNulls = new THashSet<PsiVariable>();
+      final Set<PsiVariable> myNotNulls = new THashSet<PsiVariable>();
     }
 
     @Override
     public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      if (myContext == instruction.getPlace()) {
+      PsiExpression place = instruction.getPlace();
+      if (place != null) {
+        PlaceResult result = myResults.get(place);
+        if (result == null) {
+          myResults.put(place, result = new PlaceResult());
+        }
         final Map<DfaVariableValue,DfaVariableState> map = ((ValuableDataFlowRunner.MyDfaMemoryState)memState).getVariableStates();
         for (Map.Entry<DfaVariableValue, DfaVariableState> entry : map.entrySet()) {
           ValuableDataFlowRunner.ValuableDfaVariableState state = (ValuableDataFlowRunner.ValuableDfaVariableState)entry.getValue();
@@ -144,25 +138,7 @@ public class DfaUtil {
           if (!concatenation.isEmpty() && variableValue.getQualifier() == null) {
             PsiModifierListOwner element = variableValue.getPsiVariable();
             if (element instanceof PsiVariable) {
-              PsiExpression psiExpression;
-              if (concatenation.size() == 1) {
-                psiExpression = concatenation.getHead();
-              } else {
-                String text = StringUtil.join(ContainerUtil.reverse(new ArrayList<PsiExpression>(concatenation)), new Function<PsiExpression, String>() {
-                  @Override
-                  public String fun(PsiExpression expression) {
-                    return expression.getText();
-                  }
-                }, "+");
-                try {
-                  psiExpression = JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(text, concatenation.getHead());
-                }
-                catch (IncorrectOperationException e) {
-                  psiExpression = concatenation.getHead();
-                }
-              }
-
-              myValues.put((PsiVariable)element, psiExpression);
+              result.myValues.put((PsiVariable)element, concatenation);
             }
           }
         }
@@ -170,11 +146,11 @@ public class DfaUtil {
         if (value instanceof DfaVariableValue && ((DfaVariableValue)value).getQualifier() == null) {
           PsiModifierListOwner element = ((DfaVariableValue)value).getPsiVariable();
           if (element instanceof PsiVariable) {
-            if (memState.isNotNull((DfaVariableValue)value)) {
-              myNotNulls.add((PsiVariable)element);
+            if (memState.isNotNull(value)) {
+              result.myNotNulls.add((PsiVariable)element);
             }
             if (memState.isNull(value)) {
-              myNulls.add((PsiVariable)element);
+              result.myNulls.add((PsiVariable)element);
             }
           }
         }
@@ -213,6 +189,25 @@ public class DfaUtil {
       }
       memState.push(dfaDest);
       return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
+    }
+  }
+
+  private static PsiExpression concatenateExpressions(FList<PsiExpression> concatenation) {
+    if (concatenation.size() == 1) {
+      return concatenation.getHead();
+    }
+    String text = StringUtil
+      .join(ContainerUtil.reverse(new ArrayList<PsiExpression>(concatenation)), new Function<PsiExpression, String>() {
+        @Override
+        public String fun(PsiExpression expression) {
+          return expression.getText();
+        }
+      }, "+");
+    try {
+      return JavaPsiFacade.getElementFactory(concatenation.getHead().getProject()).createExpressionFromText(text, concatenation.getHead());
+    }
+    catch (IncorrectOperationException e) {
+      return concatenation.getHead();
     }
   }
 }

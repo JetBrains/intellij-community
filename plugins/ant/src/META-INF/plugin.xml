@@ -73,16 +73,13 @@
     <configurationType implementation="com.intellij.lang.ant.config.execution.AntRunConfigurationType"/>
     <programRunner implementation="com.intellij.lang.ant.config.execution.AntRunner"/>
 
+    <applicationService serviceImplementation="com.intellij.lang.ant.config.impl.GlobalAntConfiguration"/>
   </extensions>
 
   <application-components>
     <component>
       <interface-class>com.intellij.lang.ant.AntSupport</interface-class>
       <implementation-class>com.intellij.lang.ant.AntSupport</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.lang.ant.config.impl.GlobalAntConfiguration</interface-class>
-      <implementation-class>com.intellij.lang.ant.config.impl.GlobalAntConfiguration</implementation-class>
     </component>
   </application-components>
 

@@ -639,13 +639,15 @@ public class JavaDocInfoGenerator {
           String text = o.toString();
           PsiType type = variable.getType();
           if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            text = "\"" + StringUtil.escapeLineBreak(StringUtil.shortenPathWithEllipsis(text, 120)) + "\"";
+            text = "\"" + StringUtil.escapeStringCharacters(StringUtil.shortenPathWithEllipsis(text, 120)) + "\"";
           }
-          else if (type.equalsToText("char")) text = "'" + text + "'";
+          else if (type.equalsToText("char")) {
+            text = "'" + text + "'";
+          }
           try {
             return instance.getElementFactory().createExpressionFromText(text, variable);
           } catch (IncorrectOperationException ex) {
-            LOG.error(text, ex);
+            LOG.info("type:" + type.getCanonicalText() + "; text: " + text, ex);
           }
         }
       }
@@ -740,13 +742,17 @@ public class JavaDocInfoGenerator {
           if (inferred) buffer.append("<i>");
           final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
           buffer.append("@");
-          generateType(buffer, type, owner, generateLink);
+          if (inferred && !generateLink) {
+            buffer.append(type.getPresentableText());
+          } else {
+            generateType(buffer, type, owner, generateLink);
+          }
           final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
           if (attributes.length > 0) {
             buffer.append("(");
             boolean first = true;
             for (PsiNameValuePair pair : attributes) {
-              if (!first) buffer.append("&nbsp;");
+              if (!first) buffer.append(",&nbsp;");
               first = false;
               final String name = pair.getName();
               if (name != null) {
@@ -778,9 +784,11 @@ public class JavaDocInfoGenerator {
         }
       } else if (external) {
         if (inferred) buffer.append("<i>");
-        buffer.append(XmlStringUtil.escapeString(annotation.getText()));
-        buffer.append("&nbsp;");
+        String annoText = inferred ? "@" + annotation.getNameReferenceElement().getReferenceName() + annotation.getParameterList().getText()
+                                   : annotation.getText();
+        buffer.append(XmlStringUtil.escapeString(annoText));
         if (inferred) buffer.append("</i>");
+        buffer.append("&nbsp;");
       }
       else {
         buffer.append("<font color=red>");
@@ -2046,7 +2054,7 @@ public class JavaDocInfoGenerator {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       myBuffer.append(expression.getMethodExpression().getText()).append("(");
-      expression.getArgumentList().acceptChildren(this);
+      expression.getArgumentList().accept(this);
       myBuffer.append(")");
     }
 

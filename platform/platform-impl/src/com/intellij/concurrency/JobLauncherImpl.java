@@ -16,6 +16,7 @@
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -90,6 +91,11 @@ public class JobLauncherImpl extends JobLauncher {
     catch (ApplierCompleter.ComputationAbortedException e) {
       return false;
     }
+    catch (ProcessCanceledException e) {
+      // task1.processor returns false and the task cancels the indicator
+      // then task2 calls checkCancel() and get here
+      return false;
+    }
     catch (RuntimeException e) {
       throw e;
     }
@@ -124,19 +130,30 @@ public class JobLauncherImpl extends JobLauncher {
 
     if (things.size() <= 1 || JobSchedulerImpl.CORES_COUNT <= CORES_FORK_THRESHOLD) {
       final AtomicBoolean result = new AtomicBoolean(true);
-      ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+      Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          //noinspection ForLoopReplaceableByForEach
-          for (int i = 0; i < things.size(); i++) {
-            T thing = things.get(i);
-            if (!thingProcessor.process(thing)) {
-              result.set(false);
-              break;
+          ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+            @Override
+            public void run() {
+              //noinspection ForLoopReplaceableByForEach
+              for (int i = 0; i < things.size(); i++) {
+                T thing = things.get(i);
+                if (!thingProcessor.process(thing)) {
+                  result.set(false);
+                  break;
+                }
+              }
             }
-          }
+          }, wrapper);
         }
-      }, wrapper);
+      };
+      if (runInReadAction) {
+        if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) return false;
+      }
+      else {
+        runnable.run();
+      }
       return result.get();
     }
 

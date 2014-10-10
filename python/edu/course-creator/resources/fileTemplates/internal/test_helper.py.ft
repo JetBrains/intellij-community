@@ -30,9 +30,12 @@ def test_file_importable():
 
 def import_file(path):
     """ returns imported file """
-    import imp
-    tmp = imp.load_source('tmp', path)
-    return tmp
+    if sys.version_info[0] == 2:
+      import imp
+      return imp.load_source("tmp", path)
+    elif sys.version_info[0] == 3:
+      import importlib.machinery
+      return importlib.machinery.SourceFileLoader("tmp", path).load_module("tmp")
 
 def import_task_file():
     """ returns imported file """

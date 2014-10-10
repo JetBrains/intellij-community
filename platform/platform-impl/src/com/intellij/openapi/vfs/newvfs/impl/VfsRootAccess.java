@@ -114,8 +114,10 @@ public class VfsRootAccess {
 
     try {
       URL outUrl = Application.class.getResource("/");
-      String output = new File(outUrl.toURI()).getParentFile().getParentFile().getPath();
-      allowed.add(FileUtil.toSystemIndependentName(output));
+      if (outUrl != null) {
+        String output = new File(outUrl.toURI()).getParentFile().getParentFile().getPath();
+        allowed.add(FileUtil.toSystemIndependentName(output));
+      }
     }
     catch (URISyntaxException ignored) { }
 

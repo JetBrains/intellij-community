@@ -26,6 +26,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class RefResolveService extends AbstractProjectComponent {
+  /**
+   * if true then getUseScope() returns scope restricted to only relevant files which are stored in {@link com.intellij.psi.RefResolveService}
+   */
+  public static final boolean ENABLED = /*ApplicationManager.getApplication().isUnitTestMode() ||*/ Boolean.getBoolean("ref.back");
+
   public RefResolveService(Project project) {
     super(project);
   }
@@ -47,4 +52,6 @@ public abstract class RefResolveService extends AbstractProjectComponent {
    * @return add files to the resolve queue. until all files from there are resolved, the service is in incomplete state and returns null from getBackwardIds()
    */
   public abstract boolean queue(@NotNull Collection<VirtualFile> files, Object reason);
+
+  public abstract boolean isUpToDate();
 }

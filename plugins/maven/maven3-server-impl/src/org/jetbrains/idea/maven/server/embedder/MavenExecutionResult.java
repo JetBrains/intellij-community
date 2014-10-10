@@ -15,18 +15,32 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
+import org.apache.maven.project.DependencyResolutionResult;
 import org.apache.maven.project.MavenProject;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MavenExecutionResult {
   private final MavenProject myMavenProject;
   private final List<Exception> myExceptions;
+  private final DependencyResolutionResult myDependencyResolutionResult;
 
   public MavenExecutionResult(@Nullable MavenProject mavenProject, List<Exception> exceptions) {
+    this(mavenProject, null, exceptions);
+  }
+
+  public MavenExecutionResult(@Nullable MavenProject mavenProject,
+                              @Nullable DependencyResolutionResult dependencyResolutionResult,
+                              List<Exception> exceptions) {
     myMavenProject = mavenProject;
-    myExceptions = exceptions;
+    myExceptions = exceptions == null ? new ArrayList<Exception>() : exceptions;
+    myDependencyResolutionResult = dependencyResolutionResult;
+    if(myDependencyResolutionResult != null && myDependencyResolutionResult.getCollectionErrors() != null) {
+      myExceptions.addAll(myDependencyResolutionResult.getCollectionErrors());
+    }
   }
 
   @Nullable
@@ -34,6 +48,12 @@ public class MavenExecutionResult {
     return myMavenProject;
   }
 
+  @Nullable
+  public DependencyResolutionResult getDependencyResolutionResult() {
+    return myDependencyResolutionResult;
+  }
+
+  @NotNull
   public List<Exception> getExceptions() {
     return myExceptions;
   }

@@ -9,8 +9,10 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 
-public class JsonStringLiteralImpl extends JsonLiteralImpl implements JsonStringLiteral {
+public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements JsonStringLiteral {
 
   public JsonStringLiteralImpl(ASTNode node) {
     super(node);
@@ -31,6 +33,15 @@ public class JsonStringLiteralImpl extends JsonLiteralImpl implements JsonString
   @Nullable
   public PsiElement getSingleQuotedString() {
     return findChildByType(SINGLE_QUOTED_STRING);
+  }
+
+  public boolean isQuotedString() {
+    return JsonPsiImplUtils.isQuotedString(this);
+  }
+
+  @NotNull
+  public List<Pair<TextRange, String>> getTextFragments() {
+    return JsonPsiImplUtils.getTextFragments(this);
   }
 
 }

@@ -228,14 +228,13 @@ class Bar {
   }
 }
 '''
-    IdentifierHighlighterPassFactory.ourTestingIdentifierHighlighting = true
-    try {
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
       def infos = myFixture.doHighlighting()
       //import highlighted twice: for each overloaded usage target
-      assert infos.findAll { it.severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY && myFixture.file.text.substring(it.startOffset, it.endOffset) == 'foo' }.size() == 3
-    }
-    finally {
-      IdentifierHighlighterPassFactory.ourTestingIdentifierHighlighting = false
+      assert infos.findAll {
+        it.severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY &&
+        myFixture.file.text.substring(it.startOffset, it.endOffset) == 'foo'
+      }.size() == 3
     }
   }
 

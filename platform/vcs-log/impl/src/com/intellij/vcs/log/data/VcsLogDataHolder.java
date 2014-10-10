@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,8 +29,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,13 +61,6 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   private final Consumer<DataPack> myDataPackUpdateHandler;
 
   /**
-   * Indicates if user wants the whole log graph to be shown.
-   * Initially we show only the top of the log (even after we've loaded the whole log structure) for performance reasons.
-   * However, if user once navigates to some old commit, we build the whole graph and show it until the next full refresh or project reload.
-   */
-  private volatile boolean myFullLogShowing;
-
-  /**
    * Cached details of the latest commits.
    * We store them separately from the cache of {@link DataGetter}, to make sure that they are always available,
    * which is important because these details will be constantly visible to the user,
@@ -82,11 +74,14 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   private final ContainingBranchesGetter myContainingBranchesGetter;
 
   @NotNull private final VcsLogRefresher myRefresher;
+  private final VcsLogFiltererImpl myFilterer;
 
   public VcsLogDataHolder(@NotNull Project project,
                           @NotNull Disposable parentDisposable,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                          @NotNull VcsLogSettings settings, Consumer<DataPack> dataPackUpdateHandler) {
+                          @NotNull VcsLogSettings settings,
+                          @NotNull VcsLogUiProperties uiProperties,
+                          @NotNull Consumer<VisiblePack> visiblePackConsumer) {
     Disposer.register(parentDisposable, this);
     myProject = project;
     myLogProviders = logProviders;
@@ -94,7 +89,6 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myMiniDetailsGetter = new MiniDetailsGetter(this, logProviders);
     myDetailsGetter = new CommitDetailsGetter(this, logProviders);
     mySettings = settings;
-    myDataPackUpdateHandler = dataPackUpdateHandler;
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
 
     try {
@@ -105,13 +99,30 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     }
     myContainingBranchesGetter = new ContainingBranchesGetter(project, this, this);
 
+    myFilterer = new VcsLogFiltererImpl(myProject, myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter,
+                                                       uiProperties.isBek() ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal,
+                                                       visiblePackConsumer);
+
+    myDataPackUpdateHandler = new Consumer<DataPack>() {
+      @Override
+      public void consume(DataPack dataPack) {
+        myFilterer.onRefresh(dataPack);
+        myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).refresh(dataPack);
+      }
+    };
+
     myRefresher = new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache,
-                                          dataPackUpdateHandler, new Consumer<Exception>() {
+                                          myDataPackUpdateHandler, new Consumer<Exception>() {
       @Override
       public void consume(Exception e) {
         LOG.error(e);
       }
     }, mySettings.getRecentCommitsCount());
+  }
+
+  @NotNull
+  public VcsLogFilterer getFilterer() {
+    return myFilterer;
   }
 
   @Override
@@ -167,52 +178,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   }
 
   private void resetState() {
-    myFullLogShowing = false;
     myTopCommitsDetailsCache.clear();
-  }
-
-  /**
-   * Show the full log tree to the user.
-   * Initially only the top part of the log is shown to avoid memory and performance problems.
-   * However, if user wants to navigate to something in the past, we rebuild the log and show it.
-   * <p/>
-   * Method returns immediately, log building is executed in the background.
-   * <p/>
-   * TODO: in most cases, users don't need to go to such deep past even if they need to go deeper than to 1000 most recent commits.
-   * Therefore optimize: Add a hash parameter, and build only the necessary part of the log + some commits below.
-   *
-   * @param onSuccess Invoked in the EDT after the log DataPack is built.
-   */
-  public void showFullLog(@NotNull final Runnable onSuccess) {
-    if (myFullLogShowing) {
-      return;
-    }
-
-    runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
-      @Override
-      public void consume(ProgressIndicator indicator) throws VcsException {
-        if (myFullLogShowing) {
-          return;
-        }
-
-        // TODO
-
-        myFullLogShowing = true;
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (!Disposer.isDisposed(VcsLogDataHolder.this)) {
-              onSuccess.run();
-            }
-          }
-        });
-      }
-    }, "Building full log...");
-  }
-
-
-  public boolean isFullLogShowing() {
-    return myFullLogShowing;
   }
 
   @NotNull
@@ -251,23 +217,6 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
 
   public ContainingBranchesGetter getContainingBranchesGetter() {
     return myContainingBranchesGetter;
-  }
-
-  @Nullable
-  public Hash findHashByString(@NotNull String string) {
-    final String pHash = string.toLowerCase();
-    try {
-      return myHashMap.findHash(new Condition<Hash>() {
-        @Override
-        public boolean value(@NotNull Hash hash) {
-          return hash.toString().toLowerCase().startsWith(pHash);
-        }
-      });
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
   }
 
   void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {

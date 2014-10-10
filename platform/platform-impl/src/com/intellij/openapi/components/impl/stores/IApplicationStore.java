@@ -15,24 +15,13 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
-
-public interface IApplicationStore extends IComponentStore {
+public interface IApplicationStore extends IComponentStore.Reloadable {
   void setOptionsPath(@NotNull String path);
 
   @NotNull
   String getConfigPath();
 
   void setConfigPath(@NotNull String configPath);
-
-  boolean reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Collection<String> notReloadableComponents)
-    throws StateStorageException, IOException;
 }

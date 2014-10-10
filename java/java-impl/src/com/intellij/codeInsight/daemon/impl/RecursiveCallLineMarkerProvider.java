@@ -62,18 +62,17 @@ public class RecursiveCallLineMarkerProvider implements LineMarkerProvider {
   }
 
   public static boolean isRecursiveMethodCall(@NotNull PsiMethodCallExpression methodCall) {
+    final PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
+    if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+      return false;
+    }
+
     final PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
     if (method == null || !method.getName().equals(methodCall.getMethodExpression().getReferenceName())) {
       return false;
     }
 
-    final PsiMethod resolvedMethod = methodCall.resolveMethod();
-
-    if (!Comparing.equal(method, resolvedMethod)) {
-      return false;
-    }
-    final PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
-    return qualifier == null || qualifier instanceof PsiThisExpression;
+    return Comparing.equal(method, methodCall.resolveMethod());
   }
 
   private static class RecursiveMethodCallMarkerInfo extends LineMarkerInfo<PsiMethodCallExpression> {

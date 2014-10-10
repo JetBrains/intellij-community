@@ -124,7 +124,7 @@ public class DataFlowRunner {
           joinInstructions.add(myInstructions[((GotoInstruction)instruction).getOffset()]);
         } else if (instruction instanceof ConditionalGotoInstruction) {
           joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
-        } else if (instruction instanceof MethodCallInstruction) {
+        } else if (instruction instanceof MethodCallInstruction && !((MethodCallInstruction)instruction).getContracts().isEmpty()) {
           joinInstructions.add(myInstructions[index + 1]);
         }
       }

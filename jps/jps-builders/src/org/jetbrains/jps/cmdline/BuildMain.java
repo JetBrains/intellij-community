@@ -67,6 +67,17 @@ public class BuildMain {
   private static NioEventLoopGroup ourEventLoopGroup;
 
   public static void main(String[] args){
+    final long start = System.nanoTime();
+    Runtime.getRuntime().addShutdownHook(new Thread("TimeLogger"){
+      public void run() {
+        final long totalTime = (System.nanoTime() - start) / 1000000L;
+
+        final long millis = totalTime % 1000L ;
+        final long seconds = totalTime / 1000L;
+
+        LOG.info("Total build time " + seconds + " sec " + millis + " ms");
+      }
+    });
     System.out.println("Build process started. Classpath: " + System.getProperty("java.class.path"));
     final String host = args[HOST_ARG];
     final int port = Integer.parseInt(args[PORT_ARG]);

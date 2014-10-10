@@ -722,4 +722,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(findResult.isStringFound());
     assertTrue(findResult.getStartOffset() > prefix.length());
   }
+
+  public void testNoExceptionDuringReplaceAll() {
+    configureByText(FileTypes.PLAIN_TEXT, "something\telse");
+    FindModel model = new FindModel();
+    model.setStringToFind("m");
+    model.setStringToReplace("M");
+    model.setPromptOnReplace(false);
+    FindUtil.replace(myProject, myEditor, 0, model);
+    assertEquals("soMething\telse", myEditor.getDocument().getText());
+  }
 }

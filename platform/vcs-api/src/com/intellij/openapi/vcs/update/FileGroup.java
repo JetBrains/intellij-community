@@ -223,7 +223,7 @@ public class FileGroup implements JDOMExternalizable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return myId + " " + myFiles.size() + " items";
+    return myId + " " + myFiles.size() + " items: " + myFiles;
   }
 
   @Nullable

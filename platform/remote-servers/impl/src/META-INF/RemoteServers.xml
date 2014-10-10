@@ -21,6 +21,8 @@
     <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner"/>
     <projectService serviceInterface="com.intellij.remoteServer.runtime.ui.RemoteServersView"
                     serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewImpl"/>
+    <projectService serviceInterface="com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager"
+                    serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeploymentConfigurationManagerImpl"/>
     <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
   </extensions>
   <application-components>

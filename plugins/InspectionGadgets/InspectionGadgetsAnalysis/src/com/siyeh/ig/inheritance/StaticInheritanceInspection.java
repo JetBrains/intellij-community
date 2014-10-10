@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceList;
 import com.siyeh.InspectionGadgetsBundle;
@@ -68,31 +69,31 @@ public class StaticInheritanceInspection extends BaseInspection {
       final PsiJavaCodeReferenceElement[] references =
         implementsList.getReferenceElements();
       for (final PsiJavaCodeReferenceElement reference : references) {
-        final PsiClass iface = (PsiClass)reference.resolve();
-        if (iface != null) {
-          if (interfaceContainsOnlyConstants(iface, new HashSet<PsiClass>())) {
-            registerError(reference);
-          }
+        final PsiElement target = reference.resolve();
+        if (!(target instanceof PsiClass)) {
+          return;
+        }
+        final PsiClass targetClass = (PsiClass)target;
+        if (targetClass.isInterface() && interfaceContainsOnlyConstants(targetClass, new HashSet<PsiClass>())) {
+          registerError(reference);
         }
       }
     }
 
-    private static boolean interfaceContainsOnlyConstants(
-      PsiClass iface, Set<PsiClass> visitedIntefaces) {
-      if (!visitedIntefaces.add(iface)) {
+    private static boolean interfaceContainsOnlyConstants(PsiClass anInterface, Set<PsiClass> visitedInterfaces) {
+      if (!visitedInterfaces.add(anInterface)) {
         return true;
       }
-      if (iface.getAllFields().length == 0) {
+      if (anInterface.getAllFields().length == 0) {
         // ignore it, it's either a true interface or just a marker
         return false;
       }
-      if (iface.getMethods().length != 0) {
+      if (anInterface.getMethods().length != 0) {
         return false;
       }
-      final PsiClass[] parentInterfaces = iface.getInterfaces();
+      final PsiClass[] parentInterfaces = anInterface.getInterfaces();
       for (final PsiClass parentInterface : parentInterfaces) {
-        if (!interfaceContainsOnlyConstants(parentInterface,
-                                            visitedIntefaces)) {
+        if (!interfaceContainsOnlyConstants(parentInterface, visitedInterfaces)) {
           return false;
         }
       }

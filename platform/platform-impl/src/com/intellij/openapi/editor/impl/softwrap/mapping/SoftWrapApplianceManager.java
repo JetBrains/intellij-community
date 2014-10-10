@@ -522,7 +522,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
     SoftWrap softWrap = registerSoftWrap(
       softWrapStartOffset,
       preferredOffset,
-      calculateSoftWrapEndOffset(softWrapStartOffset, myContext.logicalLineData.endLineOffset),
+      myContext.logicalLineData.endLineOffset,
       myContext.getSpaceWidth(),
       myContext.logicalLineData
     );
@@ -616,17 +616,6 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
       //FontInfo fontInfo = EditorUtil.fontForChar(c, myContext.fontType, myEditor);
       //return myContext.currentPosition.x + fontInfo.charWidth(c, myContext.contentComponent);
     }
-  }
-
-  private int calculateSoftWrapEndOffset(int start, int end) {
-    CharSequence text = myEditor.getDocument().getCharsSequence();
-    for (int i = start; i < end; i++) {
-      char c = text.charAt(i);
-      if (c == '\n') {
-        return i;
-      }
-    }
-    return Math.max(start, end);
   }
 
   private static int calculateWidthInColumns(char c, int widthInPixels, int plainSpaceWithInPixels) {

@@ -31,6 +31,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.LineReader;
@@ -133,6 +134,18 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
   public void doTest(@NonNls String fileNameBefore, @NonNls String fileNameAfter) {
     doTextTest(Action.REFORMAT, loadFile(fileNameBefore), loadFile(fileNameAfter));
+  }
+
+  public void doTestWithDetectableIndentOptions(@NonNls String text, @NonNls String textAfter) {
+    DetectableIndentOptionsProvider provider = DetectableIndentOptionsProvider.getInstance();
+    assertNotNull("DetectableIndentOptionsProvider not found", provider);
+    provider.setEnabledInTest(true);
+    try {
+      doTextTest(text, textAfter);
+    }
+    finally {
+      provider.setEnabledInTest(false);
+    }
   }
 
   public void doTextTest(@NonNls final String text, @NonNls String textAfter) throws IncorrectOperationException {

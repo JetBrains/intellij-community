@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,15 @@ public interface EditorSettings {
 
   boolean isWhitespacesShown();
   void setWhitespacesShown(boolean val);
+
+  boolean isLeadingWhitespaceShown();
+  void setLeadingWhitespaceShown(boolean val);
+
+  boolean isInnerWhitespaceShown();
+  void setInnerWhitespaceShown(boolean val);
+
+  boolean isTrailingWhitespaceShown();
+  void setTrailingWhitespaceShown(boolean val);
 
   int getRightMargin(Project project);
   void setRightMargin(int myRightMargin);

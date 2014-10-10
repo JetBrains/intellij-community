@@ -136,15 +136,15 @@ public class GithubNotifications {
   }
 
   @Messages.YesNoResult
-  public static int showYesNoDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
-    return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
+  public static boolean showYesNoDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
+    return Messages.YES == Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
   }
 
   @Messages.YesNoResult
-  public static int showYesNoDialog(@Nullable Project project,
-                                    @NotNull String title,
-                                    @NotNull String message,
-                                    @NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
-    return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon(), doNotAskOption);
+  public static boolean showYesNoDialog(@Nullable Project project,
+                                        @NotNull String title,
+                                        @NotNull String message,
+                                        @NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
+    return Messages.YES == Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon(), doNotAskOption);
   }
 }

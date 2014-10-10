@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.testing;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -33,7 +34,6 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -134,7 +134,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent {
     try {
       return packageManager.findPackage(testPackageName, false) != null;
     }
-    catch (PyExternalProcessException e) {
+    catch (ExecutionException e) {
       LOG.info("Can't load package list " + e.getMessage());
     }
     return null;

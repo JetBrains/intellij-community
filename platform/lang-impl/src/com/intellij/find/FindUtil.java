@@ -494,29 +494,23 @@ public class FindUtil {
     document.startGuardedBlockChecking();
     boolean toPrompt = model.isPromptOnReplace();
 
-    if (!toPrompt) {
-      ((DocumentEx)document).setInBulkUpdate(true);
-    }
     try {
-      toPrompt = doReplace(project, editor, model, document, offset, toPrompt, delegate);
+      doReplace(project, editor, model, document, offset, toPrompt, delegate);
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
     }
     finally {
-      if (!toPrompt) {
-        ((DocumentEx)document).setInBulkUpdate(false);
-      }
       document.stopGuardedBlockChecking();
     }
 
     return true;
   }
 
-  private static boolean doReplace(Project project, final Editor editor, final FindModel aModel, final Document document, int caretOffset,
+  private static void doReplace(Project project, final Editor editor, final FindModel aModel, final Document document, int caretOffset,
                                    boolean toPrompt, ReplaceDelegate delegate) {
     FindManager findManager = FindManager.getInstance(project);
-    final FindModel model = (FindModel)aModel.clone();
+    final FindModel model = aModel.clone();
     int occurrences = 0;
 
     List<Pair<TextRange, String>> rangesToChange = new ArrayList<Pair<TextRange, String>>();
@@ -560,20 +554,18 @@ public class FindUtil {
         }
         if (promptResult == FindManager.PromptResult.ALL) {
           toPrompt = false;
-          ((DocumentEx)document).setInBulkUpdate(true);
         }
       }
       int newOffset;
       if (delegate == null || delegate.shouldReplace(result, toReplace)) {
-        boolean reallyReplace = toPrompt;
-        if (reallyReplace) {
+        if (toPrompt) {
           //[SCR 7258]
           if (!reallyReplaced) {
             editor.getCaretModel().moveToOffset(0);
             reallyReplaced = true;
           }
         }
-        TextRange textRange = doReplace(project, document, model, result, toReplace, reallyReplace, rangesToChange);
+        TextRange textRange = doReplace(project, document, model, result, toReplace, toPrompt, rangesToChange);
         replaced = true;
         newOffset = model.isForward() ? textRange.getEndOffset() : textRange.getStartOffset();
         occurrences++;
@@ -646,7 +638,6 @@ public class FindUtil {
     }
 
     ReplaceInProjectManager.reportNumberReplacedOccurrences(project, occurrences);
-    return replaced;
   }
 
 

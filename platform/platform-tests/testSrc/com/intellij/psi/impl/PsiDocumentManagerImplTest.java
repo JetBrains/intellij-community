@@ -199,7 +199,7 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
     final Project alienProject = createProject(new File(temp, "alien.ipr"), DebugUtil.currentStackTrace());
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
-
+    UIUtil.dispatchAllInvocationEvents(); // startup activities
 
     try {
       PsiManager alienManager = PsiManager.getInstance(alienProject);
@@ -342,7 +342,7 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
     final Project alienProject = createProject(new File(temp, "alien.ipr"), DebugUtil.currentStackTrace());
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
-
+    UIUtil.dispatchAllInvocationEvents(); // startup activities
 
     try {
       PsiManager alienManager = PsiManager.getInstance(alienProject);

@@ -24,10 +24,13 @@ import org.jetbrains.annotations.Nullable;
  */
 @State(
   name = "Git.Application.Settings",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml")})
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/git.xml", roamingType = RoamingType.PER_PLATFORM)
+  },
+  storageChooser = LastStorageChooserForWrite.class
+)
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
-
-
   private State myState = new State();
 
   /**
@@ -52,6 +55,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     return myState;
   }
 
+  @Override
   public void loadState(State state) {
     myState = state;
   }
@@ -77,5 +81,4 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   SshExecutable getIdeaSsh() {
     return myState.SSH_EXECUTABLE;
   }
-
 }

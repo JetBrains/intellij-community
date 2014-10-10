@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -40,10 +39,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -60,10 +56,10 @@ import java.util.Collections;
 
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
+
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
-    String s = "/java/lang/Object.class";
     return this;
   }
 
@@ -86,11 +82,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         return;
       }
 
-      final PsiElement element = elements[0];
-
+      PsiElement element = elements[0];
       PsiElement navElement = element.getNavigationElement();
       navElement = TargetElementUtilBase.getInstance().getGotoDeclarationTarget(element, navElement);
-
       if (navElement != null) {
         gotoTargetElement(navElement);
       }
@@ -197,8 +191,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
     final Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file == null) {
-      return null;
+    if (file == null) return null;
+
+    if (file instanceof PsiCompiledElement) {
+      PsiElement mirror = ((PsiCompiledElement)file).getMirror();
+      if (mirror instanceof PsiFile) file = (PsiFile)mirror;
     }
 
     PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, document, offset));
@@ -226,7 +223,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
     PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
     if (element != null) {
-      return new PsiElement[] {element};
+      return new PsiElement[]{element};
     }
 
     // if no references found in injected fragment, try outer document
@@ -234,26 +231,28 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       EditorWindow window = (EditorWindow)editor;
       return findTargetElementsNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset), lookupAccepted);
     }
+
     return null;
   }
 
   @Override
   public void update(final AnActionEvent event) {
-    final InputEvent inputEvent = event.getInputEvent();
+    InputEvent inputEvent = event.getInputEvent();
     if (inputEvent instanceof MouseEvent) {
-      final MouseEvent mouseEvent = (MouseEvent)inputEvent;
-      final Point point = mouseEvent.getPoint();
-      final Component componentAt = SwingUtilities.getDeepestComponentAt(inputEvent.getComponent(), point.x, point.y);
-      if (componentAt instanceof EditorGutterComponentEx) {
-        event.getPresentation().setEnabled(false);
-        return;
+      Component component = inputEvent.getComponent();
+      if (component != null) {
+        Point point = ((MouseEvent)inputEvent).getPoint();
+        Component componentAt = SwingUtilities.getDeepestComponentAt(component, point.x, point.y);
+        if (componentAt instanceof EditorGutterComponentEx) {
+          event.getPresentation().setEnabled(false);
+          return;
+        }
       }
     }
 
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
       try {
-        final String text = handler.getActionText(event.getDataContext());
-
+        String text = handler.getActionText(event.getDataContext());
         if (text != null) {
           Presentation presentation = event.getPresentation();
           presentation.setText(text);

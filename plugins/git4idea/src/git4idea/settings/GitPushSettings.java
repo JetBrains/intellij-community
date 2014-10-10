@@ -16,9 +16,9 @@
 package git4idea.settings;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import git4idea.config.UpdateMethod;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Kirill Likhodedov
@@ -55,11 +55,12 @@ public class GitPushSettings implements PersistentStateComponent<GitPushSettings
     myState.myUpdateAllRoots = updateAllRoots;
   }
 
+  @NotNull
   public UpdateMethod getUpdateMethod() {
     return myState.myUpdateMethod;
   }
 
-  public void setUpdateMethod(UpdateMethod updateMethod) {
+  public void setUpdateMethod(@NotNull UpdateMethod updateMethod) {
     myState.myUpdateMethod = updateMethod;
   }
 

@@ -67,7 +67,8 @@ import java.util.Set;
  */
 @State(
   name = "WindowManager",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/window.manager.xml")})
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/window.manager.xml", roamingType = RoamingType.DISABLED)}
+)
 public final class WindowManagerImpl extends WindowManagerEx implements NamedComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
 
@@ -115,7 +116,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   private Rectangle myFrameBounds;
   private int myFrameExtendedState;
   private final WindowAdapter myActivationListener;
-  private final ApplicationInfoEx myApplicationInfoEx;
   private final DataManager myDataManager;
   private final ActionManagerEx myActionManager;
   private final UISettings myUiSettings;
@@ -124,11 +124,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
    * invoked by reflection
    */
   public WindowManagerImpl(DataManager dataManager,
-                           ApplicationInfoEx applicationInfoEx,
                            ActionManagerEx actionManager,
                            UISettings uiSettings,
                            MessageBus bus) {
-    myApplicationInfoEx = applicationInfoEx;
     myDataManager = dataManager;
     myActionManager = actionManager;
     myUiSettings = uiSettings;
@@ -523,7 +521,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   public void showFrame() {
-    final IdeFrameImpl frame = new IdeFrameImpl(myApplicationInfoEx,
+    final IdeFrameImpl frame = new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(),
                                                 myActionManager, myUiSettings, myDataManager,
                                                 ApplicationManager.getApplication());
     myProject2Frame.put(null, frame);
@@ -594,7 +592,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       frame.setProject(project);
     }
     else {
-      frame = new IdeFrameImpl(myApplicationInfoEx, myActionManager, myUiSettings,
+      frame = new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(), myActionManager, myUiSettings,
                                myDataManager, ApplicationManager.getApplication());
 
       final Rectangle bounds = ProjectFrameBounds.getInstance(project).getBounds();

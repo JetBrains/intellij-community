@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.CompositeException;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Method;
 import com.sun.jdi.ThreadReference;
@@ -445,11 +446,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
 
     private void pauseExecution() {
-      try {
-        Thread.sleep(10);
-      }
-      catch (InterruptedException ignored) {
-      }
+      TimeoutUtil.sleep(10);
     }
   }
 }

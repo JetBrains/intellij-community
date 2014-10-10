@@ -28,10 +28,11 @@ public class AttributeBinding extends BasePrimitiveBinding {
   }
 
   @Override
-  public Object serialize(@NotNull Object o, Object context, SerializationFilter filter) {
+  @Nullable
+  public Object serialize(@NotNull Object o, @Nullable Object context, SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
-      return context;
+      return null;
     }
 
     String stringValue;
@@ -40,7 +41,12 @@ public class AttributeBinding extends BasePrimitiveBinding {
     }
     else {
       assert myBinding != null;
-      stringValue = ((Content)myBinding.serialize(value, context, filter)).getValue();
+      Content content = (Content)myBinding.serialize(value, context, filter);
+      if (content == null) {
+        return null;
+      }
+
+      stringValue = content.getValue();
     }
     return new org.jdom.Attribute(myName, stringValue);
   }

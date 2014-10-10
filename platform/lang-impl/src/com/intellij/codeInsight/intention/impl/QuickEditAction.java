@@ -18,6 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -106,7 +107,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedFile);
       if (documentWindow != null) {
-        handler.navigate(documentWindow.hostToInjected(offset));
+        handler.navigate(((DocumentWindowImpl)documentWindow).hostToInjectedUnescaped(offset));
       }
     }
     return handler;

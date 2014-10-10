@@ -57,7 +57,7 @@ public class CommandExecutor {
   private boolean myNeedsDestroy;
   private volatile String myDestroyReason;
   private volatile boolean myWasCancelled;
-  protected final GeneralCommandLine myCommandLine;
+  @NotNull protected final GeneralCommandLine myCommandLine;
   protected Process myProcess;
   protected SvnProcessHandler myHandler;
   private OutputStreamWriter myProcessWriter;
@@ -82,7 +82,7 @@ public class CommandExecutor {
       myListeners.addListener(new CommandCancelTracker());
     }
     myLock = new Object();
-    myCommandLine = new GeneralCommandLine();
+    myCommandLine = createCommandLine();
     myCommandLine.setExePath(exePath);
     myCommandLine.setWorkDirectory(command.getWorkingDirectory());
     if (command.getConfigDir() != null) {
@@ -225,6 +225,11 @@ public class CommandExecutor {
 
   protected boolean needsUtf8Output() {
     return myCommand.getParameters().contains("--xml");
+  }
+
+  @NotNull
+  protected GeneralCommandLine createCommandLine() {
+    return new GeneralCommandLine();
   }
 
   @NotNull

@@ -105,6 +105,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     return "Google App Engine";
   }
 
+  @NotNull
   public JComponent createComponent() {
     mySdkEditorPanel.add(BorderLayout.CENTER, mySdkEditor.getMainComponent());
     return myMainPanel;

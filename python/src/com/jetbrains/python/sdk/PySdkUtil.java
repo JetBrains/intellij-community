@@ -16,9 +16,9 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -113,7 +112,7 @@ public class PySdkUtil {
     final Map<String, String> systemEnv = System.getenv();
     final Map<String, String> env = extraEnv != null ? mergeEnvVariables(systemEnv, extraEnv) : systemEnv;
     try {
-      final Process process = ExecUtil.exec(Arrays.asList(command), homePath, env);
+      final Process process = new GeneralCommandLine(command).withWorkDirectory(homePath).withEnvironment(env).createProcess();
       final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();

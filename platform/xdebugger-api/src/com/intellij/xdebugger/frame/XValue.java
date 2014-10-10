@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,17 @@ public abstract class XValue extends XValueContainer {
    */
   public void computeSourcePosition(@NotNull XNavigatable navigatable) {
     navigatable.setSourcePosition(null);
+  }
+
+  /**
+   * Provide inline debugger data, return ability to provide, use
+   * {@link ThreeState#UNSURE} if unsupported (default platform implementation will be used),
+   * {@link ThreeState#YES} if applicable
+   * {@link ThreeState#NO} if not applicable
+   */
+  @NotNull
+  public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
+    return ThreeState.UNSURE;
   }
 
   /**

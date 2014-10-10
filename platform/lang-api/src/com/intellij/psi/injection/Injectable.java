@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public abstract class Injectable implements Comparable<Injectable> {
 
   public Language toLanguage() {
     return getLanguage() == null ? new Language(getId(), false) {
+      @NotNull
       @Override
       public String getDisplayName() {
         return Injectable.this.getDisplayName();

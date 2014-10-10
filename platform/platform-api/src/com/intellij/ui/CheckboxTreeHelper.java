@@ -143,6 +143,7 @@ class CheckboxTreeHelper {
           final Object o = treePath.getLastPathComponent();
           if (!(o instanceof CheckedTreeNode)) return;
           CheckedTreeNode firstNode = (CheckedTreeNode)o;
+          if (!firstNode.isEnabled()) return;
           toggleNode(tree, firstNode);
           boolean checked = firstNode.isChecked();
 

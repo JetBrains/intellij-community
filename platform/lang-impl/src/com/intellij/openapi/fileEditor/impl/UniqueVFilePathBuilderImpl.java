@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.ProjectScope;
 import gnu.trove.THashSet;
@@ -48,7 +49,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     return getUniqueVirtualFilePath(project, vFile, true);
   }
 
-  private String getUniqueVirtualFilePath(Project project, VirtualFile file, boolean skipNonOpenedFiles) {
+  private static String getUniqueVirtualFilePath(Project project, VirtualFile file, boolean skipNonOpenedFiles) {
     String fileName = file.getName();
     Collection<VirtualFile> filesWithSameName = skipNonOpenedFiles ? Collections.<VirtualFile>emptySet() :
                                                 FilenameIndex.getVirtualFilesByName(project, fileName, ProjectScope.getProjectScope(project));
@@ -63,6 +64,9 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     filesWithSameName = setOfFilesWithTheSameName;
 
     if (filesWithSameName.size() > 1 && filesWithSameName.contains(file)) {
+      if (file instanceof VirtualFilePathWrapper) {
+        return ((VirtualFilePathWrapper)file).getPresentablePath();
+      }
       String path = project.getBasePath();
       path = path == null ? "" : FileUtil.toSystemIndependentName(path);
       UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<VirtualFile>(path, File.separator, 25);

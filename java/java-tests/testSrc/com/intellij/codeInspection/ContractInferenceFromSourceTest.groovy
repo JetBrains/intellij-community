@@ -170,6 +170,18 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
+  void "test no return value NotNull duplication with branching"() {
+    def c = inferContracts("""
+  @org.jetbrains.annotations.NotNull static Object requireNotNull(Object o) {
+        if (o == null)
+            throw new NullPointerException();
+        else
+            return o;
+    }
+""")
+    assert c == ['null -> fail']
+  }
+
   public void "test plain delegation"() {
     def c = inferContracts("""
   boolean delegating(Object o) {
@@ -368,6 +380,15 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     }
     """)
     assert c == ['_, null -> fail', '_, _ -> !null']
+  }
+
+  public void "test dig into type cast"() {
+    def c = inferContracts("""
+  public static String cast(Object o) {
+    return o instanceof String ? (String)o : null;
+  }
+    """)
+    assert c == ['null -> null']
   }
 
   private String inferContract(String method) {

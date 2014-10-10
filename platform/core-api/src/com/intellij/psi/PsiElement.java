@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *          if this element is invalid
    */
   @NotNull
+  @Contract(pure=true)
   Project getProject() throws PsiInvalidElementAccessException;
 
   /**
@@ -67,6 +69,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the language instance.
    */
   @NotNull
+  @Contract(pure=true)
   Language getLanguage();
 
   /**
@@ -74,6 +77,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the PSI manager instance.
    */
+  @Contract(pure=true)
   PsiManager getManager();
 
   /**
@@ -83,6 +87,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the array of child elements.
    */
   @NotNull
+  @Contract(pure=true)
   PsiElement[] getChildren();
 
   /**
@@ -90,6 +95,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the parent of the element, or null if the element has no parent.
    */
+  @Contract(pure=true)
   PsiElement getParent();
 
   /**
@@ -97,6 +103,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the first child, or null if the element has no children.
    */
+  @Contract(pure=true)
   PsiElement getFirstChild();
 
   /**
@@ -104,6 +111,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the last child, or null if the element has no children.
    */
+  @Contract(pure=true)
   PsiElement getLastChild();
 
   /**
@@ -111,6 +119,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the next sibling, or null if the node is the last in the list of siblings.
    */
+  @Contract(pure=true)
   PsiElement getNextSibling();
 
   /**
@@ -118,6 +127,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the previous sibling, or null if the node is the first in the list of siblings.
    */
+  @Contract(pure=true)
   PsiElement getPrevSibling();
 
   /**
@@ -128,6 +138,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @throws PsiInvalidElementAccessException
    *          if this element is invalid
    */
+  @Contract(pure=true)
   PsiFile getContainingFile() throws PsiInvalidElementAccessException;
 
   /**
@@ -135,6 +146,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the text range.
    */
+  @Contract(pure=true)
   TextRange getTextRange();
 
   /**
@@ -142,6 +154,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the relative offset.
    */
+  @Contract(pure=true)
   int getStartOffsetInParent();
 
   /**
@@ -149,6 +162,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the text length.
    */
+  @Contract(pure=true)
   int getTextLength();
 
   /**
@@ -158,6 +172,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the element at the offset, or null if none is found.
    */
   @Nullable
+  @Contract(pure=true)
   PsiElement findElementAt(int offset);
 
   /**
@@ -167,6 +182,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the reference at the offset, or null if none is found.
    */
   @Nullable
+  @Contract(pure=true)
   PsiReference findReferenceAt(int offset);
 
   /**
@@ -177,6 +193,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the offset of the PSI element.
    */
+  @Contract(pure=true)
   int getTextOffset();
 
   /**
@@ -185,6 +202,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the element text.
    */
   @NonNls
+  @Contract(pure=true)
   String getText();
 
   /**
@@ -193,6 +211,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the element text as a character array.
    */
   @NotNull
+  @Contract(pure=true)
   char[] textToCharArray();
 
   /**
@@ -205,6 +224,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the navigation target element.
    */
+  @Contract(pure=true)
   PsiElement getNavigationElement();
 
   /**
@@ -216,6 +236,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the original element.
    */
+  @Contract(pure=true)
   PsiElement getOriginalElement();
 
   //Q: get rid of these methods?
@@ -226,6 +247,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param text the character sequence to compare with.
    * @return true if the text is equal, false otherwise.
    */
+  @Contract(pure=true)
   boolean textMatches(@NotNull @NonNls CharSequence text);
 
   /**
@@ -234,6 +256,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param element the element to compare the text with.
    * @return true if the text is equal, false otherwise.
    */
+  @Contract(pure=true)
   boolean textMatches(@NotNull PsiElement element);
 
   /**
@@ -242,6 +265,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param c the character to search for.
    * @return true if the character is found, false otherwise.
    */
+  @Contract(pure=true)
   boolean textContains(char c);
 
   /**
@@ -395,6 +419,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return true if the element is valid, false otherwise.
    * @see com.intellij.psi.util.PsiUtilCore#ensureValid(PsiElement)
    */
+  @Contract(pure=true)
   boolean isValid();
 
   /**
@@ -403,6 +428,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return true if the element can be modified, false otherwise.
    */
+  @Contract(pure=true)
   boolean isWritable();
 
   /**
@@ -414,6 +440,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *         associated references.
    */
   @Nullable
+  @Contract(pure=true)
   PsiReference getReference();
 
   /**
@@ -432,6 +459,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see com.intellij.psi.PsiReferenceService#getReferences
    */
   @NotNull
+  @Contract(pure=true)
   PsiReference[] getReferences();
 
   /**
@@ -442,6 +470,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see #putCopyableUserData(com.intellij.openapi.util.Key, Object)
    */
   @Nullable
+  @Contract(pure=true)
   <T> T getCopyableUserData(Key<T> key);
 
   /**
@@ -479,6 +508,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the resolve context element.
    */
   @Nullable
+  @Contract(pure=true)
   PsiElement getContext();
 
   /**
@@ -489,6 +519,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return true if the element is physical, false otherwise.
    */
+  @Contract(pure=true)
   boolean isPhysical();
 
   /**
@@ -497,6 +528,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the resolve scope instance.
    */
   @NotNull
+  @Contract(pure=true)
   GlobalSearchScope getResolveScope();
 
   /**
@@ -506,6 +538,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see {@link com.intellij.psi.search.PsiSearchHelper#getUseScope(PsiElement)}
    */
   @NotNull
+  @Contract(pure=true)
   SearchScope getUseScope();
 
   /**
@@ -513,13 +546,16 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the AST node instance.
    */
+  @Contract(pure=true)
   ASTNode getNode();
 
   /**
    * toString() should never be presented to the user.
    */
   @NonNls
+  @Contract(pure=true)
   String toString();
 
+  @Contract(pure=true)
   boolean isEquivalentTo(PsiElement another);
 }

@@ -19,6 +19,7 @@ import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.sdk.AppEngineSdkManager;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.facet.FacetType;
+import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FileContentPattern;
 import com.intellij.openapi.fileTypes.FileType;
@@ -41,6 +42,11 @@ public class AppEngineFrameworkDetector extends FacetBasedFrameworkDetector<AppE
   @Override
   public FacetType<AppEngineFacet, AppEngineFacetConfiguration> getFacetType() {
     return FacetType.findInstance(AppEngineFacetType.class);
+  }
+
+  @Override
+  public FrameworkType getFrameworkType() {
+    return AppEngineFrameworkType.getFrameworkType();
   }
 
   @Override

@@ -46,6 +46,7 @@ public class _LastInSuiteTest extends TestCase {
       public void run() {
         ((ApplicationImpl)ApplicationManager.getApplication()).setDisposeInProgress(true);
         LightPlatformTestCase.disposeApplication();
+        UIUtil.dispatchAllInvocationEvents();
       }
     });
 

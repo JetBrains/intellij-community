@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
-import com.intellij.openapi.util.LazyInstance;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassExtensionPoint<T> extends AbstractExtensionPointBean implements KeyedLazyInstance<T> {
   // these must be public for scrambling compatibility
@@ -39,6 +39,7 @@ public class ClassExtensionPoint<T> extends AbstractExtensionPointBean implement
     }
   };
 
+  @NotNull
   @Override
   public T getInstance() {
     return myHandler.getValue();

@@ -31,6 +31,7 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -95,11 +96,13 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean impleme
     }
   }
 
+  @NotNull
   @Override
   public String getKey() {
     return language;
   }
 
+  @NotNull
   @Override
   public PsiReferenceProviderBean getInstance() {
     return this;

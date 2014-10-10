@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.light;
 
-import com.intellij.psi.OriginInfoAwareElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.NavigationItem;
@@ -152,5 +151,10 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
 
   public void setOriginInfo(@Nullable String originInfo) {
     myOriginInfo = originInfo;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return super.equals(obj);
   }
 }

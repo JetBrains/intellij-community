@@ -17,6 +17,7 @@ package git4idea.checkout;
 
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -81,7 +82,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
     new Task.Backgroundable(project, DvcsBundle.message("cloning.repository", sourceRepositoryURL)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cloneResult.set(doClone(project, indicator, git, directoryName, parentDirectory, sourceRepositoryURL));
+        cloneResult.set(doClone(project, git, directoryName, parentDirectory, sourceRepositoryURL));
       }
 
       @Override
@@ -104,8 +105,10 @@ public class GitCheckoutProvider implements CheckoutProvider {
     }.queue();
   }
 
-  public static boolean doClone(@NotNull Project project, @NotNull ProgressIndicator indicator, @NotNull Git git,
+  public static boolean doClone(@NotNull Project project, @NotNull Git git,
                                 @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
+
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setIndeterminate(false);
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
     GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);

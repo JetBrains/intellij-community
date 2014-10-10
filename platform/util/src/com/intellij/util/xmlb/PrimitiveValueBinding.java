@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -37,8 +36,6 @@ class PrimitiveValueBinding implements Binding {
   @Override
   @Nullable
   public Object deserialize(Object o, @NotNull Object... nodes) {
-    assert nodes != null;
-
     if (nodes.length == 0) {
       return convertString("");
     }

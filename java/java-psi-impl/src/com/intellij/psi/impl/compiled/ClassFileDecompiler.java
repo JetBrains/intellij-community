@@ -52,12 +52,6 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
       if (result != null) return result;
     }
 
-    return decompileText(file);
-  }
-
-  @NotNull
-  public static CharSequence decompileText(@NotNull VirtualFile file) {
-    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
     if (decompiler instanceof ClassFileDecompilers.Light) {
       try {
         return ((ClassFileDecompilers.Light)decompiler).getText(file);

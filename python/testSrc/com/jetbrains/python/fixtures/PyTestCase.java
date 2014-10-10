@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.fixtures;
 
+import com.google.common.base.Joiner;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -67,10 +69,10 @@ import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author yole
@@ -98,12 +100,12 @@ public abstract class PyTestCase extends UsefulTestCase {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-      myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                      new LightTempDirTestFixtureImpl(true));
-      myFixture.setUp();
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
+                                                                                    new LightTempDirTestFixtureImpl(true));
+    myFixture.setUp();
 
-      myFixture.setTestDataPath(getTestDataPath());
-    }
+    myFixture.setTestDataPath(getTestDataPath());
+  }
 
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
@@ -240,6 +242,19 @@ public abstract class PyTestCase extends UsefulTestCase {
     return result;
   }
 
+  /**
+   * @return completion strings suggested by {@link com.intellij.testFramework.fixtures.CodeInsightTestFixture#completeBasic()}
+   */
+  @NotNull
+  protected List<String> getCompletionStrings() {
+    final LookupElement[] elements = myFixture.completeBasic();
+    final List<String> result = new ArrayList<String>(elements.length);
+    for (final LookupElement element : elements) {
+      result.add(element.getLookupString());
+    }
+    return result;
+  }
+
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
     private final String myPythonVersion;
 
@@ -303,6 +318,19 @@ public abstract class PyTestCase extends UsefulTestCase {
       }
     }
     return null;
+  }
+
+  /**
+   * Comares sets with string sorting them and displaying one-per-line to make comparision easier
+   * @param message message to display in case of error
+   * @param actual actual set
+   * @param expected expected set
+   */
+  protected static void compareStringSets(@NotNull final String message,
+                                          @NotNull final Set<String> actual,
+                                          @NotNull final Set<String> expected) {
+    final Joiner joiner = Joiner.on("\n");
+    Assert.assertEquals(message, joiner.join(new TreeSet<String>(actual)), joiner.join(new TreeSet<String>(expected)));
   }
 }
 

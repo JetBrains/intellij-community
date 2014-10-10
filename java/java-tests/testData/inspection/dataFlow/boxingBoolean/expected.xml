@@ -35,5 +35,11 @@
     <line>51</line>
     <description>Condition &lt;code&gt;o&lt;/code&gt; at the left side of assignment expression is always &lt;code&gt;false&lt;/code&gt;. Can be simplified.</description>
   </problem>
+  <problem>
+
+  <file>Test.java</file>
+    <line>62</line>
+    <description>Condition &lt;code&gt;o&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
+  </problem>
 
 </problems>

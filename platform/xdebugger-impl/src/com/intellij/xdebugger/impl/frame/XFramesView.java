@@ -76,7 +76,7 @@ public class XFramesView extends XDebugView {
     myFramesList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        if (myListenersEnabled && !e.getValueIsAdjusting()) {
+        if (myListenersEnabled && !e.getValueIsAdjusting() && mySelectedFrameIndex != myFramesList.getSelectedIndex()) {
           processFrameSelection(getSession(e));
         }
       }
@@ -281,7 +281,7 @@ public class XFramesView extends XDebugView {
       StackFramesListBuilder builder = getOrCreateBuilder(executionStack, session);
       myListenersEnabled = false;
       builder.initModel(myFramesList.getModel());
-      builder.start();
+      myListenersEnabled = !builder.start();
     }
   }
 
@@ -334,6 +334,7 @@ public class XFramesView extends XDebugView {
           myAllFramesLoaded = last;
           if (last) {
             myRunning = false;
+            myListenersEnabled = true;
           }
         }
       });
@@ -348,6 +349,7 @@ public class XFramesView extends XDebugView {
             myErrorMessage = errorMessage;
             addFrameListElements(Collections.singletonList(errorMessage), true);
             myRunning = false;
+            myListenersEnabled = true;
           }
         }
       });
@@ -356,14 +358,21 @@ public class XFramesView extends XDebugView {
     private void addFrameListElements(final List<?> values, final boolean last) {
       if (myExecutionStack != null && myExecutionStack == mySelectedStack) {
         DefaultListModel model = myFramesList.getModel();
-        if (!model.isEmpty() && model.getElementAt(model.getSize() - 1) == null) {
-          model.removeElementAt(model.getSize() - 1);
+        int insertIndex = model.size();
+        boolean loadingPresent = !model.isEmpty() && model.getElementAt(model.getSize() - 1) == null;
+        if (loadingPresent) {
+          insertIndex--;
         }
         for (Object value : values) {
           //noinspection unchecked
-          model.addElement(value);
+          model.add(insertIndex++, value);
         }
-        if (!last) {
+        if (last) {
+          if (loadingPresent) {
+            model.removeElementAt(model.getSize() - 1);
+          }
+        }
+        else if (!loadingPresent) {
           //noinspection unchecked
           model.addElement(null);
         }
@@ -381,12 +390,13 @@ public class XFramesView extends XDebugView {
       myExecutionStack = null;
     }
 
-    public void start() {
+    public boolean start() {
       if (myExecutionStack == null || myErrorMessage != null) {
-        return;
+        return false;
       }
       myRunning = true;
       myExecutionStack.computeStackFrames(myNextFrameIndex, this);
+      return true;
     }
 
     public void stop() {

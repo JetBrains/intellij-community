@@ -210,26 +210,6 @@ public class RefactoringUtil {
     return false;
   }
 
-   public static boolean hasStaticImportOn(final PsiElement expr, final PsiMember member) {
-    if (expr.getContainingFile() instanceof PsiJavaFile) {
-      final PsiImportList importList = ((PsiJavaFile)expr.getContainingFile()).getImportList();
-      if (importList != null) {
-        final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
-        for(PsiImportStaticStatement stmt: importStaticStatements) {
-          final PsiClass containingClass = member.getContainingClass();
-          final String referenceName = stmt.getReferenceName();
-          if (!stmt.isOnDemand() && stmt.resolveTargetClass() == containingClass && Comparing.strEqual(referenceName, member.getName())) {
-            if (member instanceof PsiMethod) {
-              return containingClass.findMethodsByName(referenceName, false).length == 1;
-            }
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
   public static PsiElement replaceElementsWithMap(PsiElement replaceIn, final Map<PsiElement, PsiElement> elementsToReplace) throws IncorrectOperationException {
     for(Map.Entry<PsiElement, PsiElement> e: elementsToReplace.entrySet()) {
       if (e.getKey() == replaceIn) {
@@ -250,13 +230,14 @@ public class RefactoringUtil {
   }
 
 
-  public static PsiElement getParentStatement(PsiElement place, boolean skipScopingStatements) {
+  @Nullable
+  public static PsiElement getParentStatement(@Nullable PsiElement place, boolean skipScopingStatements) {
     PsiElement parent = place;
     while (true) {
+      if (parent == null) return null;
       if (parent instanceof PsiStatement) break;
       if (parent instanceof PsiExpression && parent.getParent() instanceof PsiLambdaExpression) return parent;
       parent = parent.getParent();
-      if (parent == null) return null;
     }
     PsiElement parentStatement = parent;
     parent = parentStatement instanceof PsiStatement ? parentStatement : parentStatement.getParent();

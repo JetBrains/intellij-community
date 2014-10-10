@@ -101,13 +101,12 @@ public class AdjustArrayRangeAction extends DebuggerAction {
   public void update(AnActionEvent e) {
     boolean enable = false;
     XValueNodeImpl node = XDebuggerTreeActionBase.getSelectedNode(e.getDataContext());
-    if (node == null) {
-      return;
-    }
-    XValue container = node.getValueContainer();
-    if (container instanceof JavaValue) {
-      ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
-      enable = getArrayRenderer(descriptor) != null;
+    if (node != null) {
+      XValue container = node.getValueContainer();
+      if (container instanceof JavaValue) {
+        ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
+        enable = getArrayRenderer(descriptor) != null;
+      }
     }
     e.getPresentation().setVisible(enable);
   }

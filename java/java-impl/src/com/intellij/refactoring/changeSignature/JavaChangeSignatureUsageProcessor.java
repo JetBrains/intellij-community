@@ -17,7 +17,6 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.lang.StdLanguages;
@@ -694,6 +693,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     final PsiSubstitutor substitutor =
       baseMethod == null ? PsiSubstitutor.EMPTY : ChangeSignatureProcessor.calculateSubstitutor(method, baseMethod);
 
+    final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(method.getProject());
     if (changeInfo.isReturnTypeChanged()) {
       PsiType newTypeElement = changeInfo.getNewReturnType().getType(changeInfo.getMethod().getParameterList(), method.getManager());
       final PsiType returnType = substitutor.substitute(newTypeElement);
@@ -701,7 +701,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       if (method.getName().equals(changeInfo.getNewName())) {
         final PsiTypeElement typeElement = method.getReturnTypeElement();
         if (typeElement != null) {
-          typeElement.replace(factory.createTypeElement(returnType));
+          javaCodeStyleManager.shortenClassReferences(typeElement.replace(factory.createTypeElement(returnType)));
         }
       }
     }

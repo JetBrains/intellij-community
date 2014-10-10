@@ -22,7 +22,6 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -30,13 +29,11 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,9 +112,8 @@ public class IndentSelectionAction extends EditorAction {
       endIndex = document.getLineCount() - 1;
     }
     
-    VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-    final FileType fileType = vFile == null ? null : vFile.getFileType();
-    int blockIndent = CodeStyleFacade.getInstance(project).getIndentSize(fileType);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    int blockIndent = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).INDENT_SIZE;
     doIndent(endIndex, startIndex, document, project, editor, blockIndent);
   }
 

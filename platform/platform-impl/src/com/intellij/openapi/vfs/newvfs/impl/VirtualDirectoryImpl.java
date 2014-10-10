@@ -316,6 +316,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         for (int i = 0; i < childrenIds.length; i++) {
           FSRecords.NameId child = childrenIds[i];
           result[i] = child.id;
+          assert child.id > 0 : child;
           prevChildren.remove(child.id);
           if (VfsData.getFileById(child.id, this) == null) {
             createChild(child.nameId, child.id, delegate);
@@ -426,6 +427,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     int i = -negativeIndex -1;
     System.arraycopy(array, 0, appended, 0, i);
     appended[i] = file.getId();
+    assert appended[i] > 0 : file;
     System.arraycopy(array, i, appended, i + 1, array.length - i);
     myData.myChildrenIds = appended;
   }

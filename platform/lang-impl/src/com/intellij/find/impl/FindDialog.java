@@ -99,6 +99,8 @@ public class FindDialog extends DialogWrapper {
   private JRadioButton myRbCustomScope;
   private ScopeChooserCombo myScopeCombo;
   protected JLabel myReplacePrompt;
+  private HideableTitledPanel myScopePanel;
+  private static boolean myPreviousResultsExpandedState;
 
   public FindDialog(@NotNull Project project, @NotNull FindModel model, @NotNull Consumer<FindModel> myOkHandler){
     super(project, true);
@@ -140,6 +142,7 @@ public class FindDialog extends DialogWrapper {
       e.getKey().removeDocumentListener(e.getValue());
     }
     myComboBoxListeners.clear();
+    if (myScopePanel != null) myPreviousResultsExpandedState = myScopePanel.isExpanded();
     super.dispose();
   }
 
@@ -388,11 +391,13 @@ public class FindDialog extends DialogWrapper {
     return optionsPanel;
   }
 
-  private static JPanel createResultsOptionPanel(JPanel optionsPanel, GridBagConstraints gbConstraints) {
+  private JPanel createResultsOptionPanel(JPanel optionsPanel, GridBagConstraints gbConstraints) {
     JPanel resultsOptionPanel = new JPanel();
     resultsOptionPanel.setLayout(new BoxLayout(resultsOptionPanel, BoxLayout.Y_AXIS));
 
-    optionsPanel.add(new HideableTitledPanel(FindBundle.message("results.options.group"), resultsOptionPanel, false), gbConstraints);
+    myScopePanel = new HideableTitledPanel(FindBundle.message("results.options.group"), resultsOptionPanel,
+                                           myPreviousResultsExpandedState);
+    optionsPanel.add(myScopePanel, gbConstraints);
     return resultsOptionPanel;
   }
 

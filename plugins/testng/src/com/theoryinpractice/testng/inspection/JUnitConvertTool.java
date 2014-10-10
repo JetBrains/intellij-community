@@ -102,8 +102,9 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
             else {
               if (TestNGUtil.containsJunitAnnotions(method)) {
                 convertJunitAnnotions(factory, method);
+              } else {
+                addMethodAnnotations(factory, method);
               }
-              addMethodAnnotations(factory, method);
             }
           }
 
@@ -171,8 +172,10 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
               //if it's a 3 arg, the error message goes at the end
               PsiElement inserted = null;
               if (expressions.length == 2) {
+                final PsiExpression qualifierExpression = methodCall.getMethodExpression().getQualifierExpression();
+                final String text = "org.testng." + (qualifierExpression == null ? "Assert." : "") + methodCall.getText() + ";";
                 inserted = methodCallStatement
-                  .replace(factory.createStatementFromText("org.testng.Assert." + methodCall.getText() + ";", methodCall.getParent()));
+                  .replace(factory.createStatementFromText(text, methodCall.getParent()));
               }
               else if (expressions.length == 3) {
                 @NonNls String call = "org.testng.Assert." + methodName + '(' + expressions[2].getText() + ", " + expressions[1].getText() +
@@ -261,7 +264,18 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
           if (!(element instanceof PsiMethodCallExpression)) return false;
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
           final PsiMethod method = methodCall.resolveMethod();
-          return method != null && "junit.framework.Assert".equals(method.getContainingClass().getQualifiedName());
+          if (method != null) {
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass != null) {
+              final String qualifiedName = containingClass.getQualifiedName();
+              if ("junit.framework.Assert".equals(qualifiedName) || 
+                  "org.junit.Assert".equals(qualifiedName) || 
+                  "junit.framework.TestCase".equals(qualifiedName)) {
+                return true;
+              }
+            }
+          }
+          return false;
         }
       });
       PsiMethodCallExpression[] expressions = new PsiMethodCallExpression[methodCalls.length];

@@ -96,7 +96,7 @@ public class HgBranchPopupActions {
   public static class HgNewBranchAction extends NewBranchAction<HgRepository> {
     @NotNull final HgRepository myPreselectedRepo;
 
-    HgNewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
+    public HgNewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
       super(project, repositories);
       myPreselectedRepo = preselectedRepo;
     }
@@ -107,6 +107,10 @@ public class HgBranchPopupActions {
       if (name == null) {
         return;
       }
+      createNewBranch(name);
+    }
+
+    public void createNewBranch(@NotNull final String name) {
       for (final HgRepository repository : myRepositories) {
         try {
           new HgBranchCreateCommand(myProject, repository.getRoot(), name).execute(new HgCommandResultHandler() {

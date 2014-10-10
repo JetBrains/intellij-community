@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +95,7 @@ public final class PsiElementRef<T extends PsiElement> {
       private final T myElement;
 
       public Real(@NotNull T element) {
-        LOG.assertTrue(element.isValid());
+        PsiUtilCore.ensureValid(element);
         myElement = element;
       }
 

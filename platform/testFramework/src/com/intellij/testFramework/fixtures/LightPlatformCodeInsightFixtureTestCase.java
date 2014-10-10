@@ -63,10 +63,15 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
 
   @Override
   protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-    myModule = null;
-    super.tearDown();
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      myModule = null;
+
+      super.tearDown();
+    }
   }
 
   /**

@@ -22,9 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.TransferToPooledThreadQueue;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -73,7 +71,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Yura Cangea
  */
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
+  private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
+
   private static final int VERSION = 11;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   private static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
@@ -182,7 +181,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       @Override
       public AbstractFileType readScheme(@NotNull final Document document) throws InvalidDataException {
         Element root = document.getRootElement();
-        if (root == null || !ELEMENT_FILETYPE.equals(root.getName())) {
+        if (!ELEMENT_FILETYPE.equals(root.getName())) {
           throw new InvalidDataException();
         }
         Element element = root.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
@@ -950,14 +949,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     final List<FileType> fileTypes = Arrays.asList(getRegisteredFileTypes());
     Collections.sort(fileTypes, new Comparator<FileType>() {
       @Override
-      public int compare(FileType o1, FileType o2) {
+      public int compare(@NotNull FileType o1, @NotNull FileType o2) {
         return o1.getName().compareTo(o2.getName());
       }
     });
     for (FileType type : fileTypes) {
       writeExtensionsMap(map, type, true);
     }
-    JDOMExternalizer.write(parentNode, "fileTypeChangedCounter", fileTypeChangedCount.get());
+
+    int value = fileTypeChangedCount.get();
+    if (value != 0) {
+      JDOMExternalizer.write(parentNode, "fileTypeChangedCounter", value);
+    }
   }
 
   private void writeExtensionsMap(final Element map, final FileType type, boolean specifyTypeName) {

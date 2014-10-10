@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.Collection;
@@ -53,7 +54,7 @@ public class GeneralStatement extends Statement {
   // public methods
   // *****************************************************************************
 
-  public String toJava(int indent) {
+  public String toJava(int indent, BytecodeMappingTracer tracer) {
     String indstr = InterpreterUtil.getIndentString(indent);
     StringBuilder buf = new StringBuilder();
 
@@ -65,7 +66,7 @@ public class GeneralStatement extends Statement {
 
     buf.append(indstr).append("abstract statement {").append(new_line_separator);
     for (int i = 0; i < stats.size(); i++) {
-      buf.append(stats.get(i).toJava(indent + 1));
+      buf.append(stats.get(i).toJava(indent + 1, tracer));
     }
     buf.append(indstr).append("}");
 

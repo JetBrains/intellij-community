@@ -156,7 +156,7 @@ public class FileTemplatesLoader {
     }
   }
 
-  private void loadDefaultsFromRoot(final URL root) throws IOException {
+  public void loadDefaultsFromRoot(final URL root) throws IOException {
     final List<String> children = UrlUtil.getChildrenRelativePaths(root);
     if (children.isEmpty()) {
       return;

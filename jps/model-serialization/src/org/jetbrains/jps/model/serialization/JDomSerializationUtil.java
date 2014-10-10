@@ -33,7 +33,7 @@ public class JDomSerializationUtil {
   @Nullable
   public static Element findComponent(@Nullable Element root, @NonNls String componentName) {
     for (Element element : JDOMUtil.getChildren(root, COMPONENT_ELEMENT)) {
-      if (element.getAttributeValue(NAME_ATTRIBUTE).equals(componentName)) {
+      if (componentName.equals(element.getAttributeValue(NAME_ATTRIBUTE))) {
         return element;
       }
     }

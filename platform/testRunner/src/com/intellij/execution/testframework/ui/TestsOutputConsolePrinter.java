@@ -42,15 +42,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
       };
 
   public TestsOutputConsolePrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView, final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
-    this(testsOutputConsoleView.getConsole(), properties, unboundOutputRoot);
-  }
-
-  /**
-   * @deprecated left for JSTestDriver compatibility
-   */
-  @Deprecated
-  public TestsOutputConsolePrinter(final ConsoleView console, final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
-    myConsole = console;
+    myConsole = testsOutputConsoleView.getConsole();
     myProperties = properties;
     myUnboundOutputRoot = unboundOutputRoot;
     myProperties.addListener(TestConsoleProperties.SCROLL_TO_STACK_TRACE, myPropertyListener);
@@ -148,7 +140,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   public boolean canPause() {
-    return myCurrentTest != null ? myCurrentTest.isInProgress() : false;
+    return myCurrentTest != null && myCurrentTest.isInProgress();
   }
 
   protected void scrollToBeginning() {

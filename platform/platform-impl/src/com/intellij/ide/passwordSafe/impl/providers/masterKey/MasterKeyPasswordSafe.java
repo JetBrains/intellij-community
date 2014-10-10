@@ -26,11 +26,14 @@ import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -207,25 +210,39 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     }
 
     final AsyncFutureResult<Object> future = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-    synchronized (ourEDTLock) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new ExpirableRunnable() {
-        @Override
-        public boolean isExpired() {
-          boolean b = expired.value(null);
-          if (b) future.setException(new ProcessCanceledException());
-          return b;
-        }
+    final ExpirableRunnable runnable = new ExpirableRunnable() {
+      @Override
+      public boolean isExpired() {
+        boolean b = expired.value(null);
+        if (b) future.setException(new ProcessCanceledException());
+        return b;
+      }
 
-        @Override
-        public void run() {
-          try {
-            future.set(computable.compute());
-          }
-          catch (Throwable e) {
-            future.setException(e);
-          }
+      @Override
+      public void run() {
+        try {
+          future.set(computable.compute());
         }
-      });
+        catch (Throwable e) {
+          future.setException(e);
+        }
+      }
+    };
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    synchronized (ourEDTLock) {
+      if (indicator != null && indicator.isModal()) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (!runnable.isExpired()) {
+              runnable.run();
+            }
+          }
+        });
+      }
+      else {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(runnable);
+      }
     }
     try {
       return (T)future.get();

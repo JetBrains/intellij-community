@@ -116,7 +116,10 @@ public class DomStubUsingTest extends DomStubTest {
   public void testFileLoading() throws Exception {
     XmlFile file = prepareFile("foo.xml");
     ((PsiManagerImpl)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
-    DomManager.getDomManager(getProject()).getFileElement(file, Foo.class);
+    DomFileElement<Foo> element = DomManager.getDomManager(getProject()).getFileElement(file, Foo.class);
+    assertNotNull(element);
+    GenericDomValue<String> id = element.getRootElement().getId();
+    assertEquals("foo", id.getValue());
   }
 
   public void testStubbedElementUndefineNotExisting() {

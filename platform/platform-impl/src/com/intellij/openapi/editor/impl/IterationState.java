@@ -120,6 +120,10 @@ public final class IterationState {
   private final Color myReadOnlyColor;
 
   public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection) {
+    this(editor, start, end, useCaretAndSelection, false);
+  }
+
+  public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection, boolean useOnlyFullLineHighlighters) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myDocument = editor.getDocument();
     myStartOffset = start;
@@ -173,10 +177,10 @@ public final class IterationState {
     myCaretRowEnd = caretModel.getVisualLineEnd();
 
     MarkupModelEx editorMarkup = editor.getMarkupModel();
-    myView = new HighlighterSweep(editorMarkup, start, myEnd);
+    myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters);
 
     final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), true);
-    myDoc = new HighlighterSweep(docMarkup, start, myEnd);
+    myDoc = new HighlighterSweep(docMarkup, start, myEnd, useOnlyFullLineHighlighters);
 
     myEndOffset = myStartOffset;
 
@@ -188,11 +192,16 @@ public final class IterationState {
     int i;
     private final RangeHighlighterEx[] highlighters;
 
-    private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end) {
+    private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end, final boolean onlyFullLine) {
       // we have to get all highlighters in advance and sort them by affected offsets
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
       final List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
-      markupModel.processRangeHighlightersOverlappingWith(start, end, new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list));
+      markupModel.processRangeHighlightersOverlappingWith(start, end, new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list) {
+        @Override
+        protected boolean accept(RangeHighlighterEx ex) {
+          return !onlyFullLine || ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
+        }
+      });
       highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(new RangeHighlighterEx[list.size()]);
       Arrays.sort(highlighters, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
 

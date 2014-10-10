@@ -68,6 +68,7 @@ public abstract class TreeClassChooserFactory {
                                                                  PsiClass base,
                                                                  boolean acceptsSelf,
                                                                  boolean acceptInner,
+                                                                 @Nullable
                                                                  Condition<? super PsiClass> additionalCondition);
 
   @NotNull

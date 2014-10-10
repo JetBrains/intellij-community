@@ -100,7 +100,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     try {
       JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
 
-      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, settings);
+      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, myForStubs, false);
       if (toCompile.isEmpty()) {
         return hasFilesToCompileForNextRound(context) ? ExitCode.ADDITIONAL_PASS_REQUIRED : ExitCode.NOTHING_DONE;
       }
@@ -108,7 +108,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         LOG.info("forStubs=" + myForStubs);
       }
 
-      Map<ModuleBuildTarget, String> finalOutputs = getCanonicalModuleOutputs(context, chunk);
+      Map<ModuleBuildTarget, String> finalOutputs = getCanonicalModuleOutputs(context, chunk, this);
       if (finalOutputs == null) {
         return ExitCode.ABORT;
       }
@@ -146,7 +146,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       final GroovycOSProcessHandler handler = runGroovyc(context, chunk, tempFile, settings, classpath, optimizeClassLoading);
 
       Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>>
-        compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, handler);
+        compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, handler.getSuccessfullyCompiled());
 
       if (checkChunkRebuildNeeded(context, handler)) {
         return ExitCode.CHUNK_REBUILD_REQUIRED;
@@ -161,7 +161,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         context.processMessage(message);
       }
 
-      if (!myForStubs && updateDependencies(context, chunk, dirtyFilesHolder, toCompile, compiled, outputConsumer)) {
+      if (!myForStubs && updateDependencies(context, chunk, dirtyFilesHolder, toCompile, compiled, outputConsumer, this)) {
         return ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
       return hasFilesToCompileForNextRound(context) ? ExitCode.ADDITIONAL_PASS_REQUIRED : ExitCode.OK;
@@ -288,15 +288,16 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> processCompiledFiles(CompileContext context,
-                                                                               ModuleChunk chunk,
-                                                                               Map<ModuleBuildTarget, String> generationOutputs,
-                                                                               String compilerOutput, GroovycOSProcessHandler handler)
+  public static Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> processCompiledFiles(CompileContext context,
+                                                                                                             ModuleChunk chunk,
+                                                                                                             Map<ModuleBuildTarget, String> generationOutputs,
+                                                                                                             String compilerOutput,
+                                                                                                             List<GroovycOSProcessHandler.OutputItem> successfullyCompiled)
     throws IOException {
     ProjectDescriptor pd = context.getProjectDescriptor();
 
     final Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> compiled = new THashMap<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>>();
-    for (final GroovycOSProcessHandler.OutputItem item : handler.getSuccessfullyCompiled()) {
+    for (final GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
         LOG.info("compiled=" + item);
       }
@@ -314,7 +315,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
       else {
         if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-          LOG.info("No java source root descriptor for th e item found =" + item);
+          LOG.info("No java source root descriptor for the item found =" + item);
         }
       }
     }
@@ -347,14 +348,16 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  private Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
+  public static Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {
     Map<ModuleBuildTarget, String> finalOutputs = new HashMap<ModuleBuildTarget, String>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File moduleOutputDir = target.getOutputDir();
       if (moduleOutputDir == null) {
-        context.processMessage(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModule().getName()));
+        context.processMessage(new CompilerMessage(builder.getPresentableName(), BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModule().getName()));
         return null;
       }
+      //noinspection ResultOfMethodCallIgnored
+      moduleOutputDir.mkdirs();
       String moduleOutputPath = FileUtil.toCanonicalPath(moduleOutputDir.getPath());
       assert moduleOutputPath != null;
       finalOutputs.put(target, moduleOutputPath.endsWith("/") ? moduleOutputPath : moduleOutputPath + "/");
@@ -395,18 +398,25 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return chunk.getModules().iterator().next().getSdk(JpsJavaSdkType.INSTANCE);
   }
 
-  private List<File> collectChangedFiles(CompileContext context,
-                                                DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder, final JpsGroovySettings settings) throws IOException {
+  static List<File> collectChangedFiles(CompileContext context,
+                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                                        final boolean forStubs, final boolean forEclipse)
+    throws IOException {
 
-    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
+    final JpsJavaCompilerConfiguration configuration =
+      JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
     assert configuration != null;
+
+    final JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
 
     final List<File> toCompile = new ArrayList<File>();
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
       public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
         final String path = file.getPath();
-        if (isGroovyFile(path) && !configuration.isResourceFile(file, sourceRoot.root)) { //todo file type check
-          if (myForStubs && settings.isExcludedFromStubGeneration(file)) {
+        //todo file type check
+        if ((isGroovyFile(path) || forEclipse && path.endsWith(".java")) &&
+            !configuration.isResourceFile(file, sourceRoot.root)) {
+          if (forStubs && settings.isExcludedFromStubGeneration(file)) {
             return true;
           }
 
@@ -418,12 +428,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return toCompile;
   }
 
-  private boolean updateDependencies(CompileContext context,
+  public static boolean updateDependencies(CompileContext context,
                                             ModuleChunk chunk,
                                             DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                             List<File> toCompile,
                                             Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> successfullyCompiled,
-                                            OutputConsumer outputConsumer) throws IOException {
+                                            OutputConsumer outputConsumer, Builder builder) throws IOException {
     final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
     final List<File> successfullyCompiledFiles = new ArrayList<File>();
     if (!successfullyCompiled.isEmpty()) {
@@ -451,7 +461,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
             final String message = "Class dependency information may be incomplete! Error parsing generated class " + item.outputPath;
             LOG.info(message, e);
             context.processMessage(new CompilerMessage(
-              myBuilderName, BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
+              builder.getPresentableName(), BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
             );
           }
           successfullyCompiledFiles.add(srcFile);

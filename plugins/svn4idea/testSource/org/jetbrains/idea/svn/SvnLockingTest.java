@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -119,32 +120,16 @@ public class SvnLockingTest extends TestCase {
 
     try {
       thread1.start();
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException e) {
-        //
-      }
+      TimeoutUtil.sleep(500);
       Assert.assertTrue(operation1.isInsideWrite());
       thread2.start();
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException e) {
-        //
-      }
+      TimeoutUtil.sleep(500);
       Assert.assertFalse(operation2.isInsideWrite());
       operation1.go();
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException e) {
-        //
-      }
+      TimeoutUtil.sleep(500);
       Assert.assertTrue(operation2.isInsideWrite());
       operation2.go();
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException e) {
-        //
-      }
+      TimeoutUtil.sleep(500);
     } finally {
       myLocks.dispose();
       operation1.stop();
@@ -250,11 +235,7 @@ public class SvnLockingTest extends TestCase {
   private void waitForRunning(HangRun operation1, int multiply) {
     int cnt = 10 * multiply;
     while (cnt > 0) {
-      try {
-        Thread.sleep(10 * multiply);
-      } catch (InterruptedException e) {
-        //
-      }
+      TimeoutUtil.sleep(10 * multiply);
       if (operation1.isRunning()) break;
       -- cnt;
     }
@@ -385,12 +366,7 @@ public class SvnLockingTest extends TestCase {
                       public boolean call(int i) {
                         if (myStopped) return false;
                         System.out.println("busy " + myName);
-                        try {
-                          Thread.sleep(10);
-                        }
-                        catch (InterruptedException e) {
-                          //
-                        }
+                        TimeoutUtil.sleep(10);
                         return true;
                       }
                     });

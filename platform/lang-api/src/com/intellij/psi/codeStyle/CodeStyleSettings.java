@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
@@ -42,7 +43,7 @@ import java.util.regex.PatternSyntaxException;
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
   
   private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettings.class.getName());
-  
+
   private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
 
   @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
@@ -164,6 +165,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean USE_SAME_INDENTS = false;
 
   public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES = false;
+
+  public boolean AUTODETECT_INDENTS = true;
 
   @Deprecated
   public final IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
@@ -658,6 +661,68 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     if (indentOptions != null) return indentOptions;
 
     return OTHER_INDENT_OPTIONS;
+  }
+
+  @NotNull
+  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file) {
+    return getIndentOptionsByFile(file, null);
+  }
+
+  @NotNull
+  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange) {
+    return getIndentOptionsByFile(file, formatRange, false);
+  }
+
+  /**
+   * Retrieves indent options for PSI file from an associated document or (if not defined in the document) from file indent options
+   * providers.
+   * @param file  The PSI file to retrieve options for.
+   * @param formatRange The text range within the file for formatting purposes or null if there is either no specific range or multiple
+   *                    ranges. If the range covers the entire file (full reformat), options stored in the document are ignored and
+   *                    indent options are taken from file indent options providers.
+   * @param ignoreDocOptions Ignore options stored in the document and use file indent options providers even if there is no text range
+   *                         or the text range doesn't cover the entire file.
+   * @return Indent options from the associated document or file indent options providers.
+   * @see com.intellij.psi.codeStyle.FileIndentOptionsProvider
+   */
+  @NotNull
+  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange, boolean ignoreDocOptions) {
+    if (file != null && file.isValid()) {
+      boolean isFullReformat = isFileFullyCoveredByRange(file, formatRange);
+      if (!ignoreDocOptions && !isFullReformat) {
+        IndentOptions docOptions = IndentOptions.retrieveFromAssociatedDocument(file);
+        if (docOptions != null) return docOptions;
+      }
+      FileIndentOptionsProvider[] providers = Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME);
+      for (FileIndentOptionsProvider provider : providers) {
+        if (!isFullReformat || provider.useOnFullReformat()) {
+          IndentOptions indentOptions = provider.getIndentOptions(this, file);
+          if (indentOptions != null) {
+            logIndentOptions(file, provider, indentOptions);
+            return indentOptions;
+          }
+        }
+      }
+      return getIndentOptions(file.getFileType());
+    }
+    else
+      return OTHER_INDENT_OPTIONS;
+  }
+
+  private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {
+    return
+      formatRange != null &&
+      file.getTextRange().equals(formatRange);
+  }
+
+  private static void logIndentOptions(@NotNull PsiFile file,
+                                       @NotNull FileIndentOptionsProvider provider,
+                                       @NotNull IndentOptions options) {
+    LOG.debug("Indent options returned by " + provider.getClass().getName() +
+              " for " + file.getName() +
+              ": indent size=" + options.INDENT_SIZE +
+              ", use tabs=" + options.USE_TAB_CHARACTER +
+              ", tab size=" + options.TAB_SIZE);
   }
   
   @Nullable

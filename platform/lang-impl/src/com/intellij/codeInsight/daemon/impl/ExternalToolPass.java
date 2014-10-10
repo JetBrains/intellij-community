@@ -117,16 +117,14 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
       @Override
       public void run() {
         if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-          doFinish(Collections.<HighlightInfo>emptyList());
           return;
         }
         doAnnotate();
 
-        if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+        ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
           @Override
           public void run() {
             if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-              doFinish(Collections.<HighlightInfo>emptyList());
               return;
             }
             collectHighlighters();
@@ -134,15 +132,14 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                List<HighlightInfo> highlights =
-                  documentChanged(modificationStampBefore) || myProject.isDisposed() ? Collections.<HighlightInfo>emptyList() : getHighlights();
-                doFinish(highlights);
+                if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+                  return;
+                }
+                doFinish(getHighlights());
               }
             }, ModalityState.stateForComponent(myEditor.getComponent()));
           }
-        })) {
-          doFinish(Collections.<HighlightInfo>emptyList());
-        }
+        });
       }
     };
 

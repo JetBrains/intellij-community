@@ -45,11 +45,15 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
   }
 
   public void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter) {
+    addDirectoryCopyInstructions(directory, filter, FileCopyingHandler.DEFAULT);
+  }
+
+  public void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter, @NotNull FileCopyingHandler copyingHandler) {
     final boolean copyExcluded = myInstructionsBuilder.getRootsIndex().isExcluded(directory);
     SourceFileFilter fileFilter = new SourceFileFilterImpl(filter, myInstructionsBuilder.getRootsIndex(), myInstructionsBuilder.getIgnoredFileIndex(), copyExcluded);
     DestinationInfo destination = createDirectoryDestination();
     if (destination != null) {
-      ArtifactRootDescriptor descriptor = myInstructionsBuilder.createFileBasedRoot(directory, fileFilter, destination);
+      ArtifactRootDescriptor descriptor = myInstructionsBuilder.createFileBasedRoot(directory, fileFilter, destination, copyingHandler);
       if (myInstructionsBuilder.addDestination(descriptor)) {
         onAdded(descriptor);
       }
@@ -95,13 +99,23 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   @Override
   public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
+    addFileCopyInstruction(file, outputFileName, FileCopyingHandler.DEFAULT);
+  }
+
+  @Override
+  public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName, @NotNull FileCopyingHandler copyingHandler) {
     DestinationInfo destination = createFileDestination(outputFileName);
     if (destination != null) {
-      FileBasedArtifactRootDescriptor root = myInstructionsBuilder.createFileBasedRoot(file, SourceFileFilter.ALL, destination);
+      FileBasedArtifactRootDescriptor root = myInstructionsBuilder.createFileBasedRoot(file, SourceFileFilter.ALL, destination, copyingHandler);
       if (myInstructionsBuilder.addDestination(root)) {
         onAdded(root);
       }
     }
+  }
+
+  @Override
+  public ArtifactInstructionsBuilder getInstructionsBuilder() {
+    return myInstructionsBuilder;
   }
 
   @Nullable

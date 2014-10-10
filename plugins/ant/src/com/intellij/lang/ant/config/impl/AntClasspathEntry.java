@@ -34,6 +34,7 @@ import java.util.List;
 
 public interface AntClasspathEntry {
   Externalizer<AntClasspathEntry> EXTERNALIZER = new Externalizer<AntClasspathEntry>() {
+    @Override
     public AntClasspathEntry readValue(Element dataElement) throws InvalidDataException {
       String pathUrl = dataElement.getAttributeValue(SinglePathEntry.PATH);
       if (pathUrl != null)
@@ -44,6 +45,7 @@ public interface AntClasspathEntry {
       throw new InvalidDataException();
     }
 
+    @Override
     public void writeValue(Element dataElement, AntClasspathEntry entry) throws WriteExternalException {
       entry.writeExternal(dataElement);
     }
@@ -68,6 +70,7 @@ public interface AntClasspathEntry {
       myMapper = mapper;
     }
 
+    @Override
     public List<AntClasspathEntry> create() {
       final VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myParentComponent, null, null);
       return files.length == 0 ? null : ContainerUtil.map(files, myMapper);

@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -33,14 +34,17 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
@@ -74,7 +78,7 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Configurable.NoScroll {
+public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract implements Configurable.NoMargin, Configurable.NoScroll {
 
   private final Project myProject;
   private final CfgInfo[] myInfos;
@@ -86,16 +90,15 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
   private final List<AnAction> myAddActions = ContainerUtil.newArrayList();
   private final JLabel myCountLabel;
 
-  private Configurable[] myConfigurables;
   private Configuration myConfiguration;
 
   public InjectionsSettingsUI(final Project project, final Configuration configuration) {
     myProject = project;
     myConfiguration = configuration;
 
-    final CfgInfo currentInfo = new CfgInfo(configuration, "project");
+    final CfgInfo currentInfo = new CfgInfo(configuration, "Project");
     myInfos = configuration instanceof Configuration.Prj ?
-              new CfgInfo[]{new CfgInfo(((Configuration.Prj)configuration).getParentConfiguration(), "global"), currentInfo}
+              new CfgInfo[]{new CfgInfo(((Configuration.Prj)configuration).getParentConfiguration(), "IDE"), currentInfo}
                                                          : new CfgInfo[]{currentInfo};
 
     myRoot = new JPanel(new BorderLayout());
@@ -105,6 +108,9 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myInjectionsTable);
     createActions(decorator);
+    if (ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")) {
+      decorator.setPanelBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 0, 1, 0));
+    }
 
     //myRoot.add(new TitledSeparator("Languages injection places"), BorderLayout.NORTH);
     myRoot.add(decorator.createPanel(), BorderLayout.CENTER);
@@ -194,7 +200,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final InjInfo injection = getSelectedInjection();
         if (injection != null) {
           addInjection(injection.injection.copy());
@@ -206,46 +212,46 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
     decorator.addExtraAction(new DumbAwareActionButton("Enable Selected Injections", "Enable Selected Injections", PlatformIcons.SELECT_ALL_ICON) {
 
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         performSelectedInjectionsEnabled(true);
       }
     });
     decorator.addExtraAction(new DumbAwareActionButton("Disable Selected Injections", "Disable Selected Injections", PlatformIcons.UNSELECT_ALL_ICON) {
 
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           performSelectedInjectionsEnabled(false);
         }
       });
 
     new DumbAwareAction("Toggle") {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myInjectionsTable);
         e.getPresentation().setEnabled(supply == null || !supply.isPopupActive());
       }
 
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         performToggleAction();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myInjectionsTable);
 
     if (myInfos.length > 1) {
-      AnActionButton shareAction = new DumbAwareActionButton("Make Global", null, PlatformIcons.IMPORT_ICON) {
+      AnActionButton shareAction = new DumbAwareActionButton("Move to IDE Scope", null, PlatformIcons.IMPORT_ICON) {
         {
           addCustomUpdater(new AnActionButtonUpdater() {
             @Override
             public boolean isEnabled(AnActionEvent e) {
               CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
-              e.getPresentation().setText(cfg == getDefaultCfgInfo() ? "Make Global" : "Move to Project");
+              e.getPresentation().setText(cfg == getDefaultCfgInfo() ? "Move to IDE Scope" : "Move to Project Scope");
               return cfg != null;
             }
           });
         }
 
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           final List<InjInfo> injections = getSelectedInjections();
           final CfgInfo cfg = getTargetCfgInfo(injections);
           if (cfg == null) return;
@@ -283,7 +289,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
     decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
 
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         doImportAction(e.getDataContext());
         updateCountLabel();
       }
@@ -291,7 +297,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
     decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.Actions.Export) {
 
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final List<BaseInjection> injections = getInjectionList(getSelectedInjections());
         final VirtualFileWrapper wrapper = FileChooserFactory.getInstance().createSaveFileDialog(
           new FileSaverDescriptor("Export Selected Injections to File...", "", "xml"), myProject).save(null, null);
@@ -372,13 +378,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
   }
 
   @Override
-  public boolean isVisible() {
-    return true;
-  }
-
-  @Override
-  public Configurable[] getConfigurables() {
-    if (myConfigurables == null) {
+  protected Configurable[] buildConfigurables() {
       final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         ContainerUtil.addAll(configurables, support.createSettings(myProject, myConfiguration));
@@ -388,21 +388,13 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
           return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
         }
       });
-      myConfigurables = configurables.toArray(new Configurable[configurables.size()]);
-    }
-
-    return myConfigurables;
+      return configurables.toArray(new Configurable[configurables.size()]);
   }
 
   @NotNull
   @Override
   public String getId() {
     return "IntelliLang.Configuration";
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   private static void sortInjections(final List<BaseInjection> injections) {
@@ -427,9 +419,6 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
     }
     myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
     updateCountLabel();
-  }
-
-  public void disposeUIResources() {
   }
 
   public void apply() {
@@ -646,10 +635,10 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
     }};
     if (myInfos.length > 1) {
       final TableCellRenderer typeRenderer = createTypeRenderer();
-      return ArrayUtil.append(columnInfos, new ColumnInfo<InjInfo, String>("Type") {
+      return ArrayUtil.append(columnInfos, new ColumnInfo<InjInfo, String>("Scope") {
         @Override
         public String valueOf(final InjInfo info) {
-          return info.bundled ? "bundled" : info.cfgInfo.title;
+          return info.bundled ? "Built-in" : info.cfgInfo.title;
         }
 
         @Override

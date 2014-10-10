@@ -246,6 +246,12 @@
       min-usage-count="10"
       first-show="2"
       successive-show="4"/>
+    <feature
+      id="scratch"
+      tip-file="Scratch.html"
+      min-usage-count="10"
+      first-show="2"
+      successive-show="3"/>
   </group>
 
   <group id="codeassists">

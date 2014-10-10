@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.util.TimeoutUtil;
 
 import javax.swing.*;
 
@@ -37,10 +38,7 @@ public class ShowDelayedMessageInternalAction extends AnAction implements DumbAw
         super.run();
 
         //noinspection EmptyCatchBlock
-        try {
-          Thread.sleep(3000);
-        }
-        catch (InterruptedException e1) {} // does not matter for an internal action
+        TimeoutUtil.sleep(3000);
 
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {

@@ -244,7 +244,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         }
       }
 
-      if (options.isEmpty()) {
+      if (configurables != null && options.isEmpty()) {
         hits.getNameHits().add(each);
         hits.getNameFullHits().add(each);
       }

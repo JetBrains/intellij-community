@@ -2,11 +2,14 @@ package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -70,5 +73,18 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
     return ExternalSystemBundle.message("progress.update.text", getExternalSystemId().getReadableName(), text);
+  }
+
+  @Override
+  protected void setState(@NotNull ExternalSystemTaskState state) {
+    super.setState(state);
+    if (state.isStopped()) {
+      InternalExternalProjectInfo projectInfo =
+        new InternalExternalProjectInfo(getExternalSystemId(), getExternalProjectPath(), getExternalProject());
+      final long currentTimeMillis = System.currentTimeMillis();
+      projectInfo.setLastImportTimestamp(currentTimeMillis);
+      projectInfo.setLastSuccessfulImportTimestamp(state == ExternalSystemTaskState.FAILED ? -1 : currentTimeMillis);
+      ProjectDataManager.getInstance().updateExternalProjectData(getIdeProject(), projectInfo);
+    }
   }
 }

@@ -15,6 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.execution;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalProject;
@@ -24,12 +27,14 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
@@ -90,25 +95,35 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     if (externalProject == null) return false;
 
     if (includeProduction) {
-      addOutputRoots(externalProject.getSourceSets().get("main"), ExternalSystemSourceType.RESOURCE, result);
+      addOutputModuleRoots(externalProject.getSourceSets().get("main"), ExternalSystemSourceType.RESOURCE, result);
     }
 
     if (includeTests) {
-      addOutputRoots(externalProject.getSourceSets().get("test"), ExternalSystemSourceType.TEST_RESOURCE, result);
+      addOutputModuleRoots(externalProject.getSourceSets().get("test"), ExternalSystemSourceType.TEST_RESOURCE, result);
     }
 
     return true;
   }
 
-  private static void addOutputRoots(@Nullable ExternalSourceSet externalSourceSet,
-                                     @NotNull ExternalSystemSourceType sourceType,
-                                     @NotNull Collection<String> result) {
+  private static void addOutputModuleRoots(@Nullable ExternalSourceSet externalSourceSet,
+                                           @NotNull ExternalSystemSourceType sourceType,
+                                           @NotNull Collection<String> result) {
     if (externalSourceSet == null) return;
     final ExternalSourceDirectorySet directorySet = externalSourceSet.getSources().get(sourceType);
     if (directorySet == null) return;
 
     if (directorySet.isCompilerOutputPathInherited()) return;
-
-    result.add(VfsUtilCore.pathToUrl(directorySet.getOutputDir().getAbsolutePath()));
+    final String path = directorySet.getOutputDir().getAbsolutePath();
+    VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(path);
+    if (virtualFile == null) {
+      if(!directorySet.getOutputDir().exists()){
+        FileUtil.createDirectory(directorySet.getOutputDir());
+      }
+      ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+      if (app.isDispatchThread() || !app.holdsReadLock()) {
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directorySet.getOutputDir());
+      }
+    }
+    result.add(VfsUtilCore.pathToUrl(path));
   }
 }

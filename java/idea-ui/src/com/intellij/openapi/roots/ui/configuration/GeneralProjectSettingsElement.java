@@ -20,6 +20,9 @@ import com.intellij.compiler.ModuleSourceSet;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.util.Condition;
@@ -54,6 +57,19 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
 
   @Override
   public void check(ProjectStructureProblemsHolder problemsHolder) {
+    final Project project = myContext.getProject();
+    if (containsModuleWithInheritedSdk()) {
+      ProjectSdksModel model = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+      Sdk sdk = model.getProjectSdk();
+      if (sdk == null) {
+        PlaceInProjectStructureBase place = new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createProjectConfigurablePlace(), this);
+        problemsHolder.registerProblem(ProjectBundle.message("project.roots.project.jdk.problem.message"), null,
+                                       ProjectStructureProblemType.error("project-sdk-not-defined"), place,
+                                       null);
+      }
+    }
+
+
     Graph<ModuleSourceSet> graph = ModuleCompilerUtil.createModuleSourceDependenciesGraph(myContext.getModulesConfigurator());
     Collection<Chunk<ModuleSourceSet>> allSourceSetCycles = extractCycles(
       GraphAlgorithms.getInstance().computeStronglyConnectedComponents(graph));
@@ -71,8 +87,8 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
       cycles.add(StringUtil.join(names, ", "));
     }
     if (!cycles.isEmpty()) {
-      final Project project = myContext.getProject();
-      final PlaceInProjectStructureBase place = new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulesPlace(), this);
+      final PlaceInProjectStructureBase place =
+        new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulesPlace(), this);
       final String message;
       final String description;
       if (cycles.size() > 1) {
@@ -89,9 +105,20 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
         description = null;
       }
       problemsHolder.registerProblem(new ProjectStructureProblemDescription(message, description, place,
-                                                                            ProjectStructureProblemType.warning("module-circular-dependency"),
+                                                                            ProjectStructureProblemType
+                                                                              .warning("module-circular-dependency"),
                                                                             Collections.<ConfigurationErrorQuickFix>emptyList()));
     }
+  }
+
+  private boolean containsModuleWithInheritedSdk() {
+    for (Module module : myContext.getModules()) {
+      ModuleRootModel rootModel = myContext.getModulesConfigurator().getRootModel(module);
+      if (rootModel.isSdkInherited()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static Collection<Chunk<ModuleSourceSet>> extractCycles(Collection<Chunk<ModuleSourceSet>> chunks) {

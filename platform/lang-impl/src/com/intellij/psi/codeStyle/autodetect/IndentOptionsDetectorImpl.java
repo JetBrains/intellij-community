@@ -64,14 +64,14 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     if (linesWithTabs > linesWithWhiteSpaceIndent) {
       setUseTabs(indentOptions, true);
     }
-    else {
+    else if (linesWithWhiteSpaceIndent > linesWithTabs) {
       setUseTabs(indentOptions, false);
 
       int newIndentSize = getPositiveIndentSize(stats);
       if (newIndentSize > 0) {
         if (indentOptions.INDENT_SIZE != newIndentSize) {
           indentOptions.INDENT_SIZE = newIndentSize;
-          LOG.info("Detected indent size: " + newIndentSize + " for file " + myFile);
+          LOG.debug("Detected indent size: " + newIndentSize + " for file " + myFile);
         }
       }
     }
@@ -80,7 +80,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private void setUseTabs(@NotNull IndentOptions indentOptions, boolean useTabs) {
     if (indentOptions.USE_TAB_CHARACTER != useTabs) {
       indentOptions.USE_TAB_CHARACTER = useTabs;
-      LOG.info("Tab usage set to " + useTabs + " for file " + myFile);
+      LOG.debug("Tab usage set to " + useTabs + " for file " + myFile);
     }
   }
 
@@ -99,8 +99,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     }
 
     if (maxUsedIndentSize <= MAX_INDENT_TO_DETECT) {
-      int totalUsagesWithoutZeroIndent = stats.getTotalLinesWithLeadingSpaces() - stats.getTimesIndentUsed(0);
-      double usageRate = (double)maxUsedIndentInfo.getTimesUsed() / totalUsagesWithoutZeroIndent;
+      double usageRate = (double)maxUsedIndentInfo.getTimesUsed() / stats.getTotalLinesWithLeadingSpaces();
       if (usageRate > RATE_THRESHOLD) {
         return maxUsedIndentSize;
       }

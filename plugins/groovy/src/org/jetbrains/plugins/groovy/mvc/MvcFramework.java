@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck;
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
@@ -62,8 +59,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import javax.swing.*;
 import java.io.File;
@@ -345,7 +342,7 @@ public abstract class MvcFramework {
                                                       @NotNull MvcCommand command) throws ExecutionException;
 
   protected static void ensureRunConfigurationExists(Module module, ConfigurationType configurationType, String name) {
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(module.getProject());
+    final RunManager runManager = RunManager.getInstance(module.getProject());
     for (final RunConfiguration runConfiguration : runManager.getConfigurationsList(configurationType)) {
       if (runConfiguration instanceof MvcRunConfiguration && ((MvcRunConfiguration)runConfiguration).getModule() == module) {
         return;
@@ -358,7 +355,7 @@ public abstract class MvcFramework {
     final MvcRunConfiguration configuration = (MvcRunConfiguration)runSettings.getConfiguration();
     configuration.setModule(module);
     runManager.addConfiguration(runSettings, false);
-    runManager.setActiveConfiguration(runSettings);
+    runManager.setSelectedConfiguration(runSettings);
 
     RunManagerEx.disableTasks(module.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);
   }

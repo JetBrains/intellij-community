@@ -19,8 +19,17 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.testFramework.VfsTestUtil;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * @author Vladislav.Soroka
@@ -34,11 +43,11 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
 
     compileModules("project");
 
-    assertSameLinesWithFile(getProjectPath() + "/target/MANIFEST.MF",
-                            "Manifest-Version: 1.0\n" +
-                            "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
-                            "Built-By: " + System.getProperty("user.name") + "\n" +
-                            "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName());
+    assertUnorderedLinesWithFile(getProjectPath() + "/target/MANIFEST.MF",
+                                 "Manifest-Version: 1.0\n" +
+                                 "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
+                                 "Built-By: " + System.getProperty("user.name") + "\n" +
+                                 "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   public void testClasspathEntry() throws Exception {
@@ -73,12 +82,12 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
 
     compileModules("project");
 
-    assertSameLinesWithFile(getProjectPath() + "/target/MANIFEST.MF",
-                            "Manifest-Version: 1.0\n" +
-                            "Class-Path: lib/other-project-1.jar\n" +
-                            "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
-                            "Built-By: " + System.getProperty("user.name") + "\n" +
-                            "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName());
+    assertUnorderedLinesWithFile(getProjectPath() + "/target/MANIFEST.MF",
+                                 "Manifest-Version: 1.0\n" +
+                                 "Class-Path: lib/other-project-1.jar\n" +
+                                 "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
+                                 "Built-By: " + System.getProperty("user.name") + "\n" +
+                                 "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   public void testDefaultEntries() throws Exception {
@@ -113,14 +122,14 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
 
     compileModules("project");
 
-    assertSameLinesWithFile(getProjectPath() + "/target/MANIFEST.MF",
-                            "Manifest-Version: 1.0\n" +
-                            "Implementation-Version: 1\n" +
-                            "Implementation-Vendor-Id: test\n" +
-                            "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
-                            "Built-By: " + System.getProperty("user.name") + "\n" +
-                            "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName() + "\n" +
-                            "Specification-Version: 1");
+    assertUnorderedLinesWithFile(getProjectPath() + "/target/MANIFEST.MF",
+                                 "Manifest-Version: 1.0\n" +
+                                 "Implementation-Version: 1\n" +
+                                 "Implementation-Vendor-Id: test\n" +
+                                 "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
+                                 "Built-By: " + System.getProperty("user.name") + "\n" +
+                                 "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName() + "\n" +
+                                 "Specification-Version: 1");
   }
 
 
@@ -148,13 +157,13 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
 
     compileModules("project");
 
-    assertSameLinesWithFile(getProjectPath() + "/target/MANIFEST.MF",
-                            "Manifest-Version: 1.0\n" +
-                            "otherEntry: other entry value\n" +
-                            "Dependencies: some.package\n" +
-                            "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
-                            "Built-By: " + System.getProperty("user.name") + "\n" +
-                            "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName());
+    assertUnorderedLinesWithFile(getProjectPath() + "/target/MANIFEST.MF",
+                                 "Manifest-Version: 1.0\n" +
+                                 "otherEntry: other entry value\n" +
+                                 "Dependencies: some.package\n" +
+                                 "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
+                                 "Built-By: " + System.getProperty("user.name") + "\n" +
+                                 "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   public void testManifestSections() throws Exception {
@@ -191,17 +200,17 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
 
     compileModules("project");
 
-    assertSameLinesWithFile(getProjectPath() + "/target/MANIFEST.MF",
-                            "Manifest-Version: 1.0\n" +
-                            "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
-                            "Built-By: " + System.getProperty("user.name") + "\n" +
-                            "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName() + "\n" +
-                            "\n" +
-                            "Name: org/test/SomeOther.class\n" +
-                            "Java-Bean: true\n" +
-                            "\n" +
-                            "Name: org/test/Some.class\n" +
-                            "Java-Bean: true");
+    assertUnorderedLinesWithFile(getProjectPath() + "/target/MANIFEST.MF",
+                                 "Manifest-Version: 1.0\n" +
+                                 "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
+                                 "Built-By: " + System.getProperty("user.name") + "\n" +
+                                 "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName() + "\n" +
+                                 "\n" +
+                                 "Name: org/test/SomeOther.class\n" +
+                                 "Java-Bean: true\n" +
+                                 "\n" +
+                                 "Name: org/test/Some.class\n" +
+                                 "Java-Bean: true");
   }
 
   @Nullable
@@ -216,5 +225,27 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
     }
 
     return jdkVersion;
+  }
+
+  private static void assertUnorderedLinesWithFile(String filePath, String actualText) {
+    String fileText;
+    try {
+      if (OVERWRITE_TESTDATA) {
+        VfsTestUtil.overwriteTestData(filePath, actualText);
+        System.out.println("File " + filePath + " created.");
+      }
+      fileText = FileUtil.loadFile(new File(filePath), CharsetToolkit.UTF8);
+    }
+    catch (FileNotFoundException e) {
+      VfsTestUtil.overwriteTestData(filePath, actualText);
+      throw new AssertionFailedError("No output text found. File " + filePath + " created.");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    String expected = StringUtil.convertLineSeparators(fileText.trim());
+    String actual = StringUtil.convertLineSeparators(actualText.trim());
+
+    assertUnorderedElementsAreEqual(expected.split("\n"), actual.split("\n"));
   }
 }

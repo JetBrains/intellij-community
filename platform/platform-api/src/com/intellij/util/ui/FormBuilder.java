@@ -176,7 +176,7 @@ public class FormBuilder {
       c.weighty = getWeightY(component);
       c.fill = getFill(component);
       c.anchor = WEST;
-      c.insets = new Insets(topInset, myIndent, 0, 0);
+      c.insets = new Insets(topInset, 0, 0, 0);
 
       myPanel.add(component, c);
 

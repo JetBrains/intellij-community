@@ -56,13 +56,11 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
       return;
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, var)) return;
     if (var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)((PsiParameter)var).getDeclarationScope();
       final PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-       if (superMethod != null) {
-         var = superMethod.getParameterList().getParameters()[method.getParameterList().getParameterIndex((PsiParameter)var)];
-       }
+      if (superMethod == null) return;
+      var = superMethod.getParameterList().getParameters()[method.getParameterList().getParameterIndex((PsiParameter)var)];
     }
 
     new InvertBooleanDialog(var).show();
@@ -87,9 +85,8 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
     }
 
     final PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-    if (superMethod != null) method = superMethod;
-
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
+    if (superMethod == null) return;
+    method = superMethod;
 
     new InvertBooleanDialog(method).show();
   }

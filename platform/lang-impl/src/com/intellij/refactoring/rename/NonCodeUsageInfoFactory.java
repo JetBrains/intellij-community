@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,14 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.refactoring.util.NonCodeUsageInfo;
-import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NonCodeUsageInfoFactory implements TextOccurrencesUtil.UsageInfoFactory {
+public class NonCodeUsageInfoFactory implements UsageInfoFactory {
   private final PsiElement myElement;
   private final String myStringToReplace;
 

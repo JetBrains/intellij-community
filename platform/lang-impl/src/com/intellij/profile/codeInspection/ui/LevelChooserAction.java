@@ -22,11 +22,12 @@ import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.SeverityEditorDialog;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +38,7 @@ import java.util.TreeSet;
 /**
  * @author Dmitry Batkovich
  */
-public abstract class LevelChooserAction extends ComboBoxAction {
+public abstract class LevelChooserAction extends ComboBoxAction implements DumbAware {
 
   private final SeverityRegistrar mySeverityRegistrar;
   private HighlightSeverity myChosen = null;
@@ -62,7 +63,7 @@ public abstract class LevelChooserAction extends ComboBoxAction {
       group.add(action);
     }
     group.addSeparator();
-    group.add(new AnAction("Edit severities...") {
+    group.add(new DumbAwareAction("Edit severities...") {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         final SeverityEditorDialog dlg = new SeverityEditorDialog(anchor, myChosen, mySeverityRegistrar);
@@ -101,7 +102,7 @@ public abstract class LevelChooserAction extends ComboBoxAction {
     templatePresentation.setIcon(HighlightDisplayLevel.find(severity).getIcon());
   }
 
-  private class HighlightSeverityAction extends AnAction {
+  private class HighlightSeverityAction extends DumbAwareAction {
     private final HighlightSeverity mySeverity;
 
     public HighlightSeverity getSeverity() {

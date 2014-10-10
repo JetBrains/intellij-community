@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -46,8 +47,9 @@ public abstract class XmlSuppressionProvider implements InspectionSuppressor {
 
   public abstract void suppressForTag(@NotNull PsiElement element, @NotNull String inspectionId);
 
+  @NotNull
   @Override
-  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, String toolShortName) {
+  public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolShortName) {
     return XmlSuppressableInspectionTool.getSuppressFixes(toolShortName, this);
   }
 

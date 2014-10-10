@@ -321,14 +321,7 @@ public class BytecodeAnalysisConverter {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     ArrayList<HKey> keys = new ArrayList<HKey>(parameters.length * 2 + 1);
     for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
-      PsiType parameterType = parameter.getType();
-      if (parameterType instanceof PsiPrimitiveType) {
-        if (PsiType.BOOLEAN.equals(parameterType)) {
-          keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.False))));
-          keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.True))));
-        }
-      } else {
+      if (!(parameters[i].getType() instanceof PsiPrimitiveType)) {
         keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.NotNull))));
         keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.Null))));
       }

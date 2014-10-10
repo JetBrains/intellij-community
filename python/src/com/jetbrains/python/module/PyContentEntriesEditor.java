@@ -200,10 +200,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
     @Override
     public void deleteContentFolder(ContentEntry contentEntry, ContentFolder folder) {
       if (folder instanceof TemplateRootFolder) {
-        final VirtualFile file = folder.getFile();
-        if (file != null) {
-          removeTemplateRoot(file);
-        }
+        removeTemplateRoot(folder.getUrl());
       }
       else {
         super.deleteContentFolder(contentEntry, folder);
@@ -217,8 +214,8 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
       update();
     }
 
-    public void removeTemplateRoot(@NotNull final VirtualFile file) {
-      final VirtualFilePointer root = getTemplateRoot(file);
+    public void removeTemplateRoot(@NotNull final String url) {
+      final VirtualFilePointer root = getTemplateRoot(url);
       if (root != null) {
         myTemplateRoots.remove(getContentEntry(), root);
         myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
@@ -227,13 +224,13 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
     }
 
     public boolean hasTemplateRoot(@NotNull final VirtualFile file) {
-      return getTemplateRoot(file) != null;
+      return getTemplateRoot(file.getUrl()) != null;
     }
 
     @Nullable
-    public VirtualFilePointer getTemplateRoot(@NotNull final VirtualFile file) {
+    public VirtualFilePointer getTemplateRoot(@NotNull final String url) {
       for (VirtualFilePointer filePointer : myTemplateRoots.get(getContentEntry())) {
-        if (Comparing.equal(filePointer.getFile(), file)) {
+        if (Comparing.equal(filePointer.getUrl(), url)) {
           return filePointer;
         }
       }
@@ -335,7 +332,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
             }
             else {
               if (wasSelected) {
-                getContentEntryEditor().removeTemplateRoot(selectedFile);
+                getContentEntryEditor().removeTemplateRoot(selectedFile.getUrl());
               }
             }
           }

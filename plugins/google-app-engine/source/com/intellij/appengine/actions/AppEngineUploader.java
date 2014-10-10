@@ -16,6 +16,7 @@
 package com.intellij.appengine.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.appengine.cloud.AppEngineAuthData;
 import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.appengine.descriptor.dom.AppEngineWebApp;
 import com.intellij.appengine.facet.AppEngineAccountDialog;
@@ -23,25 +24,13 @@ import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -91,19 +80,17 @@ public class AppEngineUploader {
   private final Artifact myArtifact;
   private final AppEngineFacet myAppEngineFacet;
   private final AppEngineSdk mySdk;
-  private final String myEmail;
-  private final String myPassword;
+  private final AppEngineAuthData myAuthData;
   private final ServerRuntimeInstance.DeploymentOperationCallback myCallback;
   private final LoggingHandler myLoggingHandler;
 
-  private AppEngineUploader(Project project, Artifact artifact, AppEngineFacet appEngineFacet, AppEngineSdk sdk, String email,
-                            String password, ServerRuntimeInstance.DeploymentOperationCallback callback, @Nullable LoggingHandler loggingHandler) {
+  private AppEngineUploader(Project project, Artifact artifact, AppEngineFacet appEngineFacet, AppEngineSdk sdk, AppEngineAuthData authData,
+                            ServerRuntimeInstance.DeploymentOperationCallback callback, @NotNull LoggingHandler loggingHandler) {
     myProject = project;
     myArtifact = artifact;
     myAppEngineFacet = appEngineFacet;
     mySdk = sdk;
-    myEmail = email;
-    myPassword = password;
+    myAuthData = authData;
     myCallback = callback;
     myLoggingHandler = loggingHandler;
   }
@@ -111,8 +98,8 @@ public class AppEngineUploader {
   @Nullable
   public static AppEngineUploader createUploader(@NotNull Project project,
                                                  @NotNull Artifact artifact,
-                                                 @Nullable AppEngineServerConfiguration configuration,
-                                                 @NotNull ServerRuntimeInstance.DeploymentOperationCallback callback, @Nullable LoggingHandler loggingHandler) {
+                                                 @NotNull AppEngineServerConfiguration configuration,
+                                                 @NotNull ServerRuntimeInstance.DeploymentOperationCallback callback, @NotNull LoggingHandler loggingHandler) {
     final String explodedPath = artifact.getOutputPath();
     if (explodedPath == null) {
       callback.errorOccurred("Output path isn't specified for '" + artifact.getName() + "' artifact");
@@ -154,26 +141,10 @@ public class AppEngineUploader {
       }
     }
 
-    String password = null;
-    String email = null;
-    try {
-      email = AppEngineAccountDialog.getStoredEmail(configuration, project);
-      password = AppEngineAccountDialog.getStoredPassword(project, email);
-    }
-    catch (PasswordSafeException e) {
-      LOG.info("Cannot load stored password: " + e.getMessage());
-      LOG.info(e);
-    }
-    if (StringUtil.isEmpty(email) || StringUtil.isEmpty(password)) {
-      final AppEngineAccountDialog dialog = new AppEngineAccountDialog(project, configuration);
-      dialog.show();
-      if (!dialog.isOK()) return null;
+    AppEngineAuthData authData = AppEngineAccountDialog.createAuthData(project, configuration);
+    if (authData == null) return null;
 
-      email = dialog.getEmail();
-      password = dialog.getPassword();
-    }
-
-    return new AppEngineUploader(project, artifact, appEngineFacet, sdk, email, password, callback, loggingHandler);
+    return new AppEngineUploader(project, artifact, appEngineFacet, sdk, authData, callback, loggingHandler);
   }
 
   public void startUploading() {
@@ -231,7 +202,14 @@ public class AppEngineUploader {
       }
 
       final ParametersList programParameters = parameters.getProgramParametersList();
-      programParameters.add("--email=" + myEmail);
+      if (myAuthData.isOAuth2()) {
+        programParameters.add("--oauth2");
+      }
+      else {
+        programParameters.add("--email=" + myAuthData.getEmail());
+        programParameters.add("--passin");
+      }
+      programParameters.add("--no_cookies");
       programParameters.add("update");
       programParameters.add(FileUtil.toSystemDependentName(myArtifact.getOutputPath()));
 
@@ -244,26 +222,8 @@ public class AppEngineUploader {
     }
 
     final ProcessHandler processHandler = new OSProcessHandler(process, commandLine.getCommandLineString());
-    if (myLoggingHandler == null) {
-      final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      final ConsoleView console = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
-      final RunnerLayoutUi ui = RunnerLayoutUi.Factory.getInstance(myProject).create("Upload", "Upload Application", "Upload Application", myProject);
-      final DefaultActionGroup group = new DefaultActionGroup();
-      ui.getOptions().setLeftToolbar(group, ActionPlaces.UNKNOWN);
-      ui.addContent(ui.createContent("upload", console.getComponent(), "Upload Application", null, console.getPreferredFocusableComponent()));
-
-      processHandler.addProcessListener(new MyProcessListener(processHandler, console, null));
-      console.attachToProcess(processHandler);
-      final RunContentDescriptor contentDescriptor = new RunContentDescriptor(console, processHandler, ui.getComponent(), "Upload Application");
-      group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));
-      group.add(new CloseAction(executor, contentDescriptor, myProject));
-
-      ExecutionManager.getInstance(myProject).getContentManager().showRunContent(executor, contentDescriptor);
-    }
-    else {
-      processHandler.addProcessListener(new MyProcessListener(processHandler, null, myLoggingHandler));
-      myLoggingHandler.attachToProcess(processHandler);
-    }
+    processHandler.addProcessListener(new MyProcessListener(processHandler, null, myLoggingHandler));
+    myLoggingHandler.attachToProcess(processHandler);
     processHandler.startNotify();
   }
 
@@ -281,15 +241,15 @@ public class AppEngineUploader {
 
     @Override
     public void onTextAvailable(ProcessEvent event, Key outputType) {
-      if (!myPasswordEntered && !outputType.equals(ProcessOutputTypes.SYSTEM) && event.getText().contains(myEmail)) {
+      if (!myAuthData.isOAuth2() && !myPasswordEntered && !outputType.equals(ProcessOutputTypes.SYSTEM) && event.getText().contains(myAuthData.getEmail())) {
         myPasswordEntered = true;
         final OutputStream processInput = myProcessHandler.getProcessInput();
         if (processInput != null) {
           //noinspection IOResourceOpenedButNotSafelyClosed
           final PrintWriter input = new PrintWriter(processInput);
-          input.println(myPassword);
+          input.println(myAuthData.getPassword());
           input.flush();
-          String message = StringUtil.repeatSymbol('*', myPassword.length()) + "\n";
+          String message = StringUtil.repeatSymbol('*', myAuthData.getPassword().length()) + "\n";
           if (myConsole != null) {
             myConsole.print(message, ConsoleViewContentType.USER_INPUT);
           }

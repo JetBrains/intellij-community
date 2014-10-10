@@ -382,6 +382,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
     for (final PsiField field : psiClass.getFields()) {
       if (field == element) continue;
+      if (StringUtil.isEmpty(field.getName())) continue;
 
       PsiUtilCore.ensureValid(field);
       PsiType fieldType = field.getType();

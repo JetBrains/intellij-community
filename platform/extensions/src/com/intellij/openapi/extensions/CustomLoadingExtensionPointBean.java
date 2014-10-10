@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.openapi.extensions;
 
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
 /**
@@ -29,7 +30,8 @@ public class CustomLoadingExtensionPointBean extends AbstractExtensionPointBean 
   @Attribute("factoryArgument")
   public String factoryArgument;
 
-  protected Object instantiateExtension(final String implementationClass, final PicoContainer picoContainer) throws ClassNotFoundException {
+  @NotNull
+  protected Object instantiateExtension(String implementationClass, @NotNull PicoContainer picoContainer) throws ClassNotFoundException {
     if (factoryClass != null) {
       ExtensionFactory factory = instantiate(factoryClass, picoContainer);
       return factory.createInstance(factoryArgument, implementationClass);

@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -131,7 +132,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected MasterDetailsComponent(MasterDetailsState state) {
     myState = state;
 
-    mySplitter = isNewProjectSettings() ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
+    mySplitter = isNewProjectSettings() || isNewSettingsView() ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
     mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
 
@@ -151,6 +152,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     catch (ClassNotFoundException ignored) {
       return false;
     }
+  }
+
+  private boolean isNewSettingsView() {
+    return ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view");
   }
 
   protected void reInitWholePanelIfNeeded() {
@@ -184,7 +189,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     };
 
-    if (isNewProjectSettings()) {
+    if (isNewProjectSettings() || isNewSettingsView()) {
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree);
       DefaultActionGroup group = createToolbarActionGroup();
       if (group != null) {
@@ -202,6 +207,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
     final JPanel right = new JPanel(new BorderLayout());
     right.add(myDetails.getComponent(), BorderLayout.CENTER);
+    if (!isNewProjectSettings() && isNewSettingsView()) {
+      right.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    }
 
     mySplitter.setSecondComponent(right);
 
@@ -295,7 +303,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   private void initToolbar() {
-    if (isNewProjectSettings()) return;
+    if (isNewProjectSettings() || isNewSettingsView()) return;
     DefaultActionGroup group = createToolbarActionGroup();
     if (group != null) {
       final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();

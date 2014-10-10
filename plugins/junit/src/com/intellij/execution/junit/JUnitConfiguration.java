@@ -310,7 +310,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     EnvironmentVariablesComponent.readExternal(element, getPersistentData().getEnvs());
     final Element patternsElement = element.getChild(PATTERNS_EL_NAME);
     if (patternsElement != null) {
-      final Set<String> tests = new LinkedHashSet<String>();
+      final LinkedHashSet<String> tests = new LinkedHashSet<String>();
       for (Object o : patternsElement.getChildren(PATTERN_EL_NAME)) {
         Element patternElement = (Element)o;
         tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
@@ -403,7 +403,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     myData.TEST_OBJECT = TEST_PATTERN;
-    final Set<String> patterns = new HashSet<String>();
+    final LinkedHashSet<String> patterns = new LinkedHashSet<String>();
     final String methodSufiix;
     if (method != null) {
       myData.METHOD_NAME = method.getName();
@@ -437,7 +437,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     public String WORKING_DIRECTORY;
     private String FORK_MODE = "none";
 
-    private Set<String> myPattern = new LinkedHashSet<String>();
+    private LinkedHashSet<String> myPattern = new LinkedHashSet<String>();
     //iws/ipr compatibility
     public String ENV_VARIABLES;
     private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
@@ -581,7 +581,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       return StringUtil.join(enabledTests, "||");
     }
 
-    public void setPatterns(Set<String> pattern) {
+    public void setPatterns(LinkedHashSet<String> pattern) {
       myPattern = pattern;
     }
 

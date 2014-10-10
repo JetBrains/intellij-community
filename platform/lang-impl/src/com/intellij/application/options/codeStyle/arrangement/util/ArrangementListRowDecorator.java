@@ -214,6 +214,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
         int row = myControl.getRowByRenderer(this);
         if (row >= 0) {
           myControl.showEditor(row);
+          myControl.scrollRowToVisible(row);
           myBeingEdited = true;
         }
       }
@@ -277,6 +278,16 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
   @Override
   public void setListener(@NotNull Listener listener) {
     myDelegate.setListener(listener); 
+  }
+
+  @Override
+  public void handleMouseClickOnSelected() {
+    myDelegate.handleMouseClickOnSelected();
+  }
+
+  @Override
+  public boolean alwaysCanBeActive() {
+    return false;
   }
 
   @Override

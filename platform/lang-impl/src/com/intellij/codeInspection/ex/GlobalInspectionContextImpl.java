@@ -693,11 +693,27 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               }
             }
           }
-          results.put(file, infos);
+          if (!infos.isEmpty()) {
+            results.put(file, infos);
+          }
         }
       }
     });
 
+    if (results.isEmpty()) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          if (commandName != null) {
+            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(getProject());
+          }
+          if (postRunnable != null) {
+            postRunnable.run();
+          }
+        }
+      });
+      return;
+    }
     Runnable runnable = new Runnable() {
       @Override
       public void run() {

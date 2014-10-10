@@ -85,4 +85,9 @@ public class ArrangementLabelUiComponent extends AbstractArrangementUiComponent 
   public int getBaselineToUse(int width, int height) {
     return myLabel.getBaseline(width, height);
   }
+
+  @Override
+  public void handleMouseClickOnSelected() {
+    setSelected(false);
+  }
 }

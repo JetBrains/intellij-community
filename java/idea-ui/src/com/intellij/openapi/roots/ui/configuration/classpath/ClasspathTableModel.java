@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.JdkOrderEntry;
@@ -23,30 +22,103 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.table.AbstractTableModel;
+import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
 * @author nik
 */
-class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathTableModel");
-  public static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
+class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implements ItemRemovable {
+  private static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
+  private static final ColumnInfo<ClasspathTableItem<?>, Boolean> EXPORT_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, Boolean>(EXPORT_COLUMN_NAME) {
+    @Nullable
+    @Override
+    public Boolean valueOf(ClasspathTableItem<?> item) {
+      return item.isExported();
+    }
+
+    @Override
+    public void setValue(ClasspathTableItem<?> item, Boolean value) {
+      item.setExported(value);
+    }
+
+    @Override
+    public boolean isCellEditable(ClasspathTableItem<?> item) {
+      return item.isExportable();
+    }
+
+    @Override
+    public Class getColumnClass() {
+      return Boolean.class;
+    }
+  };
   private static final String SCOPE_COLUMN_NAME = ProjectBundle.message("modules.order.export.scope.column");
+  private static final Comparator<DependencyScope> DEPENDENCY_SCOPE_COMPARATOR = new Comparator<DependencyScope>() {
+    @Override
+    public int compare(DependencyScope o1, DependencyScope o2) {
+      return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+    }
+  };
+  private static final Comparator<ClasspathTableItem<?>> CLASSPATH_ITEM_SCOPE_COMPARATOR =
+    new Comparator<ClasspathTableItem<?>>() {
+      @Override
+      public int compare(ClasspathTableItem<?> o1, ClasspathTableItem<?> o2) {
+        return Comparing.compare(o1.getScope(), o2.getScope(), DEPENDENCY_SCOPE_COMPARATOR);
+      }
+    };
+  private static final ColumnInfo<ClasspathTableItem<?>, DependencyScope> SCOPE_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, DependencyScope>(SCOPE_COLUMN_NAME) {
+    @Nullable
+    @Override
+    public DependencyScope valueOf(ClasspathTableItem<?> item) {
+      return item.getScope();
+    }
+
+    @Override
+    public void setValue(ClasspathTableItem<?> item, DependencyScope value) {
+      item.setScope(value);
+    }
+
+    @Override
+    public boolean isCellEditable(ClasspathTableItem<?> item) {
+      return item.isExportable();
+    }
+
+    @Override
+    public Class getColumnClass() {
+      return DependencyScope.class;
+    }
+
+    @Nullable
+    @Override
+    public Comparator<ClasspathTableItem<?>> getComparator() {
+      return CLASSPATH_ITEM_SCOPE_COMPARATOR;
+    }
+  };
   public static final int EXPORT_COLUMN = 0;
   public static final int ITEM_COLUMN = 1;
   public static final int SCOPE_COLUMN = 2;
-  private final List<ClasspathTableItem<?>> myItems = new ArrayList<ClasspathTableItem<?>>();
   private final ModuleConfigurationState myState;
   private StructureConfigurableContext myContext;
 
   public ClasspathTableModel(final ModuleConfigurationState state, StructureConfigurableContext context) {
+    super(EXPORT_COLUMN_INFO, new ClasspathTableItemClasspathColumnInfo(context), SCOPE_COLUMN_INFO);
     myState = state;
     myContext = context;
     init();
+  }
+
+  @Override
+  public RowSorter.SortKey getDefaultSortKey() {
+    return new RowSorter.SortKey(1, SortOrder.UNSORTED);
   }
 
   private ModifiableRootModel getModel() {
@@ -56,111 +128,58 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
   public void init() {
     final OrderEntry[] orderEntries = getModel().getOrderEntries();
     boolean hasJdkOrderEntry = false;
+    List<ClasspathTableItem<?>> items = new ArrayList<ClasspathTableItem<?>>();
     for (final OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof JdkOrderEntry) {
         hasJdkOrderEntry = true;
       }
-      addItem(ClasspathTableItem.createItem(orderEntry, myContext));
+      items.add(ClasspathTableItem.createItem(orderEntry, myContext));
     }
     if (!hasJdkOrderEntry) {
-      addItemAt(new InvalidJdkItem(), 0);
+      items.add(0, new InvalidJdkItem());
     }
-  }
-
-  public ClasspathTableItem<?> getItemAt(int row) {
-    return myItems.get(row);
-  }
-
-  public void addItem(ClasspathTableItem<?> item) {
-    myItems.add(item);
-  }
-
-  public void addItemAt(ClasspathTableItem<?> item, int row) {
-    myItems.add(row, item);
-  }
-
-  public ClasspathTableItem<?> removeDataRow(int row) {
-    return myItems.remove(row);
-  }
-
-
-  @Override
-  public void removeRow(int row) {
-    removeDataRow(row);
+    setItems(items);
   }
 
   public void clear() {
-    myItems.clear();
+    setItems(Collections.<ClasspathTableItem<?>>emptyList());
   }
 
-  @Override
-  public int getRowCount() {
-    return myItems.size();
-  }
+  private static class ClasspathTableItemClasspathColumnInfo extends ColumnInfo<ClasspathTableItem<?>, ClasspathTableItem<?>> {
+    private final Comparator<ClasspathTableItem<?>> myItemComparator;
 
-  @Override
-  public Object getValueAt(int rowIndex, int columnIndex) {
-    final ClasspathTableItem<?> item = myItems.get(rowIndex);
-    if (columnIndex == EXPORT_COLUMN) {
-      return item.isExported();
+    public ClasspathTableItemClasspathColumnInfo(final StructureConfigurableContext context) {
+      super("");
+      myItemComparator = new Comparator<ClasspathTableItem<?>>() {
+        @Override
+        public int compare(ClasspathTableItem<?> o1, ClasspathTableItem<?> o2) {
+          String text1 = ClasspathPanelImpl.getCellAppearance(o1, context, false).getText();
+          String text2 = ClasspathPanelImpl.getCellAppearance(o2, context, false).getText();
+          return text1.compareToIgnoreCase(text2);
+        }
+      };
     }
-    if (columnIndex == SCOPE_COLUMN) {
-      return item.getScope();
+
+    @Nullable
+    @Override
+    public Comparator<ClasspathTableItem<?>> getComparator() {
+      return myItemComparator;
     }
-    if (columnIndex == ITEM_COLUMN) {
+
+    @Nullable
+    @Override
+    public ClasspathTableItem<?> valueOf(ClasspathTableItem<?> item) {
       return item;
     }
-    LOG.error("Incorrect column index: " + columnIndex);
-    return null;
-  }
 
-  @Override
-  public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-    final ClasspathTableItem<?> item = myItems.get(rowIndex);
-    if (columnIndex == EXPORT_COLUMN) {
-      item.setExported(((Boolean)aValue).booleanValue());
+    @Override
+    public boolean isCellEditable(ClasspathTableItem<?> item) {
+      return false;
     }
-    else if (columnIndex == SCOPE_COLUMN && aValue instanceof DependencyScope) {
-      item.setScope((DependencyScope) aValue);
-    }
-  }
 
-  @Override
-  public String getColumnName(int column) {
-    if (column == EXPORT_COLUMN) {
-      return EXPORT_COLUMN_NAME;
-    }
-    if (column == SCOPE_COLUMN) {
-      return SCOPE_COLUMN_NAME;
-    }
-    return "";
-  }
-
-  @Override
-  public Class getColumnClass(int column) {
-    if (column == EXPORT_COLUMN) {
-      return Boolean.class;
-    }
-    if (column == SCOPE_COLUMN) {
-      return DependencyScope.class;
-    }
-    if (column == ITEM_COLUMN) {
+    @Override
+    public Class getColumnClass() {
       return ClasspathTableItem.class;
     }
-    return super.getColumnClass(column);
-  }
-
-  @Override
-  public int getColumnCount() {
-    return 3;
-  }
-
-  @Override
-  public boolean isCellEditable(int row, int column) {
-    if (column == EXPORT_COLUMN || column == SCOPE_COLUMN) {
-      final ClasspathTableItem<?> item = myItems.get(row);
-      return item != null && item.isExportable();
-    }
-    return false;
   }
 }

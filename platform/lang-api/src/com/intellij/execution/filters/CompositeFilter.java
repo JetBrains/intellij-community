@@ -187,4 +187,8 @@ public class CompositeFilter implements Filter, FilterMixin {
     this.forceUseAllFilters = forceUseAllFilters;
   }
 
+  @Override
+  public String toString() {
+    return "CompositeFilter: " + myFilters;
+  }
 }

@@ -41,6 +41,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
@@ -761,11 +762,12 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeSelected() {
-    if (!checkCanDelete()) {
+    List<DirDiffElementImpl> selectedElements = getSelectedElements();
+    if (!checkCanDelete(selectedElements)) {
       return;
     }
     rememberSelection();
-    for (DirDiffElementImpl element : getSelectedElements()) {
+    for (DirDiffElementImpl element : selectedElements) {
       syncElement(element);
     }
     restoreSelection();
@@ -778,19 +780,20 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeAll() {
-    if (!checkCanDelete()) {
+    List<DirDiffElementImpl> elements = new ArrayList<DirDiffElementImpl>(myElements);
+    if (!checkCanDelete(elements)) {
       return;
     }
-    for (DirDiffElementImpl element : myElements.toArray(new DirDiffElementImpl[myElements.size()])) {
+    for (DirDiffElementImpl element : elements) {
       syncElement(element);
     }
     selectFirstRow();
   }
 
-  private boolean checkCanDelete() {
+  private boolean checkCanDelete(List<DirDiffElementImpl> elements) {
     if (WarnOnDeletion.isWarnWhenDeleteItems()) {
       int count = 0;
-      for (DirDiffElementImpl element : myElements) {
+      for (DirDiffElementImpl element : elements) {
         if (element.getOperation() == DirDiffOperation.DELETE) {
           count++;
         }
@@ -870,11 +873,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     @Override
     public void run() {
       if (myLoadingPanel.isLoading()) {
-        try {
-          Thread.sleep(mySleep);
-        }
-        catch (InterruptedException e) {//
-        }
+        TimeoutUtil.sleep(mySleep);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {

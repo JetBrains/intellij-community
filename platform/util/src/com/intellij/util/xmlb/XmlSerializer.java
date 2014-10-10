@@ -65,7 +65,7 @@ public class XmlSerializer {
       throw e;
     }
     catch (Exception e) {
-      throw new XmlSerializationException(e);
+      throw new XmlSerializationException("Cannot deserialize class " + aClass.getName(), e);
     }
   }
 
@@ -114,14 +114,13 @@ public class XmlSerializer {
     serializeInto(bean, element, null);
   }
 
-  public static void serializeInto(final Object bean, final Element element, @Nullable SerializationFilter filter) {
+  public static void serializeInto(@NotNull Object bean, @NotNull Element element, @Nullable SerializationFilter filter) {
     if (filter == null) {
       filter = TRUE_FILTER;
     }
     try {
-      final Binding binding = XmlSerializerImpl.getBinding(bean.getClass());
+      Binding binding = XmlSerializerImpl.getBinding(bean.getClass());
       assert binding instanceof BeanBinding;
-
       ((BeanBinding)binding).serializeInto(bean, element, filter);
     }
     catch (XmlSerializationException e) {

@@ -421,8 +421,9 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           if (!nullableManager.hasNullability(superParameter) && isNotNullNotInferred(parameter, false, false)) {
             PsiAnnotation notNullAnnotation = nullableManager.getNotNullAnnotation(parameter, false);
             assert notNullAnnotation != null;
-            final LocalQuickFix fix = new RemoveAnnotationQuickFix(notNullAnnotation, parameter);
-            holder.registerProblem(notNullAnnotation,
+            boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
+            final LocalQuickFix fix = physical ? new RemoveAnnotationQuickFix(notNullAnnotation, parameter) : null;
+            holder.registerProblem(physical ? notNullAnnotation : parameter.getNameIdentifier(),
                                    InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.overrides.not.annotated", getPresentableAnnoName(parameter)),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                    wrapFix(fix));

@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
@@ -29,14 +29,15 @@ import java.util.Set;
  */
 public class UsageViewContext {
   protected final SearchContext mySearchContext;
+  private final Runnable mySearchStarter;
   private UsageView myUsageView;
   protected final Configuration myConfiguration;
   private Set<Usage> myExcludedSet;
-  private SearchCommand myCommand;
 
-  protected UsageViewContext(SearchContext _searchContext,Configuration _configuration) {
-    myConfiguration = _configuration;
-    mySearchContext = _searchContext;
+  protected UsageViewContext(Configuration configuration, SearchContext searchContext, Runnable searchStarter) {
+    myConfiguration = configuration;
+    mySearchContext = searchContext;
+    mySearchStarter = searchStarter;
   }
 
   public boolean isExcluded(Usage usage) {
@@ -52,41 +53,31 @@ public class UsageViewContext {
     myUsageView = usageView;
   }
 
-  public Configuration getConfiguration() {
-    return myConfiguration;
-  }
-
-  public SearchCommand getCommand() {
-    if (myCommand == null) myCommand = createCommand();
-    return myCommand;
-  }
-
-  protected SearchCommand createCommand() {
-    return new SearchCommand(mySearchContext.getProject(), this);
-  }
-
   public ConfigurableUsageTarget getTarget() {
     return new MyUsageTarget();
   }
 
   public void configure(@NotNull UsageViewPresentation presentation) {
     final String pattern = myConfiguration.getMatchOptions().getSearchPattern();
-    final String usagesString = SSRBundle.message("occurrences.of", StringUtil.shortenTextWithEllipsis(pattern, 50, 0, true));
-    presentation.setUsagesString(SSRBundle.message("occurrences.of", pattern));
-    presentation.setTabText(usagesString);
+    final String scopeText = myConfiguration.getMatchOptions().getScope().getDisplayName();
+    presentation.setScopeText(scopeText);
+    final String usagesString = SSRBundle.message("occurrences.of", pattern);
+    presentation.setUsagesString(usagesString);
+    presentation.setTabText(StringUtil.shortenTextWithEllipsis(usagesString, 60, 0, false));
     presentation.setUsagesWord(SSRBundle.message("occurrence"));
-    presentation.setCodeUsagesString(SSRBundle.message("found.occurrences"));
+    presentation.setCodeUsagesString(SSRBundle.message("found.occurrences", scopeText));
+    presentation.setTargetsNodeText(SSRBundle.message("targets.node.text"));
+    presentation.setCodeUsages(false);
   }
 
   protected void configureActions() {}
 
-  private class MyUsageTarget implements ConfigurableUsageTarget,ItemPresentation {
+  private class MyUsageTarget implements ConfigurableUsageTarget, ItemPresentation {
 
     @NotNull
     @Override
     public String getPresentableText() {
-      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-      return SSRBundle.message("occurrences.of.0.in.1", matchOptions.getSearchPattern(), matchOptions.getScope().getDisplayName());
+      return myConfiguration.getMatchOptions().getSearchPattern();
     }
 
     @Override
@@ -102,7 +93,7 @@ public class UsageViewContext {
 
     @Override
     public void findUsages() {
-      throw new UnsupportedOperationException();
+      mySearchStarter.run();
     }
 
     @Override
@@ -167,13 +158,27 @@ public class UsageViewContext {
 
     @Override
     public KeyboardShortcut getShortcut() {
-      return ActionManager.getInstance().getKeyboardShortcut(getCommand() instanceof ReplaceCommand ? "StructuralSearchPlugin.StructuralReplaceAction":"StructuralSearchPlugin.StructuralSearchAction");
+      return ActionManager.getInstance().getKeyboardShortcut(myConfiguration instanceof ReplaceConfiguration
+                                                             ? "StructuralSearchPlugin.StructuralReplaceAction"
+                                                             : "StructuralSearchPlugin.StructuralSearchAction");
     }
 
     @NotNull
     @Override
     public String getLongDescriptiveName() {
-      return getPresentableText();
+      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+      final String pattern = matchOptions.getSearchPattern();
+      final String scope = matchOptions.getScope().getDisplayName();
+      final String result;
+      if (myConfiguration instanceof ReplaceConfiguration) {
+        final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)myConfiguration;
+        final String replacement = replaceConfiguration.getOptions().getReplacement();
+        result = SSRBundle.message("replace.occurrences.of.0.with.1.in.2", pattern, replacement, scope);
+      }
+      else {
+        result = SSRBundle.message("occurrences.of.0.in.1", pattern, scope);
+      }
+      return StringUtil.shortenTextWithEllipsis(result, 150, 0, true);
     }
   }
 }

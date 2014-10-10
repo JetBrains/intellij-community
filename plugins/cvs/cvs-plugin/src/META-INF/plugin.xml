@@ -50,6 +50,7 @@
 
     <vcsCheckinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
 
+    <search.topHitProvider implementation="com.intellij.cvsSupport2.config.CvsOptionsTopHitProvider"/>
     <vcs name="CVS" vcsClass="com.intellij.cvsSupport2.CvsVcs2" displayName="CVS" administrativeAreaName="CVS"/>
     <vcsPopupProvider implementation="com.intellij.cvsSupport2.actions.CvsQuickListContentProvider"/>
   </extensions>
@@ -88,7 +89,7 @@
 
     <group id="CvsActions" class="com.intellij.cvsSupport2.actions.Cvs2Group">
       <reference id="CheckinFiles"/>
-      <reference id="ChangesView.Rollback"/>
+      <reference id="ChangesView.Revert"/>
       <reference id="UpdateFiles"/>
       <reference id="CheckStatusForFiles"/>
       <action id="Cvs.Checkout" class="com.intellij.cvsSupport2.actions.CheckoutFileAction"/>

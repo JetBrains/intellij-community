@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.main.collectors;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.struct.StructContext;
 
 import java.util.*;
@@ -107,17 +108,23 @@ public class ImportCollector {
     return retname == null ? nshort : retname;
   }
 
-  public boolean writeImports(StringBuilder buffer) {
+  public int writeImports(TextBuffer buffer) {
+
+    int importlines_written = 0;
+    String new_line_separator = DecompilerContext.getNewLineSeparator();
+
     List<String> imports = packImports();
 
     for (String s : imports) {
       buffer.append("import ");
       buffer.append(s);
       buffer.append(";");
-      buffer.append(DecompilerContext.getNewLineSeparator());
+      buffer.append(new_line_separator);
+
+      importlines_written++;
     }
 
-    return imports.size() > 0;
+    return importlines_written;
   }
 
   private List<String> packImports() {

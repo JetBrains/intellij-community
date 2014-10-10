@@ -31,31 +31,31 @@ public class AfterSuiteEvent extends AbstractTestEvent {
   @Override
   public void process(XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
     final String testId = getTestId(eventXml);
-
-    final SMTestProxy testProxy = getConsoleManager().getTestsMap().get(testId);
-    if (testProxy == null) return;
-
     final TestEventResult result = getTestEventResultType(eventXml);
-    switch (result) {
-      case SUCCESS:
-        testProxy.setFinished();
-        break;
-      case FAILURE:
-        testProxy.setTestFailed("", null, false);
-        break;
-      case SKIPPED:
-        testProxy.setTestIgnored(null, null);
-        break;
-      case UNKNOWN_RESULT:
-        break;
-    }
 
-    if (testProxy.isEmptySuite() && !(testProxy instanceof SMTestProxy.SMRootTestProxy)) {
-      testProxy.getParent().getChildren().remove(testProxy);
-    }
     addToInvokeLater(new Runnable() {
       @Override
       public void run() {
+        final SMTestProxy testProxy = getConsoleManager().getTestsMap().get(testId);
+        if (testProxy == null) return;
+
+        switch (result) {
+          case SUCCESS:
+            testProxy.setFinished();
+            break;
+          case FAILURE:
+            testProxy.setTestFailed("", null, false);
+            break;
+          case SKIPPED:
+            testProxy.setTestIgnored(null, null);
+            break;
+          case UNKNOWN_RESULT:
+            break;
+        }
+
+        if (testProxy.isEmptySuite() && !(testProxy instanceof SMTestProxy.SMRootTestProxy)) {
+          testProxy.getParent().getChildren().remove(testProxy);
+        }
         getResultsViewer().onSuiteFinished(testProxy);
       }
     });

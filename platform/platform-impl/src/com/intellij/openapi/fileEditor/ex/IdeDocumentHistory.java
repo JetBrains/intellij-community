@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,9 @@ public abstract class IdeDocumentHistory {
   public abstract boolean isForwardAvailable();
 
   public abstract void navigatePreviousChange();
+  public abstract void navigateNextChange();
   public abstract boolean isNavigatePreviousChangeAvailable();
+  public abstract boolean isNavigateNextChangeAvailable();
 
   public abstract VirtualFile[] getChangedFiles();
 }

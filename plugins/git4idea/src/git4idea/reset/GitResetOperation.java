@@ -15,6 +15,7 @@
  */
 package git4idea.reset;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -74,7 +75,7 @@ public class GitResetOperation {
 
   public void execute() {
     saveAllDocuments();
-    GitUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     Map<GitRepository, GitCommandResult> results = ContainerUtil.newHashMap();
     try {
       for (Map.Entry<GitRepository, VcsFullCommitDetails> entry : myCommits.entrySet()) {
@@ -96,7 +97,7 @@ public class GitResetOperation {
       }
     }
     finally {
-      GitUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
     notifyResult(results);
   }

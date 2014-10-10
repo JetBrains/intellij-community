@@ -43,6 +43,8 @@ public class SvnConfigurationState {
   @Attribute("myUseAcceleration")
   public SvnConfiguration.UseAcceleration accelerationType = SvnConfiguration.UseAcceleration.commandLine;
 
+  public boolean runUnderTerminal;
+
   @Attribute("myAutoUpdateAfterCommit")
   public boolean autoUpdateAfterCommit;
 

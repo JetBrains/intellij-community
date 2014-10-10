@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.folding;
-
+package com.intellij.codeInsight.folding
 
 import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
+import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder
 import com.intellij.find.FindManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -279,12 +279,16 @@ class Test {
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() -> { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2(")).placeholderText == '(Runnable2) () -> { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable3(")).placeholderText == '(Runnable3) () -> { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable4(")).placeholderText == '() -> { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction(")).placeholderText == '(MyAction) () -> { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction2(")).placeholderText == '(MyAction2) () -> { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2(")).placeholderText == '(Runnable2) () ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable3(")).placeholderText == '(Runnable3) () ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable4(")).placeholderText == '() ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction(")).placeholderText == '(MyAction) () ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction2(")).placeholderText == '(MyAction2) () ' + rightArrow() + ' { '
+  }
+
+  private static String rightArrow() {
+    return JavaFoldingBuilder.rightArrow
   }
 
   public void "test closure folding after paste"() {
@@ -306,7 +310,7 @@ class Test {
 
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() -> { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() ' + rightArrow() + ' { '
   }
 
   public void "test closure folding when overriding one method of many"() {
@@ -333,8 +337,8 @@ class Test {
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable("))?.placeholderText == 'run() -> { '
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2("))?.placeholderText == '(Runnable2) run2() -> { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable("))?.placeholderText == 'run() ' + rightArrow() + ' { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2("))?.placeholderText == '(Runnable2) run2() ' + rightArrow() + ' { '
   }
 
   public void "test no closure folding when the method throws an unresolved exception"() {
@@ -425,6 +429,26 @@ public class Test {
       }
     }  
     assert count == 2 : "Not all custom regions are found";
+  }
+
+  public void "test custom foldings intersecting with language ones"() {
+    def text = """\
+class Foo {
+//*********************************************
+// region Some
+//*********************************************
+
+  int t = 1;
+
+//*********************************************
+// endregion
+//*********************************************
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    assertEquals 1, foldRegionsCount
+    assertEquals "Some", foldingModel.allFoldRegions[0].placeholderText
   }
   
   public void "test custom folding collapsed by default"() {
@@ -610,6 +634,7 @@ class Test {
   }
 
   public void "test insert boolean literal argument name"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """class Groo {
 
  public void test() {
@@ -667,6 +692,7 @@ class Test {
   }
 
   public void "test do not collapse varargs"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class VarArgTest {
 
@@ -780,6 +806,7 @@ public class CharSymbol {
   }
 
   public void "test inline names if literal expression can be assigned to method parameter"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class CharSymbol {
 
@@ -809,6 +836,7 @@ public class CharSymbol {
   }
 
   public void "test inline negative and positive numbers"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class CharSymbol {
 
@@ -836,6 +864,7 @@ public class CharSymbol {
   }
 
   public void "test inline constructor literal arguments names"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class Test {
 
@@ -866,6 +895,7 @@ public class Test {
   }
 
   public void "test inline anonymous class constructor literal arguments names"() {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
     def text = """
 public class Test {
 
@@ -913,5 +943,82 @@ public class Test {
     assertSize 2, myFixture.editor.foldingModel.allFoldRegions
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
     assert 'return field;' == myFixture.editor.selectionModel.selectedText
+  }
+
+  public void "test expand and collapse regions in selection"() {
+    def text = """
+class Foo {
+    public static void main() {
+        new Runnable(){
+            public void run() {
+            }
+        }.run();
+    }
+}
+"""
+    configure text
+    assertEquals 3, foldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
+    assertEquals 3, expandedFoldRegionsCount
+
+
+    myFixture.editor.selectionModel.setSelection(text.indexOf("new"), text.indexOf("run();"))
+    myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS)
+    assertEquals 1, expandedFoldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
+    assertEquals 3, expandedFoldRegionsCount
+  }
+
+  public void "test expand and collapse recursively"() {
+    def text = """
+class Foo {
+    public static void main() {
+        new Runnable(){
+            public void run() {
+            }
+        }.run();
+    }
+}
+"""
+    configure text
+    assertEquals 3, foldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
+    assertEquals 3, expandedFoldRegionsCount
+
+
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("new"))
+    myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_REGION_RECURSIVELY)
+    assertEquals 1, expandedFoldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_REGION_RECURSIVELY)
+    assertEquals 3, expandedFoldRegionsCount
+  }
+
+  public void "test expand to level"() {
+    def text = """
+class Foo {
+    public static void main() {
+        new Runnable(){
+            public void run() {
+            }
+        }.run();
+    }
+}
+"""
+    configure text
+    assertEquals 3, foldRegionsCount
+
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("new"))
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_TO_LEVEL_1)
+    assertEquals 2, expandedFoldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_TO_LEVEL_1)
+    assertEquals 1, expandedFoldRegionsCount
+  }
+
+  private int getFoldRegionsCount() {
+    return myFixture.editor.foldingModel.allFoldRegions.length
+  }
+
+  private int getExpandedFoldRegionsCount() {
+    return myFixture.editor.foldingModel.allFoldRegions.count { it.isExpanded() ? 1 : 0}
   }
 }

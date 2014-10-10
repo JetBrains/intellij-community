@@ -29,6 +29,8 @@ import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.maven.model.impl.*;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -42,12 +44,16 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
   private static final Logger LOG = Logger.getInstance(MavenWebArtifactRootCopyingHandlerProvider.class);
   @Nullable
   @Override
-  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact, @NotNull File root, @NotNull JpsModel model,
+  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
+                                                @NotNull File root,
+                                                @NotNull JpsPackagingElement contextElement,
+                                                @NotNull JpsModel model,
                                                 @NotNull BuildDataPaths buildDataPaths) {
-    JpsMavenExtensionService mavenExtensionService = JpsMavenExtensionService.getInstance();
-    if (!mavenExtensionService.hasMavenProjectConfiguration(buildDataPaths)) return null;
+    if (contextElement instanceof JpsModuleOutputPackagingElement) return null;
 
-    MavenProjectConfiguration projectConfiguration = mavenExtensionService.getMavenProjectConfiguration(buildDataPaths);
+    MavenProjectConfiguration projectConfiguration = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(buildDataPaths);
+    if (projectConfiguration == null) return null;
+
     MavenWebArtifactConfiguration artifactResourceConfiguration = projectConfiguration.webArtifactConfigs.get(artifact.getName());
     if (artifactResourceConfiguration == null) return null;
 

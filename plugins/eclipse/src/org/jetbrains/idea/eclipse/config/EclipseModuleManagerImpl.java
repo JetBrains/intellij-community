@@ -19,6 +19,7 @@ package org.jetbrains.idea.eclipse.config;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
@@ -29,15 +30,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.EclipseModuleManager;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 @State(
   name = "EclipseModuleManager",
-  storages = {
-    @Storage(
-      file = "$MODULE_FILE$"
-    )
-  }
+  storages = @Storage(file = StoragePathMacros.MODULE_FILE)
 )
 public class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element> {
   @NonNls private static final String VALUE_ATTR = "value";

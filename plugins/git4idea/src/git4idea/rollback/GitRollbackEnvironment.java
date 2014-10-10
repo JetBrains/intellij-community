@@ -15,6 +15,7 @@
  */
 package git4idea.rollback;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -141,7 +142,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     // revert files from HEAD
-    GitUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       for (Map.Entry<VirtualFile, List<FilePath>> entry : toRevert.entrySet()) {
         listener.accept(entry.getValue());
@@ -154,7 +155,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     finally {
-      GitUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     HashSet<File> filesToRefresh = new HashSet<File>();

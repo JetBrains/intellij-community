@@ -30,7 +30,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -64,7 +63,9 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
       final int offsetInParent = elementToReplace.getStartOffsetInParent();
       String textBeforeRange = text.substring(0, range.getStartOffset() - offsetInParent);
       String textAfterRange = text.substring(range.getEndOffset()- offsetInParent, text.length());
-      text = textBeforeRange + XmlUtil.escape(newContent) + textAfterRange;
+      newContent = element.getText().startsWith("'") || element.getText().endsWith("'") ?
+                   newContent.replace("'", "&apos;") : newContent.replace("\"", "&quot;");
+      text = textBeforeRange + newContent + textAfterRange;
     } catch(StringIndexOutOfBoundsException e) {
       LOG.error("Range: " + range + " in text: '" + element.getText() + "'", e);
       throw e;

@@ -17,10 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowContentUiType;
-import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.WindowInfo;
+import com.intellij.openapi.wm.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +125,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     myAutoHide = info.myAutoHide;
     myFloatingBounds = info.myFloatingBounds == null ? null : (Rectangle)info.myFloatingBounds.clone();
     myId = info.myId;
-    myType = info.myType;
+    setTypeAndCheck(info.myType);
     myInternalType = info.myInternalType;
     myVisible = info.myVisible;
     myWeight = info.myWeight;
@@ -302,7 +299,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     catch (IllegalArgumentException ignored) {
     }
     try {
-      myType = parseToolWindowType(element.getAttributeValue(TYPE_ATTR));
+      setTypeAndCheck(parseToolWindowType(element.getAttributeValue(TYPE_ATTR)));
     }
     catch (IllegalArgumentException ignored) {
     }
@@ -362,7 +359,11 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     if(ToolWindowType.DOCKED==type||ToolWindowType.SLIDING==type){
       myInternalType=type;
     }
-    myType=type;
+    setTypeAndCheck(type);
+  }
+  //Hardcoded to avoid single-usage-API
+  private void setTypeAndCheck(ToolWindowType type) {
+    myType = ToolWindowId.PREVIEW == myId && type == ToolWindowType.DOCKED ? ToolWindowType.SLIDING : type;
   }
 
   void setVisible(final boolean visible){

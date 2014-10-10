@@ -115,4 +115,9 @@ public class UpdatedFiles implements JDOMExternalizable {
       group.setRevisions(path, vcs, revision);      
     }
   }
+
+  @Override
+  public String toString() {
+    return myGroups.toString();
+  }
 }

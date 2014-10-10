@@ -99,7 +99,7 @@ abstract class CodeStyleManagerRunnable<T> {
         myIndentOptions = ((FormattingModelBuilderEx)builder).getIndentOptionsToUse(file, new FormatTextRanges(mySignificantRange, true), mySettings);
       }
       if (myIndentOptions == null) {
-        myIndentOptions = mySettings.getIndentOptions(file.getFileType());
+        myIndentOptions = mySettings.getIndentOptionsByFile(file);
       }
 
       myModel = CoreFormatterUtil.buildModel(builder, file, mySettings, myMode);

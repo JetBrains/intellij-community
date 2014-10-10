@@ -53,6 +53,76 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "    }" +
            "}");
   }
+
+  public void testExactStaticImport() {
+    doTest("package a;\n" +
+           "import static java.lang.Math.abs;\n" +
+           "/*Unused import 'import static java.lang.Math.max;'*/import static java.lang.Math.max;/**/\n" +
+           "class Main {{\n" +
+           "  abs(1);\n" +
+           "}}");
+  }
+
+  public void testStaticImportOnDemandConflict1() {
+    addEnvironmentClass("package a;" +
+                        "public class Parent {" +
+                        "  public static final int FOOBAR = 1;" +
+                        "  public static class FooBar {}" +
+                        "}");
+    addEnvironmentClass("package a;" +
+                        "public class FooBar {" +
+                        "}");
+    doTest("package b;\n" +
+           "import a.*;\n" +
+           "import a.FooBar;\n" +
+           "import static a.Parent.*;\n" +
+           "class Main {\n" +
+           "    public static void main() {\n" +
+           "        Parent parent = new Parent();\n" +
+           "        int i = FOOBAR;\n" +
+           "        FooBar foobar = new FooBar();\n" +
+           "    }\n" +
+           "}");
+  }
+
+  public void testStaticImportOnDemandConflict2() {
+    addEnvironmentClass("package a;" +
+                        "public class Parent {" +
+                        "  public static final int FOOBAR = 1;" +
+                        "  public static class FooBar {}" +
+                        "}");
+    addEnvironmentClass("package a;" +
+                        "public class FooBar {" +
+                        "}");
+    doTest("package b;\n" +
+           "import a.*;\n" +
+           "import static a.Parent.*;\n" +
+           "import static a.Parent.FooBar;\n" +
+           "class Main {\n" +
+           "    public static void main() {\n" +
+           "        Parent parent = new Parent();\n" +
+           "        int i = FOOBAR;\n" +
+           "        FooBar foobar = new FooBar();\n" +
+           "    }\n" +
+           "}");
+  }
+
+  public void testInherited() {
+    addEnvironmentClass("package a;" +
+                        "class GrandParent {" +
+                        "  public static final int FOOBAR = 1;" +
+                        "}");
+    addEnvironmentClass("package a;" +
+                        "public class Parent extends GrandParent {" +
+                        "}");
+    doTest("package b;\n" +
+           "import static a.Parent.*;\n" +
+           "class Main {\n" +
+           "    public static void main() {\n" +
+           "        int i = FOOBAR;\n" +
+           "    }\n" +
+           "}");
+  }
   
   public void testNoWarning() {
     doTest("import java.util.List;" +
@@ -100,6 +170,35 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "  List<Integer> l;\n" +
            "  JComponent jc;\n" +
            "}");
+  }
+
+  public void testOrderIsNotImportant() {
+    doTest("package a;" +
+           "import java.util.*;" +
+           "/*Unused import 'import java.util.List;'*/import java.util.List;/**/" +
+           "class X {{" +
+           "  List list = new ArrayList();" +
+           "}}");
+
+  }
+
+  public void testConflictInSamePackage() {
+    addEnvironmentClass("package a; public class List {}");
+    doTest("package a;" +
+           "import java.util.List;" +
+           "import java.util.*;" +
+           "class X {{" +
+           "  List list = new ArrayList();" +
+           "}}");
+  }
+
+  public void testNoConflictInSamePackage() {
+    doTest("package a;" +
+           "/*Unused import 'import java.util.List;'*/import java.util.List;/**/" +
+           "import java.util.*;" +
+           "class X {{" +
+           "  List list = new ArrayList();" +
+           "}}");
   }
 
   @Override

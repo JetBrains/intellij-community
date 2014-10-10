@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class UsageViewPresentation {
   private String myTabText;
-  private String myScopeText;
+  private String myScopeText = ""; // Default value. to be overwritten in most cases.
   private String myUsagesString;
   private String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
   private String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");

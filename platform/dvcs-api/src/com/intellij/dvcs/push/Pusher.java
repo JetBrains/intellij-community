@@ -31,7 +31,7 @@ public abstract class Pusher<Repo extends Repository, Source extends PushSource,
    *
    * @param pushSpecs        push specs for each repository telling what to push and where.
    * @param additionalOption some additional push option(s), which are received from
-   *                         {@link PushSupport#getVcsPushOptionsPanel() the additional panel} if the plugin has one.
+   *                         {@link PushSupport#createOptionsPanel() the additional panel} if the plugin has one.
    * @param force            if true then force push should be performed.
    */
   public abstract void push(@NotNull Map<Repo, PushSpec<Source, Target>> pushSpecs,

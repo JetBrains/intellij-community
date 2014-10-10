@@ -509,18 +509,18 @@ public abstract class TestObject implements JavaCommandLine {
           testNames.add(name);
         }
       }
+      final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
       if (perModule != null) {
         for (List<String> perModuleClasses : perModule.values()) {
           Collections.sort(perModuleClasses);
           testNames.addAll(perModuleClasses);
         }
       }
-      else {
+      else if (JUnitConfiguration.TEST_PACKAGE.equals(data.TEST_OBJECT)) {
         Collections.sort(testNames); //sort tests in FQN order
       }
 
-      final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-      final String category = data.TEST_OBJECT == JUnitConfiguration.TEST_CATEGORY ? data.getCategory() : "";
+      final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) ? data.getCategory() : "";
       JUnitStarter.printClassesList(testNames, packageName, category, myTempFile);
 
       if (perModule != null && perModule.size() > 1) {

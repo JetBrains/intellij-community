@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
@@ -105,14 +106,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myKeyField.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
-        myTemplate.setKey(myKeyField.getText().trim());
+        myTemplate.setKey(StringUtil.notNullize(myKeyField.getText()).trim());
         myNodeChanged.run();
       }
     });
     myDescription.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
-        myTemplate.setDescription(myDescription.getText().trim());
+        myTemplate.setDescription(StringUtil.notNullize(myDescription.getText()).trim());
         myNodeChanged.run();
       }
     });
@@ -153,6 +154,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     JLabel templateTextLabel = new JLabel(CodeInsightBundle.message("dialog.edit.template.template.text.title"));
     templateTextLabel.setLabelFor(myTemplateEditor.getContentComponent());
     editorPanel.add(templateTextLabel, BorderLayout.NORTH);
+    editorPanel.setFocusable(false);
     panel.add(editorPanel, gb.nextLine().next().weighty(1).weightx(1).coverColumn(2));
 
     myEditVariablesButton = new JButton(CodeInsightBundle.message("dialog.edit.template.button.edit.variables"));
@@ -338,7 +340,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
           sb.append(ownName);
         }
         final boolean noContexts = sb.length() == 0;
-        ctxLabel.setText((noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ");
+        String contexts = (noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ";
+        ctxLabel.setText(StringUtil.first(contexts, 100, true));
         ctxLabel.setForeground(noContexts ? allowNoContexts ? JBColor.GRAY : JBColor.RED : UIUtil.getLabelForeground());
         change.setText(noContexts ? "Define" : "Change");
       }
@@ -420,7 +423,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
       public boolean accept(Object _node) {
         final CheckedTreeNode node = (CheckedTreeNode)_node;
         if (node.isChecked()) {
-          checkboxTree.expandPath(new TreePath(node.getPath()).getParentPath());
+          final TreeNode[] path = node.getPath();
+          if (path != null) {
+            checkboxTree.expandPath(new TreePath(path).getParentPath());
+          }
         }
         return true;
       }

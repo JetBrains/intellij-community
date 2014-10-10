@@ -53,6 +53,7 @@ public class WeigherExtensionPoint extends AbstractExtensionPointBean implements
     }
   };
 
+  @NotNull
   @Override
   public Weigher getInstance() {
     return myHandler.getValue();

@@ -24,7 +24,6 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -37,11 +36,12 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.EditorPopupHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,10 +134,11 @@ public class EditorActionUtil {
     Document document = editor.getDocument();
     int spacesEnd = 0;
     int lineStart = 0;
+    int lineEnd = 0;
     int tabsEnd = 0;
     if (lineNumber < document.getLineCount()) {
       lineStart = document.getLineStartOffset(lineNumber);
-      int lineEnd = document.getLineEndOffset(lineNumber);
+      lineEnd = document.getLineEndOffset(lineNumber);
       spacesEnd = lineStart;
       CharSequence text = document.getCharsSequence();
       boolean inTabs = true;
@@ -157,6 +158,11 @@ public class EditorActionUtil {
       if (inTabs) {
         tabsEnd = lineEnd;
       } 
+    }
+    int newCaretOffset = editor.getCaretModel().getOffset();
+    if (newCaretOffset >= lineStart && newCaretOffset < lineEnd && spacesEnd == lineEnd) {
+      spacesEnd = newCaretOffset;
+      tabsEnd = Math.min(spacesEnd, tabsEnd);
     }
     int oldLength = editor.offsetToLogicalPosition(spacesEnd).column;
     tabsEnd = editor.offsetToLogicalPosition(tabsEnd).column;
@@ -181,7 +187,6 @@ public class EditorActionUtil {
       }
     }
 
-    int newCaretOffset = editor.getCaretModel().getOffset();
     if (newCaretOffset >= spacesEnd) {
       newCaretOffset += buf.length() - (spacesEnd - lineStart);
     }
@@ -205,9 +210,8 @@ public class EditorActionUtil {
 
   private static boolean shouldUseSmartTabs(Project project, @NotNull Editor editor) {
     if (!(editor instanceof EditorEx)) return false;
-    VirtualFile file = ((EditorEx)editor).getVirtualFile();
-    FileType fileType = file == null ? null : file.getFileType();
-    return fileType != null && CodeStyleFacade.getInstance(project).isSmartTabs(fileType);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    return CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).SMART_TABS;
   }
 
   public static boolean isWordStart(@NotNull CharSequence text, int offset, boolean isCamel) {

@@ -467,7 +467,7 @@ public abstract class ChooseByNameBase {
     actionMap.setParent(myTextField.getActionMap());
     actionMap.put(DefaultEditorKit.copyAction, new AbstractAction() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (myTextField.getSelectedText() != null) {
           actionMap.getParent().get(DefaultEditorKit.copyAction).actionPerformed(e);
           return;
@@ -491,7 +491,7 @@ public abstract class ChooseByNameBase {
       if (myCheckBox != null && myCheckBoxShortcut != null) {
         new AnAction("change goto check box", null, null) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             myCheckBox.setSelected(!myCheckBox.isSelected());
           }
         }.registerCustomShortcutSet(myCheckBoxShortcut, myTextField);
@@ -563,7 +563,7 @@ public abstract class ChooseByNameBase {
     if (myCheckBox != null) {
       myCheckBox.addItemListener(new ItemListener() {
         @Override
-        public void itemStateChanged(ItemEvent e) {
+        public void itemStateChanged(@NotNull ItemEvent e) {
           rebuildList(false);
         }
       });
@@ -641,7 +641,7 @@ public abstract class ChooseByNameBase {
 
     myTextField.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent actionEvent) {
+      public void actionPerformed(@NotNull ActionEvent actionEvent) {
         doClose(true);
       }
     });
@@ -683,7 +683,7 @@ public abstract class ChooseByNameBase {
       private int myPreviousSelectionIndex = 0;
 
       @Override
-      public void valueChanged(ListSelectionEvent e) {
+      public void valueChanged(@NotNull ListSelectionEvent e) {
         if (myList.getSelectedValue() != NON_PREFIX_SEPARATOR) {
           myPreviousSelectionIndex = myList.getSelectedIndex();
           chosenElementMightChange();
@@ -774,6 +774,7 @@ public abstract class ChooseByNameBase {
   protected void doClose(final boolean ok) {
     if (checkDisposed()) return;
 
+    if (closeForbidden(ok)) return;
     if (postponeCloseWhenListReady(ok)) return;
 
     cancelListUpdater();
@@ -781,6 +782,10 @@ public abstract class ChooseByNameBase {
 
     clearPostponedOkAction(ok);
     myListModel.clear();
+  }
+
+  protected boolean closeForbidden(boolean ok) {
+    return false;
   }
 
   protected void cancelListUpdater() {
@@ -945,6 +950,17 @@ public abstract class ChooseByNameBase {
     }
 
     myAlarm.cancelAllRequests();
+
+    if (delay > 0) {
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          rebuildList(pos, 0, modalityState, postRunnable);
+        }
+      }, delay, ModalityState.stateForComponent(myTextField));
+      return;
+    }
+    
     myListUpdater.cancelAll();
 
     final CalcElementsThread calcElementsThread = myCalcElementsThread;
@@ -972,32 +988,20 @@ public abstract class ChooseByNameBase {
       ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
     }
 
-    final Runnable request = new Runnable() {
+    scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
       @Override
-      public void run() {
-        scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
-          @Override
-          public void consume(Set<?> elements) {
-            ApplicationManager.getApplication().assertIsDispatchThread();
-            if (checkDisposed()) {
-              return;
-            }
-            backgroundCalculationFinished(elements, pos);
+      public void consume(Set<?> elements) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        if (checkDisposed()) {
+          return;
+        }
+        backgroundCalculationFinished(elements, pos);
 
-            if (postRunnable != null) {
-              postRunnable.run();
-            }
-          }
-        });
+        if (postRunnable != null) {
+          postRunnable.run();
+        }
       }
-    };
-
-    if (delay > 0) {
-      myAlarm.addRequest(request, delay, ModalityState.stateForComponent(myTextField));
-    }
-    else {
-      request.run();
-    }
+    });
   }
 
   private void backgroundCalculationFinished(Collection<?> result, int toSelect) {
@@ -1019,6 +1023,7 @@ public abstract class ChooseByNameBase {
   }
 
   private void scheduleCalcElements(final CalcElementsThread thread) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myCalcElementsThread = thread;
     ApplicationManager.getApplication().executeOnPooledThread(thread);
   }
@@ -1509,6 +1514,8 @@ public abstract class ChooseByNameBase {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 @Override
                 public void run() {
+                  if (myProject != null && myProject.isDisposed()) return;
+
                   ApplicationAdapter listener = new ApplicationAdapter() {
                     @Override
                     public void beforeWriteActionStart(Object action) {
@@ -1554,7 +1561,8 @@ public abstract class ChooseByNameBase {
             @Override
             public void run() {
               if (!myCancelled.isCanceled()) {
-                LOG.assertTrue(myCalcElementsThread == CalcElementsThread.this);
+                CalcElementsThread currentBgProcess = myCalcElementsThread;
+                LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
                 myCallback.consume(edt ? filter(elements) : filtered);
               }
             }
@@ -1613,6 +1621,7 @@ public abstract class ChooseByNameBase {
     }
 
     private boolean cancel() {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       if (myCancelled.isCanceled()) {
         return false;
       }
@@ -1675,7 +1684,7 @@ public abstract class ChooseByNameBase {
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       cancelListUpdater();
 
       final UsageViewPresentation presentation = new UsageViewPresentation();

@@ -39,7 +39,8 @@ public class CCTreeStructureProvider implements TreeStructureProvider, DumbAware
           if (virtualFile == null) {
             continue;
           }
-          if (CCProjectService.getInstance(project).isTaskFile(virtualFile)) {
+          if (CCProjectService.getInstance(project).isTaskFile(virtualFile)
+              || virtualFile.getName().contains("_windows")) {
             continue;
           }
         }

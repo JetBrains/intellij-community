@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.debugger.UiDebuggerExtension;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
@@ -420,10 +421,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
         message(null, "Starting script...", -1, Type.message, true);
 
-        try {
-          sleep(1000);
-        }
-        catch (InterruptedException e) {}
+        TimeoutUtil.sleep(1000);
 
 
         if (myRunner == null) {

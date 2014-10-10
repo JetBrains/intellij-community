@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -90,6 +91,8 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       if ("</".equals(prevLeafText) && prevLeaf.getElementType() == XmlTokenType.XML_END_TAG_START) {
         XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
         if (tag != null && StringUtil.isNotEmpty(tag.getName()) && TreeUtil.findSibling(prevLeaf, XmlTokenType.XML_NAME) == null) {
+          if (!(file.getFileType() instanceof XmlLikeFileType)) return Result.CONTINUE;
+
           // check for template language like JSP
           if (provider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
             PsiElement element1 = SingleRootFileViewProvider.findElementAt(file, offset - 1);

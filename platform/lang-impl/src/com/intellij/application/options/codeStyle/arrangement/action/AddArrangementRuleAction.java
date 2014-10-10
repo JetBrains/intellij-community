@@ -39,7 +39,7 @@ public class AddArrangementRuleAction extends AbstractArrangementRuleAction impl
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
+    ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
       return;
     }

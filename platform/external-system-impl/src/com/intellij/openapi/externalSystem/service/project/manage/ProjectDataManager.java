@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -42,6 +45,10 @@ public class ProjectDataManager {
   private static final Logger LOG = Logger.getInstance("#" + ProjectDataManager.class.getName());
 
   @NotNull private final NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>> myServices;
+
+  public static ProjectDataManager getInstance() {
+    return ServiceManager.getService(ProjectDataManager.class);
+  }
 
   public ProjectDataManager() {
     myServices = new NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>>() {
@@ -79,6 +86,8 @@ public class ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   public <T> void importData(@NotNull Collection<DataNode<?>> nodes, @NotNull Project project, boolean synchronous) {
+    if(project.isDisposed()) return;
+
     Map<Key<?>, List<DataNode<?>>> grouped = ExternalSystemApiUtil.group(nodes);
     for (Map.Entry<Key<?>, List<DataNode<?>>> entry : grouped.entrySet()) {
       // Simple class cast makes ide happy but compiler fails.
@@ -92,6 +101,8 @@ public class ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   public <T> void importData(@NotNull Key<T> key, @NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
+    if(project.isDisposed()) return;
+
     ensureTheDataIsReadyToUse(nodes);
     List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
     if (services == null) {
@@ -138,5 +149,16 @@ public class ProjectDataManager {
     for (ProjectDataService<?, ?> service : services) {
       ((ProjectDataService<?, T>)service).removeData(toRemove, project, synchronous);
     }
+  }
+
+  public void updateExternalProjectData(@NotNull Project project, @NotNull ExternalProjectInfo externalProjectInfo) {
+    if(!project.isDisposed()) {
+      ExternalProjectsDataStorage.getInstance(project).add(externalProjectInfo);
+    }
+  }
+
+  @Nullable
+  public ExternalProjectInfo getExternalProjectData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
+    return !project.isDisposed() ? ExternalProjectsDataStorage.getInstance(project).get(projectSystemId, externalProjectPath) : null;
   }
 }

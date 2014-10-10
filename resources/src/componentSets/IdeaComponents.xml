@@ -50,12 +50,5 @@
     </component>
   </project-components>
 
-  <module-components>
-    <component>
-      <interface-class>com.intellij.openapi.vcs.impl.VcsManagerPerModuleConfiguration</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.VcsManagerPerModuleConfiguration</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-  </module-components>
 </components>
 

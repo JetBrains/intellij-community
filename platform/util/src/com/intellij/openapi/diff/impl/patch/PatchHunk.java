@@ -75,7 +75,8 @@ public class PatchHunk {
   public String getText() {
     StringBuilder builder = new StringBuilder();
     for(PatchLine line: myLines) {
-      builder.append(line.getText()).append("\n");
+      builder.append(line.getText());
+      if (!line.isSuppressNewLine()) builder.append("\n");
     }
     return builder.toString();
   }
