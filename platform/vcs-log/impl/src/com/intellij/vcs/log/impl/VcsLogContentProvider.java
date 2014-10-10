@@ -91,9 +91,6 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
   @NotNull
   @Override
   public Boolean fun(Project project) {
-    if (!Registry.is("git.new.log")) {
-      return false;
-    }
     return !myLogManager.findLogProviders(Arrays.asList(myVcsManager.getAllVcsRoots())).isEmpty();
   }
 

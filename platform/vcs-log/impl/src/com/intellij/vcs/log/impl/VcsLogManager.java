@@ -47,7 +47,7 @@ public class VcsLogManager implements Disposable {
   @NotNull private final VcsLogSettings mySettings;
   @NotNull private final VcsLogUiProperties myUiProperties;
 
-  private PostponeableLogRefresher myLogRefresher;
+  private VcsLogRefresher myLogRefresher;
   private volatile VcsLogUiImpl myUi;
 
   public VcsLogManager(@NotNull Project project,
@@ -60,7 +60,7 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public JComponent initContent(@NotNull Collection<VcsRoot> roots, @NotNull String contentTabName) {
+  public JComponent initContent(@NotNull Collection<VcsRoot> roots, @Nullable String contentTabName) {
     final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots);
 
     Consumer<VisiblePack> visiblePackConsumer = new Consumer<VisiblePack>() {
@@ -76,10 +76,20 @@ public class VcsLogManager implements Disposable {
           });
       }
     };
-    VcsLogDataHolder logDataHolder = new VcsLogDataHolder(myProject, this, logProviders, mySettings, myUiProperties, visiblePackConsumer);
+    final VcsLogDataHolder logDataHolder = new VcsLogDataHolder(myProject, this, logProviders, mySettings, myUiProperties, visiblePackConsumer);
     myUi = new VcsLogUiImpl(logDataHolder, myProject, mySettings,
                             new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, logDataHolder.getFilterer());
-    myLogRefresher = new PostponeableLogRefresher(myProject, logDataHolder, contentTabName);
+    if (contentTabName != null) {
+      myLogRefresher = new PostponeableLogRefresher(myProject, logDataHolder, contentTabName);
+    }
+    else {
+      myLogRefresher = new VcsLogRefresher() {
+        @Override
+        public void refresh(@NotNull VirtualFile root) {
+          logDataHolder.refresh(Collections.singletonList(root));
+        }
+      };
+    }
     refreshLogOnVcsEvents(logProviders);
     logDataHolder.initialize();
 
@@ -143,7 +153,7 @@ public class VcsLogManager implements Disposable {
 
   private static class PostponeableLogRefresher implements VcsLogRefresher, Disposable {
 
-    private  static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
+    private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
 
     @NotNull private final VcsLogDataHolder myDataHolder;
     @NotNull private final ToolWindowManagerImpl myToolWindowManager;
