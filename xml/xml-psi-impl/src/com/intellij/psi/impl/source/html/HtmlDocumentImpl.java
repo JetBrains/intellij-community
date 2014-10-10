@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 
@@ -25,6 +26,10 @@ import com.intellij.psi.xml.XmlTag;
 public class HtmlDocumentImpl extends XmlDocumentImpl {
   public HtmlDocumentImpl() {
     super(XmlElementType.HTML_DOCUMENT);
+  }
+
+  public HtmlDocumentImpl(IElementType type) {
+    super(type);
   }
 
   @Override

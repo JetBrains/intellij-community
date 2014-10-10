@@ -159,19 +159,15 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     if (recursively) {
-      final VirtualFile[] children = CvsVfsUtil.getChildrenOf(dir);
-      if (children != null) {
-        for (VirtualFile file : children) {
-          progress.checkCanceled();
-          if (file.isDirectory()) {
-            final boolean isIgnored = myVcsManager.isIgnored(file);
-            if (!isIgnored) {
-              processEntriesIn(file, scope, builder, true, progress);
-            }
-            else {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Skipping ignored path " + file.getPath());
-              }
+      for (VirtualFile file : CvsVfsUtil.getChildrenOf(dir)) {
+        progress.checkCanceled();
+        if (file.isDirectory()) {
+          if (!myVcsManager.isIgnored(file)) {
+            processEntriesIn(file, scope, builder, true, progress);
+          }
+          else {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Skipping ignored path " + file.getPath());
             }
           }
         }
@@ -187,7 +183,6 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     return false;
   }
-
 
   private void processFile(final FilePath filePath, final ChangelistBuilder builder, final ProgressIndicator progress) throws VcsException {
     final VirtualFile dir = filePath.getVirtualFileParent();
@@ -224,16 +219,10 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void showBranchImOn(final ChangelistBuilder builder, final VcsDirtyScope scope) {
     final List<VirtualFile> dirs = ObjectsConvertor.fp2vf(scope.getRecursivelyDirtyDirectories());
-    final Collection<VirtualFile> roots = new ArrayList<VirtualFile>(scope.getAffectedContentRoots());
-
-    for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
-      final VirtualFile root = iterator.next();
-      if (! dirs.contains(root)) iterator.remove();
-    }
-
-    if (roots.isEmpty()) return;
-    for (VirtualFile root : roots) {
-      checkTopLevelForBeingSwitched(root, builder);
+    for (VirtualFile root : myVcsManager.getRootsUnderVcs(myVcs)) {
+      if (dirs.contains(root)) {
+        checkTopLevelForBeingSwitched(root, builder);
+      }
     }
   }
 
@@ -455,17 +444,12 @@ public class CvsChangeProvider implements ChangeProvider {
     final CvsInfo cvsInfo = CvsEntriesManager.getInstance().getCvsInfoFor(directory);
     final DirectoryContent result = new DirectoryContent(cvsInfo);
 
-    VirtualFile[] children = CvsVfsUtil.getChildrenOf(directory);
-    if (children == null) children = VirtualFile.EMPTY_ARRAY;
-
-    final Collection<Entry> entries = cvsInfo.getEntries();
-
     final HashMap<String, VirtualFile> nameToFileMap = new HashMap<String, VirtualFile>();
-    for (VirtualFile child : children) {
+    for (VirtualFile child : CvsVfsUtil.getChildrenOf(directory)) {
       nameToFileMap.put(child.getName(), child);
     }
 
-    for (final Entry entry : entries) {
+    for (final Entry entry : cvsInfo.getEntries()) {
       progress.checkCanceled();
       final String fileName = entry.getFileName();
       if (entry.isDirectory()) {

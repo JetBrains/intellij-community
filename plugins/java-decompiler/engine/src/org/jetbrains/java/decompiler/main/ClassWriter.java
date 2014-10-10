@@ -805,7 +805,7 @@ public class ClassWriter {
         }
 
         //TODO: for now only start line set
-        buffer.setCurrentLine(startLine);
+        buffer.setCurrentLine(startLine-1);
         buffer.append('{').appendLineSeparator();
 
         RootStatement root = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;

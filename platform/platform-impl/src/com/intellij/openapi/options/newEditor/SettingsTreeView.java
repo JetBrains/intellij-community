@@ -136,7 +136,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
     myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
     myBuilder.setFilteringMerge(300, null);
-    setMinimumSize(new Dimension(200, 100));
     Disposer.register(this, myBuilder);
   }
 
@@ -490,19 +489,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         if (myRoot == node.getParent()) {
           myTextLabel.setFont(myTextLabel.getFont().deriveFont(Font.BOLD));
         }
-        if (tree.isVisible()) {
-          int indent = node.myLevel * (UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent());
-          Insets treeInsets = tree.getInsets();
-          if (treeInsets != null) {
-            indent += treeInsets.left + treeInsets.right;
-          }
-          int visibleWidth = tree.getVisibleRect().width;
-          if (visibleWidth > indent) {
-            Dimension size = getPreferredSize();
-            size.width = visibleWidth - indent;
-            //setPreferredSize(size);
-          }
-        }
       }
       // update font color for modified configurables
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : NORMAL_NODE);
@@ -564,6 +550,30 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         }
       }
       myNodeIcon.setIcon(nodeIcon);
+      // calculate minimum size
+      if (node != null && tree.isVisible()) {
+        int width = getPreferredSize().width;
+        width += node.myLevel * UIUtil.getTreeLeftChildIndent();
+        width += node.myLevel * UIUtil.getTreeRightChildIndent();
+        Insets insets = tree.getInsets();
+        if (insets != null) {
+          width += insets.left + insets.right;
+        }
+        JScrollBar bar = myScroller.getVerticalScrollBar();
+        if (bar != null && bar.isVisible()) {
+          width += bar.getWidth();
+        }
+        width = Math.min(width, 300); // maximal width for minimum size
+        JComponent view = SettingsTreeView.this;
+        Dimension size = view.getMinimumSize();
+        if (size.width < width) {
+          size.width = width;
+          System.out.println("width = " + width);
+          view.setMinimumSize(size);
+          view.revalidate();
+          view.repaint();
+        }
+      }
       return this;
     }
   }

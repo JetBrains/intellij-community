@@ -24,6 +24,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -41,6 +42,7 @@ import java.awt.*;
 import java.util.Properties;
 
 public class CreateFromTemplateDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog");
   @NotNull private final PsiDirectory myDirectory;
   @NotNull private final Project myProject;
   private PsiElement myCreatedElement;
@@ -113,16 +115,22 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
   }
 
-  private void doCreate(@Nullable final String fileName)  {
+  private void doCreate(@Nullable String fileName)  {
     try {
-      final CreateFileAction.MkDirs mkDirs = ApplicationManager.getApplication().runWriteAction(new Computable<CreateFileAction.MkDirs>() {
-        @Override
-        public CreateFileAction.MkDirs compute() {
-          return new CreateFileAction.MkDirs(fileName, myDirectory);
-        }
-      });
-      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, mkDirs.newName, myAttrPanel.getProperties(myDefaultProperties),
-                                                             mkDirs.directory);
+      String newName = fileName;
+      PsiDirectory directory = myDirectory;
+      if (fileName != null) {
+        final String finalFileName = fileName;
+        CreateFileAction.MkDirs mkDirs = ApplicationManager.getApplication().runWriteAction(new Computable<CreateFileAction.MkDirs>() {
+            @Override
+            public CreateFileAction.MkDirs compute() {
+              return new CreateFileAction.MkDirs(finalFileName, myDirectory);
+            }
+          });
+        newName = mkDirs.newName;
+        directory = mkDirs.directory;
+      }
+      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, newName, myAttrPanel.getProperties(myDefaultProperties), directory);
     }
     catch (Exception e) {
       showErrorDialog(e);
@@ -134,6 +142,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   }
 
   private void showErrorDialog(final Exception e) {
+    LOG.info(e);
     Messages.showMessageDialog(myProject, filterMessage(e.getMessage()), getErrorMessage(), Messages.getErrorIcon());
   }
 

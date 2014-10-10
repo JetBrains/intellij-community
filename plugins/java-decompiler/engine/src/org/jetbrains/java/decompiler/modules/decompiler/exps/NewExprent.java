@@ -268,7 +268,10 @@ public class NewExprent extends Exprent {
         new ClassWriter().classLambdaToJava(child, buf, methodObject, indent);
       }
       else {
+        // do not track lines in sub classes for now
+        buf.setTrackLines(false);
         new ClassWriter().classToJava(child, buf, indent);
+        buf.setTrackLines(true);
       }
     }
     else if (directArrayInit) {
