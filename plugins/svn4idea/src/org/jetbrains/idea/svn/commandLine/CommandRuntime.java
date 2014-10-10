@@ -52,6 +52,7 @@ public class CommandRuntime {
     myModules = ContainerUtil.newArrayList();
     myModules.add(new CommandParametersResolutionModule(this));
     myModules.add(new ProxyModule(this));
+    myModules.add(new SshTunnelRuntimeModule(this));
   }
 
   @NotNull
@@ -224,7 +225,7 @@ public class CommandRuntime {
     return SystemInfo.isWindows ? new WinTerminalExecutor(exePath, command) : new TerminalExecutor(exePath, command);
   }
 
-  private static boolean isLocal(@NotNull Command command) {
+  public static boolean isLocal(@NotNull Command command) {
     return SvnCommandName.version.equals(command.getName()) ||
            SvnCommandName.cleanup.equals(command.getName()) ||
            SvnCommandName.add.equals(command.getName()) ||
