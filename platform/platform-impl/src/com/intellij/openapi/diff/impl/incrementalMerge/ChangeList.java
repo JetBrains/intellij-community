@@ -202,7 +202,7 @@ public class ChangeList {
 
   public LineBlocks getLineBlocks() {
     ArrayList<Change> changes = new ArrayList<Change>(myChanges);
-    changes.addAll(myAppliedChanges);
+    //changes.addAll(myAppliedChanges);
     return LineBlocks.fromChanges(changes);
   }
 

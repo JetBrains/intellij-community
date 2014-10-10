@@ -456,11 +456,9 @@ public class MergePanel2 implements DiffViewer {
   private class MyScrollingPanel implements DiffPanelOuterComponent.ScrollingPanel {
     public void scrollEditors() {
       Editor centerEditor = getEditor(1);
-      if (!centerEditor.isViewer() && centerEditor.getDocument().isWritable()) {
-        JComponent centerComponent = centerEditor.getContentComponent();
-        if (centerComponent.isShowing()) {
-          centerComponent.requestFocus();
-        }
+      JComponent centerComponent = centerEditor.getContentComponent();
+      if (centerComponent.isShowing()) {
+        centerComponent.requestFocus();
       }
       int[] toLeft = getPrimaryBeginnings(myDividers[0].getPaint());
       int[] toRight = getPrimaryBeginnings(myDividers[1].getPaint());
