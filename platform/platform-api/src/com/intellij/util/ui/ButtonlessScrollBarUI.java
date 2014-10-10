@@ -638,6 +638,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private void paintMacThumb(Graphics g, Rectangle thumbBounds) {
+    if (isMacScrollbarHiddenAndDistractionFreeEnabled()) return;
+
     thumbBounds = getMacScrollBarBounds(thumbBounds, true);
     Graphics2D g2d = (Graphics2D)g;
     RenderingHints oldHints = g2d.getRenderingHints();
@@ -766,6 +768,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   @Override
   protected JButton createDecreaseButton(int orientation) {
     return new EmptyButton();
+  }
+
+  public boolean isMacScrollbarHiddenAndDistractionFreeEnabled() {
+    return myMacScrollbarHidden && Registry.is("editor.distraction.free.mode");
   }
 
   private static class EmptyButton extends JButton {

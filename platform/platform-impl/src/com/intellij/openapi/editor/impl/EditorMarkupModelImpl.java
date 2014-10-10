@@ -574,6 +574,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void doPaintTrack(Graphics g, JComponent c, Rectangle bounds) {
+      if (isMacScrollbarHiddenAndDistractionFreeEnabled()) return;
+
       if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
         g.setColor(getEditor().getColorsScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
