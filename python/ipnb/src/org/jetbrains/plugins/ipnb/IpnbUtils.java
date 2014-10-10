@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ipnb;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.petebevin.markdown.MarkdownProcessor;
 import net.sourceforge.jeuclid.MathMLParserSupport;
@@ -50,10 +51,22 @@ public class IpnbUtils {
                                                      "padding: 8px 35px 8px 14px;" +
                                                      "border: 1px solid #fbeed5;}";
 
+  private static final String ourAlertSuccessRule = ".alert-success{ background-color: #dff0d8;\n" +
+                                                    "color: #468847;" +
+                                                    "padding: 8px 35px 8px 14px;" +
+                                                    "border: 1px solid #d6e9c6;}";
+
+  private static final String ourAlertErrorRule = ".alert-error{ background-color: #f2dede;\n" +
+                                                  "color: #b94a48;" +
+                                                  "padding: 8px 35px 8px 14px;" +
+                                                  "border: 1px solid #eed3d7;}";
+
   private static Pattern ourRegex = Pattern.compile("(https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])");
 
   public static String markdown2Html(@NotNull String description) {
     description = ourRegex.matcher(description).replaceAll("<a href=\"$1\">$1</a>");
+    description = StringUtil.replace(description, "class=\"alert alert-success\"", "class=\"alert-success\"");
+    description = StringUtil.replace(description, "class=\"alert alert-error\"", "class=\"alert-error\"");
     return ourMarkdownProcessor.markdown(description);
   }
 
@@ -65,6 +78,8 @@ public class IpnbUtils {
     sheet.addRule(ourBodyRule);
     sheet.addRule(ourCodeRule);
     sheet.addRule(ourAlertRule);
+    sheet.addRule(ourAlertSuccessRule);
+    sheet.addRule(ourAlertErrorRule);
 
     editorPane.setEditable(false);
 
