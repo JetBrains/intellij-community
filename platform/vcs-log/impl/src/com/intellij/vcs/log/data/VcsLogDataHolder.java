@@ -89,7 +89,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
 
     try {
-      myHashMap = new VcsLogHashMap(myProject);
+      myHashMap = new VcsLogHashMap(myProject, logProviders);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // TODO: show a message to the user & fallback to using in-memory Hashes
