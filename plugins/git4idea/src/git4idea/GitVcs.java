@@ -192,7 +192,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
-    myExecutableValidator = new GitExecutableValidator(myProject, this);
+    myExecutableValidator = new GitExecutableValidator(myProject);
     myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
   }
 
