@@ -60,14 +60,12 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     PsiElement targetElement = null;
     PsiMethod targetMethod = null;
 
-    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myWrongElement, PsiLambdaExpression.class);
-    if (lambdaExpression != null) {
-      targetMethod = LambdaUtil.getFunctionalInterfaceMethod(lambdaExpression);
-      targetElement = lambdaExpression.getBody();
-    }
-
-    if (targetElement == null && targetMethod == null) {
-      targetMethod = PsiTreeUtil.getParentOfType(myWrongElement, PsiMethod.class);
+    final PsiElement psiElement = PsiTreeUtil.getParentOfType(myWrongElement, PsiLambdaExpression.class, PsiMethod.class);
+    if (psiElement instanceof PsiLambdaExpression) {
+      targetMethod = LambdaUtil.getFunctionalInterfaceMethod(psiElement);
+      targetElement = ((PsiLambdaExpression)psiElement).getBody();
+    } else if (psiElement instanceof PsiMethod) {
+      targetMethod = (PsiMethod)psiElement;
       targetElement = targetMethod;
     }
 
@@ -85,7 +83,8 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
 
     final boolean processSuperMethods;
     if (hasSuperMethodsWithoutExceptions && superMethods.length > 0) {
-      int result = Messages.showYesNoCancelDialog(
+      int result = ApplicationManager.getApplication().isUnitTestMode() ? Messages.YES :
+                   Messages.showYesNoCancelDialog(
         QuickFixBundle.message("add.exception.to.throws.inherited.method.warning.text", targetMethod.getName()),
         QuickFixBundle.message("method.is.inherited.warning.title"),
         Messages.getQuestionIcon());
@@ -184,16 +183,16 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     PsiElement targetElement = null;
     PsiMethod targetMethod = null;
 
-    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myWrongElement, PsiLambdaExpression.class);
-    if (lambdaExpression != null) {
-      targetMethod = LambdaUtil.getFunctionalInterfaceMethod(lambdaExpression);
-      targetElement = lambdaExpression.getBody();
+    final PsiElement psiElement = PsiTreeUtil.getParentOfType(myWrongElement, PsiLambdaExpression.class, PsiMethod.class);
+    if (psiElement instanceof PsiLambdaExpression) {
+      targetMethod = LambdaUtil.getFunctionalInterfaceMethod(psiElement);
+      targetElement = ((PsiLambdaExpression)psiElement).getBody();
+    } 
+    else if (psiElement instanceof PsiMethod) {
+      targetMethod = (PsiMethod)psiElement;
+      targetElement = psiElement;
     }
 
-    if (targetElement == null && targetMethod == null) {
-      targetMethod = PsiTreeUtil.getParentOfType(myWrongElement, PsiMethod.class);
-      targetElement = targetMethod;
-    }
     if (targetElement == null || targetMethod == null || !targetMethod.getThrowsList().isPhysical()) return false;
     List<PsiClassType> unhandled = getUnhandledExceptions(myWrongElement, targetElement, targetMethod);
     if (unhandled == null || unhandled.isEmpty()) return false;
