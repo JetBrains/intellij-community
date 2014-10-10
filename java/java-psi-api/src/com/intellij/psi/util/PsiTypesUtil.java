@@ -208,15 +208,12 @@ public class PsiTypesUtil {
       }
     }
     else if (parent instanceof PsiReturnStatement) {
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
-      if (lambdaExpression != null) {
+      final PsiElement psiElement = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, PsiMethod.class);
+      if (psiElement instanceof PsiLambdaExpression) {
         return null;
       }
-      else {
-        PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-        if (method != null) {
-          return method.getReturnType();
-        }
+      else if (psiElement instanceof PsiMethod){
+        return ((PsiMethod)psiElement).getReturnType();
       }
     }
     else if (PsiUtil.isCondition(methodCall, parent)) {
