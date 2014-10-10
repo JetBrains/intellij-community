@@ -16,7 +16,6 @@
 
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -146,33 +145,29 @@ abstract class AbstractCollectionBinding implements Binding {
   @Override
   public Object deserialize(Object o, @NotNull Object... nodes) {
     Collection result;
-
     if (getTagName(o) != null) {
       assert nodes.length == 1;
       Element e = (Element)nodes[0];
-
       result = createCollection(e.getName());
-      final Content[] childElements = JDOMUtil.getContent(e);
-      for (final Content n : childElements) {
-        if (XmlSerializerImpl.isIgnoredNode(n)) continue;
-        final Binding elementBinding = getElementBinding(n);
-        Object v = elementBinding.deserialize(o, n);
-        //noinspection unchecked
-        result.add(v);
+      List<Content> content = e.getContent();
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, size = content.size(); i < size; i++) {
+        Content child = content.get(i);
+        if (!XmlSerializerImpl.isIgnoredNode(child)) {
+          //noinspection unchecked
+          result.add(getElementBinding(child).deserialize(o, child));
+        }
       }
     }
     else {
-      result = new ArrayList();
+      result = new SmartList();
       for (Object node : nodes) {
-        if (XmlSerializerImpl.isIgnoredNode(node)) continue;
-        final Binding elementBinding = getElementBinding(node);
-        Object v = elementBinding.deserialize(o, node);
-        //noinspection unchecked
-        result.add(v);
+        if (!XmlSerializerImpl.isIgnoredNode(node)) {
+          //noinspection unchecked
+          result.add(getElementBinding(node).deserialize(o, node));
+        }
       }
     }
-
-
     return processResult(result, o);
   }
 

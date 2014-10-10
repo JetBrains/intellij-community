@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -169,7 +168,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       component.readExternal(element);
     }
     catch (InvalidDataException e) {
-      throw new InvalidComponentDataException(e);
+      throw new RuntimeException(e);
     }
 
     validateUnusedMacros(componentName, true);
@@ -206,10 +205,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
   @Nullable
   private static Element getJdomState(final Object component, @NotNull String componentName, @NotNull StateStorage defaultsStorage) {
-    ComponentRoamingManager roamingManager = ComponentRoamingManager.getInstance();
-    if (component instanceof RoamingTypeDisabled) {
-      roamingManager.setRoamingType(componentName, RoamingType.DISABLED);
-    }
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }
 
@@ -230,14 +225,10 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         }
       }
     }
-
   }
 
   private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData, boolean isReinit) {
-    State spec = getStateSpec(component);
-    final String name = spec.name();
-    ComponentRoamingManager.getInstance().setRoamingType(name, spec.roamingType());
-
+    String name = getStateSpec(component).name();
     if (!isReinit) {
       doAddComponent(name, component);
     }
@@ -246,11 +237,9 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     Class<T> stateClass = getComponentStateClass(component);
-
     T state = null;
     //todo: defaults merging
-
-    final StateStorage defaultsStorage = getDefaultsStorage();
+    StateStorage defaultsStorage = getDefaultsStorage();
     if (defaultsStorage != null) {
       state = defaultsStorage.getState(component, name, stateClass, null);
     }
@@ -321,8 +310,8 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @NotNull
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
-                                                   final StateStorageOperation operation) throws StateStorageException {
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+                                                   @NotNull StateStorageOperation operation) {
     final State stateSpec = getStateSpec(persistentStateComponent);
     final Storage[] storages = stateSpec.storages();
     if (storages.length == 1) {
@@ -340,14 +329,9 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return LastStorageChooserForWrite.INSTANCE.selectStorages(storages, persistentStateComponent, operation);
     }
     else {
-      try {
-        @SuppressWarnings("unchecked")
-        StateStorageChooser<PersistentStateComponent<T>> storageChooser = ReflectionUtil.newInstance(storageChooserClass);
-        return storageChooser.selectStorages(storages, persistentStateComponent, operation);
-      }
-      catch (RuntimeException e) {
-        throw new StateStorageException(e);
-      }
+      @SuppressWarnings("unchecked")
+      StateStorageChooser<PersistentStateComponent<T>> storageChooser = ReflectionUtil.newInstance(storageChooserClass);
+      return storageChooser.selectStorages(storages, persistentStateComponent, operation);
     }
   }
 

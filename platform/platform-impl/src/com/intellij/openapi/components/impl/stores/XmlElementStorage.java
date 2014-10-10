@@ -40,8 +40,6 @@ import java.util.*;
 public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected static final Logger LOG = Logger.getInstance(XmlElementStorage.class);
 
-  private final static RoamingElementFilter DISABLED_ROAMING_ELEMENT_FILTER = new RoamingElementFilter(RoamingType.DISABLED);
-
   private static final String ATTR_NAME = "name";
   private static final String VERSION_FILE_SUFFIX = ".ver";
 
@@ -321,19 +319,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
       if (element == null) {
         myStreamProvider.delete(myFileSpec, myRoamingType);
-        return;
-      }
-
-      // skip the whole document if some component has disabled roaming type
-      // you must not store components with different roaming types in one document
-      // one exclusion: workspace file (you don't have choice in this case)
-      // for example, it is important for ICS ProjectId - we cannot keep project in another place,
-      // but this project id must not be shared
-      if (myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
-        Element copiedElement = JDOMUtil.cloneElement(element, DISABLED_ROAMING_ELEMENT_FILTER);
-        if (copiedElement != null) {
-          doSaveForProvider(copiedElement, DISABLED_ROAMING_ELEMENT_FILTER.myRoamingType, content);
-        }
       }
       else {
         doSaveForProvider(element, myRoamingType, content);
@@ -445,21 +430,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
           LOG.debug(e);
         }
       }
-    }
-  }
-
-  private static class RoamingElementFilter extends ElementFilter {
-    final RoamingType myRoamingType;
-
-    public RoamingElementFilter(RoamingType roamingType) {
-      super(StorageData.COMPONENT);
-
-      myRoamingType = roamingType;
-    }
-
-    @Override
-    public boolean matches(Object obj) {
-      return super.matches(obj) && ComponentRoamingManager.getInstance().getRoamingType(((Element)obj).getAttributeValue(StorageData.NAME)) == myRoamingType;
     }
   }
 }

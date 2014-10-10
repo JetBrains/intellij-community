@@ -40,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -48,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.annotation.Annotation;
 import java.util.List;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
@@ -57,7 +57,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls static final String OPTION_WORKSPACE = "workspace";
 
-  static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
   private static int originalVersion = -1;
 
   protected ProjectImpl myProject;
@@ -72,19 +71,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Override
   public boolean checkVersion() {
-    final ApplicationNamesInfo appNamesInfo = ApplicationNamesInfo.getInstance();
     if (originalVersion >= 0 && originalVersion < ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
       final VirtualFile projectFile = getProjectFile();
       LOG.assertTrue(projectFile != null);
-      String name = projectFile.getNameWithoutExtension();
-
       String message = ProjectBundle.message("project.convert.old.prompt", projectFile.getName(),
-                                             appNamesInfo.getProductName(),
-                                             name + OLD_PROJECT_SUFFIX + projectFile.getExtension());
+                                             ApplicationNamesInfo.getInstance().getProductName(),
+                                             projectFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + projectFile.getExtension());
       if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
 
       List<String> conversionProblems = getConversionProblemsStorage();
-      if (conversionProblems != null && !conversionProblems.isEmpty()) {
+      if (!ContainerUtil.isEmpty(conversionProblems)) {
         StringBuilder buffer = new StringBuilder();
         buffer.append(ProjectBundle.message("project.convert.problems.detected"));
         for (String s : conversionProblems) {
@@ -92,10 +88,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           buffer.append(s);
         }
         buffer.append(ProjectBundle.message("project.convert.problems.help"));
-        final int result = Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
+        if (Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
                                                ProjectBundle.message("project.convert.problems.help.button"),
-                                                 CommonBundle.getCloseButtonText(), Messages.getWarningIcon());
-        if (result == Messages.OK) {
+                                                 CommonBundle.getCloseButtonText(), Messages.getWarningIcon()) == Messages.OK) {
           HelpManager.getInstance().invokeHelp("project.migrationProblems");
         }
       }
@@ -130,7 +125,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     if (originalVersion > ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
       String message =
-        ProjectBundle.message("project.load.new.version.warning", myProject.getName(), appNamesInfo.getProductName());
+        ProjectBundle.message("project.load.new.version.warning", myProject.getName(), ApplicationNamesInfo.getInstance().getProductName());
 
       if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
     }
@@ -567,66 +562,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Override
   protected StateStorageChooser<PersistentStateComponent<?>> getDefaultStateStorageChooser() {
     return myStateStorageChooser;
-  }
-
-  @NotNull
-  @Override
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
-                                                   final StateStorageOperation operation) throws StateStorageException {
-    Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, operation);
-
-    if (operation == StateStorageOperation.READ) {
-      Storage[] upd = new Storage[result.length + 1];
-      System.arraycopy(result, 0, upd, 0, result.length);
-      upd[result.length] = DEFAULT_STORAGE_ANNOTATION;
-      result = upd;
-    }
-
-    return result;
-  }
-
-  @SuppressWarnings("ClassExplicitlyAnnotation")
-  private static class MyStorage implements Storage {
-    @Override
-    public String id() {
-      return "___Default___";
-    }
-
-    @Override
-    public boolean isDefault() {
-      return true;
-    }
-
-    @Override
-    public String file() {
-      return StoragePathMacros.PROJECT_FILE;
-    }
-
-    @Override
-    public StorageScheme scheme() {
-      return  StorageScheme.DEFAULT;
-    }
-
-    @Override
-    public RoamingType roamingType() {
-      return RoamingType.PER_USER;
-    }
-
-    @Override
-    public Class<? extends StateStorage> storageClass() {
-      return StateStorage.class;
-    }
-
-    @Override
-    public Class<? extends StateSplitter> stateSplitter() {
-      return StateSplitter.class;
-    }
-
-    @NotNull
-    @Override
-    public Class<? extends Annotation> annotationType() {
-      throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
-    }
   }
 
   @NotNull

@@ -16,6 +16,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
@@ -161,18 +162,17 @@ class XmlSerializerImpl {
   }
 
   public static boolean isIgnoredNode(final Object child) {
-    if (child instanceof Text && ((Text)child).getValue().trim().isEmpty()) {
+    if (child instanceof Text && StringUtil.isEmptyOrSpaces(((Text)child).getValue())) {
       return true;
     }
     if (child instanceof Comment) {
       return true;
     }
     if (child instanceof Attribute) {
-      Attribute attr = (Attribute)child;
-      final String namespaceURI = attr.getNamespaceURI();
-      if (namespaceURI != null && !namespaceURI.isEmpty()) return true;
+      if (!StringUtil.isEmpty(((Attribute)child).getNamespaceURI())) {
+        return true;
+      }
     }
-
     return false;
   }
 

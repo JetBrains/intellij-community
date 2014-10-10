@@ -123,7 +123,7 @@ class JarLoader extends Loader {
       }
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.error("file: " + myURL, e);
     }
 
     return null;
