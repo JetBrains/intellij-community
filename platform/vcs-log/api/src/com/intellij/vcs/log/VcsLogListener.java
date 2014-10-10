@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This listener is notified about VCS log refresh procedure.
+ * Listens to changes in the log, both in Permanent and Visible parts.
  */
-public interface VcsLogRefreshListener {
+public interface VcsLogListener {
 
-  void refresh(@NotNull DataPack dataPack);
+  /**
+   * This method is called whether a refresh happened, or filter changed, or the VisibleGraph was rebuilt.
+   * <p/>
+   * It is called on the EDT thread.
+   *
+   * @param dataPack        new VcsLogDataPack which was just applied to the UI.
+   * @param refreshHappened true if a refresh initiated this log change, i.e. PermanentGraph changed.
+   */
+  void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened);
 
 }

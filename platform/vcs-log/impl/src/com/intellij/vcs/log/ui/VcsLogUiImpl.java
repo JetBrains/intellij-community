@@ -46,7 +46,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogFilterer myFilterer;
 
-  @NotNull private final Collection<VcsLogFilterChangeListener> myFilterChangeListeners = ContainerUtil.newArrayList();
+  @NotNull private final Collection<VcsLogListener> myLogListeners = ContainerUtil.newArrayList();
 
   @NotNull private VisiblePack myVisiblePack;
 
@@ -69,13 +69,16 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
     TIntHashSet previouslySelected = getSelectedCommits();
 
+    PermanentGraph<Integer> previousPermGraph = myVisiblePack.getPermanentGraph();
     myVisiblePack = pack;
+
+    boolean permGraphChanged = previousPermGraph != myVisiblePack.getPermanentGraph();
 
     GraphTableModel newModel = new GraphTableModel(myVisiblePack, myLogDataHolder, this);
     setModel(newModel, myVisiblePack.getVisibleGraph(), previouslySelected);
     myMainFrame.updateDataPack(myVisiblePack);
     setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
-    fireFilterChangeEvent();
+    fireFilterChangeEvent(myVisiblePack, permGraphChanged);
     repaintUI();
   }
 
@@ -368,18 +371,18 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   @Override
-  public void addFilterChangeListener(@NotNull VcsLogFilterChangeListener listener) {
-    myFilterChangeListeners.add(listener);
+  public void addLogListener(@NotNull VcsLogListener listener) {
+    myLogListeners.add(listener);
   }
 
   @Override
-  public void removeFilterChangeListener(@NotNull VcsLogFilterChangeListener listener) {
-    myFilterChangeListeners.remove(listener);
+  public void removeLogListener(@NotNull VcsLogListener listener) {
+    myLogListeners.remove(listener);
   }
 
-  private void fireFilterChangeEvent() {
-    for (VcsLogFilterChangeListener listener : myFilterChangeListeners) {
-      listener.filtersPossiblyChanged();
+  private void fireFilterChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
+    for (VcsLogListener listener : myLogListeners) {
+      listener.onChange(visiblePack, refresh);
     }
   }
 
