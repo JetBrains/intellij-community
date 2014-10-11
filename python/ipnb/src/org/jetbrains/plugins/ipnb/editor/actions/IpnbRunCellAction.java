@@ -17,19 +17,20 @@ public class IpnbRunCellAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext context = event.getDataContext();
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof IpnbFileEditor) {
       final IpnbFilePanel component = ((IpnbFileEditor)editor).getIpnbFilePanel();
-      runCell(component);
+      runCell(component, false);
     }
   }
 
-  public void runCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
+  public void runCell(@NotNull final IpnbFilePanel ipnbFilePanel, boolean selectNext) {
     final IpnbEditablePanel cell = ipnbFilePanel.getSelectedCell();
     cell.runCell();
-    ipnbFilePanel.selectNext(cell);
+    if (selectNext)
+      ipnbFilePanel.selectNext(cell);
     ipnbFilePanel.revalidate();
     ipnbFilePanel.repaint();
     ipnbFilePanel.requestFocus();
