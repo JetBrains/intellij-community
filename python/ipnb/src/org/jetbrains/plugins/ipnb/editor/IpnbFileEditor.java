@@ -8,7 +8,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
@@ -41,7 +41,6 @@ import java.util.List;
  * @author traff
  */
 public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, TextEditor {
-  private final Project myProject;
   private final VirtualFile myFile;
 
   private final String myName;
@@ -54,6 +53,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private static final String codeCellType = "Code";
   private static final String markdownCellType = "Markdown";
   private static final String headingCellType = "Heading ";
+  @SuppressWarnings("UnusedDeclaration")
   private static final String rawNBCellType = "Raw NBConvert";
   private final static String[] ourCellTypes = new String[]{codeCellType, markdownCellType, /*rawNBCellType, */headingCellType + "1",
     headingCellType + "2", headingCellType + "3", headingCellType + "4", headingCellType + "5", headingCellType + "6"};
@@ -62,8 +62,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
 
   public IpnbFileEditor(Project project, final VirtualFile vFile) {
-    myProject = project;
-    myProject.getMessageBus().connect(this).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+    project.getMessageBus().connect(this).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
       public void beforeAllDocumentsSaving() {
         final IpnbFilePanel filePanel = myIpnbFilePanel;
@@ -75,7 +74,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       }
     });
 
-    myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
+    project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
       @Override
       public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         IpnbParser.saveIpnbFile(myIpnbFilePanel);
@@ -91,7 +90,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     myEditorPanel = new JPanel(new BorderLayout());
     myEditorPanel.setBackground(IpnbEditorUtil.getBackground());
 
-    myIpnbFilePanel = createIpnbEditorPanel(myProject, vFile);
+    myIpnbFilePanel = createIpnbEditorPanel(project, vFile);
 
     final JPanel controlPanel = createControlPanel();
     myEditorPanel.add(controlPanel, BorderLayout.NORTH);
@@ -190,7 +189,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     }, AllIcons.Actions.Menu_paste);
   }
 
-  private void addButton(@NotNull final  JPanel controlPanel, @NotNull final ActionListener listener, @NotNull final  Icon icon) {
+  private static void addButton(@NotNull final JPanel controlPanel, @NotNull final ActionListener listener, @NotNull final Icon icon) {
     final JButton button = new JButton();
     button.setBackground(IpnbEditorUtil.getBackground());
     button.setPreferredSize(new Dimension(30, 30));
@@ -429,7 +428,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
   @Nullable
   private static FileEditorProvider getProvider(Project project, VirtualFile vFile) {
-    FileEditorProvider[] providers = FileEditorProviderManagerImpl.getInstance().getProviders(project, vFile);
+    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
     for (FileEditorProvider provider : providers) {
       if (!(provider instanceof IpnbEditorProvider)) {
         return provider;
@@ -438,7 +437,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     return null;
   }
 
-  public abstract class CellSelectionListener {
+  public abstract static class CellSelectionListener {
     public abstract void selectionChanged(@NotNull final IpnbPanel ipnbPanel);
   }
 
