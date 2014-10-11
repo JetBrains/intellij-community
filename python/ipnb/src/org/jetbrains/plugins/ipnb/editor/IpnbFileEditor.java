@@ -144,7 +144,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       @Override
       public void actionPerformed(ActionEvent e) {
         final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
-        action.runCell(myIpnbFilePanel);
+        action.runCell(myIpnbFilePanel, true);
       }
     });
     controlPanel.add(myRunCellButton);
