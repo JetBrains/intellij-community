@@ -85,7 +85,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     int listSize = size();
     Element listElement = new Element(ATTR_LIST);
     listElement.setAttribute(ATTR_LISTSIZE, Integer.toString(listSize));
