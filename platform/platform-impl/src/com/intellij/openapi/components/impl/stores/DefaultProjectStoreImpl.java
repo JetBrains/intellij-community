@@ -61,7 +61,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     ComponentManager componentManager = getComponentManager();
     final Element element = _d;
-    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(), componentManager,
+    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(),
                                                             ROOT_TAG_NAME, null,
                                                             ComponentVersionProvider.EMPTY) {
       @Override

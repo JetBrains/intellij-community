@@ -18,8 +18,8 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.store.ComponentSaveSession;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +63,6 @@ public interface IComponentStore {
      * list of not reloadable components (reload is not performed)
      */
     @Nullable
-    Collection<String> reload(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles);
+    Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages);
   }
 }

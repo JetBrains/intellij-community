@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,10 @@ import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairConsumer;
 import gnu.trove.THashMap;
-import org.jdom.Document;
+import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -32,33 +31,40 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class DirectoryStorageData {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageData.class);
 
-  private Map<String, Map<File, Element>> myStates = new THashMap<String, Map<File, Element>>();
+  private Map<String, THashMap<File, Element>> myStates = new THashMap<String, THashMap<File, Element>>();
   private long myLastTimestamp = 0;
   private DirectoryStorageData myOriginalData;
 
+  @NotNull
   public Set<String> getComponentNames() {
     return myStates.keySet();
   }
 
-  public void loadFrom(final @Nullable VirtualFile dir, TrackingPathMacroSubstitutor pathMacroSubstitutor) {
+  static boolean isStorageFile(@NotNull VirtualFile file) {
+    // ignore system files like .DS_Store on Mac
+    return StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), ".xml");
+  }
+
+  public void loadFrom(@Nullable VirtualFile dir, @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor) {
     if (dir == null || !dir.exists()) {
       return;
     }
 
     for (VirtualFile file : dir.getChildren()) {
-      if (!StringUtil.endsWithIgnoreCase(file.getName(), ".xml")) {
-        //do not load system files like .DS_Store on Mac
+      if (!isStorageFile(file)) {
         continue;
       }
 
       try {
-        final Document document = JDOMUtil.loadDocument(file.contentsToByteArray());
-        final Element element = document.getRootElement();
+        final Element element = JDOMUtil.loadDocument(file.contentsToByteArray()).detachRootElement();
         if (!element.getName().equals(StorageData.COMPONENT)) {
           LOG.error("Incorrect root tag name (" + element.getName() + ") in " + file.getPresentableUrl());
           continue;
@@ -72,9 +78,7 @@ public class DirectoryStorageData {
 
         if (pathMacroSubstitutor != null) {
           pathMacroSubstitutor.expandPaths(element);
-
-          final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(element);
-          pathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
+          pathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(element));
         }
 
         put(componentName, new File(file.getPath()), element, true);
@@ -88,10 +92,8 @@ public class DirectoryStorageData {
     }
   }
 
-  public void put(final String componentName, File file, final Element element, final boolean updateTimestamp) {
-    LOG.assertTrue(componentName != null, String.format("Component name should not be null for file: %s", file == null ? "NULL!" : file.getPath()));
-
-    Map<File, Element> stateMap = myStates.get(componentName);
+  public void put(@NotNull String componentName, @NotNull File file, @NotNull Element element, boolean updateTimestamp) {
+    THashMap<File, Element> stateMap = myStates.get(componentName);
     if (stateMap == null) {
       stateMap = new THashMap<File, Element>();
       myStates.put(componentName, stateMap);
@@ -103,7 +105,7 @@ public class DirectoryStorageData {
     }
   }
 
-  public void updateLastTimestamp(File file) {
+  public void updateLastTimestamp(@NotNull File file) {
     myLastTimestamp = Math.max(myLastTimestamp, file.lastModified());
     if (myOriginalData != null) {
       myOriginalData.myLastTimestamp = myLastTimestamp;
@@ -114,42 +116,17 @@ public class DirectoryStorageData {
     return myLastTimestamp;
   }
 
-  public Map<File, Long> getAllStorageFiles() {
-    final Map<File, Long> allStorageFiles = new THashMap<File, Long>();
-    process(new StorageDataProcessor() {
-      @Override
-      public void process(final String componentName, final File file, final Element element) {
-        allStorageFiles.put(file, file.lastModified());
-      }
-    });
-
-    return allStorageFiles;
-  }
-
-  public void processComponent(@NotNull final String componentName, @NotNull final PairConsumer<File, Element> consumer) {
-    final Map<File, Element> map = myStates.get(componentName);
+  void processComponent(@NotNull String componentName, @NotNull TObjectObjectProcedure<File, Element> consumer) {
+    THashMap<File, Element> map = myStates.get(componentName);
     if (map != null) {
-      for (File file : map.keySet()) {
-        consumer.consume(file, map.get(file));
-      }
-    }
-  }
-
-  public void process(@NotNull final StorageDataProcessor processor) {
-    for (final String componentName : myStates.keySet()) {
-      processComponent(componentName, new PairConsumer<File, Element>() {
-        @Override
-        public void consume(File file, Element element) {
-          processor.process(componentName, file, element);
-        }
-      });
+      map.forEachEntry(consumer);
     }
   }
 
   @Override
   protected DirectoryStorageData clone() {
     final DirectoryStorageData result = new DirectoryStorageData();
-    result.myStates = new HashMap<String, Map<File, Element>>(myStates);
+    result.myStates = new THashMap<String, THashMap<File, Element>>(myStates);
     result.myLastTimestamp = myLastTimestamp;
     result.myOriginalData = this;
     return result;
@@ -171,14 +148,15 @@ public class DirectoryStorageData {
   @Nullable
   public <T> T getMergedState(String componentName, Class<T> stateClass, StateSplitter splitter, @Nullable T mergeInto) {
     final List<Element> subElements = new ArrayList<Element>();
-    processComponent(componentName, new PairConsumer<File, Element>() {
+    processComponent(componentName, new TObjectObjectProcedure<File, Element>() {
       @Override
-      public void consume(File file, Element element) {
+      public boolean execute(File file, Element element) {
         final List children = element.getChildren();
         assert children.size() == 1 : JDOMUtil.writeElement(element, File.separator);
-        final Element subElement = (Element)children.get(0);
+        Element subElement = (Element)children.get(0);
         subElement.detach();
         subElements.add(subElement);
+        return true;
       }
     });
 
@@ -187,9 +165,5 @@ public class DirectoryStorageData {
     removeComponent(componentName);
 
     return DefaultStateSerializer.deserializeState(state, stateClass, mergeInto);
-  }
-
-  interface StorageDataProcessor {
-    void process(String componentName, File file, Element element);
   }
 }
