@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,7 +110,7 @@ public class AssertEqualsBetweenInconvertibleTypesTestNGInspection extends BaseJ
       if (!objectType.equals(parameterType1) || !objectType.equals(parameterType2)) {
         return;
       }
-      if (TypeConversionUtil.areTypesConvertible(type1, type2)) {
+      if (TypeUtils.areConvertible(type1, type2)) {
         return;
       }
       final PsiElement referenceNameElement = methodExpression.getReferenceNameElement();
