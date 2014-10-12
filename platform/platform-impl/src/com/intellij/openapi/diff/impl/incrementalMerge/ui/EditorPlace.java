@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ScrollBarUI;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,24 +57,18 @@ public class EditorPlace extends JComponent implements Disposable, ButtonlessScr
   }
 
   @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-    paintThis(g, true);
-  }
-
-  @Override
   public void call(Graphics g) {
-    paintThis(g, false);
+    paintThis(g);
   }
 
-  private void paintThis(Graphics g, boolean paintOnEditor) {
+  private void paintThis(Graphics g) {
     if (myEditor == null) return;
     // painting only above the central scrollbar, because painting on edge scrollbars is not needed, and there are error stripes
     if (myColumn != MergePanelColumn.BASE) return;
 
-    int offset = paintOnEditor ? DiffDivider.MERGE_DIVIDER_POLYGONS_OFFSET : DiffDivider.MERGE_SCROLL_DIVIDER_POLYGONS_OFFSET;
-    ArrayList<DividerPolygon> polygons = DividerPolygon.createVisiblePolygons(myMergePanel.getSecondEditingSide(), FragmentSide.SIDE1,
-                                                                              offset);
+    int offset = DiffDivider.MERGE_SCROLL_DIVIDER_POLYGONS_OFFSET;
+    ArrayList<DividerPolygon> polygons =
+      DividerPolygon.createVisiblePolygons(myMergePanel.getSecondEditingSide(), FragmentSide.SIDE1, offset);
     for (DividerPolygon polygon : polygons) {
       int startY = polygon.getTopLeftY();
       int endY = polygon.getBottomLeftY();
@@ -85,87 +78,34 @@ public class EditorPlace extends JComponent implements Disposable, ButtonlessScr
         height = 1;
       }
 
-      drawPolygonAboveScrollBar((Graphics2D)g, startY, height, polygon.getColor(), polygon.isApplied(), paintOnEditor);
+      drawPolygon((Graphics2D)g, startY, height, polygon.getColor(), polygon.isApplied());
     }
   }
 
-  private void drawPolygonAboveScrollBar(@NotNull Graphics2D g,
-                                         int startY,
-                                         int height,
-                                         @NotNull Color color,
-                                         boolean applied,
-                                         boolean paintOnEditor) {
-    g.setColor(color);
-    JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
-    int startX = paintOnEditor ? scrollBar.getX() : 0;
-    int endX = startX + scrollBar.getWidth() - 1;
-
-    Rectangle thumb = calcThumbBounds(scrollBar);
+  private void drawPolygon(@NotNull Graphics2D g, int startY, int height, @NotNull Color color, boolean applied) {
+    int scrollbarWidth = myEditor.getScrollPane().getVerticalScrollBar().getWidth();
+    int startX = 0;
+    int endX = startX + scrollbarWidth - 1;
 
     int endY = startY + height;
+
+    g.setColor(color);
     if (!applied) {
       if (height > 2) {
-        fillRectAboveScrollBar(g, startX, startY, scrollBar.getWidth(), height, thumb);
+        g.fillRect(startX, startY, scrollbarWidth, height);
 
         Color framingColor = DiffUtil.getFramingColor(color);
-        if (outsideBounds(startY, thumb)) {
-          UIUtil.drawLine(g, startX, startY, endX, startY, null, framingColor);
-        }
-        if (outsideBounds(endY, thumb)) {
-          UIUtil.drawLine(g, startX, endY, endX, endY, null, framingColor);
-        }
+        UIUtil.drawLine(g, startX, startY, endX, startY, null, framingColor);
+        UIUtil.drawLine(g, startX, endY, endX, endY, null, framingColor);
       }
       else {
-        if (outsideBounds(startY, thumb)) {
-          DiffUtil.drawDoubleShadowedLine(g, startX, endX, startY, color);
-        }
+        DiffUtil.drawDoubleShadowedLine(g, startX, endX, startY, color);
       }
     }
     else {
-      if (outsideBounds(startY, thumb)) {
-        UIUtil.drawBoldDottedLine(g, startX, endX, startY, null, color, false);
-      }
-      if (outsideBounds(endY, thumb)) {
-        UIUtil.drawBoldDottedLine(g, startX, endX, endY, null, color, false);
-      }
+      UIUtil.drawBoldDottedLine(g, startX, endX, startY, null, color, false);
+      UIUtil.drawBoldDottedLine(g, startX, endX, endY, null, color, false);
     }
-  }
-
-  private static void fillRectAboveScrollBar(Graphics2D g, int startX, int startY, int width, int height, Rectangle thumb) {
-    int endY = startY + height;
-    int thumbEndY = thumb == null ? 0 : thumb.y + thumb.height;  // it's for further readability (could have a 2-level ifs for the variable)
-    if (thumb == null) {
-      g.fillRect(startX, startY, width, height);
-    }
-    else if (outsideBounds(startY, thumb) && !outsideBounds(endY, thumb)) {
-      g.fillRect(startX, startY, width, thumb.y - startY);
-    }
-    else if (!outsideBounds(startY, thumb) && outsideBounds(endY, thumb)) {
-      g.fillRect(startX, thumbEndY, width, endY - thumbEndY);
-    }
-    else if (startY < thumb.y && endY > thumbEndY) {  // surrounding the thumb
-      g.fillRect(startX, startY, width, thumb.y - startY);
-      g.fillRect(startX, thumbEndY, width, endY - thumbEndY);
-    }
-    else if (outsideBounds(startY, thumb) && outsideBounds(endY, thumb)) {    // outside without intersection
-      g.fillRect(startX, startY, width, height);
-    }
-  }
-
-  private static boolean outsideBounds(int y, @Nullable Rectangle rectangle) {
-    if (rectangle == null) {
-      return true;
-    }
-    return y < rectangle.y || y > rectangle.y + rectangle.height;
-  }
-
-  @Nullable
-  private static Rectangle calcThumbBounds(JScrollBar scrollBar) {
-    ScrollBarUI scrollBarUI = scrollBar.getUI();
-    if (scrollBarUI instanceof ButtonlessScrollBarUI) {
-      return ((ButtonlessScrollBarUI)scrollBarUI).getThumbBounds();
-    }
-    return null;
   }
 
   public void addNotify() {
