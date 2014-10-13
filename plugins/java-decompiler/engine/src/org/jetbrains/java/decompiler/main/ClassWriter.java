@@ -805,7 +805,7 @@ public class ClassWriter {
         }
 
         //TODO: for now only start line set
-        buffer.setCurrentLine(startLine);
+        buffer.setCurrentLine(startLine-1);
         buffer.append('{').appendLineSeparator();
 
         RootStatement root = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
@@ -814,7 +814,7 @@ public class ClassWriter {
           try {
             tracer.incrementCurrentSourceLine(buffer.count(lineSeparator, start_index_method));
 
-            String code = root.toJava(indent + 1, tracer);
+            TextBuffer code = root.toJava(indent + 1, tracer);
 
             hideMethod = (clinit || dinit || hideConstructor(wrapper, init, throwsExceptions, paramCount)) && code.length() == 0;
 

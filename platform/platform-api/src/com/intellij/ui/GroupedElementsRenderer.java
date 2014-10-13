@@ -36,9 +36,8 @@ public abstract class GroupedElementsRenderer {
   protected JComponent myComponent;
   protected MyComponent myRendererComponent;
 
-  protected JLabel myTextLabel;
-
-
+  protected ErrorLabel myTextLabel;
+  
   public GroupedElementsRenderer() {
     myRendererComponent = new MyComponent();
 
@@ -63,9 +62,6 @@ public abstract class GroupedElementsRenderer {
 
     myTextLabel.setIcon(icon);
     myTextLabel.setDisabledIcon(disabledIcon);
-    if (myTextLabel instanceof EngravedLabel) {
-      ((EngravedLabel)myTextLabel).setShadowColor(isSelected ? UIUtil.getTreeSelectionBackground() : null);
-    }
 
     if (isSelected) {
       //myComponent.setBorder(getSelectedBorder());

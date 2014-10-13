@@ -47,6 +47,22 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
     doStatementTest("com.google.common.base.Objects./*'equal()' between objects of inconvertible types 'Integer' and 'String'*/equal/**/(Integer.valueOf(1), \"string\");");
   }
 
+  public void testCollection() {
+    doTest(
+      "import java.util.Collection;" +
+      "class XXX {" +
+      "  interface A {}" +
+      "  interface B extends A {}" +
+      "  boolean m(Collection<A> c1, Collection<B> c2) {" +
+      "    return c2.equals(c1);" +
+      "  }" +
+      "" +
+      "  boolean n(Collection<Integer> c1, Collection<String> c2) {" +
+      "     return c1./*'equals()' between objects of inconvertible types 'Collection<String>' and 'Collection<Integer>'*/equals/**/(c2);" +
+      "  }" +
+      "}");
+  }
+
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {

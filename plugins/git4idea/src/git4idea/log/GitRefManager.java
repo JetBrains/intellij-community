@@ -156,7 +156,7 @@ public class GitRefManager implements VcsLogRefManager {
 
       Set<String> locals = getLocalBranches(repository);
       Set<String> tracked = getTrackedRemoteBranches(repository);
-      Map<String, GitRemote> nonTracked = getNonTrackedRemoteBranches(repository);
+      Map<String, GitRemote> allRemote = getAllRemoteBranches(repository);
 
       for (VcsRef ref : refsInRoot) {
         if (ref.getType() == HEAD) {
@@ -168,11 +168,11 @@ public class GitRefManager implements VcsLogRefManager {
         if (locals.contains(refName)) {
           localBranches.add(ref);
         }
-        else if (tracked.contains(refName)) {
-          trackedBranches.add(ref);
-        }
-        else if (nonTracked.containsKey(refName)) {
-          remoteRefGroups.putValue(nonTracked.get(refName), ref);
+        else if (allRemote.containsKey(refName)) {
+          remoteRefGroups.putValue(allRemote.get(refName), ref);
+          if (tracked.contains(refName)) {
+            trackedBranches.add(ref);
+          }
         }
         else {
           LOG.debug("Didn't find ref neither in local nor in remote branches: " + ref);
@@ -215,16 +215,13 @@ public class GitRefManager implements VcsLogRefManager {
   }
 
   @NotNull
-  private static Map<String, GitRemote> getNonTrackedRemoteBranches(@NotNull GitRepository repository) {
+  private static Map<String, GitRemote> getAllRemoteBranches(@NotNull GitRepository repository) {
     Set<GitRemoteBranch> all = new HashSet<GitRemoteBranch>(repository.getBranches().getRemoteBranches());
-    Set<String> tracked = getTrackedRemoteBranchesFromConfig(repository);
-    Map<String, GitRemote> nonTracked = ContainerUtil.newHashMap();
+    Map<String, GitRemote> allRemote = ContainerUtil.newHashMap();
     for (GitRemoteBranch remoteBranch : all) {
-      if (!tracked.contains(remoteBranch.getName())) {
-        nonTracked.put(remoteBranch.getName(), remoteBranch.getRemote());
-      }
+      allRemote.put(remoteBranch.getName(), remoteBranch.getRemote());
     }
-    return nonTracked;
+    return allRemote;
   }
 
   private static Set<String> getTrackedRemoteBranchesFromConfig(GitRepository repository) {

@@ -58,12 +58,12 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     };
   }
 
-  public static boolean isElementToolSuppressedIn(final PsiElement place, final String toolId) {
+  public static boolean isElementToolSuppressedIn(final PsiElement place, @NotNull String toolId) {
     return getElementToolSuppressedIn(place, toolId) != null;
   }
 
   @Nullable
-  public static PsiElement getElementToolSuppressedIn(final PsiElement place, final String toolId) {
+  public static PsiElement getElementToolSuppressedIn(final PsiElement place, @NotNull String toolId) {
     if (place == null) return null;
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 

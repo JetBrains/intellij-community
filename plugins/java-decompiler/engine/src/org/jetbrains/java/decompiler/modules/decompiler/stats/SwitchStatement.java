@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
 import org.jetbrains.java.decompiler.code.SwitchInstruction;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
@@ -107,18 +108,18 @@ public class SwitchStatement extends Statement {
     return null;
   }
 
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
 
     String indstr = InterpreterUtil.getIndentString(indent);
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    StringBuilder buf = new StringBuilder();
+    TextBuffer buf = new TextBuffer();
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
     buf.append(first.toJava(indent, tracer));
 
     if (isLabeled()) {
-      buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
+      buf.append(indstr).append("label").append(this.id.toString()).append(":").append(new_line_separator);
       tracer.incrementCurrentSourceLine();
     }
 
@@ -153,7 +154,7 @@ public class SwitchStatement extends Statement {
     buf.append(indstr).append("}").append(new_line_separator);
     tracer.incrementCurrentSourceLine();
 
-    return buf.toString();
+    return buf;
   }
 
   public void initExprents() {

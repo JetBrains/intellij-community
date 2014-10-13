@@ -56,7 +56,7 @@ public class FileBasedStorage extends XmlElementStorage {
                           @Nullable final Listener listener,
                           @Nullable StreamProvider streamProvider,
                           ComponentVersionProvider componentVersionProvider) {
-    super(fileSpec, roamingType, pathMacroManager, parentDisposable, rootElementName, streamProvider, componentVersionProvider);
+    super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider, componentVersionProvider);
 
     myFilePath = filePath;
     myFile = new File(filePath);
@@ -82,12 +82,10 @@ public class FileBasedStorage extends XmlElementStorage {
 
           @Override
           public void contentsChanged(@NotNull final VirtualFileEvent event) {
-            if (!isDisposed()) {
-              assert listener != null;
-              listener.storageFileChanged(event, FileBasedStorage.this);
-            }
+            assert listener != null;
+            listener.storageFileChanged(event, FileBasedStorage.this);
           }
-        }, false, this);
+        }, false, parentDisposable);
       }
     }
   }

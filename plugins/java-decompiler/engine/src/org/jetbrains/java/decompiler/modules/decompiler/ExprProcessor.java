@@ -756,8 +756,8 @@ public class ExprProcessor implements CodeConstants {
                .isClassdef()));
   }
 
-  public static String jmpWrapper(Statement stat, int indent, boolean semicolon, BytecodeMappingTracer tracer) {
-    StringBuilder buf = new StringBuilder(stat.toJava(indent, tracer));
+  public static TextBuffer jmpWrapper(Statement stat, int indent, boolean semicolon, BytecodeMappingTracer tracer) {
+    TextBuffer buf = stat.toJava(indent, tracer);
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
@@ -776,7 +776,7 @@ public class ExprProcessor implements CodeConstants {
         }
 
         if (edge.labeled) {
-          buf.append(" label").append(edge.closure.id);
+          buf.append(" label").append(edge.closure.id.toString());
         }
         buf.append(";").append(new_line_separator);
         tracer.incrementCurrentSourceLine();
@@ -788,7 +788,7 @@ public class ExprProcessor implements CodeConstants {
       tracer.incrementCurrentSourceLine();
     }
 
-    return buf.toString();
+    return buf;
   }
 
   public static String buildJavaClassName(String name) {
@@ -805,18 +805,18 @@ public class ExprProcessor implements CodeConstants {
     return res;
   }
 
-  public static String listToJava(List<Exprent> lst, int indent, BytecodeMappingTracer tracer) {
+  public static TextBuffer listToJava(List<Exprent> lst, int indent, BytecodeMappingTracer tracer) {
     if (lst == null || lst.isEmpty()) {
-      return "";
+      return new TextBuffer();
     }
 
     String indstr = InterpreterUtil.getIndentString(indent);
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    StringBuilder buf = new StringBuilder();
+    TextBuffer buf = new TextBuffer();
 
     for (Exprent expr : lst) {
-      String content = expr.toJava(indent, tracer);
+      TextBuffer content = expr.toJava(indent, tracer);
       if (content.length() > 0) {
         if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent)expr).isClassdef()) {
           buf.append(indstr);
@@ -833,7 +833,7 @@ public class ExprProcessor implements CodeConstants {
       }
     }
 
-    return buf.toString();
+    return buf;
   }
 
   public static ConstExprent getDefaultArrayValue(VarType arrtype) {
@@ -873,7 +873,7 @@ public class ExprProcessor implements CodeConstants {
     boolean ret = false;
     VarType rightType = exprent.getExprType();
 
-    String res = exprent.toJava(indent, tracer);
+    TextBuffer res = exprent.toJava(indent, tracer);
 
     boolean cast =
       !leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT);
@@ -889,10 +889,10 @@ public class ExprProcessor implements CodeConstants {
 
     if (cast) {
       if (exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-        res = "(" + res + ")";
+        res.enclose("(", ")");
       }
 
-      res = "(" + getCastTypeName(leftType) + ")" + res;
+      res.prepend("(" + getCastTypeName(leftType) + ")");
       ret = true;
     }
 

@@ -579,6 +579,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         //return;
       }
+      if (isMacScrollbarHiddenAndDistractionFreeEnabled()) return;
       Rectangle clip = g.getClipBounds().intersection(bounds);
       if (clip.height == 0) return;
 

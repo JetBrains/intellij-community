@@ -41,6 +41,7 @@ public abstract class XmlSuppressionProvider implements InspectionSuppressor {
 
   public abstract boolean isProviderAvailable(@NotNull PsiFile file);
 
+  @Override
   public abstract boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String inspectionId);
 
   public abstract void suppressForFile(@NotNull PsiElement element, @NotNull String inspectionId);

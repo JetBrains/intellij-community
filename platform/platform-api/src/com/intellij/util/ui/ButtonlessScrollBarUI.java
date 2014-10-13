@@ -15,7 +15,6 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -119,7 +118,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         if (oldViewportPosition != null) {
           int scrollH = position.x - oldViewportPosition.x;
           int scrollV = position.y - oldViewportPosition.y;
-          scrolled = (scrollH == 0 && scrollV != 0 && vertical) || (scrollV == 0 && scrollH != 0 && !vertical);
+          scrolled = (vertical && scrollH == 0 && scrollV != 0) || 
+                     (!vertical && scrollV == 0 && scrollH != 0);
         }
         oldViewportPosition = position;
 
@@ -127,7 +127,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         if (oldViewportDimension != null) {
           int resizedH = dimension.width - oldViewportDimension.width;
           int resizedV = dimension.height - oldViewportDimension.height;
-          resized = (resizedV != 0 && vertical) || (resizedH != 0 && !vertical);
+          resized = (vertical && resizedV != 0) || (!vertical && resizedH != 0);
         }
         oldViewportDimension = dimension;
         
@@ -339,7 +339,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
           public void run() {
             myMacScrollbarFadeAnimator.resume();
           }
-        }, 700, ModalityState.any());
+        }, 700, null);
       }
     }
   }
@@ -504,12 +504,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
       @Override
       public void paintNow(int frame, int totalFrames, int cycle) {
-        int delay = (int)(0);
-        int frameAfterDelay = frame - delay;
-
-        if (frameAfterDelay > 0) {
-          myMacScrollbarFadeLevel = frameAfterDelay / (float)(totalFrames - delay);
-        }
+        myMacScrollbarFadeLevel = frame / (float)totalFrames;
         if (scrollbar != null) scrollbar.repaint();
       }
     };
@@ -643,6 +638,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private void paintMacThumb(Graphics g, Rectangle thumbBounds) {
+    if (isMacScrollbarHiddenAndDistractionFreeEnabled()) return;
+
     thumbBounds = getMacScrollBarBounds(thumbBounds, true);
     Graphics2D g2d = (Graphics2D)g;
     RenderingHints oldHints = g2d.getRenderingHints();
@@ -771,6 +768,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   @Override
   protected JButton createDecreaseButton(int orientation) {
     return new EmptyButton();
+  }
+
+  public boolean isMacScrollbarHiddenAndDistractionFreeEnabled() {
+    return myMacScrollbarHidden && Registry.is("editor.distraction.free.mode");
   }
 
   private static class EmptyButton extends JButton {

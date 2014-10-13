@@ -20,7 +20,6 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jdom.Document;
@@ -37,7 +36,6 @@ import java.util.Set;
 
 class DefaultsStateStorage implements StateStorage {
   private final PathMacroManager myPathMacroManager;
-
 
   public DefaultsStateStorage(@Nullable final PathMacroManager pathMacroManager) {
     myPathMacroManager = pathMacroManager;
@@ -92,6 +90,6 @@ class DefaultsStateStorage implements StateStorage {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> result) {
   }
 }

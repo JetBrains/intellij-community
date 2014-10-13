@@ -17,10 +17,7 @@ package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Allows to connect text with resulting lines
@@ -39,6 +36,10 @@ public class TextBuffer {
 
   public TextBuffer(int size) {
     myStringBuilder = new StringBuilder(size);
+  }
+
+  public TextBuffer(String text) {
+    myStringBuilder = new StringBuilder(text);
   }
 
   public void setCurrentLine(int line) {
@@ -70,14 +71,24 @@ public class TextBuffer {
     return this;
   }
 
-  public TextBuffer addBanner(String banner) {
-    myStringBuilder.insert(0, banner);
-    if (myLineToOffsetMapping != null) {
-      for (Integer line : myLineToOffsetMapping.keySet()) {
-        myLineToOffsetMapping.put(line, myLineToOffsetMapping.get(line) + banner.length());
+  public TextBuffer prepend(String s) {
+    insert(0, s);
+    return this;
+  }
+
+  public TextBuffer enclose(String left, String right) {
+    prepend(left);
+    append(right);
+    return this;
+  }
+
+  public boolean containsOnlyWhitespaces() {
+    for (int i = 0; i < myStringBuilder.length(); i++) {
+      if (myStringBuilder.charAt(i) != ' ') {
+        return false;
       }
     }
-    return this;
+    return true;
   }
 
   @Override
@@ -101,9 +112,10 @@ public class TextBuffer {
           String line = srcLines[currentLine];
           int lineEnd = currentLineStartOffset + line.length() + myLineSeparator.length();
           if (markOffset >= currentLineStartOffset && markOffset <= lineEnd) {
-            int requiredLinesNumber = markLine - dumpedLines;
-            dumpedLines = markLine;
-            appendLines(res, srcLines, previousMarkLine, currentLine, requiredLinesNumber);
+            int requiredLine = markLine - 1;
+            int linesToAdd = requiredLine - dumpedLines;
+            dumpedLines = requiredLine;
+            appendLines(res, srcLines, previousMarkLine, currentLine, linesToAdd);
             previousMarkLine = currentLine;
             break;
           }
@@ -121,9 +133,10 @@ public class TextBuffer {
 
   private void appendLines(StringBuilder res, String[] srcLines, int from, int to, int requiredLineNumber) {
     if (to - from > requiredLineNumber) {
-      int separatorsRequired = to - from - requiredLineNumber - 1;
-      for (int i = from; i < to; i++) {
-        res.append(srcLines[i]);
+      List<String> strings = compactLines(Arrays.asList(srcLines).subList(from, to) ,requiredLineNumber);
+      int separatorsRequired = requiredLineNumber - 1;
+      for (String s : strings) {
+        res.append(s);
         if (separatorsRequired-- > 0) {
           res.append(myLineSeparator);
         }
@@ -148,8 +161,23 @@ public class TextBuffer {
     return myStringBuilder.substring(start);
   }
 
+  public TextBuffer setStart(int position) {
+    myStringBuilder.delete(0, position);
+    shiftMapping(0, -position);
+    return this;
+  }
+
   public void setLength(int position) {
     myStringBuilder.setLength(position);
+    if (myLineToOffsetMapping != null) {
+      HashMap<Integer, Integer> newMap = new HashMap<Integer, Integer>();
+      for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
+        if (entry.getValue() <= position) {
+          newMap.put(entry.getKey(), entry.getValue());
+        }
+      }
+      myLineToOffsetMapping = newMap;
+    }
   }
 
   public TextBuffer append(TextBuffer buffer) {
@@ -163,17 +191,32 @@ public class TextBuffer {
     return this;
   }
 
+  private void shiftMapping(int startOffset, int shiftOffset) {
+    if (myLineToOffsetMapping != null) {
+      HashMap<Integer, Integer> newMap = new HashMap<Integer, Integer>();
+      for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
+        int newValue = entry.getValue();
+        if (newValue >= startOffset) {
+          newValue += shiftOffset;
+        }
+        if (newValue >= 0) {
+          newMap.put(entry.getKey(), newValue);
+        }
+      }
+      myLineToOffsetMapping = newMap;
+    }
+  }
+
   private void checkMapCreated() {
     if (myLineToOffsetMapping == null) {
       myLineToOffsetMapping = new HashMap<Integer, Integer>();
     }
   }
 
-  public void insert(int offset, String s) {
-    if (myLineToOffsetMapping != null) {
-      throw new IllegalStateException("insert not yet supported with Line mapping");
-    }
+  public TextBuffer insert(int offset, String s) {
     myStringBuilder.insert(offset, s);
+    shiftMapping(offset, s.length());
+    return this;
   }
 
   public int count(String substring, int from) {
@@ -183,5 +226,35 @@ public class TextBuffer {
       p += length;
     }
     return count;
+  }
+
+  private static List<String> compactLines(List<String> srcLines, int requiredLineNumber) {
+    if (srcLines.size() < 2 || srcLines.size() <= requiredLineNumber) {
+      return srcLines;
+    }
+    List<String> res = new LinkedList<String>(srcLines);
+    // first join lines with a single { or }
+    for (int i = res.size()-1; i > 0 ; i--) {
+      String s = res.get(i);
+      if (s.trim().equals("{") || s.trim().equals("}")) {
+        res.set(i-1, res.get(i-1).concat(s));
+        res.remove(i);
+      }
+      if (res.size() <= requiredLineNumber) {
+        return res;
+      }
+    }
+    // now join empty lines
+    for (int i = res.size()-1; i > 0 ; i--) {
+      String s = res.get(i);
+      if (s.trim().isEmpty()) {
+        res.set(i-1, res.get(i-1).concat(s));
+        res.remove(i);
+      }
+      if (res.size() <= requiredLineNumber) {
+        return res;
+      }
+    }
+    return res;
   }
 }

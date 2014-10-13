@@ -101,7 +101,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                 dialog.show();
 
                 if (DialogWrapper.OK_EXIT_CODE == dialog.getExitCode()) {
-                    Collection<PsiMember> selectedMembers = GenerateToStringUtils.convertClassMembersToPsiMembers(dialog.getSelectedElements());
+                    Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(dialog.getSelectedElements());
 
                     final TemplateResource template = header.getSelectedTemplate();
                     TemplatesManager.getInstance().setDefaultTemplate(template);
@@ -139,7 +139,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
           filteredMethods = PsiMethod.EMPTY_ARRAY;
         }
 
-        return GenerateToStringUtils.combineToClassMemberList(filteredFields, filteredMethods);
+        return GenerationUtil.combineToClassMemberList(filteredFields, filteredMethods);
     }
 
     @Override

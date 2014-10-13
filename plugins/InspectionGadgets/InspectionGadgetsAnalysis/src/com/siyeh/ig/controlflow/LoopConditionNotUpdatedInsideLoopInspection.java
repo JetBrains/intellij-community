@@ -176,10 +176,10 @@ public class LoopConditionNotUpdatedInsideLoopInspection
             // flag them
             return true;
           }
-          else if (element instanceof PsiLocalVariable ||
-                   element instanceof PsiParameter) {
-            if (!VariableAccessUtils.variableIsAssigned(variable,
-                                                        context)) {
+          else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+            final PsiType type = variable.getType();
+            if (!VariableAccessUtils.variableIsAssigned(variable, context) &&
+                (!(type instanceof PsiArrayType) || !VariableAccessUtils.arrayContentsAreAssigned(variable, context))) {
               notUpdated.add(referenceExpression);
               return true;
             }
