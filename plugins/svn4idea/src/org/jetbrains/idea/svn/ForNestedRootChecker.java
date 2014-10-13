@@ -56,12 +56,11 @@ public class ForNestedRootChecker {
       if (vcsElement != null) {
         result.add(vcsElement);
       }
-      else if (item.isDirectory() && !SvnUtil.isAdminDirectory(item)) {
-        // TODO: Only directory children should be checked.
+      else if (!SvnUtil.isAdminDirectory(item)) {
         for (VirtualFile child : item.getChildren()) {
           checkCancelled();
 
-          if (myRootIterator.acceptFolderUnderVcs(root, child)) {
+          if (child.isDirectory() && myRootIterator.acceptFolderUnderVcs(root, child)) {
             workItems.add(child);
           }
         }
