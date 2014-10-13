@@ -141,6 +141,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     updatePanel(myCell.getCellOutputs());
     final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(myProject);
     connectionManager.executeCell(this);
+    setEditing(false);
   }
 
   @Override
