@@ -282,6 +282,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     if (mySelectedCell != null && e.getID() == KeyEvent.KEY_PRESSED) {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
         mySelectedCell.switchToEditing();
+        repaint();
       }
       int index = myIpnbPanels.indexOf(mySelectedCell);
       final Rectangle rect = getVisibleRect();
