@@ -100,6 +100,7 @@ public class InspectionEngine {
   }
 
   // public accessibility for Upsource
+  // returns map (toolName -> problem descriptors)
   @NotNull
   public static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull final List<LocalInspectionToolWrapper> toolWrappers,
                                                                @NotNull final PsiFile file,

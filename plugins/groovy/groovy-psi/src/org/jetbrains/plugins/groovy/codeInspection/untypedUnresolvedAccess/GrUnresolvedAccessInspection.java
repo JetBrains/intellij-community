@@ -45,7 +45,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   public boolean myHighlightIfMissingMethodsDeclared = true;
   public boolean myHighlightInnerClasses = true;
 
-  public static boolean isSuppressed(PsiElement ref) {
+  public static boolean isSuppressed(@NotNull PsiElement ref) {
     return isElementToolSuppressedIn(ref, SHORT_NAME);
   }
 
