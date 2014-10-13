@@ -48,6 +48,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.*;
@@ -1251,6 +1252,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 String s = String.valueOf(tooltip);
                 if (s.isEmpty()) continue;
                 s = s.replaceAll("&nbsp;", " ").replaceAll("\\s+", " ");
+                s = StringUtil.unescapeXml(s);
 
                 LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(hEndOffset);
                 int endOfLineOffset = myEditor.getDocument().getLineEndOffset(logicalPosition.line);
