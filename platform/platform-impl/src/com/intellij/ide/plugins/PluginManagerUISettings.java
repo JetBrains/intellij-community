@@ -51,7 +51,6 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
 
   public int AVAILABLE_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
 
-  public int AVAILABLE_SORT_MODE = 1;
   public boolean AVAILABLE_SORT_BY_STATUS = false;
   public boolean INSTALLED_SORT_BY_STATUS = false;
   public boolean UPDATE_IN_BACKGROUND = false;

@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.ElementClassHint;
@@ -1005,7 +1006,7 @@ public class PsiClassImplUtil {
         PsiTypeParameter p2 = (PsiTypeParameter)another;
 
         return p1.getIndex() == p2.getIndex() &&
-               aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner());
+               (aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner()) || InferenceSession.areSameFreshVariables(p1, p2));
       }
       else {
         return false;

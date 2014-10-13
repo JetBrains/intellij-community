@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -287,8 +288,12 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
           methodRefText = getClassReferenceName(containingClass);
         } else {
+          PsiClass treeContainingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+          while (!InheritanceUtil.isInheritorOrSelf(treeContainingClass, containingClass, true)) {
+            treeContainingClass = PsiTreeUtil.getParentOfType(treeContainingClass, PsiClass.class, true);
+          }
           if (containingClass != PsiTreeUtil.getParentOfType(element, PsiClass.class) ) {
-            methodRefText = containingClass.getName() + ".this";
+            methodRefText = treeContainingClass.getName() + ".this";
           } else {
             methodRefText = "this";
           }

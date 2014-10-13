@@ -21,10 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.TypesDistinctProver;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -505,12 +502,12 @@ public class GenericsUtil {
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, PsiReferenceParameterList referenceParameterList) {
     //allow unchecked conversions in method calls but not in type declaration
-    return checkNotInBounds(type, bound, referenceParameterList.getParent() instanceof PsiReferenceExpression);
+    return checkNotInBounds(type, bound, PsiTreeUtil.getParentOfType(referenceParameterList, PsiCallExpression.class) != null);
   }
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, boolean uncheckedConversionByDefault) {
     if (type instanceof PsiClassType) {
-      return checkNotAssignable(bound, type, allowUncheckedConversions((PsiClassType)type, uncheckedConversionByDefault));
+      return checkNotAssignable(bound, type, uncheckedConversionByDefault);
     }
     if (type instanceof PsiWildcardType) {
       if (((PsiWildcardType)type).isExtends()) {
@@ -580,19 +577,5 @@ public class GenericsUtil {
     else {
       return !TypeConversionUtil.isAssignable(bound, type, allowUncheckedConversion);
     }
-  }
-
-  private static boolean allowUncheckedConversions(PsiClassType type, boolean uncheckedConversionByDefault) {
-    final PsiClass psiClass = type.resolve();
-    if (psiClass != null) {
-      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
-        if (parameter.getExtendsListTypes().length != 0) {
-          return false;
-        }
-      }
-      if (psiClass instanceof PsiTypeParameter && psiClass.getExtendsListTypes().length != 0) return false;
-    }
-    if (!type.isRaw()) return true;
-    return uncheckedConversionByDefault;
   }
 }
