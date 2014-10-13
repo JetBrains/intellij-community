@@ -397,17 +397,17 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  //@Override
-  //public Dimension getPreferredSize() {
-  //  Dimension size = super.getPreferredSize();
-  //  Border border = super.getBorder();
-  //  if (border != null && UIUtil.isUnderAquaLookAndFeel()) {
-  //    Insets insets = border.getBorderInsets(this);
-  //    size.height += insets.top + insets.bottom;
-  //    size.width += insets.left + insets.right;
-  //  }
-  //  return size;
-  //}
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    Border border = super.getBorder();
+    if (border != null && UIUtil.isUnderAquaLookAndFeel()) {
+      Insets insets = border.getBorderInsets(this);
+      size.height += insets.top + insets.bottom;
+      size.width += insets.left + insets.right;
+    }
+    return size;
+  }
 
   protected Runnable createItemChosenCallback(final JList list) {
     return new Runnable() {
