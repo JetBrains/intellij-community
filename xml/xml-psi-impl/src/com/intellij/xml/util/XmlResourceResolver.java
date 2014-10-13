@@ -28,8 +28,12 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.actions.validate.ErrorReporter;
@@ -98,10 +102,16 @@ public class XmlResourceResolver implements XMLEntityResolver {
       @Override
       public PsiFile compute() {
 
-        PsiFile baseFile = myFile;
+        PsiFile baseFile = null;
         if (baseSystemId != null) {
           baseFile = getBaseFile(baseSystemId);
         }
+        if (baseFile == null) {
+          baseFile = myFile;
+        }
+
+        PsiFile byLocation = resolveByLocation(myFile, systemId);
+        if (byLocation != null) return byLocation;
 
         String version = null;
         String tagName = null;
@@ -267,6 +277,28 @@ public class XmlResourceResolver implements XMLEntityResolver {
     source.setCharacterStream(new StringReader(psiFile.getText()));
 
     return source;
+  }
+
+  private static PsiFile resolveByLocation(PsiFile baseFile, String location) {
+    if (baseFile instanceof XmlFile) {
+      XmlTag tag = ((XmlFile)baseFile).getRootTag();
+      if (tag != null) {
+        XmlAttribute attribute = tag.getAttribute("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
+        if (attribute != null) {
+          XmlAttributeValue element = attribute.getValueElement();
+          if (element != null) {
+            PsiReference[] references = element.getReferences();
+            for (PsiReference reference : references) {
+              if (location.equals(reference.getCanonicalText())) {
+                PsiElement resolve = reference.resolve();
+                return resolve instanceof PsiFile ? (PsiFile)resolve : null;
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public void setStopOnUnDeclaredResource(final boolean stopOnUnDeclaredResource) {
