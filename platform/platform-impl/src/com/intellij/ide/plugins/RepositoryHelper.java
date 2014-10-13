@@ -137,7 +137,7 @@ public class RepositoryHelper {
       }
     }
 
-    HttpURLConnection connection = (HttpURLConnection)openConnection(url, true).first;
+    URLConnection connection = openConnection(url, true).first;
     if (indicator != null) {
       indicator.setText2(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", appInfo.getPluginManagerUrl()));
     }
@@ -147,7 +147,7 @@ public class RepositoryHelper {
         indicator.checkCanceled();
       }
 
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+      if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
         return loadPluginList(pluginListFile);
       }
 
@@ -157,7 +157,9 @@ public class RepositoryHelper {
       return readPluginsStream(connection, indicator, PLUGIN_LIST_FILE);
     }
     finally {
-      connection.disconnect();
+      if (connection instanceof HttpURLConnection) {
+        ((HttpURLConnection)connection).disconnect();
+      }
     }
   }
 
