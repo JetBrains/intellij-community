@@ -183,7 +183,7 @@ public class SearchTextField extends JPanel {
         setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0), originalBorder));
 
         myTextField.setOpaque(true);
-        //myTextField.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 0, 5));
+        myTextField.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 0, 5));
       }
       else {
         setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
