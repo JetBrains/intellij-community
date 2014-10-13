@@ -34,13 +34,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * The container for an {@link Editor}, which is added then to {@link com.intellij.openapi.diff.impl.util.ThreePanels}.
  */
-public class EditorPlace extends JComponent implements Disposable, EditorEx.RepaintCallback {
+public class EditorPlace extends JComponent implements Disposable, ButtonlessScrollBarUI.ScrollbarRepaintCallback {
   private static final Logger LOG = Logger.getInstance(EditorPlace.class);
 
   @NotNull private final MergePanel2.DiffEditorState myState;
@@ -60,49 +60,44 @@ public class EditorPlace extends JComponent implements Disposable, EditorEx.Repa
   @Override
   public void paint(Graphics g) {
     super.paint(g);
-    paintThis(g);
+    paintThis(g, true);
   }
 
+  @Override
   public void call(Graphics g) {
-    repaintScrollbar();
+    paintThis(g, false);
   }
 
-  private void repaintScrollbar() {
-    if (myEditor == null || myColumn != MergePanelColumn.BASE) {
-      return; // we draw above the scrollbar only in the central column
-    }
-    Component editorComponent = myEditor.getComponent();
-    JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
-    repaint(editorComponent.getWidth() - scrollBar.getWidth(), 0, scrollBar.getWidth(), scrollBar.getHeight());
-  }
-
-  private void paintThis(Graphics g) {
-    if (myEditor != null) {
-      ArrayList<DividerPolygon> polygons = DividerPolygon.createVisiblePolygons(myMergePanel.getSecondEditingSide(), FragmentSide.SIDE1,
-                                                                                DiffDivider.MERGE_DIVIDER_POLYGONS_OFFSET);
-      for (DividerPolygon polygon : polygons) {
-        int startY = polygon.getTopLeftY();
-        int endY = polygon.getBottomLeftY();
-        int height = endY - startY;
-
-        if (height == 0) { // draw at least a one-pixel line (e.g. for insertion or deletion), as it is done in highlighters
-          height = 1;
-        }
-
-        drawPolygonAboveScrollBar((Graphics2D)g, startY, height, polygon.getColor(), polygon.isApplied());
-      }
-    }
-  }
-
-  private void drawPolygonAboveScrollBar(@NotNull Graphics2D g, int startY, int height, @NotNull Color color, boolean applied) {
+  private void paintThis(Graphics g, boolean paintOnEditor) {
+    if (myEditor == null) return;
     // painting only above the central scrollbar, because painting on edge scrollbars is not needed, and there are error stripes
-    if (myColumn != MergePanelColumn.BASE) {
-      return;
-    }
+    if (myColumn != MergePanelColumn.BASE) return;
 
+    int offset = paintOnEditor ? DiffDivider.MERGE_DIVIDER_POLYGONS_OFFSET : DiffDivider.MERGE_SCROLL_DIVIDER_POLYGONS_OFFSET;
+    ArrayList<DividerPolygon> polygons = DividerPolygon.createVisiblePolygons(myMergePanel.getSecondEditingSide(), FragmentSide.SIDE1,
+                                                                              offset);
+    for (DividerPolygon polygon : polygons) {
+      int startY = polygon.getTopLeftY();
+      int endY = polygon.getBottomLeftY();
+      int height = endY - startY;
+
+      if (height == 0) { // draw at least a one-pixel line (e.g. for insertion or deletion), as it is done in highlighters
+        height = 1;
+      }
+
+      drawPolygonAboveScrollBar((Graphics2D)g, startY, height, polygon.getColor(), polygon.isApplied(), paintOnEditor);
+    }
+  }
+
+  private void drawPolygonAboveScrollBar(@NotNull Graphics2D g,
+                                         int startY,
+                                         int height,
+                                         @NotNull Color color,
+                                         boolean applied,
+                                         boolean paintOnEditor) {
     g.setColor(color);
     JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
-    int startX = scrollBar.getX();
+    int startX = paintOnEditor ? scrollBar.getX() : 0;
     int endX = startX + scrollBar.getWidth() - 1;
 
     Rectangle thumb = calcThumbBounds(scrollBar);
@@ -249,6 +244,7 @@ public class EditorPlace extends JComponent implements Disposable, EditorEx.Repa
 
   public interface EditorListener {
     void onEditorCreated(EditorPlace place);
+
     void onEditorReleased(Editor releasedEditor);
   }
 
