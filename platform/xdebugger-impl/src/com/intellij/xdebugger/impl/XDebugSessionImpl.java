@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -381,13 +382,21 @@ public class XDebugSessionImpl implements XDebugSession {
 
   private <B extends XBreakpoint<?>> void handleBreakpoint(final XBreakpointHandler<B> handler, final B b, final boolean register,
                                                            final boolean temporary) {
-    if (register && isBreakpointActive(b)) {
-      synchronized (myRegisteredBreakpoints) {
-        myRegisteredBreakpoints.put(b, new CustomizedBreakpointPresentation());
+    if (register) {
+      boolean active = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return isBreakpointActive(b);
+        }
+      });
+      if (active) {
+        synchronized (myRegisteredBreakpoints) {
+          myRegisteredBreakpoints.put(b, new CustomizedBreakpointPresentation());
+        }
+        handler.registerBreakpoint(b);
       }
-      handler.registerBreakpoint(b);
     }
-    if (!register) {
+    else {
       boolean removed;
       synchronized (myRegisteredBreakpoints) {
         removed = myRegisteredBreakpoints.remove(b) != null;

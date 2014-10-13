@@ -18,7 +18,6 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,8 +49,8 @@ public class SingleRowLayout extends TabLayout {
     protected int getIconY(Rectangle iconRec) {
       final int shift;
       switch (myTabs.getTabsPosition()) {
-        case bottom: shift = TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT; break;
-        case top: shift = -(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2); break;
+        case bottom: shift = myTabs.getActiveTabUnderlineHeight(); break;
+        case top: shift = -(myTabs.getActiveTabUnderlineHeight() / 2); break;
         default: shift = 0;
       }
       return super.getIconY(iconRec) + shift;

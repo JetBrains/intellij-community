@@ -61,7 +61,7 @@ import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
  */
 public class GithubRebaseAction extends DumbAwareAction {
   private static final Logger LOG = GithubUtil.LOG;
-  private static final String CANNOT_PERFORM_GITHUB_REBASE = "Can't perform github rebase";
+  private static final String CANNOT_PERFORM_GITHUB_REBASE = "Can't perform GitHub rebase";
 
   public GithubRebaseAction() {
     super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", GithubIcons.Github_icon);
@@ -165,7 +165,7 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     if (!repositoryInfo.isFork() || repositoryInfo.getParent() == null) {
       GithubNotifications.showWarningURL(project, CANNOT_PERFORM_GITHUB_REBASE, "GitHub repository ", "'" + repositoryInfo.getName() + "'",
-                                         " is not a forked one", repositoryInfo.getHtmlUrl());
+                                         " is not a fork", repositoryInfo.getHtmlUrl());
       return null;
     }
 
@@ -188,7 +188,7 @@ public class GithubRebaseAction extends DumbAwareAction {
                                                        @NotNull ProgressIndicator indicator) {
     final String remoteUrl = GithubUtil.findGithubRemoteUrl(gitRepository);
     if (remoteUrl == null) {
-      GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't find github remote");
+      GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't find GitHub remote");
       return null;
     }
     final GithubFullPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);

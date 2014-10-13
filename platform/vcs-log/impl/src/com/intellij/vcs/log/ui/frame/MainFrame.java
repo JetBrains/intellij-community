@@ -91,7 +91,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myToolbar = createActionsToolbar();
 
     myDetailsSplitter = new Splitter(true, 0.7f);
-    myDetailsSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myGraphTable));
+    myDetailsSplitter.setFirstComponent(setupScrolledGraph());
     setupDetailsSplitter(myUiProperties.isShowDetails());
 
     JComponent toolbars = new JPanel(new BorderLayout());
@@ -154,6 +154,12 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   public void setupDetailsSplitter(boolean state) {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
+  }
+
+  private JScrollPane setupScrolledGraph() {
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable);
+    myGraphTable.viewportSet(scrollPane.getViewport());
+    return scrollPane;
   }
 
   private static void setDefaultEmptyText(ChangesBrowser changesBrowser) {
