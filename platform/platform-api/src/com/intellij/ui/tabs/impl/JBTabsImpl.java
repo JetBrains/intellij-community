@@ -345,6 +345,10 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
+  public int getActiveTabUnderlineHeight() {
+    return TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+  }
+
   public boolean isEditorTabs() {
     return false;
   }
