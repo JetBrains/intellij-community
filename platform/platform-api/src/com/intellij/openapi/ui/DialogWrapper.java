@@ -145,7 +145,7 @@ public abstract class DialogWrapper {
    */
   private int myButtonAlignment = SwingConstants.RIGHT;
   private boolean myCrossClosesWindow = true;
-  private Insets myButtonMargins = new Insets(2, 16, 2, 16);
+  private Insets myButtonMargins = UIUtil.createScaledInsets(new Insets(2, 16, 2, 16));
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -476,14 +476,14 @@ public abstract class DialogWrapper {
 
     JPanel panel = new JPanel(new BorderLayout());
     final JPanel lrButtonsPanel = new JPanel(new GridBagLayout());
-    final Insets insets = SystemInfo.isMacOSLeopard ? new Insets(0, 0, 0, 0) : new Insets(8, 0, 0, 0);
+    final Insets insets = UIUtil.createScaledInsets(SystemInfo.isMacOSLeopard ? new Insets(0, 0, 0, 0) : new Insets(8, 0, 0, 0));
 
     if (actions.length > 0 || leftSideActions.length > 0) {
       int gridX = 0;
       if (leftSideActions.length > 0) {
         JPanel buttonsPanel = createButtons(leftSideActions, buttons);
         if (actions.length > 0) {
-          buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
+          buttonsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
         }
         lrButtonsPanel.add(buttonsPanel,
                            new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
@@ -557,7 +557,7 @@ public abstract class DialogWrapper {
       panel = withCB;
     }
 
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(8, 0, 0, 0));
 
     return panel;
   }
@@ -591,7 +591,7 @@ public abstract class DialogWrapper {
 
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
-    checkBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
+    checkBox.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 20));
 
     return panel;
   }
