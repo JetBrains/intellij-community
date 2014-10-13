@@ -43,6 +43,7 @@ import java.util.Set;
 //todo: support storage data
 public class DirectoryBasedStorage extends StateStorageBase {
   private final File myDir;
+  private volatile VirtualFile myVirtualFile;
   private final StateSplitter mySplitter;
 
   private DirectoryStorageData myStorageData;
@@ -67,6 +68,9 @@ public class DirectoryBasedStorage extends StateStorageBase {
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
+          if (event.getFile().equals(myVirtualFile)) {
+            myVirtualFile = null;
+          }
           notifyIfNeed(event);
         }
 
@@ -115,15 +119,27 @@ public class DirectoryBasedStorage extends StateStorageBase {
 
   private DirectoryStorageData loadState() {
     DirectoryStorageData storageData = new DirectoryStorageData();
-    storageData.loadFrom(LocalFileSystem.getInstance().findFileByIoFile(myDir), myPathMacroSubstitutor);
+    storageData.loadFrom(getVirtualFile(), myPathMacroSubstitutor);
     return storageData;
+  }
+
+  @Nullable
+  private VirtualFile getVirtualFile() {
+    VirtualFile virtualFile = myVirtualFile;
+    if (virtualFile == null) {
+      myVirtualFile = virtualFile = LocalFileSystem.getInstance().findFileByIoFile(myDir);
+    }
+    return virtualFile;
   }
 
   @Override
   public boolean hasState(@Nullable Object component, @NotNull String componentName, Class<?> aClass, boolean reloadData) {
     // dir could be deleted on VCS update: storage data is empty and dir doesn't exists - we must return true to reload component
-    if (myStorageData == null && !myDir.exists()) {
-      return false;
+    if (myStorageData == null) {
+      VirtualFile dir = getVirtualFile();
+      if (dir == null || !dir.exists()) {
+        return false;
+      }
     }
     if (reloadData) {
       myStorageData = null;
@@ -182,7 +198,7 @@ public class DirectoryBasedStorage extends StateStorageBase {
 
     @Override
     public void save() {
-      final VirtualFile dir = LocalFileSystem.getInstance().findFileByIoFile(myStorage.myDir);
+      final VirtualFile dir = myStorage.getVirtualFile();
       final Set<String> existingFileNames = new SmartHashSet<String>();
       for (String componentName : myStorageData.getComponentNames()) {
         myStorageData.processComponent(componentName, new TObjectObjectProcedure<File, Element>() {
