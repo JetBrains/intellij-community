@@ -49,9 +49,11 @@ import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -216,7 +218,7 @@ public class ITNProxy {
     HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
 
     connection.setSSLSocketFactory(ourSslContext.getSocketFactory());
-    if (!SystemInfo.isJavaVersionAtLeast("1.7") || !SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true)) {
+    if (!(SystemInfo.isJavaVersionAtLeast("1.7") && SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true))) {
       connection.setHostnameVerifier(new EaHostnameVerifier(url.getHost(), "ftp.intellij.net"));
     }
 
@@ -243,10 +245,15 @@ public class ITNProxy {
     KeyStore ks = KeyStore.getInstance(CertificateUtil.JKS);
     ks.load(null, null);
     ks.setCertificateEntry("JetBrains CA", ca);
-    TrustManagerFactory tmf = TrustManagerFactory.getInstance(CertificateUtil.X509);
-    tmf.init(ks);
+    TrustManagerFactory jbTmf = TrustManagerFactory.getInstance(CertificateUtil.X509);
+    jbTmf.init(ks);
+
+    TrustManagerFactory sysTmf = TrustManagerFactory.getInstance(CertificateUtil.X509);
+    sysTmf.init((KeyStore)null);
+
     SSLContext ctx = SSLContext.getInstance("TLS");
-    ctx.init(null, tmf.getTrustManagers(), null);
+    TrustManager composite = new CompositeX509TrustManager(jbTmf.getTrustManagers(), sysTmf.getTrustManagers());
+    ctx.init(null, new TrustManager[]{composite}, null);
     return ctx;
   }
 
@@ -271,6 +278,46 @@ public class ITNProxy {
       }
       catch (SSLPeerUnverifiedException ignored) { }
       return false;
+    }
+  }
+
+  private static class CompositeX509TrustManager implements X509TrustManager {
+    private final List<X509TrustManager> myManagers = ContainerUtil.newArrayList();
+
+    public CompositeX509TrustManager(TrustManager[]... managerSets) {
+      for (TrustManager[] set : managerSets) {
+        for (TrustManager manager : set) {
+          if (manager instanceof X509TrustManager) {
+            myManagers.add((X509TrustManager)manager);
+          }
+        }
+      }
+    }
+
+    @Override
+    public void checkClientTrusted(X509Certificate[] certificates, String s) throws CertificateException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void checkServerTrusted(X509Certificate[] certificates, String s) throws CertificateException {
+      for (X509TrustManager manager : myManagers) {
+        try {
+          manager.checkServerTrusted(certificates, s);
+          return;
+        }
+        catch (CertificateException ignored) { }
+      }
+      throw new CertificateException("No trusting managers found for " + s);
+    }
+
+    @Override
+    public X509Certificate[] getAcceptedIssuers() {
+      List<X509Certificate> result = ContainerUtil.newArrayList();
+      for (X509TrustManager manager : myManagers) {
+        ContainerUtil.addAll(result, manager.getAcceptedIssuers());
+      }
+      return result.toArray(new X509Certificate[result.size()]);
     }
   }
 
