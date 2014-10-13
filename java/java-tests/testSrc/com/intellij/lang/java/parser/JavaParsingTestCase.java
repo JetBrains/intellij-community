@@ -74,6 +74,10 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     void parse(PsiBuilder builder);
   }
 
+  protected void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
+  }
+
   protected void doParserTest(final String text, final TestParser parser) {
     final String name = getTestName(false);
     myFile = createPsiFile(name, text, parser);

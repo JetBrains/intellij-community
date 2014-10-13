@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 import com.intellij.lang.java.parser.ReferenceParser;
-
+import com.intellij.pom.java.LanguageLevel;
 
 public class ReferenceParserTest extends JavaParsingTestCase {
   public ReferenceParserTest() {
@@ -51,6 +51,11 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testTypeParams7() { doTypeParamsParserTest("<T extends X, Y>"); }
   public void testTypeParams8() { doTypeParamsParserTest("<?>"); }
 
+  public void testAnyType() {
+    setLanguageLevel(LanguageLevel.JDK_1_9);
+    doTypeParamsParserTest("<any T>");
+  }
+
   private void doRefParserTest(final String text, final boolean incomplete) {
     doParserTest(text, new MyTestParser(incomplete));
   }
@@ -73,8 +78,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   private static class MyTestParser2 implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getReferenceParser()
-        .parseType(builder, ReferenceParser.ELLIPSIS | ReferenceParser.DIAMONDS | ReferenceParser.DISJUNCTIONS);
+      JavaParser.INSTANCE.getReferenceParser().parseType(builder, ReferenceParser.ELLIPSIS | ReferenceParser.DIAMONDS | ReferenceParser.DISJUNCTIONS);
     }
   }
 
