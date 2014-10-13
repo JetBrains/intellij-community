@@ -138,4 +138,11 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
     assertEquals(new VisualPosition(0, 6), myEditor.getCaretModel().getVisualPosition());
   }
+
+  public void testEnterOnLastLineInOverwriteMode() throws Exception {
+    init("text<caret>", TestFileType.TEXT);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_OVERWRITE_MODE);
+    executeAction(IdeActions.ACTION_EDITOR_ENTER);
+    checkResultByText("text\n<caret>");
+  }
 }
