@@ -40,6 +40,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
@@ -488,6 +490,33 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       @Override
       public XValue getReferringObjectsValue() {
         return new JavaReferringObjectsValue(JavaValue.this, false);
+      }
+    };
+  }
+
+  @Nullable
+  @Override
+  public XInstanceEvaluator getInstanceEvaluator() {
+    final DebugProcessImpl process = myEvaluationContext.getDebugProcess();
+    return new XInstanceEvaluator() {
+      @Override
+      public void evaluate(@NotNull final XDebuggerEvaluator.XEvaluationCallback callback, @NotNull final XStackFrame frame) {
+        process.getManagerThread().schedule(new DebuggerCommandImpl() {
+          @Override
+          protected void action() throws Exception {
+            ValueDescriptorImpl inspectDescriptor = myValueDescriptor;
+            if (myValueDescriptor instanceof WatchItemDescriptor) {
+              inspectDescriptor = (ValueDescriptorImpl) ((WatchItemDescriptor) myValueDescriptor).getModifier().getInspectItem(getProject());
+            }
+            EvaluationContextImpl evaluationContext = ((JavaStackFrame)frame).getFrameDebuggerContext().createEvaluationContext();
+            if (evaluationContext != null) {
+              callback.evaluated(create(inspectDescriptor, evaluationContext, myNodeManager));
+            }
+            else {
+              callback.errorOccurred("Context is not available");
+            }
+          }
+        });
       }
     };
   }
