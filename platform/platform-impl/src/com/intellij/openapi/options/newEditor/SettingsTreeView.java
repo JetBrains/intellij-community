@@ -57,7 +57,9 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 
 /**
@@ -568,7 +570,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         Dimension size = view.getMinimumSize();
         if (size.width < width) {
           size.width = width;
-          System.out.println("width = " + width);
           view.setMinimumSize(size);
           view.revalidate();
           view.repaint();
