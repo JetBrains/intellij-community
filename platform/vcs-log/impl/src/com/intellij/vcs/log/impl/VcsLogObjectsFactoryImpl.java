@@ -27,9 +27,11 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   @Override
   public VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp,
                                                   @NotNull VirtualFile root, @NotNull String subject,
-                                                  @NotNull String authorName, String authorEmail) {
+                                                  @NotNull String authorName, String authorEmail,
+                                                  @NotNull String committerName, @NotNull String committerEmail, long authorTime) {
     VcsUser author = createUser(authorName, authorEmail);
-    return new VcsShortCommitDetailsImpl(hash, parents, timeStamp, root, subject, author);
+    VcsUser committer = createUser(committerName, committerEmail);
+    return new VcsShortCommitDetailsImpl(hash, parents, timeStamp, root, subject, author, committer, authorTime);
   }
 
   @NotNull

@@ -26,15 +26,11 @@ import java.util.List;
 public class VcsCommitMetadataImpl extends VcsShortCommitDetailsImpl implements VcsCommitMetadata {
 
   @NotNull private final String myFullMessage;
-  @NotNull private final VcsUser myCommitter;
-  private final long myAuthorTime;
 
   public VcsCommitMetadataImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp, @NotNull VirtualFile root,
                                @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
                                @NotNull VcsUser committer, long authorTime) {
-    super(hash, parents, timeStamp, root, subject, author);
-    myCommitter = committer;
-    myAuthorTime = authorTime;
+    super(hash, parents, timeStamp, root, subject, author, committer, authorTime);
     myFullMessage = message;
   }
 
@@ -43,16 +39,4 @@ public class VcsCommitMetadataImpl extends VcsShortCommitDetailsImpl implements 
   public String getFullMessage() {
     return myFullMessage;
   }
-
-  @NotNull
-  @Override
-  public VcsUser getCommitter() {
-    return myCommitter;
-  }
-
-  @Override
-  public long getAuthorTime() {
-    return myAuthorTime;
-  }
-
 }

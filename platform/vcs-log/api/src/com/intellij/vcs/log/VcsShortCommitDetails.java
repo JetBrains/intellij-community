@@ -30,4 +30,8 @@ public interface VcsShortCommitDetails extends TimedVcsCommit {
   @NotNull
   VcsUser getAuthor();
 
+  @NotNull
+  VcsUser getCommitter();
+
+  long getAuthorTime();
 }
