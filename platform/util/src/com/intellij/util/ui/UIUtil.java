@@ -276,6 +276,19 @@ public class UIUtil {
   private UIUtil() {
   }
 
+  public static Insets getRegularPanelInsets() {
+    return createScaledInsets(PANEL_REGULAR_INSETS);
+  }
+
+  public static Insets createScaledInsets(Insets insets) {
+    int scale = getScale();
+    return new Insets(insets.top * scale, insets.left * 2, insets.bottom * scale, insets.right * scale);
+  }
+
+  public static int getScale() {
+    return isRetina() ? 2 : 1;
+  }
+
   public static boolean isRetina() {
     if (GraphicsEnvironment.isHeadless()) return false;
 

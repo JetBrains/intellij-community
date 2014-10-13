@@ -136,7 +136,7 @@ public abstract class DialogWrapper {
   /**
    * The shared instance of default border for dialog's content pane.
    */
-  public static final Border ourDefaultBorder = new EmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
+  public static final Border ourDefaultBorder = new EmptyBorder(UIUtil.getRegularPanelInsets());
 
   private float myHorizontalStretch = 1.0f;
   private float myVerticalStretch = 1.0f;
