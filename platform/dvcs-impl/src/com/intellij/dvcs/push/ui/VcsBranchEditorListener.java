@@ -35,10 +35,7 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
   public void mouseMoved(MouseEvent e) {
     Component component = (Component)e.getSource();
     Object tag = getTagAt(e);
-    if (tag != null && tag instanceof PushTargetPanel) {
-      component.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
-    }
-    else if (tag != null && tag instanceof TextWithLinkNode) {
+    if (tag instanceof PushTargetPanel || tag instanceof TextWithLinkNode) {
       component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
     else {

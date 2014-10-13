@@ -43,7 +43,10 @@ public class ShowStructureSettingsAction extends AnAction implements DumbAware {
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
+    showDialog(project);
+  }
 
+  static void showDialog(Project project) {
     if (Registry.is("ide.new.project.settings")) {
       new SingleConfigurableEditor(project, ProjectStructureConfigurable.getInstance(project), OptionsEditorDialog.DIMENSION_KEY) {
         @Nullable
