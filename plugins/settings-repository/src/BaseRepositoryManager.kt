@@ -65,7 +65,6 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
   /**
    * path relative to repository root
    */
-  throws(javaClass<Exception>())
   protected abstract fun addToIndex(file: File, path: String, content: ByteArray, size: Int)
 
   override fun delete(path: String) {

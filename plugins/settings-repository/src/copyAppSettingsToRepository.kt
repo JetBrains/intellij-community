@@ -11,7 +11,6 @@ import java.io.File
 import com.intellij.openapi.components.ExportableComponent
 import com.intellij.util.containers.MultiMap
 import com.intellij.openapi.util.RoamingTypeDisabled
-import com.intellij.openapi.components.impl.stores.StreamProvider
 
 fun copyLocalConfig() {
   val stateStorageManager = (ApplicationManager.getApplication()!! as ApplicationImpl).getStateStore().getStateStorageManager()
