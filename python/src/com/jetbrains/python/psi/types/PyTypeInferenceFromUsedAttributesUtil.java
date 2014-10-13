@@ -22,6 +22,9 @@ import java.util.*;
  * @author Mikhail Golubev
  */
 public class PyTypeInferenceFromUsedAttributesUtil {
+  // Not final so it can be changed in debugger
+  private static boolean ENABLED = true;
+
   private PyTypeInferenceFromUsedAttributesUtil() {
     // empty
   }
@@ -36,6 +39,10 @@ public class PyTypeInferenceFromUsedAttributesUtil {
    */
   @Nullable
   public static PyType getTypeFromUsedAttributes(@NotNull PyExpression expr, @NotNull final TypeEvalContext context) {
+    if (!ENABLED) {
+      return null;
+    }
+
     if (!context.maySwitchToAST(expr)) {
       return null;
     }
@@ -75,12 +82,12 @@ public class PyTypeInferenceFromUsedAttributesUtil {
         return StringUtil.compare(o1.getName(), o2.getName(), true);
       }
     });
-    return PyUnionType.union(ContainerUtil.map(orderedWinners, new Function<PyClass, PyType>() {
+    return PyUnionType.createWeakType(PyUnionType.union(ContainerUtil.map(orderedWinners, new Function<PyClass, PyType>() {
       @Override
       public PyType fun(PyClass cls) {
         return new PyClassTypeImpl(cls, false);
       }
-    }));
+    })));
   }
 
   @NotNull
