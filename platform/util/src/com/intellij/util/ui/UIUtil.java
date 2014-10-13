@@ -346,30 +346,27 @@ public class UIUtil {
   }
 
   public static String getHtmlBody(String text) {
-    return getHtmlBody(new Html(text));
+    int htmlIndex = 6 + text.indexOf("<html>");
+    if (htmlIndex < 6) {
+      return text.replaceAll("\n", "<br>");
+    }
+    int htmlCloseIndex = text.indexOf("</html>", htmlIndex);
+    if (htmlCloseIndex < 0) {
+      htmlCloseIndex = text.length();
+    }
+    int bodyIndex = 6 + text.indexOf("<body>", htmlIndex);
+    if (bodyIndex < 6) {
+      return text.substring(htmlIndex, htmlCloseIndex);
+    }
+    int bodyCloseIndex = text.indexOf("</body>", bodyIndex);
+    if (bodyCloseIndex < 0) {
+      bodyCloseIndex = text.length();
+    }
+    return text.substring(bodyIndex, Math.min(bodyCloseIndex, htmlCloseIndex));
   }
 
   public static String getHtmlBody(Html html) {
-    String text = html.getText();
-    String result;
-    if (!text.startsWith("<html>")) {
-      result = text.replaceAll("\n", "<br>");
-    }
-    else {
-      final int bodyIdx = text.indexOf("<body>");
-      final int closedBodyIdx = text.indexOf("</body>");
-      if (bodyIdx != -1 && closedBodyIdx != -1) {
-        result = text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
-      }
-      else {
-        text = StringUtil.trimStart(text, "<html>").trim();
-        text = StringUtil.trimEnd(text, "</html>").trim();
-        text = StringUtil.trimStart(text, "<body>").trim();
-        text = StringUtil.trimEnd(text, "</body>").trim();
-        result = text;
-      }
-    }
-
+    String result = getHtmlBody(html.getText());
     return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
   }
 
