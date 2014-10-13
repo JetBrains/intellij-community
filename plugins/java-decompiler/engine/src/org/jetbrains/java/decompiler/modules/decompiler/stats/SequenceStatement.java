@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -99,9 +100,9 @@ public class SequenceStatement extends Statement {
     return null;
   }
 
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
 
-    StringBuilder buf = new StringBuilder();
+    TextBuffer buf = new TextBuffer();
 
     String indstr = null;
     boolean islabeled = isLabeled();
@@ -113,7 +114,7 @@ public class SequenceStatement extends Statement {
     if (islabeled) {
       indstr = InterpreterUtil.getIndentString(indent);
       indent++;
-      buf.append(indstr).append("label").append(this.id).append(": {").append(new_line_separator);
+      buf.append(indstr).append("label").append(this.id.toString()).append(": {").append(new_line_separator);
       tracer.incrementCurrentSourceLine();
     }
 
@@ -128,10 +129,10 @@ public class SequenceStatement extends Statement {
         tracer.incrementCurrentSourceLine();
       }
 
-      String str = ExprProcessor.jmpWrapper(st, indent, false, tracer);
+      TextBuffer str = ExprProcessor.jmpWrapper(st, indent, false, tracer);
       buf.append(str);
 
-      notempty = (str.trim().length() > 0);
+      notempty = !str.containsOnlyWhitespaces();
     }
 
     if (islabeled) {
@@ -139,7 +140,7 @@ public class SequenceStatement extends Statement {
       tracer.incrementCurrentSourceLine();
     }
 
-    return buf.toString();
+    return buf;
   }
 
   public Statement getSimpleCopy() {

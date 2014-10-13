@@ -77,7 +77,7 @@ public class ExitExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
 
     tracer.addMapping(bytecode);
 
@@ -89,7 +89,7 @@ public class ExitExprent extends Exprent {
         ExprProcessor.getCastedExprent(value, rettype, buffer, indent, false, tracer);
       }
 
-      return "return" + buffer.toString();
+      return buffer.prepend("return");
     }
     else {
 
@@ -119,12 +119,12 @@ public class ExitExprent extends Exprent {
             TextBuffer buffer = new TextBuffer();
             ExprProcessor.getCastedExprent(value, exctype, buffer, indent, false, tracer);
 
-            return "throw " + buffer.toString();
+            return buffer.prepend("throw ");
           }
         }
       }
 
-      return "throw " + value.toJava(indent, tracer);
+      return value.toJava(indent, tracer).prepend("throw ");
     }
   }
 

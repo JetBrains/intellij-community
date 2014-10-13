@@ -172,7 +172,7 @@ public class NewExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
 
     if (anonymous) {
@@ -247,10 +247,10 @@ public class NewExprent extends Exprent {
             typename = typename.substring(typename.lastIndexOf('.') + 1);
           }
         }
-        buf.insert(0, "new " + typename);
+        buf.prepend("new " + typename);
 
         if (enclosing != null) {
-          buf.insert(0, enclosing + ".");
+          buf.prepend(enclosing + ".");
         }
       }
 
@@ -268,10 +268,7 @@ public class NewExprent extends Exprent {
         new ClassWriter().classLambdaToJava(child, buf, methodObject, indent);
       }
       else {
-        // do not track lines in sub classes for now
-        buf.setTrackLines(false);
         new ClassWriter().classToJava(child, buf, indent);
-        buf.setTrackLines(true);
       }
     }
     else if (directArrayInit) {
@@ -349,10 +346,10 @@ public class NewExprent extends Exprent {
               typename = typename.substring(typename.lastIndexOf('.') + 1);
             }
           }
-          buf.insert(0, "new " + typename);
+          buf.prepend("new " + typename);
 
           if (enclosing != null) {
-            buf.insert(0, enclosing + ".");
+            buf.prepend(enclosing + ".");
           }
         }
       }
@@ -361,7 +358,11 @@ public class NewExprent extends Exprent {
 
         if (lstArrayElements.isEmpty()) {
           for (int i = 0; i < newtype.arraydim; i++) {
-            buf.append("[").append(i < lstDims.size() ? lstDims.get(i).toJava(indent, tracer) : "").append("]");
+            buf.append("[");
+            if (i < lstDims.size()) {
+              buf.append(lstDims.get(i).toJava(indent, tracer));
+            }
+            buf.append("]");
           }
         }
         else {
@@ -386,7 +387,7 @@ public class NewExprent extends Exprent {
         }
       }
     }
-    return buf.toString();
+    return buf;
   }
 
   private static String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent, BytecodeMappingTracer tracer) {
@@ -414,7 +415,7 @@ public class NewExprent extends Exprent {
         }
 
         if (isQualifiedNew) {
-          return enclosing.toJava(indent, tracer);
+          return enclosing.toJava(indent, tracer).toString();
         }
       }
     }

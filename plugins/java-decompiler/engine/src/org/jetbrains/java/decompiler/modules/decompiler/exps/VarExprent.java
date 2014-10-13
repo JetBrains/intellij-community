@@ -83,7 +83,7 @@ public class VarExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buffer = new TextBuffer();
 
     tracer.addMapping(bytecode);
@@ -107,7 +107,7 @@ public class VarExprent extends Exprent {
       buffer.append(name == null ? ("var" + index + (version == 0 ? "" : "_" + version)) : name);
     }
 
-    return buffer.toString();
+    return buffer;
   }
 
   public boolean equals(Object o) {

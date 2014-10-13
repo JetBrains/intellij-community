@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -105,7 +106,7 @@ public class AssignmentExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     VarType leftType = left.getExprType();
     VarType rightType = right.getExprType();
 
@@ -127,10 +128,10 @@ public class AssignmentExprent extends Exprent {
     }
 
     if (hiddenField) {
-      return "";
+      return new TextBuffer();
     }
 
-    StringBuilder buffer = new StringBuilder();
+    TextBuffer buffer = new TextBuffer();
 
     if (fieldInClassInit) {
       buffer.append(((FieldExprent)left).getName());
@@ -139,23 +140,23 @@ public class AssignmentExprent extends Exprent {
       buffer.append(left.toJava(indent, tracer));
     }
 
-    String res = right.toJava(indent, tracer);
+    TextBuffer res = right.toJava(indent, tracer);
 
     if (condtype == CONDITION_NONE &&
         !leftType.isSuperset(rightType) &&
         (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) {
       if (right.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-        res = "(" + res + ")";
+        res.enclose("(", ")");
       }
 
-      res = "(" + ExprProcessor.getCastTypeName(leftType) + ")" + res;
+      res.prepend("(" + ExprProcessor.getCastTypeName(leftType) + ")");
     }
 
     buffer.append(condtype == CONDITION_NONE ? " = " : funceq[condtype]).append(res);
 
     tracer.addMapping(bytecode);
 
-    return buffer.toString();
+    return buffer;
   }
 
   public boolean equals(Object o) {

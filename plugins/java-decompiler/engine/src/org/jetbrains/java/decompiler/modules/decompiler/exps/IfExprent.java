@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -113,9 +114,9 @@ public class IfExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     tracer.addMapping(bytecode);
-    return "if(" + condition.toJava(indent, tracer) + ")";
+    return condition.toJava(indent, tracer).enclose("if(", ")");
   }
 
   public boolean equals(Object o) {

@@ -814,7 +814,7 @@ public class ClassWriter {
           try {
             tracer.incrementCurrentSourceLine(buffer.count(lineSeparator, start_index_method));
 
-            String code = root.toJava(indent + 1, tracer);
+            TextBuffer code = root.toJava(indent + 1, tracer);
 
             hideMethod = (clinit || dinit || hideConstructor(wrapper, init, throwsExceptions, paramCount)) && code.length() == 0;
 
