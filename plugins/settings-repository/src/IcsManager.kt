@@ -34,6 +34,7 @@ import javax.swing.SwingUtilities
 import com.intellij.util.ui.UIUtil
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.components.impl.stores.ComponentStoreImpl
+import gnu.trove.THashSet
 
 val PLUGIN_NAME: String = "Settings Repository"
 
@@ -352,7 +353,10 @@ private fun updateStoragesFromStreamProvider(store: IComponentStore.Reloadable, 
         }
 
         notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
-        store.reinitComponents(changedComponentNames, notReloadableComponents, false)
+
+        val changedStorageSet = THashSet(changed)
+        changedStorageSet.addAll(deleted)
+        (store as ComponentStoreImpl).reinitComponents(changedComponentNames, notReloadableComponents, changedStorageSet)
       }
       finally {
         token.finish()
