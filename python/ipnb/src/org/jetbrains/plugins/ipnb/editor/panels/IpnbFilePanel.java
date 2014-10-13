@@ -347,7 +347,14 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     super.paintComponent(g);
     if (mySelectedCell != null) {
       g.setColor(mySelectedCell.isEditing() ? JBColor.GREEN : JBColor.GRAY);
-      g.drawRoundRect(100, mySelectedCell.getTop() - 1, getWidth() - 200, mySelectedCell.getHeight() + 2, 5, 5);
+      if (mySelectedCell instanceof IpnbCodePanel) {
+        g.drawRoundRect(mySelectedCell.getX() - 50, mySelectedCell.getTop() - 1,
+                        mySelectedCell.getWidth() + 145 - IpnbEditorUtil.PROMPT_SIZE.width, mySelectedCell.getHeight() + 2, 5, 5);
+      }
+      else {
+        g.drawRoundRect(mySelectedCell.getX() - IpnbEditorUtil.PROMPT_SIZE.width - 55, mySelectedCell.getTop() - 1,
+                        mySelectedCell.getWidth() + 150, mySelectedCell.getHeight() + 2, 5, 5);
+      }
     }
   }
 
