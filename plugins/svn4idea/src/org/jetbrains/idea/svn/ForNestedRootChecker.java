@@ -52,11 +52,11 @@ public class ForNestedRootChecker {
       VirtualFile item = workItems.removeFirst();
       checkCancelled();
 
-      final Node vcsElement = new VcsFileResolver(myVcs, item).resolve();
+      final Node vcsElement = new VcsFileResolver(myVcs, item, root).resolve();
       if (vcsElement != null) {
         result.add(vcsElement);
       }
-      else if (!SvnUtil.isAdminDirectory(item)) {
+      else {
         for (VirtualFile child : item.getChildren()) {
           checkCancelled();
 
@@ -80,13 +80,15 @@ public class ForNestedRootChecker {
     @NotNull private final SvnVcs myVcs;
     @NotNull private final VirtualFile myFile;
     @NotNull private final File myIoFile;
+    @NotNull private final VirtualFile myRoot;
     @Nullable private Info myInfo;
     @Nullable private SvnBindException myError;
 
-    private VcsFileResolver(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    private VcsFileResolver(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull VirtualFile root) {
       myVcs = vcs;
       myFile = file;
       myIoFile = VfsUtilCore.virtualToIoFile(file);
+      myRoot = root;
     }
 
     @Nullable
@@ -97,12 +99,23 @@ public class ForNestedRootChecker {
     }
 
     private void runInfo() {
-      try {
-        myInfo = myVcs.getFactory(myIoFile, false).createInfoClient().doInfo(myIoFile, SVNRevision.UNDEFINED);
+      if (isRoot() || hasChildAdminDirectory()) {
+        try {
+          myInfo = myVcs.getFactory(myIoFile, false).createInfoClient().doInfo(myIoFile, SVNRevision.UNDEFINED);
+        }
+        catch (SvnBindException e) {
+          myError = e;
+        }
       }
-      catch (SvnBindException e) {
-        myError = e;
-      }
+    }
+
+    @SuppressWarnings("UseVirtualFileEquals")
+    private boolean isRoot() {
+      return myRoot == myFile;
+    }
+
+    private boolean hasChildAdminDirectory() {
+      return myFile.findChild(SvnUtil.SVN_ADMIN_DIR_NAME) != null;
     }
 
     @Nullable
