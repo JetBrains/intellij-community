@@ -2724,12 +2724,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int visibleLine = clip.y / lineHeight;
 
-    // The main idea is that there is a possible case that we need to perform painting starting from soft-wrapped logical line.
-    // We may want to skip necessary number of visual lines then. Hence, we remember logical position that corresponds to the starting
-    // visual line in order to use it for further processing. As soon as necessary number of visual lines is skipped, logical
-    // position is expected to be set to null as an indication that no soft wrap-introduced visual lines should be skipped on
-    // current painting iteration.
-    Ref<LogicalPosition> logicalPosition = new Ref<LogicalPosition>(clipStartPosition);
     int startLine = clipStartPosition.line;
     int start = clipStartOffset;
 
@@ -2737,7 +2731,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (startLine == 0 && myPrefixText != null) {
       position.x = drawStringWithSoftWraps(g, new CharArrayCharSequence(myPrefixText), 0, myPrefixText.length, position, clip,
                                            myPrefixAttributes.getEffectColor(), myPrefixAttributes.getEffectType(),
-                                           myPrefixAttributes.getFontType(), myPrefixAttributes.getForegroundColor(), logicalPosition,
+                                           myPrefixAttributes.getFontType(), myPrefixAttributes.getForegroundColor(), -1,
                                            PAINT_NO_WHITESPACE);
     }
     if (startLine >= myDocument.getLineCount() || startLine < 0) {
@@ -2773,7 +2767,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
           drawStringWithSoftWraps(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
-                                                effectType, fontType, currentColor, logicalPosition, context);
+                                                effectType, fontType, currentColor, clipStartOffset, context);
           final VirtualFile file = getVirtualFile();
           if (myProject != null && file != null && !isOneLineMode()) {
             int offset = position.x;
@@ -2789,7 +2783,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                           info.getEffectType() == null ? effectType : info.getEffectType(),
                                           info.getFontType(),
                                           info.getColor() == null ? currentColor : info.getColor(),
-                                          logicalPosition, context);
+                                          clipStartOffset, context);
                 }
               }
             }
@@ -2820,7 +2814,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (softWrap != null) {
             position.x = drawStringWithSoftWraps(
               g, chars, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, clip, effectColor, effectType,
-              fontType, currentColor, logicalPosition, context
+              fontType, currentColor, clipStartOffset, context
             );
           }
           int foldingXStart = position.x;
@@ -2833,7 +2827,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         else {
           position.x = drawStringWithSoftWraps(g, chars, start, Math.min(hEnd, lEnd - lIterator.getSeparatorLength()), position, clip,
-                                               effectColor, effectType, fontType, currentColor, logicalPosition, context);
+                                               effectColor, effectType, fontType, currentColor, clipStartOffset, context);
         }
 
         iterationState.advance();
@@ -2856,7 +2850,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (collapsedFolderAt != null) {
       int foldingXStart = position.x;
       int foldingXEnd = drawStringWithSoftWraps(
-        g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor, logicalPosition,
+        g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor, clipStartOffset,
         PAINT_NO_WHITESPACE);
       BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, foldingXEnd, getLineHeight(), effectColor, effectType);
       //      myBorderEffect.collapsedFolderReached(g, this);
@@ -3084,15 +3078,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                       EffectType effectType,
                                       @JdkConstants.FontStyle int fontType,
                                       Color fontColor,
-                                      @NotNull Ref<LogicalPosition> startDrawingLogicalPosition,
+                                      int startDrawingOffset,
                                       WhitespacePaintingStrategy context) {
     return drawStringWithSoftWraps(g, text, 0, text.length(), position, clip, effectColor, effectType,
-                                   fontType, fontColor, startDrawingLogicalPosition, context);
+                                   fontType, fontColor, startDrawingOffset, context);
   }
 
   private int drawStringWithSoftWraps(@NotNull Graphics g,
                                       final CharSequence text,
-                                      final int start,
+                                      int start,
                                       final int end,
                                       @NotNull Point position,
                                       @NotNull Rectangle clip,
@@ -3100,49 +3094,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                       EffectType effectType,
                                       @JdkConstants.FontStyle int fontType,
                                       Color fontColor,
-                                      @NotNull Ref<LogicalPosition> startDrawingLogicalPosition,
+                                      int startDrawingOffset,
                                       WhitespacePaintingStrategy context) {
-    int startToUse = start;
-
-    // There is a possible case that starting logical line is split by soft-wraps and it's part after the split should be drawn.
-    // We need to skip necessary number of visual lines then.
-    int softWrapLinesToSkip = 0;
-    if (startDrawingLogicalPosition.get() != null) {
-      softWrapLinesToSkip = startDrawingLogicalPosition.get().softWrapLinesOnCurrentLogicalLine;
-    }
-    SoftWrap lastSkippedSoftWrap = null;
-    if (softWrapLinesToSkip > 0) {
-      List<? extends SoftWrap> softWraps = getSoftWrapModel().getSoftWrapsForLine(startDrawingLogicalPosition.get().line);
-      for (SoftWrap softWrap : softWraps) {
-        softWrapLinesToSkip--; // Assuming that soft wrap has a single line feed all the time
-        if (softWrapLinesToSkip <= 0) {
-          lastSkippedSoftWrap = softWrap;
-          startToUse = softWrap.getStart();
-          break;
-        }
-      }
-    }
-    startToUse = Math.max(startToUse, start);
-
-    if (startToUse >= end && getSoftWrapModel().getSoftWrap(startToUse) == null) {
+    if (start >= end && getSoftWrapModel().getSoftWrap(start) == null) {
       return position.x;
     }
-    startDrawingLogicalPosition.set(null);
 
     // Given 'end' offset is exclusive though SoftWrapModel.getSoftWrapsForRange() uses inclusive end offset.
     // Hence, we decrement it if necessary. Please note that we don't do that if start is equal to end. That is the case,
     // for example, for soft-wrapped collapsed fold region - we need to draw soft wrap before it.
     int softWrapRetrievalEndOffset = end;
-    if (startToUse < end) {
+    if (start < end) {
       softWrapRetrievalEndOffset--;
     }
 
     outer:
-    for (SoftWrap softWrap : getSoftWrapModel().getSoftWrapsForRange(startToUse, softWrapRetrievalEndOffset)) {
+    for (SoftWrap softWrap : getSoftWrapModel().getSoftWrapsForRange(start, softWrapRetrievalEndOffset)) {
       char[] softWrapChars = softWrap.getChars();
       CharArrayCharSequence softWrapSeq = new CharArrayCharSequence(softWrapChars);
 
-      if (softWrap.equals(lastSkippedSoftWrap)) {
+      if (softWrap.getStart() == startDrawingOffset) {
         // If we are here that means that we are located on soft wrap-introduced visual line just after soft wrap. Hence, we need
         // to draw soft wrap indent if any and 'after soft wrap' sign.
         int i = CharArrayUtil.lastIndexOf(softWrapChars, '\n', 0, softWrapChars.length);
@@ -3157,13 +3128,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       // Draw token text before the wrap.
-      if (softWrap.getStart() > startToUse) {
+      if (softWrap.getStart() > start) {
         position.x = drawString(
-          g, text, startToUse, softWrap.getStart(), position, clip, null, null, fontType, fontColor, context
+          g, text, start, softWrap.getStart(), position, clip, null, null, fontType, fontColor, context
         );
       }
 
-      startToUse = softWrap.getStart();
+      start = softWrap.getStart();
 
       // We don't draw every soft wrap symbol one-by-one but whole visual line. Current variable holds index that points
       // to the first soft wrap symbol that is not drawn yet.
@@ -3201,7 +3172,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
     }
-    return position.x = drawString(g, text, startToUse, end, position, clip, effectColor, effectType, fontType, fontColor, context);
+    return position.x = drawString(g, text, start, end, position, clip, effectColor, effectType, fontType, fontColor, context);
   }
 
   private int drawString(@NotNull Graphics g,
