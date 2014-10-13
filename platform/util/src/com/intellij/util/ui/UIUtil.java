@@ -285,6 +285,11 @@ public class UIUtil {
     return new Insets(insets.top * scale, insets.left * 2, insets.bottom * scale, insets.right * scale);
   }
 
+  public static Dimension createScaledDimension(Dimension dimension) {
+    int scale = getScale();
+    return new Dimension(dimension.width * scale, dimension.height * scale);
+  }
+
   public static int getScale() {
     return isRetina() ? 2 : 1;
   }
