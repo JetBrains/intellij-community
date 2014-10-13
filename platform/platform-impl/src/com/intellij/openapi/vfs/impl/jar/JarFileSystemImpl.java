@@ -122,7 +122,6 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   @Override
   public VirtualFile findFileByPath(@NotNull String path) {
-    if (!path.contains(JAR_SEPARATOR)) path += JAR_SEPARATOR;
     return VfsImplUtil.findFileByPath(this, path);
   }
 
