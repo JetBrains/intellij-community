@@ -23,10 +23,11 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -41,7 +42,6 @@ import com.intellij.vcs.log.printer.idea.PrintParameters;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RefPainter;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +69,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private final VcsLogGraphTable myGraphTable;
 
   @NotNull private final RefsPanel myRefsPanel;
-  @NotNull private final DataPanel myDataPanel;
+  @NotNull private final DataPanel myHashAuthorPanel;
+  @NotNull private final DataPanel myMessageDataPanel;
   @NotNull private final ContainingBranchesPanel myContainingBranchesPanel;
   @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final JBLoadingPanel myLoadingPanel;
@@ -78,18 +79,20 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   DetailsPanel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogGraphTable graphTable, @NotNull VcsLogColorManager colorManager,
                @NotNull VisiblePack initialDataPack) {
-    super(new CardLayout());
     myLogDataHolder = logDataHolder;
     myGraphTable = graphTable;
     myDataPack = initialDataPack;
 
     myRefsPanel = new RefsPanel(colorManager);
-    myDataPanel = new DataPanel(logDataHolder.getProject());
-    myContainingBranchesPanel = new ContainingBranchesPanel();
-    myMessagePanel = new MessagePanel();
+    myHashAuthorPanel = new DataPanel(logDataHolder.getProject(), false);
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane();
-    JPanel content = new JPanel(new MigLayout("flowy, ins 0, fill, hidemode 3")) {
+    final JScrollPane scrollPane = new JBScrollPane() {
+      @Override
+      public Border getBorder() {
+        return getVerticalScrollBar().isVisible() ? super.getBorder() : null;
+      }
+    };
+    myMessageDataPanel = new DataPanel(logDataHolder.getProject(), true) {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
@@ -97,21 +100,31 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return size;
       }
     };
-    content.setOpaque(false);
-    scrollPane.setViewportView(content);
-    content.add(myRefsPanel, "shrinky, pushx, growx");
-    content.add(myDataPanel, "growy, push");
-    content.add(myContainingBranchesPanel, "shrinky, pushx, growx");
-    content.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+    scrollPane.setViewportView(myMessageDataPanel);
+
+    myContainingBranchesPanel = new ContainingBranchesPanel();
+    myMessagePanel = new MessagePanel();
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
-    myLoadingPanel.add(scrollPane);
+    JPanel header = new NonOpaquePanel(new BorderLayout());
+    header.add(myRefsPanel, BorderLayout.NORTH);
+    header.add(myHashAuthorPanel, BorderLayout.SOUTH);
+    myLoadingPanel.add(header, BorderLayout.NORTH);
+    myLoadingPanel.add(scrollPane, BorderLayout.CENTER);
+    myLoadingPanel.add(myContainingBranchesPanel, BorderLayout.SOUTH);
+    myLoadingPanel.setOpaque(false);
 
+    setLayout(new CardLayout());
     add(myLoadingPanel, STANDARD_LAYER);
     add(myMessagePanel, MESSAGE_LAYER);
 
-    setBackground(UIUtil.getTableBackground());
+    setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
     showMessage("No commits selected");
+  }
+
+  @Override
+  public Color getBackground() {
+    return UIUtil.getTableBackground();
   }
 
   void updateDataPack(@NotNull VisiblePack dataPack) {
@@ -139,12 +152,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
-        myDataPanel.setData(null);
+        myHashAuthorPanel.setData(null);
+        myMessageDataPanel.setData(null);
         myRefsPanel.setRefs(Collections.<VcsRef>emptyList());
       }
       else {
         myLoadingPanel.stopLoading();
-        myDataPanel.setData(commitData);
+        myHashAuthorPanel.setData(commitData);
+        myMessageDataPanel.setData(commitData);
         myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
       }
 
@@ -171,13 +186,16 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   private static class DataPanel extends JEditorPane {
 
     @NotNull private final Project myProject;
+    private final boolean myMessageMode;
 
-    DataPanel(@NotNull Project project) {
+    DataPanel(@NotNull Project project, boolean messageMode) {
       super(UIUtil.HTML_MIME, "");
+      myMessageMode = messageMode;
       setEditable(false);
       myProject = project;
       addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
       setOpaque(false);
+      putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     }
 
     void setData(@Nullable VcsFullCommitDetails commit) {
@@ -185,10 +203,25 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         setText("");
       }
       else {
-        String body = getHashText(commit) + "<br/>" + getAuthorText(commit) + "<p>" + getMessageText(commit) + "</p>";
+        String body;
+        if (myMessageMode) {
+          body = getMessageText(commit);
+        } else {
+          body = commit.getId().asString() + "<br/>" + getAuthorText(commit);
+        }
         setText("<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + body + "</body></html>");
         setCaretPosition(0);
       }
+      revalidate();
+      repaint();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      int h = getFontMetrics(getFont()).getHeight();
+      size.height = Math.max(size.height, myMessageMode ? 5 * h : 2 * h);
+      return size;
     }
 
     private String getMessageText(VcsFullCommitDetails commit) {
@@ -198,10 +231,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       String description = fullMessage.substring(subject.length());
       return "<b>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject) + "</b>" +
              IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description);
-    }
-
-    private static String getHashText(VcsFullCommitDetails commit) {
-      return commit.getId().asString();
     }
 
     private static String getAuthorText(VcsFullCommitDetails commit) {
@@ -225,7 +254,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   private static class ContainingBranchesPanel extends JPanel {
 
-    private final JComponent myLoadingIcon;
+    private final JComponent myLoadingComponent;
     private final JTextField myBranchesList;
 
     ContainingBranchesPanel() {
@@ -235,43 +264,47 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
           return UIUtil.getLabelFont().deriveFont(Font.ITALIC);
         }
       };
-      myLoadingIcon = new AsyncProcessIcon("Loading...");
-      myBranchesList = new JBTextField("");
-      myBranchesList.setEditable(false);
-      myBranchesList.setBorder(IdeBorderFactory.createEmptyBorder()); // setting border to null may mean "use default border" while setting empty border means we do not want a border
-      if (UIUtil.isUnderIntelliJLaF()) {
-        myBranchesList.setBackground(UIUtil.getPanelBackground());
-      } else if (UIUtil.isUnderGTKLookAndFeel()) {
-        // setting border to empty does not help with gtk l&f
-        // so I just cover it completely with my line border
-        myBranchesList.setBorder(new LineBorder(UIUtil.getTextFieldBackground(), 3));
-      }
+      myLoadingComponent = new NonOpaquePanel(new BorderLayout());
+      myLoadingComponent.add(new AsyncProcessIcon("Loading..."), BorderLayout.WEST);
+      myLoadingComponent.add(Box.createHorizontalGlue(), BorderLayout.CENTER);
+      myBranchesList = new JBTextField("") {
+        private final Border gtkBorder = new LineBorder(UIUtil.getTextFieldBackground(), 3) {
+          @Override
+          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            lineColor = UIUtil.getTextFieldBackground();
+            super.paintBorder(c, g, x, y, width, height);
+          }
+        };
+        private final Border emptyBorder = IdeBorderFactory.createEmptyBorder();
 
+        @Override
+        public Border getBorder() {
+          // setting border to empty does not help with gtk l&f
+          // so I just cover it completely with my line border
+          return UIUtil.isUnderGTKLookAndFeel() ? gtkBorder : emptyBorder;
+        }
+      };
+      myBranchesList.setOpaque(false);
+      myBranchesList.setEditable(false);
       setOpaque(false);
-      setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-      add(label);
-      add(myLoadingIcon);
-      add(myBranchesList);
-      add(Box.createHorizontalGlue());
+      setLayout(new BorderLayout());
+      add(label, BorderLayout.WEST);
+      add(Box.createHorizontalGlue(), BorderLayout.EAST);
     }
 
     void setBranches(@Nullable List<String> branches) {
       if (branches == null) {
-        myLoadingIcon.setVisible(true);
-        myBranchesList.setVisible(false);
+        remove(myBranchesList);
+        add(myLoadingComponent, BorderLayout.CENTER);
       }
       else {
-        myLoadingIcon.setVisible(false);
-        myBranchesList.setVisible(true);
-        myBranchesList.setText(getContainedBranchesText(branches));
+        remove(myLoadingComponent);
+        myBranchesList.setText(StringUtil.join(branches, ", "));
+        add(myBranchesList, BorderLayout.CENTER);
       }
+      revalidate();
+      repaint();
     }
-
-    @NotNull
-    private static String getContainedBranchesText(@NotNull List<String> branches) {
-      return StringUtil.join(branches, ", ");
-    }
-
   }
 
   private static class RefsPanel extends JPanel {
@@ -299,7 +332,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
   }
 
-  private static class MessagePanel extends JPanel {
+  private static class MessagePanel extends NonOpaquePanel {
 
     private final JLabel myLabel;
 
