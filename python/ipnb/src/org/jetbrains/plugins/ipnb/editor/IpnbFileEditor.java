@@ -107,12 +107,28 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private JPanel createControlPanel() {
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
-    addSaveButton(controlPanel);
-    addAddButton(controlPanel);
-    addCutButton(controlPanel);
-    addCopyButton(controlPanel);
-    addPasteButton(controlPanel);
-    addRunButton(controlPanel);
+
+    final JPanel savePanel = new JPanel(new GridBagLayout());
+    savePanel.setBackground(IpnbEditorUtil.getBackground());
+    addSaveButton(savePanel);
+    controlPanel.add(savePanel);
+
+    final JPanel addPanel = new JPanel(new GridBagLayout());
+    addPanel.setBackground(IpnbEditorUtil.getBackground());
+    addAddButton(addPanel);
+    controlPanel.add(addPanel);
+
+    final JPanel editorPanel = new JPanel(new GridBagLayout());
+    editorPanel.setBackground(IpnbEditorUtil.getBackground());
+    addCutButton(editorPanel);
+    addCopyButton(editorPanel);
+    addPasteButton(editorPanel);
+    controlPanel.add(editorPanel);
+
+    final JPanel runPanel = new JPanel(new GridBagLayout());
+    runPanel.setBackground(IpnbEditorUtil.getBackground());
+    addRunButton(runPanel);
+    controlPanel.add(runPanel);
 
     myCellTypeCombo = new ComboBox(ourCellTypes);
 
