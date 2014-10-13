@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 public class SpellCheckingEditorCustomizationTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testEnabled() throws Exception {
@@ -28,6 +29,11 @@ public class SpellCheckingEditorCustomizationTest extends LightPlatformCodeInsig
 
   public void testDisabled() throws Exception {
     doTest(false, "missspelling");
+  }
+
+  public void testEnabledEvenIfDisabledInMainProfile() throws Exception {
+    ((CodeInsightTestFixtureImpl)myFixture).myDisabledInspections.add(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
+    testEnabled();
   }
 
   @Override

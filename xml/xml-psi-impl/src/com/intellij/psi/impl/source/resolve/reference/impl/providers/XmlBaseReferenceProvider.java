@@ -43,6 +43,8 @@ public class XmlBaseReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+    PsiReference reference = URIReferenceProvider.getUrlReference(element, ElementManipulators.getValueText(element));
+    if (reference != null) return new PsiReference[] { reference };
     FileReferenceSet referenceSet = FileReferenceSet.createSet(element, false, false, false);
     referenceSet.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, new Function<PsiFile, Collection<PsiFileSystemItem>>() {
       @Override

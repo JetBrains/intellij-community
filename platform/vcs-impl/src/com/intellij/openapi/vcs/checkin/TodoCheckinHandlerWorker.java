@@ -112,7 +112,7 @@ public class TodoCheckinHandlerWorker {
     for (Change change : changes) {
       ProgressManager.checkCanceled();
       if (change.getAfterRevision() == null) continue;
-      final VirtualFile afterFile = getAfterFileWithRefresh(change.getAfterRevision().getFile());
+      final VirtualFile afterFile = getFileWithRefresh(change.getAfterRevision().getFile());
       if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) continue;
       myPsiFile = null;
 
@@ -143,12 +143,12 @@ public class TodoCheckinHandlerWorker {
   }
 
   @Nullable
-  private static VirtualFile getAfterFileWithRefresh(@NotNull FilePath filePath) {
-    VirtualFile afterFile = filePath.getVirtualFile();
-    if (afterFile == null) {
-      afterFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(filePath.getIOFile());
+  private static VirtualFile getFileWithRefresh(@NotNull FilePath filePath) {
+    VirtualFile file = filePath.getVirtualFile();
+    if (file == null) {
+      file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(filePath.getIOFile());
     }
-    return afterFile;
+    return file;
   }
 
   private static void applyFilterAndRemoveDuplicates(final List<TodoItem> todoItems, final TodoFilter filter) {

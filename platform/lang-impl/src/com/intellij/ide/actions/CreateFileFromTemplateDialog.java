@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     myKindLabel.setLabelFor(myKindCombo);
     myKindCombo.registerUpDownHint(myNameField);
     myUpDownHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
+    setTemplateKindComponentsVisible(false);
     init();
   }
 
@@ -106,6 +107,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     return getNameField();
   }
 
+  public void setTemplateKindComponentsVisible(boolean flag) {
+    myKindCombo.setVisible(flag);
+    myKindLabel.setVisible(flag);
+    myUpDownHint.setVisible(flag);
+  }
+
   public static Builder createDialog(@NotNull final Project project) {
     final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project);
     return new BuilderImpl(dialog, project);
@@ -129,6 +136,9 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     @Override
     public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
       myDialog.getKindCombo().addItem(name, icon, templateName);
+      if (myDialog.getKindCombo().getComboBox().getItemCount() > 1) {
+        myDialog.setTemplateKindComponentsVisible(true);
+      }
       return this;
     }
 

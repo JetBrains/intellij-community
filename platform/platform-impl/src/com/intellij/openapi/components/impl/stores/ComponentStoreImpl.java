@@ -27,6 +27,7 @@ import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
+import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -35,11 +36,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
@@ -169,7 +170,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       component.readExternal(element);
     }
     catch (InvalidDataException e) {
-      throw new InvalidComponentDataException(e);
+      throw new RuntimeException(e);
     }
 
     validateUnusedMacros(componentName, true);
@@ -206,10 +207,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
   @Nullable
   private static Element getJdomState(final Object component, @NotNull String componentName, @NotNull StateStorage defaultsStorage) {
-    ComponentRoamingManager roamingManager = ComponentRoamingManager.getInstance();
-    if (component instanceof RoamingTypeDisabled) {
-      roamingManager.setRoamingType(componentName, RoamingType.DISABLED);
-    }
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }
 
@@ -230,14 +227,10 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         }
       }
     }
-
   }
 
   private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData, boolean isReinit) {
-    State spec = getStateSpec(component);
-    final String name = spec.name();
-    ComponentRoamingManager.getInstance().setRoamingType(name, spec.roamingType());
-
+    String name = getStateSpec(component).name();
     if (!isReinit) {
       doAddComponent(name, component);
     }
@@ -246,11 +239,9 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     Class<T> stateClass = getComponentStateClass(component);
-
     T state = null;
     //todo: defaults merging
-
-    final StateStorage defaultsStorage = getDefaultsStorage();
+    StateStorage defaultsStorage = getDefaultsStorage();
     if (defaultsStorage != null) {
       state = defaultsStorage.getState(component, name, stateClass, null);
     }
@@ -321,8 +312,8 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @NotNull
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
-                                                   final StateStorageOperation operation) throws StateStorageException {
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+                                                   @NotNull StateStorageOperation operation) {
     final State stateSpec = getStateSpec(persistentStateComponent);
     final Storage[] storages = stateSpec.storages();
     if (storages.length == 1) {
@@ -340,14 +331,9 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return LastStorageChooserForWrite.INSTANCE.selectStorages(storages, persistentStateComponent, operation);
     }
     else {
-      try {
-        @SuppressWarnings("unchecked")
-        StateStorageChooser<PersistentStateComponent<T>> storageChooser = ReflectionUtil.newInstance(storageChooserClass);
-        return storageChooser.selectStorages(storages, persistentStateComponent, operation);
-      }
-      catch (RuntimeException e) {
-        throw new StateStorageException(e);
-      }
+      @SuppressWarnings("unchecked")
+      StateStorageChooser<PersistentStateComponent<T>> storageChooser = ReflectionUtil.newInstance(storageChooserClass);
+      return storageChooser.selectStorages(storages, persistentStateComponent, operation);
     }
   }
 
@@ -444,14 +430,14 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
   @Override
   @Nullable
-  public final Collection<String> reload(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles) {
+  public final Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages) {
     Set<String> componentNames = new SmartHashSet<String>();
-    for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-      StateStorage storage = pair.second;
+
+    for (StateStorage storage : changedStorages.keySet()) {
       try {
         // we must update (reload in-memory storage data) even if non-reloadable component will be detected later
         // not saved -> user does own modification -> new (on disk) state will be overwritten and not applied
-        storage.analyzeExternalChangesAndUpdateIfNeed(changedFiles, componentNames);
+        storage.analyzeExternalChangesAndUpdateIfNeed(changedStorages.get(storage), componentNames);
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -491,13 +477,18 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @NotNull
-  public static ReloadComponentStoreStatus reloadStore(@NotNull Collection<Pair<VirtualFile, StateStorage>> causes, @NotNull IComponentStore.Reloadable store) {
+  public static ReloadComponentStoreStatus reloadStore(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedStorages, @NotNull IComponentStore.Reloadable store) {
+    MultiMap<StateStorage, VirtualFile> storageToFiles = MultiMap.createLinkedSet();
+    for (Pair<VirtualFile, StateStorage> pair : changedStorages) {
+      storageToFiles.putValue(pair.second, pair.first);
+    }
+
     Collection<String> notReloadableComponents;
     boolean willBeReloaded = false;
     try {
       AccessToken token = WriteAction.start();
       try {
-        notReloadableComponents = store.reload(causes);
+        notReloadableComponents = store.reload(storageToFiles);
       }
       catch (Throwable e) {
         Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
@@ -512,14 +503,14 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         return ReloadComponentStoreStatus.SUCCESS;
       }
 
-      willBeReloaded = askToRestart(store, notReloadableComponents, causes);
+      willBeReloaded = askToRestart(store, notReloadableComponents, changedStorages);
       return willBeReloaded ? ReloadComponentStoreStatus.RESTART_AGREED : ReloadComponentStoreStatus.RESTART_CANCELLED;
     }
     finally {
       if (!willBeReloaded) {
-        for (Pair<VirtualFile, StateStorage> cause : causes) {
-          if (cause.second instanceof XmlElementStorage) {
-            ((XmlElementStorage)cause.second).enableSaving();
+        for (StateStorage storage : storageToFiles.keySet()) {
+          if (storage instanceof StateStorageBase) {
+            ((StateStorageBase)storage).enableSaving();
           }
         }
       }
@@ -529,7 +520,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   // used in settings repository plugin
   public static boolean askToRestart(@NotNull Reloadable store,
                                      @NotNull Collection<String> notReloadableComponents,
-                                     @Nullable Collection<Pair<VirtualFile, StateStorage>> causes) {
+                                     @Nullable Collection<Pair<VirtualFile, StateStorage>> changedStorages) {
     StringBuilder message = new StringBuilder();
     String storeName = store instanceof IApplicationStore ? "Application" : "Project";
     message.append(storeName).append(' ');
@@ -556,11 +547,11 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
     if (Messages.showYesNoDialog(message.toString(),
                                  storeName + " Files Changed", Messages.getQuestionIcon()) == Messages.YES) {
-      if (causes != null) {
-        for (Pair<VirtualFile, StateStorage> cause : causes) {
-          StateStorage stateStorage = cause.getSecond();
-          if (stateStorage instanceof XmlElementStorage) {
-            ((XmlElementStorage)stateStorage).disableSaving();
+      if (changedStorages != null) {
+        for (Pair<VirtualFile, StateStorage> cause : changedStorages) {
+          StateStorage storage = cause.getSecond();
+          if (storage instanceof StateStorageBase) {
+            ((StateStorageBase)storage).disableSaving();
           }
         }
       }

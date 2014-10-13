@@ -324,7 +324,6 @@ public class StorageUtil {
     }
   }
 
-  @SuppressWarnings("Contract")
   @Nullable
   public static Document loadDocument(@Nullable InputStream stream) {
     if (stream == null) {

@@ -52,7 +52,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
-    ApplicationInfo info = ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
+    ApplicationInfo info = ApplicationInfo.getInstance();
     String appName = info.getVersionName();
     myPanel.add(new JLabel(IdeBundle.message("label.please.enter.project.name", appName, wizardContext.getPresentationName())),
                 new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 8, 10), 0, 0));
@@ -101,7 +101,7 @@ public class ProjectNameStep extends ModuleWizardStep {
   public boolean validate() throws ConfigurationException {
     String name = myNamePathComponent.getNameValue();
     if (name.length() == 0) {
-      final ApplicationInfo info = ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
+      final ApplicationInfo info = ApplicationInfo.getInstance();
       throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getVersionName(), myWizardContext.getPresentationName()));
     }
 

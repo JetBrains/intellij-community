@@ -221,6 +221,7 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
     return prev == null ? null : prev.get();
   }
 
+  @NotNull
   @Override
   public Collection<V> values() {
     Set<V> result = new THashSet<V>();

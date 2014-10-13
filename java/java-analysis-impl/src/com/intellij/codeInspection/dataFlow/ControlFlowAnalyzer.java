@@ -1501,7 +1501,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             catch (Exception ignored) {
             }
           }
-          return Result.create(Collections.<MethodContract>emptyList(), contractAnno);
+          return Result.create(Collections.<MethodContract>emptyList(), contractAnno, method);
         }
       });
     }

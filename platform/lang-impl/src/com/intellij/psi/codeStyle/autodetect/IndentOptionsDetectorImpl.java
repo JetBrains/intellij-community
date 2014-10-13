@@ -71,7 +71,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
       if (newIndentSize > 0) {
         if (indentOptions.INDENT_SIZE != newIndentSize) {
           indentOptions.INDENT_SIZE = newIndentSize;
-          LOG.info("Detected indent size: " + newIndentSize + " for file " + myFile);
+          LOG.debug("Detected indent size: " + newIndentSize + " for file " + myFile);
         }
       }
     }
@@ -80,7 +80,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private void setUseTabs(@NotNull IndentOptions indentOptions, boolean useTabs) {
     if (indentOptions.USE_TAB_CHARACTER != useTabs) {
       indentOptions.USE_TAB_CHARACTER = useTabs;
-      LOG.info("Tab usage set to " + useTabs + " for file " + myFile);
+      LOG.debug("Tab usage set to " + useTabs + " for file " + myFile);
     }
   }
 

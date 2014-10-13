@@ -17,7 +17,10 @@
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BatchSuppressManager;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,7 +48,8 @@ import java.util.regex.Matcher;
  * @author peter
  */
 public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool {
-  public static SuppressQuickFix[] getSuppressActions(String name) {
+  @NotNull
+  public static SuppressQuickFix[] getSuppressActions(@NotNull String name) {
     final HighlightDisplayKey displayKey = HighlightDisplayKey.find(name);
     return new SuppressQuickFix[] {
       new SuppressByGroovyCommentFix(displayKey),

@@ -28,7 +28,9 @@ import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -40,9 +42,7 @@ import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
@@ -255,6 +255,53 @@ public abstract class PyTestCase extends UsefulTestCase {
     return result;
   }
 
+  /**
+   * Returns elements certain element allows to navigate to (emulates CTRL+Click, actually).
+   * You need to pass element as argument or
+   * make sure your fixture is configured for some element (see {@link com.intellij.testFramework.fixtures.CodeInsightTestFixture#getElementAtCaret()})
+   *
+   * @param element element to fetch navigate elements from (may be null: element under caret would be used in this case)
+   * @return elements to navigate to
+   */
+  @NotNull
+  protected Set<PsiElement> getElementsToNavigate(@Nullable final PsiElement element) {
+    final Set<PsiElement> result = new HashSet<PsiElement>();
+    final PsiElement elementToProcess = ((element != null) ? element : myFixture.getElementAtCaret());
+    for (final PsiReference reference : elementToProcess.getReferences()) {
+      final PsiElement directResolve = reference.resolve();
+      if (directResolve != null) {
+        result.add(directResolve);
+      }
+      if (reference instanceof PsiPolyVariantReference) {
+        for (final ResolveResult resolveResult : ((PsiPolyVariantReference)reference).multiResolve(true)) {
+          result.add(resolveResult.getElement());
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Clears provided file
+   *
+   * @param file file to clear
+   */
+  protected void clearFile(@NotNull final PsiFile file) {
+    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            for (final PsiElement element : file.getChildren()) {
+              element.delete();
+            }
+          }
+        });
+      }
+    }, null, null);
+  }
+
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
     private final String myPythonVersion;
 
@@ -321,9 +368,10 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   /**
-   * Comares sets with string sorting them and displaying one-per-line to make comparision easier
-   * @param message message to display in case of error
-   * @param actual actual set
+   * Compares sets with string sorting them and displaying one-per-line to make comparision easier
+   *
+   * @param message  message to display in case of error
+   * @param actual   actual set
    * @param expected expected set
    */
   protected static void compareStringSets(@NotNull final String message,

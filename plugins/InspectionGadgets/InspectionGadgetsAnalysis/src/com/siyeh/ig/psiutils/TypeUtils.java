@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,5 +178,29 @@ public class TypeUtils {
     }
     final PsiType type = expression.getType();
     return type != null && (PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type));
+  }
+
+  public static boolean areConvertible(PsiType type1, PsiType type2) {
+    final PsiType comparedTypeErasure = TypeConversionUtil.erasure(type1);
+    final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(type2);
+    if (comparedTypeErasure == null || comparisonTypeErasure == null ||
+        TypeConversionUtil.areTypesConvertible(comparedTypeErasure, comparisonTypeErasure)) {
+      if (type1 instanceof PsiClassType && type2 instanceof PsiClassType) {
+        final PsiClassType classType1 = (PsiClassType)type1;
+        final PsiClassType classType2 = (PsiClassType)type2;
+        final PsiType[] parameters1 = classType1.getParameters();
+        final PsiType[] parameters2 = classType2.getParameters();
+        if (parameters1.length != parameters2.length) {
+          return false;
+        }
+        for (int i = 0; i < parameters1.length; i++) {
+          if (!areConvertible(parameters1[i], parameters2[i])) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    return false;
   }
 }

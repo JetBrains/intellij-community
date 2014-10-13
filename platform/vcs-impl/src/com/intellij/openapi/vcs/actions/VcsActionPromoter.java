@@ -18,11 +18,10 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diff.actions.DiffWalkerAction;
 import com.intellij.openapi.vcs.ex.RollbackLineStatusAction;
-import com.intellij.openapi.vcs.ui.Refreshable;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,18 +30,20 @@ import java.util.List;
 public class VcsActionPromoter implements ActionPromoter {
   @Override
   public List<AnAction> promote(List<AnAction> actions, DataContext context) {
-    if (Refreshable.PANEL_KEY.getData(context) != null) {
-      for (AnAction action : actions) {
-        if (action instanceof ShowMessageHistoryAction) {
-          return Arrays.asList(action);
-        }
+    List<AnAction> list = new ArrayList<AnAction>(0);
+
+    for (AnAction action : actions) {
+      if (action instanceof RollbackLineStatusAction) {
+        list.add(action);
+      }
+      if (action instanceof ShowMessageHistoryAction) {
+        list.add(action);
+      }
+      if (action instanceof DiffWalkerAction) {
+        list.add(action);
       }
     }
 
-    for (AnAction action : actions) {
-      if (action instanceof RollbackLineStatusAction) return Arrays.asList(action);
-    }
-
-    return Collections.emptyList();
+    return list;
   }
 }

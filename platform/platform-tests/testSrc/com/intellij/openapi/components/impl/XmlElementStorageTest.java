@@ -87,7 +87,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     private Element mySavedElement;
 
     public MyXmlElementStorage(Element element, final Disposable parentDisposable) throws StateStorageException {
-      super("", RoamingType.PER_USER, new MyPathMacroManager(), parentDisposable, "root", null, ComponentVersionProvider.EMPTY);
+      super("", RoamingType.PER_USER, new MyPathMacroManager(), "root", null, ComponentVersionProvider.EMPTY);
       myElement = element;
     }
 

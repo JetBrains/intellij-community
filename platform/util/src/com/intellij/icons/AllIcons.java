@@ -577,13 +577,6 @@ public class AllIcons {
       public static final Icon SpeedSearchPrompt = IconLoader.getIcon("/icons/ide/speedSearchPrompt.png"); // 16x16
 
     }
-    
-    public static class Inspector {
-      public static final Icon Empty = IconLoader.getIcon("/icons/inspector/empty.gif"); // 9x9
-      public static final Icon SortByCategory = IconLoader.getIcon("/icons/inspector/sortByCategory.png"); // 16x16
-      public static final Icon SortByName = IconLoader.getIcon("/icons/inspector/sortByName.png"); // 16x16
-
-    }
 
   }
   

@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -25,12 +28,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -61,10 +65,18 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
             return;
           }
 
-          final String[] split = splitUrl(pair.getSecond());
+          JsonElement element = new JsonParser().parse(pair.getSecond());
+
+          HashMap<String, String> parameters = new HashMap<String, String>();
+          for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+            JsonElement value = entry.getValue();
+            parameters.put(entry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString());
+          }
           String directoryName = context.directoryName;
-          if (!split[1].isEmpty()) directoryName += "/" + split[1];
-          if (!processor.checkout(split[0], context.directory, directoryName)) return;
+          if (parameters.get("targetDir") != null) {
+            directoryName += "/" + parameters.get("targetDir");
+          }
+          if (!processor.checkout(parameters, context.directory, directoryName)) return;
         }
         runNext.run();
       }
@@ -73,16 +85,10 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
 
   private static boolean getDirectoryName(@NotNull Context context, List<Pair<String, String>> entries) {
 
-    for (Pair<String, String> entry : entries) {
-      String url = entry.getSecond();
-      final String[] split = splitUrl(url);
-      if (split[1].isEmpty()) {
-        int i = url.lastIndexOf('/');
-        context.directoryName = i < 0 ? "" : FileUtil.getNameWithoutExtension(url.substring(i + 1));
-        break;
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      context.directoryName = "test";
+      return true;
     }
-    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     context.directoryName = Messages.showInputDialog((Project)null,
                                         "Enter directory name for created project. Leave blank to checkout directly into \"" +
                                         context.directory.getName() + "\".",

@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,22 +77,16 @@ public class ProjectLibraryTable extends LibraryTableBase {
     return true;
   }
 
-
   public static class LibraryStateSplitter implements StateSplitter {
-
     @Override
     public List<Pair<Element, String>> splitState(Element e) {
       final UniqueNameGenerator generator = new UniqueNameGenerator();
 
       List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
-
-      final List list = e.getChildren();
-      for (final Object o : list) {
-        Element library = (Element)o;
-        @NonNls final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(library.getAttributeValue(LibraryImpl.LIBRARY_NAME_ATTR))) + ".xml";
+      for (Element library : e.getChildren()) {
+        String name = generator.generateUniqueName(FileUtil.sanitizeFileName(library.getAttributeValue(LibraryImpl.LIBRARY_NAME_ATTR))) + ".xml";
         result.add(Pair.create(library, name));
       }
-
       return result;
     }
 

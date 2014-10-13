@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,7 +63,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
       }
 
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         close(RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL.ordinal());
       }
 
@@ -75,7 +76,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           close(RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT.ordinal());
         }
       };
@@ -87,7 +88,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
       }
 
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         doCancelAction();
       }
 
@@ -125,11 +126,34 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
   protected String sideEffectsDescription() {
     if (myCanCopeWithSideEffects) {
-      return QuickFixBundle.message("side.effect.message2",
-                                    myVariable.getName(),
-                                    myVariable.getType().getPresentableText(),
-                                    myBeforeText,
-                                    myAfterText);
+      String format = "<html>\n" +
+                      "<body>\n" +
+                      "There are possible side effects found in expressions assigned to the variable ''{0}''<br>\n" +
+                      "You can:\n" +
+                      "<br>\n" +
+                      "—&nbsp;<b>Remove</b> variable usages along with all expressions involved, or<br>\n" +
+                      "—&nbsp;<b>Transform</b> expressions assigned to variable into the statements on their own.<br>\n" +
+                      "<div style=\"padding-left: 0.6cm;\">\n" +
+                      "  That is,<br>\n" +
+                      "  <table border=\"0\">\n" +
+                      "    <tr>\n" +
+                      "      <td><code>{1} {0} = {2};</code></td>\n" +
+                      "    </tr>\n" +
+                      "  </table>\n" +
+                      "  becomes: <br>\n" +
+                      "  <table border=\"0\">\n" +
+                      "    <tr>\n" +
+                      "      <td><code>{3};</code></td>\n" +
+                      "    </tr>\n" +
+                      "  </table>\n" +
+                      "</div>\n" +
+                      "</body>\n" +
+                      "</html>";
+      return MessageFormat.format(format, 
+                                  myVariable.getName(),
+                                  myVariable.getType().getPresentableText(),
+                                  myBeforeText,
+                                  myAfterText);
     }
     else {
       return QuickFixBundle.message("side.effect.message1", myVariable.getName());

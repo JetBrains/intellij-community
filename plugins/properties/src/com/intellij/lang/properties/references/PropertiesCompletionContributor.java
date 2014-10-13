@@ -66,10 +66,12 @@ public class PropertiesCompletionContributor extends CompletionContributor {
       PsiElement element = propertyReference.getElement();
       final int offsetInElement = startOffset - element.getTextRange().getStartOffset();
       TextRange range = propertyReference.getRangeInElement();
-      final String prefix = element.getText().substring(range.getStartOffset(), offsetInElement);
+      if (offsetInElement >= range.getStartOffset()) {
+        final String prefix = element.getText().substring(range.getStartOffset(), offsetInElement);
 
-      LookupElement[] variants = getVariants(propertyReference);
-      result.withPrefixMatcher(prefix).addAllElements(Arrays.asList(variants));
+        LookupElement[] variants = getVariants(propertyReference);
+        result.withPrefixMatcher(prefix).addAllElements(Arrays.asList(variants));
+      }
     }
   }
 

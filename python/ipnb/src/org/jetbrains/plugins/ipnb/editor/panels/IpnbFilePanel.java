@@ -59,6 +59,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
       public void run() {
         try {
           myIpnbFile = IpnbParser.parseIpnbFile(vFile);
+          if (myIpnbFile.getCells().isEmpty()) {
+            final IpnbCodeCell cell = new IpnbCodeCell("python", new String[]{""}, null, new ArrayList<IpnbOutputCell>());
+            myIpnbFile.addCell(cell, 0);
+          }
           layoutFile();
           addMouseListener(new MouseAdapter() {
             @Override
@@ -148,17 +152,23 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
   }
 
   private void addCell(IpnbEditableCell cell, IpnbEditablePanel panel) {
-    final IpnbEditablePanel selectedCell = getSelectedCell();
-    final int index = myIpnbPanels.indexOf(selectedCell);
-    myIpnbFile.addCell(cell, index+1);
-    myIpnbPanels.add(index + 1, panel);
-
     final GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
     c.gridy = 0;
     c.gridwidth = 1;
     c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
+
+    if (myIpnbPanels.isEmpty()) {
+      final int width = IpnbEditorUtil.PANEL_WIDTH + IpnbEditorUtil.PROMPT_SIZE.width;
+      final JLabel label = new JLabel("<html><body style='width: " + width + "px'></body></html>");
+      add(label, c);
+    }
+    final IpnbEditablePanel selectedCell = getSelectedCell();
+    final int index = myIpnbPanels.indexOf(selectedCell);
+    myIpnbFile.addCell(cell, index + 1);
+    myIpnbPanels.add(index + 1, panel);
+
 
     final JPanel promptPanel = new JPanel();
     promptPanel.setPreferredSize(new Dimension(IpnbEditorUtil.PROMPT_SIZE.width, 1));
@@ -191,6 +201,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
 
   public void cutCell() {
     myBufferPanel = getSelectedCell();
+    if (myBufferPanel == null) return;
     selectNextOrPrev(myBufferPanel);
     final int index = myIpnbPanels.indexOf(myBufferPanel);
     if (index < 0) return;
@@ -198,6 +209,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     myIpnbFile.removeCell(index);
 
     remove(myBufferPanel);
+    if (myIpnbPanels.isEmpty()) {
+      createAndAddCell();
+    }
   }
 
   public void copyCell() {
@@ -240,6 +254,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
       myIpnbPanels.remove(index);
       myIpnbPanels.add(index, panel);
     }
+    if (from instanceof IpnbCodePanel) {
+      panel.switchToEditing();
+    }
     setSelectedCell(panel);
     remove(from);
     revalidate();
@@ -254,7 +271,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     myIpnbPanels.add(comp);
   }
 
-  private JPanel createEmptyPanel() {
+  private static JPanel createEmptyPanel() {
     JPanel panel = new JPanel();
     panel.setBackground(IpnbEditorUtil.getBackground());
     return panel;
@@ -274,7 +291,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
         selectPrev(mySelectedCell);
         if (index > 0) {
           final Rectangle cellBounds = mySelectedCell.getBounds();
-          if (cellBounds.getY() + cellBounds.getHeight() <= rect.getY()) {
+          if (cellBounds.getY() <= rect.getY()) {
             myIncrement = rect.y - cellBounds.y;
             getParent().dispatchEvent(e);
           }
@@ -284,7 +301,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
         selectNext(mySelectedCell);
         if (index < myIpnbPanels.size() - 1) {
           final Rectangle cellBounds = mySelectedCell.getBounds();
-          if (cellBounds.getY() > rect.getY() + rect.getHeight()) {
+          if (cellBounds.getY() + cellBounds.getHeight() > rect.getY() + rect.getHeight()) {
             myIncrement = cellBounds.y + cellBounds.height - rect.y - rect.height;
             getParent().dispatchEvent(e);
           }
