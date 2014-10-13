@@ -3061,25 +3061,4 @@ public class UIUtil {
 
     textField.setColumns(4);
   }
-
-  public static <T> Border makeChameleonBorder(final Border border, final Condition<T> conditionToShow, final T checker) {
-    return new Border() {
-      @Override
-      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        if (conditionToShow.value(checker)) {
-          border.paintBorder(c, g, x, y, width, height);
-        }
-      }
-
-      @Override
-      public Insets getBorderInsets(Component c) {
-        return border.getBorderInsets(c);
-      }
-
-      @Override
-      public boolean isBorderOpaque() {
-        return border.isBorderOpaque() && conditionToShow.value(checker);
-      }
-    };
-  }
 }
