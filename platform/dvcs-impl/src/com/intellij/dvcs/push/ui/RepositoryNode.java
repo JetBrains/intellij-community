@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,7 +39,8 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   @Nullable private Future<AtomicReference<OutgoingResult>> myFuture;
-  protected final int myLoadingIconWidth;
+  protected final int myCheckBoxHGap;
+  private final int myCheckBoxVGap;
 
   public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull CheckBoxModel model, boolean enabled) {
     super(repositoryPanel);
@@ -48,10 +48,9 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     setChecked(false);
     setEnabled(enabled);
     myRepositoryPanel = repositoryPanel;
-
-    Dimension size = new JCheckBox().getPreferredSize();
-    myLoadingIconWidth = size.width;
-    myLoadingIcon = LoadingIcon.create(myLoadingIconWidth, size.height);
+    myLoadingIcon = myRepositoryPanel.getLoadingIcon();
+    myCheckBoxHGap = myRepositoryPanel.getLoadingIconAndCheckBoxGapH();
+    myCheckBoxVGap = myRepositoryPanel.getLoadingIconAndCheckBoxGapV();
   }
 
   @Override
@@ -71,25 +70,44 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     int repoFixedWidth = 120;
+    int borderHOffset = myRepositoryPanel.getHBorderOffset(renderer);
+    int borderVOffset = myRepositoryPanel.getVBorderOffset(renderer);
     if (myLoading.get()) {
       renderer.setIcon(myLoadingIcon);
       renderer.setIconOnTheRight(false);
-      repoFixedWidth += myLoadingIconWidth;
+      int checkBoxWidth = myRepositoryPanel.getCheckBoxWidth();
+      repoFixedWidth += checkBoxWidth;
+      if (myCheckBoxHGap > 0) {
+        renderer.append("");
+        renderer.appendFixedTextFragmentWidth(checkBoxWidth + renderer.getIconTextGap() + borderHOffset);
+      }
+      if (myCheckBoxVGap > 0) {
+        int shiftV = myCheckBoxVGap - borderVOffset;
+        renderer.setBorder(new EmptyBorder(shiftV / 2, 0, shiftV / 2, 0));
+      }
     }
-    renderer.append(getRepoName(renderer, repoFixedWidth), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    else {
+      if (myCheckBoxHGap <= 0) {
+        renderer.append("");
+        renderer.appendFixedTextFragmentWidth(myRepositoryPanel.calculateRendererShiftH(renderer));
+      }
+      if (myCheckBoxVGap <= 0) {
+        int shiftV = -myCheckBoxVGap + borderVOffset;
+        renderer.setBorder(new EmptyBorder(shiftV / 2, 0, shiftV / 2, 0));
+      }
+    }
+    renderer.append(getRepoName(renderer, repoFixedWidth), isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     renderer.appendFixedTextFragmentWidth(repoFixedWidth);
-    renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(myRepositoryPanel.getSourceName(), isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+    renderer.append(myRepositoryPanel.getArrow(), isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
     pushTargetPanel.render(renderer);
-    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(pushTargetPanel);
-    renderer.setBorder(new EmptyBorder(insets));
   }
 
   @NotNull
   private String getRepoName(@NotNull ColoredTreeCellRenderer renderer, int maxWidth) {
     String name = myRepositoryPanel.getRepositoryName();
-    return GraphicsUtil.stringWidth(name, renderer.getFont()) > maxWidth - UIUtil.DEFAULT_VGAP ? name + "  " : name;
+    return GraphicsUtil.stringWidth(name, renderer.getFont()) > maxWidth - UIUtil.DEFAULT_HGAP ? name + "  " : name;
   }
 
   @Override
