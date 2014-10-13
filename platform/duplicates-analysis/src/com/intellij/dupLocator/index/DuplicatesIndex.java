@@ -25,6 +25,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
@@ -106,16 +107,21 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     @Override
     @NotNull
     public Map<Integer, TIntArrayList> map(@NotNull final FileContent inputData) {
-      FileType type = inputData.getFileType();
+      return ApplicationManager.getApplication().runReadAction(new Computable<Map<Integer, TIntArrayList>>() {
+        @Override
+        public Map<Integer, TIntArrayList> compute() {
+          FileType type = inputData.getFileType();
 
-      DuplicatesProfile profile = findDuplicatesProfile(type);
-      if (profile == null) return Collections.emptyMap();
+          DuplicatesProfile profile = findDuplicatesProfile(type);
+          if (profile == null) return Collections.emptyMap();
 
-      MyFragmentsCollector collector = new MyFragmentsCollector(profile, ((LanguageFileType)type).getLanguage());
-      DuplocateVisitor visitor = profile.createVisitor(collector, true);
-      visitor.visitNode(((FileContentImpl)inputData).getPsiFileAccountingForUnsavedDocument());
+          MyFragmentsCollector collector = new MyFragmentsCollector(profile, ((LanguageFileType)type).getLanguage());
+          DuplocateVisitor visitor = profile.createVisitor(collector, true);
+          visitor.visitNode(((FileContentImpl)inputData).getPsiFileAccountingForUnsavedDocument());
 
-      return collector.getMap();
+          return collector.getMap();
+        }
+      });
     }
   };
 
