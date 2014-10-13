@@ -15,6 +15,7 @@ import java.io.FileInputStream
 import java.util.Collections
 import org.jetbrains.settingsRepository.removeFileAndParentDirectoryIfEmpty
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.SystemInfo
 
 private val EDIT_CMP = object : Comparator<PathEdit> {
   override fun compare(o1: PathEdit, o2: PathEdit): Int {
@@ -116,7 +117,35 @@ public abstract class PathEdit(val path: ByteArray) {
   public abstract fun apply(entry: DirCacheEntry, repository: Repository)
 }
 
-class AddFile(private val pathString: String) : PathEdit(Constants.encode(pathString)) {
+private fun encodePath(path: String): ByteArray {
+  val byteBuffer = Constants.CHARSET.encode(path)
+  if (byteBuffer.hasArray() && byteBuffer.arrayOffset() == 0) {
+    val bytes = byteBuffer.array()
+    if (bytes.size == byteBuffer.limit()) {
+      replaceBackSlash(bytes)
+      return bytes
+    }
+  }
+
+  val bytes = ByteArray(byteBuffer.limit())
+  byteBuffer.get(bytes)
+  replaceBackSlash(bytes)
+  return bytes
+}
+
+private fun replaceBackSlash(path: ByteArray) {
+  if (!SystemInfo.isWindows) {
+    return
+  }
+
+  for (i in 0..path.size - 1) {
+    if (path[i].toChar() == '\\') {
+      path[i] = '/'.toByte()
+    }
+  }
+}
+
+class AddFile(private val pathString: String) : PathEdit(encodePath(pathString)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
     val file = File(repository.getWorkTree(), pathString)
     entry.setFileMode(FileMode.REGULAR_FILE)
@@ -137,7 +166,7 @@ class AddFile(private val pathString: String) : PathEdit(Constants.encode(pathSt
   }
 }
 
-class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size, private val lastModified: Long = System.currentTimeMillis()) : PathEdit(Constants.encode(path)) {
+class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size, private val lastModified: Long = System.currentTimeMillis()) : PathEdit(encodePath(path)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
     entry.setFileMode(FileMode.REGULAR_FILE)
     entry.setLength(size)
@@ -154,13 +183,13 @@ class AddLoadedFile(path: String, private val content: ByteArray, private val si
   }
 }
 
-fun DeleteFile(path: String) = DeleteFile(Constants.encode(path))
+fun DeleteFile(path: String) = DeleteFile(encodePath(path))
 
 public class DeleteFile(path: ByteArray) : PathEdit(path) {
   override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 
-public class DeleteDirectory(entryPath: String) : PathEdit(Constants.encode(if (entryPath.endsWith("/") || entryPath.length() == 0) entryPath else entryPath + "/")) {
+public class DeleteDirectory(entryPath: String) : PathEdit(encodePath(if (entryPath.endsWith("/") || entryPath.length() == 0) entryPath else entryPath + "/")) {
   override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 
