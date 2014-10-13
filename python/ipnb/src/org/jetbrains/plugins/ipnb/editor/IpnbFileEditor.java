@@ -162,6 +162,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         action.runCell(myIpnbFilePanel, true);
       }
     });
+    myRunCellButton.setToolTipText("Run Cell");
     controlPanel.add(myRunCellButton);
   }
 
@@ -172,7 +173,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         final IpnbSaveAction action = (IpnbSaveAction)ActionManager.getInstance().getAction("IpnbSaveAction");
         action.saveAndCheckpoint(IpnbFileEditor.this);
       }
-    }, AllIcons.Actions.Menu_saveall);
+    }, AllIcons.Actions.Menu_saveall, "Save and Checkpoint");
   }
 
   private void addCutButton(@NotNull final JPanel controlPanel) {
@@ -182,7 +183,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         final IpnbCutCellAction action = (IpnbCutCellAction)ActionManager.getInstance().getAction("IpnbCutCellAction");
         action.cutCell(myIpnbFilePanel);
       }
-    }, AllIcons.Actions.Menu_cut);
+    }, AllIcons.Actions.Menu_cut, "Cut Cell");
   }
 
   private void addCopyButton(@NotNull final JPanel controlPanel) {
@@ -192,7 +193,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         final IpnbCopyCellAction action = (IpnbCopyCellAction)ActionManager.getInstance().getAction("IpnbCopyCellAction");
         action.copyCell(myIpnbFilePanel);
       }
-    }, AllIcons.Actions.Copy);
+    }, AllIcons.Actions.Copy, "Copy Cell");
   }
 
   private void addPasteButton(@NotNull final JPanel controlPanel) {
@@ -202,15 +203,19 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         final IpnbPasteCellAction action = (IpnbPasteCellAction)ActionManager.getInstance().getAction("IpnbPasteCellAction");
         action.pasteCell(myIpnbFilePanel);
       }
-    }, AllIcons.Actions.Menu_paste);
+    }, AllIcons.Actions.Menu_paste, "Paste Cell Below");
   }
 
-  private static void addButton(@NotNull final JPanel controlPanel, @NotNull final ActionListener listener, @NotNull final Icon icon) {
+  private static void addButton(@NotNull final JPanel controlPanel,
+                                @NotNull final ActionListener listener,
+                                @NotNull final Icon icon,
+                                @NotNull final String tooltip) {
     final JButton button = new JButton();
     button.setBackground(IpnbEditorUtil.getBackground());
     button.setPreferredSize(new Dimension(30, 30));
     button.setIcon(icon);
     button.addActionListener(listener);
+    button.setToolTipText(tooltip);
     controlPanel.add(button);
   }
 
@@ -221,7 +226,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         final IpnbAddCellAction action = (IpnbAddCellAction)ActionManager.getInstance().getAction("IpnbAddCellAction");
         action.addCell(myIpnbFilePanel);
       }
-    }, AllIcons.General.Add);
+    }, AllIcons.General.Add, "Insert Cell Below");
   }
 
   public JButton getRunCellButton() {
