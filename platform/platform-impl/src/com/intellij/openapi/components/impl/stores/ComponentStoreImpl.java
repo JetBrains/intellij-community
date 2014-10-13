@@ -62,20 +62,19 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   protected abstract StateStorage getDefaultsStorage();
 
   @Override
-  public void initComponent(@NotNull final Object component, final boolean service) {
+  public void initComponent(@NotNull final Object component, boolean service) {
     if (component instanceof SettingsSavingComponent) {
       mySettingsSavingComponents.add((SettingsSavingComponent)component);
     }
 
-    boolean isSerializable = component instanceof JDOMExternalizable ||
-                             component instanceof PersistentStateComponent;
+    if (!(component instanceof JDOMExternalizable || component instanceof PersistentStateComponent)) {
+      return;
+    }
 
-    if (!isSerializable) return;
-
-    try {
-      ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
-        @Override
-        public void run() {
+    ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        try {
           if (component instanceof PersistentStateComponent) {
             initPersistentComponent((PersistentStateComponent<?>)component, false, false);
           }
@@ -83,14 +82,14 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
             initJdomExternalizable((JDOMExternalizable)component);
           }
         }
-      });
-    }
-    catch (StateStorageException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+        catch (StateStorageException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+    });
   }
 
   @Override
@@ -141,26 +140,24 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
   }
 
-  @Nullable
-  private String initJdomExternalizable(@NotNull JDOMExternalizable component) {
-    final String componentName = ComponentManagerImpl.getComponentName(component);
-
+  private void initJdomExternalizable(@NotNull JDOMExternalizable component) {
+    String componentName = ComponentManagerImpl.getComponentName(component);
     doAddComponent(componentName, component);
 
     if (optimizeTestLoading()) {
-      return componentName;
+      return;
     }
 
     loadJdomDefaults(component, componentName);
 
     StateStorage stateStorage = getStateStorageManager().getOldStorage(component, componentName, StateStorageOperation.READ);
     if (stateStorage == null) {
-      return null;
+      return;
     }
 
     Element element = getJdomState(component, componentName, stateStorage);
     if (element == null) {
-      return null;
+      return;
     }
 
     try {
@@ -170,12 +167,11 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       component.readExternal(element);
     }
     catch (InvalidDataException e) {
-      throw new RuntimeException(e);
+      LOG.error(e);
+      return;
     }
 
     validateUnusedMacros(componentName, true);
-
-    return componentName;
   }
 
   private void doAddComponent(String componentName, Object component) {
