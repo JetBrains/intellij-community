@@ -59,7 +59,12 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this);
   private final IdentityHashMap<Configurable, JComponent> myConfigurableContent = new IdentityHashMap<Configurable, JComponent>();
   private final JLabel myErrorLabel = new JLabel();
-  private final AbstractAction myApplyAction;
+  private final AbstractAction myApplyAction = new AbstractAction(CommonBundle.getApplyButtonText()) {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      apply();
+    }
+  };
   private final AbstractAction myResetAction = new AbstractAction(RESET_NAME) {
     @Override
     public void actionPerformed(ActionEvent event) {
@@ -71,14 +76,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   };
   private Configurable myConfigurable;
 
-  ConfigurableEditor(Disposable parent, Configurable configurable, boolean showApplyButton) {
+  ConfigurableEditor(Disposable parent, Configurable configurable) {
     super(parent);
-    myApplyAction = !showApplyButton ? null : new AbstractAction(CommonBundle.getApplyButtonText()) {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        apply();
-      }
-    };
+    myApplyAction.setEnabled(false);
     myResetAction.putValue(Action.SHORT_DESCRIPTION, RESET_DESCRIPTION);
     myResetAction.setEnabled(false);
     myErrorLabel.setOpaque(true);
@@ -179,9 +179,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   void updateCurrent(Configurable configurable, boolean reset) {
     boolean modified = configurable != null && configurable.isModified();
-    if (myApplyAction != null) {
-      myApplyAction.setEnabled(modified);
-    }
+    myApplyAction.setEnabled(modified);
     myResetAction.setEnabled(modified);
     if (!modified && reset) {
       setError(null);
