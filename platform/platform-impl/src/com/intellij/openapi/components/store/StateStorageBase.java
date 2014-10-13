@@ -17,7 +17,9 @@ package com.intellij.openapi.components.store;
 
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.impl.stores.StorageDataBase;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class StateStorageBase implements StateStorage {
@@ -29,6 +31,18 @@ public abstract class StateStorageBase implements StateStorage {
   protected StateStorageBase(@Nullable TrackingPathMacroSubstitutor trackingPathMacroSubstitutor) {
     myPathMacroSubstitutor = trackingPathMacroSubstitutor;
   }
+
+  @Override
+  public final boolean hasState(@Nullable Object component, @NotNull String componentName, Class<?> aClass, boolean reloadData) {
+    return getStorageData(reloadData).hasState(componentName);
+  }
+
+  @NotNull
+  public final StorageDataBase getStorageData() {
+    return getStorageData(false);
+  }
+
+  protected abstract StorageDataBase getStorageData(boolean reloadData);
 
   public final void disableSaving() {
     if (LOG.isDebugEnabled()) {

@@ -48,7 +48,7 @@ import java.io.OutputStream;
 import java.util.*;
 
 @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-public class StorageData {
+public class StorageData extends StorageDataBase {
   private static final Logger LOG = Logger.getInstance(StorageData.class);
   @NonNls public static final String COMPONENT = "component";
   @NonNls public static final String NAME = "name";
@@ -67,6 +67,7 @@ public class StorageData {
     myComponentStates = new THashMap<String, Object>(storageData.myComponentStates);
   }
 
+  @Override
   @NotNull
   public Set<String> getComponentNames() {
     return myComponentStates.keySet();
@@ -79,33 +80,40 @@ public class StorageData {
 
     for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
       Element element = iterator.next();
-      String name = element.getAttributeValue(NAME);
-      if (StringUtil.isEmpty(name)) {
-        LOG.warn("No name attribute for component in " + this);
+      String name = getComponentNameIfValid(element);
+      if (name == null) {
         continue;
       }
 
-      if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
-        iterator.remove();
-        if (intern) {
-          IdeaPluginDescriptorImpl.internJDOMElement(element);
-        }
+      iterator.remove();
+      if (intern) {
+        IdeaPluginDescriptorImpl.internJDOMElement(element);
+      }
 
-        Object serverElement = myComponentStates.get(name);
-        if (serverElement != null) {
-          element = mergeElements(name, element, (Element)serverElement);
-        }
+      Object serverElement = myComponentStates.get(name);
+      if (serverElement != null) {
+        element = mergeElements(name, element, (Element)serverElement);
+      }
 
-        myComponentStates.put(name, element);
+      myComponentStates.put(name, element);
 
-        if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
-          ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(name, PathMacrosCollector.getMacroNames(element));
-        }
+      if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
+        ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(name, PathMacrosCollector.getMacroNames(element));
       }
 
       // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
       element.removeAttribute(NAME);
     }
+  }
+
+  @Nullable
+  static String getComponentNameIfValid(@NotNull Element element) {
+    String name = element.getAttributeValue(NAME);
+    if (StringUtil.isEmpty(name)) {
+      LOG.warn("No name attribute for component in " + JDOMUtil.writeElement(element));
+      return null;
+    }
+    return element.getAttributes().size() > 1 || !element.getChildren().isEmpty() ? name : null;
   }
 
   @NotNull
@@ -369,6 +377,7 @@ public class StorageData {
     return diffs;
   }
 
+  @Override
   public boolean hasState(@NotNull String componentName) {
     return myComponentStates.get(componentName) instanceof Element;
   }

@@ -76,7 +76,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       public void run() {
         try {
           if (component instanceof PersistentStateComponent) {
-            initPersistentComponent((PersistentStateComponent<?>)component, false, false);
+            initPersistentComponent((PersistentStateComponent<?>)component, null, false);
           }
           else {
             initJdomExternalizable((JDOMExternalizable)component);
@@ -225,9 +225,9 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
   }
 
-  private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData, boolean isReinit) {
+  private <T> String initPersistentComponent(@NotNull PersistentStateComponent<T> component, @Nullable Set<StateStorage> changedStorages, boolean reloadData) {
     String name = getStateSpec(component).name();
-    if (!isReinit) {
+    if (changedStorages == null || !reloadData) {
       doAddComponent(name, component);
     }
     if (optimizeTestLoading()) {
@@ -245,7 +245,8 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     Storage[] storageSpecs = getComponentStorageSpecs(component, StateStorageOperation.READ);
     for (Storage storageSpec : storageSpecs) {
       StateStorage stateStorage = getStateStorageManager().getStateStorage(storageSpec);
-      if (stateStorage != null && stateStorage.hasState(component, name, stateClass, reloadData)) {
+      if (stateStorage != null && (stateStorage.hasState(component, name, stateClass, reloadData) ||
+                                   (changedStorages != null && changedStorages.contains(stateStorage)))) {
         state = stateStorage.getState(component, name, stateClass, state);
         if (state instanceof Element) {
           // actually, our DefaultStateSerializer.deserializeState doesn't perform merge states if state is Element,
@@ -406,17 +407,18 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @Override
-  public final void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData) {
-    reinitComponents(componentNames, Collections.<String>emptySet(), reloadData);
+  public void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData) {
+    reinitComponents(componentNames, Collections.<String>emptySet(), Collections.<StateStorage>emptySet());
   }
 
-  protected boolean reinitComponent(@NotNull String componentName, boolean reloadData) {
+  protected boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages) {
     PersistentStateComponent component = (PersistentStateComponent)myComponents.get(componentName);
     if (component == null) {
       return false;
     }
     else {
-      initPersistentComponent(component, reloadData, true);
+      boolean changedStoragesEmpty = changedStorages.isEmpty();
+      initPersistentComponent(component, changedStoragesEmpty ? null : changedStorages, changedStoragesEmpty);
       return true;
     }
   }
@@ -427,8 +429,11 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   @Override
   @Nullable
   public final Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages) {
-    Set<String> componentNames = new SmartHashSet<String>();
+    if (changedStorages.isEmpty()) {
+      return Collections.emptySet();
+    }
 
+    Set<String> componentNames = new SmartHashSet<String>();
     for (StateStorage storage : changedStorages.keySet()) {
       try {
         // we must update (reload in-memory storage data) even if non-reloadable component will be detected later
@@ -445,18 +450,18 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     Collection<String> notReloadableComponents = getNotReloadableComponents(componentNames);
-    reinitComponents(componentNames, notReloadableComponents, false);
+    reinitComponents(componentNames, notReloadableComponents, changedStorages.keySet());
     return notReloadableComponents.isEmpty() ? null : notReloadableComponents;
   }
 
-  @Override
-  public final void reinitComponents(@NotNull Set<String> componentNames, @NotNull Collection<String> notReloadableComponents, boolean reloadData) {
+  // used in settings repository plugin
+  public void reinitComponents(@NotNull Set<String> componentNames, @NotNull Collection<String> notReloadableComponents, @NotNull Set<StateStorage> changedStorages) {
     MessageBus messageBus = getMessageBus();
     messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
     try {
       for (String componentName : componentNames) {
         if (!notReloadableComponents.contains(componentName)) {
-          reinitComponent(componentName, reloadData);
+          reinitComponent(componentName, changedStorages);
         }
       }
     }

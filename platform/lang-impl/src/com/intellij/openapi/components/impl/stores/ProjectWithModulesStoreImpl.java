@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ComponentSaveSession;
@@ -40,14 +41,14 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   }
 
   @Override
-  protected boolean reinitComponent(@NotNull String componentName, boolean reloadData) {
-    if (super.reinitComponent(componentName, reloadData)) {
+  protected boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages) {
+    if (super.reinitComponent(componentName, changedStorages)) {
       return true;
     }
 
     for (Module module : getPersistentModules()) {
       // we have to reinit all modules for component because we don't know affected module
-      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponent(componentName, reloadData);
+      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponent(componentName, changedStorages);
     }
     return true;
   }

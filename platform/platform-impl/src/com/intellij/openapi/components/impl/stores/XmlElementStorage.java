@@ -74,24 +74,15 @@ public abstract class XmlElementStorage extends StateStorageBase {
   protected abstract Element loadLocalData();
 
   @Override
-  public boolean hasState(@Nullable Object component, @NotNull String componentName, Class<?> aClass, boolean reloadData) throws StateStorageException {
-    return getStorageData(reloadData).hasState(componentName);
-  }
-
-  @Override
   @Nullable
   public <T> T getState(Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException {
     Element state = getStorageData(false).getStateAndArchive(componentName);
     return DefaultStateSerializer.deserializeState(state, stateClass, mergeInto);
   }
 
+  @Override
   @NotNull
-  protected StorageData getStorageData() {
-    return getStorageData(false);
-  }
-
-  @NotNull
-  private StorageData getStorageData(boolean reloadData) {
+  protected StorageData getStorageData(boolean reloadData) {
     if (myLoadedData != null && !reloadData) {
       return myLoadedData;
     }
@@ -160,7 +151,7 @@ public abstract class XmlElementStorage extends StateStorageBase {
   @Override
   @Nullable
   public final ExternalizationSession startExternalization() {
-    return checkIsSavingDisabled() ? null : createSaveSession(getStorageData());
+    return checkIsSavingDisabled() ? null : createSaveSession((StorageData)getStorageData());
   }
 
   @Nullable

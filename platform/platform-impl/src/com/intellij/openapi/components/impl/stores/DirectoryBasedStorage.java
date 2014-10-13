@@ -106,17 +106,15 @@ public class DirectoryBasedStorage extends StateStorageBase {
 
   @Override
   @Nullable
-  public <T> T getState(final Object component, @NotNull final String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) {
-    if (myStorageData == null) {
-      myStorageData = loadState();
-    }
-
-    if (!myStorageData.containsComponent(componentName)) {
+  public <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) {
+    DirectoryStorageData storage = getStorageData(false);
+    if (!storage.hasState(componentName)) {
       return DefaultStateSerializer.deserializeState(new Element(StorageData.COMPONENT), stateClass, mergeInto);
     }
-    return myStorageData.getMergedState(componentName, stateClass, mySplitter, mergeInto);
+    return storage.getMergedState(componentName, stateClass, mySplitter, mergeInto);
   }
 
+  @NotNull
   private DirectoryStorageData loadState() {
     DirectoryStorageData storageData = new DirectoryStorageData();
     storageData.loadFrom(getVirtualFile(), myPathMacroSubstitutor);
@@ -133,18 +131,14 @@ public class DirectoryBasedStorage extends StateStorageBase {
   }
 
   @Override
-  public boolean hasState(@Nullable Object component, @NotNull String componentName, Class<?> aClass, boolean reloadData) {
-    // dir could be deleted on VCS update: storage data is empty and dir doesn't exists - we must return true to reload component
-    if (myStorageData == null) {
-      VirtualFile dir = getVirtualFile();
-      if (dir == null || !dir.exists()) {
-        return false;
-      }
+  @NotNull
+  protected DirectoryStorageData getStorageData(boolean reloadData) {
+    if (myStorageData != null && !reloadData) {
+      return myStorageData;
     }
-    if (reloadData) {
-      myStorageData = null;
-    }
-    return true;
+
+    myStorageData = loadState();
+    return myStorageData;
   }
 
   @Override

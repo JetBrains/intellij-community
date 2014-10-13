@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
@@ -31,21 +32,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class DirectoryStorageData {
+public class DirectoryStorageData extends StorageDataBase {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageData.class);
 
   private Map<String, THashMap<File, Element>> myStates = new THashMap<String, THashMap<File, Element>>();
   private long myLastTimestamp = 0;
   private DirectoryStorageData myOriginalData;
 
+  @Override
   @NotNull
   public Set<String> getComponentNames() {
     return myStates.keySet();
+  }
+
+  boolean isEmpty() {
+    return myStates.isEmpty();
   }
 
   static boolean isStorageFile(@NotNull VirtualFile file) {
@@ -64,24 +69,23 @@ public class DirectoryStorageData {
       }
 
       try {
-        final Element element = JDOMUtil.loadDocument(file.contentsToByteArray()).detachRootElement();
+        Element element = JDOMUtil.loadDocument(file.contentsToByteArray()).detachRootElement();
+        String name = StorageData.getComponentNameIfValid(element);
+        if (name == null) {
+          continue;
+        }
+
         if (!element.getName().equals(StorageData.COMPONENT)) {
           LOG.error("Incorrect root tag name (" + element.getName() + ") in " + file.getPresentableUrl());
           continue;
         }
 
-        String componentName = element.getAttributeValue(StorageData.NAME);
-        if (componentName == null) {
-          LOG.error("Component name isn't specified in " + file.getPresentableUrl());
-          continue;
-        }
-
         if (pathMacroSubstitutor != null) {
           pathMacroSubstitutor.expandPaths(element);
-          pathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(element));
+          pathMacroSubstitutor.addUnknownMacros(name, PathMacrosCollector.getMacroNames(element));
         }
 
-        put(componentName, new File(file.getPath()), element, true);
+        put(name, new File(file.getPath()), element, true);
       }
       catch (IOException e) {
         LOG.info("Unable to load state", e);
@@ -137,33 +141,32 @@ public class DirectoryStorageData {
     myOriginalData = null;
   }
 
-  public boolean containsComponent(final String componentName) {
-    return myStates.get(componentName) != null;
-  }
-
-  public void removeComponent(final String componentName) {
-    myStates.remove(componentName);
+  @Override
+  public boolean hasState(@NotNull String componentName) {
+    return myStates.containsKey(componentName);
   }
 
   @Nullable
-  public <T> T getMergedState(String componentName, Class<T> stateClass, StateSplitter splitter, @Nullable T mergeInto) {
-    final List<Element> subElements = new ArrayList<Element>();
-    processComponent(componentName, new TObjectObjectProcedure<File, Element>() {
-      @Override
-      public boolean execute(File file, Element element) {
-        final List children = element.getChildren();
-        assert children.size() == 1 : JDOMUtil.writeElement(element, File.separator);
-        Element subElement = (Element)children.get(0);
-        subElement.detach();
-        subElements.add(subElement);
-        return true;
-      }
-    });
-
-    final Element state = new Element(StorageData.COMPONENT);
-    splitter.mergeStatesInto(state, subElements.toArray(new Element[subElements.size()]));
-    removeComponent(componentName);
-
+  public <T> T getMergedState(@NotNull String componentName, @NotNull Class<T> stateClass, @NotNull StateSplitter splitter, @Nullable T mergeInto) {
+    final List<Element> subElements = new SmartList<Element>();
+    Element state = new Element(StorageData.COMPONENT);
+    THashMap<File, Element> data = myStates.remove(componentName);
+    if (data != null) {
+      data.forEachEntry(new TObjectObjectProcedure<File, Element>() {
+        @Override
+        public boolean execute(File file, Element element) {
+          List<Element> children = element.getChildren();
+          assert children.size() == 1 : JDOMUtil.writeElement(element, File.separator);
+          Element subElement = children.get(0);
+          subElement.detach();
+          subElements.add(subElement);
+          return true;
+        }
+      });
+    }
+    if (!subElements.isEmpty()) {
+      splitter.mergeStatesInto(state, subElements.toArray(new Element[subElements.size()]));
+    }
     return DefaultStateSerializer.deserializeState(state, stateClass, mergeInto);
   }
 }
