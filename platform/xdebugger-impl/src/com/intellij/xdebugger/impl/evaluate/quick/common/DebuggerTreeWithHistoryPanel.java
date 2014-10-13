@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
@@ -28,14 +29,19 @@ import java.awt.*;
  */
 public class DebuggerTreeWithHistoryPanel<D> extends DebuggerTreeWithHistoryContainer<D> {
   private final JPanel myMainPanel;
+  private final Disposable myDisposable;
 
-  public DebuggerTreeWithHistoryPanel(@NotNull D initialItem, @NotNull DebuggerTreeCreator<D> creator, @NotNull Project project) {
+  public DebuggerTreeWithHistoryPanel(@NotNull D initialItem, @NotNull DebuggerTreeCreator<D> creator, @NotNull Project project, Disposable disposable) {
     super(initialItem, creator, project);
-    myMainPanel = createMainPanel(myTreeCreator.createTree(initialItem));
+    myDisposable = disposable;
+    Tree tree = myTreeCreator.createTree(initialItem);
+    registerTreeDisposable(myDisposable, tree);
+    myMainPanel = createMainPanel(tree);
   }
 
   @Override
   protected void updateContainer(Tree tree, String title) {
+    registerTreeDisposable(myDisposable, tree);
     Component component = ((BorderLayout)myMainPanel.getLayout()).getLayoutComponent(BorderLayout.CENTER);
     myMainPanel.remove(component);
     myMainPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(tree));

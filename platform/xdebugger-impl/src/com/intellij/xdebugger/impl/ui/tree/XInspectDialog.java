@@ -50,7 +50,7 @@ public class XInspectDialog extends DialogWrapper {
 
     Pair<XValue, String> initialItem = Pair.create(value, name);
     XDebuggerTreeCreator creator = new XDebuggerTreeCreator(project, editorsProvider, sourcePosition, markers);
-    myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XValue, String>>(initialItem, creator, project);
+    myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XValue, String>>(initialItem, creator, project, myDisposable);
     init();
   }
 
