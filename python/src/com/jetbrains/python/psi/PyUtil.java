@@ -1209,7 +1209,7 @@ public class PyUtil {
     if (isBaseException(pyClass.getQualifiedName())) {
       return true;
     }
-    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback(pyClass.getProject()))) {
       if (type != null && isBaseException(type.getClassQName())) {
         return true;
       }

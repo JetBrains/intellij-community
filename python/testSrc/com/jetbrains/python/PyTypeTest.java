@@ -874,7 +874,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
-    return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
+    return TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing();
   }
 
   private PyExpression parseExpr(String text) {

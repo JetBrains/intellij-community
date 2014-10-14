@@ -122,7 +122,7 @@ class MethodsManager extends MembersManager<PyFunction> {
   // TODO: Copy/Paste with PyClass.getMeta..
   private static boolean addMetaAbcIfNeeded(@NotNull final PyClass aClass) {
     final PsiFile file = aClass.getContainingFile();
-    final PyType type = aClass.getMetaClassType(TypeEvalContext.userInitiated(file));
+    final PyType type = aClass.getMetaClassType(TypeEvalContext.userInitiated(aClass.getProject(), file));
     if (type != null) {
       return false; //User already has metaclass. He probably knows about metaclasses, so we should not add ABCMeta
     }

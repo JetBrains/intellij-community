@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -65,8 +66,9 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
           object instanceof PyFunction && ((PyFunction)object).getProperty() == null &&
           !PyUtil.hasCustomDecorators((PyFunction)object) &&
           !isSingleArgDecoratorCall(myContext, (PyFunction)object)) {
+        final Project project = ((PyFunction)object).getProject();
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
-        final TypeEvalContext context = TypeEvalContext.userInitiated(myContext != null ? myContext.getContainingFile() : null);
+        final TypeEvalContext context = TypeEvalContext.userInitiated(project, myContext != null ? myContext.getContainingFile() : null);
         final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)object, context);
         final String params = StringUtil.join(parameters, new Function<PyParameter, String>() {
           @Override
