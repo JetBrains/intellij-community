@@ -15,7 +15,6 @@ public class VcsShortCommitDetailsImpl extends TimedVcsCommitImpl implements Vcs
   @NotNull private final VirtualFile myRoot;
   @NotNull private final VcsUser myCommitter;
   private final long myAuthorTime;
-  private final long myCommitTime;
 
   public VcsShortCommitDetailsImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                                    @NotNull String subject, @NotNull VcsUser author, @NotNull VcsUser committer, long authorTime) {
@@ -25,7 +24,6 @@ public class VcsShortCommitDetailsImpl extends TimedVcsCommitImpl implements Vcs
     myAuthor = author;
     myCommitter = committer;
     myAuthorTime = authorTime;
-    myCommitTime = commitTime;
   }
 
   @NotNull
@@ -59,7 +57,7 @@ public class VcsShortCommitDetailsImpl extends TimedVcsCommitImpl implements Vcs
 
   @Override
   public long getCommitTime() {
-    return myCommitTime;
+    return getTimestamp();
   }
 
   @Override
