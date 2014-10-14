@@ -64,7 +64,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerFileType(JavaClassFileType.INSTANCE, "class");
     registerFileType(JavaFileType.INSTANCE, "java");
     registerFileType(ArchiveFileType.INSTANCE, "jar;zip");
-    registerFileType(PlainTextFileType.INSTANCE, "txt;sh;bat;cmd;policy;log;cgi;MF;jad;jam;htaccess;rb");
+    registerFileType(PlainTextFileType.INSTANCE, "txt;sh;bat;cmd;policy;log;cgi;MF;jad;jam;htaccess");
 
     addExplicitExtension(LanguageASTFactory.INSTANCE, PlainTextLanguage.INSTANCE, new PlainTextASTFactory());
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, PlainTextLanguage.INSTANCE, new PlainTextParserDefinition());
