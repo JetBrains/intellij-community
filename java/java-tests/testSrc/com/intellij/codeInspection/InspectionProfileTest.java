@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
@@ -183,6 +184,107 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final Element copy = new Element("inspections");
     profile.writeExternal(copy);
     assertElementsEqual(element, copy);
+  }
+
+  public void testMergeUnusedDeclarationAndUnusedSymbol() throws Exception {
+    //no specific settings
+    final Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
+                                                  "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                  "  <option name=\"myLocal\" value=\"true\" />\n" +
+                                                  "</inspections>").getRootElement();
+    InspectionProfileImpl profile = createProfile();
+    profile.setBaseProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(element);
+    ModifiableModel model = profile.getModifiableModel();
+    model.commit();
+    final Element copy = new Element("inspections");
+    profile.writeExternal(copy);
+    assertElementsEqual(element, copy);
+
+
+    //settings to merge
+    final Element unusedProfile = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
+                                                        "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                        "  <option name=\"myLocal\" value=\"true\" />\n" +
+                                                        "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                                        "      <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                                                        "      <option name=\"FIELD\" value=\"true\" />\n" +
+                                                        "      <option name=\"METHOD\" value=\"true\" />\n" +
+                                                        "      <option name=\"CLASS\" value=\"true\" />\n" +
+                                                        "      <option name=\"PARAMETER\" value=\"true\" />\n" +
+                                                        "      <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"false\" />\n" +
+                                                        "  </inspection_tool>\n" +
+                                                        "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                                        "      <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                                                        "      <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                                                        "      <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                                                        "      <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
+                                                        "   </inspection_tool>\n" +
+                                                        "</inspections>").getRootElement();
+    profile.readExternal(unusedProfile);
+    model = profile.getModifiableModel();
+    model.commit();
+    assertEquals("<profile version=\"1.0\" is_locked=\"false\">\n" +
+                 "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                 "  <option name=\"myLocal\" value=\"true\" />\n" +
+                 "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                 "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                 "    <option name=\"FIELD\" value=\"true\" />\n" +
+                 "    <option name=\"METHOD\" value=\"true\" />\n" +
+                 "    <option name=\"CLASS\" value=\"true\" />\n" +
+                 "    <option name=\"PARAMETER\" value=\"true\" />\n" +
+                 "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"false\" />\n" +
+                 "  </inspection_tool>\n" +
+                 "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                 "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                 "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                 "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                 "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
+                 "  </inspection_tool>\n" +
+                 "</profile>", serialize(profile));
+
+    //make them default
+    profile = createProfile();
+    profile.setBaseProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(unusedProfile);
+    model = profile.getModifiableModel();
+    InspectionToolWrapper toolWrapper = ((InspectionProfileImpl)model).getInspectionTool("unused", getProject());
+    UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
+    tool.ADD_NONJAVA_TO_ENTRIES = true;
+    UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
+    inspectionTool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
+    model.commit();
+    String mergedText = "<profile version=\"1.0\" is_locked=\"false\">\n" +
+                        "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                        "  <option name=\"myLocal\" value=\"true\" />\n" +
+                        "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                        "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                        "    <option name=\"FIELD\" value=\"true\" />\n" +
+                        "    <option name=\"METHOD\" value=\"true\" />\n" +
+                        "    <option name=\"CLASS\" value=\"true\" />\n" +
+                        "    <option name=\"PARAMETER\" value=\"true\" />\n" +
+                        "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"false\" />\n" +
+                        "  </inspection_tool>\n" +
+                        "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                        "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                        "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                        "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                        "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
+                        "  </inspection_tool>\n" +
+                        "  <inspection_tool class=\"unusedMerged\" />\n" +
+                        "</profile>";
+    assertEquals(mergedText, serialize(profile));
+
+    //check merged
+    Element mergedElement = JDOMUtil.loadDocument(mergedText).getRootElement();
+    profile = createProfile();
+    profile.setBaseProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(mergedElement);
+    model = profile.getModifiableModel();
+    model.commit();
+    Element copyMerged = new Element("profile");
+    profile.writeExternal(copyMerged);
+    assertElementsEqual(mergedElement, copyMerged);
   }
 
   public void testLockProfile() throws Exception {
