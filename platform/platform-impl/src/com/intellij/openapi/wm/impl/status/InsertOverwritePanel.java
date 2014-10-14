@@ -39,7 +39,7 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
 
   public InsertOverwritePanel(Project project) {
     super(project);
-    myTextPanel.setRightPadding(6);
+    myTextPanel.setRightPadding(7);
   }
 
   @NotNull
