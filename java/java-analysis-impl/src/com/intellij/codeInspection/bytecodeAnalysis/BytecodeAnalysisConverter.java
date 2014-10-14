@@ -350,11 +350,17 @@ public class BytecodeAnalysisConverter {
 
   /**
    * Given a PSI method and its primary HKey enumerate all contract keys for it.
+   *
+   * @param psiMethod psi method
+   * @param primaryKey primary stable keys
+   * @return corresponding (stable!) keys
    */
   @NotNull
   public static ArrayList<HKey> mkInOutKeys(@NotNull PsiMethod psiMethod, @NotNull HKey primaryKey) {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    ArrayList<HKey> keys = new ArrayList<HKey>(parameters.length * 2 + 1);
+    ArrayList<HKey> keys = new ArrayList<HKey>(parameters.length * 2 + 2);
+    keys.add(primaryKey);
+    keys.add(primaryKey.updateDirection(mkDirectionKey(Pure)));
     for (int i = 0; i < parameters.length; i++) {
       if (!(parameters[i].getType() instanceof PsiPrimitiveType)) {
         keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.NotNull))));
@@ -369,38 +375,47 @@ public class BytecodeAnalysisConverter {
    *
    * @param solution solution of equations
    * @param methodAnnotations annotations to which corresponding solutions should be added
-   * @param methodKey a primary key of a method being analyzed
+   * @param methodKey a primary key of a method being analyzed. not it is stable
    * @param arity arity of this method (hint for constructing @Contract annotations)
    */
   public static void addMethodAnnotations(@NotNull HashMap<HKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull HKey methodKey, int arity) {
-    List<String> clauses = new ArrayList<String>();
-    HashSet<HKey> notNulls = methodAnnotations.notNulls;
-    HashMap<HKey, String> contracts = methodAnnotations.contracts;
+    List<String> contractClauses = new ArrayList<String>(arity * 2);
+    Set<HKey> notNulls = methodAnnotations.notNulls;
+    Set<HKey> pures = methodAnnotations.pures;
+    Map<HKey, String> contracts = methodAnnotations.contractsValues;
+
     for (Map.Entry<HKey, Value> entry : solution.entrySet()) {
-      HKey key = entry.getKey().mkStable();
+      // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
       if (value == Value.Top || value == Value.Bot) {
         continue;
       }
+      HKey key = entry.getKey().mkStable();
       Direction direction = extractDirection(key.dirKey);
-      if (value == Value.NotNull && direction == Out && methodKey.equals(key)) {
-        notNulls.add(key);
+      HKey baseKey = key.mkBase();
+      if (!methodKey.equals(baseKey)) {
+        continue;
+      }
+      if (value == Value.NotNull && direction == Out) {
+        notNulls.add(methodKey);
+      }
+      else if (value == Value.Pure && direction == Pure) {
+        pures.add(methodKey);
       }
       else if (direction instanceof InOut) {
-        HKey baseKey = key.mkBase();
-        if (methodKey.equals(baseKey)) {
-          clauses.add(contractElement(arity, (InOut)direction, value));
-        }
+        contractClauses.add(contractElement(arity, (InOut)direction, value));
       }
     }
 
-    if (!notNulls.contains(methodKey) && !clauses.isEmpty()) {
-      Collections.sort(clauses);
+    if (!notNulls.contains(methodKey) && !contractClauses.isEmpty()) {
+      // no contract clauses for @NotNull methods
+      Collections.sort(contractClauses);
       StringBuilder sb = new StringBuilder("\"");
-      StringUtil.join(clauses, ";", sb);
+      StringUtil.join(contractClauses, ";", sb);
       sb.append('"');
       contracts.put(methodKey, sb.toString().intern());
     }
+
   }
 
   private static String contractValueString(@NotNull Value v) {
