@@ -165,7 +165,7 @@ public abstract class Animator implements Disposable {
 
   protected boolean noApplication() {
     Application app = ApplicationManager.getApplication();
-    return app == null || app.isUnitTestMode();
+    return app != null && app.isUnitTestMode();
   }
 
   public abstract void paintNow(int frame, int totalFrames, int cycle);

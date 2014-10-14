@@ -243,7 +243,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
   }
 
-  private static class InsertionListener extends CCDocumentListener {
+  public static class InsertionListener extends CCDocumentListener {
 
     public InsertionListener(TaskFile taskFile) {
       super(taskFile);

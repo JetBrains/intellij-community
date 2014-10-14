@@ -40,6 +40,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -74,12 +75,13 @@ public class CvsChangeProvider implements ChangeProvider {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing changes for scope " + dirtyScope);
     }
-    showBranchImOn(builder, dirtyScope);
+    final HashSet<VirtualFile> cvsRoots = ContainerUtil.newHashSet(myVcsManager.getRootsUnderVcs(myVcs));
+    showBranchImOn(builder, dirtyScope, cvsRoots);
 
     for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
       final VirtualFile dir = path.getVirtualFile();
       if (dir != null) {
-        processEntriesIn(dir, dirtyScope, builder, true, progress);
+        processEntriesIn(dir, dirtyScope, builder, true, cvsRoots, progress);
       }
       else {
         processFile(path, builder, progress);
@@ -90,7 +92,7 @@ public class CvsChangeProvider implements ChangeProvider {
       if (path.isDirectory()) {
         final VirtualFile dir = path.getVirtualFile();
         if (dir != null) {
-          processEntriesIn(dir, dirtyScope, builder, false, progress);
+          processEntriesIn(dir, dirtyScope, builder, false, cvsRoots, progress);
         }
         else {
           processFile(path, builder, progress);
@@ -114,7 +116,7 @@ public class CvsChangeProvider implements ChangeProvider {
   public void doCleanup(final List<VirtualFile> files) {}
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively,
-                                final ProgressIndicator progress) throws VcsException {
+                                Collection<VirtualFile> cvsRoots, final ProgressIndicator progress) throws VcsException {
     final FilePath path = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir);
     if (!scope.belongsTo(path)) {
       if (LOG.isDebugEnabled()) {
@@ -147,7 +149,7 @@ public class CvsChangeProvider implements ChangeProvider {
     */
 
     progress.checkCanceled();
-    checkSwitchedDir(dir, builder, scope);
+    checkSwitchedDir(dir, builder, scope, cvsRoots);
 
     if (CvsUtil.fileIsUnderCvs(dir) && dir.getChildren().length == 1 /* admin dir */ &&
         dirContent.getDeletedFiles().isEmpty() && hasRemovedFiles(dirContent.getFiles())) {
@@ -163,7 +165,7 @@ public class CvsChangeProvider implements ChangeProvider {
         progress.checkCanceled();
         if (file.isDirectory()) {
           if (!myVcsManager.isIgnored(file)) {
-            processEntriesIn(file, scope, builder, true, progress);
+            processEntriesIn(file, scope, builder, true, cvsRoots, progress);
           }
           else {
             if (LOG.isDebugEnabled()) {
@@ -217,18 +219,12 @@ public class CvsChangeProvider implements ChangeProvider {
     return new CvsRevisionNumber(correctedRevision);
   }
 
-  private void showBranchImOn(final ChangelistBuilder builder, final VcsDirtyScope scope) {
+  private void showBranchImOn(final ChangelistBuilder builder, final VcsDirtyScope scope, HashSet<VirtualFile> cvsRoots) {
     final List<VirtualFile> dirs = ObjectsConvertor.fp2vf(scope.getRecursivelyDirtyDirectories());
-    final Collection<VirtualFile> roots = new ArrayList<VirtualFile>(scope.getAffectedContentRoots());
-
-    for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
-      final VirtualFile root = iterator.next();
-      if (! dirs.contains(root)) iterator.remove();
-    }
-
-    if (roots.isEmpty()) return;
-    for (VirtualFile root : roots) {
-      checkTopLevelForBeingSwitched(root, builder);
+    for (VirtualFile root : cvsRoots) {
+      if (dirs.contains(root)) {
+        checkTopLevelForBeingSwitched(root, builder);
+      }
     }
   }
 
@@ -272,9 +268,12 @@ public class CvsChangeProvider implements ChangeProvider {
     return null;
   }
 
-  private void checkSwitchedDir(final VirtualFile dir, final ChangelistBuilder builder, final VcsDirtyScope scope) {
+  private void checkSwitchedDir(final VirtualFile dir,
+                                final ChangelistBuilder builder,
+                                final VcsDirtyScope scope,
+                                Collection<VirtualFile> cvsRoots) {
     final VirtualFile parentDir = dir.getParent();
-    if (parentDir == null || !myVcsManager.isFileInContent(parentDir)) {
+    if (parentDir == null || cvsRoots.contains(dir) || !myVcsManager.isFileInContent(parentDir)) {
       return;
     }
     final CvsInfo info = myEntriesManager.getCvsInfoFor(dir);

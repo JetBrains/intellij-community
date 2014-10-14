@@ -156,7 +156,7 @@ import java.util.concurrent.locks.LockSupport;
  * values that trade off overhead versus throughput.
  *
  * <p>The concurrency properties of bulk operations follow
- * from those of ConcurrentHashMapV8: Any non-null result returned
+ * from those of ConcurrentHashMap: Any non-null result returned
  * from {@code get(key)} and related access methods bears a
  * happens-before relation with the associated insertion or
  * update.  The result of any bulk operation reflects the
@@ -206,10 +206,6 @@ import java.util.concurrent.locks.LockSupport;
  * performing unrelated tasks.
  *
  * <p>All arguments to all task methods must be non-null.
- *
- * <p><em>jsr166e note: During transition, this class
- * uses nested functional interfaces with different names but the
- * same forms as those expected for JDK8.</em>
  *
  * <p>This class is a member of the
  * <a href="{@docRoot}/../technotes/guides/collections/index.html">
@@ -335,14 +331,15 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * The table is resized when occupancy exceeds a percentage
    * threshold (nominally, 0.75, but see below).  Any thread
    * noticing an overfull bin may assist in resizing after the
-   * initiating thread allocates and sets up the replacement
-   * array. However, rather than stalling, these other threads may
-   * proceed with insertions etc.  The use of TreeBins shields us
-   * from the worst case effects of overfilling while resizes are in
+   * initiating thread allocates and sets up the replacement array.
+   * However, rather than stalling, these other threads may proceed
+   * with insertions etc.  The use of TreeBins shields us from the
+   * worst case effects of overfilling while resizes are in
    * progress.  Resizing proceeds by transferring bins, one by one,
-   * from the table to the next table. To enable concurrency, the
-   * next table must be (incrementally) prefilled with place-holders
-   * serving as reverse forwarders to the old table.  Because we are
+   * from the table to the next table. However, threads claim small
+   * blocks of indices to transfer (via field transferIndex) before
+   * doing so, reducing contention.  A generation stamp in field
+   * sizeCtl ensures that resizings do not overlap. Because we are
    * using power-of-two expansion, the elements from each bin must
    * either stay at same index, or move with a power of two
    * offset. We eliminate unnecessary node creation by catching
@@ -363,13 +360,19 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * locks, average aggregate waits become shorter as resizing
    * progresses.  The transfer operation must also ensure that all
    * accessible bins in both the old and new table are usable by any
-   * traversal.  This is arranged by proceeding from the last bin
-   * (table.length - 1) up towards the first.  Upon seeing a
-   * forwarding node, traversals (see class Traverser) arrange to
-   * move to the new table without revisiting nodes.  However, to
-   * ensure that no intervening nodes are skipped, bin splitting can
-   * only begin after the associated reverse-forwarders are in
-   * place.
+     * traversal.  This is arranged in part by proceeding from the
+     * last bin (table.length - 1) up towards the first.  Upon seeing
+     * a forwarding node, traversals (see class Traverser) arrange to
+     * move to the new table without revisiting nodes.  To ensure that
+     * no intervening nodes are skipped even when moved out of order,
+     * a stack (see class TableStack) is created on first encounter of
+     * a forwarding node during a traversal, to maintain its place if
+     * later processing the current table. The need for these
+     * save/restore mechanics is relatively rare, but when one
+     * forwarding node is encountered, typically many more will be.
+     * So Traversers use a simple caching scheme to avoid creating so
+     * many new TableStack nodes. (Thanks to Peter Levart for
+     * suggesting use of a stack here.)
    *
    * The traversal scheme also applies to partial traversals of
    * ranges of bins (via an alternate Traverser constructor)
@@ -465,6 +468,12 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
   /**
+     * The default concurrency level for this table. Unused but
+     * defined for compatibility with previous versions of this class.
+     */
+    private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
+
+    /**
    * The load factor for this table. Overrides of this value in
    * constructors affect only the initial table capacity.  The
    * actual floating point value isn't normally used -- it is
@@ -506,6 +515,23 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * DEFAULT_CAPACITY.
    */
   private static final int MIN_TRANSFER_STRIDE = 16;
+
+    /**
+     * The number of bits used for generation stamp in sizeCtl.
+     * Must be at least 6 for 32bit arrays.
+     */
+    private static int RESIZE_STAMP_BITS = 16;
+
+    /**
+     * The maximum number of threads that can help resize.
+     * Must fit in 32 - RESIZE_STAMP_BITS bits.
+     */
+    private static final int MAX_RESIZERS = (1 << (32 - RESIZE_STAMP_BITS)) - 1;
+
+    /**
+     * The bit shift for recording size stamp in sizeCtl.
+     */
+    private static final int RESIZE_STAMP_SHIFT = 32 - RESIZE_STAMP_BITS;
 
   /*
    * Encodings for Node hash fields. See above for explanation.
@@ -744,11 +770,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * The next table index (plus one) to split while resizing.
    */
   private transient volatile int transferIndex;
-
-  /**
-   * The least available table index to split while resizing.
-   */
-  private transient volatile int transferOrigin;
 
   /**
    * Spinlock (locked via CAS) used when resizing and/or creating CounterCells.
@@ -1247,6 +1268,9 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * construction of the iterator, and may (but is not guaranteed to)
    * reflect any modifications subsequent to construction.
    *
+   * <p>The view's iterators and spliterators are
+   * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+   *
    * @return the set view
    */
   @NotNull
@@ -1272,6 +1296,9 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * construction of the iterator, and may (but is not guaranteed to)
    * reflect any modifications subsequent to construction.
    *
+   * <p>The view's iterators and spliterators are
+   * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+   *
    * @return the collection view
    */
   @NotNull
@@ -1295,6 +1322,9 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * and guarantees to traverse elements as they existed upon
    * construction of the iterator, and may (but is not guaranteed to)
    * reflect any modifications subsequent to construction.
+   *
+   * <p>The view's iterators and spliterators are
+   * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
    *
    * @return the set view
    */
@@ -1484,7 +1514,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * {@code false} otherwise
    * @throws NullPointerException if the specified value is null
    */
-  @Deprecated
+  @Deprecated // use containsValue()
   public boolean contains(Object value) {
     return containsValue(value);
   }
@@ -1513,11 +1543,11 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     return new ValueIterator<K, V>(t, f, 0, f, this);
   }
 
-  // ConcurrentHashMapV8-only methods
+    // ConcurrentHashMap-only methods
 
   /**
    * Returns the number of mappings. This method should be used
-   * instead of {@link #size} because a ConcurrentHashMapV8 may
+     * instead of {@link #size} because a ConcurrentHashMap may
    * contain more mappings than can be represented as an int. The
    * value returned is an estimate; the actual count may differ if
    * there are concurrent insertions or removals.
@@ -1531,9 +1561,10 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   }
 
   /**
-   * Creates a new {@link Set} backed by a ConcurrentHashMapV8
+   * Creates a new {@link Set} backed by a ConcurrentHashMap
    * from the given type to {@code Boolean.TRUE}.
    *
+   * @param <K> the element type of the returned set
    * @return the new set
    * @since 1.8
    */
@@ -1543,11 +1574,12 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   }
 
   /**
-   * Creates a new {@link Set} backed by a ConcurrentHashMapV8
+     * Creates a new {@link Set} backed by a ConcurrentHashMap
    * from the given type to {@code Boolean.TRUE}.
    *
    * @param initialCapacity The implementation performs internal
    *                        sizing to accommodate this many elements.
+   * @param <K> the element type of the returned set
    * @return the new set
    * @throws IllegalArgumentException if the initial capacity of
    *                                  elements is negative
@@ -1625,6 +1657,14 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   /* ---------------- Table Initialization and Resizing -------------- */
 
   /**
+   * Returns the stamp bits for resizing a table of size n.
+   * Must be negative when shifted left by RESIZE_STAMP_SHIFT.
+   */
+  static final int resizeStamp(int n) {
+      return Integer.numberOfLeadingZeros(n) | (1 << (RESIZE_STAMP_BITS - 1));
+  }
+
+  /**
    * Initializes table, using the size recorded in sizeCtl.
    */
   private Node<K, V>[] initTable() {
@@ -1669,63 +1709,61 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     long s;
     if ((as = counterCells) != null ||
         !U.compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
-      CounterHashCode hc;
-      CounterCell a;
-      long v;
-      int m;
-      boolean uncontended = true;
-      if ((hc = threadCounterHashCode.get()) == null ||
-          as == null || (m = as.length - 1) < 0 ||
-          (a = as[m & hc.code]) == null ||
-          !(uncontended =
+        CounterCell a; long v; int m;
+        boolean uncontended = true;
+        if (as == null || (m = as.length - 1) < 0 ||
+            (a = as[ThreadLocalRandom.getProbe() & m]) == null ||
+            !(uncontended =
               U.compareAndSwapLong(a, CELLVALUE, v = a.value, v + x))) {
-        fullAddCount(x, hc, uncontended);
-        return;
-      }
-      if (check <= 1) {
-        return;
-      }
-      s = sumCount();
+            fullAddCount(x, uncontended);
+            return;
+        }
+        if (check <= 1)
+            return;
+        s = sumCount();
     }
     if (check >= 0) {
-      Node<K, V>[] tab;
-      int sc;
-      while (s >= (long)(sc = sizeCtl) && (tab = table) != null &&
-             tab.length < MAXIMUM_CAPACITY) {
-        if (sc < 0) {
-          Node<K, V>[] nt;
-          if (sc == -1 || transferIndex <= transferOrigin ||
-              (nt = nextTable) == null) {
-            break;
-          }
-          if (U.compareAndSwapInt(this, SIZECTL, sc, sc - 1)) {
-            transfer(tab, nt);
-          }
+        Node<K,V>[] tab, nt; int n, sc;
+        while (s >= (long)(sc = sizeCtl) && (tab = table) != null &&
+               (n = tab.length) < MAXIMUM_CAPACITY) {
+            int rs = resizeStamp(n);
+            if (sc < 0) {
+                if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 ||
+                    sc == rs + MAX_RESIZERS || (nt = nextTable) == null ||
+                    transferIndex <= 0)
+                    break;
+                if (U.compareAndSwapInt(this, SIZECTL, sc, sc + 1))
+                    transfer(tab, nt);
+            }
+            else if (U.compareAndSwapInt(this, SIZECTL, sc,
+                                         (rs << RESIZE_STAMP_SHIFT) + 2))
+                transfer(tab, null);
+            s = sumCount();
         }
-        else if (U.compareAndSwapInt(this, SIZECTL, sc, -2)) {
-          transfer(tab, null);
-        }
-        s = sumCount();
-      }
     }
   }
 
   /**
    * Helps transfer if a resize is in progress.
    */
-  final Node<K, V>[] helpTransfer(Node<K, V>[] tab, Node<K, V> f) {
-    Node<K, V>[] nextTab;
-    if (f instanceof ForwardingNode &&
-        (nextTab = ((ForwardingNode<K, V>)f).nextTable) != null) {
-      int sc;
-      if (nextTab == nextTable && tab == table &&
-          transferIndex > transferOrigin && (sc = sizeCtl) < -1 &&
-          U.compareAndSwapInt(this, SIZECTL, sc, sc - 1)) {
-        transfer(tab, nextTab);
+  final Node<K,V>[] helpTransfer(Node<K,V>[] tab, Node<K,V> f) {
+      Node<K,V>[] nextTab; int sc;
+      if (tab != null && (f instanceof ForwardingNode) &&
+          (nextTab = ((ForwardingNode<K,V>)f).nextTable) != null) {
+          int rs = resizeStamp(tab.length);
+          while (nextTab == nextTable && table == tab &&
+                 (sc = sizeCtl) < 0) {
+              if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 ||
+                  sc == rs + MAX_RESIZERS || transferIndex <= 0)
+                  break;
+              if (U.compareAndSwapInt(this, SIZECTL, sc, sc + 1)) {
+                  transfer(tab, nextTab);
+                  break;
+              }
+          }
+          return nextTab;
       }
-      return nextTab;
-    }
-    return table;
+      return table;
   }
 
   /**
@@ -1734,35 +1772,43 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @param size number of elements (doesn't need to be perfectly accurate)
    */
   private void tryPresize(int size) {
-    int c = size >= MAXIMUM_CAPACITY >>> 1 ? MAXIMUM_CAPACITY :
-            tableSizeFor(size + (size >>> 1) + 1);
+    int c = (size >= (MAXIMUM_CAPACITY >>> 1)) ? MAXIMUM_CAPACITY :
+        tableSizeFor(size + (size >>> 1) + 1);
     int sc;
     while ((sc = sizeCtl) >= 0) {
-      Node<K, V>[] tab = table;
-      int n;
-      if (tab == null || (n = tab.length) == 0) {
-        n = sc > c ? sc : c;
-        if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) {
-          try {
-            if (table == tab) {
-              @SuppressWarnings({"rawtypes", "unchecked"})
-              Node<K, V>[] nt = (Node<K, V>[])new Node[n];
-              table = nt;
-              sc = n - (n >>> 2);
+        Node<K,V>[] tab = table; int n;
+        if (tab == null || (n = tab.length) == 0) {
+            n = (sc > c) ? sc : c;
+            if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) {
+                try {
+                    if (table == tab) {
+                        @SuppressWarnings("unchecked")
+                        Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n];
+                        table = nt;
+                        sc = n - (n >>> 2);
+                    }
+                } finally {
+                    sizeCtl = sc;
+                }
             }
-          }
-          finally {
-            sizeCtl = sc;
-          }
         }
-      }
-      else if (c <= sc || n >= MAXIMUM_CAPACITY) {
-        break;
-      }
-      else if (tab == table &&
-               U.compareAndSwapInt(this, SIZECTL, sc, -2)) {
-        transfer(tab, null);
-      }
+        else if (c <= sc || n >= MAXIMUM_CAPACITY)
+            break;
+        else if (tab == table) {
+            int rs = resizeStamp(n);
+            if (sc < 0) {
+                Node<K,V>[] nt;
+                if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 ||
+                    sc == rs + MAX_RESIZERS || (nt = nextTable) == null ||
+                    transferIndex <= 0)
+                    break;
+                if (U.compareAndSwapInt(this, SIZECTL, sc, sc + 1))
+                    transfer(tab, nt);
+            }
+            else if (U.compareAndSwapInt(this, SIZECTL, sc,
+                                         (rs << RESIZE_STAMP_SHIFT) + 2))
+                transfer(tab, null);
+        }
     }
   }
 
@@ -1773,13 +1819,13 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   private void transfer(Node<K, V>[] tab, Node<K, V>[] nextTab) {
     int n = tab.length;
     int stride;
-    if ((stride = NCPU > 1 ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE) {
+    if ((stride = (NCPU > 1) ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE) {
       stride = MIN_TRANSFER_STRIDE; // subdivide range
     }
     if (nextTab == null) {            // initiating
       try {
-        @SuppressWarnings({"rawtypes", "unchecked"})
-        Node<K, V>[] nt = (Node<K, V>[])new Node[n << 1];
+        @SuppressWarnings("unchecked")
+        Node<K, V>[] nt = (Node<K, V>[])new Node<?, ?>[n << 1];
         nextTab = nt;
       }
       catch (Throwable ex) {      // try to cope with OOME
@@ -1787,71 +1833,51 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         return;
       }
       nextTable = nextTab;
-      transferOrigin = n;
       transferIndex = n;
-      ForwardingNode<K, V> rev = new ForwardingNode<K, V>(tab, myHashingStrategy);
-      for (int k = n; k > 0; ) {    // progressively reveal ready slots
-        int nextk = k > stride ? k - stride : 0;
-        for (int m = nextk; m < k; ++m) {
-          nextTab[m] = rev;
-        }
-        for (int m = n + nextk; m < n + k; ++m) {
-          nextTab[m] = rev;
-        }
-        U.putOrderedInt(this, TRANSFERORIGIN, k = nextk);
-      }
     }
     int nextn = nextTab.length;
     ForwardingNode<K, V> fwd = new ForwardingNode<K, V>(nextTab, myHashingStrategy);
     boolean advance = true;
     boolean finishing = false; // to ensure sweep before committing nextTab
     for (int i = 0, bound = 0; ; ) {
+      Node<K, V> f;
+      int fh;
       while (advance) {
-        int nextIndex;
-        int nextBound;
+        int nextIndex, nextBound;
         if (--i >= bound || finishing) {
           advance = false;
         }
-        else if ((nextIndex = transferIndex) <= transferOrigin) {
+        else if ((nextIndex = transferIndex) <= 0) {
           i = -1;
           advance = false;
         }
         else if (U.compareAndSwapInt
           (this, TRANSFERINDEX, nextIndex,
-           nextBound = nextIndex > stride ?
-                       nextIndex - stride : 0)) {
+           nextBound = (nextIndex > stride ?
+                        nextIndex - stride : 0))) {
           bound = nextBound;
           i = nextIndex - 1;
           advance = false;
         }
       }
-      int fh;
-      Node<K, V> f;
       if (i < 0 || i >= n || i + n >= nextn) {
+        int sc;
         if (finishing) {
           nextTable = null;
           table = nextTab;
           sizeCtl = (n << 1) - (n >>> 1);
           return;
         }
-        for (; ; ) {
-          int sc;
-          if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, ++sc)) {
-            if (sc != -1) {
-              return;
-            }
-            finishing = advance = true;
-            i = n; // recheck before commit
-            break;
+        if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {
+          if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT) {
+            return;
           }
+          finishing = advance = true;
+          i = n; // recheck before commit
         }
       }
       else if ((f = tabAt(tab, i)) == null) {
-        if (casTabAt(tab, i, null, fwd)) {
-          setTabAt(nextTab, i, null);
-          setTabAt(nextTab, i + n, null);
-          advance = true;
-        }
+        advance = casTabAt(tab, i, null, fwd);
       }
       else if ((fh = f.hash) == MOVED) {
         advance = true; // already processed
@@ -1859,8 +1885,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       else {
         synchronized (f) {
           if (tabAt(tab, i) == f) {
-            Node<K, V> ln;
-            Node<K, V> hn;
+            Node<K, V> ln, hn;
             if (fh >= 0) {
               int runBit = fh & n;
               Node<K, V> lastRun = f;
@@ -1884,10 +1909,10 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
                 K pk = p.key;
                 V pv = p.val;
                 if ((ph & n) == 0) {
-                  ln = new Node<K, V>(ph, pk, pv, ln,myHashingStrategy);
+                  ln = new Node<K, V>(ph, pk, pv, ln, myHashingStrategy);
                 }
                 else {
-                  hn = new Node<K, V>(ph, pk, pv, hn,myHashingStrategy);
+                  hn = new Node<K, V>(ph, pk, pv, hn, myHashingStrategy);
                 }
               }
               setTabAt(nextTab, i, ln);
@@ -1928,10 +1953,10 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
                   ++hc;
                 }
               }
-              ln = lc <= UNTREEIFY_THRESHOLD ? untreeify(lo) :
-                   hc != 0 ? new TreeBin<K, V>(lo, myHashingStrategy) : t;
-              hn = hc <= UNTREEIFY_THRESHOLD ? untreeify(hi) :
-                   lc != 0 ? new TreeBin<K, V>(hi, myHashingStrategy) : t;
+              ln = (lc <= UNTREEIFY_THRESHOLD) ? untreeify(lo) :
+                   (hc != 0) ? new TreeBin<K, V>(lo, myHashingStrategy) : t;
+              hn = (hc <= UNTREEIFY_THRESHOLD) ? untreeify(hi) :
+                   (lc != 0) ? new TreeBin<K, V>(hi, myHashingStrategy) : t;
               setTabAt(nextTab, i, ln);
               setTabAt(nextTab, i + n, hn);
               setTabAt(tab, i, fwd);
@@ -1943,6 +1968,128 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
   }
 
+    /* ---------------- Counter support -------------- */
+
+    /**
+     * A padded cell for distributing counts.  Adapted from LongAdder
+     * and Striped64.  See their internal docs for explanation.
+     */
+    static final class CounterCell {
+      volatile long p0;
+      volatile long p1;
+      volatile long p2;
+      volatile long p3;
+      volatile long p4;
+      volatile long p5;
+      volatile long p6;
+      volatile long value;
+      volatile long q0;
+      volatile long q1;
+      volatile long q2;
+      volatile long q3;
+      volatile long q4;
+      volatile long q5;
+      volatile long q6;
+
+      CounterCell(long x) {
+        value = x;
+      }
+    }
+
+    final long sumCount() {
+        CounterCell[] as = counterCells; CounterCell a;
+        long sum = baseCount;
+        if (as != null) {
+            for (int i = 0; i < as.length; ++i) {
+                if ((a = as[i]) != null)
+                    sum += a.value;
+            }
+        }
+        return sum;
+    }
+
+    // See LongAdder version for explanation
+    private void fullAddCount(long x, boolean wasUncontended) {
+        int h;
+        if ((h = ThreadLocalRandom.getProbe()) == 0) {
+            ThreadLocalRandom.localInit();      // force initialization
+            h = ThreadLocalRandom.getProbe();
+            wasUncontended = true;
+        }
+        boolean collide = false;                // True if last slot nonempty
+        for (;;) {
+            CounterCell[] as; CounterCell a; int n; long v;
+            if ((as = counterCells) != null && (n = as.length) > 0) {
+                if ((a = as[(n - 1) & h]) == null) {
+                    if (cellsBusy == 0) {            // Try to attach new Cell
+                        CounterCell r = new CounterCell(x); // Optimistic create
+                        if (cellsBusy == 0 &&
+                            U.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
+                            boolean created = false;
+                            try {               // Recheck under lock
+                                CounterCell[] rs; int m, j;
+                                if ((rs = counterCells) != null &&
+                                    (m = rs.length) > 0 &&
+                                    rs[j = (m - 1) & h] == null) {
+                                    rs[j] = r;
+                                    created = true;
+                                }
+                            } finally {
+                                cellsBusy = 0;
+                            }
+                            if (created)
+                                break;
+                            continue;           // Slot is now non-empty
+                        }
+                    }
+                    collide = false;
+                }
+                else if (!wasUncontended)       // CAS already known to fail
+                    wasUncontended = true;      // Continue after rehash
+                else if (U.compareAndSwapLong(a, CELLVALUE, v = a.value, v + x))
+                    break;
+                else if (counterCells != as || n >= NCPU)
+                    collide = false;            // At max size or stale
+                else if (!collide)
+                    collide = true;
+                else if (cellsBusy == 0 &&
+                         U.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
+                    try {
+                        if (counterCells == as) {// Expand table unless stale
+                            CounterCell[] rs = new CounterCell[n << 1];
+                            for (int i = 0; i < n; ++i)
+                                rs[i] = as[i];
+                            counterCells = rs;
+                        }
+                    } finally {
+                        cellsBusy = 0;
+                    }
+                    collide = false;
+                    continue;                   // Retry with expanded table
+                }
+                h = ThreadLocalRandom.advanceProbe(h);
+            }
+            else if (cellsBusy == 0 && counterCells == as &&
+                     U.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
+                boolean init = false;
+                try {                           // Initialize table
+                    if (counterCells == as) {
+                        CounterCell[] rs = new CounterCell[2];
+                        rs[h & 1] = new CounterCell(x);
+                        counterCells = rs;
+                        init = true;
+                    }
+                } finally {
+                    cellsBusy = 0;
+                }
+                if (init)
+                    break;
+            }
+            else if (U.compareAndSwapLong(this, BASECOUNT, v = baseCount, v + x))
+                break;                          // Fall back on using base
+        }
+    }
+
   /* ---------------- Conversion from/to TreeBins -------------- */
 
   /**
@@ -1950,14 +2097,12 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * too small, in which case resizes instead.
    */
   private void treeifyBin(Node<K, V>[] tab, int index) {
+    Node<K, V> b;
+    int n;
+    int sc;
     if (tab != null) {
-      Node<K, V> b;
-      if (tab.length < MIN_TREEIFY_CAPACITY) {
-        int sc;
-        if (tab == table && (sc = sizeCtl) >= 0 &&
-            U.compareAndSwapInt(this, SIZECTL, sc, -2)) {
-          transfer(tab, null);
-        }
+      if ((n = tab.length) < MIN_TREEIFY_CAPACITY) {
+        tryPresize(n << 1);
       }
       else if ((b = tabAt(tab, index)) != null && b.hash >= 0) {
         synchronized (b) {
@@ -2185,7 +2330,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       boolean waiting = false;
       for (; ; ) {
         int s;
-        if (((s = lockState) & WRITER) == 0) {
+        if (((s = lockState) & ~WAITER) == 0) {
           if (U.compareAndSwapInt(this, LOCKSTATE, s, WRITER)) {
             if (waiting) {
               waiter = null;
@@ -2213,7 +2358,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     @Override
     final Node<K, V> find(int h, Object k) {
       if (k != null) {
-        for (Node<K, V> e = first; e != null; e = e.next) {
+        for (Node<K, V> e = first; e != null; ) {
           int s;
           if (((s = lockState) & (WAITER | WRITER)) != 0) {
             K ek;
@@ -2221,6 +2366,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
                 ((ek = e.key) == k || ek != null && myHashingStrategy.equals((K)k,ek))) {
               return e;
             }
+            e = e.next;
           }
           else if (U.compareAndSwapInt(this, LOCKSTATE, s,
                                        s + READER)) {
@@ -2722,9 +2868,21 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   /* ----------------Table Traversal -------------- */
 
   /**
+     * Records the table, its length, and current traversal index for a
+     * traverser that must process a region of a forwarded table before
+     * proceeding with current table.
+     */
+    static final class TableStack<K,V> {
+        int length;
+        int index;
+        Node<K,V>[] tab;
+        TableStack<K,V> next;
+    }
+
+    /**
    * Encapsulates traversal for methods such as containsValue; also
    * serves as a base class for other iterators and spliterators.
-   * <p/>
+   *
    * Method advance visits once each still-valid node that was
    * reachable upon iterator construction. It might miss some that
    * were added to a bin after the bin was visited, which is OK wrt
@@ -2733,7 +2891,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * bookkeeping state that is difficult to optimize away amidst
    * volatile accesses.  Even so, traversal maintains reasonable
    * throughput.
-   * <p/>
+   *
    * Normally, iteration proceeds bin-by-bin traversing lists.
    * However, if the table has been resized, then all future steps
    * must traverse both the bin at the current index as well as at
@@ -2745,6 +2903,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   static class Traverser<K, V> {
     Node<K, V>[] tab;        // current table; updated if resized
     Node<K, V> next;         // the next entry to use
+        TableStack<K,V> stack, spare; // to save/restore on ForwardingNodes
     int index;              // index of bin to use next
     int baseIndex;          // current index of initial table
     int baseLimit;          // index bound for initial table
@@ -2777,10 +2936,11 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
             (n = t.length) <= (i = index) || i < 0) {
           return next = null;
         }
-        if ((e = tabAt(t, index)) != null && e.hash < 0) {
+        if ((e = tabAt(t, i)) != null && e.hash < 0) {
           if (e instanceof ForwardingNode) {
             tab = ((ForwardingNode<K, V>)e).nextTable;
             e = null;
+            pushState(t, i, n);
             continue;
           }
           else if (e instanceof TreeBin) {
@@ -2790,14 +2950,52 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
             e = null;
           }
         }
-        if ((index += baseSize) >= n) {
-          index = ++baseIndex;    // visit upper slots if present
-        }
+        if (stack != null)
+            recoverState(n);
+        else if ((index = i + baseSize) >= n)
+            index = ++baseIndex; // visit upper slots if present
       }
     }
+
+        /**
+         * Saves traversal state upon encountering a forwarding node.
+         */
+        private void pushState(Node<K,V>[] t, int i, int n) {
+            TableStack<K,V> s = spare;  // reuse if possible
+            if (s != null)
+                spare = s.next;
+            else
+                s = new TableStack<K,V>();
+            s.tab = t;
+            s.length = n;
+            s.index = i;
+            s.next = stack;
+            stack = s;
   }
 
   /**
+         * Possibly pops traversal state.
+         *
+         * @param n length of current table
+         */
+        private void recoverState(int n) {
+            TableStack<K,V> s; int len;
+            while ((s = stack) != null && (index += (len = s.length)) >= n) {
+                n = len;
+                index = s.index;
+                tab = s.tab;
+                s.tab = null;
+                TableStack<K,V> next = s.next;
+                s.next = spare; // save for reuse
+                stack = next;
+                spare = s;
+            }
+            if (s == null && (index += baseSize) >= n)
+                index = ++baseIndex;
+        }
+    }
+
+    /**
    * Base of key, value, and entry Iterators. Adds fields to
    * Traverser to support iterator.remove.
    */
@@ -3434,29 +3632,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   // Adapted from LongAdder and Striped64.
   // See their internal docs for explanation.
 
-  // A padded cell for distributing counts
-  static final class CounterCell {
-    volatile long p0;
-    volatile long p1;
-    volatile long p2;
-    volatile long p3;
-    volatile long p4;
-    volatile long p5;
-    volatile long p6;
-    volatile long value;
-    volatile long q0;
-    volatile long q1;
-    volatile long q2;
-    volatile long q3;
-    volatile long q4;
-    volatile long q5;
-    volatile long q6;
-
-    CounterCell(long x) {
-      value = x;
-    }
-  }
-
   /**
    * Holder for the thread-local hash code determining which
    * CounterCell to use. The code is initialized via the
@@ -3483,19 +3658,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   static final ThreadLocal<CounterHashCode> threadCounterHashCode =
     new ThreadLocal<CounterHashCode>();
 
-
-  final long sumCount() {
-    CounterCell[] as = counterCells;
-    long sum = baseCount;
-    if (as != null) {
-      for (CounterCell a : as) {
-        if (a != null) {
-          sum += a.value;
-        }
-      }
-    }
-    return sum;
-  }
 
   // See LongAdder version for explanation
   private void fullAddCount(long x, CounterHashCode hc,
@@ -3608,7 +3770,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   private static final Unsafe U;
   private static final long SIZECTL;
   private static final long TRANSFERINDEX;
-  private static final long TRANSFERORIGIN;
   private static final long BASECOUNT;
   private static final long CELLSBUSY;
   private static final long CELLVALUE;
@@ -3623,8 +3784,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         (k.getDeclaredField("sizeCtl"));
       TRANSFERINDEX = U.objectFieldOffset
         (k.getDeclaredField("transferIndex"));
-      TRANSFERORIGIN = U.objectFieldOffset
-        (k.getDeclaredField("transferOrigin"));
       BASECOUNT = U.objectFieldOffset
         (k.getDeclaredField("baseCount"));
       CELLSBUSY = U.objectFieldOffset

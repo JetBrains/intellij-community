@@ -96,8 +96,8 @@ public class FieldExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-    StringBuilder buf = new StringBuilder();
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer buf = new TextBuffer();
 
 
     if (isStatic) {
@@ -162,7 +162,7 @@ public class FieldExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
-    return buf.toString();
+    return buf;
   }
 
   public boolean equals(Object o) {

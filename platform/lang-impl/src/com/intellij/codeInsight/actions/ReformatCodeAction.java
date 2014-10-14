@@ -187,23 +187,11 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     if (rearrangeEntries && file != null && editor != null) {
-      final ArrangementEngine engine = ServiceManager.getService(project, ArrangementEngine.class);
-      try {
-        final PsiFile finalFile = file;
-        SelectionModel selectionModel = editor.getSelectionModel();
-        final TextRange rangeToUse = selectionModel.hasSelection()
-                                     ? TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
-                                     : TextRange.create(0, editor.getDocument().getTextLength());
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            engine.arrange(editor, finalFile, Collections.singleton(rangeToUse));
-          }
-        }, getTemplatePresentation().getText(), null);
-      }
-      finally {
-        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-      }
+      SelectionModel selectionModel = editor.getSelectionModel();
+      final TextRange rangeToUse = selectionModel.hasSelection()
+                                   ? TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
+                                   : TextRange.create(0, editor.getDocument().getTextLength());
+      new RearrangeCodeProcessor(project, file, Collections.singleton(rangeToUse)).run();
     }
   }
 

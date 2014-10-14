@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -83,9 +84,9 @@ public class SwitchExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     tracer.addMapping(bytecode);
-    return "switch(" + value.toJava(indent, tracer) + ")";
+    return value.toJava(indent, tracer).enclose("switch(", ")");
   }
 
   public boolean equals(Object o) {

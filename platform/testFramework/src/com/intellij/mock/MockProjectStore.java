@@ -23,8 +23,8 @@ import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,7 +148,7 @@ public class MockProjectStore implements IProjectStore {
 
   @Nullable
   @Override
-  public Collection<String> reload(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles) {
+  public Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages) {
     return null;
   }
 

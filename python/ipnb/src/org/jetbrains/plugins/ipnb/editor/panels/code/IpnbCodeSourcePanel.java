@@ -65,7 +65,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
 
   @Override
   protected JComponent createViewPanel() {
-    final JPanel panel = new JPanel(new VerticalFlowLayout(FlowLayout.LEFT, true, true));
+    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, true, true));
     panel.setBackground(UIUtil.isUnderDarcula() ? IpnbEditorUtil.getBackground() : Gray._247);
 
     if (mySource.startsWith("%")) {
@@ -94,7 +94,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
           }
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) {
             final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
-            action.runCell(ipnbFilePanel);
+            action.runCell(ipnbFilePanel, false);
           }
         }
 

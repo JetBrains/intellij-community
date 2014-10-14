@@ -41,7 +41,7 @@ public class PluginId implements Comparable<PluginId> {
   }
 
   @NotNull
-  public static PluginId getId(String idString) {
+  public static synchronized PluginId getId(String idString) {
     PluginId pluginId = ourRegisteredIds.get(idString);
     if (pluginId == null) {
       pluginId = new PluginId(idString);
@@ -60,7 +60,7 @@ public class PluginId implements Comparable<PluginId> {
     return getIdString();
   }
 
-  public static Map<String, PluginId> getRegisteredIds() {
-    return ourRegisteredIds;
+  public static synchronized Map<String, PluginId> getRegisteredIds() {
+    return new HashMap<String, PluginId>(ourRegisteredIds);
   }
 }

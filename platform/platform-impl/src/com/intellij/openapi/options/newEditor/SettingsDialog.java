@@ -45,18 +45,22 @@ import java.util.ArrayList;
 public final class SettingsDialog extends DialogWrapper implements DataProvider {
   private final String myDimensionServiceKey;
   private final AbstractEditor myEditor;
+  private boolean myApplyButtonNeeded;
+  private boolean myResetButtonNeeded;
 
   public SettingsDialog(Project project, @NotNull String key, @NotNull Configurable configurable, boolean showApplyButton) {
     super(project, true);
     myDimensionServiceKey = key;
-    myEditor = new ConfigurableEditor(myDisposable, configurable, showApplyButton);
+    myEditor = new ConfigurableEditor(myDisposable, configurable);
+    myApplyButtonNeeded = showApplyButton;
     init(configurable);
   }
 
   public SettingsDialog(@NotNull Component parent, @NotNull String key, @NotNull Configurable configurable, boolean showApplyButton) {
     super(parent, true);
     myDimensionServiceKey = key;
-    myEditor = new ConfigurableEditor(myDisposable, configurable, showApplyButton);
+    myEditor = new ConfigurableEditor(myDisposable, configurable);
+    myApplyButtonNeeded = showApplyButton;
     init(configurable);
   }
 
@@ -64,6 +68,7 @@ public final class SettingsDialog extends DialogWrapper implements DataProvider 
     super(project, true);
     myDimensionServiceKey = "SettingsEditor";
     myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter);
+    myApplyButtonNeeded = true;
     init(null);
   }
 
@@ -125,11 +130,11 @@ public final class SettingsDialog extends DialogWrapper implements DataProvider 
     actions.add(getOKAction());
     actions.add(getCancelAction());
     Action apply = myEditor.getApplyAction();
-    if (apply != null) {
+    if (apply != null && myApplyButtonNeeded) {
       actions.add(apply);
     }
     Action reset = myEditor.getResetAction();
-    if (reset != null) {
+    if (reset != null && myResetButtonNeeded) {
       actions.add(reset);
     }
     actions.add(getHelpAction());

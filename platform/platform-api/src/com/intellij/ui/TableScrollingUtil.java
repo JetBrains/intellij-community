@@ -96,16 +96,30 @@ public class TableScrollingUtil {
   }
 
   private static int getLeadingRow(JTable table,Rectangle visibleRect) {
-      Point leadingPoint;
+    return table.rowAtPoint(getLeadingPoint(table, visibleRect));
+  }
 
-      if (table.getComponentOrientation().isLeftToRight()) {
-          leadingPoint = new Point(visibleRect.x, visibleRect.y);
-      }
-      else {
-          leadingPoint = new Point(visibleRect.x + visibleRect.width,
-                                   visibleRect.y);
-      }
-      return table.rowAtPoint(leadingPoint);
+  private static Point getLeadingPoint(JTable table, Rectangle visibleRect) {
+    if (table.getComponentOrientation().isLeftToRight()) {
+        return new Point(visibleRect.x, visibleRect.y);
+    }
+    else {
+        return new Point(visibleRect.x + visibleRect.width,
+                                 visibleRect.y);
+    }
+  }
+
+  public static int getReadableRow(JTable table, int maximumHiddenPart) {
+    Rectangle visibleRect = table.getVisibleRect();
+    Point leadingPoint = getLeadingPoint(table, visibleRect);
+    int row = table.rowAtPoint(leadingPoint);
+    int column = table.columnAtPoint(leadingPoint);
+    if (leadingPoint.y - table.getCellRect(row, column, true).getY() <= maximumHiddenPart) {
+      return row;
+    } else {
+      return Math.min(row + 1, table.getRowCount() - 1); // just in case
+    }
+
   }
 
   private static int getTrailingRow(JTable table,Rectangle visibleRect) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,10 @@ public abstract class InspectionExtensionsFactory {
   @Nullable
   public abstract HTMLComposerExtension createHTMLComposerExtension(final HTMLComposer composer);
 
-  public abstract boolean isToCheckMember(PsiElement element, String id);
+  public abstract boolean isToCheckMember(@NotNull PsiElement element, @NotNull String id);
 
   @Nullable
-  public abstract String getSuppressedInspectionIdsIn(PsiElement element);
+  public abstract String getSuppressedInspectionIdsIn(@NotNull PsiElement element);
 
   public abstract boolean isProjectConfiguredToRunInspections(@NotNull Project project, boolean online);
 

@@ -22,7 +22,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -44,9 +44,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+@State(
+  name = "RunManager",
+  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+)
+public class RunManagerImpl extends RunManagerEx implements PersistentStateComponent<Element>, NamedComponent, Disposable {
+  private static final Logger LOG = Logger.getInstance(RunManagerImpl.class);
 
-public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, NamedComponent, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunManagerImpl");
   private final Project myProject;
 
   private final Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
@@ -526,8 +530,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return true;
   }
 
+  @Nullable
   @Override
-  public void writeExternal(@NotNull final Element parentNode) throws WriteExternalException {
+  public Element getState() {
+    Element parentNode = new Element("state");
     writeContext(parentNode);//writes temporary configurations here
     for (final RunnerAndConfigurationSettings runnerAndConfigurationSettings : myTemplateConfigurationsMap.values()) {
       if (runnerAndConfigurationSettings.getConfiguration() instanceof UnknownRunConfiguration) {
@@ -575,9 +581,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         parentNode.addContent(unloadedElement.clone());
       }
     }
+    return parentNode;
   }
 
-  public void writeContext(Element parentNode) throws WriteExternalException {
+  public void writeContext(Element parentNode) {
     for (RunnerAndConfigurationSettings configurationSettings : myConfigurations.values()) {
       if (configurationSettings.isTemporary()) {
         addConfigurationElement(parentNode, configurationSettings, CONFIGURATION);
@@ -589,15 +596,19 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
   }
 
-  void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettings template) throws WriteExternalException {
+  void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettings template) {
     addConfigurationElement(parentNode, template, CONFIGURATION);
   }
 
-  private void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettings settings, String elementType)
-    throws WriteExternalException {
+  private void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettings settings, String elementType) {
     final Element configurationElement = new Element(elementType);
     parentNode.addContent(configurationElement);
-    ((RunnerAndConfigurationSettingsImpl)settings).writeExternal(configurationElement);
+    try {
+      ((RunnerAndConfigurationSettingsImpl)settings).writeExternal(configurationElement);
+    }
+    catch (WriteExternalException e) {
+      throw new RuntimeException(e);
+    }
 
     if (!(settings.getConfiguration() instanceof UnknownRunConfiguration)) {
       final List<BeforeRunTask> tasks = ContainerUtil.createLockFreeCopyOnWriteList(getBeforeRunTasks(settings.getConfiguration()));
@@ -635,7 +646,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
           j++;
         }
         if (task.equals(templateTask) && i == j) {
-          continue; // not neccesary saving if the task is the same as template and on the same place
+          continue; // not necessary saving if the task is the same as template and on the same place
         }
         final Element child = new Element(OPTION);
         child.setAttribute(NAME_ATTR, task.getProviderId().toString());
@@ -647,7 +658,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   @Override
-  public void readExternal(final Element parentNode) throws InvalidDataException {
+  public void loadState(Element parentNode) {
     clear();
 
     final Comparator<Element> comparator = new Comparator<Element>() {
@@ -685,7 +696,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
     }
 
-    myOrder.readExternal(parentNode);
+    try {
+      myOrder.readExternal(parentNode);
+    }
+    catch (InvalidDataException e) {
+      throw new RuntimeException(e);
+    }
+
     //Begin migration (old ids to UUIDs)
     for (int i = 0; i < myOrder.size(); i++) {
       String id = myOrder.get(i);
@@ -703,7 +720,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     Element recentNode = parentNode.getChild(RECENT);
     if (recentNode != null) {
       JDOMExternalizableStringList list = new JDOMExternalizableStringList();
-      list.readExternal(recentNode);
+      try {
+        list.readExternal(recentNode);
+      }
+      catch (InvalidDataException e) {
+        throw new RuntimeException(e);
+      }
       for (int i = 0; i < list.size(); i++) {
         String id = list.get(i);
         for (RunnerAndConfigurationSettings settings : myConfigurations.values()) {

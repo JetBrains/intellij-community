@@ -1517,6 +1517,8 @@
 
     <applicationService serviceInterface="org.jetbrains.generate.tostring.template.TemplatesManager"
                         serviceImplementation="org.jetbrains.generate.tostring.template.TemplatesManager"/>
+    <applicationService serviceInterface="org.jetbrains.generate.tostring.GenerateToStringActionHandler"
+                        serviceImplementation="org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl"/>
     <applicationService serviceInterface="org.jetbrains.generate.tostring.GenerateToStringContext"
                         serviceImplementation="org.jetbrains.generate.tostring.GenerateToStringContext"/>
 

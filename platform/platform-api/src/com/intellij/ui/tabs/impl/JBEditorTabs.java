@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.table.TableLayout;
@@ -98,8 +97,10 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean hasUnderline() {
-    return true;
+    return isSingleRow();
   }
+
+
 
   protected void doPaintInactive(Graphics2D g2d,
                                  boolean leftGhostExists,
@@ -116,14 +117,14 @@ public class JBEditorTabs extends JBTabsImpl {
 
     if ((!isSingleRow() /* for multiline */) || (isSingleRow() && isHorizontalTabs()))  {
       if (isSingleRow() && getPosition() == JBTabsPosition.bottom) {
-        _y += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+        _y += getActiveTabUnderlineHeight();
       } else {
         if (isSingleRow()) {
-          _height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+          _height -= getActiveTabUnderlineHeight();
         } else {
           TabInfo info = label.getInfo();
           if (((TableLayout)getEffectiveLayout()).isLastRow(info)) {
-            _height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+            _height -= getActiveTabUnderlineHeight();
           }
         }
       }
@@ -131,7 +132,19 @@ public class JBEditorTabs extends JBTabsImpl {
 
     final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
     final Color tabColor = label.getInfo().getTabColor();
+    final Composite oldComposite = g2d.getComposite();
+    //if (label != getSelectedLabel()) {
+    //  g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
+    //}
     getPainter().doPaintInactive(g2d, effectiveBounds, _x, _y, _width, _height, tabColor, row, column, vertical);
+    //g2d.setComposite(oldComposite);
+  }
+
+
+
+  @Override
+  public int getActiveTabUnderlineHeight() {
+    return hasUnderline() ? super.getActiveTabUnderlineHeight() : 1;
   }
 
   JBEditorTabsPainter getPainter() {
@@ -186,9 +199,9 @@ public class JBEditorTabs extends JBTabsImpl {
       int y = r2.y + insets.top;
       int height = maxLength - insets.top - insets.bottom;
       if (getTabsPosition() == JBTabsPosition.bottom) {
-        y = r2.height - height - insets.top + TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+        y = r2.height - height - insets.top + getActiveTabUnderlineHeight();
       } else {
-        height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+        height -= getActiveTabUnderlineHeight();
       }
 
       rectangle = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
@@ -229,7 +242,7 @@ public class JBEditorTabs extends JBTabsImpl {
     shape.insets = shape.path.transformInsets(getLayoutInsets());
     shape.labelPath = shape.path.createTransform(getSelectedLabel().getBounds());
 
-    shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1);
+    shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1);
     shape.labelTopY =
       shape.labelPath.getY() + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? shape.labelPath.deltaY(1) : 0) ;
     shape.labelLeftX = shape.labelPath.getX() + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? 0 : shape.labelPath.deltaX(
@@ -247,8 +260,8 @@ public class JBEditorTabs extends JBTabsImpl {
     int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right);
 
     shape.path.lineTo(lastX, shape.labelBottomY);
-    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1));
-    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1));
+    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1));
+    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1));
 
     shape.path.closePath();
     shape.fillPath = shape.path.copy();

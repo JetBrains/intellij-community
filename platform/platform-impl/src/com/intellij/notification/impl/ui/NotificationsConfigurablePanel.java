@@ -64,7 +64,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     myDisplayBalloons = new JCheckBox("Display balloon notifications");
     myDisplayBalloons.setMnemonic('b');
     if (newSettings) {
-      myDisplayBalloons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+      myDisplayBalloons.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     }
     add(myDisplayBalloons, BorderLayout.NORTH);
     myDisplayBalloons.addActionListener(new ActionListener() {

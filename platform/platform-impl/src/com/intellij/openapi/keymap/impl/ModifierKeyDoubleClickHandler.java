@@ -117,7 +117,7 @@ public class ModifierKeyDoubleClickHandler {
             resetState();
             return false;
           }
-          if (ourOtherKeyWasPressed.get() && Clock.getTime() - ourLastTimePressed.get() < 500) {
+          if (myActionKeyCode == -1 && ourOtherKeyWasPressed.get() && Clock.getTime() - ourLastTimePressed.get() < 500) {
             resetState();
             return false;
           }

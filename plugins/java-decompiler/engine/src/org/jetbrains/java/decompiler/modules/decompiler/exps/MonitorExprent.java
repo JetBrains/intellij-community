@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
@@ -51,15 +52,15 @@ public class MonitorExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
 
     tracer.addMapping(bytecode);
 
     if (montype == MONITOR_ENTER) {
-      return "synchronized(" + value.toJava(indent, tracer) + ")";
+      return value.toJava(indent, tracer).enclose("synchronized(", ")");
     }
     else {
-      return "";
+      return new TextBuffer();
     }
   }
 

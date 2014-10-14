@@ -144,7 +144,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         mySearch.repaint();
       }
     });
-    myEditor = new ConfigurableEditor(this, null, true) {
+    myEditor = new ConfigurableEditor(this, null) {
       @Override
       boolean apply() {
         checkModified(myFilter.myContext.getCurrentConfigurable());

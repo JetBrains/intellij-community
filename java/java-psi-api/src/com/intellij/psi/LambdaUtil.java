@@ -60,7 +60,7 @@ public class LambdaUtil {
   }
 
   public static PsiMethod getFunctionalInterfaceMethod(@Nullable PsiElement element) {
-    if (element instanceof PsiLambdaExpression || element instanceof PsiMethodReferenceExpression) {
+    if (element instanceof PsiFunctionalExpression) {
       final PsiType samType = element instanceof PsiLambdaExpression
                               ? ((PsiLambdaExpression)element).getFunctionalInterfaceType()
                               : ((PsiMethodReferenceExpression)element).getFunctionalInterfaceType();
@@ -355,14 +355,11 @@ public class LambdaUtil {
       }
     }
     else if (parent instanceof PsiReturnStatement) {
-      final PsiLambdaExpression gParent = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
-      if (gParent != null) {
-        return getFunctionalInterfaceTypeByContainingLambda(gParent);
-      } else {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-        if (method != null) {
-          return method.getReturnType();
-        }
+      final PsiElement gParent = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, PsiMethod.class);
+      if (gParent instanceof PsiLambdaExpression) {
+        return getFunctionalInterfaceTypeByContainingLambda((PsiLambdaExpression)gParent);
+      } else if (gParent instanceof PsiMethod) {
+        return ((PsiMethod)gParent).getReturnType();
       }
     }
     else if (parent instanceof PsiLambdaExpression) {

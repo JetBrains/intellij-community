@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.util;
 
-/*
- * @author max
- */
-package org.jetbrains.generate.tostring.config;
-
-public enum InsertWhere {
-    AT_CARET("At caret"),
-    AFTER_EQUALS_AND_HASHCODE("After equals() and hashCode()"),
-    AT_THE_END_OF_A_CLASS("At the end of class");
-
-    private final String displayName;
-
-    InsertWhere(String displayName) {
-        this.displayName = displayName;
-    }
-
-    @Override
-    public String toString() {
-        return displayName;
-    }
+public class SdkHomeBean {
+  public String SDK_HOME;
 }
