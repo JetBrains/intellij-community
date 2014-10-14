@@ -276,7 +276,7 @@ public class XLineBreakpointManager {
           || mouseEvent.isMetaDown() || mouseEvent.isControlDown()
           || mouseEvent.getButton() != MouseEvent.BUTTON1
           || MarkupEditorFilterFactory.createIsDiffFilter().avaliableIn(editor)
-          || (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA && e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA)
+          || !isInsideGutter(e, editor)
           || ConsoleViewUtil.isConsoleViewEditor(editor)
           || !isFromMyProject(editor)
           || (editor.getSelectionModel().hasSelection() && myDragDetected)
@@ -317,6 +317,13 @@ public class XLineBreakpointManager {
           }
         }
       });
+    }
+
+    private boolean isInsideGutter(EditorMouseEvent e, Editor editor) {
+      if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA && e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
+        return false;
+      }
+      return e.getMouseEvent().getX() <= ((EditorEx)editor).getGutterComponentEx().getWhitespaceSeparatorOffset();
     }
   }
 
