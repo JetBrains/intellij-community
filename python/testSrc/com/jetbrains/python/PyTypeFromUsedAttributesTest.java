@@ -70,7 +70,7 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "x = undefined()\n" +
                "x.attr_a\n" +
                "x.attr_b",
-               "Base");
+               "Base | unknown");
   }
 
   public void testDiamondHierarchyBottom() {
@@ -87,7 +87,7 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "def func(x):\n" +
                "    x.foo\n" +
                "    x.bar",
-               "A");
+               "A | unknown");
   }
 
   public void testDiamondHierarchySiblings() {
@@ -105,7 +105,7 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "def func(x):\n" +
                "    x.foo()\n" +
                "    x.bar()\n",
-               "B | C");
+               "B | C | unknown");
   }
 
   public void testDiamondHierarchyTop() {
@@ -127,7 +127,7 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "def func(x):\n" +
                "    x.foo()\n" +
                "    x.bar()",
-               "D");
+               "D | unknown");
   }
 
   public void testDiamondHierarchyLeft() {
@@ -143,18 +143,18 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "def func(x):\n" +
                "    x.foo()\n" +
                "    x.bar()",
-               "B");
+               "B | unknown");
   }
 
   public void testBuiltinTypes() {
     doTestType("def func(x):\n" +
                "    x.upper()\n" +
                "    x.decode()",
-               "bytearray | str | unicode");
+               "bytearray | str | unicode | unknown");
 
     doTestType("def func(x):\n" +
                "    x.pop() and x.update()",
-               "dict | MutableMapping | set");
+               "dict | set | MutableMapping | unknown");
   }
 
   public void testFunctionType() {
@@ -170,7 +170,7 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "    return a\n" +
                "x = func\n" +
                "x" ,
-               "(a: A, b: B) -> A");
+               "(a: A | unknown, b: B | unknown) -> A | unknown");
   }
 
   private void doTestType(@NotNull String text, @NotNull String expectedType) {
