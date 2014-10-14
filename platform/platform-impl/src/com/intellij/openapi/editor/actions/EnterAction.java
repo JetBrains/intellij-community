@@ -58,9 +58,15 @@ public class EnterAction extends EditorAction {
 
   public static void insertNewLineAtCaret(Editor editor) {
     MacUIUtil.hideCursor();
+    Document document = editor.getDocument();
+    int caretLine = editor.getCaretModel().getLogicalPosition().line;
     if(!editor.isInsertMode()) {
-      if(editor.getCaretModel().getLogicalPosition().line < editor.getDocument().getLineCount()-1) {
-        LogicalPosition pos = new LogicalPosition(editor.getCaretModel().getLogicalPosition().line+1, 0);
+      int lineCount = document.getLineCount();
+      if(caretLine < lineCount) {
+        if (caretLine == lineCount - 1) {
+          document.insertString(document.getTextLength(), "\n");
+        }
+        LogicalPosition pos = new LogicalPosition(caretLine + 1, 0);
         editor.getCaretModel().moveToLogicalPosition(pos);
         editor.getSelectionModel().removeSelection();
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -69,10 +75,9 @@ public class EnterAction extends EditorAction {
     }
     EditorModificationUtil.deleteSelectedText(editor);
     // Smart indenting here:
-    Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
 
-    int indentLineNum = editor.getCaretModel().getLogicalPosition().line;
+    int indentLineNum = caretLine;
     int lineLength = 0;
     if (document.getLineCount() > 0) {
       for(;indentLineNum >= 0; indentLineNum--) {

@@ -20,9 +20,11 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 
 public class EditorActionTest extends AbstractEditorTest {
@@ -137,5 +139,20 @@ public class EditorActionTest extends AbstractEditorTest {
     addCollapsedFoldRegion(5, 7, "...");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
     assertEquals(new VisualPosition(0, 6), myEditor.getCaretModel().getVisualPosition());
+  }
+
+  public void testEnterOnLastLineInOverwriteMode() throws Exception {
+    init("text<caret>", TestFileType.TEXT);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_OVERWRITE_MODE);
+    executeAction(IdeActions.ACTION_EDITOR_ENTER);
+    checkResultByText("text\n<caret>");
+  }
+
+  public void testPasteInOneLineMode() throws Exception {
+    init("", TestFileType.TEXT);
+    ((EditorEx)myEditor).setOneLineMode(true);
+    CopyPasteManager.getInstance().setContents(new StringSelection("a\rb"));
+    executeAction(IdeActions.ACTION_EDITOR_PASTE);
+    checkResultByText("a b<caret>");
   }
 }
