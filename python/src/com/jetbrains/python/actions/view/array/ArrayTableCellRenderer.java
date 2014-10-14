@@ -38,7 +38,7 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
   private boolean colored = true;
   private String myType;
 
-  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d^j]*)([+-]?[.\\d]*j)?");
+  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d^j]*)([+-]?[e.\\d]*j)?");
 
   public ArrayTableCellRenderer(double min, double max, String type) {
     setHorizontalAlignment(CENTER);
