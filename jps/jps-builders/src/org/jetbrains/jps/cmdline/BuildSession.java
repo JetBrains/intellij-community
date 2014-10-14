@@ -202,7 +202,7 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     if (fsStateStream != null) {
       // optimization: check whether we can skip the build
-      final boolean hasWorkToDoWithModules = fsStateStream.readBoolean();
+      final boolean hasWorkToDoWithModules = fsStateStream.readBoolean() || myInitialFSDelta == null;
       if (!myForceModelLoading && (myBuildType == BuildType.BUILD || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules
           && scopeContainsModulesOnlyForIncrementalMake(myScopes) && !containsChanges(myInitialFSDelta)) {
         updateFsStateOnDisk(dataStorageRoot, fsStateStream, myInitialFSDelta.getOrdinal());
