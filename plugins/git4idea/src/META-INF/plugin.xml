@@ -145,9 +145,6 @@
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
     
     <projectService
-      serviceInterface="git4idea.history.wholeTree.LogFactoryService"
-      serviceImplementation="git4idea.history.wholeTree.LogFactoryService"/>
-    <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
     <projectService
@@ -173,27 +170,17 @@
         serviceInterface="git4idea.settings.GitPushSettings"
         serviceImplementation="git4idea.settings.GitPushSettings"/>
     <projectService
-        serviceInterface="git4idea.history.NewGitUsersComponent"
-        serviceImplementation="git4idea.history.NewGitUsersComponent"/>
-    <projectService
-        serviceInterface="git4idea.history.browser.GitProjectLogManager"
-        serviceImplementation="git4idea.history.browser.GitProjectLogManager"/>
-    <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>
     <projectService
         serviceInterface="git4idea.MessageManager"
         serviceImplementation="git4idea.MessageManager"/>
-    <projectService serviceInterface="git4idea.history.wholeTree.GitLogSettings"
-                    serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
 
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
 
-    <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
-                        serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
     <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
                         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceInterface="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"
