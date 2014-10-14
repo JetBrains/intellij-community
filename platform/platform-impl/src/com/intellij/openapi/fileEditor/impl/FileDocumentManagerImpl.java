@@ -632,8 +632,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
               documentEx.setReadOnly(false);
               LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
               file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-              documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
-              documentEx.setReadOnly(!wasWritable);
+              if (!file.getFileType().isBinary()) {
+                documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
+                documentEx.setReadOnly(!wasWritable);
+              }
             }
           }
         );
