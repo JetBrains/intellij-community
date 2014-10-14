@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,13 @@ import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInsight.daemon.JavaAwareInspectionProfileCoverter;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.util.messages.MessageBus;
 
 public class JavaAwareInspectionProfileManager extends InspectionProfileManagerImpl {
-  public JavaAwareInspectionProfileManager(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
-    super(registrar, schemesManagerFactory);
+  public JavaAwareInspectionProfileManager(InspectionToolRegistrar registrar,
+                                           SchemesManagerFactory schemesManagerFactory,
+                                           MessageBus messageBus) {
+    super(registrar, schemesManagerFactory, messageBus);
   }
 
   @Override
