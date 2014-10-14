@@ -153,11 +153,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     protected void paintComponent(Graphics g) {
       if (getBorder() == null) return;
       Color oldColor = g.getColor();
-      Rectangle clip = g.getClipBounds();
       g.setColor(myEditor.getBackgroundColor());
       Insets insets = getInsets();
-      g.fillRect(0, 0, insets.left, clip.height);
-      g.fillRect(clip.width - insets.left - insets.right, 0, clip.width, clip.height);
+      g.fillRect(0, 0, insets.left, getHeight());
+      g.fillRect(getWidth() - insets.left - insets.right, 0, getWidth(), getHeight());
       g.setColor(oldColor);
     }
 
