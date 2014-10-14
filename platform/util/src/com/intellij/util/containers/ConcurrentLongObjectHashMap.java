@@ -2167,7 +2167,7 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
     static {
       try {
-        U = sun.misc.Unsafe.getUnsafe();
+        U = getUnsafe();
         Class<?> k = TreeBin.class;
         LOCKSTATE = U.objectFieldOffset
           (k.getDeclaredField("lockState"));
