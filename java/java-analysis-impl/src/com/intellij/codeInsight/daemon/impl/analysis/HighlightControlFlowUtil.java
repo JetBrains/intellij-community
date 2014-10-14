@@ -690,7 +690,9 @@ public class HighlightControlFlowUtil {
     } else {
       final ControlFlow controlFlow;
       try {
-        controlFlow = getControlFlow(PsiUtil.getVariableCodeBlock(variable, context));
+        PsiElement codeBlock = PsiUtil.getVariableCodeBlock(variable, context);
+        if (codeBlock == null) return true;
+        controlFlow = getControlFlow(codeBlock);
       }
       catch (AnalysisCanceledException e) {
         return true;

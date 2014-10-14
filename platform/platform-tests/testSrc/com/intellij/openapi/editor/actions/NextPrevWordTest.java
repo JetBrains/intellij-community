@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,4 +35,21 @@ public class NextPrevWordTest extends LightPlatformCodeInsightFixtureTestCase {
     myFixture.checkResult("<caret><foo>");
   }
 
+  public void testNextWordWithEscapeChars() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo { String s = \"a\\<caret>nb\"; }");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
+    myFixture.checkResult("class Foo { String s = \"a\\n<caret>b\"; }");
+  }
+
+  public void testPrevWordWithEscapeChars() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo { String s = \"a\\nb<caret>\"; }");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
+    myFixture.checkResult("class Foo { String s = \"a\\n<caret>b\"; }");
+  }
+
+  public void testPrevWordWithIllegalEscapeChar() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo { String s = \"a\\xb<caret>\"; }");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
+    myFixture.checkResult("class Foo { String s = \"a\\x<caret>b\"; }");
+  }
 }

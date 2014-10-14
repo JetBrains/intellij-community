@@ -428,41 +428,5 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       return myRefs.get(root);
     }
 
-    @NotNull
-    public String toLogString(@NotNull final NotNullFunction<Hash, Integer> indexGetter,
-                              @NotNull Map<VirtualFile, Set<VcsRef>> previousRefs,
-                              @NotNull Map<VirtualFile, VcsLogProvider> providers) {
-      StringBuilder sb = new StringBuilder();
-      sb.append("LOG:\n");
-      for (Map.Entry<VirtualFile, List<GraphCommit<Integer>>> entry : myCommits.entrySet()) {
-        VirtualFile root = entry.getKey();
-        sb.append(String.format("%s (%s) \n", root.getName(), providers.get(root).getSupportedVcs().getName()));
-        sb.append(StringUtil.join(entry.getValue(), new Function<GraphCommit<Integer>, String>() {
-          @Override
-          public String fun(@NotNull GraphCommit<Integer> commit) {
-            return commit.getId() + "<-" + StringUtil.join(commit.getParents(), ",");
-          }
-        }, "\n"));
-      }
-      sb.append("\nREFS:\n");
-      printRefs(sb, indexGetter, myRefs);
-      sb.append("\nPREVIOUS REFS:\n");
-      printRefs(sb, indexGetter, previousRefs);
-      return sb.toString();
-    }
-
-    private static void printRefs(@NotNull StringBuilder sb,
-                                  @NotNull final NotNullFunction<Hash, Integer> indexGetter,
-                                  @NotNull Map<VirtualFile, Set<VcsRef>> refs) {
-      for (Map.Entry<VirtualFile, Set<VcsRef>> entry : refs.entrySet()) {
-        sb.append(entry.getKey().getName() + "\n");
-        sb.append(StringUtil.join(entry.getValue(), new Function<VcsRef, String>() {
-          @Override
-          public String fun(@NotNull VcsRef ref) {
-            return ref.getName() + "(" + indexGetter.fun(ref.getCommitHash()) + ")";
-          }
-        }, ","));
-      }
-    }
   }
 }

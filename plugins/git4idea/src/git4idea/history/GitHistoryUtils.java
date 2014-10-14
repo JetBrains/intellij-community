@@ -412,7 +412,7 @@ public class GitHistoryUtils {
             if (record != null) {
               resultAdapter.consume(record);
             }
-          } 
+          }
           catch (Throwable t) {
             LOG.error(t);
             exceptionConsumer.consume(new VcsException("Internal error " + t.getMessage(), t));
@@ -493,7 +493,7 @@ public class GitHistoryUtils {
 
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
-                                           AUTHOR_EMAIL, COMMIT_TIME, SUBJECT);
+                                           AUTHOR_EMAIL, COMMIT_TIME, SUBJECT, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME);
     h.setSilent(true);
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
     h.addParameters("--no-walk");
@@ -511,7 +511,8 @@ public class GitHistoryUtils {
           parents.add(HashImpl.build(parent));
         }
         return factory.createShortDetails(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
-                                          record.getSubject(), record.getAuthorName(), record.getAuthorEmail());
+                                          record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getCommitterName(), record.getCommitterEmail(),
+                                                                                      record.getAuthorTimeStamp());
       }
     });
   }
@@ -899,7 +900,7 @@ public class GitHistoryUtils {
                          record.getStatusInfos());
   }
 
-  @NotNull 
+  @NotNull
   private static List<Hash> getParentHashes(@NotNull final VcsLogObjectsFactory factory, @NotNull GitLogRecord record) {
     return ContainerUtil.map(record.getParentsHashes(), new Function<String, Hash>() {
       @Override

@@ -28,6 +28,9 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.LineSet;
 import com.intellij.openapi.editor.impl.RangeMarkerTree;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,6 +47,8 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author gregsh
@@ -60,8 +65,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   protected abstract String getText(FontMetrics fontMetrics, JTable table, Object value, int row, int column);
 
-  protected void customizeEditor(EditorEx editor, Object value, boolean selected, int row, int col) {
-  }
+  @Nullable
+  protected abstract TextAttributes getTextAttributes(Object value, boolean selected, int row, int col);
 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -72,7 +77,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     if (!Comparing.equal(font, editorFont)) {
       editor.getColorsScheme().setEditorFontSize(font.getSize());
     }
-    panel.setText(getText(((EditorImpl)editor).getFontMetrics(Font.PLAIN), table, value, row, column));
+    String text = getText(((EditorImpl)editor).getFontMetrics(Font.PLAIN), table, value, row, column);
+    TextAttributes textAttributes = getTextAttributes(value, isSelected, row, column);
+    panel.setText(text, textAttributes);
 
     ((EditorImpl)editor).setPaintSelection(isSelected);
     editor.getSelectionModel().setSelection(0, isSelected ? editor.getDocument().getTextLength() : 0);
@@ -82,7 +89,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     panel.setBorder(null); // prevents double border painting when ExtendedItemRendererComponentWrapper is used
 
-    customizeEditor(editor, value, isSelected, row, column);
     return panel;
   }
 
@@ -104,7 +110,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     // reuse EditorTextField initialization logic
-    EditorTextField field = new EditorTextField(new MyDocument(), null, FileTypes.PLAIN_TEXT);
+    EditorTextField field = new EditorTextField(new MyDocument(), null, FileTypes.PLAIN_TEXT, false, false);
     field.setSupplementary(true);
     field.addNotify(); // creates editor
 
@@ -128,36 +134,43 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   }
 
   private static class MyPanel extends CellRendererPanel implements Disposable {
-    private static final String ABBREVIATION_SUFFIX = "\u2026"; // 2026 '...'
+    private static final String LINE_TERMINATOR_PATTERN_TEXT = "\\n|(?:\\r\\n?)|\\u0085|\\u2028|\\u2029";
+    private static final Pattern LINE_TERMINATOR_OR_A_CHARACTER_PATTERN = Pattern.compile("(" + LINE_TERMINATOR_PATTERN_TEXT + ")|.");
+    private static final Pattern LINE_PATTERN = Pattern.compile("(.*)(" + LINE_TERMINATOR_PATTERN_TEXT + ")?");
+    private static final char ABBREVIATION_SUFFIX = '\u2026'; // 2026 '...'
     private static final char RETURN_SYMBOL = '\u23ce';
 
     private final StringBuilder myDocumentTextBuilder = new StringBuilder();
     private final EditorEx myEditor;
+
     private Dimension myPreferredSize;
+    private String myRawText;
+    private TextAttributes myTextAttributes;
 
     public MyPanel(EditorEx editor) {
       add(editor.getContentComponent());
       this.myEditor = editor;
     }
 
-    public void setText(String text) {
-      setText(text, false);
+    public void setText(String text, @Nullable TextAttributes textAttributes) {
+      myRawText = text;
+      myTextAttributes = textAttributes;
+      recalculatePreferredSize();
     }
 
     @Override
     public Dimension getPreferredSize() {
-      return myPreferredSize == null ? super.getPreferredSize() : myPreferredSize;
+      return myPreferredSize;
     }
 
     @Override
     protected void paintComponent(Graphics g) {
       if (getBorder() == null) return;
       Color oldColor = g.getColor();
-      Rectangle clip = g.getClipBounds();
       g.setColor(myEditor.getBackgroundColor());
       Insets insets = getInsets();
-      g.fillRect(0, 0, insets.left, clip.height);
-      g.fillRect(clip.width - insets.left - insets.right, 0, clip.width, clip.height);
+      g.fillRect(0, 0, insets.left, getHeight());
+      g.fillRect(getWidth() - insets.left - insets.right, 0, getWidth(), getHeight());
       g.setColor(oldColor);
     }
 
@@ -172,63 +185,113 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
 
+    private void recalculatePreferredSize() {
+      int maxLineLength = 0;
+      int linesCount = 0;
+
+      Matcher m = LINE_PATTERN.matcher(myRawText);
+      while (m.find()) {
+        maxLineLength = Math.max(maxLineLength, m.end(1) - m.start());
+        linesCount++;
+      }
+
+      FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
+      int preferredHeight = myEditor.getLineHeight() * Math.max(1, linesCount);
+      int preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
+
+      Insets insets = getInsets();
+      if (insets != null) {
+        preferredHeight += insets.top + insets.bottom;
+        preferredWidth += insets.left + insets.right;
+      }
+
+      myPreferredSize = new Dimension(preferredWidth, preferredHeight);
+    }
+
     private void updateText() {
-      FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(Font.PLAIN);
-      DocumentEx document = myEditor.getDocument();
+      FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
       Insets insets = getInsets();
       int maxLineWidth = getWidth() - (insets != null ? insets.left + insets.right : 0);
 
       myDocumentTextBuilder.setLength(0);
-      if (getHeight() / myEditor.getLineHeight() < 1.1f) {
-        String line = document.getText().replace('\n', RETURN_SYMBOL);
-        appendAbbreviatedLine(myDocumentTextBuilder, line, fontMetrics, maxLineWidth);
+      float visibleLinesCountFractional = getHeight() / (float)myEditor.getLineHeight();
+      if (visibleLinesCountFractional < 1.1f) {
+        appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true);
       }
       else {
-        for (LineIterator line = document.createLineIterator(); !line.atEnd(); line.advance()) {
-          String lineText = document.getText(new TextRange(line.getStart(), line.getEnd()));
-          appendAbbreviatedLine(myDocumentTextBuilder, lineText, fontMetrics, maxLineWidth);
+        Matcher m = LINE_PATTERN.matcher(myRawText);
+        int visibleLinesCount = (int)Math.floor(visibleLinesCountFractional + 0.5);
+        for (int i = 0; i < visibleLinesCount && m.find(); i++) {
+          appendAbbreviated(myDocumentTextBuilder, myRawText, m.start(1), m.end(1), fontMetrics, maxLineWidth, false);
+          if (m.start(2) != -1) {
+            myDocumentTextBuilder.append('\n');
+          }
         }
       }
 
-      setText(myDocumentTextBuilder.toString(), true);
+      setTextToEditor(myDocumentTextBuilder.toString());
     }
 
-    private static void appendAbbreviatedLine(StringBuilder to, String line, FontMetrics metrics, int maxWidth) {
-      if (metrics.charWidth('m') * line.length() <= maxWidth) {
-        to.append(line);
-        return;
-      }
-
-      int abbrWidth = metrics.stringWidth(ABBREVIATION_SUFFIX);
-      int abbrIdx = 0;
-
-      for (; abbrIdx < line.length(); abbrIdx++) {
-        int nextCharWidth = metrics.charWidth(line.charAt(abbrIdx));
-        if (abbrWidth + nextCharWidth >= maxWidth) break;
-        abbrWidth += nextCharWidth;
-      }
-
-      to.append(line, 0, abbrIdx);
-      to.append(ABBREVIATION_SUFFIX);
-      if (abbrIdx != line.length() && line.endsWith("\n")) {
-        to.append('\n');
-      }
-    }
-
-    private void setText(String text, boolean abbreviationOfCurrentText) {
-      if (!abbreviationOfCurrentText) {
-        myEditor.getMarkupModel().removeAllHighlighters();
-      }
-
+    private void setTextToEditor(String text) {
+      myEditor.getMarkupModel().removeAllHighlighters();
       myEditor.getDocument().setText(text);
       myEditor.getHighlighter().setText(text);
+      if (myTextAttributes != null) {
+        myEditor.getMarkupModel().addRangeHighlighter(0, myEditor.getDocument().getTextLength(),
+          HighlighterLayer.ADDITIONAL_SYNTAX, myTextAttributes, HighlighterTargetArea.EXACT_RANGE);
+      }
+
       ((EditorImpl)myEditor).resetSizes();
 
       SelectionModel selectionModel = myEditor.getSelectionModel();
       selectionModel.setSelection(0, selectionModel.hasSelection() ? myEditor.getDocument().getTextLength() : 0);
+    }
 
-      if (!abbreviationOfCurrentText) {
-        myPreferredSize = super.getPreferredSize();
+    private static void appendAbbreviated(StringBuilder to, String text, int start, int end,
+                                          FontMetrics metrics, int maxWidth, boolean replaceLineTerminators) {
+      if (metrics.charWidth('m') * (end - start) <= maxWidth) {
+        appendAndReplaceLineTerminatorsIfNeeded(to, text, start, end, replaceLineTerminators);
+        return;
+      }
+
+      int abbrWidth = metrics.charWidth(ABBREVIATION_SUFFIX);
+      int abbrIdx = start;
+
+      Matcher m = LINE_TERMINATOR_OR_A_CHARACTER_PATTERN.matcher(text);
+      m.region(start, end);
+
+      while (m.find()) {
+        int appendWidth = 0;
+        if (replaceLineTerminators && m.start(1) != -1) {
+          appendWidth = metrics.charWidth(RETURN_SYMBOL);
+        }
+        else {
+          for (int i = m.start(); i < m.end(); i++) {
+            appendWidth += metrics.charWidth(text.charAt(i));
+          }
+        }
+        if (abbrWidth + appendWidth >= maxWidth) break;
+        abbrWidth += appendWidth;
+        abbrIdx = m.end();
+      }
+
+      appendAndReplaceLineTerminatorsIfNeeded(to, text, start, abbrIdx, replaceLineTerminators);
+      to.append(ABBREVIATION_SUFFIX);
+    }
+
+    private static void appendAndReplaceLineTerminatorsIfNeeded(StringBuilder to, String text, int start, int end, boolean doReplace) {
+      if (doReplace) {
+        Matcher m = LINE_PATTERN.matcher(text);
+        m.region(start, end);
+        while (m.find()) {
+          to.append(text, m.start(1), m.end(1));
+          if (m.start(2) != -1) {
+            to.append(RETURN_SYMBOL);
+          }
+        }
+      }
+      else {
+        to.append(text, start, end);
       }
     }
   }

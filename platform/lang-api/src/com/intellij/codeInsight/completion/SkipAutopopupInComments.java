@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -23,13 +25,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class UnfocusedComments extends CompletionConfidence {
+public class SkipAutopopupInComments extends CompletionConfidence {
+
   @NotNull
   @Override
-  public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
-    if (PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiComment.class, false) != null) {
-      return ThreeState.NO;
+  public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    if (PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset, PsiComment.class, false) != null) {
+      return ThreeState.YES;
     }
+
     return ThreeState.UNSURE;
   }
+
 }

@@ -92,7 +92,7 @@ public class BackspaceAction extends EditorAction {
         editor.getCaretModel().moveCaretRelatively(columnShift, 0, false, false, true);
       }
       else {
-        scrollToCaret(editor);
+        EditorModificationUtil.scrollToCaret(editor);
         editor.getSelectionModel().removeSelection();
 
         FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
@@ -111,17 +111,11 @@ public class BackspaceAction extends EditorAction {
       int lineEnd = document.getLineEndOffset(lineNumber - 1) + separatorLength;
       document.deleteString(lineEnd - separatorLength, lineEnd);
       editor.getCaretModel().moveToOffset(lineEnd - separatorLength);
-      scrollToCaret(editor);
+      EditorModificationUtil.scrollToCaret(editor);
       editor.getSelectionModel().removeSelection();
       // Do not group delete newline and other deletions.
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
       commandProcessor.setCurrentCommandGroupId(null);
-    }
-  }
-
-  private static void scrollToCaret(Editor editor) {
-    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
 }

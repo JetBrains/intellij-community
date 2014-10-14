@@ -23,6 +23,7 @@ import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -164,6 +165,9 @@ public abstract class Animator implements Disposable {
   }
 
   private static boolean skipAnimation() {
+    if (GraphicsEnvironment.isHeadless()) {
+      return true;
+    }
     Application app = ApplicationManager.getApplication();
     return app != null && app.isUnitTestMode();
   }
