@@ -64,7 +64,7 @@ public abstract class Animator implements Disposable {
 
     reset();
 
-    if (noApplication()) {
+    if (skipAnimation()) {
       animationDone();
     }
   }
@@ -133,7 +133,7 @@ public abstract class Animator implements Disposable {
   }
 
   public void resume() {
-    if (noApplication()) {
+    if (skipAnimation()) {
       animationDone();
       return;
     }
@@ -163,7 +163,7 @@ public abstract class Animator implements Disposable {
     }
   }
 
-  protected boolean noApplication() {
+  private static boolean skipAnimation() {
     Application app = ApplicationManager.getApplication();
     return app != null && app.isUnitTestMode();
   }
