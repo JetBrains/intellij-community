@@ -184,7 +184,7 @@ public class AuthenticationService {
   @NotNull
   public AcceptResult acceptCertificate(@NotNull final SVNURL url, @NotNull final String certificateInfo) {
     // TODO: Probably explicitly construct server url for realm here - like in CertificateTrustManager.
-    String kind = "svn.ssl.server";
+    String kind = "terminal.ssl.server";
     String realm = url.toDecodedString();
     Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getDataWithLowerCheck(kind, realm);
     AcceptResult result;
