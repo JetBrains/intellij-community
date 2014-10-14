@@ -16,9 +16,11 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -94,6 +96,18 @@ public class TextBlockTransferable implements Transferable {
       // ignore
     }
     throw new UnsupportedFlavorException(flavor);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input) {
+    return convertLineSeparators(editor, input, Collections.<TextBlockTransferableData>emptyList());
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input,
+                                             @NotNull Collection<TextBlockTransferableData> transferableDatas) {
+    // converting line separators to spaces matches the behavior of Swing text components on paste
+    return convertLineSeparators(input, editor.isOneLineMode() ? " " : "\n", transferableDatas);
   }
 
   public static String convertLineSeparators(String text,
