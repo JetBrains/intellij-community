@@ -44,10 +44,10 @@
     <basicWordSelectionFilter implementation="com.intellij.json.editor.selection.JsonBasicWordSelectionFilter"/>
 
     <!-- Annotators -->
-    <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
+    <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
     <!-- Inspections -->
-    <localInspection language="JSON" groupPath="JSON" shortName="JsonStandardCompliance" key="name.standard.compliance.inspection"
+    <localInspection language="JSON" shortName="JsonStandardCompliance" key="name.standard.compliance.inspection"
                      groupKey="name.json.inspection.group" enabledByDefault="true" level="ERROR"
                      bundle="com.intellij.json.JsonBundle"
                      implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
