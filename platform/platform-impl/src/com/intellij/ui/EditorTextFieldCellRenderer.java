@@ -33,10 +33,12 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +49,6 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author gregsh
@@ -134,9 +134,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   }
 
   private static class MyPanel extends CellRendererPanel implements Disposable {
-    private static final String LINE_TERMINATOR_PATTERN_TEXT = "\\n|(?:\\r\\n?)|\\u0085|\\u2028|\\u2029";
-    private static final Pattern LINE_TERMINATOR_OR_A_CHARACTER_PATTERN = Pattern.compile("(" + LINE_TERMINATOR_PATTERN_TEXT + ")|.");
-    private static final Pattern LINE_PATTERN = Pattern.compile("(.*)(" + LINE_TERMINATOR_PATTERN_TEXT + ")?");
     private static final char ABBREVIATION_SUFFIX = '\u2026'; // 2026 '...'
     private static final char RETURN_SYMBOL = '\u23ce';
 
@@ -189,9 +186,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       int maxLineLength = 0;
       int linesCount = 0;
 
-      Matcher m = LINE_PATTERN.matcher(myRawText);
-      while (m.find()) {
-        maxLineLength = Math.max(maxLineLength, m.end(1) - m.start());
+      for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd(); lt.advance()) {
+        maxLineLength = Math.max(maxLineLength, lt.getLength());
         linesCount++;
       }
 
@@ -219,11 +215,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
         appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true);
       }
       else {
-        Matcher m = LINE_PATTERN.matcher(myRawText);
-        int visibleLinesCount = (int)Math.floor(visibleLinesCountFractional + 0.5);
-        for (int i = 0; i < visibleLinesCount && m.find(); i++) {
-          appendAbbreviated(myDocumentTextBuilder, myRawText, m.start(1), m.end(1), fontMetrics, maxLineWidth, false);
-          if (m.start(2) != -1) {
+        int linesToAppend = (int)Math.floor(visibleLinesCountFractional + 0.5);
+        for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd() && linesToAppend > 0; lt.advance(), linesToAppend--) {
+          appendAbbreviated(myDocumentTextBuilder, myRawText, lt.getOffset(), lt.getOffset() + lt.getLength(), fontMetrics, maxLineWidth, false);
+          if (lt.getLineSeparatorLength() > 0) {
             myDocumentTextBuilder.append('\n');
           }
         }
@@ -249,50 +244,46 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     private static void appendAbbreviated(StringBuilder to, String text, int start, int end,
                                           FontMetrics metrics, int maxWidth, boolean replaceLineTerminators) {
-      if (metrics.charWidth('m') * (end - start) <= maxWidth) {
-        appendAndReplaceLineTerminatorsIfNeeded(to, text, start, end, replaceLineTerminators);
-        return;
+      int abbreviationLength = abbreviationLength(text, start, end, metrics, maxWidth, replaceLineTerminators);
+
+      if (!replaceLineTerminators) {
+        to.append(text, start, start + abbreviationLength);
       }
-
-      int abbrWidth = metrics.charWidth(ABBREVIATION_SUFFIX);
-      int abbrIdx = start;
-
-      Matcher m = LINE_TERMINATOR_OR_A_CHARACTER_PATTERN.matcher(text);
-      m.region(start, end);
-
-      while (m.find()) {
-        int appendWidth = 0;
-        if (replaceLineTerminators && m.start(1) != -1) {
-          appendWidth = metrics.charWidth(RETURN_SYMBOL);
-        }
-        else {
-          for (int i = m.start(); i < m.end(); i++) {
-            appendWidth += metrics.charWidth(text.charAt(i));
-          }
-        }
-        if (abbrWidth + appendWidth >= maxWidth) break;
-        abbrWidth += appendWidth;
-        abbrIdx = m.end();
-      }
-
-      appendAndReplaceLineTerminatorsIfNeeded(to, text, start, abbrIdx, replaceLineTerminators);
-      to.append(ABBREVIATION_SUFFIX);
-    }
-
-    private static void appendAndReplaceLineTerminatorsIfNeeded(StringBuilder to, String text, int start, int end, boolean doReplace) {
-      if (doReplace) {
-        Matcher m = LINE_PATTERN.matcher(text);
-        m.region(start, end);
-        while (m.find()) {
-          to.append(text, m.start(1), m.end(1));
-          if (m.start(2) != -1) {
+      else {
+        CharSequenceSubSequence subSeq = new CharSequenceSubSequence(text, start, start + abbreviationLength);
+        for (LineTokenizer lt = new LineTokenizer(subSeq); !lt.atEnd(); lt.advance()) {
+          to.append(subSeq, lt.getOffset(), lt.getOffset() + lt.getLength());
+          if (lt.getLineSeparatorLength() > 0) {
             to.append(RETURN_SYMBOL);
           }
         }
       }
-      else {
-        to.append(text, start, end);
+
+      if (abbreviationLength != end - start) {
+        to.append(ABBREVIATION_SUFFIX);
       }
+    }
+
+    private static int abbreviationLength(String text, int start, int end, FontMetrics metrics, int maxWidth, boolean replaceSeparators) {
+      if (metrics.charWidth('m') * (end - start) <= maxWidth) return end - start;
+
+      int abbrWidth = metrics.charWidth(ABBREVIATION_SUFFIX);
+      int abbrLength = 0;
+
+      CharSequenceSubSequence subSeq = new CharSequenceSubSequence(text, start, end);
+      for (LineTokenizer lt = new LineTokenizer(subSeq); !lt.atEnd(); lt.advance()) {
+        for (int i = 0; i < lt.getLength(); i++, abbrLength++) {
+          abbrWidth += metrics.charWidth(subSeq.charAt(lt.getOffset() + i));
+          if (abbrWidth >= maxWidth) return abbrLength;
+        }
+        if (replaceSeparators && lt.getLineSeparatorLength() != 0) {
+          abbrWidth += metrics.charWidth(RETURN_SYMBOL);
+          if (abbrWidth >= maxWidth) return abbrLength;
+          abbrLength += lt.getLineSeparatorLength();
+        }
+      }
+
+      return abbrLength;
     }
   }
 
