@@ -161,10 +161,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     private int getMatchingDegree() {
       String text = getValueText();
       if (text != null) {
-        if (StringUtil.equalsIgnoreCase(StringUtil.trimEnd(text, "..."), pattern)) return 3;
-        if (StringUtil.startsWithIgnoreCase(text, pattern)) return 2;
-        if (StringUtil.containsIgnoreCase(text, pattern)) return 1;
+        int degree = getRank(text);
+        return value instanceof ActionWrapper && !((ActionWrapper)value).isGroupAction() ? degree + 1 : degree;
       }
+      return 0;
+    }
+
+    private int getRank(@NotNull String text) {
+      if (StringUtil.equalsIgnoreCase(StringUtil.trimEnd(text, "..."), pattern)) return 3;
+      if (StringUtil.startsWithIgnoreCase(text, pattern)) return 2;
+      if (StringUtil.containsIgnoreCase(text, pattern)) return 1;
       return 0;
     }
 
@@ -172,14 +178,19 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     public int compareTo(@NotNull MatchedValue o) {
       boolean edt = ApplicationManager.getApplication().isDispatchThread();
 
-      if (value instanceof ActionWrapper) {
-        boolean available = edt && ((ActionWrapper)value).isAvailable();
-        if (o.value instanceof BooleanOptionDescription || o.value instanceof ActionWrapper) return available ? -1 : 1;
+      if (value instanceof ActionWrapper && o.value instanceof ActionWrapper && edt) {
+        boolean p1Enable = ((ActionWrapper)value).isAvailable();
+        boolean p2enable = ((ActionWrapper)o.value).isAvailable();
+        if (p1Enable && !p2enable) return -1;
+        if (!p1Enable && p2enable) return 1;
       }
       
-      if (o.value instanceof ActionWrapper) {
-        boolean available = edt && ((ActionWrapper)o.value).isAvailable();
-        if (value instanceof BooleanOptionDescription) return available ? 1 : -1;
+      if (value instanceof ActionWrapper && o.value instanceof BooleanOptionDescription) {
+        return edt && ((ActionWrapper)value).isAvailable() ? -1 : 1;
+      }
+      
+      if (o.value instanceof ActionWrapper && value instanceof BooleanOptionDescription) {
+        return edt && ((ActionWrapper)o.value).isAvailable() ? 1 : -1;
       }
       
       if (value instanceof OptionDescription && o.value instanceof BooleanOptionDescription) return 1;
@@ -197,7 +208,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Override
   public ListCellRenderer getListCellRenderer() {
     return new DefaultListCellRenderer() {
-
       @Override
       public Component getListCellRendererComponent(@NotNull final JList list,
                                                     final Object matchedValue,
@@ -260,20 +270,24 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
             hit = ((OptionDescription)value).getOption();
           }
           hit = StringUtil.unescapeXml(hit);
-          hit = StringUtil.first(hit, 50, true);
-          hit = hit.replace("  ", " "); //avoid extra spaces from mnemonics and xml conversion
+          hit = hit.replace("  ", " "); // avoid extra spaces from mnemonics and xml conversion
+          String fullHit = hit;
+          hit = StringUtil.first(hit, 45, true);
 
           final Color fg = UIUtil.getListForeground(isSelected);
 
           appendWithColoredMatches(nameComponent, hit.trim(), pattern, fg, isSelected);
 
           panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
+          panel.setToolTipText(fullHit);
 
           if (value instanceof BooleanOptionDescription) {
             final OnOffButton button = new OnOffButton();
             button.setSelected(((BooleanOptionDescription)value).isOptionEnabled());
             panel.add(button, BorderLayout.EAST);
-          } else {
+            panel.setBorder(IdeBorderFactory.createEmptyBorder());
+          } 
+          else {
             final JLabel settingsLabel = new JLabel(getGroupName((OptionDescription)value));
             settingsLabel.setForeground(groupFg);
             settingsLabel.setBackground(bg);
@@ -346,7 +360,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   public int compare(@NotNull Object o1, @NotNull Object o2) {
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
     if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
-    return ((MatchedValue) o1).compareTo((MatchedValue)o2);
+    return ((MatchedValue)o1).compareTo((MatchedValue)o2);
   }
 
   public static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
@@ -667,6 +681,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
     public String getGroupName() {
       return myGroupName;
+    }
+    
+    public boolean isGroupAction() {
+      return myAction instanceof ActionGroup;
     }
 
     @Override

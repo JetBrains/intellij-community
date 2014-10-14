@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.ui.OptionsTopHitProvider;
+import com.intellij.ide.ui.UISimpleSettingsProvider;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -31,6 +32,7 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -78,8 +80,8 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
     if (!processIntentions(pattern, consumer, dataContext)) return false;
     if (!processActions(pattern, everywhere, consumer, dataContext)) return false;
+    if (!processTopHits(pattern, consumer, dataContext)) return false;
     if (!processOptions(pattern, consumer, dataContext)) return false;
-    if (processTopHits(pattern, consumer, dataContext)) return false;
 
     return true;
   }
@@ -88,11 +90,9 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<Object>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
-      if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) {
-        continue;
-      }
-
-      if (provider instanceof OptionsTopHitProvider) {
+      if (provider instanceof UISimpleSettingsProvider) continue;
+      if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) continue;
+      if (provider instanceof OptionsTopHitProvider && !StringUtil.startsWith(pattern, "#")) {
         String prefix = "#" + ((OptionsTopHitProvider)provider).getId() + " ";
         provider.consumeTopHits(prefix + pattern, collector, project);
       }
@@ -105,8 +105,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
         c.add((Comparable)o);
       }
     }
-    if (!processItems(pattern, c, consumer)) return true;
-    return false;
+    return processItems(pattern, c, consumer);
   }
 
   private boolean processOptions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
