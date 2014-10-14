@@ -23,6 +23,31 @@
   <item name="java.net.DatagramPacket DatagramPacket(byte[], int, java.net.SocketAddress) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.DatagramPacket byte[] getData()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.DatagramPacket int getLength()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.DatagramPacket int getOffset()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.DatagramPacket int getPort()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.DatagramPacket java.net.InetAddress getAddress()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.DatagramPacket java.net.SocketAddress getSocketAddress()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -41,6 +66,31 @@
   <item name="java.net.DatagramSocket DatagramSocket(java.net.SocketAddress) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.net.DatagramSocket boolean isBound()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.DatagramSocket boolean isClosed()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.DatagramSocket boolean isConnected()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.DatagramSocket int getPort()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.DatagramSocket java.net.InetAddress getInetAddress()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.DatagramSocket java.net.InetAddress getLocalAddress()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -51,6 +101,9 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.DatagramSocket java.nio.channels.DatagramChannel getChannel()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.DatagramSocket void connect(java.net.InetAddress, int) 0">
@@ -76,14 +129,72 @@
   </item>
   <item name="java.net.InetAddress boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+      <val val="value=&quot;!null-&gt;false;null-&gt;false&quot;,pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.InetAddress boolean isAnyLocalAddress()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.InetAddress boolean isLinkLocalAddress()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.InetAddress boolean isLoopbackAddress()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.InetAddress boolean isMCGlobal()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.InetAddress boolean isMCLinkLocal()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.InetAddress boolean isMCNodeLocal()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.InetAddress boolean isMCOrgLocal()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.InetAddress boolean isMCSiteLocal()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.InetAddress boolean isMulticastAddress()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.InetAddress boolean isSiteLocalAddress()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
     </annotation>
   </item>
   <item name="java.net.InetAddress byte[] getAddress()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.InetAddress int checkNumericZone(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.InetAddress int hashCode()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.net.InetAddress java.lang.Object checkLookupTable(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -101,6 +212,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.InetAddress java.lang.String getHostAddress()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.InetAddress java.lang.String getHostFromNameService(java.net.InetAddress, boolean) 0">
@@ -146,6 +260,16 @@
   <item name="java.net.ServerSocket ServerSocket(java.net.Proxy) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.ServerSocket boolean isBound()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.ServerSocket boolean isClosed()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.ServerSocket java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -161,7 +285,15 @@
   <item name="java.net.ServerSocket java.net.SocketImpl access$000(java.net.ServerSocket) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.ServerSocket java.net.SocketImpl access$000(java.net.ServerSocket)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.ServerSocket java.nio.channels.ServerSocketChannel getChannel()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.ServerSocket void implAccept(java.net.Socket) 0">
@@ -191,6 +323,31 @@
   <item name="java.net.Socket Socket(java.net.SocketAddress, java.net.SocketAddress, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.Socket boolean isBound()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.Socket boolean isClosed()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.Socket boolean isConnected()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.Socket boolean isInputShutdown()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.Socket boolean isOutputShutdown()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.Socket java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -204,6 +361,9 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.Socket java.nio.channels.SocketChannel getChannel()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.Socket void bind(java.net.SocketAddress) 0">
@@ -269,6 +429,11 @@
   <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String) 4">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.net.URI boolean access$300(char, long, long)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.URI boolean equal(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -284,6 +449,21 @@
   <item name="java.net.URI boolean equals(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.net.URI boolean isAbsolute()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI boolean isOpaque()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI boolean match(char, long, long)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.URI int access$2502(java.net.URI, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -292,6 +472,11 @@
   </item>
   <item name="java.net.URI int compare(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI int compare(java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.net.URI int compareIgnoringCase(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -304,6 +489,11 @@
   </item>
   <item name="java.net.URI int compareTo(java.net.URI) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.URI int getPort()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.net.URI int hash(int, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -319,6 +509,11 @@
   </item>
   <item name="java.net.URI int needsNormalization(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.URI int toLower(char)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.net.URI java.lang.String access$002(java.net.URI, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -403,6 +598,41 @@
   <item name="java.net.URI java.lang.String encode(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI java.lang.String getHost()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI java.lang.String getRawAuthority()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI java.lang.String getRawFragment()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI java.lang.String getRawPath()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI java.lang.String getRawQuery()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI java.lang.String getRawUserInfo()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI java.lang.String getScheme()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
     </annotation>
   </item>
   <item name="java.net.URI java.lang.String normalize(java.lang.String) 0">
@@ -493,8 +723,138 @@
   <item name="java.net.URI java.net.URL toURL()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.URI long access$100()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$1200()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$1300()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$1600()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$1700()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$1800()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$1900()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$200()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$2000()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$2100()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$2600()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$2700()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$2800()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$2900()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$3000()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$3100()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$3200()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$3300()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$3400()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$400()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$500()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$600()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$800()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long access$900()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URI long highMask(char, char)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.URI long highMask(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.URI long lowMask(char, char)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.net.URI long lowMask(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -588,6 +948,51 @@
   <item name="java.net.URL boolean isValidProtocol(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.URL int getPort()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URL java.lang.String getAuthority()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URL java.lang.String getFile()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URL java.lang.String getHost()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URL java.lang.String getPath()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URL java.lang.String getProtocol()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URL java.lang.String getQuery()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URL java.lang.String getRef()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URL java.lang.String getUserInfo()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.URL java.net.URI toURI()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -612,6 +1017,46 @@
   <item name="java.net.URLConnection boolean checkfpx(java.io.InputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.URLConnection boolean getAllowUserInteraction()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URLConnection boolean getDefaultAllowUserInteraction()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URLConnection boolean getDefaultUseCaches()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URLConnection boolean getDoInput()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URLConnection boolean getDoOutput()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URLConnection boolean getUseCaches()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URLConnection int getConnectTimeout()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URLConnection int getReadTimeout()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.URLConnection int readBytes(int[], int, java.io.InputStream) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -629,11 +1074,14 @@
   </item>
   <item name="java.net.URLConnection java.lang.String getDefaultRequestProperty(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+      <val val="value=&quot;!null-&gt;null;null-&gt;null&quot;,pure=true"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.URLConnection java.lang.String getHeaderField(int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.URLConnection java.lang.String getHeaderField(java.lang.String) 0">
@@ -641,11 +1089,14 @@
   </item>
   <item name="java.net.URLConnection java.lang.String getHeaderField(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+      <val val="value=&quot;!null-&gt;null;null-&gt;null&quot;,pure=true"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.URLConnection java.lang.String getHeaderFieldKey(int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.URLConnection java.lang.String getRequestProperty(java.lang.String)">
@@ -678,8 +1129,33 @@
   <item name="java.net.URLConnection java.net.ContentHandler lookupContentHandlerClassFor(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.URLConnection java.net.FileNameMap access$000()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.net.URLConnection java.net.FileNameMap getFileNameMap()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.URLConnection java.net.URL getURL()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URLConnection java.security.Permission getPermission()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URLConnection java.util.Map&lt;java.lang.String,java.util.List&lt;java.lang.String&gt;&gt; getHeaderFields()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.net.URLConnection long getIfModifiedSince()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.net.URLConnection void addRequestProperty(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -692,6 +1168,11 @@
   </item>
   <item name="java.net.URLConnection void setDefaultRequestProperty(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URLConnection void setDefaultRequestProperty(java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.net.URLConnection void setFileNameMap(java.net.FileNameMap) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
