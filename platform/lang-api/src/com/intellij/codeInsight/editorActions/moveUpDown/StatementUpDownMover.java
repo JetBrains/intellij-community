@@ -16,14 +16,15 @@
 
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class StatementUpDownMover {
   public static final ExtensionPointName<StatementUpDownMover> STATEMENT_UP_DOWN_MOVER_EP = ExtensionPointName.create("com.intellij.statementUpDownMover");
 
-  public static class MoveInfo {
+  public static class MoveInfo extends UserDataHolderBase {
     /** Source line range */
     @NotNull
     public LineRange toMove;
