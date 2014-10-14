@@ -170,7 +170,7 @@ public class GraphTableModel extends AbstractTableModel {
           return "";
         }
         else {
-          return data.getAuthor().getName();
+          return data.getAuthor().getName() + (data.getAuthor().equals(data.getCommitter()) ? "" : "*");
         }
       case DATE_COLUMN:
         if (data == null || data.getTimestamp() < 0) {

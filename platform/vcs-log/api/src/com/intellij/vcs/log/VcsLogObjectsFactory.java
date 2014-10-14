@@ -23,7 +23,8 @@ public interface VcsLogObjectsFactory {
 
   @NotNull
   VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp,
-                                           VirtualFile root, @NotNull String subject, @NotNull String authorName, String authorEmail);
+                                           VirtualFile root, @NotNull String subject, @NotNull String authorName, String authorEmail,
+                                           @NotNull String committerName, @NotNull String committerEmail, long authorTime);
 
   @NotNull
   VcsCommitMetadata createCommitMetadata(@NotNull Hash hash, @NotNull List<Hash> parents, long time, VirtualFile root,
