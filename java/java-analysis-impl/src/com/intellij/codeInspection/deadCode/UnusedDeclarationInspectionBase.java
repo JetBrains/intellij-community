@@ -110,6 +110,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return new UnusedSymbolLocalInspectionBase();
   }
 
+  @Nullable
+  @Override
+  public UnusedSymbolLocalInspectionBase getSharedLocalInspectionTool() {
+    return myLocalInspectionBase;
+  }
+
   protected GlobalInspectionContext getContext() {
     return myContext;
   }
