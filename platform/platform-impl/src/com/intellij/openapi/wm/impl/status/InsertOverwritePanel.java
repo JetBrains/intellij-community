@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
 
   public InsertOverwritePanel(Project project) {
     super(project);
+    myTextPanel.setRightPadding(6);
   }
 
   @NotNull
@@ -86,7 +87,7 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
   }
 
   @Override
-  public void propertyChange(PropertyChangeEvent evt) {
+  public void propertyChange(@NotNull PropertyChangeEvent evt) {
     if (EditorEx.PROP_INSERT_MODE.equals(evt.getPropertyName()) || EditorEx.PROP_COLUMN_MODE.equals(evt.getPropertyName())) {
       updateStatus();
     }

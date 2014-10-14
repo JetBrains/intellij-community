@@ -429,16 +429,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
     final ToggleReadOnlyAttributePanel readOnlyAttributePanel = new ToggleReadOnlyAttributePanel();
 
-    InsertOverwritePanel insertOverwritePanel = null;
-    if (!SystemInfo.isMac) {
-      insertOverwritePanel = new InsertOverwritePanel(project);
-      statusBar.addWidget(insertOverwritePanel, "after Encoding");
-      statusBar.addWidget(readOnlyAttributePanel, "after InsertOverwrite");
-    } else {
-      statusBar.addWidget(readOnlyAttributePanel, "after Encoding");
-    }
+    final InsertOverwritePanel insertOverwritePanel = new InsertOverwritePanel(project);
+    statusBar.addWidget(insertOverwritePanel, "after Encoding");
+    statusBar.addWidget(readOnlyAttributePanel, "after InsertOverwrite");
 
-    final InsertOverwritePanel finalInsertOverwritePanel = insertOverwritePanel;
     Disposer.register(project, new Disposable() {
       public void dispose() {
         statusBar.removeWidget(encodingPanel.ID());
@@ -446,7 +440,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
         statusBar.removeWidget(positionPanel.ID());
         statusBar.removeWidget(notificationArea.ID());
         statusBar.removeWidget(readOnlyAttributePanel.ID());
-        if (finalInsertOverwritePanel != null) statusBar.removeWidget(finalInsertOverwritePanel.ID());
+        if (insertOverwritePanel != null) statusBar.removeWidget(insertOverwritePanel.ID());
 
         ((StatusBarEx)statusBar).removeCustomIndicationComponents();
       }
