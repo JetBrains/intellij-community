@@ -153,7 +153,7 @@ public class AuthenticationService {
   public String requestSshCredentials(@NotNull final String realm,
                                       @NotNull final SimpleCredentialsDialog.Mode mode,
                                       @NotNull final String key) {
-    return requestCredentials(realm, ISVNAuthenticationManager.SSH, new Getter<String>() {
+    return requestCredentials(realm, StringUtil.toLowerCase(mode.toString()), new Getter<String>() {
       @Override
       public String get() {
         final Ref<String> answer = new Ref<String>();
