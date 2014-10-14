@@ -82,9 +82,9 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
       }
       if (expression instanceof PyStringLiteralExpression)
         continue;
-      final PyType type = TypeEvalContext.codeAnalysis(file).getType(expression);
+      final PyType type = TypeEvalContext.codeAnalysis(file.getProject(), file).getType(expression);
       final boolean isStringReference = PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(expression)),
-                                                            type, TypeEvalContext.codeAnalysis(file)) && type != null;
+                                                            type, TypeEvalContext.codeAnalysis(file.getProject(), file)) && type != null;
       if (!isStringReference) {
         return false;
       }
@@ -136,7 +136,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     List<String> parameters = new ArrayList<String>();
     Pair<String, String> quotes = Pair.create("\"", "\"");
     boolean quotesDetected = false;
-    final TypeEvalContext context = TypeEvalContext.userInitiated(file);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file);
     int paramCount = 0;
     boolean isUnicode = false;
     final PyClassTypeImpl unicodeType = PyBuiltinCache.getInstance(element).getObjectType("unicode");

@@ -193,7 +193,7 @@ public class PyOverrideImplementUtil {
     if (anno != null) {
       pyFunctionBuilder.annotation(anno.getText());
     }
-    final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getProject(), baseFunction.getContainingFile());
     final List<PyParameter> baseParams = PyUtil.getParameters(baseFunction, context);
     for (PyParameter parameter : baseParams) {
       pyFunctionBuilder.parameter(parameter.getText());

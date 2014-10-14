@@ -132,7 +132,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
         for (PyImportElement element : elements) {
           final PyReferenceExpression referenceExpression = element.getImportReferenceExpression();
           if (referenceExpression == null) continue;
-          final PyType type = TypeEvalContext.userInitiated(CompletionUtil.getOriginalOrSelf(file)).getType(referenceExpression);
+          final PyType type = TypeEvalContext.userInitiated(file.getProject(), CompletionUtil.getOriginalOrSelf(file)).getType(referenceExpression);
           if (type instanceof PyClassType) {
             variants.add(((PyClassType)type).getPyClass());
           }

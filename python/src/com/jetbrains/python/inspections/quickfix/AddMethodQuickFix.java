@@ -96,7 +96,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       boolean madeInstance = false;
       if (callByClass) {
         if (args.length > 0) {
-          PyType firstArgType = TypeEvalContext.userInitiated(cls.getContainingFile()).getType(args[0]);
+          PyType firstArgType = TypeEvalContext.userInitiated(cls.getProject(), cls.getContainingFile()).getType(args[0]);
           if (firstArgType instanceof PyClassType && ((PyClassType)firstArgType).getPyClass().isSubclass(cls)) {
             // class, first arg ok: instance method
             builder.parameter("self"); // NOTE: might use a name other than 'self', according to code style.
@@ -151,7 +151,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
     if ((problemElement instanceof PyQualifiedExpression)) {
       final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
       if (qualifier == null) return null;
-      final PyType type = TypeEvalContext.userInitiated(problemElement.getContainingFile()).getType(qualifier);
+      final PyType type = TypeEvalContext.userInitiated(problemElement.getProject(), problemElement.getContainingFile()).getType(qualifier);
       return type instanceof PyClassType ? (PyClassType)type : null;
     }
     final PyClass pyClass = PsiTreeUtil.getParentOfType(problemElement, PyClass.class);

@@ -118,7 +118,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (element instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
       if (qualifier == null) return null;
-      final PyType type = TypeEvalContext.userInitiated(element.getContainingFile()).getType(qualifier);
+      final PyType type = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).getType(qualifier);
       return type instanceof PyClassType ? (PyClassType)type : null;
     }
     final PyClass aClass = PsiTreeUtil.getParentOfType(element, PyClass.class);

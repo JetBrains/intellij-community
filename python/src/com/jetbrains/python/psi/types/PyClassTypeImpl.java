@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -410,9 +411,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     boolean suppressParentheses = context.get(CTX_SUPPRESS_PARENTHESES) != null;
     addOwnClassMembers(location, namesAlready, suppressParentheses, ret);
 
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(location != null ?
-                                                                          CompletionUtil.getOriginalOrSelf(location).getContainingFile() :
-                                                                          null);
+    PsiFile origin = (location != null) ?
+                     CompletionUtil.getOriginalOrSelf(location)
+                       .getContainingFile() :
+                     null;
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myClass.getProject(), origin);
     addInheritedMembers(prefix, location, namesAlready, context, ret, typeEvalContext);
 
     // from providers

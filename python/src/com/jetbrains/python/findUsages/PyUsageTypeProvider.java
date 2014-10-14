@@ -53,7 +53,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
       if (element instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
         if (qualifier != null) {
-          final TypeEvalContext context = TypeEvalContext.userInitiated(element.getContainingFile());
+          final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
           final PyType type = context.getType(qualifier);
           if (type == null) {
             final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
