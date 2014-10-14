@@ -16,8 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -29,8 +28,9 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedDecls";
 
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UnusedSymbolLocalInspection()};
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedDeclarationInspection());
   }
 
   public void testInnerClass() throws Exception { doTest(); }

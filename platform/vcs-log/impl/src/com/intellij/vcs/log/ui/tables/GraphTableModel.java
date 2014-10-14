@@ -1,19 +1,21 @@
 package com.intellij.vcs.log.ui.tables;
 
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
+import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
@@ -21,10 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class GraphTableModel extends AbstractTableModel {
 
@@ -61,11 +60,40 @@ public class GraphTableModel extends AbstractTableModel {
     int head = myDataPack.getVisibleGraph().getRowInfo(rowIndex).getOneOfHeads();
     Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(head);
     if (refs.isEmpty()) {
-      LOG.error("No references pointing to head " + head + " identified for commit at row " + rowIndex);
+      LOG.error("No references pointing to head " + myDataHolder.getHash(head) + " identified for commit at row " + rowIndex,
+                new Attachment("details.txt", getErrorDetails()));
       // take the first root: it is the right choice in one-repo case, though it will likely fail in multi-repo case
       return myDataPack.getLogProviders().keySet().iterator().next();
     }
     return refs.iterator().next().getRoot();
+  }
+
+  @NotNull
+  private String getErrorDetails() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("LAST 100 COMMITS:\n");
+    List<GraphCommit<Integer>> commits = myDataPack.getPermanentGraph().getAllCommits();
+    for (int i = 0; i < 100 && i < commits.size(); i++) {
+      GraphCommit<Integer> commit = commits.get(0);
+      sb.append(myDataHolder.getHash(commit.getId()) + "\n");
+    }
+    sb.append("\nALL REFS:\n");
+    printRefs(sb, myDataHolder.getHashMap().asIndexGetter(), myDataPack.getRefsModel().getAllRefsByRoot());
+    return sb.toString();
+  }
+
+  private static void printRefs(@NotNull StringBuilder sb,
+                                @NotNull final NotNullFunction<Hash, Integer> indexGetter,
+                                @NotNull Map<VirtualFile, Set<VcsRef>> refs) {
+    for (Map.Entry<VirtualFile, Set<VcsRef>> entry : refs.entrySet()) {
+      sb.append(entry.getKey().getName() + ":\n");
+      sb.append(StringUtil.join(entry.getValue(), new Function<VcsRef, String>() {
+        @Override
+        public String fun(@NotNull VcsRef ref) {
+          return ref.getName() + "(" + indexGetter.fun(ref.getCommitHash()) + ")";
+        }
+      }, ","));
+    }
   }
 
   @NotNull

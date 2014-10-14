@@ -376,10 +376,20 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       if (!StringUtil.isEmpty(httpConfigurable.PROXY_EXCEPTIONS)) {
         List<String> hosts = StringUtil.split(httpConfigurable.PROXY_EXCEPTIONS, ",");
         if (!hosts.isEmpty()) {
-          extraJvmArgs.add(KeyValue.create("http.nonProxyHosts", StringUtil.join(hosts, StringUtil.TRIMMER, "|")));
+          final String nonProxyHosts = StringUtil.join(hosts, StringUtil.TRIMMER, "|");
+          extraJvmArgs.add(KeyValue.create("http.nonProxyHosts", nonProxyHosts));
+          extraJvmArgs.add(KeyValue.create("https.nonProxyHosts", nonProxyHosts));
         }
       }
+      if (httpConfigurable.USE_HTTP_PROXY && StringUtil.isNotEmpty(httpConfigurable.PROXY_LOGIN)) {
+        extraJvmArgs.add(KeyValue.create("http.proxyUser", httpConfigurable.PROXY_LOGIN));
+        extraJvmArgs.add(KeyValue.create("https.proxyUser", httpConfigurable.PROXY_LOGIN));
+        final String plainProxyPassword = httpConfigurable.getPlainProxyPassword();
+        extraJvmArgs.add(KeyValue.create("http.proxyPassword", plainProxyPassword));
+        extraJvmArgs.add(KeyValue.create("https.proxyPassword", plainProxyPassword));
+      }
       extraJvmArgs.addAll(HttpConfigurable.getJvmPropertiesList(false, null));
+
       return extraJvmArgs;
     }
     return Collections.emptyList();

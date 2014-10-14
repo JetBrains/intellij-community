@@ -25,7 +25,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
@@ -91,7 +91,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     final HighlightDisplayKey unusedDefKey = HighlightDisplayKey.find(GroovyUnusedDeclarationInspection.SHORT_NAME);
     final boolean deadCodeEnabled = profile.isToolEnabled(unusedDefKey, myFile);
-    final UnusedDeclarationInspection deadCodeInspection = (UnusedDeclarationInspection)profile.getUnwrappedTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
+    final UnusedDeclarationInspectionBase deadCodeInspection = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, myFile);
     final GlobalUsageHelper usageHelper = new GlobalUsageHelper() {
       @Override
       public boolean isCurrentFileAlreadyChecked() {

@@ -817,6 +817,7 @@
     <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider" interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
 
     <extensionPoint name="previewPanelProvider" interface="com.intellij.openapi.preview.PreviewPanelProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger"/>
   </extensionPoints>
 </idea-plugin>
 

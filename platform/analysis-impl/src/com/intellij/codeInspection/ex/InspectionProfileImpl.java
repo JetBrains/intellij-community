@@ -27,6 +27,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -47,7 +48,6 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashMap;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -75,9 +75,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   protected InspectionProfileImpl mySource;
   private InspectionProfileImpl myBaseProfile = null;
   @NonNls private static final String VERSION_TAG = "version";
-  @NonNls private static final String INSPECTION_TOOL_TAG = "inspection_tool";
+  @NonNls public static final String INSPECTION_TOOL_TAG = "inspection_tool";
 
-  @NonNls private static final String CLASS_TAG = "class";
+  @NonNls public static final String CLASS_TAG = "class";
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
 
@@ -263,6 +263,18 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
 
       myDeinstalledInspectionsSettings.put(toolClassName, toolElement);
+    }
+
+    for (InspectionElementsMerger merger : Extensions.getExtensions(InspectionElementsMerger.EP_NAME)) {
+      final String newToolName = merger.getNewToolName();
+      final String mergedToolName = newToolName + "Merged";
+      if (!myDeinstalledInspectionsSettings.containsKey(mergedToolName)) {
+        final Element merged = merger.merge(myDeinstalledInspectionsSettings);
+        if (merged != null) {
+          myDeinstalledInspectionsSettings.put(newToolName, merged);
+          myDeinstalledInspectionsSettings.put(mergedToolName, new Element(INSPECTION_TOOL_TAG).setAttribute(CLASS_TAG, mergedToolName));
+        }
+      }
     }
   }
 

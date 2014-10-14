@@ -16,8 +16,8 @@ import java.io.*;
 import java.util.Map;
 
 public class StudyTestRunner {
-  public static final String TEST_OK = "#study_plugin test OK";
-  private static final String TEST_FAILED = "#study_plugin FAILED + ";
+  public static final String TEST_OK = "#educational_plugin test OK";
+  private static final String TEST_FAILED = "#educational_plugin FAILED + ";
   private static final String PYTHONPATH = "PYTHONPATH";
   private static final Logger LOG = Logger.getInstance(StudyTestRunner.class);
   private final Task myTask;

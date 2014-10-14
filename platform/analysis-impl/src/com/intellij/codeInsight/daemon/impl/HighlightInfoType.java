@@ -37,9 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface HighlightInfoType {
-  @NonNls String UNUSED_SYMBOL_SHORT_NAME = "UNUSED_SYMBOL";
-  @NonNls String UNUSED_SYMBOL_DISPLAY_NAME = InspectionsBundle.message("unused.symbol");
-  @NonNls String UNUSED_SYMBOL_ID = "UnusedDeclaration";
+  @NonNls String UNUSED_SYMBOL_SHORT_NAME = "unused";
+  @NonNls String UNUSED_SYMBOL_DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
 
   HighlightInfoType ERROR = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
@@ -55,7 +54,7 @@ public interface HighlightInfoType {
   HighlightInfoType DUPLICATE_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.DUPLICATE_FROM_SERVER);
 
   HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(
-    HighlightDisplayKey.findOrRegister(UNUSED_SYMBOL_SHORT_NAME, UNUSED_SYMBOL_DISPLAY_NAME, UNUSED_SYMBOL_ID),
+    HighlightDisplayKey.findOrRegister(UNUSED_SYMBOL_SHORT_NAME, UNUSED_SYMBOL_DISPLAY_NAME, UNUSED_SYMBOL_SHORT_NAME),
     CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
 
   HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(
