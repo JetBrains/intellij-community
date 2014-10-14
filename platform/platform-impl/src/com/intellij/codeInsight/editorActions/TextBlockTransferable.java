@@ -105,30 +105,30 @@ public class TextBlockTransferable implements Transferable {
 
   @NotNull
   public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input,
-                                             @NotNull Collection<TextBlockTransferableData> transferableDatas) {
+                                             @NotNull Collection<TextBlockTransferableData> itemsToUpdate) {
     // converting line separators to spaces matches the behavior of Swing text components on paste
-    return convertLineSeparators(input, editor.isOneLineMode() ? " " : "\n", transferableDatas);
+    return convertLineSeparators(input, editor.isOneLineMode() ? " " : "\n", itemsToUpdate);
   }
 
   public static String convertLineSeparators(String text,
                                              String newSeparator,
-                                             Collection<TextBlockTransferableData> transferableDatas) {
-    if (transferableDatas.size() > 0){
+                                             Collection<TextBlockTransferableData> itemsToUpdate) {
+    if (itemsToUpdate.size() > 0){
       int size = 0;
-      for(TextBlockTransferableData data: transferableDatas) {
+      for(TextBlockTransferableData data: itemsToUpdate) {
         size += data.getOffsetCount();
       }
 
       int[] offsets = new int[size];
       int index = 0;
-      for(TextBlockTransferableData data: transferableDatas) {
+      for(TextBlockTransferableData data: itemsToUpdate) {
         index = data.getOffsets(offsets, index);
       }
 
       text = StringUtil.convertLineSeparators(text, newSeparator, offsets);
 
       index = 0;
-      for(TextBlockTransferableData data: transferableDatas) {
+      for(TextBlockTransferableData data: itemsToUpdate) {
         index = data.setOffsets(offsets, index);
       }
 
