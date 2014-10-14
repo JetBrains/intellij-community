@@ -53,10 +53,11 @@ public class BytecodeAnalysisConverter {
     ProgressManager.checkCanceled();
 
     Result<Key, Value> rhs = equation.rhs;
-    HResult result;
+    HResult hResult;
     if (rhs instanceof Final) {
-      result = new HFinal(((Final<Key, Value>)rhs).value);
-    } else {
+      hResult = new HFinal(((Final<Key, Value>)rhs).value);
+    }
+    else {
       Pending<Key, Value> pending = (Pending<Key, Value>)rhs;
       Set<Product<Key, Value>> sumOrigin = pending.sum;
       HComponent[] components = new HComponent[sumOrigin.size()];
@@ -64,17 +65,17 @@ public class BytecodeAnalysisConverter {
       for (Product<Key, Value> prod : sumOrigin) {
         HKey[] intProd = new HKey[prod.ids.size()];
         int idI = 0;
-        for (Key id : prod.ids) {
-          intProd[idI] = asmKey(id, md);
+        for (Key key : prod.ids) {
+          intProd[idI] = asmKey(key, md);
           idI++;
         }
         HComponent intIdComponent = new HComponent(prod.value, intProd);
         components[componentI] = intIdComponent;
         componentI++;
       }
-      result = new HPending(components);
+      hResult = new HPending(components);
     }
-    return new DirectionResultPair(mkDirectionKey(equation.id.direction), result);
+    return new DirectionResultPair(mkDirectionKey(equation.id.direction), hResult);
   }
 
   /**
@@ -274,6 +275,23 @@ public class BytecodeAnalysisConverter {
   }
 
 
+  /**
+   * Converts Direction object to int.
+   *
+   * 0 - Out
+   * 1 - NullableOut
+   * 2 - Pure
+   *
+   * 3 - 0-th NOT_NULL
+   * 4 - 0-th NULLABLE
+   * ...
+   *
+   * 11 - 1-st NOT_NULL
+   * 12 - 1-st NULLABLE
+   *
+   * @param dir direction of analysis
+   * @return unique int for direction
+   */
   static int mkDirectionKey(Direction dir) {
     if (dir == Out) {
       return 0;
@@ -281,17 +299,28 @@ public class BytecodeAnalysisConverter {
     else if (dir == NullableOut) {
       return 1;
     }
+    else if (dir == Pure) {
+      return 2;
+    }
     else if (dir instanceof In) {
       In in = (In)dir;
       // nullity mask is 0/1
-      return 2 + 8 * in.paramId() + in.nullityMask;
+      return 3 + 8 * in.paramId() + in.nullityMask;
     }
     else {
+      // valueId is [1-5]
       InOut inOut = (InOut)dir;
-      return 4 + 8 * inOut.paramId() + inOut.valueId();
+      return 3 + 8 * inOut.paramId() + 2 + inOut.valueId();
     }
   }
 
+  /**
+   * Converts int to Direction object.
+   *
+   * @param  directionKey int representation of direction
+   * @return Direction object
+   * @see    #mkDirectionKey(Direction)
+   */
   @NotNull
   private static Direction extractDirection(int directionKey) {
     if (directionKey == 0) {
@@ -300,15 +329,21 @@ public class BytecodeAnalysisConverter {
     else if (directionKey == 1) {
       return NullableOut;
     }
+    else if (directionKey == 2) {
+      return Pure;
+    }
     else {
-      directionKey--;
-      int paramId = directionKey / 8;
-      int subDirection = directionKey % 8;
-      if (subDirection <= 2) {
-        return new In(paramId, subDirection - 1);
+      int paramKey = directionKey - 3;
+      int paramId = paramKey / 8;
+      // shifting first 3 values - now we have key [0 - 7]
+      int subDirectionId = paramKey % 8;
+      // 0 - 1 - @NotNull, @Nullable, parameter
+      if (subDirectionId <= 1) {
+        return new In(paramId, subDirectionId);
       }
       else {
-        return new InOut(paramId, Value.values()[subDirection - 3]);
+        int valueId = subDirectionId - 2;
+        return new InOut(paramId, Value.values()[valueId]);
       }
     }
   }

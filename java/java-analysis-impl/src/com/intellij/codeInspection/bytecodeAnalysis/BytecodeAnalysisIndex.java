@@ -88,6 +88,9 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
     return ourInternalVersion + (ourEnabled ? 0xFF : 0);
   }
 
+  /**
+   * Externalizer for primary method keys.
+   */
   private static class HKeyDescriptor implements KeyDescriptor<Bytes>, DifferentSerializableBytesImplyNonEqualityPolicy {
 
     @Override
@@ -115,6 +118,9 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
     }
   }
 
+  /**
+   * Externalizer for compressed equations.
+   */
   public static class HEquationsExternalizer implements DataExternalizer<HEquations>, DifferentSerializableBytesImplyNonEqualityPolicy {
     @Override
     public void save(@NotNull DataOutput out, HEquations eqs) throws IOException {

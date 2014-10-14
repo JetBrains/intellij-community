@@ -194,7 +194,7 @@ final class CombinedAnalysis {
   }
 
   final Equation<Key, Value> notNullParamEquation(int i, boolean stable) {
-    final Key key = new Key(method, new In(i, In.NOT_NULL), stable);
+    final Key key = new Key(method, new In(i, In.NOT_NULL_MASK), stable);
     final Result<Key, Value> result;
     if (interpreter.dereferencedParams[i]) {
       result = new Final<Key, Value>(Value.NotNull);
@@ -207,7 +207,7 @@ final class CombinedAnalysis {
       else {
         Set<Key> keys = new HashSet<Key>();
         for (ParamKey pk: calls) {
-          keys.add(new Key(pk.method, new In(pk.i, In.NOT_NULL), pk.stable));
+          keys.add(new Key(pk.method, new In(pk.i, In.NOT_NULL_MASK), pk.stable));
         }
         result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
       }
@@ -216,7 +216,7 @@ final class CombinedAnalysis {
   }
 
   final Equation<Key, Value> nullableParamEquation(int i, boolean stable) {
-    final Key key = new Key(method, new In(i, In.NULLABLE), stable);
+    final Key key = new Key(method, new In(i, In.NULLABLE_MASK), stable);
     final Result<Key, Value> result;
     if (interpreter.dereferencedParams[i] || interpreter.notNullableParams[i] || returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
       result = new Final<Key, Value>(Value.Top);
@@ -229,7 +229,7 @@ final class CombinedAnalysis {
       else {
         Set<Product<Key, Value>> sum = new HashSet<Product<Key, Value>>();
         for (ParamKey pk: calls) {
-          sum.add(new Product<Key, Value>(Value.Top, Collections.singleton(new Key(pk.method, new In(pk.i, In.NULLABLE), pk.stable))));
+          sum.add(new Product<Key, Value>(Value.Top, Collections.singleton(new Key(pk.method, new In(pk.i, In.NULLABLE_MASK), pk.stable))));
         }
         result = new Pending<Key, Value>(sum);
       }
