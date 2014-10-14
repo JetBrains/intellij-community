@@ -129,7 +129,13 @@ public class TodoCheckinHandlerWorker {
         continue;
       }
 
-      myNewTodoItems = new ArrayList<TodoItem>(Arrays.asList(mySearchHelper.findTodoItems(myPsiFile)));
+      myNewTodoItems = new ArrayList<TodoItem>(Arrays.asList(
+        ApplicationManager.getApplication().runReadAction(new Computable<TodoItem[]>() {
+          @Override
+          public TodoItem[] compute() {
+            return mySearchHelper.findTodoItems(myPsiFile);
+          }
+        })));
       applyFilterAndRemoveDuplicates(myNewTodoItems, myTodoFilter);
       if (change.getBeforeRevision() == null) {
         // take just all todos
