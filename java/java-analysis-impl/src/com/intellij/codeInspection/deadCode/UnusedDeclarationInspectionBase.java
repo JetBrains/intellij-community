@@ -35,13 +35,14 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -55,15 +56,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
-import java.util.List;
 
-public class UnusedDeclarationInspection extends GlobalInspectionTool {
+public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public boolean ADD_MAINS_TO_ENTRIES = true;
 
   public boolean ADD_APPLET_TO_ENTRIES = true;
@@ -73,14 +70,21 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
   private Set<RefElement> myProcessedSuspicious = null;
   private int myPhase;
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
-  @NonNls public static final String SHORT_NAME = "UnusedDeclaration";
-  @NonNls private static final String ALTERNATIVE_ID = "unused";
+  @NonNls public static final String SHORT_NAME = "unused";
+  @NonNls public static final String ALTERNATIVE_ID = "UnusedDeclaration";
 
   public final EntryPoint[] myExtensions;
-  private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspectionBase.class.getName());
   private GlobalInspectionContext myContext;
+  protected UnusedSymbolLocalInspectionBase myLocalInspectionBase = createUnusedSymbolLocalInspection();
+  private boolean myEnabledInEditor = !ApplicationManager.getApplication().isUnitTestMode();
 
-  public UnusedDeclarationInspection() {
+  public UnusedDeclarationInspectionBase(boolean enabledInEditor) {
+    this();
+    myEnabledInEditor = enabledInEditor;
+  }
+
+  public UnusedDeclarationInspectionBase() {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
     final EntryPoint[] deadCodeAddins = new EntryPoint[point.getExtensions().length];
     EntryPoint[] extensions = point.getExtensions();
@@ -102,115 +106,12 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     myExtensions = deadCodeAddins;
   }
 
-  private GlobalInspectionContext getContext() {
+  protected UnusedSymbolLocalInspectionBase createUnusedSymbolLocalInspection() {
+    return new UnusedSymbolLocalInspectionBase();
+  }
+
+  protected GlobalInspectionContext getContext() {
     return myContext;
-  }
-
-  private class OptionsPanel extends JPanel {
-    private final JCheckBox myMainsCheckbox;
-    private final JCheckBox myAppletToEntries;
-    private final JCheckBox myServletToEntries;
-    private final JCheckBox myNonJavaCheckbox;
-
-    private OptionsPanel() {
-      super(new GridBagLayout());
-      GridBagConstraints gc = new GridBagConstraints();
-      gc.weightx = 1;
-      gc.weighty = 0;
-      gc.insets = new Insets(0, 20, 2, 0);
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      gc.anchor = GridBagConstraints.NORTHWEST;
-
-      myMainsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option"));
-      myMainsCheckbox.setSelected(ADD_MAINS_TO_ENTRIES);
-      myMainsCheckbox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          ADD_MAINS_TO_ENTRIES = myMainsCheckbox.isSelected();
-        }
-      });
-
-      gc.gridy = 0;
-      add(myMainsCheckbox, gc);
-
-      myAppletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option3"));
-      myAppletToEntries.setSelected(ADD_APPLET_TO_ENTRIES);
-      myAppletToEntries.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          ADD_APPLET_TO_ENTRIES = myAppletToEntries.isSelected();
-        }
-      });
-      gc.gridy++;
-      add(myAppletToEntries, gc);
-
-      myServletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option4"));
-      myServletToEntries.setSelected(ADD_SERVLET_TO_ENTRIES);
-      myServletToEntries.addActionListener(new ActionListener(){
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          ADD_SERVLET_TO_ENTRIES = myServletToEntries.isSelected();
-        }
-      });
-      gc.gridy++;
-      add(myServletToEntries, gc);
-
-      for (final EntryPoint extension : myExtensions) {
-        if (extension.showUI()) {
-          final JCheckBox extCheckbox = new JCheckBox(extension.getDisplayName());
-          extCheckbox.setSelected(extension.isSelected());
-          extCheckbox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-              extension.setSelected(extCheckbox.isSelected());
-            }
-          });
-          gc.gridy++;
-          add(extCheckbox, gc);
-        }
-      }
-
-      myNonJavaCheckbox =
-      new JCheckBox(InspectionsBundle.message("inspection.dead.code.option5"));
-      myNonJavaCheckbox.setSelected(ADD_NONJAVA_TO_ENTRIES);
-      myNonJavaCheckbox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          ADD_NONJAVA_TO_ENTRIES = myNonJavaCheckbox.isSelected();
-        }
-      });
-
-      gc.gridy++;
-      add(myNonJavaCheckbox, gc);
-
-      Project project = guessProject();
-      JButton configureAnnotations = EntryPointsManager.getInstance(project).createConfigureAnnotationsBtn();
-      gc.fill = GridBagConstraints.NONE;
-      gc.gridy++;
-      gc.insets.top = 10;
-      gc.weighty = 1;
-
-      add(configureAnnotations, gc);
-    }
-
-  }
-
-  private Project guessProject() {
-    Project project = myContext == null ? null : myContext.getProject();
-
-    if (project == null) {
-      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-      project = openProjects.length == 0 ? ProjectManager.getInstance().getDefaultProject() : openProjects[0];
-    }
-    return project;
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    final JPanel scrollPane = new JPanel(new BorderLayout());
-    scrollPane.add(new JLabel("Entry points:"), BorderLayout.NORTH);
-    scrollPane.add(new OptionsPanel(), BorderLayout.CENTER);
-    return scrollPane;
   }
 
   private boolean isAddMainsEnabled() {
@@ -250,6 +151,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
+    myLocalInspectionBase.readSettings(node);
     for (EntryPoint extension : myExtensions) {
       extension.readExternal(node);
     }
@@ -258,6 +160,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
+    myLocalInspectionBase.writeSettings(node);
     for (EntryPoint extension : myExtensions) {
       extension.writeExternal(node);
     }
@@ -363,7 +266,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
 
           if (file == null) return;
           final boolean isSuppressed = refElement.isSuppressed(getShortName(), ALTERNATIVE_ID);
-          if (isSuppressed || !((GlobalInspectionContextBase)globalContext).isToCheckFile(file, UnusedDeclarationInspection.this)) {
+          if (isSuppressed || !((GlobalInspectionContextBase)globalContext).isToCheckFile(file, UnusedDeclarationInspectionBase.this)) {
             if (isSuppressed || !scope.contains(file)) {
               getEntryPointsManager().addEntryPoint(refElement, false);
             }
@@ -498,9 +401,17 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     return false;
   }
 
+  public boolean isGlobalEnabledInEditor() {
+    return myEnabledInEditor;
+  }
+
+  @TestOnly
+  public void setEnabledInEditor(boolean enabledInEditor) {
+    myEnabledInEditor = enabledInEditor;
+  }
 
   private static class StrictUnreferencedFilter extends UnreferencedFilter {
-    private StrictUnreferencedFilter(@NotNull UnusedDeclarationInspection tool, @NotNull GlobalInspectionContext context) {
+    private StrictUnreferencedFilter(@NotNull UnusedDeclarationInspectionBase tool, @NotNull GlobalInspectionContext context) {
       super(tool, context);
     }
 
@@ -652,7 +563,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
       public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
           final RefJavaElementImpl refElement = (RefJavaElementImpl)refEntity;
-          if (!((GlobalInspectionContextBase)context).isToCheckMember(refElement, UnusedDeclarationInspection.this)) return;
+          if (!((GlobalInspectionContextBase)context).isToCheckMember(refElement, UnusedDeclarationInspectionBase.this)) return;
           refElement.setReachable(false);
         }
       }

@@ -50,8 +50,8 @@ import java.util.Map;
 
 public class ToolsImpl implements Tools {
   @NonNls private static final String ENABLED_BY_DEFAULT_ATTRIBUTE = "enabled_by_default";
-  @NonNls private static final String ENABLED_ATTRIBUTE = "enabled";
-  @NonNls private static final String LEVEL_ATTRIBUTE = "level";
+  @NonNls public static final String ENABLED_ATTRIBUTE = "enabled";
+  @NonNls public static final String LEVEL_ATTRIBUTE = "level";
 
   private final String myShortName;
   private final ScopeToolState myDefaultState;

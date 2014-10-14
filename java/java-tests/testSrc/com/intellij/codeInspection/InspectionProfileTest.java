@@ -17,7 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -262,7 +262,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   public void testGlobalInspectionContext() throws Exception {
     InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
     profile.disableAllTools(getProject());
-    profile.enableTool(new UnusedDeclarationInspection().getShortName(), getProject());
+    profile.enableTool(new UnusedDeclarationInspectionBase(true).getShortName(), getProject());
 
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
     context.setExternalProfile(profile);
