@@ -138,12 +138,12 @@ public class StudyUtils {
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
           if (!taskWindow.isValid(document)) {
-            printWriter.println("#study_plugin_window = ");
+            printWriter.println("#educational_plugin_window = ");
             continue;
           }
           int start = taskWindow.getRealStartOffset(document);
           String windowDescription = document.getText(new TextRange(start, start + taskWindow.getLength()));
-          printWriter.println("#study_plugin_window = " + windowDescription);
+          printWriter.println("#educational_plugin_window = " + windowDescription);
         }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override

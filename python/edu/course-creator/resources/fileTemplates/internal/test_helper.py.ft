@@ -93,13 +93,13 @@ def test_window_text_deleted(error_text="Don't just delete task text"):
 
 
 def failed(message="Please, reload the task and try again."):
-    print("#study_plugin FAILED + " + message)
+    print("#educational_plugin FAILED + " + message)
 
 def passed():
-    print("#study_plugin test OK")
+    print("#educational_plugin test OK")
 
 def get_task_windows():
-    prefix = "#study_plugin_window = "
+    prefix = "#educational_plugin_window = "
     path = sys.argv[-1]
     import os
     windows_path = os.path.splitext(path)[0] + "_windows"
