@@ -31,10 +31,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   private static final Logger LOG = Logger.getInstance(EditorCopyPasteHelperImpl.class);
@@ -119,18 +116,19 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
-          String segment = segments.next();
+          String normalizedText = TextBlockTransferable.convertLineSeparators(editor, segments.next());
           int caretOffset = caret.getOffset();
-          ranges[index[0]++] = new TextRange(caretOffset, caretOffset + segment.length());
-          EditorModificationUtil.insertStringAtCaret(editor, segment, false, true);
+          ranges[index[0]++] = new TextRange(caretOffset, caretOffset + normalizedText.length());
+          EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
         }
       });
       return ranges;
     }
     else {
       int caretOffset = editor.getCaretModel().getOffset();
-      EditorModificationUtil.insertStringAtCaret(editor, text, false, true);
-      return new TextRange[] { new TextRange(caretOffset, caretOffset + text.length())};
+      String normalizedText = TextBlockTransferable.convertLineSeparators(editor, text);
+      EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
+      return new TextRange[]{new TextRange(caretOffset, caretOffset + text.length())};
     }
   }
 
