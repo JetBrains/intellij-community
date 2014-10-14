@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,8 +113,13 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   }
 
   public static ModuleType get(@NotNull Module module) {
-    ModuleTypeManager instance = ModuleTypeManager.getInstance();
-    return instance == null && ApplicationManager.getApplication().isUnitTestMode() ? EMPTY : instance.findByID(module.getOptionValue(Module.ELEMENT_TYPE));
+    try {
+      ModuleTypeManager instance = ModuleTypeManager.getInstance();
+      return instance == null && ApplicationManager.getApplication().isUnitTestMode() ? EMPTY : instance.findByID(module.getOptionValue(Module.ELEMENT_TYPE));
+    }
+    catch (Exception e) {
+      return EMPTY;
+    }
   }
 
   @NotNull
