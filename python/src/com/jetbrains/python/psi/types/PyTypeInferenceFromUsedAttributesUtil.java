@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
@@ -31,6 +33,17 @@ public class PyTypeInferenceFromUsedAttributesUtil {
   public static final int MAX_CANDIDATES = 5;
   // Not final so it can be changed in debugger
   private static boolean ENABLED = Boolean.parseBoolean(System.getProperty("py.infer.types.from.used.attributes", "true"));
+
+  private static final Set<String> COMMON_OBJECT_ATTRIBUTES = ImmutableSet.of(
+    "__init__",
+    "__new__",
+    "__str__",
+    "__repr__", // TODO __module__ actually belongs to object's metaclass, it's not available to intances
+    "__doc__",
+    "__class__",
+    "__module__",
+    "__dict__"
+  );
 
   private PyTypeInferenceFromUsedAttributesUtil() {
     // empty
@@ -54,7 +67,14 @@ public class PyTypeInferenceFromUsedAttributesUtil {
 
     final Set<PyClass> candidates = Sets.newHashSet();
     for (String attribute : seenAttrs) {
-      candidates.addAll(PyClassAttributesIndex.find(attribute, expression.getProject()));
+      // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
+      // and we probably don't want to confuse user with __Classobj anyway
+      if (COMMON_OBJECT_ATTRIBUTES.contains(attribute)) {
+        candidates.add(PyBuiltinCache.getInstance(expression).getClass(PyNames.OBJECT));
+      }
+      else {
+        candidates.addAll(PyClassAttributesIndex.find(attribute, expression.getProject()));
+      }
     }
 
     final Set<PyClass> suitableClasses = Sets.newHashSet();

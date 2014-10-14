@@ -173,6 +173,13 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "(a: A | unknown, b: B | unknown) -> A | unknown");
   }
 
+  public void testFastInferenceForObjectAttributes() {
+    doTestType("x = undefined()\n" +
+               "x.__init__(1)\n" +
+               "x",
+               "object | unknown");
+  }
+
   private void doTestType(@NotNull String text, @NotNull String expectedType) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyReferenceExpression referenceExpression = findLastReferenceByText("x");
