@@ -22,18 +22,18 @@ public interface VcsLogObjectsFactory {
   TimedVcsCommit createTimedCommit(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp);
 
   @NotNull
-  VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp,
+  VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime,
                                            VirtualFile root, @NotNull String subject, @NotNull String authorName, String authorEmail,
                                            @NotNull String committerName, @NotNull String committerEmail, long authorTime);
 
   @NotNull
-  VcsCommitMetadata createCommitMetadata(@NotNull Hash hash, @NotNull List<Hash> parents, long time, VirtualFile root,
+  VcsCommitMetadata createCommitMetadata(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, VirtualFile root,
                                          @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
                                          @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
                                          long authorTime);
 
   @NotNull
-  VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long time, VirtualFile root,
+  VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, VirtualFile root,
                                          @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
                                          @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
                                          long authorTime,

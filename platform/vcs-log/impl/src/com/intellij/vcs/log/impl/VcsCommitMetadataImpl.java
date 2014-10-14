@@ -27,10 +27,10 @@ public class VcsCommitMetadataImpl extends VcsShortCommitDetailsImpl implements 
 
   @NotNull private final String myFullMessage;
 
-  public VcsCommitMetadataImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp, @NotNull VirtualFile root,
+  public VcsCommitMetadataImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                                @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
                                @NotNull VcsUser committer, long authorTime) {
-    super(hash, parents, timeStamp, root, subject, author, committer, authorTime);
+    super(hash, parents, commitTime, root, subject, author, committer, authorTime);
     myFullMessage = message;
   }
 

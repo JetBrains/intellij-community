@@ -34,4 +34,6 @@ public interface VcsShortCommitDetails extends TimedVcsCommit {
   VcsUser getCommitter();
 
   long getAuthorTime();
+
+  long getCommitTime();
 }
