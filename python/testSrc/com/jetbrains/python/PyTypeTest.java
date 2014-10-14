@@ -873,6 +873,19 @@ public class PyTypeTest extends PyTestCase {
                     "expr = np.ones(10) * 2\n");
   }
 
+  public void testUnionTypeAttributeOfDifferentTypes() {
+    doTest("list | int",
+           "class Foo:\n" +
+           "    x = []\n" +
+           "\n" +
+           "class Bar:\n" +
+           "    x = 42\n" +
+           "\n" +
+           "def f(c):\n" +
+           "    o = Foo() if c else Bar()\n" +
+           "    expr = o.x\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
