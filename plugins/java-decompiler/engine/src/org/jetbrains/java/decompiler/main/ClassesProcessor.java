@@ -359,6 +359,7 @@ public class ClassesProcessor {
     public Set<String> enclosingClasses = new HashSet<String>();
     public ClassNode parent;
     public LambdaInformation lambdaInformation;
+    public boolean namelessConstructorStub = false;
 
     public ClassNode(String content_class_name,
                      String content_method_name,

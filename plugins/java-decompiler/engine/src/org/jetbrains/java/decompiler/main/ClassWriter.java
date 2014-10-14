@@ -250,7 +250,7 @@ public class ClassWriter {
       for (ClassNode inner : node.nested) {
         if (inner.type == ClassNode.CLASS_MEMBER) {
           StructClass innerCl = inner.classStruct;
-          boolean isSynthetic = (inner.access & CodeConstants.ACC_SYNTHETIC) != 0 || innerCl.isSynthetic();
+          boolean isSynthetic = (inner.access & CodeConstants.ACC_SYNTHETIC) != 0 || innerCl.isSynthetic() || inner.namelessConstructorStub;
           boolean hide = isSynthetic && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
                          wrapper.getHiddenMembers().contains(innerCl.qualifiedName);
           if (hide) continue;

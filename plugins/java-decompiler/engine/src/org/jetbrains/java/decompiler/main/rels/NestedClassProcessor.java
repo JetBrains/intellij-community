@@ -79,6 +79,7 @@ public class NestedClassProcessor {
           DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
           child.simpleName = "NamelessClass_" + (++nameless);
         }
+        child.namelessConstructorStub = !cl.hasModifier(CodeConstants.ACC_STATIC) && cl.getMethods().size() + cl.getFields().size() == 0;
       }
     }
 
