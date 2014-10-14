@@ -1,8 +1,11 @@
 package com.jetbrains.python.psi.types;
 
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
@@ -12,18 +15,22 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.jetbrains.python.psi.resolve.QualifiedNameFinder.findShortestImportableQName;
+
 /**
  * @author Mikhail Golubev
  */
 public class PyTypeInferenceFromUsedAttributesUtil {
+  public static final int MAX_CANDIDATES = 5;
   // Not final so it can be changed in debugger
-  private static boolean ENABLED = true;
+  private static boolean ENABLED = Boolean.parseBoolean(System.getProperty("py.infer.types.from.used.attributes", "true"));
 
   private PyTypeInferenceFromUsedAttributesUtil() {
     // empty
@@ -33,25 +40,21 @@ public class PyTypeInferenceFromUsedAttributesUtil {
    * Attempts to guess type of given expression based on what attributes (including special names) were accessed on it. If several types
    * fit their union will be returned.
    *
-   * @param expr    expression which type should be inferred
-   * @param context type evaluation context
+   * @param expression expression which type should be inferred
+   * @param context    type evaluation context
    * @return described type or {@code null} if nothing suits
    */
   @Nullable
-  public static PyType getTypeFromUsedAttributes(@NotNull PyExpression expr, @NotNull final TypeEvalContext context) {
-    if (!ENABLED) {
-      return null;
-    }
-
-    if (!context.maySwitchToAST(expr)) {
+  public static PyType getTypeFromUsedAttributes(@NotNull PyExpression expression, @NotNull final TypeEvalContext context) {
+    if (!ENABLED || !context.maySwitchToAST(expression)) {
       return null;
     }
     final Set<String> seenAttrs;
-    seenAttrs = collectUsedAttributes(expr);
+    seenAttrs = collectUsedAttributes(expression);
 
     final Set<PyClass> candidates = Sets.newHashSet();
     for (String attribute : seenAttrs) {
-      candidates.addAll(PyClassAttributesIndex.find(attribute, expr.getProject()));
+      candidates.addAll(PyClassAttributesIndex.find(attribute, expression.getProject()));
     }
 
     final Set<PyClass> suitableClasses = Sets.newHashSet();
@@ -75,19 +78,28 @@ public class PyTypeInferenceFromUsedAttributesUtil {
         }
       }
     }
-    // TODO: proper prioritisation of results
-    final List<PyClass> orderedWinners = ContainerUtil.sorted(suitableClasses, new Comparator<PyClass>() {
+
+    final List<CandidateClass> finalists = prepareCandidates(candidates, expression);
+
+    return PyUnionType.createWeakType(PyUnionType.union(ContainerUtil.map(finalists, new Function<CandidateClass, PyType>() {
       @Override
-      public int compare(PyClass o1, PyClass o2) {
-        return StringUtil.compare(o1.getName(), o2.getName(), true);
-      }
-    });
-    return PyUnionType.createWeakType(PyUnionType.union(ContainerUtil.map(orderedWinners, new Function<PyClass, PyType>() {
-      @Override
-      public PyType fun(PyClass cls) {
-        return new PyClassTypeImpl(cls, false);
+      public PyType fun(CandidateClass cls) {
+        return new PyClassTypeImpl(cls.myClass, false);
       }
     })));
+  }
+
+  @NotNull
+  private static List<CandidateClass> prepareCandidates(@NotNull Collection<PyClass> candidates, @NotNull final PyExpression anchor) {
+    final List<CandidateClass> prepared = ContainerUtil.map(candidates, new Function<PyClass, CandidateClass>() {
+      @Override
+      public CandidateClass fun(PyClass pyClass) {
+        return new CandidateClass(pyClass, anchor);
+      }
+    });
+
+    Collections.sort(prepared);
+    return prepared.subList(0, Math.min(prepared.size(), MAX_CANDIDATES));
   }
 
   @NotNull
@@ -160,5 +172,81 @@ public class PyTypeInferenceFromUsedAttributesUtil {
         return attrName != null ? attrName : null;
       }
     });
+  }
+
+  private static class CandidateClass implements Comparable<CandidateClass> {
+    final PyClass myClass;
+    final Priority myPriority;
+    private final PyExpression myAnchor;
+
+    public CandidateClass(@NotNull PyClass cls, @NotNull PyExpression anchor) {
+      myClass = cls;
+      myAnchor = anchor;
+      myPriority = findPriority();
+    }
+
+    @NotNull
+    private Priority findPriority() {
+      if (PyBuiltinCache.getInstance(myClass).isBuiltin(myClass)) {
+        return Priority.BUILTIN;
+      }
+      final PsiFile originalFile = myAnchor.getContainingFile();
+      final PsiFile candidateFile = myClass.getContainingFile();
+      if (candidateFile == originalFile) {
+        return Priority.SAME_FILE;
+      }
+      if (originalFile instanceof PyFile) {
+        final PyFile anchorModule = (PyFile)originalFile;
+
+        final QualifiedName moduleQName = findShortestImportableQName(myAnchor, candidateFile.getVirtualFile());
+        for (PyFromImportStatement fromImportStatement : anchorModule.getFromImports()) {
+          if (Comparing.equal(fromImportStatement.getImportSourceQName(), moduleQName)) {
+            if (fromImportStatement.isStarImport()) {
+              return Priority.IMPORTED;
+            }
+            for (PyImportElement importElement : fromImportStatement.getImportElements()) {
+              final PyReferenceExpression expression = importElement.getImportReferenceExpression();
+              if (expression != null && Comparing.equal(expression.getName(), myClass.getName())) {
+                return Priority.IMPORTED;
+              }
+            }
+          }
+        }
+        for (PyImportElement importElement : anchorModule.getImportTargets()) {
+          if (Comparing.equal(importElement.getImportedQName(), moduleQName)) {
+            return Priority.IMPORTED;
+          }
+        }
+      }
+      if (ProjectRootManager.getInstance(myAnchor.getProject()).getFileIndex().isInSource(candidateFile.getVirtualFile())) {
+        return Priority.PROJECT;
+      }
+      return Priority.OTHER;
+    }
+
+    @Override
+    public int compareTo(@NotNull CandidateClass o) {
+      // Alphabetical tie-breaker for consistent results
+      //noinspection ConstantConditions
+      return ComparisonChain.start()
+        .compare(myPriority, o.myPriority)
+        .compare(myClass.getName(), o.myClass.getName())
+        .result();
+    }
+
+    @Override
+    public String toString() {
+      return String.format("ClassCandidate(name='%s' priority=%s)", myClass.getName(), myPriority);
+    }
+  }
+
+  enum Priority {
+    BUILTIN,
+    SAME_FILE,
+    IMPORTED,
+    PROJECT,
+    // TODO How implement?
+    DEPENDENCY,
+    OTHER
   }
 }
