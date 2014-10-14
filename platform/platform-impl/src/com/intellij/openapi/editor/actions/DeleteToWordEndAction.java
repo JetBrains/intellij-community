@@ -89,7 +89,7 @@ public class DeleteToWordEndAction extends TextComponentEditorAction {
     for (; newOffset < maxOffset; newOffset++) {
       if (EditorActionUtil.isWordEnd(text, newOffset, camelMode) ||
           EditorActionUtil.isWordStart(text, newOffset, camelMode) ||
-          EditorActionUtil.isLexemeBoundary(editor, offset)) {
+          EditorActionUtil.isLexemeBoundary(editor, newOffset)) {
         break;
       }
     }
