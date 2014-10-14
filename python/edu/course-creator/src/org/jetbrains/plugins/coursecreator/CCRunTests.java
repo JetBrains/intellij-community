@@ -298,7 +298,7 @@ public class CCRunTests extends AnAction {
         for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
           int start = taskWindow.getRealStartOffset(document);
           String windowDescription = document.getText(new TextRange(start, start + taskWindow.getReplacementLength()));
-          printWriter.println("#study_plugin_window = " + windowDescription);
+          printWriter.println("#educational_plugin_window = " + windowDescription);
         }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
