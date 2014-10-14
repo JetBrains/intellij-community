@@ -173,11 +173,11 @@ public class GraphTableModel extends AbstractTableModel {
           return data.getAuthor().getName() + (data.getAuthor().equals(data.getCommitter()) ? "" : "*");
         }
       case DATE_COLUMN:
-        if (data == null || data.getTimestamp() < 0) {
+        if (data == null || data.getAuthorTime() < 0) {
           return "";
         }
         else {
-          return DateFormatUtil.formatDateTime(data.getTimestamp());
+          return DateFormatUtil.formatDateTime(data.getAuthorTime());
         }
       default:
         throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (COLUMN_COUNT - 1));
