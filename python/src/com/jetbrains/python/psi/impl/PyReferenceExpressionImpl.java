@@ -220,7 +220,15 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (targets.length == 0) {
         return getQualifiedReferenceTypeByControlFlow(context);
       }
+
+      final List<PyType> members = new ArrayList<PyType>();
+      final int maxRate = getMaxRate(targets);
+
       for (ResolveResult resolveResult : targets) {
+        final int rate = resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
+        if (rate < maxRate) {
+          continue;
+        }
         PsiElement target = resolveResult.getElement();
         if (target == this || target == null) {
           continue;
@@ -229,12 +237,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           LOG.error("Reference " + this + " resolved to invalid element " + target + " (text=" + target.getText() + ")");
           continue;
         }
-        type = getTypeFromTarget(target, context, this);
-        if (type != null) {
-          return type;
-        }
+        members.add(getTypeFromTarget(target, context, this));
       }
-      return null;
+
+      return PyUnionType.union(members);
     }
     finally {
       TypeEvalStack.evaluated(this);
@@ -419,6 +425,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public void subtreeChanged() {
     super.subtreeChanged();
     myQualifiedName = null;
+  }
+
+  private static int getMaxRate(@NotNull ResolveResult[] targets) {
+    int maxRate = Integer.MIN_VALUE;
+    for (ResolveResult target : targets) {
+      if (target instanceof RatedResolveResult) {
+        final int rate = ((RatedResolveResult)target).getRate();
+        if (rate > maxRate) {
+          maxRate = rate;
+        }
+      }
+    }
+    return maxRate;
   }
 
   private static class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {
