@@ -145,4 +145,10 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_ENTER);
     checkResultByText("text\n<caret>");
   }
+
+  public void testEscapeCharsImpactOnWordBoundaries() throws Exception {
+    init("class Foo { String s = \"a\\nb<caret>\"; }", TestFileType.JAVA);
+    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START);
+    checkResultByText("class Foo { String s = \"a\\n<caret>\"; }");
+  }
 }
