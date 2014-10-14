@@ -310,20 +310,31 @@ public class NewExprent extends Exprent {
           if (!enumconst || start < lstParameters.size()) {
             buf.append("(");
 
-            boolean firstpar = true;
+            boolean firstParam = true;
             for (int i = start; i < lstParameters.size(); i++) {
               if (sigFields == null || sigFields.get(i) == null) {
-                if (!firstpar) {
+                Exprent expr = lstParameters.get(i);
+                VarType leftType = constructor.getDescriptor().params[i];
+
+                if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
+                  ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);
+                  if (node != null && node.namelessConstructorStub) {
+                    break;  // skip last parameter of synthetic constructor call
+                  }
+                }
+
+                if (!firstParam) {
                   buf.append(", ");
                 }
 
                 StringBuilder buff = new StringBuilder();
                 ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buff, indent, true, tracer);
-
                 buf.append(buff);
-                firstpar = false;
+
+                firstParam = false;
               }
             }
+
             buf.append(")");
           }
         }
