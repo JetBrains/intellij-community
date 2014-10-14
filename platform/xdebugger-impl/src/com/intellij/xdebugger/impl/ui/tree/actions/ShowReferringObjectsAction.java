@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XReferrersProvider;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -37,13 +38,14 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     XReferrersProvider referrersProvider = node.getValueContainer().getReferrersProvider();
     if (referrersProvider != null) {
-      XDebuggerTree tree = XDebuggerTree.getTree(e.getDataContext());
+      XDebuggerTree tree = node.getTree();
+      XDebugSession session = e.getData(XDebugSession.DATA_KEY);
       XInspectDialog dialog = new XInspectDialog(tree.getProject(),
                                                  tree.getEditorsProvider(),
                                                  tree.getSourcePosition(),
                                                  nodeName,
                                                  referrersProvider.getReferringObjectsValue(),
-                                                 tree.getValueMarkers());
+                                                 tree.getValueMarkers(), session, false);
       dialog.setTitle(XDebuggerBundle.message("showReferring.dialog.title", nodeName));
       dialog.show();
     }

@@ -65,14 +65,9 @@ public class PyEvaluator {
     if (expr instanceof PySequenceExpression) {
       return evaluateSequenceExpression((PySequenceExpression)expr);
     }
-    if (expr instanceof PyQualifiedExpression) { // support bool
-      final String referencedName = ((PyQualifiedExpression)expr).getReferencedName();
-      if (PyNames.TRUE.equals(referencedName)) {
-        return true;
-      }
-      if (PyNames.FALSE.equals(referencedName)) {
-        return true;
-      }
+    final Boolean booleanExpression = getBooleanExpression(expr);
+    if (booleanExpression != null) { // support bool
+      return booleanExpression;
     }
     if (expr instanceof PyCallExpression) {
       return evaluateCall((PyCallExpression)expr);
@@ -94,6 +89,32 @@ public class PyEvaluator {
         }
       }
     }
+    return null;
+  }
+
+  /**
+   * TODO: Move to PyExpression? PyUtil?
+   * True/False is bool literal in Py3K, but reference in Python2.
+   *
+   * @param expression expression to check
+   * @return true if expression is boolean
+   */
+  @Nullable
+  private static Boolean getBooleanExpression(@NotNull final PyExpression expression) {
+    final boolean py3K = LanguageLevel.forElement(expression).isPy3K();
+    if ((py3K && (expression instanceof PyBoolLiteralExpression))) {
+      return ((PyBoolLiteralExpression)expression).getValue(); // Cool in Py2K
+    }
+    if ((!py3K && (expression instanceof PyReferenceExpression))) {
+      final String text = ((PyReferenceExpression)expression).getReferencedName(); // Ref in Python2
+      if (PyNames.TRUE.equals(text)) {
+        return true;
+      }
+      if (PyNames.FALSE.equals(text)) {
+        return false;
+      }
+    }
+
     return null;
   }
 

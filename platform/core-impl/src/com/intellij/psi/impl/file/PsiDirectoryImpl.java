@@ -28,7 +28,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -503,24 +502,23 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     CheckUtil.checkWritable(this);
     if (element instanceof PsiDirectory) {
       String name = ((PsiDirectory)element).getName();
-      PsiDirectory[] subpackages = getSubdirectories();
-      for (PsiDirectory dir : subpackages) {
-        if (Comparing.strEqual(dir.getName(), name)) {
-          throw new IncorrectOperationException(VfsBundle.message("dir.already.exists.error", dir.getVirtualFile().getPresentableUrl()));
-        }
-      }
+      checkName(name, getSubdirectories(), "dir.already.exists.error");
     }
     else if (element instanceof PsiFile) {
       String name = ((PsiFile)element).getName();
-      PsiFile[] files = getFiles();
-      for (PsiFile file : files) {
-        if (Comparing.strEqual(file.getName(), name, SystemInfo.isFileSystemCaseSensitive)) {
-          throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", file.getVirtualFile().getPresentableUrl()));
-        }
-      }
+      checkName(name, getFiles(), "file.already.exists.error");
     }
     else {
-      throw new IncorrectOperationException();
+      throw new IncorrectOperationException(element.getClass().getName());
+    }
+  }
+
+  private void checkName(String name, PsiFileSystemItem[] items, String key) {
+    boolean caseSensitive = getVirtualFile().getFileSystem().isCaseSensitive();
+    for (PsiFileSystemItem item : items) {
+      if (Comparing.strEqual(item.getName(), name, caseSensitive)) {
+        throw new IncorrectOperationException(VfsBundle.message(key, item.getVirtualFile().getPresentableUrl()));
+      }
     }
   }
 

@@ -766,6 +766,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testInferredParameterInBoundsInRecursiveGenerics() {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(false);
   }

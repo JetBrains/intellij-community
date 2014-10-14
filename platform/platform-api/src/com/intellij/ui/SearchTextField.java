@@ -28,14 +28,17 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentListener;
+import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,6 +83,25 @@ public class SearchTextField extends JPanel {
         }
         if (myToggleHistoryLabel != null) {
           myToggleHistoryLabel.setBackground(bg);
+        }
+      }
+
+      @Override
+      public void setUI(TextUI ui) {
+        super.setUI(ui);
+        if (SystemInfo.isMac) {
+          try {
+            Class<?> uiClass = Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI");
+            Method method = ReflectionUtil.getMethod(uiClass, "createUI", JComponent.class);
+            if (method != null) {
+              super.setUI((TextUI)method.invoke(uiClass, this));
+              Class<?> borderClass = Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder");
+              setBorder((Border)ReflectionUtil.newInstance(borderClass));
+              setOpaque(false);
+            }
+          }
+          catch (Exception ignored) {
+          }
         }
       }
     };

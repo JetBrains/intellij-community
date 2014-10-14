@@ -18,13 +18,18 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionAdapter;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerInstanceTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeWithHistoryPanel;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,22 +40,54 @@ import javax.swing.*;
  * @author nik
  */
 public class XInspectDialog extends DialogWrapper {
-  private final DebuggerTreeWithHistoryPanel<Pair<XValue, String>> myDebuggerTreePanel;
+  private final DebuggerTreeWithHistoryPanel myDebuggerTreePanel;
+  private final boolean myRebuildOnSessionEvents;
 
   public XInspectDialog(@NotNull Project project,
                         XDebuggerEditorsProvider editorsProvider,
                         XSourcePosition sourcePosition,
                         @NotNull String name,
                         @NotNull XValue value,
-                        XValueMarkers<?, ?> markers) {
+                        XValueMarkers<?, ?> markers,
+                        XDebugSession session,
+                        boolean rebuildOnSessionEvents) {
     super(project, false);
+    myRebuildOnSessionEvents = rebuildOnSessionEvents;
 
     setTitle(XDebuggerBundle.message("inspect.value.dialog.title", name));
     setModal(false);
 
-    Pair<XValue, String> initialItem = Pair.create(value, name);
-    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(project, editorsProvider, sourcePosition, markers);
-    myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XValue, String>>(initialItem, creator, project);
+    XInstanceEvaluator instanceEvaluator = value.getInstanceEvaluator();
+    if (instanceEvaluator != null && myRebuildOnSessionEvents) {
+      Pair<XInstanceEvaluator, String> initialItem = Pair.create(instanceEvaluator, name);
+      XDebuggerInstanceTreeCreator creator = new XDebuggerInstanceTreeCreator(project, editorsProvider, sourcePosition, markers, session);
+      myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XInstanceEvaluator, String>>(initialItem, creator, project, myDisposable);
+    }
+    else {
+      Pair<XValue, String> initialItem = Pair.create(value, name);
+      XDebuggerTreeCreator creator = new XDebuggerTreeCreator(project, editorsProvider, sourcePosition, markers);
+      myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XValue, String>>(initialItem, creator, project, myDisposable);
+    }
+
+    session.addSessionListener(new XDebugSessionAdapter() {
+      @Override
+      public void sessionPaused() {
+        if (myRebuildOnSessionEvents) {
+          myDebuggerTreePanel.rebuild();
+        }
+      }
+
+      @Override
+      public void sessionStopped() {
+        DebuggerUIUtil.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            close(OK_EXIT_CODE);
+          }
+        });
+      }
+    }, myDisposable);
+
     init();
   }
 

@@ -58,17 +58,14 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
     if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiThrowStatement)) return;
 
     PsiCodeBlock body = null;
-    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myTarget, PsiLambdaExpression.class);
-    if (lambdaExpression != null) {
-      final PsiElement lambdaBody = lambdaExpression.getBody();
+    final PsiElement psiElement = PsiTreeUtil.getParentOfType(myTarget, PsiLambdaExpression.class, PsiMethod.class);
+    if (psiElement instanceof PsiLambdaExpression) {
+      final PsiElement lambdaBody = ((PsiLambdaExpression)psiElement).getBody();
       if (lambdaBody instanceof PsiCodeBlock) {
         body = (PsiCodeBlock)lambdaBody;
       }
-    }
-
-    if (body == null) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(myTarget, PsiMethod.class);
-      body = method != null ? method.getBody() : null;
+    } else if (psiElement instanceof PsiMethod) {
+      body = ((PsiMethod)psiElement).getBody();
     }
 
     if (body == null) return;
