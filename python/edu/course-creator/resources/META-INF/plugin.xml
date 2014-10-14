@@ -67,6 +67,8 @@
     </action>
     <action id="PackCourse" class="org.jetbrains.plugins.coursecreator.actions.CCCreateCourseArchive">
       <add-to-group group-id="MainToolBar" anchor="last" />
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </action>
     <action id="CCRunTests" class="org.jetbrains.plugins.coursecreator.CCRunTests" text="Run tests" description="Run tests"/>
   </actions>
