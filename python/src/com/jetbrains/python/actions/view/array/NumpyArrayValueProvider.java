@@ -35,8 +35,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.management.InvalidAttributeValueException;
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,13 +54,13 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   private String myDtypeKind;
   private int[] myShape;
   private ArrayTableCellRenderer myTableCellRenderer;
-  private FixSizeTableAdjustmentListener myTableAdjustmentListener;
+  private PagingTableModel pagingModel;
 
   private final static int COLUMNS_IN_DEFAULT_SLICE = 40;
   private final static int ROWS_IN_DEFAULT_SLICE = 40;
 
-  private final static int COLUMNS_IN_DEFAULT_CHUNK = 2;
-  private final static int ROWS_IN_DEFAULT_CHUNK = 2;
+  private final static int COLUMNS_IN_DEFAULT_VIEW = 1000;
+  private final static int ROWS_IN_DEFAULT_VIEW = 1000;
 
   private final static int HUGE_ARRAY_SIZE = 1024 * 1024;
 
@@ -73,31 +73,94 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     myEvaluator = new PyDebuggerEvaluator(project, getValueContainer().getFrameAccessor());
   }
 
-  private void initComponent() {
+  private PagingTableModel getPagingModel(int[] shape, boolean rendered) {
+    assert shape != null;
+    int columns = Math.min(getMaxColumn(shape), COLUMNS_IN_DEFAULT_VIEW);
+    if (columns == 0) {
+      showError("Slice with zero axis shape.");
+    }
+    int rows = Math.min(getMaxRow(shape), ROWS_IN_DEFAULT_VIEW * COLUMNS_IN_DEFAULT_VIEW / columns);
 
+    return new PagingTableModel(rows, columns, rendered) {
+
+      private String myFormat = getFormat();
+      private String myBaseSlice = getSliceText();
+
+      @Override
+      protected NumpyArraySlice createChunk(int rows, int columns, int rOffset, int cOffset) {
+        return new NumpyArraySlice(myBaseSlice, rows, columns, rOffset, cOffset, myFormat, getInstance());
+      }
+
+      @Override
+      protected Runnable getDataEvaluator(final ComparableArrayChunk chunk) {
+        final NumpyArraySlice arraySlice = new NumpyArraySlice(chunk.baseSlice, chunk.rows, chunk.columns, chunk.rOffset, chunk.cOffset,
+                                                               myFormat, getInstance());
+
+        if (arraySlice.getFormat().isEmpty()) {
+          arraySlice.setFormat(getDefaultFormat());
+        }
+
+        return new Runnable() {
+          public void run() {
+            if (!arraySlice.dataFilled()) {
+              arraySlice.fillData(new Runnable() {
+                @Override
+                public void run() {
+                  myLastPresentation = arraySlice;
+
+                  SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                      setData(arraySlice.rOffset, arraySlice.cOffset, arraySlice.getData());
+                      getPendingSet().remove(chunk);
+
+                      myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
+                      myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
+                      myTable.setPaintBusy(false);
+                    }
+                  });
+                }
+              });
+            }
+          }
+        };
+      }
+    };
+  }
+
+  private void initComponent() {
     //add table renderer
     myTableCellRenderer = new ArrayTableCellRenderer(Double.MIN_VALUE, Double.MIN_VALUE, myDtypeKind);
 
-    //add table dynamic scrolling
-    myTableAdjustmentListener =
-      new FixSizeTableAdjustmentListener<NumpyArraySlice>(myTable, getMaxRow(myShape), getMaxColumn(myShape),
-                                                          Math.min(getMaxRow(myShape), COLUMNS_IN_DEFAULT_SLICE),
-                                                          Math.min(getMaxColumn(myShape), ROWS_IN_DEFAULT_SLICE),
-                                                          ROWS_IN_DEFAULT_CHUNK, COLUMNS_IN_DEFAULT_CHUNK) {
-        @NotNull
-        @Override
-        NumpyArraySlice createChunk(String baseSlice, int rows, int columns, int rOffset, int cOffset) {
-          return new NumpyArraySlice(baseSlice, rows, columns, rOffset, cOffset, getDefaultFormat(), getInstance());
-        }
+    myComponent.getScrollPane().getHorizontalScrollBar().addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        clearErrorMessage();
+      }
 
-        @Override
-        String getBaseSlice() {
-          return NumpyArraySlice.getUpperSlice(myComponent.getSliceTextField().getText(), 1);
-        }
-      };
+      @Override
+      public void focusLost(FocusEvent e) {
 
-    myComponent.getScrollPane().getHorizontalScrollBar().addAdjustmentListener(myTableAdjustmentListener);
-    myComponent.getScrollPane().getVerticalScrollBar().addAdjustmentListener(myTableAdjustmentListener);
+      }
+    });
+
+    myComponent.getScrollPane().getVerticalScrollBar().addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        clearErrorMessage();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+
+      }
+    });
+
+    myComponent.getScrollPane().getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+      @Override
+      public void adjustmentValueChanged(AdjustmentEvent e) {
+        clearErrorMessage();
+      }
+    });
 
 
     //add color checkbox listener
@@ -159,7 +222,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     myComponent.getSliceTextField().getActionMap().put("strokeEnter", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        doReslice(myComponent.getSliceTextField().getText(), null);
+        doReslice(getSliceText(), null);
       }
     });
   }
@@ -170,7 +233,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     myComponent.getFormatTextField().getActionMap().put("strokeEnter", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        doApplyFormat(myComponent.getFormatTextField().getText());
+        doApplyFormat();
       }
     });
   }
@@ -214,12 +277,16 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       return;
     }
 
-    int size = myShape.length;
-    startFillTable(
-      new NumpyArraySlice(getDefaultPresentation(), Math.min(myShape[size - 2], ROWS_IN_DEFAULT_SLICE),
-                          Math.min(myShape[size - 1], COLUMNS_IN_DEFAULT_SLICE), 0, 0, getDefaultFormat(), getInstance()));
-    //startFillTable(new Numpy2DArraySlice(getNodeName(), defaultSlice, this, getShape(), getDtypeKind(), getDefaultFormat()));
-    //falseFill();
+    DebuggerUIUtil.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        myComponent.getSliceTextField().setText(getDefaultPresentation());
+        myComponent.getFormatTextField().setText(getDefaultFormat());
+      }
+    });
+    startFillTable(new NumpyArraySlice(getDefaultPresentation(), Math.min(getMaxRow(myShape), ROWS_IN_DEFAULT_VIEW),
+                                       Math.min(getMaxColumn(myShape), COLUMNS_IN_DEFAULT_VIEW), 0, 0, getDefaultFormat(), getInstance()),
+                   false, false);
   }
 
   private void fillColorRange(@NotNull final Runnable returnToMain) {
@@ -296,6 +363,13 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     return slices;
   }
 
+  public String getSliceText() {
+    if (myComponent.getSliceTextField().getText().isEmpty()) {
+      return getDefaultPresentation();
+    }
+    return myComponent.getSliceTextField().getText();
+  }
+
   private void fillType(@NotNull final Runnable returnToMain) {
     XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
       @Override
@@ -363,60 +437,40 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     return false;
   }
 
-  private void startFillTable(final NumpyArraySlice arraySlice) {
-    if (myLastPresentation != null && arraySlice.getPresentation().equals(myLastPresentation.getPresentation())) {
+  private void startFillTable(final NumpyArraySlice arraySlice, boolean rendered, final boolean inPlace) {
+    if (myLastPresentation != null &&
+        arraySlice.baseSlice.equals(myLastPresentation.baseSlice) &&
+        arraySlice.getFormat().equals(myLastPresentation.getFormat())) {
       return;
     }
+
+    pagingModel = getPagingModel(myShape, rendered);
 
     DebuggerUIUtil.invokeLater(new Runnable() {
       @Override
       public void run() {
         myTable.setPaintBusy(true);
-        myTable.setModel(new DefaultTableModel());
+        myTable.setModel(pagingModel);
+        if (!inPlace) {
+          myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
+        }
         RowNumberTable rowTable = ((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable();
         rowTable.setRowShift(0);
-
-        myTableAdjustmentListener.setRowOffset(arraySlice.getRowOffset());
-        myTableAdjustmentListener.setColOffset(arraySlice.getColOffset());
-        myTableAdjustmentListener.setRowLimit(getMaxRow(myShape));
-        myTableAdjustmentListener.setColLimit(getMaxColumn(myShape));
-        myTableAdjustmentListener.setViewRows(Math.min(getMaxColumn(myShape), ROWS_IN_DEFAULT_SLICE));
-        myTableAdjustmentListener.setViewCols(Math.min(getMaxRow(myShape), COLUMNS_IN_DEFAULT_SLICE));
+        ((PagingTableModel)myTable.getModel()).fireTableDataChanged();
+        ((PagingTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
       }
     });
+  }
 
-    if (!arraySlice.dataFilled()) {
-      arraySlice.startFillData(new Runnable() {
-        @Override
-        public void run() {
-          Object[][] data = arraySlice.getData();
-
-          DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
-
-          DebuggerUIUtil.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
-              myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
-              myTable.setPaintBusy(false);
-
-              myComponent.getSliceTextField().setText(arraySlice.getPresentation());
-              myComponent.getFormatTextField().setText(getDefaultFormat());
-            }
-          });
-
-          myTable.setModel(model);
-          myLastPresentation = arraySlice;
-        }
-      });
-    }
+  private void cancelPreviousFill() {
+    // todo: close Threads and init
   }
 
   private TableCellEditor getArrayTableCellEditor() {
     return new ArrayTableCellEditor(myProject) {
 
       private String getCellSlice() {
-        String expression = myLastPresentation.getPresentation();
+        String expression = getSliceText();
         if (myTable.getRowCount() == 1) {
           expression += "[" + myTable.getSelectedColumn() + "]";
         }
@@ -484,6 +538,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
 
               @Override
               public void errorOccurred(@NotNull String errorMessage) {
+                showError(errorMessage);
               }
             };
 
@@ -548,8 +603,15 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     return "%s";
   }
 
+  public String getFormat() {
+    if (myComponent.getFormatTextField().getText().isEmpty()) {
+      return getDefaultFormat();
+    }
+    return myComponent.getFormatTextField().getText();
+  }
+
   private void doReslice(final String newSlice, int[] shape) {
-    showError(null);
+    clearErrorMessage();
 
     if (shape == null) {
       XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
@@ -578,11 +640,11 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     }
 
     myShape = shape;
-    int size = myShape.length;
-    startFillTable(
-      new NumpyArraySlice(newSlice, Math.min(myShape[size - 2], ROWS_IN_DEFAULT_SLICE),
-                          Math.min(myShape[size - 1], COLUMNS_IN_DEFAULT_SLICE), 0, 0, myComponent.getFormatTextField().getText(),
-                          getInstance()));
+    startRefillTable(false);
+  }
+
+  private void clearErrorMessage() {
+    showError(null);
   }
 
   private static boolean is2DShape(int[] shape) {
@@ -592,19 +654,21 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     return false;
   }
 
-  private void doApplyFormat(String format) {
-    showError(null);
+  private void doApplyFormat() {
+    startRefillTable(true);
+  }
 
-    myLastPresentation.applyFormat(format, new Runnable() {
-      @Override
-      public void run() {
-        Object[][] data = myLastPresentation.getData();
+  private void startRefillTable(boolean inPlace) {
+    clearTableData();
+    Rectangle vr = myTable.getVisibleRect();
+    int rOffset = myTable.rowAtPoint(vr.getLocation());
+    int cOffset = myTable.columnAtPoint(vr.getLocation());
+    startFillTable(new NumpyArraySlice(getSliceText(), 0, 0, rOffset, cOffset, getFormat(), this), true, inPlace);
+  }
 
-        DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
-        myTable.setModel(model);
-        myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
-      }
-    });
+  private void clearTableData() {
+    clearErrorMessage();
+    ((PagingTableModel)myTable.getModel()).clearCached();
   }
 
   public String evalTypeFunc(String format) {

@@ -17,7 +17,7 @@ import java.util.List;
  * @author amarch
  */
 
-class NumpyArraySlice extends ArrayChunk {
+class NumpyArraySlice extends ComparableArrayChunk {
   private NumpyArrayValueProvider myValueProvider;
   private DataEvaluator myDataEvaluator;
   private String myFormat;
@@ -48,15 +48,11 @@ class NumpyArraySlice extends ArrayChunk {
 
   @Override
   void fillData(Runnable callback) {
-    startFillData(callback);
+    myDataEvaluator.evaluateData(callback);
   }
 
   public NumpyArraySlice getInstance() {
     return this;
-  }
-
-  public void startFillData(Runnable callback) {
-    myDataEvaluator.evaluateData(callback);
   }
 
   public boolean dataFilled() {
@@ -92,7 +88,9 @@ class NumpyArraySlice extends ArrayChunk {
 
         @Override
         public void errorOccurred(@NotNull String errorMessage) {
-          myValueProvider.showError(errorMessage);
+          if (!errorMessage.contains("Timeout waiting for response on")) {
+            myValueProvider.showError(errorMessage);
+          }
         }
       };
 
@@ -104,6 +102,10 @@ class NumpyArraySlice extends ArrayChunk {
         @Override
         public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
           String fullName = ((XValueNodeImpl)node).getName();
+          if (!fullName.contains(getPresentation())) {
+            return;
+          }
+
           int row = -1;
           if (isOneRow()) {
             row = 0;
@@ -120,19 +122,23 @@ class NumpyArraySlice extends ArrayChunk {
             }
           }
 
+          if (row > rows) {
+            throw new IllegalStateException("Row " + row + " is out of range for " + getPresentation() + ".");
+          }
+
           if (row != -1 && myData[row][0] == null) {
             for (int i = 0; i < node.getChildCount() - 1; i++) {
               myData[row][i] = ((XValueNodeImpl)node.getChildAt(i + 1)).getRawValue();
             }
             myFilledRows += 1;
-          }
-          if (myFilledRows == rows) {
-            node.getTree().removeTreeListener(this);
-            callback.run();
-          }
-          else {
-            nextRow += 1;
-            startEvalNextRow(computeChildrenCallback);
+            if (myFilledRows == rows) {
+              node.getTree().removeTreeListener(this);
+              callback.run();
+            }
+            else {
+              nextRow += 1;
+              startEvalNextRow(computeChildrenCallback);
+            }
           }
         }
       };
@@ -146,6 +152,10 @@ class NumpyArraySlice extends ArrayChunk {
     }
 
     private void startEvalNextRow(XDebuggerEvaluator.XEvaluationCallback callback) {
+      if (nextRow >= rows) {
+        throw new IllegalStateException("Row " + nextRow + " is out of range for " + getPresentation() + ".");
+      }
+
       String evalRowCommand = "map(lambda l: " + myValueProvider.evalTypeFunc(myFormat) + ", list(" + getPresentation();
       if (!isOneRow()) {
         evalRowCommand += "[" + nextRow + ", 0:" + columns + "]";
@@ -153,22 +163,6 @@ class NumpyArraySlice extends ArrayChunk {
       evalRowCommand += "))";
       myValueProvider.getEvaluator().evaluate(evalRowCommand, callback, null);
     }
-  }
-
-  public static String getUpperSlice(String presentation, int up) {
-    if (up < 1) {
-      return "";
-    }
-    String upperSlice = presentation;
-    for (int i = 0; i < up; i++) {
-      if (upperSlice.contains("[")) {
-        upperSlice = upperSlice.substring(0, upperSlice.lastIndexOf('['));
-      }
-      else {
-        return upperSlice;
-      }
-    }
-    return upperSlice;
   }
 
   private boolean isOneRow() {
@@ -187,12 +181,17 @@ class NumpyArraySlice extends ArrayChunk {
     myDataEvaluator.evaluateData(callback);
   }
 
-  public int getRowOffset() {
-    return rOffset;
+  public String getFormat() {
+    return myFormat;
   }
 
-  public int getColOffset() {
-    return cOffset;
+  public void setFormat(String format) {
+    myFormat = format;
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + " : " + getPresentation();
   }
 }
 

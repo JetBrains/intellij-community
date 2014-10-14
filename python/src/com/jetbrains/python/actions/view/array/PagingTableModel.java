@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Queue;
 
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.util.SortedSet;
@@ -39,21 +40,29 @@ public abstract class PagingTableModel extends AbstractTableModel {
   private static final int DEFAULT_MAX_CACHED_SIZE = 100;
   public static final String EMPTY_CELL_VALUE = "...";
 
+  // wait for debugger response and then run again
+  private static final int RESPONSE_TIMEOUT = 10000;
+
   private HashMap<String, Object[][]> myCachedData = new HashMap<String, Object[][]>();
   private SortedSet<ComparableArrayChunk> myPendingSet = new TreeSet<ComparableArrayChunk>();
   private Queue<String> cachedChunkKeys = new Queue<String>(DEFAULT_MAX_CACHED_SIZE + 1);
 
-  private boolean myRendered = false;
+  private boolean myRendered;
   private int myRows = 0;
   private int myColumns = 0;
 
-  public PagingTableModel(int rows, int columns) {
+  public PagingTableModel(int rows, int columns, boolean rendered) {
     myRows = rows;
     myColumns = columns;
+    myRendered = rendered;
+  }
+
+  @Override
+  public boolean isCellEditable(int row, int column) {
+    return true;
   }
 
   public Object getValueAt(int row, int col) {
-
     //prevent data evaluation for full table
     if (row == (getRowCount() - 1) && col == (getColumnCount() - 1) && !myRendered) {
       myRendered = true;
@@ -92,10 +101,10 @@ public abstract class PagingTableModel extends AbstractTableModel {
     }
 
     int startROffset = getPageRowStart(rOffset);
-    int rLength = CHUNK_ROW_SIZE;
+    int rLength = Math.min(CHUNK_ROW_SIZE, myRows - startROffset);
 
     int startCOffset = getPageColStart(cOffset);
-    int cLength = CHUNK_COL_SIZE;
+    int cLength = Math.min(CHUNK_COL_SIZE, myColumns - startCOffset);
 
     load(startROffset, rLength, startCOffset, cLength);
   }
@@ -109,8 +118,8 @@ public abstract class PagingTableModel extends AbstractTableModel {
       return seg.contains(rOffset, cOffset);
     }
 
-    ComparableArrayChunk lo = createChunk("", 0, 0, getPageRowStart(rOffset), getPageColStart(cOffset));
-    ComparableArrayChunk hi = createChunk("", 0, 0, getPageRowStart(rOffset + CHUNK_ROW_SIZE), getPageColStart(cOffset + CHUNK_COL_SIZE));
+    ComparableArrayChunk lo = createChunk(0, 0, getPageRowStart(rOffset), getPageColStart(cOffset));
+    ComparableArrayChunk hi = createChunk(0, 0, getPageRowStart(rOffset + CHUNK_ROW_SIZE), getPageColStart(cOffset + CHUNK_COL_SIZE));
 
     for (ComparableArrayChunk seg : myPendingSet.subSet(lo, hi)) {
       if (seg.contains(rOffset, cOffset)) return true;
@@ -118,18 +127,46 @@ public abstract class PagingTableModel extends AbstractTableModel {
     return false;
   }
 
-  protected abstract ComparableArrayChunk createChunk(String baseSlice, int rows, int columns, int rOffset, int cOffset);
+  protected abstract ComparableArrayChunk createChunk(int rows, int columns, int rOffset, int cOffset);
 
   protected abstract Runnable getDataEvaluator(final ComparableArrayChunk chunk);
 
   private void load(final int rOffset, final int rLength, final int cOffset, final int cLength) {
-    // simulate something slow like loading from a database
-    final ComparableArrayChunk segment = createChunk("", rLength, cLength, rOffset, cOffset);
+    final ComparableArrayChunk segment = createChunk(rLength, cLength, rOffset, cOffset);
     myPendingSet.add(segment);
 
     // set up code to run in another thread
     Runnable evaluator = getDataEvaluator(segment);
-    new Thread(evaluator).start();
+    final Thread evalThread = new Thread(evaluator);
+    evalThread.start();
+
+    final long until = System.currentTimeMillis() + RESPONSE_TIMEOUT;
+
+    // delete segment if wait too long
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (myPendingSet) {
+          do {
+            try {
+              myPendingSet.wait(1000);
+            }
+            catch (InterruptedException ignore) {
+            }
+          }
+          while (evalThread.isAlive() && System.currentTimeMillis() < until);
+          myPendingSet.remove(segment);
+          if (evalThread.isAlive()) {
+            evalThread.interrupt();
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                fireTableCellUpdated(segment.rOffset, segment.cOffset);
+              }
+            });
+          }
+        }
+      }
+    }).start();
   }
 
   protected void setData(int rOffset, int cOffset, Object[][] newData) {
@@ -163,6 +200,12 @@ public abstract class PagingTableModel extends AbstractTableModel {
 
   public SortedSet<ComparableArrayChunk> getPendingSet() {
     return myPendingSet;
+  }
+
+  public void clearCached() {
+    myCachedData = new HashMap<String, Object[][]>();
+    myPendingSet = new TreeSet<ComparableArrayChunk>();
+    cachedChunkKeys = new Queue<String>(DEFAULT_MAX_CACHED_SIZE + 1);
   }
 
   public static class LazyViewport extends JBViewport {
