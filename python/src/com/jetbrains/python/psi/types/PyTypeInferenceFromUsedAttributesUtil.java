@@ -79,7 +79,7 @@ public class PyTypeInferenceFromUsedAttributesUtil {
       }
     }
 
-    final List<CandidateClass> finalists = prepareCandidates(candidates, expression);
+    final List<CandidateClass> finalists = prepareCandidates(suitableClasses, expression);
 
     return PyUnionType.createWeakType(PyUnionType.union(ContainerUtil.map(finalists, new Function<CandidateClass, PyType>() {
       @Override
@@ -159,6 +159,12 @@ public class PyTypeInferenceFromUsedAttributesUtil {
     return null;
   }
 
+  /**
+   * Returns all attributes: methods, class and instance fields that are declared directly in specified class
+   * (not taking inheritance into account).
+   * <p/>
+   * This method must not access to AST because it's called during stub indexing process.
+   */
   @NotNull
   public static List<String> getAllDeclaredAttributeNames(@NotNull PyClass pyClass) {
     final List<PsiNamedElement> members = ContainerUtil.<PsiNamedElement>concat(pyClass.getInstanceAttributes(),
