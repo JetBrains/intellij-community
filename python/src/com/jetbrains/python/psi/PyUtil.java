@@ -68,6 +68,7 @@ import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
@@ -748,6 +749,40 @@ public class PyUtil {
       currentElement = resolve;
     }
     return currentElement;
+  }
+
+  @NotNull
+  public static List<PsiElement> multiResolveTopPriority(@NotNull PsiPolyVariantReference reference) {
+    return filterTopPriorityResults(reference.multiResolve(false));
+  }
+
+  @NotNull
+  private static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
+    if (resolveResults.length == 0) {
+      return Collections.emptyList();
+    }
+    final List<PsiElement> filtered = new ArrayList<PsiElement>();
+    final int maxRate = getMaxRate(resolveResults);
+    for (ResolveResult resolveResult : resolveResults) {
+      final int rate = resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
+      if (rate >= maxRate) {
+        filtered.add(resolveResult.getElement());
+      }
+    }
+    return filtered;
+  }
+
+  private static int getMaxRate(@NotNull ResolveResult[] resolveResults) {
+    int maxRate = Integer.MIN_VALUE;
+    for (ResolveResult resolveResult : resolveResults) {
+      if (resolveResult instanceof RatedResolveResult) {
+        final int rate = ((RatedResolveResult)resolveResult).getRate();
+        if (rate > maxRate) {
+          maxRate = rate;
+        }
+      }
+    }
+    return maxRate;
   }
 
   /**
