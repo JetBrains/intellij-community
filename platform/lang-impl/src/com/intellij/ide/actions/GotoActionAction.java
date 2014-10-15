@@ -61,10 +61,15 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     };
 
     Pair<String, Integer> start = getInitialText(false, e);
-    showNavigationPopup(callback, null, createPopup(project, model, start.first, start.second), false);
+    showNavigationPopup(callback, null, createPopup(project, model, start.first, start.second, component, e), false);
   }
 
-  private static ChooseByNamePopup createPopup(final Project project, final GotoActionModel model, final String initialText, final int initialIndex) {
+  private static ChooseByNamePopup createPopup(final Project project,
+                                               final GotoActionModel model,
+                                               final String initialText,
+                                               final int initialIndex,
+                                               final Component component, 
+                                               final AnActionEvent e) {
     final ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
       oldPopup.close(false);
@@ -80,7 +85,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       protected boolean closeForbidden(boolean ok) {
         if (!ok) return false;
         Object element = getChosenElement();
-        return element instanceof GotoActionModel.MatchedValue && processOptionInplace(((GotoActionModel.MatchedValue)element).value, this)
+        return element instanceof GotoActionModel.MatchedValue && processOptionInplace(((GotoActionModel.MatchedValue)element).value, this, component, e)
                || super.closeForbidden(true);
       }
     };
@@ -90,11 +95,11 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     }
     popup.addMouseClickListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(@NotNull MouseEvent e) {
-        Object element = popup.getSelectionByPoint(e.getPoint());
+      public void mouseClicked(@NotNull MouseEvent me) {
+        Object element = popup.getSelectionByPoint(me.getPoint());
         if (element instanceof GotoActionModel.MatchedValue) {
-          if (processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup)) {
-            e.consume();
+          if (processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup, component, e)) {
+            me.consume();
           }
         }
       }
@@ -102,16 +107,28 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     return popup;
   }
 
-  private static boolean processOptionInplace(Object value, ChooseByNamePopup popup) {
+  private static boolean processOptionInplace(Object value, ChooseByNamePopup popup, Component component, AnActionEvent e) {
     if (value instanceof BooleanOptionDescription) {
       final BooleanOptionDescription option = (BooleanOptionDescription)value;
       option.setOptionState(!option.isOptionEnabled());
-      if (popup != null) {
-        popup.repaintList();
-      }
+      repaint(popup);
       return true;
     }
+    else if (value instanceof GotoActionModel.ActionWrapper) {
+      AnAction action = ((GotoActionModel.ActionWrapper)value).getAction();
+      if (action instanceof ToggleAction) {
+        performAction(action, component, e);
+        repaint(popup);
+        return true;
+      }
+    }
     return false;
+  }
+
+  private static void repaint(@Nullable ChooseByNamePopup popup) {
+    if (popup != null) {
+      popup.repaintList();
+    }
   }
 
   public static void openOptionOrPerformAction(Object element,
@@ -119,9 +136,6 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                                                final Project project,
                                                final Component component,
                                                @Nullable final AnActionEvent e) {
-    if (processOptionInplace(element, null)) {
-      return;
-    }
     if (element instanceof OptionDescription) {
       final String configurableId = ((OptionDescription)element).getConfigurableId();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -132,37 +146,41 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       });
     }
     else {
-      //element could be AnAction (SearchEverywhere)
-      final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
-      if (action != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (component == null || !component.isShowing()) {
-              return;
-            }
-            final Presentation presentation = action.getTemplatePresentation().clone();
-            final DataContext context = DataManager.getInstance().getDataContext(component);
-            final AnActionEvent event = new AnActionEvent(e == null ? null : e.getInputEvent(),
-                                                          context,
-                                                          ActionPlaces.ACTION_SEARCH,
-                                                          presentation,
-                                                          ActionManager.getInstance(),
-                                                          e == null ? 0 : e.getModifiers());
+      performAction(element, component, e);
+    }
+  }
 
-            if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-              if (action instanceof ActionGroup) {
-                JBPopupFactory.getInstance()
-                  .createActionGroupPopup(presentation.getText(), (ActionGroup)action, context,
-                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
-                  .showInBestPositionFor(context);
-              } else {
-                ActionUtil.performActionDumbAware(action, event);
-              }
+  public static void performAction(Object element, final Component component, final AnActionEvent e) {
+    // element could be AnAction (SearchEverywhere)
+    final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
+    if (action != null) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (component == null || !component.isShowing()) {
+            return;
+          }
+          final Presentation presentation = action.getTemplatePresentation().clone();
+          final DataContext context = DataManager.getInstance().getDataContext(component);
+          final AnActionEvent event = new AnActionEvent(e == null ? null : e.getInputEvent(),
+                                                        context,
+                                                        ActionPlaces.ACTION_SEARCH,
+                                                        presentation,
+                                                        ActionManager.getInstance(),
+                                                        e == null ? 0 : e.getModifiers());
+
+          if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
+            if (action instanceof ActionGroup) {
+              JBPopupFactory.getInstance()
+                .createActionGroupPopup(presentation.getText(), (ActionGroup)action, context,
+                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+                .showInBestPositionFor(context);
+            } else {
+              ActionUtil.performActionDumbAware(action, event);
             }
           }
-        }, ModalityState.NON_MODAL);
-      }
+        }
+      }, ModalityState.NON_MODAL);
     }
   }
 
