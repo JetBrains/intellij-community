@@ -37,6 +37,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakHashMap;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   private final Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
 
   private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap =
-    new HashMap<String, RunnerAndConfigurationSettings>();
+    new THashMap<String, RunnerAndConfigurationSettings>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<String, RunnerAndConfigurationSettings>(); // template configurations are not included here
   private final Map<String, Boolean> mySharedConfigurations = new TreeMap<String, Boolean>();
@@ -536,33 +537,43 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   @Override
   public Element getState() {
     Element parentNode = new Element("state");
-    writeContext(parentNode);//writes temporary configurations here
-    for (final RunnerAndConfigurationSettings runnerAndConfigurationSettings : myTemplateConfigurationsMap.values()) {
-      if (runnerAndConfigurationSettings.getConfiguration() instanceof UnknownRunConfiguration) {
-        if (((UnknownRunConfiguration)runnerAndConfigurationSettings.getConfiguration()).isDoNotStore()) {
-          continue;
-        }
+    // writes temporary configurations here
+    writeContext(parentNode);
+
+    for (RunnerAndConfigurationSettings configuration : myTemplateConfigurationsMap.values()) {
+      if (configuration.getConfiguration() instanceof UnknownRunConfiguration &&
+          ((UnknownRunConfiguration)configuration.getConfiguration()).isDoNotStore()) {
+        continue;
       }
 
-      addConfigurationElement(parentNode, runnerAndConfigurationSettings);
+      addConfigurationElement(parentNode, configuration);
     }
 
     for (RunnerAndConfigurationSettings configuration : getStableConfigurations(false)) {
       addConfigurationElement(parentNode, configuration);
     }
 
-    final JDOMExternalizableStringList order = new JDOMExternalizableStringList();
-    //temp && stable configurations, !unknown
+    // temp && stable configurations, !unknown
+    JDOMExternalizableStringList order = null;
     for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
-      if (each.getType() instanceof UnknownConfigurationType) continue;
+      if (each.getType() instanceof UnknownConfigurationType) {
+        continue;
+      }
+
+      if (order == null) {
+        order = new JDOMExternalizableStringList();
+      }
       order.add(each.getUniqueID());
     }
-
-    order.writeExternal(parentNode);
+    if (order != null) {
+      order.writeExternal(parentNode);
+    }
 
     final JDOMExternalizableStringList recentList = new JDOMExternalizableStringList();
     for (RunConfiguration each : myRecentlyUsedTemporaries) {
-      if (each.getType() instanceof UnknownConfigurationType) continue;
+      if (each.getType() instanceof UnknownConfigurationType) {
+        continue;
+      }
       RunnerAndConfigurationSettings settings = getSettings(each);
       if (settings == null) {
         continue;
@@ -570,7 +581,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       recentList.add(settings.getUniqueID());
     }
     if (!recentList.isEmpty()) {
-      final Element recent = new Element(RECENT);
+      Element recent = new Element(RECENT);
       parentNode.addContent(recent);
       recentList.writeExternal(recent);
     }
@@ -583,12 +594,13 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     return parentNode;
   }
 
-  public void writeContext(Element parentNode) {
+  public void writeContext(@NotNull Element parentNode) {
     for (RunnerAndConfigurationSettings configurationSettings : myConfigurations.values()) {
       if (configurationSettings.isTemporary()) {
         addConfigurationElement(parentNode, configurationSettings, CONFIGURATION);
       }
     }
+
     RunnerAndConfigurationSettings selected = getSelectedConfiguration();
     if (selected != null) {
       parentNode.setAttribute(SELECTED_ATTR, selected.getUniqueID());
