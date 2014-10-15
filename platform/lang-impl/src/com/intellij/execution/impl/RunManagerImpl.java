@@ -674,27 +674,18 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   public void loadState(Element parentNode) {
     clear();
 
-    final Comparator<Element> comparator = new Comparator<Element>() {
+    List<Element> sortedElements = new SmartList<Element>(parentNode.getChildren(CONFIGURATION));
+    // ensure templates are loaded first
+    Collections.sort(sortedElements, new Comparator<Element>() {
       @Override
       public int compare(@NotNull Element a, @NotNull Element b) {
         final boolean aDefault = Boolean.valueOf(a.getAttributeValue("default", "false"));
         final boolean bDefault = Boolean.valueOf(b.getAttributeValue("default", "false"));
         return aDefault == bDefault ? 0 : aDefault ? -1 : 1;
       }
-    };
+    });
 
-    final List children = parentNode.getChildren();
-    final List<Element> sortedElements = new ArrayList<Element>();
-    for (final Object aChildren : children) {
-      final Element element = (Element)aChildren;
-      if (Comparing.strEqual(element.getName(), CONFIGURATION)) {
-        sortedElements.add(element);
-      }
-    }
-
-    Collections.sort(sortedElements, comparator); // ensure templates are loaded first!
-
-    for (final Element element : sortedElements) {
+    for (Element element : sortedElements) {
       RunnerAndConfigurationSettings configurationSettings;
       try {
         configurationSettings = loadConfiguration(element, false);
@@ -704,7 +695,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
         continue;
       }
       if (configurationSettings == null) {
-        if (myUnknownElements == null) myUnknownElements = new ArrayList<Element>(2);
+        if (myUnknownElements == null) {
+          myUnknownElements = new SmartList<Element>();
+        }
         myUnknownElements.add(element);
       }
     }
@@ -716,19 +709,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       throw new RuntimeException(e);
     }
 
-    //Begin migration (old ids to UUIDs)
-    for (int i = 0; i < myOrder.size(); i++) {
-      String id = myOrder.get(i);
-      for (RunnerAndConfigurationSettings settings : myConfigurations.values()) {
-        RunConfiguration configuration = settings.getConfiguration();
-        if (configuration != null && id.equals(configuration.getType().getDisplayName() + "." + configuration.getName() +
-                                               (configuration instanceof UnknownRunConfiguration ? configuration.getUniqueID() : ""))) {
-          myOrder.set(i, settings.getUniqueID());
-          break;
-        }
-      }
-    }
-    //End migration
+    // migration (old ids to UUIDs)
+    readList(myOrder);
+
     myRecentlyUsedTemporaries.clear();
     Element recentNode = parentNode.getChild(RECENT);
     if (recentNode != null) {
@@ -739,21 +722,12 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       catch (InvalidDataException e) {
         throw new RuntimeException(e);
       }
-      for (int i = 0; i < list.size(); i++) {
-        String id = list.get(i);
-        for (RunnerAndConfigurationSettings settings : myConfigurations.values()) {
-          RunConfiguration configuration = settings.getConfiguration();
-          if (configuration != null && id.equals(configuration.getType().getDisplayName() + "." + configuration.getName() +
-                                                 (configuration instanceof UnknownRunConfiguration ? configuration.getUniqueID() : ""))) {
-            list.set(i, settings.getUniqueID());
-            break;
-          }
-        }
-      }
+      readList(list);
       for (String name : list) {
         RunnerAndConfigurationSettings settings = myConfigurations.get(name);
-        if (settings != null)
+        if (settings != null) {
           myRecentlyUsedTemporaries.add(settings.getConfiguration());
+        }
       }
     }
     myOrdered = false;
@@ -763,6 +737,20 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
     fireBeforeRunTasksUpdated();
     fireRunConfigurationSelected();
+  }
+
+  private void readList(@NotNull JDOMExternalizableStringList list) {
+    for (int i = 0; i < list.size(); i++) {
+      for (RunnerAndConfigurationSettings settings : myConfigurations.values()) {
+        RunConfiguration configuration = settings.getConfiguration();
+        //noinspection deprecation
+        if (configuration != null && list.get(i).equals(configuration.getType().getDisplayName() + "." + configuration.getName() +
+                                                        (configuration instanceof UnknownRunConfiguration ? configuration.getUniqueID() : ""))) {
+          list.set(i, settings.getUniqueID());
+          break;
+        }
+      }
+    }
   }
 
   public void readContext(Element parentNode) throws InvalidDataException {
