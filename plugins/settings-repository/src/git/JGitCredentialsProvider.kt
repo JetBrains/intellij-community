@@ -112,7 +112,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     }
 
     if (!credentials.isFulfilled()) {
-      credentials = showAuthenticationForm(credentials, uri.toStringWithoutCredentials(), uri.getHost(), sshKeyFile)
+      credentials = showAuthenticationForm(credentials, uri.toStringWithoutCredentials(), uri.getHost(), uri.getPath(), sshKeyFile)
     }
 
     if (saveCredentialsToStore && credentials.isFulfilled()) {
