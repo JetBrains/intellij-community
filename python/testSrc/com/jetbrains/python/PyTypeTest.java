@@ -621,12 +621,25 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testFunctionTypeAsUnificationArgument() {
-    doTest("int",
+    doTest("list[int] | str | unicode",
            "def map2(f, xs):\n" +
            "    '''\n" +
            "    :type f: (T) -> V | None\n" +
-           "    :type xs: collections.Iterable[T] | bytes | unicode\n" +
-           "    :rtype: list[V] | bytes | unicode\n" +
+           "    :type xs: collections.Iterable[T] | str | unicode\n" +
+           "    :rtype: list[V] | str | unicode\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = map2(lambda x: 10, ['1', '2', '3'])\n");
+  }
+
+  public void testFunctionTypeAsUnificationArgumentWithSubscription() {
+    doTest("int | str | unicode",
+           "def map2(f, xs):\n" +
+           "    '''\n" +
+           "    :type f: (T) -> V | None\n" +
+           "    :type xs: collections.Iterable[T] | str | unicode\n" +
+           "    :rtype: list[V] | str | unicode\n" +
            "    '''\n" +
            "    pass\n" +
            "\n" +
@@ -904,6 +917,27 @@ public class PyTypeTest extends PyTestCase {
            "    pass\n" +
            "\n" +
            "expr = f().foo()\n");
+  }
+
+  // PY-12862
+  public void testUnionTypeAttributeSubscriptionOfDifferentTypes() {
+    doTest("C1 | C2",
+           "class C1:\n" +
+           "    def __getitem__(self, item):\n" +
+           "        return self\n" +
+           "\n" +
+           "class C2:\n" +
+           "    def __getitem__(self, item):\n" +
+           "        return self\n" +
+           "\n" +
+           "def f():\n" +
+           "    '''\n" +
+           "    :rtype: C1 | C2\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f()[0]\n" +
+           "print(expr)\n");
   }
 
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
