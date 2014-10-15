@@ -100,6 +100,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return size;
       }
     };
+    scrollPane.setOpaque(false);
+    scrollPane.getViewport().setOpaque(false);
     scrollPane.setViewportView(myMessageDataPanel);
 
     myContainingBranchesPanel = new ContainingBranchesPanel();
