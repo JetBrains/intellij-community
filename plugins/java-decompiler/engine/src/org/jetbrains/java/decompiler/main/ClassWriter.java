@@ -43,6 +43,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.*;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -581,13 +582,9 @@ public class ClassWriter {
       boolean isDeprecated = mt.getAttributes().containsKey("Deprecated");
       boolean clinit = false, init = false, dinit = false;
 
-      int startLine = -1;
+      StructLineNumberTableAttribute lineNumberTable = null;
       if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS)) {
-        StructLineNumberTableAttribute lineNumberTable =
-          (StructLineNumberTableAttribute)mt.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
-        if (lineNumberTable != null) {
-          startLine = lineNumberTable.getFirstLine();
-        }
+        lineNumberTable = (StructLineNumberTableAttribute)mt.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
       }
 
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
@@ -804,8 +801,10 @@ public class ClassWriter {
           buffer.append(' ');
         }
 
-        //TODO: for now only start line set
-        buffer.setCurrentLine(startLine-1);
+        // We do not have line information for method start, lets have it here for now
+        if (lineNumberTable != null) {
+          buffer.setCurrentLine(lineNumberTable.getFirstLine() - 1);
+        }
         buffer.append('{').appendLineSeparator();
 
         RootStatement root = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
@@ -813,10 +812,15 @@ public class ClassWriter {
         if (root != null && !methodWrapper.decompiledWithErrors) { // check for existence
           try {
             tracer.incrementCurrentSourceLine(buffer.count(lineSeparator, start_index_method));
+            int startLine = tracer.getCurrentSourceLine();
 
             TextBuffer code = root.toJava(indent + 1, tracer);
 
             hideMethod = (clinit || dinit || hideConstructor(wrapper, init, throwsExceptions, paramCount)) && code.length() == 0;
+
+            if (!hideMethod && lineNumberTable != null) {
+              mapLines(code, lineNumberTable, tracer, startLine);
+            }
 
             buffer.append(code);
           }
@@ -844,6 +848,33 @@ public class ClassWriter {
     tracer.setCurrentSourceLine(buffer.count(lineSeparator, start_index_method));
 
     return !hideMethod;
+  }
+
+  private void mapLines(TextBuffer code, StructLineNumberTableAttribute table, BytecodeMappingTracer tracer, int startLine) {
+    // build line start offsets map
+    HashMap<Integer, Integer> lineStartOffsets = new HashMap<Integer, Integer>();
+    for (Map.Entry<Integer, Integer> entry : tracer.getMapping().entrySet()) {
+      Integer lineNumber = entry.getValue() - startLine;
+      Integer curr = lineStartOffsets.get(lineNumber);
+      if (curr == null || curr > entry.getKey()) {
+        lineStartOffsets.put(lineNumber, entry.getKey());
+      }
+    }
+    String lineSeparator = DecompilerContext.getNewLineSeparator();
+    StringBuilder text = code.getOriginalText();
+    int pos = text.indexOf(lineSeparator);
+    int lineNumber = 0;
+    while (pos != -1) {
+      Integer startOffset = lineStartOffsets.get(lineNumber);
+      if (startOffset != null) {
+        int number = table.findLineNumber(startOffset);
+        if (number >= 0) {
+          code.setLineMapping(number, pos);
+        }
+      }
+      pos = text.indexOf(lineSeparator, pos+1);
+      lineNumber++;
+    }
   }
 
   private static boolean hideConstructor(ClassWrapper wrapper, boolean init, boolean throwsExceptions, int paramCount) {

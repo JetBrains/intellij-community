@@ -43,9 +43,13 @@ public class TextBuffer {
   }
 
   public void setCurrentLine(int line) {
+    setLineMapping(line, myStringBuilder.length()+1);
+  }
+
+  public void setLineMapping(int line, int offset) {
     if (line >= 0) {
       checkMapCreated();
-      myLineToOffsetMapping.put(line, myStringBuilder.length()+1);
+      myLineToOffsetMapping.put(line, offset);
     }
   }
 
@@ -256,5 +260,9 @@ public class TextBuffer {
       }
     }
     return res;
+  }
+
+  public StringBuilder getOriginalText() {
+    return myStringBuilder;
   }
 }
