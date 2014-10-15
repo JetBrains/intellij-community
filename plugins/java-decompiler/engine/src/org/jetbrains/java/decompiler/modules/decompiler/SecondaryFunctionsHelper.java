@@ -189,7 +189,7 @@ public class SecondaryFunctionsHelper {
               }
 
               if (desttype >= 0) {
-                return new FunctionExprent(desttype, funcexpr.getLstOperands());
+                return new FunctionExprent(desttype, funcexpr.getLstOperands(), funcexpr.bytecode);
               }
             }
           }
@@ -236,7 +236,7 @@ public class SecondaryFunctionsHelper {
                 if (val == -1) {
                   List<Exprent> lstBitNotOperand = new ArrayList<Exprent>();
                   lstBitNotOperand.add(lstOperands.get(1 - i));
-                  return new FunctionExprent(FunctionExprent.FUNCTION_BITNOT, lstBitNotOperand);
+                  return new FunctionExprent(FunctionExprent.FUNCTION_BITNOT, lstBitNotOperand, fexpr.bytecode);
                 }
               }
             }
@@ -257,7 +257,7 @@ public class SecondaryFunctionsHelper {
                   else {
                     List<Exprent> lstNotOperand = new ArrayList<Exprent>();
                     lstNotOperand.add(lstOperands.get(1 - i));
-                    return new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT, lstNotOperand);
+                    return new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT, lstNotOperand, fexpr.bytecode);
                   }
                 }
               }
@@ -267,10 +267,10 @@ public class SecondaryFunctionsHelper {
             if (lstOperands.get(0).type == Exprent.EXPRENT_CONST) {
               int val = ((ConstExprent)lstOperands.get(0)).getIntValue();
               if (val == 0) {
-                return new ConstExprent(VarType.VARTYPE_BOOLEAN, new Integer(1));
+                return new ConstExprent(VarType.VARTYPE_BOOLEAN, new Integer(1), fexpr.bytecode);
               }
               else {
-                return new ConstExprent(VarType.VARTYPE_BOOLEAN, new Integer(0));
+                return new ConstExprent(VarType.VARTYPE_BOOLEAN, new Integer(0), fexpr.bytecode);
               }
             }
             break;
@@ -286,7 +286,7 @@ public class SecondaryFunctionsHelper {
                   cexpr2.getExprType().type == CodeConstants.TYPE_BOOLEAN) {
 
                 if (cexpr1.getIntValue() == 0 && cexpr2.getIntValue() != 0) {
-                  return new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT, Arrays.asList(new Exprent[]{lstOperands.get(0)}));
+                  return new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT, Arrays.asList(lstOperands.get(0)), fexpr.bytecode);
                 }
                 else if (cexpr1.getIntValue() != 0 && cexpr2.getIntValue() == 0) {
                   return lstOperands.get(0);
@@ -303,23 +303,22 @@ public class SecondaryFunctionsHelper {
             VarType type = lstOperands.get(0).getExprType();
             VarProcessor processor = (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR);
 
-            FunctionExprent iff = new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(new Exprent[]{
-              new FunctionExprent(FunctionExprent.FUNCTION_LT, Arrays.asList(new Exprent[]{new VarExprent(var, type, processor),
-                ConstExprent.getZeroConstant(type.type)})),
-              new ConstExprent(VarType.VARTYPE_INT, new Integer(-1)),
-              new ConstExprent(VarType.VARTYPE_INT, new Integer(1))}));
+            FunctionExprent iff = new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(
+              new FunctionExprent(FunctionExprent.FUNCTION_LT, Arrays.asList(new VarExprent(var, type, processor),
+                ConstExprent.getZeroConstant(type.type)), null),
+              new ConstExprent(VarType.VARTYPE_INT, new Integer(-1), null),
+              new ConstExprent(VarType.VARTYPE_INT, new Integer(1), null)), null);
 
-            FunctionExprent head = new FunctionExprent(FunctionExprent.FUNCTION_EQ, Arrays.asList(new Exprent[]{
+            FunctionExprent head = new FunctionExprent(FunctionExprent.FUNCTION_EQ, Arrays.asList(
               new AssignmentExprent(new VarExprent(var, type, processor), new FunctionExprent(FunctionExprent.FUNCTION_SUB,
-                                                                                              Arrays.asList(
-                                                                                                new Exprent[]{lstOperands.get(0),
-                                                                                                  lstOperands.get(1)}))),
-              ConstExprent.getZeroConstant(type.type)}));
+                                                                                              Arrays.asList(lstOperands.get(0),
+                                                                                                  lstOperands.get(1)), null), null),
+              ConstExprent.getZeroConstant(type.type)), null);
 
             processor.setVarType(new VarVersionPaar(var, 0), type);
 
-            return new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(new Exprent[]{
-              head, new ConstExprent(VarType.VARTYPE_INT, new Integer(0)), iff}));
+            return new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(
+              head, new ConstExprent(VarType.VARTYPE_INT, new Integer(0), null), iff), fexpr.bytecode);
         }
         break;
       case Exprent.EXPRENT_ASSIGNMENT: // check for conditional assignment
@@ -409,7 +408,7 @@ public class SecondaryFunctionsHelper {
               List<Exprent> operands = fparam.getLstOperands();
               for (int i = 0; i < operands.size(); i++) {
                 Exprent newparam = new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT,
-                                                       Arrays.asList(new Exprent[]{operands.get(i)}));
+                                                       Arrays.asList(operands.get(i)), operands.get(i).bytecode);
 
                 Exprent retparam = propagateBoolNot(newparam);
                 operands.set(i, retparam == null ? newparam : retparam);

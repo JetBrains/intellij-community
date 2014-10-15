@@ -462,7 +462,7 @@ public class ClassWriter {
       if (attr != null) {
         PrimitiveConstant constant = cl.getPool().getPrimitiveConstant(attr.getIndex());
         buffer.append(" = ");
-        buffer.append(new ConstExprent(fieldType, constant.value).toJava(indent, tracer));
+        buffer.append(new ConstExprent(fieldType, constant.value, null).toJava(indent, tracer));
       }
     }
 

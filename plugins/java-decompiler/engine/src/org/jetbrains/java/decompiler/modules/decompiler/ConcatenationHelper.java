@@ -104,7 +104,7 @@ public class ConcatenationHelper {
     }
 
     if (first2str == 0) {
-      lstOperands.add(0, new ConstExprent(VarType.VARTYPE_STRING, ""));
+      lstOperands.add(0, new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
     }
 
     // remove redundant String.valueOf
@@ -133,7 +133,7 @@ public class ConcatenationHelper {
       List<Exprent> lstTmp = new ArrayList<Exprent>();
       lstTmp.add(func);
       lstTmp.add(lstOperands.get(i));
-      func = new FunctionExprent(FunctionExprent.FUNCTION_STRCONCAT, lstTmp);
+      func = new FunctionExprent(FunctionExprent.FUNCTION_STRCONCAT, lstTmp, expr.bytecode);
     }
 
     return func;

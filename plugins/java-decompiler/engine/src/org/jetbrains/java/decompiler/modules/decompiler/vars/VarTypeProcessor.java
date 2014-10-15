@@ -116,7 +116,7 @@ public class VarTypeProcessor {
           else if (expr.type == Exprent.EXPRENT_CONST) {
             ConstExprent cexpr = (ConstExprent)expr;
             if (cexpr.getConsttype().type_family == CodeConstants.TYPE_FAMILY_INTEGER) {
-              cexpr.setConsttype(new ConstExprent(cexpr.getIntValue(), cexpr.isBoolPermitted()).getConsttype());
+              cexpr.setConsttype(new ConstExprent(cexpr.getIntValue(), cexpr.isBoolPermitted(), null).getConsttype());
             }
           }
         }
@@ -183,7 +183,7 @@ public class VarTypeProcessor {
           return true;
         }
         else if (newtype.type_family == CodeConstants.TYPE_FAMILY_INTEGER) {
-          VarType mininteger = new ConstExprent((Integer)((ConstExprent)exprent).getValue(), false).getConsttype();
+          VarType mininteger = new ConstExprent((Integer)((ConstExprent)exprent).getValue(), false, null).getConsttype();
           if (mininteger.isStrictSuperset(newtype)) {
             newtype = mininteger;
           }

@@ -1,10 +1,10 @@
 package org.jetbrains.java.decompiler.main.collectors;
 
-import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
-
 import java.util.HashMap;
 import java.util.Map.Entry;
+
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 
 public class BytecodeSourceMapper {
 
@@ -37,7 +37,7 @@ public class BytecodeSourceMapper {
     }
   }
 
-  public void dumpMapping(TextBuffer buffer) {
+  public void dumpMapping(TextBuffer buffer, boolean offsetsToHex) {
 
     String lineSeparator = DecompilerContext.getNewLineSeparator();
 
@@ -56,7 +56,8 @@ public class BytecodeSourceMapper {
         buffer.appendIndent(1).append("method " + method_entry.getKey() + "{" + lineSeparator);
 
         for(Entry<Integer, Integer> line : method_mapping.entrySet()) {
-          buffer.appendIndent(2).append(line.getKey().toString()).appendIndent(2).append((line.getValue() + offset_total) + lineSeparator);
+          String strOffset = offsetsToHex ? Integer.toHexString(line.getKey()): line.getKey().toString();
+          buffer.appendIndent(2).append(strOffset).appendIndent(2).append((line.getValue() + offset_total) + lineSeparator);
         }
         buffer.appendIndent(1).append("}").appendLineSeparator();
         is_first_method = false;

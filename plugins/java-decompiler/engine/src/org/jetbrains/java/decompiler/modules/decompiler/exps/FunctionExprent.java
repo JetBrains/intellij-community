@@ -15,6 +15,12 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -23,11 +29,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 
 
 public class FunctionExprent extends Exprent {
@@ -207,7 +208,7 @@ public class FunctionExprent extends Exprent {
     this.type = EXPRENT_FUNCTION;
   }
 
-  public FunctionExprent(int functype, ListStack<Exprent> stack) {
+  public FunctionExprent(int functype, ListStack<Exprent> stack, Set<Integer> bytecode_offsets) {
     this.functype = functype;
     if (functype >= FUNCTION_BITNOT && functype <= FUNCTION_PPI && functype != FUNCTION_CAST
         && functype != FUNCTION_INSTANCEOF) {
@@ -221,11 +222,15 @@ public class FunctionExprent extends Exprent {
       lstOperands.add(stack.pop());
       lstOperands.add(expr);
     }
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
-  public FunctionExprent(int functype, List<Exprent> operands) {
+  public FunctionExprent(int functype, List<Exprent> operands, Set<Integer> bytecode_offsets) {
     this.functype = functype;
     this.lstOperands = operands;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
   public VarType getExprType() {
@@ -420,12 +425,13 @@ public class FunctionExprent extends Exprent {
     return lst;
   }
 
+  @Override
   public Exprent copy() {
     List<Exprent> lst = new ArrayList<Exprent>();
     for (Exprent expr : lstOperands) {
       lst.add(expr.copy());
     }
-    FunctionExprent func = new FunctionExprent(functype, lst);
+    FunctionExprent func = new FunctionExprent(functype, lst, bytecode);
     func.setImplicitType(implicitType);
 
     return func;

@@ -287,7 +287,7 @@ public class ClassesProcessor {
         mapper.addTotalOffset(total_offset_lines);
 
         buffer.append(lineSeparator);
-        mapper.dumpMapping(buffer);
+        mapper.dumpMapping(buffer, true);
       }
     }
     finally {
