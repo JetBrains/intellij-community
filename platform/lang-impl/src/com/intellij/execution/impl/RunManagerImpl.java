@@ -33,6 +33,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakHashMap;
@@ -95,7 +96,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     myConfig = new RunManagerConfig(propertiesComponent, this);
     myProject = project;
 
-    initConfigurationTypes();
+    initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions());
     myProject.getMessageBus().connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
@@ -126,11 +127,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
     final UnknownConfigurationType broken = UnknownConfigurationType.INSTANCE;
     myTypesByName.put(broken.getId(), broken);
-  }
-
-  private void initConfigurationTypes() {
-    final ConfigurationType[] configurationTypes = Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
-    initializeConfigurationTypes(configurationTypes);
   }
 
   @Override
@@ -202,7 +198,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   @Override
   @NotNull
   public List<RunConfiguration> getConfigurationsList(@NotNull final ConfigurationType type) {
-
     final List<RunConfiguration> list = new ArrayList<RunConfiguration>();
     for (RunnerAndConfigurationSettings myConfiguration : getSortedConfigurations()) {
       final RunConfiguration configuration = myConfiguration.getConfiguration();
@@ -211,18 +206,22 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
         list.add(configuration);
       }
     }
-    return Collections.unmodifiableList(list);
+    return list;
   }
 
   @Override
   @NotNull
   public List<RunConfiguration> getAllConfigurationsList() {
+    Collection<RunnerAndConfigurationSettings> sortedConfigurations = getSortedConfigurations();
+    if (sortedConfigurations.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     List<RunConfiguration> result = new ArrayList<RunConfiguration>(myConfigurations.size());
-    for (Iterator<RunnerAndConfigurationSettings> iterator = getSortedConfigurations().iterator(); iterator.hasNext();) {
-      RunnerAndConfigurationSettings settings = iterator.next();
+    for (RunnerAndConfigurationSettings settings : sortedConfigurations) {
       result.add(settings.getConfiguration());
     }
-    return Collections.unmodifiableList(result);
+    return result;
   }
 
   @NotNull
@@ -235,7 +234,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   @NotNull
   @Override
   public List<RunnerAndConfigurationSettings> getAllSettings() {
-    return Collections.unmodifiableList(new ArrayList<RunnerAndConfigurationSettings>(getSortedConfigurations()));
+    return new ArrayList<RunnerAndConfigurationSettings>(getSortedConfigurations());
   }
 
   @Nullable
@@ -253,7 +252,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   @Override
   @NotNull
   public List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull final ConfigurationType type) {
-
     final LinkedHashSet<RunnerAndConfigurationSettings> set = new LinkedHashSet<RunnerAndConfigurationSettings>();
     for (RunnerAndConfigurationSettings configuration : getSortedConfigurations()) {
       final ConfigurationType configurationType = configuration.getType();
@@ -380,10 +378,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     trimUsagesListToLimit();
     List<RunnerAndConfigurationSettings> removed = new ArrayList<RunnerAndConfigurationSettings>();
     while (getTempConfigurationsList().size() > getConfig().getRecentsLimit()) {
-      for (Iterator<Map.Entry<String, RunnerAndConfigurationSettings>> it = myConfigurations.entrySet().iterator(); it.hasNext(); ) {
-        Map.Entry<String, RunnerAndConfigurationSettings> entry = it.next();
-        if (entry.getValue().isTemporary() && !myRecentlyUsedTemporaries.contains(entry.getValue().getConfiguration())) {
-          removed.add(entry.getValue());
+      for (Iterator<RunnerAndConfigurationSettings> it = myConfigurations.values().iterator(); it.hasNext(); ) {
+        RunnerAndConfigurationSettings configuration = it.next();
+        if (configuration.isTemporary() && !myRecentlyUsedTemporaries.contains(configuration.getConfiguration())) {
+          removed.add(configuration);
           it.remove();
           break;
         }
@@ -448,67 +446,71 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   @Override
   @NotNull
   public Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
-    if (!myOrdered) { //compatibility
-      List<Pair<String, RunnerAndConfigurationSettings>> order
-        = new ArrayList<Pair<String, RunnerAndConfigurationSettings>>(myConfigurations.size());
-      final List<String> folderNames = new ArrayList<String>();
-      for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
-        order.add(Pair.create(each.getUniqueID(), each));
-        String folderName = each.getFolderName();
-        if (folderName != null && !folderNames.contains(folderName)) {
-          folderNames.add(folderName);
-        }
-      }
-      folderNames.add(null);
-      myConfigurations.clear();
-
-      if (myOrder.isEmpty()) {
-        // IDEA-63663 Sort run configurations alphabetically if clean checkout 
-        Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
-          @Override
-          public int compare(@NotNull Pair<String, RunnerAndConfigurationSettings> o1, @NotNull Pair<String, RunnerAndConfigurationSettings> o2) {
-            boolean temporary1 = o1.getSecond().isTemporary();
-            boolean temporary2 = o2.getSecond().isTemporary();
-            if (temporary1 == temporary2) {
-              return o1.first.compareTo(o2.first);
-            } else {
-              return temporary1 ? 1 : -1;
-            }
-          }
-        });
-      }
-      else {
-        Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
-          @Override
-          public int compare(@NotNull Pair<String, RunnerAndConfigurationSettings> o1, @NotNull Pair<String, RunnerAndConfigurationSettings> o2) {
-            int i1 = folderNames.indexOf(o1.getSecond().getFolderName());
-            int i2 = folderNames.indexOf(o2.getSecond().getFolderName());
-            if (i1 != i2) {
-              return i1 - i2;
-            }
-            boolean temporary1 = o1.getSecond().isTemporary();
-            boolean temporary2 = o2.getSecond().isTemporary();
-            if (temporary1 == temporary2) {
-              int index1 = myOrder.indexOf(o1.first);
-              int index2 = myOrder.indexOf(o2.first);
-              if (index1 ==-1 && index2 ==-1) {
-                return o1.second.getName().compareTo(o2.second.getName());
-              }
-              return index1 - index2;
-            } else {
-              return temporary1 ? 1 : -1;
-            }
-          }
-        });
-      }
-
-      for (Pair<String, RunnerAndConfigurationSettings> each : order) {
-        RunnerAndConfigurationSettings setting = each.second;
-        myConfigurations.put(setting.getUniqueID(), setting);
-      }
-
-      myOrdered = true;
+    if (myOrdered) {
+      return myConfigurations.values();
     }
+
+    List<Pair<String, RunnerAndConfigurationSettings>> order
+      = new ArrayList<Pair<String, RunnerAndConfigurationSettings>>(myConfigurations.size());
+    final List<String> folderNames = new SmartList<String>();
+    for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
+      order.add(Pair.create(each.getUniqueID(), each));
+      String folderName = each.getFolderName();
+      if (folderName != null && !folderNames.contains(folderName)) {
+        folderNames.add(folderName);
+      }
+    }
+    folderNames.add(null);
+    myConfigurations.clear();
+
+    if (myOrder.isEmpty()) {
+      // IDEA-63663 Sort run configurations alphabetically if clean checkout
+      Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
+        @Override
+        public int compare(@NotNull Pair<String, RunnerAndConfigurationSettings> o1, @NotNull Pair<String, RunnerAndConfigurationSettings> o2) {
+          boolean temporary1 = o1.getSecond().isTemporary();
+          boolean temporary2 = o2.getSecond().isTemporary();
+          if (temporary1 == temporary2) {
+            return o1.first.compareTo(o2.first);
+          }
+          else {
+            return temporary1 ? 1 : -1;
+          }
+        }
+      });
+    }
+    else {
+      Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
+        @Override
+        public int compare(@NotNull Pair<String, RunnerAndConfigurationSettings> o1, @NotNull Pair<String, RunnerAndConfigurationSettings> o2) {
+          int i1 = folderNames.indexOf(o1.getSecond().getFolderName());
+          int i2 = folderNames.indexOf(o2.getSecond().getFolderName());
+          if (i1 != i2) {
+            return i1 - i2;
+          }
+          boolean temporary1 = o1.getSecond().isTemporary();
+          boolean temporary2 = o2.getSecond().isTemporary();
+          if (temporary1 == temporary2) {
+            int index1 = myOrder.indexOf(o1.first);
+            int index2 = myOrder.indexOf(o2.first);
+            if (index1 == -1 && index2 == -1) {
+              return o1.second.getName().compareTo(o2.second.getName());
+            }
+            return index1 - index2;
+          }
+          else {
+            return temporary1 ? 1 : -1;
+          }
+        }
+      });
+    }
+
+    for (Pair<String, RunnerAndConfigurationSettings> each : order) {
+      RunnerAndConfigurationSettings setting = each.second;
+      myConfigurations.put(setting.getUniqueID(), setting);
+    }
+
+    myOrdered = true;
     return myConfigurations.values();
   }
 
@@ -545,11 +547,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       addConfigurationElement(parentNode, runnerAndConfigurationSettings);
     }
 
-    final Collection<RunnerAndConfigurationSettings> configurations = getStableConfigurations();
-    for (RunnerAndConfigurationSettings configuration : configurations) {
-      if (!isConfigurationShared(configuration)) {
-        addConfigurationElement(parentNode, configuration);
-      }
+    for (RunnerAndConfigurationSettings configuration : getStableConfigurations(false)) {
+      addConfigurationElement(parentNode, configuration);
     }
 
     final JDOMExternalizableStringList order = new JDOMExternalizableStringList();
@@ -596,11 +595,11 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     }
   }
 
-  void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettings template) {
+  void addConfigurationElement(@NotNull Element parentNode, RunnerAndConfigurationSettings template) {
     addConfigurationElement(parentNode, template, CONFIGURATION);
   }
 
-  private void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettings settings, String elementType) {
+  private void addConfigurationElement(@NotNull Element parentNode, RunnerAndConfigurationSettings settings, String elementType) {
     final Element configurationElement = new Element(elementType);
     parentNode.addContent(configurationElement);
     try {
@@ -610,51 +609,53 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       throw new RuntimeException(e);
     }
 
-    if (!(settings.getConfiguration() instanceof UnknownRunConfiguration)) {
-      final List<BeforeRunTask> tasks = ContainerUtil.createLockFreeCopyOnWriteList(getBeforeRunTasks(settings.getConfiguration()));
-      final Element methodsElement = new Element(METHOD);
-      Map<Key<BeforeRunTask>, BeforeRunTask> templateTasks = new HashMap<Key<BeforeRunTask>, BeforeRunTask>();
-      List<BeforeRunTask> beforeRunTasks = settings.isTemplate()
-                                           ? getHardcodedBeforeRunTasks(settings.getConfiguration())
-                                           : getBeforeRunTasks(getConfigurationTemplate(settings.getFactory()).getConfiguration());
-      for (BeforeRunTask templateTask : beforeRunTasks) {
-        templateTasks.put(templateTask.getProviderId(), templateTask);
-        if (templateTask.isEnabled()) {
-          boolean found = false;
-          for (BeforeRunTask realTask : tasks) {
-            if (realTask.getProviderId() == templateTask.getProviderId()) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            BeforeRunTask clone = templateTask.clone();
-            clone.setEnabled(false);
-            tasks.add(0, clone);
-          }
-        }
-      }
-      for (int i = 0, size = tasks.size(); i < size; i++) {
-        BeforeRunTask task = tasks.get(i);
-        int j = 0;
-        BeforeRunTask templateTask = null;
-        for (Map.Entry<Key<BeforeRunTask>, BeforeRunTask> entry : templateTasks.entrySet()) {
-          if (entry.getKey() == task.getProviderId()) {
-            templateTask = entry.getValue();
+    if (settings.getConfiguration() instanceof UnknownRunConfiguration) {
+      return;
+    }
+
+    final List<BeforeRunTask> tasks = ContainerUtil.createLockFreeCopyOnWriteList(getBeforeRunTasks(settings.getConfiguration()));
+    final Element methodsElement = new Element(METHOD);
+    Map<Key<BeforeRunTask>, BeforeRunTask> templateTasks = new HashMap<Key<BeforeRunTask>, BeforeRunTask>();
+    List<BeforeRunTask> beforeRunTasks = settings.isTemplate()
+                                         ? getHardcodedBeforeRunTasks(settings.getConfiguration())
+                                         : getBeforeRunTasks(getConfigurationTemplate(settings.getFactory()).getConfiguration());
+    for (BeforeRunTask templateTask : beforeRunTasks) {
+      templateTasks.put(templateTask.getProviderId(), templateTask);
+      if (templateTask.isEnabled()) {
+        boolean found = false;
+        for (BeforeRunTask realTask : tasks) {
+          if (realTask.getProviderId() == templateTask.getProviderId()) {
+            found = true;
             break;
           }
-          j++;
         }
-        if (task.equals(templateTask) && i == j) {
-          continue; // not necessary saving if the task is the same as template and on the same place
+        if (!found) {
+          BeforeRunTask clone = templateTask.clone();
+          clone.setEnabled(false);
+          tasks.add(0, clone);
         }
-        final Element child = new Element(OPTION);
-        child.setAttribute(NAME_ATTR, task.getProviderId().toString());
-        task.writeExternal(child);
-        methodsElement.addContent(child);
       }
-      configurationElement.addContent(methodsElement);
     }
+    for (int i = 0, size = tasks.size(); i < size; i++) {
+      BeforeRunTask task = tasks.get(i);
+      int j = 0;
+      BeforeRunTask templateTask = null;
+      for (Map.Entry<Key<BeforeRunTask>, BeforeRunTask> entry : templateTasks.entrySet()) {
+        if (entry.getKey() == task.getProviderId()) {
+          templateTask = entry.getValue();
+          break;
+        }
+        j++;
+      }
+      if (task.equals(templateTask) && i == j) {
+        continue; // not necessary saving if the task is the same as template and on the same place
+      }
+      final Element child = new Element(OPTION);
+      child.setAttribute(NAME_ATTR, task.getProviderId().toString());
+      task.writeExternal(child);
+      methodsElement.addContent(child);
+    }
+    configurationElement.addContent(methodsElement);
   }
 
   @Override
@@ -806,7 +807,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   @Nullable
-  public RunnerAndConfigurationSettings loadConfiguration(final Element element, boolean isShared) throws InvalidDataException {
+  public RunnerAndConfigurationSettings loadConfiguration(@NotNull Element element, boolean isShared) throws InvalidDataException {
     final RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this);
     settings.readExternal(element);
     ConfigurationFactory factory = settings.getFactory();
@@ -915,16 +916,18 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     setSelectedConfiguration(tempConfiguration);
   }
 
-  Collection<RunnerAndConfigurationSettings> getStableConfigurations() {
-    final Map<String, RunnerAndConfigurationSettings> result =
-      new LinkedHashMap<String, RunnerAndConfigurationSettings>(myConfigurations);
-    for (Iterator<Map.Entry<String, RunnerAndConfigurationSettings>> it = result.entrySet().iterator(); it.hasNext(); ) {
-      Map.Entry<String, RunnerAndConfigurationSettings> entry = it.next();
-      if (entry.getValue().isTemporary()) {
-        it.remove();
+  @NotNull
+  Collection<RunnerAndConfigurationSettings> getStableConfigurations(boolean shared) {
+    List<RunnerAndConfigurationSettings> result = null;
+    for (RunnerAndConfigurationSettings configuration : myConfigurations.values()) {
+      if (!configuration.isTemporary() && isConfigurationShared(configuration) == shared) {
+        if (result == null) {
+          result = new SmartList<RunnerAndConfigurationSettings>();
+        }
+        result.add(configuration);
       }
     }
-    return result.values();
+    return ContainerUtil.notNullize(result);
   }
 
   @NotNull
