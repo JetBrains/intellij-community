@@ -52,6 +52,7 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
   private final int myCheckBoxLoadingIconGapV;
   private final LoadingIcon myLoadingIcon;
   private final int myCheckBoxWidth;
+  private final int myCheckBoxHeight;
 
 
   public RepositoryWithBranchPanel(@NotNull final Project project, @NotNull String repoName,
@@ -102,6 +103,7 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     emptyBorderCheckBox.setBorder(null);
     Dimension size = emptyBorderCheckBox.getPreferredSize();
     myCheckBoxWidth = size.width;
+    myCheckBoxHeight = size.height;
     myLoadingIcon = LoadingIcon.create(myCheckBoxWidth, size.height);
     myCheckBoxLoadingIconGapH = myCheckBoxWidth - myLoadingIcon.getIconWidth();
     myCheckBoxLoadingIconGapV = size.height - myLoadingIcon.getIconHeight();
@@ -222,6 +224,10 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
   public int getVBorderOffset(@NotNull SimpleColoredComponent coloredRenderer) {
     Border border = coloredRenderer.getMyBorder();
     return border != null ? border.getBorderInsets(coloredRenderer).top : 0;
+  }
+
+  public int getCheckBoxHeight() {
+    return myCheckBoxHeight;
   }
 }
 
