@@ -74,7 +74,7 @@ public class GraphTableModel extends AbstractTableModel {
     sb.append("LAST 100 COMMITS:\n");
     List<GraphCommit<Integer>> commits = myDataPack.getPermanentGraph().getAllCommits();
     for (int i = 0; i < 100 && i < commits.size(); i++) {
-      GraphCommit<Integer> commit = commits.get(0);
+      GraphCommit<Integer> commit = commits.get(i);
       sb.append(myDataHolder.getHash(commit.getId()) + "\n");
     }
     sb.append("\nALL REFS:\n");
