@@ -5,6 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.navigation.ItemPresentation;
 
 public interface JsonProperty extends JsonElement, PsiNamedElement {
 
@@ -16,5 +17,8 @@ public interface JsonProperty extends JsonElement, PsiNamedElement {
 
   @Nullable
   JsonValue getValue();
+
+  @Nullable
+  ItemPresentation getPresentation();
 
 }
