@@ -43,9 +43,6 @@ public class JavaAwareCompletionData extends CompletionData{
     if(_ret == null || !(_ret instanceof LookupItem)) return;
 
     LookupItem ret = (LookupItem)_ret;
-    final InsertHandler insertHandler = variant.getInsertHandler();
-    if(insertHandler != null && ret.getInsertHandler() == null) {
-    }
     ret.setInsertHandler(new InsertHandler<LookupElement>() {
       @Override
       public void handleInsert(InsertionContext context, LookupElement item) {
