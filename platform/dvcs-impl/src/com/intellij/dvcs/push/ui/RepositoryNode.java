@@ -71,7 +71,6 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     int repoFixedWidth = 120;
     int borderHOffset = myRepositoryPanel.getHBorderOffset(renderer);
-    int borderVOffset = myRepositoryPanel.getVBorderOffset(renderer);
     if (myLoading.get()) {
       renderer.setIcon(myLoadingIcon);
       renderer.setIconOnTheRight(false);
@@ -81,27 +80,31 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
         renderer.append("");
         renderer.appendFixedTextFragmentWidth(checkBoxWidth + renderer.getIconTextGap() + borderHOffset);
       }
-      if (myCheckBoxVGap > 0) {
-        int shiftV = myCheckBoxVGap - borderVOffset;
-        renderer.setBorder(new EmptyBorder(shiftV / 2, 0, shiftV / 2, 0));
-      }
     }
     else {
       if (myCheckBoxHGap <= 0) {
         renderer.append("");
         renderer.appendFixedTextFragmentWidth(myRepositoryPanel.calculateRendererShiftH(renderer));
       }
-      if (myCheckBoxVGap <= 0) {
-        int shiftV = -myCheckBoxVGap + borderVOffset;
-        renderer.setBorder(new EmptyBorder(shiftV / 2, 0, shiftV / 2, 0));
-      }
     }
-    renderer.append(getRepoName(renderer, repoFixedWidth), isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+    renderer.append(getRepoName(renderer, repoFixedWidth),
+                    isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     renderer.appendFixedTextFragmentWidth(repoFixedWidth);
-    renderer.append(myRepositoryPanel.getSourceName(), isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
-    renderer.append(myRepositoryPanel.getArrow(), isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+    renderer.append(myRepositoryPanel.getSourceName(),
+                    isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+    renderer
+      .append(myRepositoryPanel.getArrow(), isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
     pushTargetPanel.render(renderer);
+
+    int maxSize = Math.max(myRepositoryPanel.getCheckBoxHeight(), myLoadingIcon.getIconHeight());
+    int rendererHeight = renderer.getPreferredSize().height;
+    if (maxSize > rendererHeight) {
+      if (myCheckBoxVGap > 0 && isLoading() || myCheckBoxVGap < 0 && !isLoading()) {
+        int vShift = maxSize - rendererHeight;
+        renderer.setBorder(new EmptyBorder((vShift + 1) / 2, 0, (vShift) / 2, 0));
+      }
+    }
   }
 
   @NotNull
