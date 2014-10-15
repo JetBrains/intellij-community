@@ -59,5 +59,6 @@ public trait RepositoryService {
     }
   }
 
-  protected fun isValidRepository(file: File): Boolean
+  // must be protected, kotlin bug
+  public fun isValidRepository(file: File): Boolean
 }

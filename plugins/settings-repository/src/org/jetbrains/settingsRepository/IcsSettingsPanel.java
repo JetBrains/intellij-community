@@ -49,7 +49,7 @@ public class IcsSettingsPanel extends DialogWrapper {
         @Override
         protected void doAction(ActionEvent event) {
           boolean repositoryWillBeCreated = !icsManager.getRepositoryManager().isRepositoryExists();
-          if (!saveRemoteRepositoryUrl(syncType)) {
+          if (!saveRemoteRepositoryUrl()) {
             if (repositoryWillBeCreated) {
               // remove created repository
               icsManager.getRepositoryManager().deleteRepository();
@@ -136,20 +136,13 @@ public class IcsSettingsPanel extends DialogWrapper {
     return syncActions;
   }
 
-  private boolean saveRemoteRepositoryUrl(@NotNull SyncType syncType) {
-    String url = StringUtil.nullize(urlTextField.getText());
-    if (url != null) {
-      try {
-        if (!icsManager.getRepositoryService().checkUrl(url, getContentPane())) {
-          return false;
-        }
-      }
-      catch (Throwable e) {
+  private boolean saveRemoteRepositoryUrl() {
+    try {
+      String url = StringUtil.nullize(urlTextField.getText());
+      if (url != null && !icsManager.getRepositoryService().checkUrl(url, getContentPane())) {
         return false;
       }
-    }
 
-    try {
       RepositoryManager repositoryManager = icsManager.getRepositoryManager();
       repositoryManager.createRepositoryIfNeed();
       repositoryManager.setUpstream(url, null);
