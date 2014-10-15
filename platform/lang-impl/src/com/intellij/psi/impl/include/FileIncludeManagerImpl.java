@@ -19,6 +19,7 @@ package com.intellij.psi.impl.include;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -155,12 +156,27 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   }
 
   @Override
-  public PsiFileSystemItem resolveFileInclude(final FileIncludeInfo info, final PsiFile context) {
+  public PsiFileSystemItem resolveFileInclude(@NotNull final FileIncludeInfo info, @NotNull final PsiFile context) {
     return doResolve(info, context);
   }
 
   @Nullable
-  private PsiFileSystemItem doResolve(FileIncludeInfo info, PsiFile context) {
+  private PsiFileSystemItem doResolve(@NotNull final FileIncludeInfo info, @NotNull final PsiFile context) {
+    if (info instanceof FileIncludeInfoImpl) {
+      final FileIncludeProvider provider =
+        ContainerUtil.find(FileIncludeProvider.EP_NAME.getExtensions(), new Condition<FileIncludeProvider>() {
+          @Override
+          public boolean value(final FileIncludeProvider provider) {
+            return provider.getId().equals(((FileIncludeInfoImpl)info).providerId);
+          }
+        });
+
+      final PsiFileSystemItem resolvedByProvider = provider == null ? null : provider.resolveIncludedFile(info, context);
+      if (resolvedByProvider != null) {
+        return resolvedByProvider;
+      }
+    }
+
     PsiFileImpl psiFile = (PsiFileImpl)myPsiFileFactory.createFileFromText("dummy.txt", FileTypes.PLAIN_TEXT, info.path);
     psiFile.setOriginalFile(context);
     return new FileReferenceSet(psiFile) {
