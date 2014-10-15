@@ -26,6 +26,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
@@ -158,17 +159,11 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
   public static class RunConfigurationStateSplitter implements StateSplitter {
     @Override
     public List<Pair<Element, String>> splitState(Element e) {
-      final UniqueNameGenerator generator = new UniqueNameGenerator();
-
-      List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
-
-      final List list = e.getChildren();
-      for (final Object o : list) {
-        Element library = (Element)o;
-        final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(library.getAttributeValue(RunManagerImpl.NAME_ATTR))) + ".xml";
-        result.add(Pair.create(library, name));
+      UniqueNameGenerator generator = new UniqueNameGenerator();
+      List<Pair<Element, String>> result = new SmartList<Pair<Element, String>>();
+      for (Element state : e.getChildren()) {
+        result.add(Pair.create(state, generator.generateUniqueName(FileUtil.sanitizeFileName(state.getAttributeValue(RunManagerImpl.NAME_ATTR))) + ".xml"));
       }
-
       return result;
     }
 

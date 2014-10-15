@@ -16,13 +16,16 @@
 package com.intellij.openapi.components.store;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.impl.stores.DefaultStateSerializer;
 import com.intellij.openapi.components.impl.stores.StorageDataBase;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class StateStorageBase implements StateStorage {
+public abstract class StateStorageBase<T extends StorageDataBase> implements StateStorage {
   protected static final Logger LOG = Logger.getInstance(StateStorageBase.class);
 
   private boolean mySavingDisabled = false;
@@ -33,16 +36,25 @@ public abstract class StateStorageBase implements StateStorage {
   }
 
   @Override
+  @Nullable
+  public final <T> T getState(Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException {
+    return DefaultStateSerializer.deserializeState(getStateAndArchive(getStorageData(), componentName), stateClass, mergeInto);
+  }
+
+  @Nullable
+  protected abstract Element getStateAndArchive(@NotNull T storageData, @NotNull String componentName);
+
+  @Override
   public final boolean hasState(@Nullable Object component, @NotNull String componentName, Class<?> aClass, boolean reloadData) {
     return getStorageData(reloadData).hasState(componentName);
   }
 
   @NotNull
-  public final StorageDataBase getStorageData() {
+  public final T getStorageData() {
     return getStorageData(false);
   }
 
-  protected abstract StorageDataBase getStorageData(boolean reloadData);
+  protected abstract T getStorageData(boolean reloadData);
 
   public final void disableSaving() {
     if (LOG.isDebugEnabled()) {
