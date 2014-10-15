@@ -121,7 +121,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
         doOKAction();
         addToWatches();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK)), getRootPane(), myDisposable);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)), getRootPane(), myDisposable);
 
     new AnAction() {
       @Override
@@ -169,7 +169,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
-        if (((e.getModifiers() & InputEvent.ALT_MASK) != 0)) {
+        if (((e.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK)) == (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK))) {
           addToWatches();
         }
       }
