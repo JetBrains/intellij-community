@@ -31,6 +31,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -44,6 +46,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataPath;
@@ -287,6 +290,17 @@ public abstract class PyTestCase extends UsefulTestCase {
         });
       }
     }, null, null);
+  }
+
+  /**
+   * Runs refactoring using special handler
+   *
+   * @param handler handler to be used
+   */
+  protected void refactorUsingHandler(@NotNull final RefactoringActionHandler handler) {
+    final Editor editor = myFixture.getEditor();
+    assertInstanceOf(editor, EditorEx.class);
+    handler.invoke(myFixture.getProject(), editor, myFixture.getFile(), ((EditorEx)editor).getDataContext());
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
