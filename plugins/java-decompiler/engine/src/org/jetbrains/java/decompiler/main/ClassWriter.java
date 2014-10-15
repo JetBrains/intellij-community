@@ -99,31 +99,31 @@ public class ClassWriter {
 
       DecompilerContext.getLogger().startWriteClass(node.simpleName);
 
-      if (node.lambda_information.is_method_reference) {
-        if (!node.lambda_information.is_content_method_static && method_object != null) {
+      if (node.lambdaInformation.is_method_reference) {
+        if (!node.lambdaInformation.is_content_method_static && method_object != null) {
           // reference to a virtual method
           buffer.append(method_object.toJava(indent, tracer));
         }
         else {
           // reference to a static method
-          buffer.append(ExprProcessor.getCastTypeName(new VarType(node.lambda_information.content_class_name, false)));
+          buffer.append(ExprProcessor.getCastTypeName(new VarType(node.lambdaInformation.content_class_name, false)));
         }
 
         buffer.append("::");
-        buffer.append(node.lambda_information.content_method_name);
+        buffer.append(node.lambdaInformation.content_method_name);
       }
       else {
         // lambda method
-        StructMethod mt = cl.getMethod(node.lambda_information.content_method_key);
+        StructMethod mt = cl.getMethod(node.lambdaInformation.content_method_key);
         MethodWrapper methodWrapper = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor());
-        MethodDescriptor md_content = MethodDescriptor.parseDescriptor(node.lambda_information.content_method_descriptor);
-        MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(node.lambda_information.method_descriptor);
+        MethodDescriptor md_content = MethodDescriptor.parseDescriptor(node.lambdaInformation.content_method_descriptor);
+        MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(node.lambdaInformation.method_descriptor);
 
         if (!lambdaToAnonymous) {
           buffer.append('(');
 
           boolean firstParameter = true;
-          int index = node.lambda_information.is_content_method_static ? 0 : 1;
+          int index = node.lambdaInformation.is_content_method_static ? 0 : 1;
           int start_index = md_content.params.length - md_lambda.params.length;
 
           for (int i = 0; i < md_content.params.length; i++) {
@@ -250,7 +250,7 @@ public class ClassWriter {
       for (ClassNode inner : node.nested) {
         if (inner.type == ClassNode.CLASS_MEMBER) {
           StructClass innerCl = inner.classStruct;
-          boolean isSynthetic = (inner.access & CodeConstants.ACC_SYNTHETIC) != 0 || innerCl.isSynthetic();
+          boolean isSynthetic = (inner.access & CodeConstants.ACC_SYNTHETIC) != 0 || innerCl.isSynthetic() || inner.namelessConstructorStub;
           boolean hide = isSynthetic && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
                          wrapper.getHiddenMembers().contains(innerCl.qualifiedName);
           if (hide) continue;
@@ -462,7 +462,7 @@ public class ClassWriter {
       if (attr != null) {
         PrimitiveConstant constant = cl.getPool().getPrimitiveConstant(attr.getIndex());
         buffer.append(" = ");
-        buffer.append(new ConstExprent(fieldType, constant.value).toJava(indent, tracer));
+        buffer.append(new ConstExprent(fieldType, constant.value, null).toJava(indent, tracer));
       }
     }
 
@@ -485,9 +485,9 @@ public class ClassWriter {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, methodWrapper);
 
     try {
-      String method_name = lambdaNode.lambda_information.method_name;
-      MethodDescriptor md_content = MethodDescriptor.parseDescriptor(lambdaNode.lambda_information.content_method_descriptor);
-      MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(lambdaNode.lambda_information.method_descriptor);
+      String method_name = lambdaNode.lambdaInformation.method_name;
+      MethodDescriptor md_content = MethodDescriptor.parseDescriptor(lambdaNode.lambdaInformation.content_method_descriptor);
+      MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(lambdaNode.lambdaInformation.method_descriptor);
 
       if (!codeOnly) {
         buffer.appendIndent(indent);
@@ -496,7 +496,7 @@ public class ClassWriter {
         buffer.append("(");
 
         boolean firstParameter = true;
-        int index = lambdaNode.lambda_information.is_content_method_static ? 0 : 1;
+        int index = lambdaNode.lambdaInformation.is_content_method_static ? 0 : 1;
         int start_index = md_content.params.length - md_lambda.params.length;
 
         for (int i = 0; i < md_content.params.length; i++) {
@@ -814,7 +814,7 @@ public class ClassWriter {
           try {
             tracer.incrementCurrentSourceLine(buffer.count(lineSeparator, start_index_method));
 
-            String code = root.toJava(indent + 1, tracer);
+            TextBuffer code = root.toJava(indent + 1, tracer);
 
             hideMethod = (clinit || dinit || hideConstructor(wrapper, init, throwsExceptions, paramCount)) && code.length() == 0;
 

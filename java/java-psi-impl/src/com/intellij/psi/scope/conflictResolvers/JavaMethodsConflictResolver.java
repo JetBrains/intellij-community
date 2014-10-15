@@ -337,7 +337,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             currentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
           }
 
-          if (currentClass != null) {
+          if (currentClass != null && existingClass != null && class1 != null) {
             final PsiSubstitutor eSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(existingClass, currentClass, PsiSubstitutor.EMPTY, null);
             final PsiSubstitutor cSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(class1, currentClass, PsiSubstitutor.EMPTY, null);
             if (eSubstitutor != null && cSubstitutor != null &&

@@ -185,6 +185,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myUiProperties.isBek();
   }
 
+  public void setShowRootNames(boolean isShowRootNames) {
+    myUiProperties.setShowRootNames(isShowRootNames);
+  }
+
+  public boolean isShowRootNames() {
+    return myUiProperties.isShowRootNames();
+  }
+
   public void jumpToCommit(@NotNull Hash commitHash) {
     jumpTo(commitHash, new PairFunction<GraphTableModel, Hash, Integer>() {
       @Override

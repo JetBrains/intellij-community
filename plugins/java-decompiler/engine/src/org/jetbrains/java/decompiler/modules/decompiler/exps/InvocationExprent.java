@@ -80,7 +80,7 @@ public class InvocationExprent extends Exprent {
   public InvocationExprent() {
   }
 
-  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamic_invokation_type) {
+  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamic_invokation_type, Set<Integer> bytecode_offsets) {
 
     name = cn.elementname;
     classname = cn.classname;
@@ -134,6 +134,8 @@ public class InvocationExprent extends Exprent {
     else {
       instance = stack.pop();
     }
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
   private InvocationExprent(InvocationExprent expr) {
@@ -152,6 +154,7 @@ public class InvocationExprent extends Exprent {
     for (int i = 0; i < lstParameters.size(); i++) {
       lstParameters.set(i, lstParameters.get(i).copy());
     }
+    bytecode.addAll(expr.bytecode);
   }
 
 
@@ -184,13 +187,14 @@ public class InvocationExprent extends Exprent {
   }
 
 
+  @Override
   public Exprent copy() {
     return new InvocationExprent(this);
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-    StringBuilder buf = new StringBuilder("");
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer buf = new TextBuffer();
 
     String super_qualifier = null;
     boolean isInstanceThis = false;
@@ -276,7 +280,7 @@ public class InvocationExprent extends Exprent {
           buf.append("super");
         }
         else {
-          String res = instance.toJava(indent, tracer);
+          TextBuffer res = instance.toJava(indent, tracer);
 
           VarType rightType = instance.getExprType();
           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
@@ -285,7 +289,7 @@ public class InvocationExprent extends Exprent {
             buf.append("((").append(ExprProcessor.getCastTypeName(leftType)).append(")");
 
             if (instance.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-              res = "(" + res + ")";
+              res.enclose("(", ")");
             }
             buf.append(res).append(")");
           }
@@ -302,7 +306,7 @@ public class InvocationExprent extends Exprent {
     switch (functype) {
       case TYP_GENERAL:
         if (VarExprent.VAR_NAMELESS_ENCLOSURE.equals(buf.toString())) {
-          buf = new StringBuilder("");
+          buf = new TextBuffer();
         }
 
         if (buf.length() > 0) {
@@ -370,7 +374,7 @@ public class InvocationExprent extends Exprent {
     }
     buf.append(")");
 
-    return buf.toString();
+    return buf;
   }
 
   private Set<Integer> getAmbiguousParameters() {

@@ -79,7 +79,7 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
       });
       return factory.createShortDetails(factory.createHash(heavyCommit.getHash().getValue()), parents, heavyCommit.getAuthorTime(),
                                         heavyCommit.getRoot(), heavyCommit.getSubject(), heavyCommit.getAuthor(),
-                                        heavyCommit.getAuthorEmail());
+                                        heavyCommit.getAuthorEmail(), heavyCommit.getCommitter(), heavyCommit.getCommitterEmail(), heavyCommit.getAuthorTime());
     }
     VcsLog log = e.getData(VcsLogDataKeys.VSC_LOG);
     if (log == null) {

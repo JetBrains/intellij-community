@@ -127,7 +127,7 @@ public class StudyCheckAction extends DumbAwareAction {
               return;
             }
             String failedMessage = testRunner.getPassedTests(testProcess);
-            if (failedMessage.equals(StudyTestRunner.TEST_OK)) {
+            if (failedMessage != null && failedMessage.equals(StudyTestRunner.TEST_OK)) {
               task.setStatus(StudyStatus.Solved, oldStatus);
               createTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), project);
             }

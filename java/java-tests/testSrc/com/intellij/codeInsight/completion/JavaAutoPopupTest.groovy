@@ -260,6 +260,24 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
   }
 
+  public void "test no autopopup in javadoc parameter descriptions"() {
+    myFixture.configureByText("a.java", """
+class Foo {
+  /**
+  * @param o some sentence
+  */
+  void foo(Object o) {}
+
+  /**
+  * @param o s<caret>
+  */
+  void foo2(Object o) {}
+}
+    """)
+    type 'o'
+    assert !lookup
+  }
+
   public void testPrefixLengthDependentSorting() {
     myFixture.addClass("package foo; public class PsiJavaCodeReferenceElement {}")
     myFixture.configureByText("a.java", """

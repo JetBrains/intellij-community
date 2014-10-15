@@ -71,7 +71,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -733,6 +732,22 @@ public class SingleInspectionProfilePanel extends JPanel {
     TreeUtil.sort(myRoot, new InspectionsConfigTreeComparator());
   }
 
+  private boolean readHTML(String text) {
+    try {
+      myBrowser.read(new StringReader(text), null);
+      return true;
+    }
+    catch (IOException ignored) {
+      return false;
+    }
+  }
+
+  private String toHTML(String text) {
+    final HintHint hintHint = new HintHint(myBrowser, new Point(0, 0));
+    hintHint.setFont(UIUtil.getLabelFont());
+    return HintUtil.prepareHintText(text, hintHint);
+  }
+
   private void updateOptionsAndDescriptionPanel(final TreePath... paths) {
     if (mySelectedProfile == null || paths == null || paths.length == 0) {
       return;
@@ -748,18 +763,8 @@ public class SingleInspectionProfilePanel extends JPanel {
         final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
         final String description = defaultDescriptor.loadDescription();
         try {
-          final HintHint hintHint = new HintHint(myBrowser, new Point(0, 0));
-          hintHint.setFont(myBrowser.getFont());
-          myBrowser
-            .read(new StringReader(SearchUtil.markup(HintUtil.prepareHintText(description, hintHint), myProfileFilter.getFilter())), null);
-        }
-        catch (IOException e2) {
-          try {
-            //noinspection HardCodedStringLiteral
-            myBrowser.read(new StringReader(XmlStringUtil.wrapInHtml("<b>" + UNDER_CONSTRUCTION + "</b>")), null);
-          }
-          catch (IOException e1) {
-            //Can't be
+          if (!readHTML(SearchUtil.markup(toHTML(description), myProfileFilter.getFilter()))) {
+            readHTML(toHTML("<b>" + UNDER_CONSTRUCTION + "</b>"));
           }
         }
         catch (Throwable t) {
@@ -771,12 +776,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       }
       else {
-        try {
-          myBrowser.read(new StringReader("<html><body>Multiple inspections are selected. You can edit them as a single inspection.</body></html>"), null);
-        }
-        catch (IOException e1) {
-          //Can't be
-        }
+        readHTML(toHTML("Multiple inspections are selected. You can edit them as a single inspection."));
       }
 
       myOptionsPanel.removeAll();
@@ -952,12 +952,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void initOptionsAndDescriptionPanel() {
     myOptionsPanel.removeAll();
-    try {
-      myBrowser.read(new StringReader(EMPTY_HTML), null);
-    }
-    catch (IOException e1) {
-      //Can't be
-    }
+    readHTML(EMPTY_HTML);
     myOptionsPanel.validate();
     myOptionsPanel.repaint();
   }

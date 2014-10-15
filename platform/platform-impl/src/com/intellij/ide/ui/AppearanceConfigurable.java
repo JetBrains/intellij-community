@@ -413,6 +413,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
           updateCombo();
         }
       });
+      if (!Registry.is("ide.transparency.mode.for.windows")) {
+        myTransparencyPanel.getParent().remove(myTransparencyPanel);
+      }
     }
 
     public void updateCombo() {

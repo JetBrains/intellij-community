@@ -45,7 +45,7 @@ class PyAncestorsUtils extends NotNullPredicate<PyClass> {
    */
   @NotNull
   static Collection<PyClass> getAncestorsUnderUserControl(@NotNull final PyClass pyClass) {
-    final List<PyClass> allAncestors = pyClass.getAncestorClasses(TypeEvalContext.userInitiated(pyClass.getContainingFile()));
+    final List<PyClass> allAncestors = pyClass.getAncestorClasses(TypeEvalContext.userInitiated(pyClass.getProject(), pyClass.getContainingFile()));
     return Collections2.filter(allAncestors, new PyAncestorsUtils(PyUtil.getSourceRoots(pyClass)));
   }
 

@@ -205,7 +205,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (text != null) {
       candidates.addAll(NameSuggesterUtil.generateNames(text));
     }
-    final TypeEvalContext context = TypeEvalContext.userInitiated(expression.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(expression.getProject(), expression.getContainingFile());
     PyType type = context.getType(expression);
     if (type != null && type != PyNoneType.INSTANCE) {
       String typeName = type.getName();

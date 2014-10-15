@@ -174,7 +174,7 @@ public class AssertProcessor {
     Exprent ascond = null, retcond = null;
     if (exprres[0] != null) {
       ascond = new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT,
-                                   Arrays.asList(new Exprent[]{(Exprent)exprres[0]}));
+                                   Arrays.asList((Exprent)exprres[0]), throwError.bytecode);
       retcond = SecondaryFunctionsHelper.propagateBoolNot(ascond);
     }
 

@@ -15,6 +15,11 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
@@ -29,10 +34,6 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class NewExprent extends Exprent {
 
@@ -56,19 +57,21 @@ public class NewExprent extends Exprent {
     this.type = EXPRENT_NEW;
   }
 
-  public NewExprent(VarType newtype, ListStack<Exprent> stack, int arraydim) {
+  public NewExprent(VarType newtype, ListStack<Exprent> stack, int arraydim, Set<Integer> bytecode_offsets) {
     this.newtype = newtype;
     for (int i = 0; i < arraydim; i++) {
       lstDims.add(0, stack.pop());
     }
 
+    addBytecodeOffsets(bytecode_offsets);
     setAnonymous();
   }
 
-  public NewExprent(VarType newtype, List<Exprent> lstDims) {
+  public NewExprent(VarType newtype, List<Exprent> lstDims, Set<Integer> bytecode_offsets) {
     this.newtype = newtype;
     this.lstDims = lstDims;
 
+    addBytecodeOffsets(bytecode_offsets);
     setAnonymous();
   }
 
@@ -152,13 +155,14 @@ public class NewExprent extends Exprent {
     return lst;
   }
 
+  @Override
   public Exprent copy() {
     List<Exprent> lst = new ArrayList<Exprent>();
     for (Exprent expr : lstDims) {
       lst.add(expr.copy());
     }
 
-    NewExprent ret = new NewExprent(newtype, lst);
+    NewExprent ret = new NewExprent(newtype, lst, bytecode);
     ret.setConstructor(constructor == null ? null : (InvocationExprent)constructor.copy());
     ret.setLstArrayElements(lstArrayElements);
     ret.setDirectArrayInit(directArrayInit);
@@ -172,7 +176,7 @@ public class NewExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
 
     if (anonymous) {
@@ -247,10 +251,10 @@ public class NewExprent extends Exprent {
             typename = typename.substring(typename.lastIndexOf('.') + 1);
           }
         }
-        buf.insert(0, "new " + typename);
+        buf.prepend("new " + typename);
 
         if (enclosing != null) {
-          buf.insert(0, enclosing + ".");
+          buf.prepend(enclosing + ".");
         }
       }
 
@@ -268,10 +272,7 @@ public class NewExprent extends Exprent {
         new ClassWriter().classLambdaToJava(child, buf, methodObject, indent);
       }
       else {
-        // do not track lines in sub classes for now
-        buf.setTrackLines(false);
         new ClassWriter().classToJava(child, buf, indent);
-        buf.setTrackLines(true);
       }
     }
     else if (directArrayInit) {
@@ -314,20 +315,31 @@ public class NewExprent extends Exprent {
           if (!enumconst || start < lstParameters.size()) {
             buf.append("(");
 
-            boolean firstpar = true;
+            boolean firstParam = true;
             for (int i = start; i < lstParameters.size(); i++) {
               if (sigFields == null || sigFields.get(i) == null) {
-                if (!firstpar) {
+                Exprent expr = lstParameters.get(i);
+                VarType leftType = constructor.getDescriptor().params[i];
+
+                if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
+                  ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);
+                  if (node != null && node.namelessConstructorStub) {
+                    break;  // skip last parameter of synthetic constructor call
+                  }
+                }
+
+                if (!firstParam) {
                   buf.append(", ");
                 }
 
                 TextBuffer buff = new TextBuffer();
-                ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buff, indent, true, tracer);
-
+                ExprProcessor.getCastedExprent(expr, leftType, buff, indent, true, tracer);
                 buf.append(buff);
-                firstpar = false;
+
+                firstParam = false;
               }
             }
+
             buf.append(")");
           }
         }
@@ -349,10 +361,10 @@ public class NewExprent extends Exprent {
               typename = typename.substring(typename.lastIndexOf('.') + 1);
             }
           }
-          buf.insert(0, "new " + typename);
+          buf.prepend("new " + typename);
 
           if (enclosing != null) {
-            buf.insert(0, enclosing + ".");
+            buf.prepend(enclosing + ".");
           }
         }
       }
@@ -361,7 +373,11 @@ public class NewExprent extends Exprent {
 
         if (lstArrayElements.isEmpty()) {
           for (int i = 0; i < newtype.arraydim; i++) {
-            buf.append("[").append(i < lstDims.size() ? lstDims.get(i).toJava(indent, tracer) : "").append("]");
+            buf.append("[");
+            if (i < lstDims.size()) {
+              buf.append(lstDims.get(i).toJava(indent, tracer));
+            }
+            buf.append("]");
           }
         }
         else {
@@ -386,7 +402,7 @@ public class NewExprent extends Exprent {
         }
       }
     }
-    return buf.toString();
+    return buf;
   }
 
   private static String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent, BytecodeMappingTracer tracer) {
@@ -414,7 +430,7 @@ public class NewExprent extends Exprent {
         }
 
         if (isQualifiedNew) {
-          return enclosing.toJava(indent, tracer);
+          return enclosing.toJava(indent, tracer).toString();
         }
       }
     }

@@ -50,7 +50,7 @@ public class PyCreatePropertyQuickFix implements LocalQuickFix {
     if (element instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
       if (qualifier != null) {
-        final PyType type = TypeEvalContext.codeAnalysis(element.getContainingFile()).getType(qualifier);
+        final PyType type = TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).getType(qualifier);
         if (type instanceof PyClassType) {
           final PyClass cls = ((PyClassType)type).getPyClass();
           final String propertyName = ((PyQualifiedExpression)element).getName();

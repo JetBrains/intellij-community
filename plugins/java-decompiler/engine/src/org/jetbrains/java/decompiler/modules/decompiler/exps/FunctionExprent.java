@@ -15,18 +15,20 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 
 
 public class FunctionExprent extends Exprent {
@@ -206,7 +208,7 @@ public class FunctionExprent extends Exprent {
     this.type = EXPRENT_FUNCTION;
   }
 
-  public FunctionExprent(int functype, ListStack<Exprent> stack) {
+  public FunctionExprent(int functype, ListStack<Exprent> stack, Set<Integer> bytecode_offsets) {
     this.functype = functype;
     if (functype >= FUNCTION_BITNOT && functype <= FUNCTION_PPI && functype != FUNCTION_CAST
         && functype != FUNCTION_INSTANCEOF) {
@@ -220,11 +222,15 @@ public class FunctionExprent extends Exprent {
       lstOperands.add(stack.pop());
       lstOperands.add(expr);
     }
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
-  public FunctionExprent(int functype, List<Exprent> operands) {
+  public FunctionExprent(int functype, List<Exprent> operands, Set<Integer> bytecode_offsets) {
     this.functype = functype;
     this.lstOperands = operands;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
   public VarType getExprType() {
@@ -419,12 +425,13 @@ public class FunctionExprent extends Exprent {
     return lst;
   }
 
+  @Override
   public Exprent copy() {
     List<Exprent> lst = new ArrayList<Exprent>();
     for (Exprent expr : lstOperands) {
       lst.add(expr.copy());
     }
-    FunctionExprent func = new FunctionExprent(functype, lst);
+    FunctionExprent func = new FunctionExprent(functype, lst, bytecode);
     func.setImplicitType(implicitType);
 
     return func;
@@ -448,87 +455,87 @@ public class FunctionExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
 
     tracer.addMapping(bytecode);
 
     if (functype <= FUNCTION_USHR) {
-      return wrapOperandString(lstOperands.get(0), false, indent, tracer) + operators[functype] +
-             wrapOperandString(lstOperands.get(1), true, indent, tracer);
+      return wrapOperandString(lstOperands.get(0), false, indent, tracer)
+        .append(operators[functype])
+        .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
     }
 
     if (functype >= FUNCTION_EQ) {
-      return wrapOperandString(lstOperands.get(0), false, indent, tracer) + operators[functype - FUNCTION_EQ + 11] +
-             wrapOperandString(lstOperands.get(1), true, indent, tracer);
+      return wrapOperandString(lstOperands.get(0), false, indent, tracer)
+        .append(operators[functype - FUNCTION_EQ + 11])
+        .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
     }
 
     switch (functype) {
       case FUNCTION_BITNOT:
-        return "~" + wrapOperandString(lstOperands.get(0), true, indent, tracer);
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("~");
       case FUNCTION_BOOLNOT:
-        return "!" + wrapOperandString(lstOperands.get(0), true, indent, tracer);
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("!");
       case FUNCTION_NEG:
-        return "-" + wrapOperandString(lstOperands.get(0), true, indent, tracer);
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
       case FUNCTION_CAST:
-        return "(" + lstOperands.get(1).toJava(indent, tracer) + ")" + wrapOperandString(lstOperands.get(0), true, indent, tracer);
+        return lstOperands.get(1).toJava(indent, tracer).enclose("(", ")").append(wrapOperandString(lstOperands.get(0), true, indent, tracer));
       case FUNCTION_ARRAYLENGTH:
         Exprent arr = lstOperands.get(0);
 
-        String res = wrapOperandString(arr, false, indent, tracer);
+        TextBuffer res = wrapOperandString(arr, false, indent, tracer);
         if (arr.getExprType().arraydim == 0) {
           VarType objarr = VarType.VARTYPE_OBJECT.copy();
           objarr.arraydim = 1; // type family does not change
 
-          res = "((" + ExprProcessor.getCastTypeName(objarr) + ")" + res + ")";
+          res.enclose("((" + ExprProcessor.getCastTypeName(objarr) + ")", ")");
         }
-        return res + ".length";
+        return res.append(".length");
       case FUNCTION_IIF:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer) + "?" + wrapOperandString(lstOperands.get(1), true, indent, tracer) + ":" +
-               wrapOperandString(lstOperands.get(2), true, indent, tracer);
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer)
+          .append("?")
+          .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+          .append(":")
+          .append(wrapOperandString(lstOperands.get(2), true, indent, tracer));
       case FUNCTION_IPP:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer) + "++";
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append("++");
       case FUNCTION_PPI:
-        return "++" + wrapOperandString(lstOperands.get(0), true, indent, tracer);
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("++");
       case FUNCTION_IMM:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer) + "--";
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append("--");
       case FUNCTION_MMI:
-        return "--" + wrapOperandString(lstOperands.get(0), true, indent, tracer);
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("--");
       case FUNCTION_INSTANCEOF:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer) + " instanceof " + wrapOperandString(lstOperands.get(1), true, indent, tracer);
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append(" instanceof ").append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
       case FUNCTION_LCMP: // shouldn't appear in the final code
-        return "__lcmp__(" +
-               wrapOperandString(lstOperands.get(0), true, indent, tracer) +
-               "," +
-               wrapOperandString(lstOperands.get(1), true, indent, tracer) +
-               ")";
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__lcmp__(")
+                 .append(",")
+                 .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+                 .append(")");
       case FUNCTION_FCMPL: // shouldn't appear in the final code
-        return "__fcmpl__(" +
-               wrapOperandString(lstOperands.get(0), true, indent, tracer) +
-               "," +
-               wrapOperandString(lstOperands.get(1), true, indent, tracer) +
-               ")";
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__fcmpl__(")
+                 .append(",")
+                 .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+                 .append(")");
       case FUNCTION_FCMPG: // shouldn't appear in the final code
-        return "__fcmpg__(" +
-               wrapOperandString(lstOperands.get(0), true, indent, tracer) +
-               "," +
-               wrapOperandString(lstOperands.get(1), true, indent, tracer) +
-               ")";
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__fcmpg__(")
+                 .append(",")
+                 .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+                 .append(")");
       case FUNCTION_DCMPL: // shouldn't appear in the final code
-        return "__dcmpl__(" +
-               wrapOperandString(lstOperands.get(0), true, indent, tracer) +
-               "," +
-               wrapOperandString(lstOperands.get(1), true, indent, tracer) +
-               ")";
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__dcmpl__(")
+                 .append(",")
+                 .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+                 .append(")");
       case FUNCTION_DCMPG: // shouldn't appear in the final code
-        return "__dcmpg__(" +
-               wrapOperandString(lstOperands.get(0), true, indent, tracer) +
-               "," +
-               wrapOperandString(lstOperands.get(1), true, indent, tracer) +
-               ")";
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__dcmpg__(")
+                 .append(",")
+                 .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+                 .append(")");
     }
 
     if (functype <= FUNCTION_I2S) {
-      return "(" + ExprProcessor.getTypeName(types[functype - FUNCTION_I2L]) + ")" + wrapOperandString(lstOperands.get(0), true, indent, tracer);
+      return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("(" + ExprProcessor.getTypeName(types[functype - FUNCTION_I2L]) + ")");
     }
 
     //		return "<unknown function>";
@@ -547,7 +554,7 @@ public class FunctionExprent extends Exprent {
     return types[functype - FUNCTION_I2L];
   }
 
-  private String wrapOperandString(Exprent expr, boolean eq, int indent, BytecodeMappingTracer tracer) {
+  private TextBuffer wrapOperandString(Exprent expr, boolean eq, int indent, BytecodeMappingTracer tracer) {
 
     int myprec = getPrecedence();
     int exprprec = expr.getPrecedence();
@@ -563,10 +570,10 @@ public class FunctionExprent extends Exprent {
       }
     }
 
-    String res = expr.toJava(indent, tracer);
+    TextBuffer res = expr.toJava(indent, tracer);
 
     if (parentheses) {
-      res = "(" + res + ")";
+      res.enclose("(", ")");
     }
 
     return res;

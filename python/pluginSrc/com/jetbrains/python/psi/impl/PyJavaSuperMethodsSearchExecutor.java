@@ -36,7 +36,7 @@ public class PyJavaSuperMethodsSearchExecutor implements QueryExecutor<PsiElemen
     PyFunction func = queryParameters.getDerivedMethod();
     PyClass containingClass = func.getContainingClass();
     if (containingClass != null) {
-      for (PyClassLikeType type : containingClass.getSuperClassTypes(TypeEvalContext.codeInsightFallback())) {
+      for (PyClassLikeType type : containingClass.getSuperClassTypes(TypeEvalContext.codeInsightFallback(containingClass.getProject()))) {
         if (type instanceof PyJavaClassType) {
           final PsiClass psiClass = ((PyJavaClassType)type).getPsiClass();
           PsiMethod[] methods = psiClass.findMethodsByName(func.getName(), true);

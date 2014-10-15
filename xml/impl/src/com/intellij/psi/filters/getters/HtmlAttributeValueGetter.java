@@ -64,8 +64,10 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
         return new String[]{"multipart/form-data", "application/x-www-form-urlencoded"};
       }
       else if ("rel".equals(name) || "rev".equals(name)) {
-        return new String[]{"alternate", "stylesheet", "start", "next", "prev", "contents", "index", "glossary", "copyright", "chapter",
-            "section", "subsection", "appendix", "help", "bookmark", "script", "import"};
+        return new String[]{"alternate", "author", "bookmark", "help", "icon", "license", "next", "nofollow",
+          "noreferrer", "prefetch", "prev", "search", "stylesheet", "tag", "start", "contents", "index",
+          "glossary", "copyright", "chapter", "section", "subsection", "appendix", "script", "import",
+          "apple-touch-icon", "apple-touch-icon-precomposed", "apple-touch-startup-image"};
       }
       else if ("media".equals(name)) {
         return new String[]{ "all", "braille", "embossed", "handheld", "print", "projection", "screen", "speech", "tty", "tv" };

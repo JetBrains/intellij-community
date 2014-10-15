@@ -28,11 +28,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -160,23 +158,11 @@ public class ClasspathStorage implements StateStorage {
   @Override
   @NotNull
   public ExternalizationSession startExternalization() {
-
-    return new ExternalizationSession() {
-      @Override
-      public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
-        ClasspathStorage.this.setState(component, componentName, state);
-      }
-    };
-  }
-
-  @Nullable
-  @Override
-  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-    return new MySaveSession();
+    return new ClasspathSaveSession();
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Set<String> result) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> result) {
   }
 
   public void save() throws StateStorageException {
@@ -369,7 +355,18 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
-  private class MySaveSession implements SaveSession, SafeWriteRequestor {
+  private final class ClasspathSaveSession implements ExternalizationSession, SaveSession {
+    @Override
+    public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
+      ClasspathStorage.this.setState(component, componentName, state);
+    }
+
+    @Nullable
+    @Override
+    public SaveSession createSaveSession() {
+      return this;
+    }
+
     @Override
     public void save() {
       ClasspathStorage.this.save();

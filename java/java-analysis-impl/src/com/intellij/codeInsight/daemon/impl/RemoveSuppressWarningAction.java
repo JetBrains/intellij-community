@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.JavaSuppressionUtil;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -38,15 +41,16 @@ import java.util.Set;
 public class RemoveSuppressWarningAction implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction");
 
+  @NotNull
   private final String myID;
   private final String myProblemLine;
 
-  public RemoveSuppressWarningAction(final String ID, final String problemLine) {
+  public RemoveSuppressWarningAction(@NotNull String ID, final String problemLine) {
     myID = ID;
     myProblemLine = problemLine;
   }
 
-  public RemoveSuppressWarningAction(String id) {
+  public RemoveSuppressWarningAction(@NotNull String id) {
     final int idx = id.indexOf(";");
     if (idx > -1) {
       myID = id.substring(0, idx);

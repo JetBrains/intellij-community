@@ -102,7 +102,7 @@ public class CvsChangeListsBuilder {
     final List<RevisionWrapper> result = new ArrayList<RevisionWrapper>();
     for (Revision revision : log.getRevisions()) {
       if (revision != null) {
-        if (revision.getState().equals(CvsChangeList.DEAD_STATE) &&
+        if (CvsChangeList.DEAD_STATE.equals(revision.getState()) &&
             revision.getMessage().contains(INITIALLY_ADDED_ON_BRANCH)) {
           // ignore dead revision (otherwise it'll get stuck in incoming changes forever - it's considered a deletion and
           // the file is never actually deleted)

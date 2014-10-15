@@ -121,6 +121,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
 
     FileUtil.copy(new File(testDir, "pkg/ReuseTestV1.class"), classFile);
     vFile.refresh(false, false);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     String text1 = psiFile.getText();
     assertTrue(text1, text1.contains("private int f1"));
     assertFalse(text1, text1.contains("private int f2"));
@@ -130,6 +131,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
 
     FileUtil.copy(new File(testDir, "pkg/ReuseTestV2.class"), classFile);
     vFile.refresh(false, false);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     String text2 = psiFile.getText();
     assertTrue(text2, text2.contains("private int f1"));
     assertTrue(text2, text2.contains("private int f2"));

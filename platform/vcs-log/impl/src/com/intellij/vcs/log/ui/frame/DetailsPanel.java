@@ -18,15 +18,14 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -86,7 +86,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myRefsPanel = new RefsPanel(colorManager);
     myHashAuthorPanel = new DataPanel(logDataHolder.getProject(), false);
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane();
+    final JScrollPane scrollPane = new JBScrollPane() {
+      @Override
+      public Border getBorder() {
+        return getVerticalScrollBar().isVisible() ? super.getBorder() : null;
+      }
+    };
     myMessageDataPanel = new DataPanel(logDataHolder.getProject(), true) {
       @Override
       public Dimension getPreferredSize() {
@@ -96,12 +101,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
     };
     scrollPane.setViewportView(myMessageDataPanel);
-    scrollPane.setBorder(UIUtil.makeChameleonBorder(scrollPane.getBorder(), new Condition<JScrollBar>() {
-      @Override
-      public boolean value(JScrollBar bar) {
-        return bar != null && bar.isVisible();
-      }
-    }, scrollPane.getVerticalScrollBar()));
 
     myContainingBranchesPanel = new ContainingBranchesPanel();
     myMessagePanel = new MessagePanel();
@@ -113,15 +112,19 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myLoadingPanel.add(header, BorderLayout.NORTH);
     myLoadingPanel.add(scrollPane, BorderLayout.CENTER);
     myLoadingPanel.add(myContainingBranchesPanel, BorderLayout.SOUTH);
-    myLoadingPanel.setBackground(UIUtil.getTableBackground());
+    myLoadingPanel.setOpaque(false);
 
     setLayout(new CardLayout());
     add(myLoadingPanel, STANDARD_LAYER);
     add(myMessagePanel, MESSAGE_LAYER);
 
     setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
-    setBackground(UIUtil.getTableBackground());
     showMessage("No commits selected");
+  }
+
+  @Override
+  public Color getBackground() {
+    return UIUtil.getTableBackground();
   }
 
   void updateDataPack(@NotNull VisiblePack dataPack) {
@@ -192,6 +195,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myProject = project;
       addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
       setOpaque(false);
+      putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     }
 
     void setData(@Nullable VcsFullCommitDetails commit) {
@@ -233,16 +237,16 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       String authorText = commit.getAuthor().getName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
       if (!commit.getAuthor().equals(commit.getCommitter())) {
         String commitTime;
-        if (commit.getAuthorTime() != commit.getTimestamp()) {
-          commitTime = " at " + DateFormatUtil.formatDateTime(commit.getTimestamp());
+        if (commit.getAuthorTime() != commit.getCommitTime()) {
+          commitTime = " at " + DateFormatUtil.formatDateTime(commit.getCommitTime());
         }
         else {
           commitTime = "";
         }
         authorText += " (committed by " + commit.getCommitter().getName() + commitTime + ")";
       }
-      else if (commit.getAuthorTime() != commit.getTimestamp()) {
-        authorText += " (committed at " + DateFormatUtil.formatDateTime(commit.getTimestamp()) + ")";
+      else if (commit.getAuthorTime() != commit.getCommitTime()) {
+        authorText += " (committed at " + DateFormatUtil.formatDateTime(commit.getCommitTime()) + ")";
       }
       return authorText;
     }
@@ -263,17 +267,25 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myLoadingComponent = new NonOpaquePanel(new BorderLayout());
       myLoadingComponent.add(new AsyncProcessIcon("Loading..."), BorderLayout.WEST);
       myLoadingComponent.add(Box.createHorizontalGlue(), BorderLayout.CENTER);
-      myBranchesList = new JBTextField("");
-      myBranchesList.setEditable(false);
-      myBranchesList.setBorder(IdeBorderFactory.createEmptyBorder()); // setting border to null may mean "use default border" while setting empty border means we do not want a border
-      if (UIUtil.isUnderIntelliJLaF()) {
-        myBranchesList.setBackground(UIUtil.getPanelBackground());
-      } else if (UIUtil.isUnderGTKLookAndFeel()) {
-        // setting border to empty does not help with gtk l&f
-        // so I just cover it completely with my line border
-        myBranchesList.setBorder(new LineBorder(UIUtil.getTextFieldBackground(), 3));
-      }
+      myBranchesList = new JBTextField("") {
+        private final Border gtkBorder = new LineBorder(UIUtil.getTextFieldBackground(), 3) {
+          @Override
+          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            lineColor = UIUtil.getTextFieldBackground();
+            super.paintBorder(c, g, x, y, width, height);
+          }
+        };
+        private final Border emptyBorder = IdeBorderFactory.createEmptyBorder();
 
+        @Override
+        public Border getBorder() {
+          // setting border to empty does not help with gtk l&f
+          // so I just cover it completely with my line border
+          return UIUtil.isUnderGTKLookAndFeel() ? gtkBorder : emptyBorder;
+        }
+      };
+      myBranchesList.setOpaque(false);
+      myBranchesList.setEditable(false);
       setOpaque(false);
       setLayout(new BorderLayout());
       add(label, BorderLayout.WEST);

@@ -15,11 +15,13 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
-
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 
 public class MonitorExprent extends Exprent {
@@ -35,13 +37,16 @@ public class MonitorExprent extends Exprent {
     this.type = EXPRENT_MONITOR;
   }
 
-  public MonitorExprent(int montype, Exprent value) {
+  public MonitorExprent(int montype, Exprent value, Set<Integer> bytecode_offsets) {
     this.montype = montype;
     this.value = value;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
+  @Override
   public Exprent copy() {
-    return new MonitorExprent(montype, value.copy());
+    return new MonitorExprent(montype, value.copy(), bytecode);
   }
 
   public List<Exprent> getAllExprents() {
@@ -51,15 +56,15 @@ public class MonitorExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
 
     tracer.addMapping(bytecode);
 
     if (montype == MONITOR_ENTER) {
-      return "synchronized(" + value.toJava(indent, tracer) + ")";
+      return value.toJava(indent, tracer).enclose("synchronized(", ")");
     }
     else {
-      return "";
+      return new TextBuffer();
     }
   }
 

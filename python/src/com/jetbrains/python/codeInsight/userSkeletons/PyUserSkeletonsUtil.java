@@ -159,7 +159,8 @@ public class PyUserSkeletonsUtil {
       assert owner != element;
       final PsiElement originalOwner = getUserSkeleton(owner, skeletonFile);
       if (originalOwner instanceof PyClass) {
-        final PyType type = TypeEvalContext.codeInsightFallback().getType((PyClass)originalOwner);
+        final PyClass classOwner = (PyClass)originalOwner;
+        final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);
         if (type instanceof PyClassLikeType) {
           final PyClassLikeType classType = (PyClassLikeType)type;
           final PyClassLikeType instanceType = classType.toInstance();

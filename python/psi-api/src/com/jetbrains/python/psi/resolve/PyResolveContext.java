@@ -71,7 +71,7 @@ public class PyResolveContext {
   }
 
   public TypeEvalContext getTypeEvalContext() {
-    return myTypeEvalContext != null ? myTypeEvalContext : TypeEvalContext.codeInsightFallback();
+    return myTypeEvalContext != null ? myTypeEvalContext : TypeEvalContext.codeInsightFallback(null);
   }
 
   @Override

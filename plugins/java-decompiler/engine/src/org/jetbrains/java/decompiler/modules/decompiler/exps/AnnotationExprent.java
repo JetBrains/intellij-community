@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -47,11 +48,11 @@ public class AnnotationExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    StringBuilder buffer = new StringBuilder();
+    TextBuffer buffer = new TextBuffer();
     String indstr = InterpreterUtil.getIndentString(indent);
 
     buffer.append(indstr);
@@ -82,7 +83,7 @@ public class AnnotationExprent extends Exprent {
       buffer.append(")");
     }
 
-    return buffer.toString();
+    return buffer;
   }
 
   public int getAnnotationType() {

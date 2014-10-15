@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,25 +41,25 @@ public class BatchSuppressManagerImpl implements BatchSuppressManager {
   }
 
   @Override
-  public boolean isSuppressedFor(@NotNull final PsiElement element, final String toolId) {
+  public boolean isSuppressedFor(@NotNull final PsiElement element, @NotNull final String toolId) {
     return JavaSuppressionUtil.getElementToolSuppressedIn(element, toolId) != null;
   }
 
   @Override
   @Nullable
-  public PsiElement getElementMemberSuppressedIn(@NotNull final PsiDocCommentOwner owner, final String inspectionToolID) {
+  public PsiElement getElementMemberSuppressedIn(@NotNull final PsiDocCommentOwner owner, @NotNull final String inspectionToolID) {
     return JavaSuppressionUtil.getElementMemberSuppressedIn(owner, inspectionToolID);
   }
 
   @Override
   @Nullable
-  public PsiElement getAnnotationMemberSuppressedIn(@NotNull final PsiModifierListOwner owner, final String inspectionToolID) {
+  public PsiElement getAnnotationMemberSuppressedIn(@NotNull final PsiModifierListOwner owner, @NotNull final String inspectionToolID) {
     return JavaSuppressionUtil.getAnnotationMemberSuppressedIn(owner, inspectionToolID);
   }
 
   @Override
   @Nullable
-  public PsiElement getDocCommentToolSuppressedIn(@NotNull final PsiDocCommentOwner owner, final String inspectionToolID) {
+  public PsiElement getDocCommentToolSuppressedIn(@NotNull final PsiDocCommentOwner owner, @NotNull final String inspectionToolID) {
     return JavaSuppressionUtil.getDocCommentToolSuppressedIn(owner, inspectionToolID);
   }
 
@@ -77,7 +77,7 @@ public class BatchSuppressManagerImpl implements BatchSuppressManager {
 
   @Override
   @Nullable
-  public PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, final String toolId) {
+  public PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, @NotNull final String toolId) {
     return JavaSuppressionUtil.getElementToolSuppressedIn(place, toolId);
   }
 

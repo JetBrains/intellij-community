@@ -15,6 +15,10 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -28,9 +32,6 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class FieldExprent extends Exprent {
@@ -49,7 +50,7 @@ public class FieldExprent extends Exprent {
     this.type = EXPRENT_FIELD;
   }
 
-  public FieldExprent(LinkConstant cn, Exprent instance) {
+  public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecode_offsets) {
 
     this.instance = instance;
 
@@ -60,14 +61,18 @@ public class FieldExprent extends Exprent {
     classname = cn.classname;
     name = cn.elementname;
     descriptor = FieldDescriptor.parseDescriptor(cn.descriptor);
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
-  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor) {
+  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecode_offsets) {
     this.name = name;
     this.classname = classname;
     this.isStatic = isStatic;
     this.instance = instance;
     this.descriptor = descriptor;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
   public VarType getExprType() {
@@ -91,13 +96,14 @@ public class FieldExprent extends Exprent {
     return lst;
   }
 
+  @Override
   public Exprent copy() {
-    return new FieldExprent(name, classname, isStatic, instance == null ? null : instance.copy(), descriptor);
+    return new FieldExprent(name, classname, isStatic, instance == null ? null : instance.copy(), descriptor, bytecode);
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-    StringBuilder buf = new StringBuilder();
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer buf = new TextBuffer();
 
 
     if (isStatic) {
@@ -162,7 +168,7 @@ public class FieldExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
-    return buf.toString();
+    return buf;
   }
 
   public boolean equals(Object o) {

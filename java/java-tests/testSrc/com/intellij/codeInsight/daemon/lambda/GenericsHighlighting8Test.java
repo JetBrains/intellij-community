@@ -17,9 +17,9 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -31,10 +31,16 @@ import org.jetbrains.annotations.NotNull;
 public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlighting8";
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedDeclarationInspection());
+  }
+
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UncheckedWarningLocalInspection(), new UnusedSymbolLocalInspection(), new UnusedImportLocalInspection()};
+    return new LocalInspectionTool[]{new UncheckedWarningLocalInspection(), new UnusedImportLocalInspection()};
   }
 
   @Override
@@ -764,6 +770,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
 
   public void testUncheckedWarningInsideLambdaReturnStatement() throws Exception {
     doTest(true);
+  }
+
+  public void testInferredParameterInBoundsInRecursiveGenerics() {
+    doTest(false);
   }
 
   private void doTest() {

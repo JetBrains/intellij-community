@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
@@ -101,23 +102,32 @@ public class ContentRevisionCache {
   }
 
   public void clearScope(final List<VcsDirtyScope> scopes) {
-    synchronized (myLock) {
-      ++ myCounter;
-      for (final VcsDirtyScope scope : scopes) {
-        final Set<CurrentKey> toRemove = new HashSet<CurrentKey>();
-        myCurrentRevisionsCache.iterateKeys(new Consumer<CurrentKey>() {
-          @Override
-          public void consume(CurrentKey currentKey) {
-            if (scope.belongsTo(currentKey.getPath())) {
-              toRemove.add(currentKey);
+    // VcsDirtyScope.belongsTo() performs some checks under read action. So deadlock could occur if some thread tries to modify
+    // ContentRevisionCache (i.e. call getOrLoadCurrentAsBytes()) under write action while other thread invokes clearScope(). To prevent
+    // such deadlocks we also perform locking "myLock" (and other logic) under read action.
+    // TODO: "myCurrentRevisionsCache" logic should be refactored to be more clear and possibly to avoid creating such wrapping read actions
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (myLock) {
+          ++myCounter;
+          for (final VcsDirtyScope scope : scopes) {
+            final Set<CurrentKey> toRemove = new HashSet<CurrentKey>();
+            myCurrentRevisionsCache.iterateKeys(new Consumer<CurrentKey>() {
+              @Override
+              public void consume(CurrentKey currentKey) {
+                if (scope.belongsTo(currentKey.getPath())) {
+                  toRemove.add(currentKey);
+                }
+              }
+            });
+            for (CurrentKey key : toRemove) {
+              myCurrentRevisionsCache.remove(key);
             }
           }
-        });
-        for (CurrentKey key : toRemove) {
-          myCurrentRevisionsCache.remove(key);
         }
       }
-    }
+    });
   }
 
   public void clearCurrent(Set<String> paths) {

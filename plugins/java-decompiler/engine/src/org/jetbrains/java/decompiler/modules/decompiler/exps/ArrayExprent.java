@@ -15,6 +15,9 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -37,14 +40,17 @@ public class ArrayExprent extends Exprent {
     this.type = EXPRENT_ARRAY;
   }
 
-  public ArrayExprent(Exprent array, Exprent index, VarType hardtype) {
+  public ArrayExprent(Exprent array, Exprent index, VarType hardtype, Set<Integer> bytecode_offsets) {
     this.array = array;
     this.index = index;
     this.hardtype = hardtype;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
+  @Override
   public Exprent copy() {
-    return new ArrayExprent(array.copy(), index.copy(), hardtype);
+    return new ArrayExprent(array.copy(), index.copy(), hardtype, bytecode);
   }
 
   public VarType getExprType() {
@@ -81,11 +87,11 @@ public class ArrayExprent extends Exprent {
 
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-    String res = array.toJava(indent, tracer);
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer res = array.toJava(indent, tracer);
 
     if (array.getPrecedence() > getPrecedence()) { // array precedence equals 0
-      res = "(" + res + ")";
+      res.enclose("(", ")");
     }
 
     VarType arrtype = array.getExprType();
@@ -93,12 +99,12 @@ public class ArrayExprent extends Exprent {
       VarType objarr = VarType.VARTYPE_OBJECT.copy();
       objarr.arraydim = 1; // type family does not change
 
-      res = "((" + ExprProcessor.getCastTypeName(objarr) + ")" + res + ")";
+      res.enclose("((" + ExprProcessor.getCastTypeName(objarr) + ")", ")");
     }
 
     tracer.addMapping(bytecode);
 
-    return res + "[" + index.toJava(indent, tracer) + "]";
+    return res.append("[").append(index.toJava(indent, tracer)).append("]");
   }
 
   public boolean equals(Object o) {

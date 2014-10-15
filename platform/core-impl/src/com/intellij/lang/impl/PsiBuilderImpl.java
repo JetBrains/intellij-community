@@ -847,6 +847,25 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     clearCachedTokenType();
   }
 
+  /**
+   *
+   * @return true if there are error elements created and not dropped after marker was created
+   */
+  public boolean hasErrorsAfter(Marker marker) {
+    assert marker instanceof StartMarker;
+    int idx = myProduction.lastIndexOf(marker);
+    if (idx < 0) {
+      LOG.error("The marker must be added before checked for errors.");
+    }
+    for (int i = idx+1; i < myProduction.size(); ++i) {
+      ProductionMarker m = myProduction.get(i);
+      if (m instanceof ErrorItem || m instanceof DoneWithErrorMarker) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @SuppressWarnings({"SuspiciousMethodCalls"})
   public void drop(Marker marker) {
     final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;

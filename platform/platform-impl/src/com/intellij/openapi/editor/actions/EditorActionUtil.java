@@ -35,6 +35,8 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -120,7 +122,6 @@ public class EditorActionUtil {
 
     editor.getCaretModel().moveCaretRelatively(columnShift, lineShift, withSelection, false, false);
 
-    //editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     VisualPosition caretPos = editor.getCaretModel().getVisualPosition();
     Point caretLocation2 = editor.visualPositionToXY(caretPos);
     final boolean scrollToCaret = !(editor instanceof EditorImpl) || ((EditorImpl)editor).isScrollToCaret();
@@ -212,6 +213,23 @@ public class EditorActionUtil {
     if (!(editor instanceof EditorEx)) return false;
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     return CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).SMART_TABS;
+  }
+
+  public static boolean isWordOrLexemeStart(@NotNull Editor editor, int offset, boolean isCamel) {
+    CharSequence chars = editor.getDocument().getCharsSequence();
+    return isWordStart(chars, offset, isCamel) || !isWordEnd(chars, offset, isCamel) && isLexemeBoundary(editor, offset);
+  }
+
+  public static boolean isWordOrLexemeEnd(@NotNull Editor editor, int offset, boolean isCamel) {
+    CharSequence chars = editor.getDocument().getCharsSequence();
+    return isWordEnd(chars, offset, isCamel) || !isWordStart(chars, offset, isCamel) && isLexemeBoundary(editor, offset);
+  }
+
+  public static boolean isLexemeBoundary(@NotNull Editor editor, int offset) {
+    if (!(editor instanceof EditorEx) || offset <= 0 || offset >= editor.getDocument().getTextLength()) return false;
+    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    HighlighterIterator it = highlighter.createIterator(offset);
+    return it.getStart() == offset;
   }
 
   public static boolean isWordStart(@NotNull CharSequence text, int offset, boolean isCamel) {
@@ -600,14 +618,12 @@ public class EditorActionUtil {
       maxOffset = document.getLineEndOffset(lineNumber + 1);
     }
     for (; newOffset < maxOffset; newOffset++) {
-      if (isWordStart(text, newOffset, camel)) {
+      if (isWordOrLexemeStart(editor, newOffset, camel)) {
         break;
       }
     }
     caretModel.moveToOffset(newOffset);
-    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
+    EditorModificationUtil.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
@@ -676,12 +692,10 @@ public class EditorActionUtil {
     int newOffset = offset - 1;
     int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
     for (; newOffset > minOffset; newOffset--) {
-      if (isWordStart(text, newOffset, camel)) break;
+      if (isWordOrLexemeStart(editor, newOffset, camel)) break;
     }
     editor.getCaretModel().moveToOffset(newOffset);
-    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
+    EditorModificationUtil.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }

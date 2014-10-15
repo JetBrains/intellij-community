@@ -53,7 +53,7 @@ public class TabLabel extends JPanel {
   private boolean myCentered;
 
   private final Wrapper myLabelPlaceholder = new Wrapper(false);
-  private final JBTabsImpl myTabs;
+  protected final JBTabsImpl myTabs;
 
   private BufferedImage myInactiveStateImage;
   private Rectangle myLastPaintedInactiveImageBounds;
@@ -241,7 +241,12 @@ public class TabLabel extends JPanel {
       }
     });
 
+    final Composite oldComposite = ((Graphics2D)g).getComposite();
+    if (myTabs instanceof JBEditorTabs && !myTabs.isSingleRow() && myTabs.getSelectedInfo() != myInfo) {
+      ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
+    }
     super.paint(g);
+    ((Graphics2D)g).setComposite(oldComposite);
 
     doTranslate(new PairConsumer<Integer, Integer>() {
       @Override
@@ -253,7 +258,7 @@ public class TabLabel extends JPanel {
 
   protected int getNonSelectedOffset() {
     if (myTabs.isEditorTabs() && (myTabs.isSingleRow() || ((TableLayout)myTabs.getEffectiveLayout()).isLastRow(getInfo()))) {
-      return -TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2 + 1;
+      return -myTabs.getActiveTabUnderlineHeight() / 2 + 1;
     }
     return 1;
   }
@@ -275,7 +280,7 @@ public class TabLabel extends JPanel {
     switch (pos) {
       case top:
       case bottom:
-        if (myTabs.hasUnderline()) size.height += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1;
+        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - 1;
         break;
       case left:
       case right:

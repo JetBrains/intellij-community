@@ -61,7 +61,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     ComponentManager componentManager = getComponentManager();
     final Element element = _d;
-    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(), componentManager,
+    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(),
                                                             ROOT_TAG_NAME, null,
                                                             ComponentVersionProvider.EMPTY) {
       @Override
@@ -144,12 +144,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return externalizationSession == null ? null : new MyExternalizationSession(externalizationSession);
       }
 
-      @Nullable
-      @Override
-      public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-        return storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
-      }
-
       @Override
       public void finishSave(@NotNull SaveSession saveSession) {
       }
@@ -217,6 +211,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     @Override
     public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       externalizationSession.setState(component, componentName, state, null);
+    }
+
+    @Nullable
+    @Override
+    public SaveSession createSaveSession() {
+      return externalizationSession.createSaveSession();
     }
   }
 }

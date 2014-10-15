@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.List;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 
 public class AssertExprent extends Exprent {
@@ -32,9 +33,9 @@ public class AssertExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
 
-    StringBuilder buffer = new StringBuilder();
+    TextBuffer buffer = new TextBuffer();
 
     buffer.append("assert ");
 
@@ -52,6 +53,6 @@ public class AssertExprent extends Exprent {
       buffer.append(parameters.get(1).toJava(indent, tracer));
     }
 
-    return buffer.toString();
+    return buffer;
   }
 }

@@ -422,7 +422,7 @@ public class PyStubsTest extends PyTestCase {
     final PyClass d = file.findTopLevelClass("D");
     assertNotNull(d);
     assertNull(d.getMetaClassExpression());
-    assertNotNull(d.getMetaClassType(TypeEvalContext.codeInsightFallback()));
+    assertNotNull(d.getMetaClassType(TypeEvalContext.codeInsightFallback(c.getProject())));
     assertNotParsed(file);
   }
 }

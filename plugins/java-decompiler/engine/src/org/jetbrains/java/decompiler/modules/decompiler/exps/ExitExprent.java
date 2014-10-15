@@ -15,6 +15,10 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -26,9 +30,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.attr.StructExceptionsAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class ExitExprent extends Exprent {
@@ -47,14 +48,17 @@ public class ExitExprent extends Exprent {
     this.type = EXPRENT_EXIT;
   }
 
-  public ExitExprent(int exittype, Exprent value, VarType rettype) {
+  public ExitExprent(int exittype, Exprent value, VarType rettype, Set<Integer> bytecode_offsets) {
     this.exittype = exittype;
     this.value = value;
     this.rettype = rettype;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
+  @Override
   public Exprent copy() {
-    return new ExitExprent(exittype, value == null ? null : value.copy(), rettype);
+    return new ExitExprent(exittype, value == null ? null : value.copy(), rettype, bytecode);
   }
 
   public CheckTypesResult checkExprTypeBounds() {
@@ -77,7 +81,7 @@ public class ExitExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
 
     tracer.addMapping(bytecode);
 
@@ -89,7 +93,7 @@ public class ExitExprent extends Exprent {
         ExprProcessor.getCastedExprent(value, rettype, buffer, indent, false, tracer);
       }
 
-      return "return" + buffer.toString();
+      return buffer.prepend("return");
     }
     else {
 
@@ -119,12 +123,12 @@ public class ExitExprent extends Exprent {
             TextBuffer buffer = new TextBuffer();
             ExprProcessor.getCastedExprent(value, exctype, buffer, indent, false, tracer);
 
-            return "throw " + buffer.toString();
+            return buffer.prepend("throw ");
           }
         }
       }
 
-      return "throw " + value.toJava(indent, tracer);
+      return value.toJava(indent, tracer).prepend("throw ");
     }
   }
 

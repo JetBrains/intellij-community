@@ -17,10 +17,7 @@ package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Allows to connect text with resulting lines
@@ -32,7 +29,6 @@ public class TextBuffer {
   private final String myIndent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
   private final StringBuilder myStringBuilder;
   private Map<Integer, Integer> myLineToOffsetMapping = null;
-  private boolean myTrackLines = true;
 
   public TextBuffer() {
     myStringBuilder = new StringBuilder();
@@ -42,12 +38,12 @@ public class TextBuffer {
     myStringBuilder = new StringBuilder(size);
   }
 
-  public void setTrackLines(boolean trackLines) {
-    myTrackLines = false;
+  public TextBuffer(String text) {
+    myStringBuilder = new StringBuilder(text);
   }
 
   public void setCurrentLine(int line) {
-    if (myTrackLines && line >= 0) {
+    if (line >= 0) {
       checkMapCreated();
       myLineToOffsetMapping.put(line, myStringBuilder.length()+1);
     }
@@ -73,6 +69,26 @@ public class TextBuffer {
       append(myIndent);
     }
     return this;
+  }
+
+  public TextBuffer prepend(String s) {
+    insert(0, s);
+    return this;
+  }
+
+  public TextBuffer enclose(String left, String right) {
+    prepend(left);
+    append(right);
+    return this;
+  }
+
+  public boolean containsOnlyWhitespaces() {
+    for (int i = 0; i < myStringBuilder.length(); i++) {
+      if (myStringBuilder.charAt(i) != ' ') {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -117,9 +133,10 @@ public class TextBuffer {
 
   private void appendLines(StringBuilder res, String[] srcLines, int from, int to, int requiredLineNumber) {
     if (to - from > requiredLineNumber) {
+      List<String> strings = compactLines(Arrays.asList(srcLines).subList(from, to) ,requiredLineNumber);
       int separatorsRequired = requiredLineNumber - 1;
-      for (int i = from; i < to; i++) {
-        res.append(srcLines[i]);
+      for (String s : strings) {
+        res.append(s);
         if (separatorsRequired-- > 0) {
           res.append(myLineSeparator);
         }
@@ -144,8 +161,23 @@ public class TextBuffer {
     return myStringBuilder.substring(start);
   }
 
+  public TextBuffer setStart(int position) {
+    myStringBuilder.delete(0, position);
+    shiftMapping(0, -position);
+    return this;
+  }
+
   public void setLength(int position) {
     myStringBuilder.setLength(position);
+    if (myLineToOffsetMapping != null) {
+      HashMap<Integer, Integer> newMap = new HashMap<Integer, Integer>();
+      for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
+        if (entry.getValue() <= position) {
+          newMap.put(entry.getKey(), entry.getValue());
+        }
+      }
+      myLineToOffsetMapping = newMap;
+    }
   }
 
   public TextBuffer append(TextBuffer buffer) {
@@ -161,11 +193,17 @@ public class TextBuffer {
 
   private void shiftMapping(int startOffset, int shiftOffset) {
     if (myLineToOffsetMapping != null) {
+      HashMap<Integer, Integer> newMap = new HashMap<Integer, Integer>();
       for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
-        if (entry.getValue() >= startOffset) {
-          myLineToOffsetMapping.put(entry.getKey(), entry.getValue() + shiftOffset);
+        int newValue = entry.getValue();
+        if (newValue >= startOffset) {
+          newValue += shiftOffset;
+        }
+        if (newValue >= 0) {
+          newMap.put(entry.getKey(), newValue);
         }
       }
+      myLineToOffsetMapping = newMap;
     }
   }
 
@@ -188,5 +226,35 @@ public class TextBuffer {
       p += length;
     }
     return count;
+  }
+
+  private static List<String> compactLines(List<String> srcLines, int requiredLineNumber) {
+    if (srcLines.size() < 2 || srcLines.size() <= requiredLineNumber) {
+      return srcLines;
+    }
+    List<String> res = new LinkedList<String>(srcLines);
+    // first join lines with a single { or }
+    for (int i = res.size()-1; i > 0 ; i--) {
+      String s = res.get(i);
+      if (s.trim().equals("{") || s.trim().equals("}")) {
+        res.set(i-1, res.get(i-1).concat(s));
+        res.remove(i);
+      }
+      if (res.size() <= requiredLineNumber) {
+        return res;
+      }
+    }
+    // now join empty lines
+    for (int i = res.size()-1; i > 0 ; i--) {
+      String s = res.get(i);
+      if (s.trim().isEmpty()) {
+        res.set(i-1, res.get(i-1).concat(s));
+        res.remove(i);
+      }
+      if (res.size() <= requiredLineNumber) {
+        return res;
+      }
+    }
+    return res;
   }
 }

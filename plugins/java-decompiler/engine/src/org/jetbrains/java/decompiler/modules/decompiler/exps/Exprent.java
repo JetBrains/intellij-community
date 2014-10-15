@@ -15,17 +15,19 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 
 public class Exprent {
@@ -128,10 +130,16 @@ public class Exprent {
     throw new RuntimeException("not implemented");
   }
 
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     throw new RuntimeException("not implemented");
   }
 
   public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
+  }
+
+  public void addBytecodeOffsets(Collection<Integer> bytecode_offsets) {
+    if(bytecode_offsets != null) {
+      bytecode.addAll(bytecode_offsets);
+    }
   }
 }

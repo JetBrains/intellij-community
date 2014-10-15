@@ -22,7 +22,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -87,9 +87,9 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
                                       @NotNull Document document, Editor editor,
                                       @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile();
-    final UnusedDeclarationInspection myDeadCodeInspection = (UnusedDeclarationInspection)profile.getUnwrappedTool(UnusedDeclarationInspection.SHORT_NAME, file);
-    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspection.SHORT_NAME);
-    final boolean myDeadCodeEnabled = profile.isToolEnabled(myDeadCodeKey, file);
+    final UnusedDeclarationInspectionBase myDeadCodeInspection = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, file);
+    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
+    final boolean myDeadCodeEnabled = myDeadCodeInspection != null && profile.isToolEnabled(myDeadCodeKey, file) && myDeadCodeInspection.isGlobalEnabledInEditor();
 
     return new PostHighlightingPass(myProject, file, editor, document, highlightInfoProcessor, new Predicate<PsiElement>() {
       @Override

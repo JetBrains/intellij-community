@@ -51,7 +51,7 @@ public class PythonAtTestConfigurationProducer extends
 
   @Override
   protected boolean isTestClass(@NotNull final PyClass pyClass, @Nullable final AbstractPythonTestRunConfiguration configuration) {
-    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback(pyClass.getProject()))) {
       if (type != null && "TestBase".equals(type.getName()) && hasTestFunction(pyClass)) {
         return true;
       }

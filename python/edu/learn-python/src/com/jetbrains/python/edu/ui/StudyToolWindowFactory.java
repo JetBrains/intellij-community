@@ -45,7 +45,7 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
       contentPanel.add(new JLabel(description));
       contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-      JButton reloadCourseButton = new JButton("reload course");
+      JButton reloadCourseButton = new JButton("Reload course");
       reloadCourseButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           StudyReloadCourseAction.reloadCourse(project);

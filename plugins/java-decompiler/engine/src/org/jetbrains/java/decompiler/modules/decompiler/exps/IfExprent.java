@@ -15,14 +15,16 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 
 public class IfExprent extends Exprent {
@@ -81,29 +83,34 @@ public class IfExprent extends Exprent {
     this.type = EXPRENT_IF;
   }
 
-  public IfExprent(int iftype, ListStack<Exprent> stack) {
+  public IfExprent(int iftype, ListStack<Exprent> stack, Set<Integer> bytecode_offsets) {
 
     if (iftype <= IF_LE) {
-      stack.push(new ConstExprent(0, true));
+      stack.push(new ConstExprent(0, true, null));
     }
     else if (iftype <= IF_NONNULL) {
-      stack.push(new ConstExprent(VarType.VARTYPE_NULL, null));
+      stack.push(new ConstExprent(VarType.VARTYPE_NULL, null, null));
     }
 
     if (iftype == IF_VALUE) {
       condition = stack.pop();
     }
     else {
-      condition = new FunctionExprent(functypes[iftype], stack);
+      condition = new FunctionExprent(functypes[iftype], stack, null);
     }
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
-  private IfExprent(Exprent condition) {
+  private IfExprent(Exprent condition, Set<Integer> bytecode_offsets) {
     this.condition = condition;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
+  @Override
   public Exprent copy() {
-    return new IfExprent(condition.copy());
+    return new IfExprent(condition.copy(), bytecode);
   }
 
   public List<Exprent> getAllExprents() {
@@ -113,9 +120,9 @@ public class IfExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     tracer.addMapping(bytecode);
-    return "if(" + condition.toJava(indent, tracer) + ")";
+    return condition.toJava(indent, tracer).enclose("if(", ")");
   }
 
   public boolean equals(Object o) {
@@ -134,7 +141,7 @@ public class IfExprent extends Exprent {
 
   public IfExprent negateIf() {
     condition = new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT,
-                                    Arrays.asList(new Exprent[]{condition}));
+                                    Arrays.asList(condition), condition.bytecode);
     return this;
   }
 

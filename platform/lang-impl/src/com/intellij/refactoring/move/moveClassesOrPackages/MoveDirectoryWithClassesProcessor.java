@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -195,7 +196,11 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
         });
       }
       for (PsiDirectory directory : myDirectories) {
-        directory.delete();
+        final TargetDirectoryWrapper wrapper = myNestedDirsToMove.get(directory);
+        final PsiDirectory targetDirectory = wrapper.getTargetDirectory();
+        if (targetDirectory == null || !PsiTreeUtil.isAncestor(directory, targetDirectory, false)) {
+          directory.delete();
+        }
       }
     }
     catch (IncorrectOperationException e) {
