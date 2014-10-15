@@ -1,6 +1,9 @@
 package org.jetbrains.java.decompiler.main.collectors;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -55,9 +58,14 @@ public class BytecodeSourceMapper {
         }
         buffer.appendIndent(1).append("method " + method_entry.getKey() + "{" + lineSeparator);
 
-        for(Entry<Integer, Integer> line : method_mapping.entrySet()) {
-          String strOffset = offsetsToHex ? Integer.toHexString(line.getKey()): line.getKey().toString();
-          buffer.appendIndent(2).append(strOffset).appendIndent(2).append((line.getValue() + offset_total) + lineSeparator);
+        List<Integer> lstBytecodeOffsets = new ArrayList<Integer>(method_mapping.keySet());
+        Collections.sort(lstBytecodeOffsets);
+
+        for(Integer offset : lstBytecodeOffsets) {
+          Integer line = method_mapping.get(offset);
+
+          String strOffset = offsetsToHex ? Integer.toHexString(offset): line.toString();
+          buffer.appendIndent(2).append(strOffset).appendIndent(2).append((line + offset_total) + lineSeparator);
         }
         buffer.appendIndent(1).append("}").appendLineSeparator();
         is_first_method = false;
