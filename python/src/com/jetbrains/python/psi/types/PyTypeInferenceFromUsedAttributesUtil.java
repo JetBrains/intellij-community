@@ -4,6 +4,7 @@ import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
@@ -45,6 +46,8 @@ public class PyTypeInferenceFromUsedAttributesUtil {
     "__dict__"
   );
 
+  private static final Logger LOG = Logger.getInstance(PyTypeInferenceFromUsedAttributesUtil.class);
+
   private PyTypeInferenceFromUsedAttributesUtil() {
     // empty
   }
@@ -59,11 +62,12 @@ public class PyTypeInferenceFromUsedAttributesUtil {
    */
   @Nullable
   public static PyType getTypeFromUsedAttributes(@NotNull PyExpression expression, @NotNull final TypeEvalContext context) {
-    if (!ENABLED || !context.maySwitchToAST(expression)) {
+    if (!ENABLED || !context.allowLocalUsages(expression)) {
       return null;
     }
-    final Set<String> seenAttrs;
-    seenAttrs = collectUsedAttributes(expression);
+    final Set<String> seenAttrs = collectUsedAttributes(expression);
+
+    LOG.debug(String.format("Attempting to infer type for expression: %s. Used attributes: %s", expression.getText(), seenAttrs));
 
     final Set<PyClass> candidates = Sets.newHashSet();
     for (String attribute : seenAttrs) {
@@ -73,7 +77,9 @@ public class PyTypeInferenceFromUsedAttributesUtil {
         candidates.add(PyBuiltinCache.getInstance(expression).getClass(PyNames.OBJECT));
       }
       else {
-        candidates.addAll(PyClassAttributesIndex.find(attribute, expression.getProject()));
+        final Collection<PyClass> declaringClasses = PyClassAttributesIndex.find(attribute, expression.getProject());
+        LOG.debug("Attribute " + attribute + " is declared in " + declaringClasses.size() + " classes");
+        candidates.addAll(declaringClasses);
       }
     }
 
@@ -82,11 +88,7 @@ public class PyTypeInferenceFromUsedAttributesUtil {
       if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
         continue;
       }
-      final Set<String> availableAttrs = Sets.newHashSet(getAllDeclaredAttributeNames(candidate));
-      for (PyClass parent : candidate.getAncestorClasses(context)) {
-        availableAttrs.addAll(getAllDeclaredAttributeNames(parent));
-      }
-      if (availableAttrs.containsAll(seenAttrs)) {
+      if (getAllInheritedAttributeNames(candidate, context).containsAll(seenAttrs)) {
         suitableClasses.add(candidate);
       }
     }
@@ -107,6 +109,15 @@ public class PyTypeInferenceFromUsedAttributesUtil {
         return new PyClassTypeImpl(cls.myClass, false);
       }
     })));
+  }
+
+  @NotNull
+  private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate, @NotNull TypeEvalContext context) {
+    final Set<String> availableAttrs = Sets.newHashSet(getAllDeclaredAttributeNames(candidate));
+    for (PyClass parent : candidate.getAncestorClasses(context)) {
+      availableAttrs.addAll(getAllDeclaredAttributeNames(parent));
+    }
+    return availableAttrs;
   }
 
   @NotNull
