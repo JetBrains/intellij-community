@@ -68,7 +68,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
         initialDestination = FileUtil.toSystemDependentName(virtualFile.getPath());
       }
     }
-    final PyMoveClassOrFunctionDialog dialog = new PyMoveClassOrFunctionDialog(project, elementsToMove, initialDestination);
+    final PyMoveClassOrFunctionDialog dialog = PyMoveClassOrFunctionDialog.getInstance(project, elementsToMove, initialDestination);
     dialog.show();
     if (!dialog.isOK()) {
       return;

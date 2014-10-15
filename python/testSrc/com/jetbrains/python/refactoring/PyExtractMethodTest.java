@@ -17,8 +17,6 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
@@ -50,11 +48,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     assertNotNull(provider);
     final RefactoringActionHandler handler = provider.getExtractMethodHandler();
     assertNotNull(handler);
-    final Editor editor = myFixture.getEditor();
-    assertInstanceOf(editor, EditorEx.class);
     System.setProperty(PyExtractMethodUtil.NAME, newName);
     try {
-      handler.invoke(myFixture.getProject(), editor, myFixture.getFile(), ((EditorEx)editor).getDataContext());
+      refactorUsingHandler(handler);
     }
     finally {
       System.clearProperty(PyExtractMethodUtil.NAME);
