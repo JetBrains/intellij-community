@@ -243,19 +243,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   /**
-   * @return completion strings suggested by {@link com.intellij.testFramework.fixtures.CodeInsightTestFixture#completeBasic()}
-   */
-  @NotNull
-  protected List<String> getCompletionStrings() {
-    final LookupElement[] elements = myFixture.completeBasic();
-    final List<String> result = new ArrayList<String>(elements.length);
-    for (final LookupElement element : elements) {
-      result.add(element.getLookupString());
-    }
-    return result;
-  }
-
-  /**
    * Returns elements certain element allows to navigate to (emulates CTRL+Click, actually).
    * You need to pass element as argument or
    * make sure your fixture is configured for some element (see {@link com.intellij.testFramework.fixtures.CodeInsightTestFixture#getElementAtCaret()})
