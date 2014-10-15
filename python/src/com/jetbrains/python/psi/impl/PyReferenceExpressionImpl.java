@@ -216,20 +216,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           return typeOfProperty.get();
         }
       }
-      ResolveResult[] targets = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context)).multiResolve(false);
-      if (targets.length == 0) {
+      final PsiPolyVariantReference reference = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
+      final List<PsiElement> targets = PyUtil.multiResolveTopPriority(reference);
+      if (targets.isEmpty()) {
         return getQualifiedReferenceTypeByControlFlow(context);
       }
 
       final List<PyType> members = new ArrayList<PyType>();
-      final int maxRate = getMaxRate(targets);
-
-      for (ResolveResult resolveResult : targets) {
-        final int rate = resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
-        if (rate < maxRate) {
-          continue;
-        }
-        PsiElement target = resolveResult.getElement();
+      for (PsiElement target : targets) {
         if (target == this || target == null) {
           continue;
         }
@@ -425,19 +419,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public void subtreeChanged() {
     super.subtreeChanged();
     myQualifiedName = null;
-  }
-
-  private static int getMaxRate(@NotNull ResolveResult[] targets) {
-    int maxRate = Integer.MIN_VALUE;
-    for (ResolveResult target : targets) {
-      if (target instanceof RatedResolveResult) {
-        final int rate = ((RatedResolveResult)target).getRate();
-        if (rate > maxRate) {
-          maxRate = rate;
-        }
-      }
-    }
-    return maxRate;
   }
 
   private static class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {
