@@ -31,8 +31,8 @@ import java.util.concurrent.*;
  * @author traff
  */
 public class AsyncArrayTableModel extends AbstractTableModel {
-  private static final int CHUNK_COL_SIZE = 30;
-  private static final int CHUNK_ROW_SIZE = 30;
+  private static final int CHUNK_COL_SIZE = 10;
+  private static final int CHUNK_ROW_SIZE = 10;
   public static final String EMPTY_CELL_VALUE = "";
 
   private final int myRows;
