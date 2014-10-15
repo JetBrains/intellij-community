@@ -886,6 +886,26 @@ public class PyTypeTest extends PyTestCase {
            "    expr = o.x\n");
   }
 
+  // PY-11364
+  public void testUnionTypeAttributeCallOfDifferentTypes() {
+    doTest("C1 | C2",
+           "class C1:\n" +
+           "    def foo(self):\n" +
+           "        return self\n" +
+           "\n" +
+           "class C2:\n" +
+           "    def foo(self):\n" +
+           "        return self\n" +
+           "\n" +
+           "def f():\n" +
+           "    '''\n" +
+           "    :rtype: C1 | C2\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f().foo()\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }

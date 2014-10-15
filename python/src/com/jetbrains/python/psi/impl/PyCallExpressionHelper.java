@@ -19,8 +19,8 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.PyNames;
@@ -430,16 +430,18 @@ public class PyCallExpressionHelper {
         }
         // normal cases
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        ResolveResult[] targets = ((PyReferenceExpression)callee).getReference(resolveContext).multiResolve(false);
-        if (targets.length > 0) {
-          final PsiElement target = targets[0].getElement();
-          if (target == null) {
-            return null;
+        final PsiPolyVariantReference reference = ((PyReferenceExpression)callee).getReference(resolveContext);
+        final List<PyType> members = new ArrayList<PyType>();
+        for (PsiElement target : PyUtil.multiResolveTopPriority(reference)) {
+          if (target != null) {
+            final Ref<? extends PyType> typeRef = getCallTargetReturnType(call, target, context);
+            if (typeRef != null) {
+              members.add(typeRef.get());
+            }
           }
-          final Ref<? extends PyType> typeRef = getCallTargetReturnType(call, target, context);
-          if (typeRef != null) {
-            return typeRef.get();
-          }
+        }
+        if (!members.isEmpty()) {
+          return PyUnionType.union(members);
         }
       }
       if (callee == null) {
