@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.components.impl.stores.StateStorageManager.ExternalizationSession;
 import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -95,44 +96,30 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   @Override
   @Nullable
   public final ComponentSaveSession startSave() {
-    if (myComponents.isEmpty()) {
-      return null;
-    }
-
-    StateStorageManager storageManager = getStateStorageManager();
-    StateStorageManager.ExternalizationSession externalizationSession = storageManager.startExternalization();
-    if (externalizationSession == null) {
-      return null;
-    }
-
-    String[] names = ArrayUtilRt.toStringArray(myComponents.keySet());
-    Arrays.sort(names);
-    for (String name : names) {
-      Object component = myComponents.get(name);
-      if (component instanceof PersistentStateComponent) {
-        commitPersistentComponent((PersistentStateComponent<?>)component, externalizationSession);
-      }
-      else if (component instanceof JDOMExternalizable) {
-        externalizationSession.setStateInOldStorage(component, ComponentManagerImpl.getComponentName(component), component);
+    ExternalizationSession externalizationSession = myComponents.isEmpty() ? null : getStateStorageManager().startExternalization();
+    if (externalizationSession != null) {
+      String[] names = ArrayUtilRt.toStringArray(myComponents.keySet());
+      Arrays.sort(names);
+      for (String name : names) {
+        Object component = myComponents.get(name);
+        if (component instanceof PersistentStateComponent) {
+          commitPersistentComponent((PersistentStateComponent<?>)component, externalizationSession);
+        }
+        else if (component instanceof JDOMExternalizable) {
+          externalizationSession.setStateInOldStorage(component, ComponentManagerImpl.getComponentName(component), component);
+        }
       }
     }
-
-    SaveSession storageManagerSaveSession = storageManager.startSave(externalizationSession);
-    if (storageManagerSaveSession == null) {
-      return null;
-    }
-
-    SaveSessionImpl session = createSaveSession();
-    session.myStorageManagerSaveSession = storageManagerSaveSession;
-    return session;
+    return createSaveSession(externalizationSession == null ? null : getStateStorageManager().startSave(externalizationSession));
   }
 
-  protected SaveSessionImpl createSaveSession() {
-    return new SaveSessionImpl();
+  @Nullable
+  protected SaveSessionImpl createSaveSession(@Nullable SaveSession storageManagerSaveSession) {
+    return storageManagerSaveSession == null ? null : new SaveSessionImpl(storageManagerSaveSession);
   }
 
   private <T> void commitPersistentComponent(@NotNull PersistentStateComponent<T> persistentStateComponent,
-                                             @NotNull StateStorageManager.ExternalizationSession session) {
+                                             @NotNull ExternalizationSession session) {
     T state = persistentStateComponent.getState();
     if (state != null) {
       Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
@@ -370,7 +357,11 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   protected class SaveSessionImpl implements ComponentSaveSession {
-    protected SaveSession myStorageManagerSaveSession;
+    private final SaveSession myStorageManagerSaveSession;
+
+    public SaveSessionImpl(@Nullable SaveSession storageManagerSaveSession) {
+      myStorageManagerSaveSession = storageManagerSaveSession;
+    }
 
     @NotNull
     @Override
@@ -384,14 +375,17 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         }
       }
 
-      executeSave(myStorageManagerSaveSession, readonlyFiles);
+      if (myStorageManagerSaveSession != null) {
+        executeSave(myStorageManagerSaveSession, readonlyFiles);
+      }
       return this;
     }
 
     @Override
     public void finishSave() {
-      getStateStorageManager().finishSave(myStorageManagerSaveSession);
-      myStorageManagerSaveSession = null;
+      if (myStorageManagerSaveSession != null) {
+        getStateStorageManager().finishSave(myStorageManagerSaveSession);
+      }
     }
   }
 
