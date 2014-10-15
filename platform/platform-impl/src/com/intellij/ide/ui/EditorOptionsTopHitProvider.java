@@ -44,7 +44,6 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     editorApp("Appearance: Caret blinking", "IS_CARET_BLINKING"),
     editorApp("Appearance: " + messageApp("checkbox.use.block.caret"), "IS_BLOCK_CURSOR"),
     editorApp("Appearance: Show right margin", "IS_RIGHT_MARGIN_SHOWN"),
-    editorApp("Appearance: " + messageApp("checkbox.show.line.numbers"), "ARE_LINE_NUMBERS_SHOWN"),
     editorCode("Appearance: " + messageApp("checkbox.show.method.separators"), "SHOW_METHOD_SEPARATORS"),
     editorApp("Appearance: " + messageApp("checkbox.show.whitespaces"), "IS_WHITESPACES_SHOWN"),
     editorApp("Appearance: Show leading whitespaces", "IS_LEADING_WHITESPACES_SHOWN"),
@@ -94,5 +93,17 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
 
   static BooleanOptionDescription editorCode(String option, String field) {
     return new DaemonCodeAnalyzerOptionDescription(field, option, "editor.preferences.appearance");
+  }
+  
+  public static class Ex extends EditorOptionsTopHitProvider implements TooMuchOptionsProvider {
+    private static final Collection<BooleanOptionDescription> ourOptions = Collections.unmodifiableCollection(Arrays.asList(
+      editorApp("Appearance: " + messageApp("checkbox.show.line.numbers"), "ARE_LINE_NUMBERS_SHOWN")
+    ));
+
+    @NotNull
+    @Override
+    public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+      return ourOptions;
+    }
   }
 }

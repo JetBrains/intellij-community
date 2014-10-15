@@ -18,7 +18,6 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.options.CurrentUserHolder;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -38,7 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-public abstract class XmlElementStorage extends StateStorageBase {
+public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   private static final String ATTR_NAME = "name";
   private static final String VERSION_FILE_SUFFIX = ".ver";
 
@@ -73,25 +72,16 @@ public abstract class XmlElementStorage extends StateStorageBase {
   @Nullable
   protected abstract Element loadLocalData();
 
-  @Override
-  public boolean hasState(@Nullable Object component, @NotNull String componentName, Class<?> aClass, boolean reloadData) throws StateStorageException {
-    return getStorageData(reloadData).hasState(componentName);
-  }
 
-  @Override
   @Nullable
-  public <T> T getState(Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException {
-    Element state = getStorageData(false).getStateAndArchive(componentName);
-    return DefaultStateSerializer.deserializeState(state, stateClass, mergeInto);
+  @Override
+  protected Element getStateAndArchive(@NotNull StorageData storageData, @NotNull String componentName) {
+    return storageData.getStateAndArchive(componentName);
   }
 
+  @Override
   @NotNull
-  protected StorageData getStorageData() {
-    return getStorageData(false);
-  }
-
-  @NotNull
-  private StorageData getStorageData(boolean reloadData) {
+  protected StorageData getStorageData(boolean reloadData) {
     if (myLoadedData != null && !reloadData) {
       return myLoadedData;
     }
@@ -163,21 +153,6 @@ public abstract class XmlElementStorage extends StateStorageBase {
     return checkIsSavingDisabled() ? null : createSaveSession(getStorageData());
   }
 
-  @Nullable
-  @Override
-  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-    if (checkIsSavingDisabled()) {
-      return null;
-    }
-    else {
-      XmlElementStorageSaveSession session = (XmlElementStorageSaveSession)externalizationSession;
-      if (LOG.isDebugEnabled() && myFileSpec.equals(StoragePathMacros.MODULE_FILE)) {
-        LOG.debug("startSave: session " + session.myCopiedStorageData + " for " + toString());
-      }
-      return session.myCopiedStorageData == null ? null : session;
-    }
-  }
-
   protected abstract XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData);
 
   @Nullable
@@ -230,14 +205,16 @@ public abstract class XmlElementStorage extends StateStorageBase {
       myOriginalStorageData = storageData;
     }
 
+    @Nullable
+    @Override
+    public final SaveSession createSaveSession() {
+      return checkIsSavingDisabled() || myCopiedStorageData == null ? null : this;
+    }
+
     @Override
     public final void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec) {
       Element element;
       try {
-        //noinspection deprecation
-        if (LOG.isDebugEnabled() && state instanceof JDOMExternalizable && componentName.endsWith("ApplicationInfo")) {
-          return;
-        }
         element = DefaultStateSerializer.serializeState(state, storageSpec);
       }
       catch (WriteExternalException e) {
@@ -245,7 +222,7 @@ public abstract class XmlElementStorage extends StateStorageBase {
         return;
       }
       catch (Throwable e) {
-        LOG.info("Unable to serialize component state!", e);
+        LOG.info("Unable to serialize component state", e);
         return;
       }
 

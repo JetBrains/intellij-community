@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -46,7 +47,6 @@ import java.util.*;
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
   private static final Key<Integer> TOO_EXPENSIVE_HASH = Key.create("TOO_EXPENSIVE_HASH");
-  public static final long ourTimeLimit = 1000 * 1000 * 1000; //1 sec in nanoseconds
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<PsiElement, DfaMemoryState>();
@@ -151,7 +151,8 @@ public class DataFlowRunner {
       MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
       MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
 
-      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 5);
+      long msLimit = shouldCheckTimeLimit() ? Registry.intValue("ide.dfa.time.limit.online") : Registry.intValue("ide.dfa.time.limit.offline");
+      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(msLimit * 1000 * 1000);
       int count = 0;
       while (!queue.isEmpty()) {
         for (DfaInstructionState instructionState : queue.getNextInstructionStates(joinInstructions)) {

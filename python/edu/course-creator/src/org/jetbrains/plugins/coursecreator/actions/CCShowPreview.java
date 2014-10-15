@@ -15,26 +15,40 @@
  */
 package org.jetbrains.plugins.coursecreator.actions;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.util.LabeledEditor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.FrameWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.hash.HashMap;
+import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.*;
 
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Map;
 
 public class CCShowPreview extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(CCShowPreview.class.getName());
+
   public CCShowPreview() {
     super("Show preview","Show preview", null);
   }
@@ -92,16 +106,38 @@ public class CCShowPreview extends DumbAwareAction {
     }
     String userFileName = FileUtil.getNameWithoutExtension(file.getName()) + ".py";
     VirtualFile userFile = taskDir.getVirtualFile().findChild(userFileName);
-    if (userFile != null) {
-      FileEditorManager.getInstance(project).openFile(userFile, true);
-      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (editor == null) {
-        return;
-      }
-      for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
-        taskWindow.drawHighlighter(editor, true);
-      }
-      CCCreateCourseArchive.resetTaskFiles(taskFilesCopy);
+    if (userFile == null) {
+      LOG.info("Generated file " + userFileName + "was not found");
+      return;
     }
+    FrameWrapper showPreviewFrame = new FrameWrapper(project);
+    showPreviewFrame.setTitle(userFileName);
+    LabeledEditor labeledEditor = new LabeledEditor(null);
+    final EditorFactory factory = EditorFactory.getInstance();
+    Document document = FileDocumentManager.getInstance().getDocument(userFile);
+    if (document == null) {
+      return;
+    }
+    final EditorEx createdEditor = (EditorEx)factory.createEditor(document, project, PythonFileType.INSTANCE, true);
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        factory.releaseEditor(createdEditor);
+      }
+    });
+    for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
+      taskWindow.drawHighlighter(createdEditor, true);
+    }
+    JPanel header = new JPanel();
+    header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+    header.setBorder(new EmptyBorder(10, 10, 10, 10));
+    header.add(new JLabel("Read-only preview."));
+    String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime());
+    header.add(new JLabel(String.format("Created %s.", timeStamp)));
+    labeledEditor.setComponent(createdEditor.getComponent(), header);
+    createdEditor.setCaretVisible(false);
+    createdEditor.setCaretEnabled(false);
+    showPreviewFrame.setComponent(labeledEditor);
+    showPreviewFrame.show();
+    CCCreateCourseArchive.resetTaskFiles(taskFilesCopy);
   }
 }

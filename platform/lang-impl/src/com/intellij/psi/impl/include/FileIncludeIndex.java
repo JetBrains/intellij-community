@@ -196,7 +196,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   interface Key {

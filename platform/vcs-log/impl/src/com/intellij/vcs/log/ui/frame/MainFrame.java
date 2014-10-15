@@ -238,7 +238,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   @Override
   public void calcData(DataKey key, DataSink sink) {
-    if (VcsLogDataKeys.VSC_LOG == key) {
+    if (VcsLogDataKeys.VCS_LOG == key) {
       sink.put(key, myLog);
     }
     else if (VcsLogDataKeys.VCS_LOG_UI == key) {

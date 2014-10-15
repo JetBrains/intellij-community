@@ -120,6 +120,11 @@ public class RecentProjectPanel extends JPanel {
           }
         }
       }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!ListWithFilter.isSearchActive(myList));
+      }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, screen);
 
     myList.addMouseMotionListener(new MouseMotionAdapter() {

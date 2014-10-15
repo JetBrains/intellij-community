@@ -16,6 +16,8 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.TextBuffer;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -38,14 +40,17 @@ public class ArrayExprent extends Exprent {
     this.type = EXPRENT_ARRAY;
   }
 
-  public ArrayExprent(Exprent array, Exprent index, VarType hardtype) {
+  public ArrayExprent(Exprent array, Exprent index, VarType hardtype, Set<Integer> bytecode_offsets) {
     this.array = array;
     this.index = index;
     this.hardtype = hardtype;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
+  @Override
   public Exprent copy() {
-    return new ArrayExprent(array.copy(), index.copy(), hardtype);
+    return new ArrayExprent(array.copy(), index.copy(), hardtype, bytecode);
   }
 
   public VarType getExprType() {

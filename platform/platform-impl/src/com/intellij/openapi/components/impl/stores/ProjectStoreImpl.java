@@ -455,11 +455,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  protected SaveSessionImpl createSaveSession() {
-    return new ProjectSaveSession();
+  protected SaveSessionImpl createSaveSession(@Nullable SaveSession storageManagerSaveSession) {
+    return storageManagerSaveSession == null ? null : new ProjectSaveSession(storageManagerSaveSession);
   }
 
   protected class ProjectSaveSession extends SaveSessionImpl {
+    public ProjectSaveSession(@Nullable SaveSession storageManagerSaveSession) {
+      super(storageManagerSaveSession);
+    }
+
     @NotNull
     @Override
     public ComponentSaveSession save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {

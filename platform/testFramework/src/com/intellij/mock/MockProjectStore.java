@@ -53,11 +53,6 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
   }
 
-  @Override
-  public void reinitComponents(@NotNull Set<String> componentNames, @NotNull Collection<String> notReloadableComponents, boolean reloadData) {
-    throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
-  }
-
   @NotNull
   @Override
   public Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames) {

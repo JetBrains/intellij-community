@@ -166,6 +166,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     myLocalInspectionBase.writeSettings(node);
+    writeUnusedDeclarationSettings(node);
+  }
+
+  protected void writeUnusedDeclarationSettings(Element node) throws WriteExternalException {
     super.writeSettings(node);
     for (EntryPoint extension : myExtensions) {
       extension.writeExternal(node);

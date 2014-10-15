@@ -17,114 +17,42 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.util.List;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBrowserAction {
 
   @Override
-  public void update(AnActionEvent e) {
-    EventData eventData = collectData(e);
-    e.getPresentation().setVisible(eventData != null && GithubUtil.isRepositoryOnGitHub(eventData.getRepository()));
-    e.getPresentation().setEnabled(eventData != null);
-  }
-
-  @Nullable
-  private static EventData collectData(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null || project.isDefault()) {
-      return null;
+    VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
+    if (project == null || log == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
-
-    VcsShortCommitDetails commit = getCurrentlySelectedCommitInTheLog(e);
-    if (commit == null) {
-      return null;
+    List<VcsFullCommitDetails> commits = log.getSelectedDetails();
+    if (commits.size() != 1) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
-
-    VirtualFile root = commit.getRoot();
-    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
-    if (repository == null) {
-      return null;
-    }
-
-    return new EventData(project, repository, commit);
-  }
-
-  @Nullable
-  private static VcsShortCommitDetails getCurrentlySelectedCommitInTheLog(AnActionEvent e) {
-    GitHeavyCommit heavyCommit = e.getData(GitVcs.GIT_COMMIT);
-    if (heavyCommit != null) {
-      final VcsLogObjectsFactory factory = ServiceManager.getService(e.getProject(), VcsLogObjectsFactory.class);
-      List<Hash> parents = ContainerUtil.map(heavyCommit.getParentsHashes(), new Function<String, Hash>() {
-        @Override
-        public Hash fun(String s) {
-          return factory.createHash(s);
-        }
-      });
-      return factory.createShortDetails(factory.createHash(heavyCommit.getHash().getValue()), parents, heavyCommit.getAuthorTime(),
-                                        heavyCommit.getRoot(), heavyCommit.getSubject(), heavyCommit.getAuthor(),
-                                        heavyCommit.getAuthorEmail(), heavyCommit.getCommitter(), heavyCommit.getCommitterEmail(), heavyCommit.getAuthorTime());
-    }
-    VcsLog log = e.getData(VcsLogDataKeys.VSC_LOG);
-    if (log == null) {
-      return null;
-    }
-    List<Hash> selectedCommits = log.getSelectedCommits();
-    if (selectedCommits.size() == 1) {
-      return log.getDetailsIfAvailable(selectedCommits.get(0));
-    }
-    return null;
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(commits.get(0).getRoot());
+    e.getPresentation().setEnabledAndVisible(repository != null && GithubUtil.isRepositoryOnGitHub(repository));
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    EventData eventData = collectData(e);
-    if (eventData != null) {
-      openInBrowser(eventData.getProject(), eventData.getRepository(), eventData.getCommit().getId().asString());
-    }
-  }
-
-  private static class EventData {
-    @NotNull private final Project myProject;
-    @NotNull private final GitRepository myRepository;
-    @NotNull private final VcsShortCommitDetails myCommit;
-
-    private EventData(@NotNull Project project, @NotNull GitRepository repository, @NotNull VcsShortCommitDetails commit) {
-      myProject = project;
-      myRepository = repository;
-      myCommit = commit;
-    }
-
-    @NotNull
-    public Project getProject() {
-      return myProject;
-    }
-
-    @NotNull
-    public GitRepository getRepository() {
-      return myRepository;
-    }
-
-    @NotNull
-    public VcsShortCommitDetails getCommit() {
-      return myCommit;
-    }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VcsFullCommitDetails commit = e.getRequiredData(VcsLogDataKeys.VCS_LOG).getSelectedDetails().get(0);
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
+    openInBrowser(project, repository, commit.getId().asString());
   }
 
 }

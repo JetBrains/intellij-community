@@ -138,7 +138,7 @@ public class PPandMMHelper {
             if (left.equals(econd) && (midlayer == null || midlayer.equals(condtype))) {
               FunctionExprent ret = new FunctionExprent(
                 func.getFunctype() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_PPI : FunctionExprent.FUNCTION_MMI,
-                Arrays.asList(new Exprent[]{econd}));
+                Arrays.asList(econd), func.bytecode);
               ret.setImplicitType(condtype);
 
               exprentReplaced = true;

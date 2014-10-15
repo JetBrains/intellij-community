@@ -69,6 +69,10 @@ public class Executor {
     cdAbs(ourCurrentDir + "/" + relativePath);
   }
 
+  public static void cd(@NotNull File dir) {
+    cdAbs(dir.getAbsolutePath());
+  }
+
   public static void cd(String relativeOrAbsolutePath) {
     if (relativeOrAbsolutePath.startsWith("/") || relativeOrAbsolutePath.charAt(1) == ':') {
       cdAbs(relativeOrAbsolutePath);
