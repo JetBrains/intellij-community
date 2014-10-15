@@ -144,7 +144,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
         }
         catch (e: TransportException) {
           val message = e.getMessage()!!
-          if (message.endsWith(": git-receive-pack not permitted")) {
+          if (message.endsWith(": -pack not permitted")) {
             if (attempt == 0) {
               credentialsProvider.reset(transport.getURI())
             }
