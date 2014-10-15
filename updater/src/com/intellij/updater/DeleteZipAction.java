@@ -4,17 +4,17 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 
-public class DeleteAction extends BaseDeleteAction {
-  public DeleteAction(String path, long checksum) {
+public class DeleteZipAction extends BaseDeleteAction {
+  public DeleteZipAction(String path, long checksum) {
     super(path, checksum);
   }
 
-  public DeleteAction(DataInputStream in) throws IOException {
+  public DeleteZipAction(DataInputStream in) throws IOException {
     super(in);
   }
 
   @Override
   protected boolean isModified(File toFile) throws IOException {
-    return myChecksum != Digester.digestRegularFile(toFile);
+    return myChecksum != Digester.digestFile(toFile);
   }
 }

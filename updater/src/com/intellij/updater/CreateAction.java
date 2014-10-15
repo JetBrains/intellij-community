@@ -23,7 +23,6 @@ public class CreateAction extends PatchAction {
 
     writeExecutableFlag(patchOutput, newerFile);
     Utils.copyFileToStream(newerFile, patchOutput);
-    newerFile.setLastModified(olderFile.lastModified());
 
     patchOutput.closeEntry();
   }
@@ -44,6 +43,11 @@ public class CreateAction extends PatchAction {
   }
 
   @Override
+  protected boolean isModified(File toFile) throws IOException {
+    return false;
+  }
+
+  @Override
   protected void doApply(ZipFile patchFile, File toFile) throws IOException {
     prepareToWriteFile(toFile);
 
@@ -60,15 +64,7 @@ public class CreateAction extends PatchAction {
 
   private static void prepareToWriteFile(File file) throws IOException {
     if (file.exists()) {
-      try {
-        Utils.delete(file);
-      } catch (IOException e) {
-        if (Utils.isWindows() && file.exists()) {
-          throw new RetryException(e);
-        } else {
-          throw e;
-        }
-      }
+      Utils.delete(file);
       return;
     }
 

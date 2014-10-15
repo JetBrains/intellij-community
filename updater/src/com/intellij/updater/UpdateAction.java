@@ -19,8 +19,12 @@ public class UpdateAction extends BaseUpdateAction {
     patchOutput.putNextEntry(new ZipEntry(myPath));
     writeExecutableFlag(patchOutput, newerFile);
     writeDiff(olderFile, newerFile, patchOutput);
-    newerFile.setLastModified(olderFile.lastModified());
     patchOutput.closeEntry();
+  }
+
+  @Override
+  protected boolean isModified(File toFile) throws IOException {
+    return myChecksum != Digester.digestRegularFile(toFile);
   }
 
   @Override
