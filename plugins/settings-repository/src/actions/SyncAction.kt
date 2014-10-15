@@ -42,4 +42,8 @@ class ConfigureIcsAction : DumbAwareAction() {
       IcsSettingsPanel(e.getProject()).show()
     }
   }
+
+  override fun update(e: AnActionEvent) {
+    e.getPresentation().setIcon(null)
+  }
 }
