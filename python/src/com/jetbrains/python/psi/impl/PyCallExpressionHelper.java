@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
@@ -431,54 +432,13 @@ public class PyCallExpressionHelper {
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
         ResolveResult[] targets = ((PyReferenceExpression)callee).getReference(resolveContext).multiResolve(false);
         if (targets.length > 0) {
-          PsiElement target = targets[0].getElement();
+          final PsiElement target = targets[0].getElement();
           if (target == null) {
             return null;
           }
-          PyClass cls = null;
-          PyFunction init = null;
-          if (target instanceof PyClass) {
-            cls = (PyClass)target;
-            init = cls.findInitOrNew(true);
-          }
-          else if (target instanceof PyFunction) {
-            final PyFunction f = (PyFunction)target;
-            if (PyNames.INIT.equals(f.getName())) {
-              init = f;
-              cls = f.getContainingClass();
-            }
-          }
-          if (init != null) {
-            final PyType t = init.getCallType(context, call);
-            if (cls != null) {
-              if (init.getContainingClass() != cls) {
-                if (t instanceof PyCollectionType) {
-                  final PyType elementType = ((PyCollectionType)t).getElementType(context);
-                  return new PyCollectionTypeImpl(cls, false, elementType);
-                }
-                return new PyClassTypeImpl(cls, false);
-              }
-            }
-            if (t != null && !(t instanceof PyNoneType)) {
-              return t;
-            }
-            if (cls != null && t == null) {
-              final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true);
-              if (newMethod != null && !PyBuiltinCache.getInstance(call).isBuiltin(newMethod)) {
-                return PyUnionType.createWeakType(new PyClassTypeImpl(cls, false));
-              }
-            }
-          }
-          if (cls != null) {
-            return new PyClassTypeImpl(cls, false);
-          }
-          final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
-          if (providedType instanceof PyCallableType) {
-            return ((PyCallableType)providedType).getCallType(context, call);
-          }
-          if (target instanceof Callable) {
-            final Callable callable = (Callable)target;
-            return callable.getCallType(context, call);
+          final Ref<? extends PyType> typeRef = getCallTargetReturnType(call, target, context);
+          if (typeRef != null) {
+            return typeRef.get();
           }
         }
       }
@@ -497,6 +457,57 @@ public class PyCallExpressionHelper {
     finally {
       TypeEvalStack.evaluated(call);
     }
+  }
+
+  @Nullable
+  private static Ref<? extends PyType> getCallTargetReturnType(@NotNull PyCallExpression call, @NotNull PsiElement target,
+                                                               @NotNull TypeEvalContext context) {
+    PyClass cls = null;
+    PyFunction init = null;
+    if (target instanceof PyClass) {
+      cls = (PyClass)target;
+      init = cls.findInitOrNew(true);
+    }
+    else if (target instanceof PyFunction) {
+      final PyFunction f = (PyFunction)target;
+      if (PyNames.INIT.equals(f.getName())) {
+        init = f;
+        cls = f.getContainingClass();
+      }
+    }
+    if (init != null) {
+      final PyType t = init.getCallType(context, call);
+      if (cls != null) {
+        if (init.getContainingClass() != cls) {
+          if (t instanceof PyCollectionType) {
+            final PyType elementType = ((PyCollectionType)t).getElementType(context);
+            return Ref.create(new PyCollectionTypeImpl(cls, false, elementType));
+          }
+          return Ref.create(new PyClassTypeImpl(cls, false));
+        }
+      }
+      if (t != null && !(t instanceof PyNoneType)) {
+        return Ref.create(t);
+      }
+      if (cls != null && t == null) {
+        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true);
+        if (newMethod != null && !PyBuiltinCache.getInstance(call).isBuiltin(newMethod)) {
+          return Ref.create(PyUnionType.createWeakType(new PyClassTypeImpl(cls, false)));
+        }
+      }
+    }
+    if (cls != null) {
+      return Ref.create(new PyClassTypeImpl(cls, false));
+    }
+    final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
+    if (providedType instanceof PyCallableType) {
+      return Ref.create(((PyCallableType)providedType).getCallType(context, call));
+    }
+    if (target instanceof Callable) {
+      final Callable callable = (Callable)target;
+      return Ref.create(callable.getCallType(context, call));
+    }
+    return null;
   }
 
   @NotNull
