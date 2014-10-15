@@ -172,7 +172,7 @@ public class StorageData {
         }
       }
 
-      rootElement.addContent(element);
+      rootElement.addContent(element.detach());
     }
     return rootElement;
   }
