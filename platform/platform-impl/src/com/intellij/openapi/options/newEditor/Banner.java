@@ -20,6 +20,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.SwingActionLink;
+import com.intellij.util.ui.AwtVisitor;
 
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -47,10 +48,7 @@ final class Banner extends JPanel {
     add(BorderLayout.WEST, myLeftPanel);
     add(BorderLayout.CENTER, myProjectIcon);
     add(BorderLayout.EAST, link);
-    Font font = link.getFont();
-    if (font != null) {
-      link.setFont(font.deriveFont(Font.BOLD));
-    }
+    setBoldFont(link);
   }
 
   void setText(String... text) {
@@ -70,6 +68,7 @@ final class Banner extends JPanel {
           label.setIcon(AllIcons.General.Divider);
         }
         myLeftPanel.add(label);
+        setBoldFont(label);
       }
     }
     while (length < components.length) {
@@ -86,6 +85,28 @@ final class Banner extends JPanel {
       myProjectIcon.setText(OptionsBundle.message(project.isDefault()
                                                   ? "configurable.default.project.tooltip"
                                                   : "configurable.current.project.tooltip"));
+    }
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    new AwtVisitor(this) {
+      @Override
+      public boolean visit(Component component) {
+        if (component instanceof JLabel && component != myProjectIcon) {
+          component.setFont(null);
+          setBoldFont(component);
+        }
+        return false;
+      }
+    };
+  }
+
+  private static void setBoldFont(Component component) {
+    Font font = component.getFont();
+    if (font != null) {
+      component.setFont(font.deriveFont(Font.BOLD));
     }
   }
 }
