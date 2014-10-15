@@ -314,6 +314,7 @@ public class CompletionData {
       for (Object completion : completions) {
         if (completion == null) {
           LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(completions));
+          continue;
         }
         if (completion instanceof PsiElement) {
           final PsiElement psiElement = (PsiElement)completion;
@@ -328,7 +329,12 @@ public class CompletionData {
               if (!filter.isClassAcceptable(o.getClass()) || !filter.isAcceptable(o, position)) continue;
             }
           }
-          addLookupItem(set, tailType, completion, file, variant);
+          try {
+            addLookupItem(set, tailType, completion, file, variant);
+          }
+          catch (AssertionError e) {
+            LOG.error("Caused by variant from reference: " + reference.getClass(), e);
+          }
         }
       }
     }
