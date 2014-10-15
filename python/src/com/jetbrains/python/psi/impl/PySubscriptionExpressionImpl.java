@@ -30,6 +30,9 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -66,29 +69,32 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Nullable
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    PyType res = null;
-    final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
-    final PsiElement resolved = ref.resolve();
-    if (resolved instanceof Callable) {
-      res = ((Callable)resolved).getCallType(context, this);
-    }
-    if (PyTypeChecker.isUnknown(res) || res instanceof PyNoneType) {
-      final PyExpression indexExpression = getIndexExpression();
-      if (indexExpression != null) {
-        final PyType type = context.getType(getOperand());
-        final PyClass cls = (type instanceof PyClassType) ? ((PyClassType)type).getPyClass() : null;
-        if (cls != null && PyABCUtil.isSubclass(cls, PyNames.MAPPING)) {
-          return res;
-        }
-        if (type instanceof PySubscriptableType) {
-          res = ((PySubscriptableType)type).getElementType(indexExpression, context);
-        }
-        else if (type instanceof PyCollectionType) {
-          res = ((PyCollectionType)type).getElementType(context);
+    final PsiPolyVariantReference reference = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
+    final List<PyType> members = new ArrayList<PyType>();
+    for (PsiElement resolved : PyUtil.multiResolveTopPriority(reference)) {
+      PyType res = null;
+      if (resolved instanceof Callable) {
+        res = ((Callable)resolved).getCallType(context, this);
+      }
+      if (PyTypeChecker.isUnknown(res) || res instanceof PyNoneType) {
+        final PyExpression indexExpression = getIndexExpression();
+        if (indexExpression != null) {
+          final PyType type = context.getType(getOperand());
+          final PyClass cls = (type instanceof PyClassType) ? ((PyClassType)type).getPyClass() : null;
+          if (cls != null && PyABCUtil.isSubclass(cls, PyNames.MAPPING)) {
+            return res;
+          }
+          if (type instanceof PySubscriptableType) {
+            res = ((PySubscriptableType)type).getElementType(indexExpression, context);
+          }
+          else if (type instanceof PyCollectionType) {
+            res = ((PyCollectionType)type).getElementType(context);
+          }
         }
       }
+      members.add(res);
     }
-    return res;
+    return PyUnionType.union(members);
   }
 
   @Override
