@@ -61,7 +61,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     new THashMap<String, RunnerAndConfigurationSettings>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<String, RunnerAndConfigurationSettings>(); // template configurations are not included here
-  private final Map<String, Boolean> mySharedConfigurations = new TreeMap<String, Boolean>();
+  private final Map<String, Boolean> mySharedConfigurations = new THashMap<String, Boolean>();
   private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = new WeakHashMap<RunConfiguration, List<BeforeRunTask>>();
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
@@ -676,7 +676,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Override
   public void loadState(Element parentNode) {
-    clear();
+    clear(false);
 
     List<Element> sortedElements = new SmartList<Element>(parentNode.getChildren(CONFIGURATION));
     // ensure templates are loaded first
@@ -789,19 +789,41 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   // used by MPS, don't delete
   public void clearAll() {
-    clear();
+    clear(true);
     myTypesByName.clear();
     initializeConfigurationTypes(new ConfigurationType[0]);
   }
 
-  private void clear() {
-    List<RunnerAndConfigurationSettings> configurations = new ArrayList<RunnerAndConfigurationSettings>(myConfigurations.values());
-    myConfigurations.clear();
+  private void clear(boolean allConfigurations) {
+    List<RunnerAndConfigurationSettings> configurations;
+    if (allConfigurations) {
+      myConfigurations.clear();
+      mySharedConfigurations.clear();
+      myConfigurationToBeforeTasksMap.clear();
+      mySelectedConfigurationId = null;
+      configurations = new ArrayList<RunnerAndConfigurationSettings>(myConfigurations.values());
+    }
+    else {
+      configurations = new SmartList<RunnerAndConfigurationSettings>();
+      for (Iterator<RunnerAndConfigurationSettings> iterator = myConfigurations.values().iterator(); iterator.hasNext(); ) {
+        RunnerAndConfigurationSettings configuration = iterator.next();
+        if (configuration.isTemporary() || !isConfigurationShared(configuration)) {
+          iterator.remove();
+
+          mySharedConfigurations.remove(configuration.getUniqueID());
+          myConfigurationToBeforeTasksMap.remove(configuration.getConfiguration());
+
+          configurations.add(configuration);
+        }
+      }
+
+      if (mySelectedConfigurationId != null && myConfigurations.containsKey(mySelectedConfigurationId)) {
+        mySelectedConfigurationId = null;
+      }
+    }
+
     myUnknownElements = null;
-    myConfigurationToBeforeTasksMap.clear();
-    mySharedConfigurations.clear();
     myTemplateConfigurationsMap.clear();
-    mySelectedConfigurationId = null;
     myLoadedSelectedConfigurationUniqueName = null;
     myIdToIcon.clear();
     myIconCheckTimes.clear();
@@ -1154,11 +1176,13 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   public void shareConfiguration(final RunnerAndConfigurationSettings settings, final boolean shareConfiguration) {
     boolean shouldFire = settings != null && isConfigurationShared(settings) != shareConfiguration;
-
-    if (shareConfiguration && settings.isTemporary()) makeStable(settings);
+    if (shareConfiguration && settings.isTemporary()) {
+      makeStable(settings);
+    }
     mySharedConfigurations.put(settings.getUniqueID(), shareConfiguration);
-
-    if (shouldFire) fireRunConfigurationChanged(settings);
+    if (shouldFire) {
+      fireRunConfigurationChanged(settings);
+    }
   }
 
   @Override
