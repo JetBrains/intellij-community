@@ -7,8 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.PathUtilRt
 import com.intellij.openapi.util.Computable
 
-public fun String?.nullize(): String? = StringUtil.nullize(this)
-
 public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?, path: String?, sshKeyFile: String?): Credentials? {
   if (ApplicationManager.getApplication()?.isUnitTestMode() === true) {
     throw AssertionError("showAuthenticationForm called from tests")

@@ -23,7 +23,6 @@ import java.io.File
 import java.io.InputStream
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import com.intellij.openapi.util.AtomicNotNullLazyValue
-import com.mcdermottroe.apple.OSXKeychain
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import com.intellij.openapi.progress.ProcessCanceledException
 import java.util.LinkedHashSet
@@ -89,7 +88,6 @@ public class IcsManager : ApplicationLoadListener {
     override fun compute(): CredentialsStore {
       if (isOSXCredentialsStoreSupported) {
         try {
-          OSXKeychain.setLibraryPath(getPathToBundledFile("osxkeychain.so"))
           return OsXCredentialsStore()
         }
         catch (e: Throwable) {

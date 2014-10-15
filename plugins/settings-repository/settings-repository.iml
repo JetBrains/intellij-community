@@ -46,19 +46,6 @@
     <orderEntry type="module" module-name="bootstrap" scope="TEST" />
     <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="module-library">
-      <library name="osxkeychain">
-        <ANNOTATIONS>
-          <root url="file://$MODULE_DIR$/lib" />
-        </ANNOTATIONS>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/osxkeychain.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/osxkeychain-sources.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>

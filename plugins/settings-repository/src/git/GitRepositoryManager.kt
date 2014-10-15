@@ -22,6 +22,7 @@ import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.eclipse.jgit.revwalk.RevCommit
 import org.jetbrains.jgit.dirCache.deletePath
+import org.jetbrains.settingsRepository.AuthenticationException
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {
@@ -120,29 +121,44 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     val refSpecs = SmartList(RemoteConfig(repository.getConfig(), Constants.DEFAULT_REMOTE_NAME).getPushRefSpecs())
     if (refSpecs.isEmpty()) {
       val head = repository.getRef(Constants.HEAD)
-      if (head != null && head.isSymbolic())
+      if (head != null && head.isSymbolic()) {
         refSpecs.add(RefSpec(head.getLeaf().getName()))
+      }
     }
 
     val monitor = JGitProgressMonitor(indicator)
-    for (transport in Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
-      transport.setCredentialsProvider(credentialsProvider)
+    for (attempt in 0..1) {
+      for (transport in Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
+        transport.setCredentialsProvider(credentialsProvider)
 
-      try {
-        val result = transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs))
-        if (LOG.isDebugEnabled()) {
-          printMessages(result)
+        try {
+          val result = transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs))
+          if (LOG.isDebugEnabled()) {
+            printMessages(result)
 
-          for (refUpdate in result.getRemoteUpdates()) {
-            LOG.debug(refUpdate.toString())
+            for (refUpdate in result.getRemoteUpdates()) {
+              LOG.debug(refUpdate.toString())
+            }
+          }
+          break;
+        }
+        catch (e: TransportException) {
+          val message = e.getMessage()!!
+          if (message.endsWith(": git-receive-pack not permitted")) {
+            if (attempt == 0) {
+              credentialsProvider.reset(transport.getURI())
+            }
+            else {
+              throw AuthenticationException(message, e)
+            }
+          }
+          else {
+            wrapIfNeedAndReThrow(e)
           }
         }
-      }
-      catch (e: TransportException) {
-        wrapIfNeedAndReThrow(e)
-      }
-      finally {
-        transport.close()
+        finally {
+          transport.close()
+        }
       }
     }
   }

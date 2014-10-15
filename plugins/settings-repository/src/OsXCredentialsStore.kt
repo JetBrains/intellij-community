@@ -1,18 +1,14 @@
 package org.jetbrains.settingsRepository
 
 import org.eclipse.jgit.transport.URIish
-import com.mcdermottroe.apple.OSXKeychain
 import com.intellij.openapi.util.PasswordUtil
 import gnu.trove.THashMap
-import com.mcdermottroe.apple.OSXKeychainException
 import com.intellij.openapi.util.SystemInfo
-
-val isOSXCredentialsStoreSupported: Boolean
-  get() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
 
 class OsXCredentialsStore : CredentialsStore {
   class object {
-    val SERVICE_NAME = "IDEAPlatformSettingsRepository"
+    val SERVICE_NAME = "IntelliJ Platform Settings Repository".toByteArray()
+    val SSH = "SSH".toByteArray()
   }
 
   private val accountToCredentials = THashMap<String, Credentials>()
@@ -28,19 +24,7 @@ class OsXCredentialsStore : CredentialsStore {
       return credentials
     }
 
-    val data: String?
-    try {
-      data = OSXKeychain.getInstance().findGenericPassword(getServiceName(sshKeyFile), accountName)
-    }
-    catch (e: OSXKeychainException) {
-      val errorMessage = e.getMessage()
-      if (errorMessage == null || (!errorMessage.contains("The specified item could not be found in the keychain.") &&
-        !errorMessage.contains("The user name or passphrase you entered is not correct.") /* if user press "Deny" we also get this error, so, we don't try to show again */)) {
-        LOG.error(e)
-      }
-      return null
-    }
-
+    val data = OSXKeychainLibrary.findGenericPassword(getServiceName(sshKeyFile), accountName)
     if (data == null) {
       return null
     }
@@ -64,7 +48,7 @@ class OsXCredentialsStore : CredentialsStore {
     return credentials
   }
 
-  private fun getServiceName(sshKeyFile: String?) = if (sshKeyFile == null) SERVICE_NAME else "SSH"
+  private fun getServiceName(sshKeyFile: String?) = if (sshKeyFile == null) SERVICE_NAME else SSH
 
   /**
    * Note - in case of SSH, our added password will not be used until ssh-agent will not be restarted (simply execute "killall ssh-agent").
@@ -77,28 +61,14 @@ class OsXCredentialsStore : CredentialsStore {
       return
     }
 
-    val data = if (sshKeyFile == null) "${PasswordUtil.encodePassword(credentials.username)}@${PasswordUtil.encodePassword(credentials.password)}" else credentials.password
-
-    val keychain = OSXKeychain.getInstance()
-    if (oldCredentials == null) {
-      try {
-        keychain.addGenericPassword(getServiceName(sshKeyFile), accountName, data)
-        return
-      }
-      catch(e: OSXKeychainException) {
-        if (e.getMessage()?.contains("The specified item already exists in the keychain.") !== true) {
-          throw e
-        }
-      }
-    }
-
-    keychain.modifyGenericPassword(getServiceName(sshKeyFile), host, data)
+    val data = if (sshKeyFile == null) "${PasswordUtil.encodePassword(credentials.username)}@${PasswordUtil.encodePassword(credentials.password)}" else credentials.password!!
+    OSXKeychainLibrary.saveGenericPassword(getServiceName(sshKeyFile), accountName, data)
   }
 
   override fun reset(uri: URIish) {
     val host = uri.getHost()!!
     if (accountToCredentials.remove(host) != null) {
-      OSXKeychain.getInstance().deleteGenericPassword(SERVICE_NAME, host)
+      OSXKeychainLibrary.deleteGenericPassword(SERVICE_NAME, host)
     }
   }
 }

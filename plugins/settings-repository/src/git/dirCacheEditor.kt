@@ -16,6 +16,7 @@ import java.util.Collections
 import org.jetbrains.settingsRepository.removeFileAndParentDirectoryIfEmpty
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.SystemInfo
+import org.jetbrains.settingsRepository.byteBufferToBytes
 
 private val EDIT_CMP = object : Comparator<PathEdit> {
   override fun compare(o1: PathEdit, o2: PathEdit): Int {
@@ -118,31 +119,15 @@ public abstract class PathEdit(val path: ByteArray) {
 }
 
 private fun encodePath(path: String): ByteArray {
-  val byteBuffer = Constants.CHARSET.encode(path)
-  if (byteBuffer.hasArray() && byteBuffer.arrayOffset() == 0) {
-    val bytes = byteBuffer.array()
-    if (bytes.size == byteBuffer.limit()) {
-      replaceBackSlash(bytes)
-      return bytes
+  val bytes = byteBufferToBytes(Constants.CHARSET.encode(path))
+  if (SystemInfo.isWindows) {
+    for (i in 0..bytes.size - 1) {
+      if (bytes[i].toChar() == '\\') {
+        bytes[i] = '/'.toByte()
+      }
     }
   }
-
-  val bytes = ByteArray(byteBuffer.limit())
-  byteBuffer.get(bytes)
-  replaceBackSlash(bytes)
   return bytes
-}
-
-private fun replaceBackSlash(path: ByteArray) {
-  if (!SystemInfo.isWindows) {
-    return
-  }
-
-  for (i in 0..path.size - 1) {
-    if (path[i].toChar() == '\\') {
-      path[i] = '/'.toByte()
-    }
-  }
 }
 
 class AddFile(private val pathString: String) : PathEdit(encodePath(pathString)) {
