@@ -364,7 +364,7 @@ public class CompletionData {
     }
   }
 
-  private void addKeyword(Set<LookupElement> set, final TailType tailType, final Object comp, final PrefixMatcher matcher,
+  protected void addKeyword(Set<LookupElement> set, final TailType tailType, final Object comp, final PrefixMatcher matcher,
                           final PsiFile file,
                           final CompletionVariant variant) {
     for (final LookupElement item : set) {
