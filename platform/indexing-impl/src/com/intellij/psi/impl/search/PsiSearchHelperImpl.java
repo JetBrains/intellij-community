@@ -883,7 +883,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           registerRequest(locals, primitive, processor);
         }
         else {
-          final List<String> words = StringUtil.getWordsInStringLongestFirst(primitive.word);
+          final List<String> words = getWordsToSearch(primitive.word);
           final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size() * 2);
           for (String word : words) {
             key.add(new IdIndexEntry(word, primitive.caseSensitive));
@@ -913,6 +913,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         localProcessors.put(singleRequest, localProcessor);
       }
     }
+  }
+
+  private static List<String> getWordsToSearch(String word) {
+    List<String> words = StringUtil.getWordsInStringLongestFirst(word);
+    if (!words.isEmpty()) {
+      return words;
+    }
+    String trimmed = word.trim();
+    if (StringUtil.isNotEmpty(trimmed)) {
+      return Collections.singletonList(trimmed);
+    }
+    return Collections.emptyList();
   }
 
   private static void registerRequest(@NotNull Collection<RequestWithProcessor> collection,
@@ -987,7 +999,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   private static List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
-    List<String> words = StringUtil.getWordsInStringLongestFirst(name);
+    List<String> words = getWordsToSearch(name);
     if (words.isEmpty()) return Collections.emptyList();
     List<IdIndexEntry> keys = new ArrayList<IdIndexEntry>(words.size());
     for (String word : words) {
