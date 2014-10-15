@@ -198,16 +198,18 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
    */
   @Override
   @NotNull
-  public List<RunConfiguration> getConfigurationsList(@NotNull final ConfigurationType type) {
-    final List<RunConfiguration> list = new ArrayList<RunConfiguration>();
-    for (RunnerAndConfigurationSettings myConfiguration : getSortedConfigurations()) {
-      final RunConfiguration configuration = myConfiguration.getConfiguration();
-      final ConfigurationType configurationType = configuration.getType();
-      if (type.getId().equals(configurationType.getId())) {
-        list.add(configuration);
+  public List<RunConfiguration> getConfigurationsList(@NotNull ConfigurationType type) {
+    List<RunConfiguration> result = null;
+    for (RunnerAndConfigurationSettings settings : getSortedConfigurations()) {
+      RunConfiguration configuration = settings.getConfiguration();
+      if (type.getId().equals(configuration.getType().getId())) {
+        if (result == null) {
+          result = new SmartList<RunConfiguration>();
+        }
+        result.add(configuration);
       }
     }
-    return list;
+    return ContainerUtil.notNullize(result);
   }
 
   @Override
@@ -218,7 +220,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       return Collections.emptyList();
     }
 
-    List<RunConfiguration> result = new ArrayList<RunConfiguration>(myConfigurations.size());
+    List<RunConfiguration> result = new ArrayList<RunConfiguration>(sortedConfigurations.size());
     for (RunnerAndConfigurationSettings settings : sortedConfigurations) {
       result.add(settings.getConfiguration());
     }
@@ -327,8 +329,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   public void addConfiguration(RunnerAndConfigurationSettings settings,
                                boolean shared,
                                List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
-    final RunConfiguration configuration = settings.getConfiguration();
-
     String existingId = findExistingConfigurationId(settings);
     String newId = settings.getUniqueID();
     RunnerAndConfigurationSettings existingSettings = null;
@@ -342,6 +342,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       setSelectedConfigurationId(newId);
     }
     myConfigurations.put(newId, settings);
+
+    RunConfiguration configuration = settings.getConfiguration();
     if (existingId == null) {
       refreshUsagesList(configuration);
     }
@@ -398,7 +400,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   public void saveOrder() {
     myOrder.clear();
     for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
-      if (each.getType() instanceof UnknownConfigurationType) continue;
+      if (each.getType() instanceof UnknownConfigurationType) {
+        continue;
+      }
       myOrder.add(each.getUniqueID());
     }
   }
@@ -791,7 +795,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   private void clear() {
-    final List<RunnerAndConfigurationSettings> configurations = new ArrayList<RunnerAndConfigurationSettings>(myConfigurations.values());
+    List<RunnerAndConfigurationSettings> configurations = new ArrayList<RunnerAndConfigurationSettings>(myConfigurations.values());
     myConfigurations.clear();
     myUnknownElements = null;
     myConfigurationToBeforeTasksMap.clear();

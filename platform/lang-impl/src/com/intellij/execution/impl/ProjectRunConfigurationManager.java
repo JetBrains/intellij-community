@@ -32,7 +32,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -75,12 +74,10 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
 
   @Override
   public void initComponent() {
-
   }
 
   @Override
   public void disposeComponent() {
-
   }
 
   @Override
@@ -106,7 +103,7 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
         RunnerAndConfigurationSettings configuration = myManager.loadConfiguration(child, true);
         if (configuration == null && Comparing.strEqual(state.getName(), RunManagerImpl.CONFIGURATION)) {
           if (myUnloadedElements == null) {
-            myUnloadedElements = new ArrayList<Element>(2);
+            myUnloadedElements = new SmartList<Element>();
           }
           myUnloadedElements.add(state);
         }
