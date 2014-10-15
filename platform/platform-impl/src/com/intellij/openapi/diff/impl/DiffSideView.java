@@ -95,7 +95,7 @@ public class DiffSideView {
       if (fileEditor != null) {
         ScrollUtil.scrollVertically(fileEditor.getComponent(), 0);
         ScrollUtil.scrollHorizontally(fileEditor.getComponent(), 0);
-
+        UIUtil.removeScrollBorder(fileEditor.getComponent());
       }
     } else {
       DataManager.removeDataProvider(myPanel);
