@@ -591,13 +591,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @Override
-  public boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor) {
-    return AsyncUtil.get(processRequestsAsync(request, processor));
-  }
-
-  @NotNull
-  @Override
-  public AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
+  public boolean processRequests(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
     final Map<SearchRequestCollector, Processor<PsiReference>> collectors = ContainerUtil.newHashMap();
     collectors.put(collector, processor);
 
@@ -626,7 +620,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }
     while(appendCollectorsFromQueryRequests(collectors));
-    return AsyncUtil.wrapBoolean(result);
+    return result;
+  }
+
+  @NotNull
+  @Override
+  public AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
+    return AsyncUtil.wrapBoolean(processRequests(collector, processor));
   }
 
   private static boolean appendCollectorsFromQueryRequests(@NotNull Map<SearchRequestCollector, Processor<PsiReference>> collectors) {
