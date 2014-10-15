@@ -19,8 +19,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
@@ -132,10 +130,8 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   private static class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
     private final FileColorManager myColorsManager;
-    private final PsiManager myPsiManager;
 
     public XDebuggerFrameListRenderer(Project project) {
-      myPsiManager = PsiManager.getInstance(project);
       myColorsManager = FileColorManager.getInstance(project);
     }
 
@@ -165,11 +161,8 @@ public class XDebuggerFramesList extends DebuggerFramesList {
         if (position != null) {
           final VirtualFile virtualFile = position.getFile();
           if (virtualFile.isValid()) {
-            PsiFile f = myPsiManager.findFile(virtualFile);
-            if (f != null) {
-              Color c = myColorsManager.getFileColor(f);
-              if (c != null) setBackground(c);
-            }
+            Color c = myColorsManager.getFileColor(virtualFile);
+            if (c != null) setBackground(c);
           }
         }
       }
