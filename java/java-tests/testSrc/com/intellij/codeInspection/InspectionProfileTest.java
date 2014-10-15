@@ -287,6 +287,89 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertElementsEqual(mergedElement, copyMerged);
   }
 
+  public void testDisabledUnusedDeclarationWithoutChanges() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\" is_locked=\"false\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <option name=\"myLocal\" value=\"true\" />\n" +
+                         "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                         "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                         "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                         "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                         "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"true\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "</profile>");
+  }
+
+  public void testDisabledUnusedDeclarationWithChanges() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\" is_locked=\"false\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <option name=\"myLocal\" value=\"true\" />\n" +
+                         "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                         "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                         "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                         "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                         "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "</profile>");
+  }
+
+  public void testEnabledUnusedDeclarationWithChanges() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\" is_locked=\"false\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <option name=\"myLocal\" value=\"true\" />\n" +
+                         "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                         "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                         "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                         "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                         "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "</profile>");
+  }
+
+  public void testDisabledUnusedSymbolWithoutChanges() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\" is_locked=\"false\">\n" +
+                         "  <option name=\"myName\" value=\"" +
+                         PROFILE +
+                         "\" />\n" +
+                         "  <option name=\"myLocal\" value=\"true\" />\n" +
+                         "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                         "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                         "    <option name=\"FIELD\" value=\"true\" />\n" +
+                         "    <option name=\"METHOD\" value=\"true\" />\n" +
+                         "    <option name=\"CLASS\" value=\"true\" />\n" +
+                         "    <option name=\"PARAMETER\" value=\"true\" />\n" +
+                         "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"true\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "</profile>");
+  }
+
+  public void testEnabledUnusedSymbolWithChanges() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\" is_locked=\"false\">\n" +
+                         "  <option name=\"myName\" value=\"" +
+                         PROFILE +
+                         "\" />\n" +
+                         "  <option name=\"myLocal\" value=\"true\" />\n" +
+                         "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                         "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                         "    <option name=\"FIELD\" value=\"true\" />\n" +
+                         "    <option name=\"METHOD\" value=\"true\" />\n" +
+                         "    <option name=\"CLASS\" value=\"true\" />\n" +
+                         "    <option name=\"PARAMETER\" value=\"true\" />\n" +
+                         "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"false\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "</profile>");
+  }
+
+  protected void checkMergedNoChanges(String initialText) throws Exception {
+    final Element element = JDOMUtil.loadDocument(initialText).getRootElement();
+    InspectionProfileImpl profile = createProfile();
+    profile.setBaseProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(element);
+    ModifiableModel model = profile.getModifiableModel();
+    model.commit();
+    assertEquals(initialText, serialize(profile));
+  }
+
   public void testLockProfile() throws Exception {
     final List<InspectionToolWrapper> list = new ArrayList<InspectionToolWrapper>();
     list.add(createTool("foo", true));
@@ -347,8 +430,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static String serialize(InspectionProfileImpl profile) throws WriteExternalException {
-    Element element;
-    element = new Element("profile");
+    Element element = new Element("profile");
     profile.writeExternal(element);
     return JDOMUtil.writeElement(element);
   }

@@ -343,7 +343,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     final String mergedName = InspectionElementsMerger.getMergedMarkerName(toolName);
     if (!myDeinstalledInspectionsSettings.containsKey(mergedName)) {
       final InspectionElementsMerger merger = getMergers().get(toolName);
-      if (merger != null && merger.merge(myDeinstalledInspectionsSettings) != null) {
+      if (merger != null && merger.markSettingsMerged(myDeinstalledInspectionsSettings)) {
         element.addContent(new Element(INSPECTION_TOOL_TAG).setAttribute(CLASS_TAG, mergedName));
       }
     }
@@ -352,13 +352,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private boolean areSettingsMerged(String toolName, Element inspectionElement) {
     //skip merged settings as they could be restored from already provided data
     final InspectionElementsMerger merger = getMergers().get(toolName);
-    if (merger != null) {
-      Element merge = merger.merge(myDeinstalledInspectionsSettings);
-      if (merge != null && JDOMUtil.areElementsEqual(merge, inspectionElement)) {
-        return true;
-      }
-    }
-    return false;
+    return merger != null && merger.areSettingsMerged(myDeinstalledInspectionsSettings, inspectionElement);
   }
 
   public void collectDependentInspections(@NotNull InspectionToolWrapper toolWrapper,

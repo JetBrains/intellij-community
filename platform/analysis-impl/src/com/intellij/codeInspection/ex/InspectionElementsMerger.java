@@ -17,12 +17,11 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Merges multiple inspections settings {@link #getSourceToolNames()} into another one {@link #getMergedToolName()}
@@ -30,24 +29,78 @@ import java.util.Map;
 public abstract class InspectionElementsMerger {
   public static final ExtensionPointName<InspectionElementsMerger> EP_NAME = ExtensionPointName.create("com.intellij.inspectionElementsMerger");
 
-  public abstract String getMergedToolName();
+  protected abstract String   getMergedToolName();
   protected abstract String[] getSourceToolNames();
+
+  /**
+   * serialize old inspection settings as they could appear in old profiles
+   */
+  protected Element writeOldSettings(String sourceToolName) throws WriteExternalException {
+    final Element sourceElement = new Element(InspectionProfileImpl.INSPECTION_TOOL_TAG);
+    sourceElement.setAttribute(InspectionProfileImpl.CLASS_TAG, sourceToolName);
+    sourceElement.setAttribute(ToolsImpl.ENABLED_ATTRIBUTE, String.valueOf(isEnabledByDefault(sourceToolName)));
+    sourceElement.setAttribute(ToolsImpl.LEVEL_ATTRIBUTE, getDefaultSeverityLevel(sourceToolName));
+    sourceElement.setAttribute(ToolsImpl.ENABLED_BY_DEFAULT_ATTRIBUTE, String.valueOf(isEnabledByDefault(sourceToolName)));
+    return sourceElement;
+  }
+
+  protected String getDefaultSeverityLevel(String sourceToolName) {
+    return HighlightSeverity.WARNING.getName();
+  }
+
+  protected boolean isEnabledByDefault(String sourceToolName) {
+    return true;
+  }
 
   /**
    * marker node to prevent multiple merging. Is needed when inspection's settings are equal to default and are skipped in profile
    */
-  public static String getMergedMarkerName(String toolName) {
+  protected static String getMergedMarkerName(String toolName) {
     return toolName + "Merged";
   }
 
-  public Element merge(Map<String, Element> inspectionElements) {
+  protected boolean markSettingsMerged(Map<String, Element> inspectionsSettings) {
+    final Element merge = merge(inspectionsSettings, true);
+    if (merge != null) {
+      final Element defaultElement = merge(Collections.<String, Element>emptyMap(), true);
+      return !JDOMUtil.areElementsEqual(merge, defaultElement);
+    }
+    return false;
+  }
+
+  protected boolean areSettingsMerged(Map<String, Element> inspectionsSettings, Element inspectionElement) {
+    final Element merge = merge(inspectionsSettings, true);
+    return merge != null && JDOMUtil.areElementsEqual(merge, inspectionElement);
+  }
+
+  protected Element merge(Map<String, Element> inspectionElements) {
+    return merge(inspectionElements, false);
+  }
+
+  protected Element merge(Map<String, Element> inspectionElements, boolean includeDefaults) {
     LinkedHashMap<String, Element> scopes = null;
     List<Element> content = null;
     boolean enabled = false;
     String level = null;
 
-    for (String sourceId : getSourceToolNames()) {
-      final Element sourceElement = inspectionElements.get(sourceId);
+    for (String sourceToolName : getSourceToolNames()) {
+      Element sourceElement = inspectionElements.get(sourceToolName);
+
+      if (sourceElement == null) {
+        if (includeDefaults) {
+          try {
+            sourceElement = writeOldSettings(sourceToolName);
+          }
+          catch (WriteExternalException ignored) {}
+        } 
+        else {
+          enabled |= isEnabledByDefault(sourceToolName);
+          if (level == null) {
+            level = getDefaultSeverityLevel(sourceToolName);
+          }
+        }
+      }
+
       if (sourceElement != null) {
         if (content == null) {
           content = new ArrayList<Element>();
