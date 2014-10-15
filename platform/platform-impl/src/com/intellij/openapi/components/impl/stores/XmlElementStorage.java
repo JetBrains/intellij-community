@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.JDOMUtil;
@@ -156,12 +153,6 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     return checkIsSavingDisabled() ? null : createSaveSession(getStorageData());
   }
 
-  @Nullable
-  @Override
-  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-    return checkIsSavingDisabled() ? null : ((XmlElementStorageSaveSession)externalizationSession).createSaveSession();
-  }
-
   protected abstract XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData);
 
   @Nullable
@@ -215,8 +206,9 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     }
 
     @Nullable
-    public SaveSession createSaveSession() {
-      return myCopiedStorageData == null ? null : this;
+    @Override
+    public final SaveSession createSaveSession() {
+      return checkIsSavingDisabled() || myCopiedStorageData == null ? null : this;
     }
 
     @Override

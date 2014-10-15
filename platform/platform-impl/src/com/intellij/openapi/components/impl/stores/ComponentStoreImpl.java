@@ -99,8 +99,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return null;
     }
 
-    StateStorageManager storageManager = getStateStorageManager();
-    StateStorageManager.ExternalizationSession externalizationSession = storageManager.startExternalization();
+    StateStorageManager.ExternalizationSession externalizationSession = getStateStorageManager().startExternalization();
     if (externalizationSession == null) {
       return null;
     }
@@ -117,7 +116,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       }
     }
 
-    SaveSession storageManagerSaveSession = storageManager.startSave(externalizationSession);
+    SaveSession storageManagerSaveSession = externalizationSession.createSaveSession();
     if (storageManagerSaveSession == null) {
       return null;
     }

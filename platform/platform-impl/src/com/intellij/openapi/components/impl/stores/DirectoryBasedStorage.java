@@ -147,12 +147,6 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     return checkIsSavingDisabled() ? null : new MySaveSession(this, getStorageData());
   }
 
-  @Nullable
-  @Override
-  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-    return checkIsSavingDisabled() ? null : ((MySaveSession)externalizationSession).createSaveSession();
-  }
-
   private static class MySaveSession implements SaveSession, ExternalizationSession {
     private final DirectoryBasedStorage storage;
     private final DirectoryStorageData originalStorageData;
@@ -211,9 +205,10 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       }
     }
 
+    @Override
     @Nullable
     public SaveSession createSaveSession() {
-      return copiedStorageData == null ? null : this;
+      return storage.checkIsSavingDisabled() || copiedStorageData == null ? null : this;
     }
 
     @Override

@@ -40,18 +40,18 @@ public interface StateStorage {
   ExternalizationSession startExternalization();
 
   /**
-   * return null if nothing to save
-   */
-  @Nullable
-  SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
-
-  /**
    * Get changed component names
    */
   void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> result);
 
   interface ExternalizationSession {
     void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec);
+
+    /**
+     * return null if nothing to save
+     */
+    @Nullable
+    SaveSession createSaveSession();
   }
 
   interface SaveSession {
