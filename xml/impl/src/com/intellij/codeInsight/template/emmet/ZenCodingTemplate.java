@@ -30,7 +30,6 @@ import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -40,7 +39,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
@@ -61,10 +59,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -326,6 +322,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       .setBlockClicksThroughBalloon(true)
       .setAnimationCycle(0)
       .setHideOnKeyOutside(true)
+      .setHideOnClickOutside(true)
       .createBalloon();
     
     field.addDocumentListener(new DocumentAdapter() {
@@ -355,20 +352,6 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
         }
       }
     });
-
-    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent e) {
-        if (e instanceof MouseEvent) {
-          if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-            if (!balloon.isInsideBalloon((MouseEvent)e) && !PopupUtil.isComboPopupKeyEvent((ComponentEvent)e, field)) {
-              balloon.hide();
-            }
-          }
-        }
-        return false;
-      }
-    }, balloon);
 
     balloon.addListener(new JBPopupListener.Adapter() {
       @Override

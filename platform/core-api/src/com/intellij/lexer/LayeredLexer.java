@@ -16,7 +16,6 @@
 package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +96,7 @@ public class LayeredLexer extends DelegateLexer {
 
   @Override
   public IElementType getTokenType() {
-    if (myState == IN_LAYER_LEXER_FINISHED_STATE) {
+    if (isInLayerEndGap()) {
       return myCurrentBaseTokenType;
     }
     return isLayerActive() ? myCurrentLayerLexer.getTokenType() : super.getTokenType();
@@ -105,7 +104,7 @@ public class LayeredLexer extends DelegateLexer {
 
   @Override
   public int getTokenStart() {
-    if (myState == IN_LAYER_LEXER_FINISHED_STATE) {
+    if (isInLayerEndGap()) {
       return myLayerLeftPart;
     }
     return isLayerActive() ? myCurrentLayerLexer.getTokenStart() : super.getTokenStart();
@@ -113,7 +112,7 @@ public class LayeredLexer extends DelegateLexer {
 
   @Override
   public int getTokenEnd() {
-    if (myState == IN_LAYER_LEXER_FINISHED_STATE) {
+    if (isInLayerEndGap()) {
       return myBaseTokenEnd;
     }
     return isLayerActive() ? myCurrentLayerLexer.getTokenEnd() : super.getTokenEnd();
@@ -121,7 +120,8 @@ public class LayeredLexer extends DelegateLexer {
 
   @Override
   public void advance() {
-    if (myState == IN_LAYER_LEXER_FINISHED_STATE){
+    if (isInLayerEndGap()){
+      myLayerLeftPart = -1;
       myState = super.getState();
       return;
     }
@@ -146,12 +146,12 @@ public class LayeredLexer extends DelegateLexer {
 
           // In case when we have non-covered gap we should return left part as next token
           if (tokenEnd != myBaseTokenEnd) {
+            myState = IN_LAYER_LEXER_FINISHED_STATE;
+            myLayerLeftPart = tokenEnd;
             if (LOG.isDebugEnabled()) {
               LOG.debug("We've got not covered gap from layered lexer: " + activeLayerLexer +
                         "\n on token: " + getBufferSequence().subSequence(myLayerLeftPart, myBaseTokenEnd));
             }
-            myState = IN_LAYER_LEXER_FINISHED_STATE;
-            myLayerLeftPart = tokenEnd;
             return;
           }
         }
@@ -185,5 +185,9 @@ public class LayeredLexer extends DelegateLexer {
 
   private boolean isLayerActive() {
     return myCurrentLayerLexer != null;
+  }
+
+  private boolean isInLayerEndGap() {
+    return myLayerLeftPart != -1;
   }
 }
