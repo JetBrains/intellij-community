@@ -50,4 +50,11 @@ public abstract class FileIncludeProvider {
   public PsiFileSystemItem resolveIncludedFile(@NotNull final FileIncludeInfo info, @NotNull final PsiFile context) {
     return null;
   }
+
+  /**
+   * Override this method and increment returned value each time when you change the logic of your provider.
+   */
+  public int getVersion() {
+    return 0;
+  }
 }

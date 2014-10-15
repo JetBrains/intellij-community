@@ -46,6 +46,8 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   public static final ID<Key,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
+  private static final int BASE_VERSION = 5;
+
   public static List<FileIncludeInfoImpl> getIncludes(VirtualFile file, GlobalSearchScope scope) {
     final List<FileIncludeInfoImpl> result = new ArrayList<FileIncludeInfoImpl>();
     FileBasedIndex.getInstance().processValues(INDEX_ID, new FileKey(file), file, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
@@ -196,7 +198,11 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   @Override
   public int getVersion() {
-    return 5;
+    int version = BASE_VERSION;
+    for (FileIncludeProvider provider : myProviders) {
+      version = version * 31 + (provider.getVersion() ^ provider.getClass().getName().hashCode());
+    }
+    return version;
   }
 
   interface Key {
