@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,7 +211,6 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    *
    * For example a global inspection that reports a package could have a local inspection tool which highlights
    * the package statement in a file.
-   * @return
    */
   @Nullable
   public LocalInspectionTool getSharedLocalInspectionTool() {

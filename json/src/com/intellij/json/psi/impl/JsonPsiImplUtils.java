@@ -1,16 +1,21 @@
 package com.intellij.json.psi.impl;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonParserDefinition;
 import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,6 +49,74 @@ public class JsonPsiImplUtils {
     return literal.getNode().findChildByType(JsonParserDefinition.STRING_LITERALS) != null;
   }
 
+  @Nullable
+  public static ItemPresentation getPresentation(@NotNull final JsonProperty property) {
+    return new ItemPresentation() {
+      @Nullable
+      @Override
+      public String getPresentableText() {
+        return property.getName();
+      }
+
+      @Nullable
+      @Override
+      public String getLocationString() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon(boolean unused) {
+        return PlatformIcons.PROPERTY_ICON;
+      }
+    };
+  }
+
+  @Nullable
+  public static ItemPresentation getPresentation(@NotNull final JsonArray array) {
+    return new ItemPresentation() {
+      @Nullable
+      @Override
+      public String getPresentableText() {
+        return JsonBundle.message("json.array");
+      }
+
+      @Nullable
+      @Override
+      public String getLocationString() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon(boolean unused) {
+        return AllIcons.Json.Object;
+      }
+    };
+  }
+
+  @Nullable
+  public static ItemPresentation getPresentation(@NotNull final JsonObject object) {
+    return new ItemPresentation() {
+      @Nullable
+      @Override
+      public String getPresentableText() {
+        return JsonBundle.message("json.object");
+      }
+
+      @Nullable
+      @Override
+      public String getLocationString() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon(boolean unused) {
+        return AllIcons.Json.Array;
+      }
+    };
+  }
 
   private static final String ourEscapesTable = "\"\"\\\\//b\bf\fn\nr\rt\t";
 

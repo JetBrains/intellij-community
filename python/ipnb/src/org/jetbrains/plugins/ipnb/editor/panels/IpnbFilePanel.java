@@ -94,10 +94,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     c.gridwidth = 2;
     c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
 
-    final int width = IpnbEditorUtil.PANEL_WIDTH + IpnbEditorUtil.PROMPT_SIZE.width;
-    final JLabel label = new JLabel("<html><body style='width: " + width + "px'></body></html>");
-    add(label, c);
-
     c.gridy = 1;
     c.gridwidth = 1;
     final JPanel panel = new JPanel();

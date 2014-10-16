@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
 import java.util.Arrays;
@@ -541,6 +542,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=1");
 
     VfsUtil.saveText(filter, "xxx=2");
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     compileModules("project");
     assertResult("target/classes/file.properties", "value=2");
   }

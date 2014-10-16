@@ -171,14 +171,14 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
     };
     myBanner = new Banner(myEditor.getResetAction());
-    myBanner.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+    myBanner.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
     mySearch.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     mySearch.setBackground(myTreeView.myTree.getBackground());
     mySearch.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent event) {
         Dimension size = myBanner.getPreferredSize();
-        size.height = mySearch.getHeight();
+        size.height = mySearch.getHeight() - 5;
         myBanner.setPreferredSize(size);
         myBanner.setSize(size);
         myBanner.revalidate();

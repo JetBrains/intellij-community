@@ -562,14 +562,14 @@ public final class VariableView extends XNamedValue implements VariableContext {
       });
     }
     else {
-      getViewSupport().computeSourcePosition(variable, context, navigatable);
+      getViewSupport().computeSourcePosition(getName(), variable, context, navigatable);
     }
   }
 
   @NotNull
   @Override
   public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
-    return getViewSupport().computeInlineDebuggerData(variable, context, callback);
+    return getViewSupport().computeInlineDebuggerData(getName(), variable, context, callback);
   }
 
   @Override

@@ -434,6 +434,7 @@ public class PsiEventsTest extends PsiTestCase {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     VfsUtil.saveText(file, "aaa");
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiFile psiFile = fileManager.findFile(file);
     psiFile.getText();
 

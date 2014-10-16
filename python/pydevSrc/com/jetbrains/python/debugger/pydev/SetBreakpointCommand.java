@@ -45,27 +45,7 @@ public class SetBreakpointCommand extends LineBreakpointCommand {
   @Override
   protected void buildPayload(Payload payload) {
     super.buildPayload(payload);
-    payload.add(buildConditionWithFunc(myCondition, myFuncName)).add(buildCondition(myLogExpression));
-  }
-
-  @NotNull
-  private static String buildConditionWithFunc(String expression, String functionName) {
-    StringBuilder builder = new StringBuilder();
-
-    if (functionName != null) {
-      builder.append(FUNC_IN_CONDITION);
-      builder.append(functionName);
-      builder.append(TAB_CHAR);
-    }
-
-    if (expression != null) {
-      builder.append(expression.replaceAll("\n", NEW_LINE_CHAR));
-    } else {
-      builder.append("None");
-    }
-    String condition = builder.toString();
-
-    return condition.replaceAll("\t", TAB_CHAR);
+    payload.add(buildCondition(myFuncName)).add(buildCondition(myCondition)).add(buildCondition(myLogExpression));
   }
 
   @NotNull

@@ -30,10 +30,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBinaryFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.PatternUtil;
@@ -237,6 +234,7 @@ public class FileTypesTest extends PlatformTestCase {
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     VirtualFile vFile = vDir.createChildData(this, "test.xxxxxxxx");
     VfsUtil.saveText(vFile, "text");
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType()); // type autodetected during indexing
 
@@ -309,12 +307,14 @@ public class FileTypesTest extends PlatformTestCase {
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
 
       VfsUtil.saveText(vFile, "TYPE:IDEA_MODULE");
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       UIUtil.dispatchAllInvocationEvents();
       myFileTypeManager.drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ModuleFileType);
 
       VfsUtil.saveText(vFile, "TYPE:IDEA_PROJECT");
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       UIUtil.dispatchAllInvocationEvents();
       myFileTypeManager.drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();

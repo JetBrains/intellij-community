@@ -19,8 +19,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.SwingActionLink;
-import com.intellij.util.ui.AwtVisitor;
 
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -29,7 +29,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Font;
 
 /**
  * @author Sergey.Malenkov
@@ -40,15 +39,13 @@ final class Banner extends JPanel {
 
   Banner(Action action) {
     super(new BorderLayout(10, 0));
-    SwingActionLink link = new SwingActionLink(action);
     myLeftPanel.setLayout(new BoxLayout(myLeftPanel, BoxLayout.X_AXIS));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurableBanner);
     myProjectIcon.setForeground(JBColor.GRAY);
     myProjectIcon.setVisible(false);
     add(BorderLayout.WEST, myLeftPanel);
     add(BorderLayout.CENTER, myProjectIcon);
-    add(BorderLayout.EAST, link);
-    setBoldFont(link);
+    add(BorderLayout.EAST, RelativeFont.BOLD.install(new SwingActionLink(action)));
   }
 
   void setText(String... text) {
@@ -67,8 +64,7 @@ final class Banner extends JPanel {
         if (i > 0) {
           label.setIcon(AllIcons.General.Divider);
         }
-        myLeftPanel.add(label);
-        setBoldFont(label);
+        myLeftPanel.add(RelativeFont.BOLD.install(label));
       }
     }
     while (length < components.length) {
@@ -85,28 +81,6 @@ final class Banner extends JPanel {
       myProjectIcon.setText(OptionsBundle.message(project.isDefault()
                                                   ? "configurable.default.project.tooltip"
                                                   : "configurable.current.project.tooltip"));
-    }
-  }
-
-  @Override
-  public void updateUI() {
-    super.updateUI();
-    new AwtVisitor(this) {
-      @Override
-      public boolean visit(Component component) {
-        if (component instanceof JLabel && component != myProjectIcon) {
-          component.setFont(null);
-          setBoldFont(component);
-        }
-        return false;
-      }
-    };
-  }
-
-  private static void setBoldFont(Component component) {
-    Font font = component.getFont();
-    if (font != null) {
-      component.setFont(font.deriveFont(Font.BOLD));
     }
   }
 }

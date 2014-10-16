@@ -57,7 +57,7 @@ class JarLoader extends Loader {
     }
   }
 
-  void preloadClasses() {
+  boolean checkArchive(boolean preloadContents) {
     ZipFile zipFile;
 
     try {
@@ -65,14 +65,16 @@ class JarLoader extends Loader {
     }
     catch (Exception e) {
       LOG.debug("url: " + myURL, e);
-      return;
+      return false;
     }
 
     try {
       try {
-        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL());
-        if (loader != null) {
-          myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+        if (preloadContents) {
+          JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL());
+          if (loader != null) {
+            myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+          }
         }
       }
       finally {
@@ -81,7 +83,10 @@ class JarLoader extends Loader {
     }
     catch (Exception e) {
       LOG.error(e);
+      return false;
     }
+
+    return true;
   }
 
   @Override
@@ -123,7 +128,7 @@ class JarLoader extends Loader {
       }
     }
     catch (Exception e) {
-      LOG.error("file: " + myURL, e);
+      LOG.error("url: " + myURL, e);
     }
 
     return null;

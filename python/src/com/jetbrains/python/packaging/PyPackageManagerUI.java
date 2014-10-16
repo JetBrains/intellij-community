@@ -368,16 +368,4 @@ public class PyPackageManagerUI {
       return "Uninstall packages failed";
     }
   }
-
-  @NotNull
-  public static PackageManagementService.ErrorDescription createDescription(List<ExecutionException> exceptions, String firstLine) {
-    final StringBuilder b = new StringBuilder();
-    b.append(firstLine);
-    b.append("\n\n");
-    for (ExecutionException exception : exceptions) {
-      b.append(exception.toString());
-      b.append("\n");
-    }
-    return PackageManagementService.ErrorDescription.fromMessage(b.toString());
-  }
 }

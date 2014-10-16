@@ -158,11 +158,11 @@ public class GitCherryPickAction extends DumbAwareAction {
 
   private boolean notFromGitAndProject(@NotNull Project project, @NotNull List<VcsFullCommitDetails> details) {
     final RepositoryManager<GitRepository> manager = myPlatformFacade.getRepositoryManager(project);
-    return ContainerUtil.and(details, new Condition<VcsFullCommitDetails>() {
+    return ContainerUtil.exists(details, new Condition<VcsFullCommitDetails>() {
       @Override
       public boolean value(VcsFullCommitDetails commit) {
         GitRepository repository = manager.getRepositoryForRoot(commit.getRoot());
-        return repository != null && manager.isExternal(repository);
+        return repository == null || manager.isExternal(repository);
       }
     });
   }
@@ -177,7 +177,9 @@ public class GitCherryPickAction extends DumbAwareAction {
         return false;
       }
       GitRepository repository = myPlatformFacade.getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
-      assert repository != null;
+      if (repository == null) {
+        return false;
+      }
       GitLocalBranch currentBranch = repository.getCurrentBranch();
       Collection<String> containingBranches = log.getContainingBranches(commit.getId());
       if (currentBranch != null &&  containingBranches != null && containingBranches.contains(currentBranch.getName())) {

@@ -32,6 +32,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -88,7 +89,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     myErrorLabel.setVerticalTextPosition(SwingConstants.TOP);
     myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
     myErrorLabel.setBackground(ERROR_BACKGROUND);
-    add(BorderLayout.SOUTH, myErrorLabel);
+    add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
     ActionManager.getInstance().addAnActionListener(this, this);
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
@@ -235,10 +236,6 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     if (exception == null) {
       myErrorLabel.setVisible(false);
       return true;
-    }
-    Font font = myErrorLabel.getFont();
-    if (font != null) {
-      myErrorLabel.setFont(font.deriveFont(2f + font.getSize()));
     }
     myErrorLabel.setText("<html><body><strong>Changes were not applied because of the following error</strong>:<br>" + exception.getMessage());
     myErrorLabel.setVisible(true);

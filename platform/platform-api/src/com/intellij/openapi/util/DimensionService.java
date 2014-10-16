@@ -44,7 +44,7 @@ import java.util.Map;
     @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml"),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/dimensions.xml", roamingType = RoamingType.DISABLED)
   },
-  storageChooser = LastStorageChooserForWrite.class
+  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
 )
 public class DimensionService implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DimensionService.class);
