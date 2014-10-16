@@ -146,7 +146,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                      @NonNls @Nullable String suffix,
                                      @NotNull PsiLanguageInjectionHost host,
                                      @NotNull TextRange rangeInsideHost) {
-    ProperTextRange.assertProperRange(rangeInsideHost);
 
     PsiFile containingFile = PsiUtilCore.getTemplateLanguageFile(host);
     assert containingFile == myHostPsiFile : exceptionContext("Trying to inject into foreign file: "+containingFile);

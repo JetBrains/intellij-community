@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -34,7 +33,6 @@ public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends Li
 
   @Override
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-    ProperTextRange.assertProperRange(rangeInsideHost);
     String subText = rangeInsideHost.substring(myHost.getText());
     outSourceOffsets = new int[subText.length()+1];
     return PsiLiteralExpressionImpl.parseStringCharacters(subText, outChars, outSourceOffsets);
