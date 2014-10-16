@@ -19,24 +19,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.util.Function;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * The action that copies a revision number text to clipboard
- */
 public class CopyRevisionNumberAction extends DumbAwareAction {
-
-  public CopyRevisionNumberAction() {
-    super(VcsBundle.getString("history.copy.revision.number"), VcsBundle.getString("history.copy.revision.number"), PlatformIcons.COPY_ICON);
-  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -47,23 +40,26 @@ public class CopyRevisionNumberAction extends DumbAwareAction {
 
   @NotNull
   private static List<VcsRevisionNumber> getRevisionNumbersFromContext(@NotNull AnActionEvent e) {
-    List<VcsRevisionNumber> revisions = ContainerUtil.newArrayList();
+    VcsRevisionNumber[] revisionNumbers = e.getData(VcsDataKeys.VCS_REVISION_NUMBERS);
+    if (revisionNumbers != null) {
+      return Arrays.asList(revisionNumbers);
+    }
+
     VcsRevisionNumber revision = e.getData(VcsDataKeys.VCS_REVISION_NUMBER);
-    if (revision == null) {
-      VcsFileRevision[] fileRevisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
-      if (fileRevisions != null) {
-        revisions.addAll(ContainerUtil.map(fileRevisions, new Function<VcsFileRevision, VcsRevisionNumber>() {
-          @Override
-          public VcsRevisionNumber fun(VcsFileRevision revision) {
-            return revision.getRevisionNumber();
-          }
-        }));
-      }
+    if (revision != null) {
+      return Collections.singletonList(revision);
     }
-    else {
-      revisions.add(revision);
+
+    VcsFileRevision[] fileRevisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
+    if (fileRevisions != null) {
+      return ContainerUtil.map(fileRevisions, new Function<VcsFileRevision, VcsRevisionNumber>() {
+        @Override
+        public VcsRevisionNumber fun(VcsFileRevision revision) {
+          return revision.getRevisionNumber();
+        }
+      });
     }
-    return revisions;
+    return Collections.emptyList();
   }
 
   @NotNull
