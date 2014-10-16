@@ -270,11 +270,12 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
 
 
+    final ExecutionResult result = myExecutionResult;
     if (myExecutionResult != null) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
-          Disposer.dispose(myExecutionResult.getExecutionConsole());
+          Disposer.dispose(result.getExecutionConsole());
         }
       });
       myExecutionResult = null;
