@@ -171,7 +171,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   private void setRootColumnSize(TableColumn column) {
     int rootWidth;
-    if (!myUI.getColorManager().isMultipleRoots()) {
+    if (!myUI.isMultipleRoots()) {
       rootWidth = 0;
     }
     else if (!myUI.isShowRootNames()) {
@@ -349,11 +349,14 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     TableColumn column = getRootColumnOrNull(e);
     if (column != null) {
       myUI.setShowRootNames(!myUI.isShowRootNames());
-      setColumnPreferredSize();
-      setRootColumnSize(column);
       return true;
     }
     return false;
+  }
+
+  public void rootColumnUpdated() {
+    setColumnPreferredSize();
+    setRootColumnSize(getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN));
   }
 
   @Nullable
