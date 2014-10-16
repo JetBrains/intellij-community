@@ -62,6 +62,7 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
  */
 public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyClass {
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
+  private static final Object EVALUATING = new Object();
 
   private List<PyTargetExpression> myInstanceAttributes;
   private final NotNullLazyValue<CachedValue<Boolean>> myNewStyle = new NotNullLazyValue<CachedValue<Boolean>>() {
@@ -323,7 +324,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     List<PyClassLikeType> result = new LinkedList<PyClassLikeType>(); // need to insert to 0th position on linearize
     while (true) {
       // filter blank sequences
-      List<List<PyClassLikeType>> nonBlankSequences = new ArrayList<List<PyClassLikeType>>(sequences.size());
+      final List<List<PyClassLikeType>> nonBlankSequences = new ArrayList<List<PyClassLikeType>>(sequences.size());
       for (List<PyClassLikeType> item : sequences) {
         if (item.size() > 0) nonBlankSequences.add(item);
       }
@@ -333,14 +334,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       PyClassLikeType head = null; // to keep compiler happy; really head is assigned in the loop at least once.
       for (List<PyClassLikeType> seq : nonBlankSequences) {
         head = seq.get(0);
-        boolean head_in_tails = false;
-        for (List<PyClassLikeType> tail_seq : nonBlankSequences) {
-          if (tail_seq.indexOf(head) > 0) { // -1 is not found, 0 is head, >0 is tail.
-            head_in_tails = true;
+        boolean headInTails = false;
+        for (List<PyClassLikeType> tailSeq : nonBlankSequences) {
+          if (tailSeq.indexOf(head) > 0) { // -1 is not found, 0 is head, >0 is tail.
+            headInTails = true;
             break;
           }
         }
-        if (!head_in_tails) {
+        if (!headInTails) {
           found = true;
           break;
         }
@@ -363,28 +364,46 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     } // we either return inside the loop or die by assertion
   }
 
+
+  private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type, boolean addThisType, @NotNull TypeEvalContext context) {
+    return mroLinearize(type, addThisType, context, new HashMap<PyClassLikeType, Object>());
+  }
+
   @NotNull
-  private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type, @NotNull Set<PyClassLikeType> seen, boolean addThisType,
-                                                    @NotNull TypeEvalContext context) {
-    if (seen.contains(type)) {
+  private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type, boolean addThisType,
+                                                    @NotNull TypeEvalContext context,
+                                                    @NotNull Map<PyClassLikeType, Object> cache) {
+    final Object computed = cache.get(type);
+    if (computed == EVALUATING) {
       throw new IllegalStateException("Circular class inheritance");
     }
-    final List<PyClassLikeType> bases = type.getSuperClassTypes(context);
-    List<List<PyClassLikeType>> lines = new ArrayList<List<PyClassLikeType>>();
-    for (PyClassLikeType base : bases) {
-      if (base != null) {
-        final Set<PyClassLikeType> newSeen = new HashSet<PyClassLikeType>(seen);
-        newSeen.add(type);
-        List<PyClassLikeType> lin = mroLinearize(base, newSeen, true, context);
-        if (!lin.isEmpty()) lines.add(lin);
+    if (computed != null) {
+      //noinspection unchecked
+      return (List<PyClassLikeType>)computed;
+    }
+    cache.put(type, EVALUATING);
+    List<PyClassLikeType> result = null;
+    try {
+      final List<PyClassLikeType> bases = type.getSuperClassTypes(context);
+      final List<List<PyClassLikeType>> lines = new ArrayList<List<PyClassLikeType>>();
+      for (PyClassLikeType base : bases) {
+        if (base != null) {
+          final List<PyClassLikeType> baseClassMRO = mroLinearize(base, true, context, cache);
+          if (!baseClassMRO.isEmpty()) {
+            lines.add(baseClassMRO);
+          }
+        }
+      }
+      if (!bases.isEmpty()) {
+        lines.add(bases);
+      }
+      result = mroMerge(lines);
+      if (addThisType) {
+        result.add(0, type);
       }
     }
-    if (!bases.isEmpty()) {
-      lines.add(bases);
-    }
-    List<PyClassLikeType> result = mroMerge(lines);
-    if (addThisType) {
-      result.add(0, type);
+    finally {
+      cache.put(type, result);
     }
     return result;
   }
@@ -1280,7 +1299,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyType thisType = context.getType(this);
     if (thisType instanceof PyClassLikeType) {
       try {
-        return mroLinearize((PyClassLikeType)thisType, new HashSet<PyClassLikeType>(), false, context);
+        return mroLinearize((PyClassLikeType)thisType, false, context);
       }
       catch (IllegalStateException ignored) {
       }

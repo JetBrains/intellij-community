@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -69,6 +70,18 @@ public class PyClassMROTest extends PyTestCase {
   // PY-4183
   public void testComplicatedDiamond() {
     assertMRO(getClass("H"), "E", "F", "B", "G", "C", "D", "A", "object");
+  }
+
+  public void testTangledInheritance() throws Exception {
+    final List<String> expectedMRO = new ArrayList<String>();
+    for (int i = 29; i >= 1; i--) {
+      expectedMRO.add(String.format("Class%03d", i));
+    }
+    expectedMRO.add("object");
+    final long startTime = System.currentTimeMillis();
+    assertMRO(getClass("Class030"), ArrayUtil.toStringArray(expectedMRO));
+    final long elapsed = System.currentTimeMillis() - startTime;
+    assertTrue("Calculation of MRO takes too much time: " + elapsed + " ms", elapsed < 5000);
   }
 
   public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {
