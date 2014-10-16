@@ -30,8 +30,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
-  private static final Logger LOG = Logger.getInstance(JarLoader.class);
-
   private final URL myURL;
   private final boolean myCanLockJar;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
@@ -64,7 +62,7 @@ class JarLoader extends Loader {
       zipFile = acquireZipFile();
     }
     catch (Exception e) {
-      LOG.debug("url: " + myURL, e);
+      Logger.getInstance(JarLoader.class).debug("url: " + myURL, e);
       return false;
     }
 
@@ -82,7 +80,7 @@ class JarLoader extends Loader {
       }
     }
     catch (Exception e) {
-      LOG.error(e);
+      Logger.getInstance(JarLoader.class).error(e);
       return false;
     }
 
@@ -128,7 +126,7 @@ class JarLoader extends Loader {
       }
     }
     catch (Exception e) {
-      LOG.error("url: " + myURL, e);
+      Logger.getInstance(JarLoader.class).error("url: " + myURL, e);
     }
 
     return null;
