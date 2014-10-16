@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -66,7 +67,10 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   public AnAction[] getAdditionalActions(Runnable refresher) {
-    return new AnAction[]{ ShowAllAffectedGenericAction.getInstance(), new CopyRevisionNumberAction(), new SelectRevisionInGitLogAction()};
+    return new AnAction[] {
+      ShowAllAffectedGenericAction.getInstance(),
+      ActionManager.getInstance().getAction("Vcs.CopyRevisionNumberAction"),
+      new SelectRevisionInGitLogAction() };
   }
 
   public boolean isDateOmittable() {
