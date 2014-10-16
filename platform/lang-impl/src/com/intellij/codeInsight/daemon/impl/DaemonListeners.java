@@ -118,7 +118,7 @@ public class DaemonListeners implements Disposable {
     return project.getComponent(DaemonListeners.class);
   }
 
-  public DaemonListeners(@NotNull Project project,
+  public DaemonListeners(@NotNull final Project project,
                          @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer,
                          @NotNull final EditorTracker editorTracker,
                          @NotNull EditorFactory editorFactory,
@@ -349,6 +349,22 @@ public class DaemonListeners implements Disposable {
       }
     };
     LaterInvocator.addModalityStateListener(modalityStateListener,this);
+
+    messageBus.connect().subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, new Runnable() {
+      @Override
+      public void run() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (!project.isDisposed()) {
+              for (Editor editor : editorTracker.getActiveEditors()) {
+                repaintErrorStripeRenderer(editor, project);
+              }
+            }
+          }
+        });
+      }
+    });
   }
   
   static boolean isUnderIgnoredAction(@Nullable Object action) {

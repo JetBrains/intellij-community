@@ -346,7 +346,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       final String dirName = extractHelper(name + ".tar.gz");
       try {
         final String fileName = dirName + name + File.separatorChar + "virtualenv.py";
-        getPythonProcessResult(fileName, Collections.singletonList(destinationDir), false, true, dirName + name);
+        getPythonProcessResult(fileName, args, false, true, dirName + name);
       }
       finally {
         FileUtil.delete(new File(dirName));

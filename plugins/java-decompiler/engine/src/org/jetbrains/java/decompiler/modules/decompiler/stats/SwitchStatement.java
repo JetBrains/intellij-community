@@ -311,7 +311,7 @@ public class SwitchStatement extends Statement {
         int index = in == lstSuccs.size() ? 0 : in;
 
         lste.add(lstSuccs.get(index));
-        lstv.add(index == 0 ? null : new ConstExprent(values[index - 1], false));
+        lstv.add(index == 0 ? null : new ConstExprent(values[index - 1], false, null));
       }
       lstEdges.add(lste);
       lstValues.add(lstv);

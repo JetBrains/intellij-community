@@ -179,9 +179,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
                               @NotNull final RunProfileState state,
                               @NotNull final ExecutionEnvironment environment) {
     final Project project = environment.getProject();
-    final RunContentDescriptor reuseContent = getContentManager().getReuseContent(environment);
+    RunContentDescriptor reuseContent = getContentManager().getReuseContent(environment);
     if (reuseContent != null) {
       reuseContent.setExecutionId(environment.getExecutionId());
+      environment.setContentToReuse(reuseContent);
     }
 
     final Executor executor = environment.getExecutor();
@@ -199,7 +200,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         try {
           project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(executor.getId(), environment);
 
-          final RunContentDescriptor descriptor = starter.execute(project, executor, state, reuseContent, environment);
+          final RunContentDescriptor descriptor = starter.execute(project, executor, state, environment.getContentToReuse(), environment);
           if (descriptor != null) {
             environment.setContentToReuse(descriptor);
             final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
@@ -211,7 +212,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
                 myRunningConfigurations.remove(trinity);
               }
             });
-            getContentManager().showRunContent(executor, descriptor, reuseContent);
+            getContentManager().showRunContent(executor, descriptor, environment.getContentToReuse());
             final ProcessHandler processHandler = descriptor.getProcessHandler();
             if (processHandler != null) {
               if (!processHandler.isStartNotified()) {

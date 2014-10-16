@@ -55,17 +55,19 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
-    if (!(element instanceof PsiModifierListOwner) || !(element instanceof PsiNameIdentifierOwner)) return null;
-    if (element instanceof PsiParameter || element instanceof PsiLocalVariable) return null;
+    PsiElement owner = element.getParent();
+    if (!(owner instanceof PsiModifierListOwner) || !(owner instanceof PsiNameIdentifierOwner)) return null;
+    if (owner instanceof PsiParameter || owner instanceof PsiLocalVariable) return null;
 
-    PsiElement nameIdentifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
-    if (nameIdentifier == null || nameIdentifier.getParent() != element) return null;
+    // support non-Java languages where getNameIdentifier may return non-physical psi with the same range
+    PsiElement nameIdentifier = ((PsiNameIdentifierOwner)owner).getNameIdentifier();
+    if (nameIdentifier == null || !nameIdentifier.getTextRange().equals(element.getTextRange())) return null;
 
-    if (!shouldShowSignature((PsiModifierListOwner)element)) {
+    if (!shouldShowSignature((PsiModifierListOwner)owner)) {
       return null;
     }
 
-    return new LineMarkerInfo<PsiElement>(nameIdentifier, nameIdentifier.getTextRange().getStartOffset(),
+    return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(),
                                           AllIcons.Gutter.ExtAnnotation,
                                           Pass.UPDATE_ALL,
                                           ourTooltipProvider, MyIconGutterHandler.INSTANCE,

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,17 +30,25 @@ import java.util.*;
  * @author yole
  */
 public class TypeEvalContext {
+  /**
+   * Contexts are cached here to prevent useless recreations (and cache loss)
+   */
+  @NotNull
+  private static final TypeEvalContextCache CACHE = new TypeEvalContextCache();
+
   public static class Key {
     private static final Key INSTANCE = new Key();
 
-    private Key() {}
+    private Key() {
+    }
   }
 
-  private final boolean myAllowDataFlow;
-  private final boolean myAllowStubToAST;
+  @NotNull
+  private final TypeEvalConstraints myConstraints;
+
+
   private List<String> myTrace;
   private String myTraceIndent = "";
-  @Nullable private final PsiFile myOrigin;
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<PyTypedElement, PyType>();
   private final Map<Callable, PyType> myEvaluatedReturn = new HashMap<Callable, PyType>();
@@ -57,63 +66,70 @@ public class TypeEvalContext {
   };
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, @Nullable PsiFile origin) {
-    myAllowDataFlow = allowDataFlow;
-    myAllowStubToAST = allowStubToAST;
-    myOrigin = origin;
+    myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, origin);
   }
 
   @Override
   public String toString() {
-    return String.format("TypeEvalContext(%b, %b, %s)", myAllowDataFlow, myAllowStubToAST, myOrigin);
+    return String
+      .format("TypeEvalContext(%b, %b, %s)", myConstraints.myAllowDataFlow, myConstraints.myAllowStubToAST, myConstraints.myOrigin);
   }
 
   public boolean allowDataFlow(PsiElement element) {
-    return myAllowDataFlow || element.getContainingFile() == myOrigin;
+    return myConstraints.myAllowDataFlow || element.getContainingFile() == myConstraints.myOrigin;
   }
 
   public boolean allowReturnTypes(PsiElement element) {
-    return myAllowDataFlow || element.getContainingFile() == myOrigin;
+    return myConstraints.myAllowDataFlow || element.getContainingFile() == myConstraints.myOrigin;
   }
 
   public boolean allowLocalUsages(@NotNull PsiElement element) {
-    return myAllowStubToAST && myAllowDataFlow && element.getContainingFile() == myOrigin;
+    return myConstraints.myAllowStubToAST && myConstraints.myAllowDataFlow && element.getContainingFile() == myConstraints.myOrigin;
   }
 
   /**
    * Create the most detailed type evaluation context for user-initiated actions.
-   *
+   * <p/>
    * Should be used for code completion, go to definition, find usages, refactorings, documentation.
    */
-  public static TypeEvalContext userInitiated(@Nullable PsiFile origin) {
-    return new TypeEvalContext(true, true, origin);
+  public static TypeEvalContext userInitiated(@NotNull final Project project, @Nullable final PsiFile origin) {
+    return CACHE.getContext(project, new TypeEvalContext(true, true, origin));
   }
 
   /**
    * Create a type evaluation context for performing analysis operations on the specified file which is currently open in the editor,
    * without accessing stubs. For such a file, additional slow operations are allowed.
-   *
+   * <p/>
    * Inspections should not create a new type evaluation context. They should re-use the context of the inspection session.
    */
-  public static TypeEvalContext codeAnalysis(@Nullable PsiFile origin) {
-    return new TypeEvalContext(false, false, origin);
+  public static TypeEvalContext codeAnalysis(@NotNull final Project project, @Nullable final PsiFile origin) {
+    return CACHE.getContext(project, new TypeEvalContext(false, false, origin));
   }
 
   /**
    * Create the most shallow type evaluation context for code insight purposes when other more detailed contexts are not available.
-   *
    * It's use should be minimized.
+   * <p/>
+   * <p/>
+   *
+   * @param project pass project here to enable cache. Pass null if you do not have any project.
+   *                <strong>Always</strong> do your best to pass project here: it increases performance!
    */
-  public static TypeEvalContext codeInsightFallback() {
-    return new TypeEvalContext(false, false, null);
+  public static TypeEvalContext codeInsightFallback(@Nullable final Project project) {
+    final TypeEvalContext anchor = new TypeEvalContext(false, false, null);
+    if (project != null) {
+      return CACHE.getContext(project, anchor);
+    }
+    return anchor;
   }
 
   /**
    * Create a type evaluation context for deeper and slower code insight.
-   *
+   * <p/>
    * Should be used only when normal code insight context is not enough for getting good results.
    */
-  public static TypeEvalContext deepCodeInsight() {
-    return new TypeEvalContext(false, true, null);
+  public static TypeEvalContext deepCodeInsight(@NotNull final Project project) {
+    return CACHE.getContext(project, new TypeEvalContext(false, true, null));
   }
 
   public TypeEvalContext withTracing() {
@@ -137,7 +153,7 @@ public class TypeEvalContext {
 
   public void traceUnindent() {
     if (myTrace != null && myTraceIndent.length() >= 2) {
-      myTraceIndent = myTraceIndent.substring(0, myTraceIndent.length()-2);
+      myTraceIndent = myTraceIndent.substring(0, myTraceIndent.length() - 2);
     }
   }
 
@@ -210,11 +226,19 @@ public class TypeEvalContext {
   }
 
   public boolean maySwitchToAST(@NotNull PsiElement element) {
-    return myAllowStubToAST || myOrigin == element.getContainingFile();
+    return myConstraints.myAllowStubToAST || myConstraints.myOrigin == element.getContainingFile();
   }
 
   @Nullable
   public PsiFile getOrigin() {
-    return myOrigin;
+    return myConstraints.myOrigin;
+  }
+
+  /**
+   * @return context constraints (see {@link com.jetbrains.python.psi.types.TypeEvalConstraints}
+   */
+  @NotNull
+  TypeEvalConstraints getConstraints() {
+    return myConstraints;
   }
 }

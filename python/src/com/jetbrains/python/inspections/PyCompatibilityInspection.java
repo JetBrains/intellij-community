@@ -302,7 +302,7 @@ public class PyCompatibilityInspection extends PyInspection {
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       super.visitPyElement(node);
       if (shouldBeCompatibleWithPy3()) {
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getContainingFile());
+        final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getProject(), node.getContainingFile());
         final String nodeText = node.getText();
         if (nodeText.endsWith("iteritems") || nodeText.endsWith("iterkeys") || nodeText.endsWith("itervalues")) {
           final PyExpression qualifier = node.getQualifier();

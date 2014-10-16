@@ -117,6 +117,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
     };
     myTree.setEditable(true);
+    myTree.setShowsRootHandles(root.getChildCount() > 1);
     MyTreeCellEditor treeCellEditor = new MyTreeCellEditor();
     myTree.setCellEditor(treeCellEditor);
     treeCellEditor.addCellEditorListener(new CellEditorListener() {

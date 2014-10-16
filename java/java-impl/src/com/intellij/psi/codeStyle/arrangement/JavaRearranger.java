@@ -62,7 +62,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   // Type
   @NotNull private static final Set<ArrangementSettingsToken>                                SUPPORTED_TYPES     =
     ContainerUtilRt.newLinkedHashSet(
-      FIELD, CONSTRUCTOR, METHOD, CLASS, INTERFACE, ENUM
+      FIELD, CONSTRUCTOR, METHOD, CLASS, INTERFACE, ENUM, GETTER, SETTER
     );
   // Modifier
   @NotNull private static final Set<ArrangementSettingsToken>                                SUPPORTED_MODIFIERS =
@@ -93,6 +93,8 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     MODIFIERS_BY_TYPE.put(METHOD, concat(commonModifiers, SYNCHRONIZED, ABSTRACT));
     MODIFIERS_BY_TYPE.put(CONSTRUCTOR, concat(commonModifiers, SYNCHRONIZED));
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
+    MODIFIERS_BY_TYPE.put(GETTER, ContainerUtilRt.<ArrangementSettingsToken>newHashSet());
+    MODIFIERS_BY_TYPE.put(SETTER, ContainerUtilRt.<ArrangementSettingsToken>newHashSet());
   }
 
   private static final Map<ArrangementSettingsToken, List<ArrangementSettingsToken>> GROUPING_RULES = ContainerUtilRt.newLinkedHashMap();

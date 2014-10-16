@@ -39,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 public interface HighlightInfoType {
   @NonNls String UNUSED_SYMBOL_SHORT_NAME = "unused";
   @NonNls String UNUSED_SYMBOL_DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
+  @Deprecated
+  @NonNls String UNUSED_SYMBOL_ID = "UnusedDeclaration";
 
   HighlightInfoType ERROR = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
@@ -88,7 +90,7 @@ public interface HighlightInfoType {
   HighlightInfoType REASSIGNED_PARAMETER = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES);
   HighlightInfoType IMPLICIT_ANONYMOUS_CLASS_PARAMETER = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES);
 
-  HighlightInfoType TODO = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, null);  // t.o.d.o attributes depend on the t.o.d.o text
+  HighlightInfoType TODO = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);  // these are default attributes, can be configured differently for specific patterns
   HighlightInfoType UNHANDLED_EXCEPTION = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
 
   HighlightSeverity INJECTED_FRAGMENT_SEVERITY = new HighlightSeverity("INJECTED_FRAGMENT", SYMBOL_TYPE_SEVERITY.myVal - 1);

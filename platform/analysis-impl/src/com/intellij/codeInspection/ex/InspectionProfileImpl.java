@@ -99,6 +99,18 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private boolean myModified = false;
   private volatile boolean myInitialized;
 
+  private static Map<String, InspectionElementsMerger> ourMergers = null;
+
+  private static synchronized Map<String, InspectionElementsMerger> getMergers() {
+    if (ourMergers == null) {
+      ourMergers = new LinkedHashMap<String, InspectionElementsMerger>();
+      for (InspectionElementsMerger merger : Extensions.getExtensions(InspectionElementsMerger.EP_NAME)) {
+        ourMergers.put(merger.getMergedToolName(), merger);
+      }
+    }
+    return ourMergers;
+  }
+
   InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
     super(inspectionProfile.getName());
 
@@ -264,18 +276,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
       myDeinstalledInspectionsSettings.put(toolClassName, toolElement);
     }
-
-    for (InspectionElementsMerger merger : Extensions.getExtensions(InspectionElementsMerger.EP_NAME)) {
-      final String newToolName = merger.getNewToolName();
-      final String mergedToolName = newToolName + "Merged";
-      if (!myDeinstalledInspectionsSettings.containsKey(mergedToolName)) {
-        final Element merged = merger.merge(myDeinstalledInspectionsSettings);
-        if (merged != null) {
-          myDeinstalledInspectionsSettings.put(newToolName, merged);
-          myDeinstalledInspectionsSettings.put(mergedToolName, new Element(INSPECTION_TOOL_TAG).setAttribute(CLASS_TAG, mergedToolName));
-        }
-      }
-    }
   }
 
   @NotNull
@@ -315,7 +315,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
 
       for (final String toolName : diffMap.keySet()) {
-        if (!myLockedProfile && diffMap.get(toolName).booleanValue()) continue;
+        if (!myLockedProfile && diffMap.get(toolName).booleanValue()) {
+          markSettingsMerged(toolName, element);
+          continue;
+        }
         final Element toolElement = myDeinstalledInspectionsSettings.get(toolName);
         if (toolElement == null) {
           final ToolsImpl toolList = myTools.get(toolName);
@@ -323,6 +326,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
           final Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
           inspectionElement.setAttribute(CLASS_TAG, toolName);
           toolList.writeExternal(inspectionElement);
+
+          if (areSettingsMerged(toolName, inspectionElement)) continue;
+
           element.addContent(inspectionElement);
         }
         else {
@@ -330,6 +336,23 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         }
       }
     }
+  }
+
+  private void markSettingsMerged(String toolName, Element element) {
+    //add marker if already merged but result is now default (-> empty node)
+    final String mergedName = InspectionElementsMerger.getMergedMarkerName(toolName);
+    if (!myDeinstalledInspectionsSettings.containsKey(mergedName)) {
+      final InspectionElementsMerger merger = getMergers().get(toolName);
+      if (merger != null && merger.markSettingsMerged(myDeinstalledInspectionsSettings)) {
+        element.addContent(new Element(INSPECTION_TOOL_TAG).setAttribute(CLASS_TAG, mergedName));
+      }
+    }
+  }
+
+  private boolean areSettingsMerged(String toolName, Element inspectionElement) {
+    //skip merged settings as they could be restored from already provided data
+    final InspectionElementsMerger merger = getMergers().get(toolName);
+    return merger != null && merger.areSettingsMerged(myDeinstalledInspectionsSettings, inspectionElement);
   }
 
   public void collectDependentInspections(@NotNull InspectionToolWrapper toolWrapper,
@@ -550,14 +573,23 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       HighlightDisplayLevel level = myBaseProfile != null ? myBaseProfile.getErrorLevel(key, project) : toolWrapper.getDefaultLevel();
       boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
       final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
-      final Element element = myDeinstalledInspectionsSettings.remove(toolWrapper.getShortName());
-      if (element != null) {
-        try {
+      final Element element = myDeinstalledInspectionsSettings.remove(shortName);
+      try {
+        if (element != null) {
           toolsList.readExternal(element, this, dependencies);
         }
-        catch (InvalidDataException e) {
-          LOG.error("Can't read settings for " + toolWrapper, e);
+        else if (!myDeinstalledInspectionsSettings.containsKey(InspectionElementsMerger.getMergedMarkerName(shortName))) {
+          final InspectionElementsMerger merger = getMergers().get(shortName);
+          if (merger != null) {
+            final Element merged = merger.merge(myDeinstalledInspectionsSettings);
+            if (merged != null) {
+              toolsList.readExternal(merged, this, dependencies);
+            }
+          }
         }
+      }
+      catch (InvalidDataException e) {
+        LOG.error("Can't read settings for " + toolWrapper, e);
       }
       myTools.put(toolWrapper.getShortName(), toolsList);
     }

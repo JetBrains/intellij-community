@@ -21,8 +21,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogSettings;
-import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,17 +33,10 @@ import java.awt.event.MouseEvent;
 public class VcsLogQuickSettingsActions extends DumbAwareAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      return;
-    }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VcsLogUi logUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogSettings settings = ServiceManager.getService(project, VcsLogSettings.class);
-    VcsLogManager logManager = ServiceManager.getService(project, VcsLogManager.class);
-    VcsLogUiImpl logUi = logManager.getLogUi();
-    if (logUi == null) {
-      return;
-    }
 
     ActionGroup settingsGroup = new MySettingsActionGroup(settings, logUi);
     ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, settingsGroup);
@@ -57,23 +51,18 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      VcsLogManager logManager = ServiceManager.getService(project, VcsLogManager.class);
-      e.getPresentation().setEnabledAndVisible(logManager.getLogUi() != null);
-    }
+    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    e.getPresentation().setEnabledAndVisible(project != null && logUi != null);
   }
 
   private static class MySettingsActionGroup extends ActionGroup {
 
     private final VcsLogSettings mySettings;
-    private final VcsLogUiImpl myUi;
+    private final VcsLogUi myUi;
 
-    public MySettingsActionGroup(VcsLogSettings settings, VcsLogUiImpl ui) {
+    public MySettingsActionGroup(VcsLogSettings settings, VcsLogUi ui) {
       mySettings = settings;
       myUi = ui;
     }

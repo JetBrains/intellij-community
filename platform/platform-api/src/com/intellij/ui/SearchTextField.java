@@ -88,7 +88,6 @@ public class SearchTextField extends JPanel {
 
       @Override
       public void setUI(TextUI ui) {
-        super.setUI(ui);
         if (SystemInfo.isMac) {
           try {
             Class<?> uiClass = Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI");
@@ -99,10 +98,12 @@ public class SearchTextField extends JPanel {
               setBorder((Border)ReflectionUtil.newInstance(borderClass));
               setOpaque(false);
             }
+            return;
           }
           catch (Exception ignored) {
           }
         }
+        super.setUI(ui);
       }
     };
     myTextField.setColumns(15);

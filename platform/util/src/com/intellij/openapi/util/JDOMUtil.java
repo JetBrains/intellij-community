@@ -83,7 +83,7 @@ public class JDOMUtil {
     return LoggerHolder.ourLogger;
   }
 
-  public static boolean areElementsEqual(Element e1, Element e2) {
+  public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2) {
     if (e1 == null && e2 == null) return true;
     if (e1 == null || e2 == null) return false;
 

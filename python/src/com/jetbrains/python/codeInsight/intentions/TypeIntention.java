@@ -180,7 +180,7 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   protected PyResolveContext getResolveContext(@NotNull PsiElement origin) {
-    return PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(origin.getContainingFile()));
+    return PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(origin.getProject(), origin.getContainingFile()));
   }
 
   public boolean startInWriteAction() {

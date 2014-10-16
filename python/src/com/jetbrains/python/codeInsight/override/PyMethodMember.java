@@ -36,7 +36,7 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
   private final String myFullName;
   private static String buildNameFor(final PyElement element) {
     if (element instanceof PyFunction) {
-      final TypeEvalContext context = TypeEvalContext.userInitiated(element.getContainingFile());
+      final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
       final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)element, context);
       return element.getName() + "(" + StringUtil.join(parameters, new Function<PyParameter, String>() {
         @Override

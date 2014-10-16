@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Set;
-
 
 class DefaultsStateStorage implements StateStorage {
   private final PathMacroManager myPathMacroManager;
@@ -82,11 +81,6 @@ class DefaultsStateStorage implements StateStorage {
   @NotNull
   public ExternalizationSession startExternalization() {
     throw new UnsupportedOperationException("Method startExternalization not implemented in " + getClass());
-  }
-
-  @Override
-  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-    return null;
   }
 
   @Override

@@ -48,7 +48,12 @@ public class ILightStubFileElementType<T extends PsiFileStub> extends IStubFileE
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
     assert parserDefinition != null : this;
     final PsiParser parser = parserDefinition.createParser(project);
-    parser.parse(this, builder);
+    if (parser instanceof LightPsiParser) {
+      ((LightPsiParser)parser).parseLight(this, builder);
+    }
+    else {
+      parser.parse(this, builder);
+    }
     return builder.getLightTree();
   }
 }

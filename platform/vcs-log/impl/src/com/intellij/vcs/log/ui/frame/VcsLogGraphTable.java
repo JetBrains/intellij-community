@@ -117,6 +117,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
 
+    getTableHeader().setReorderingAllowed(false);
+
     PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
     TableScrollingUtil.installActions(this, false);
   }
@@ -206,7 +208,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     if (column == GraphTableModel.ROOT_COLUMN) {
       Object at = getValueAt(row, column);
       if (at instanceof VirtualFile) {
-        return "<html><b>" + ((VirtualFile)at).getPresentableUrl() + "</b><br/>Click to " + (myUI.isShowRootNames() ? "collapse" : "expand") + "</html>";
+        return "<html><b>" + ((VirtualFile)at).getPresentableUrl() + "</b><br/>Double-click to " + (myUI.isShowRootNames() ? "collapse" : "expand") + "</html>";
       }
     }
     return null;
@@ -349,9 +351,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         return;
       }
 
-      if (e.getClickCount() == 1) {
-        if (expandOrCollapseRoots(e)) return;
-
+      if (e.getClickCount() > 1) {
+        expandOrCollapseRoots(e);
+      } else if (e.getClickCount() == 1) {
         performAction(e, MyGraphMouseAction.Type.CLICK);
       }
     }

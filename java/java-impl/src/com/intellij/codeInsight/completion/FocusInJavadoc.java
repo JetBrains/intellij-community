@@ -15,6 +15,9 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
@@ -31,5 +34,15 @@ public class FocusInJavadoc extends CompletionConfidence {
       return ThreeState.YES;
     }
     return ThreeState.UNSURE;
+  }
+
+  @NotNull
+  @Override
+  public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    if (PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset - 1, PsiDocTag.class, false) != null && 
+        PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset - 1, PsiJavaCodeReferenceElement.class, false) != null) {
+      return ThreeState.NO;
+    }
+    return super.shouldSkipAutopopup(contextElement, psiFile, offset);
   }
 }

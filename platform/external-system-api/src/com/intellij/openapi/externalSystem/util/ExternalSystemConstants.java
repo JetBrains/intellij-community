@@ -39,6 +39,8 @@ public class ExternalSystemConstants {
   @NonNls @NotNull public static final String TREE_CONTEXT_MENU_PLACE = "ExternalSystem.Tree.Context.Menu";
 
   @NotNull @NonNls public static final String USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX = ".system.in.process";
+  @NotNull @NonNls public static final String EXTERNAL_SYSTEM_REMOTE_COMMUNICATION_MANAGER_DEBUG_PORT
+    = "external.system.remote.communication.manager.debug.port";
 
   @NotNull public static final String DEBUG_RUNNER_ID = "ExternalSystemTaskDebugRunner";
   @NotNull public static final String RUNNER_ID       = "ExternalSystemTaskRunner";

@@ -51,6 +51,7 @@ public abstract class AbstractCommand<T> {
   public static final int VERSION = 501;
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
+  public static final String FUNC_IN_CONDITION = "**FUNC**";
 
 
   @NotNull private final RemoteDebugger myDebugger;
