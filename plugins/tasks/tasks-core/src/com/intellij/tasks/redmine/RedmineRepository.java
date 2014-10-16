@@ -232,7 +232,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   public String getPresentableName() {
     String name = super.getPresentableName();
     if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
-      name += "/projects/" + StringUtil.notNullize(myCurrentProject.getIdentifier(), myCurrentProject.getName());
+      name += "/projects/" + StringUtil.notNullize(myCurrentProject.getIdentifier(), String.valueOf(myCurrentProject.getId()));
     }
     return name;
   }
