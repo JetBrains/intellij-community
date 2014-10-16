@@ -19,7 +19,6 @@ public class PropertyImplEscaper extends LiteralTextEscaper<PropertyImpl> {
 
   @Override
   public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-    TextRange.assertProperRange(rangeInsideHost);
     String subText = rangeInsideHost.substring(myHost.getText());
     outSourceOffsets = new int[subText.length() + 1];
     int prefixLen = outChars.length();
