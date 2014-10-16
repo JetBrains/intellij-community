@@ -229,19 +229,9 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void setUp(final String testName) throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (myFixture == null) {
-            PyBaseDebuggerTask.super.setUp(testName);
-          }
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    if (myFixture == null) {
+      PyBaseDebuggerTask.super.setUp(testName);
+    }
   }
 
   @Override
@@ -280,11 +270,12 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
 
 
+    final ExecutionResult result = myExecutionResult;
     if (myExecutionResult != null) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
-          Disposer.dispose(myExecutionResult.getExecutionConsole());
+          Disposer.dispose(result.getExecutionConsole());
         }
       });
       myExecutionResult = null;
