@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugSession;
@@ -53,23 +54,34 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
-    String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
-    if (selectedText != null) {
-      selectedText = evaluator.formatTextForEvaluation(selectedText);
-    }
-    String text = selectedText;
-
-    if (text == null && editor != null) {
-      text = getExpressionText(evaluator, CommonDataKeys.PROJECT.getData(dataContext), editor);
+    XExpression expression = null;
+    if (editor != null) {
+      expression = evaluator.getEditorExpression(editor, CommonDataKeys.PSI_FILE.getData(dataContext));
     }
 
-    if (text == null) {
+    Language language = calcLanguage(stackFrame, dataContext);
+
+    if (expression != null && !Comparing.equal(language, expression.getLanguage())) { // may need to change language
+      expression = new XExpressionImpl(expression.getExpression(), language, expression.getCustomInfo(), expression.getMode());
+    }
+
+    if (expression == null) {
       XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
       if (value != null) {
-        text = value.getEvaluationExpression();
+        String text = value.getEvaluationExpression();
+        if (!StringUtil.isEmpty(text)) {
+          expression = new XExpressionImpl(text, language, null);
+        }
       }
     }
 
+    if (expression == null) {
+      expression = new XExpressionImpl("", language, null);
+    }
+    new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, expression, stackFrame == null ? null : stackFrame.getSourcePosition()).show();
+  }
+
+  private static Language calcLanguage(XStackFrame stackFrame, DataContext dataContext) {
     Language language = null;
     if (stackFrame != null) {
       XSourcePosition position = stackFrame.getSourcePosition();
@@ -83,8 +95,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
         language = XDebuggerEditorBase.getFileTypeLanguage(file.getFileType());
       }
     }
-    XExpression expression = new XExpressionImpl(StringUtil.notNullize(text), language, null);
-    new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, expression, stackFrame == null ? null : stackFrame.getSourcePosition()).show();
+    return language;
   }
 
   @Nullable
