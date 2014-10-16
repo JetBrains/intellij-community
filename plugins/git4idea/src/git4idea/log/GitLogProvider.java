@@ -338,6 +338,7 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   private Set<VcsRef> readBranches(@NotNull GitRepository repository) {
     VirtualFile root = repository.getRoot();
+    repository.update();
     Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
     Set<VcsRef> refs = new THashSet<VcsRef>(localBranches.size() + remoteBranches.size());
