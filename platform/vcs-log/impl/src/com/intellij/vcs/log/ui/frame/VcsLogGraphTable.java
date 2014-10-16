@@ -74,7 +74,9 @@ import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
 public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
 
-  private static final int ROOT_INDICATOR_WIDTH = 5;
+  private static final int ROOT_INDICATOR_COLORED_WIDTH = 8;
+  private static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
+  private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + ROOT_INDICATOR_COLORED_WIDTH;
   private static final int ROOT_NAME_MAX_WIDTH = 200;
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
@@ -209,7 +211,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     if (column == GraphTableModel.ROOT_COLUMN) {
       Object at = getValueAt(row, column);
       if (at instanceof VirtualFile) {
-        return "<html><b>" + ((VirtualFile)at).getPresentableUrl() + "</b><br/>Double-click to " + (myUI.isShowRootNames() ? "collapse" : "expand") + "</html>";
+        return "<html><b>" + ((VirtualFile)at).getPresentableUrl() + "</b><br/>Click to " + (myUI.isShowRootNames() ? "collapse" : "expand") + "</html>";
       }
     }
     return null;
@@ -351,16 +353,15 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         return;
       }
 
-      if (e.getClickCount() > 1) {
-        expandOrCollapseRoots(e);
-      } else if (e.getClickCount() == 1) {
+      if (e.getClickCount() == 1) {
+        if (expandOrCollapseRoots(e)) return;
         performAction(e, MyGraphMouseAction.Type.CLICK);
       }
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-      if (isAboveLink(e)) {
+      if (isAboveLink(e) || isAboveRoots(e)) {
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
       else {
@@ -395,6 +396,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     private boolean isAboveLink(MouseEvent e) {
       return myLinkListener.getTagAt(e) != null;
+    }
+
+    private boolean isAboveRoots(MouseEvent e) {
+      int column = convertColumnIndexToModel(columnAtPoint(e.getPoint()));
+      int row = rowAtPoint(e.getPoint());
+      return column == GraphTableModel.ROOT_COLUMN && (row >= 0 && row < getRowCount());
     }
 
     @Override
@@ -443,7 +450,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private static class RootCellRenderer extends JBLabel implements TableCellRenderer {
     @NotNull private final VcsLogUiImpl myUi;
     @NotNull private Color myColor = UIUtil.getTableBackground();
-    private boolean myHasBorder;
+    @NotNull private Color myBorderColor = UIUtil.getTableBackground();
+    private boolean isNarrow = true;
 
     RootCellRenderer(@NotNull VcsLogUiImpl ui) {
       super("", CENTER);
@@ -456,13 +464,14 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
       int width = getWidth();
 
-      if (myHasBorder) {
-        g.fillRect(0, 0, width - 1, HEIGHT_CELL);
-        UIUtil.drawLine((Graphics2D)g, width - 1, 0, width - 1, HEIGHT_CELL, null, myUi.getColorManager().getRootIndicatorBorder());
-      }
-      else {
+      if (isNarrow) {
+        g.fillRect(0, 0, width - ROOT_INDICATOR_WHITE_WIDTH, HEIGHT_CELL);
+        g.setColor(myBorderColor);
+        g.fillRect(width - ROOT_INDICATOR_WHITE_WIDTH, 0, ROOT_INDICATOR_WHITE_WIDTH, HEIGHT_CELL);
+      } else {
         g.fillRect(0, 0, width, HEIGHT_CELL);
       }
+
       super.paintComponent(g);
     }
 
@@ -488,28 +497,20 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         color = UIUtil.getTableBackground(isSelected);
       }
 
-      if (myUi.isShowRootNames()) {
-        // pale colors, honors selection, does not have border
-        if (isSelected) {
-          myColor = UIUtil.getTableBackground(isSelected);
-        }
-        else {
-          //we create JBColor later
-          //noinspection UseJBColor
-          Color transparentColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), 50);
-          myColor = new JBColor(transparentColor, transparentColor);
-        }
+      //we create JBColor later
+      //noinspection UseJBColor
+      Color transparentColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), 50);
+      myColor = new JBColor(transparentColor, transparentColor);
+      myBorderColor = UIUtil.getTableBackground(isSelected);
+      setForeground(UIUtil.getTableForeground(false));
 
-        setForeground(UIUtil.getTableForeground(isSelected));
+      if (myUi.isShowRootNames()) {
         setText(text);
-        myHasBorder = false;
+        isNarrow = false;
       }
       else {
-        // bright colors, does not know about the selection, has border
-        setForeground(UIUtil.getTableForeground(false));
-        myColor = color;
         setText("");
-        myHasBorder = true;
+        isNarrow = true;
       }
 
       return this;
