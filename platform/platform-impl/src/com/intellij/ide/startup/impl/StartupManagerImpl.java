@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,9 +110,10 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public void runStartupActivities() {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       @SuppressWarnings("SynchronizeOnThis")
       public void run() {
-        HeavyProcessLatch.INSTANCE.processStarted();
+        HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
         try {
           runActivities(myPreStartupActivities);
 
@@ -141,6 +142,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   public void runPostStartupActivitiesFromExtensions() {
     for (final StartupActivity extension : Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY)) {
       final Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           if (!myProject.isDisposed()) {
             extension.runActivity(myProject);
@@ -173,6 +175,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     runActivities(myDumbAwarePostStartupActivities);
     DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+      @Override
       public void run() {
         //noinspection SynchronizeOnThis
         synchronized (StartupManagerImpl.this) {
@@ -199,6 +202,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public void scheduleInitialVfsRefresh() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
 
@@ -318,6 +322,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     final Runnable runnable;
     if (DumbService.isDumbAware(action)) {
       runnable = new DumbAwareRunnable() {
+        @Override
         public void run() {
           action.run();
         }
@@ -325,6 +330,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
     else {
       runnable = new Runnable() {
+        @Override
         public void run() {
           action.run();
         }
@@ -335,6 +341,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       // in tests which simulate project opening, post-startup activities could have been run already.
       // Then we should act as if the project was initialized
       UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
         public void run() {
           if (!myProject.isDisposed()) {
             runnable.run();

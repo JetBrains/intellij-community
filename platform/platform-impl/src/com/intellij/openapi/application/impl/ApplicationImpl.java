@@ -502,7 +502,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       myIsFiringLoadingEvent = false;
     }
 
-    HeavyProcessLatch.INSTANCE.processStarted();
+    HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       store.load();
     }
