@@ -229,8 +229,12 @@ public class StorageData extends StorageDataBase {
     return newState;
   }
 
-  private static void prepareElement(@NotNull Element element) {
-    element.setName(COMPONENT);
+  private static void prepareElement(@NotNull Element state) {
+    if (state.getParent() != null) {
+      LOG.warn("State element must not have parent " + JDOMUtil.writeElement(state));
+      state.detach();
+    }
+    state.setName(COMPONENT);
   }
 
   @Override
