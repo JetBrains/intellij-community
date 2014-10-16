@@ -34,10 +34,23 @@ class JarLoader extends Loader {
   private final boolean myCanLockJar;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
 
-  JarLoader(URL url, boolean canLockJar, int index) throws IOException {
+  JarLoader(URL url, boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
     super(new URL(URLUtil.JAR_PROTOCOL, "", -1, url + "!/"), index);
     myURL = url;
     myCanLockJar = canLockJar;
+
+    ZipFile zipFile = acquireZipFile();
+    try {
+      if (preloadJarContents) {
+        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL());
+        if (loader != null) {
+          myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+        }
+      }
+    }
+    finally {
+      releaseZipFile(zipFile);
+    }
   }
 
   private ZipFile acquireZipFile() throws IOException {
@@ -53,38 +66,6 @@ class JarLoader extends Loader {
     else if (zipFile != null) {
       zipFile.close();
     }
-  }
-
-  boolean checkArchive(boolean preloadContents) {
-    ZipFile zipFile;
-
-    try {
-      zipFile = acquireZipFile();
-    }
-    catch (Exception e) {
-      Logger.getInstance(JarLoader.class).debug("url: " + myURL, e);
-      return false;
-    }
-
-    try {
-      try {
-        if (preloadContents) {
-          JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL());
-          if (loader != null) {
-            myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
-          }
-        }
-      }
-      finally {
-        releaseZipFile(zipFile);
-      }
-    }
-    catch (Exception e) {
-      Logger.getInstance(JarLoader.class).error(e);
-      return false;
-    }
-
-    return true;
   }
 
   @Override
