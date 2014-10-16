@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.XmlConfigurationMerger;
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.containers.WeakStringInterner;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -67,6 +67,8 @@ public class StorageData extends StorageDataBase {
       pathMacroSubstitutor.expandPaths(rootElement);
     }
 
+    WeakStringInterner interner = intern ? new WeakStringInterner() : null;
+
     for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
       Element element = iterator.next();
       String name = getComponentNameIfValid(element);
@@ -75,8 +77,8 @@ public class StorageData extends StorageDataBase {
       }
 
       iterator.remove();
-      if (intern) {
-        IdeaPluginDescriptorImpl.internJDOMElement(element);
+      if (interner != null) {
+        JDOMUtil.internElement(element, interner);
       }
 
       Object serverElement = myStates.get(name);
@@ -227,8 +229,12 @@ public class StorageData extends StorageDataBase {
     return newState;
   }
 
-  private static void prepareElement(@NotNull Element element) {
-    element.setName(COMPONENT);
+  private static void prepareElement(@NotNull Element state) {
+    if (state.getParent() != null) {
+      LOG.warn("State element must not have parent " + JDOMUtil.writeElement(state));
+      state.detach();
+    }
+    state.setName(COMPONENT);
   }
 
   @Override
