@@ -21,12 +21,12 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.PythonFileType;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 
@@ -42,6 +42,7 @@ public class ArrayTableForm {
   private JPanel myFormatPanel;
   private JPanel myMainPanel;
   public JBTable myTable;
+  private JBTable myBusyTable;
   private Project myProject;
 
 
@@ -56,44 +57,43 @@ public class ArrayTableForm {
     myTable = new JBTableWithRows();
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     myTable.setRowSelectionAllowed(false);
-    myTable.getTableHeader().setReorderingAllowed(false);
     myTable.setTableHeader(new CustomTableHeader(myTable));
     myTable.getTableHeader().setDefaultRenderer(new ColumnHeaderRenderer());
+    myTable.getTableHeader().setReorderingAllowed(false);
 
-    myScrollPane = new JBScrollPane();
-    JTable rowTable = new RowNumberTable(myTable) {
-      @Override
-      protected void paintComponent(@NotNull Graphics g) {
-        getEmptyText().setText("");
-        super.paintComponent(g);
-      }
-    };
+    myScrollPane = PagingTableModel.LazyViewport.createLazyScrollPaneFor(myTable);
+    JTable rowTable = new RowHeaderTable(myTable);
     myScrollPane.setRowHeaderView(rowTable);
     myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
                            rowTable.getTableHeader());
 
     mySliceTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE);
 
-    ((JBTableWithRows)myTable).setRowNumberTable((RowNumberTable)rowTable);
+    ((JBTableWithRows)myTable).setRowHeaderTable((RowHeaderTable)rowTable);
     ((JBTableWithRows)myTable).setSliceField(mySliceTextField);
 
     myFormatTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE);
+
+    myBusyTable = new JBTable(new DefaultTableModel());
+    myBusyTable.getEmptyText().setText("");
+    myBusyTable.setBackground(myBusyTable.getTableHeader().getBackground());
+    myBusyTable.setBorder(BorderFactory.createEmptyBorder());
   }
 
   public static class JBTableWithRows extends JBTable {
-    private RowNumberTable myRowNumberTable;
+    private RowHeaderTable myRowHeaderTable;
     private EditorTextField mySliceField;
 
     public boolean getScrollableTracksViewportWidth() {
       return getPreferredSize().width < getParent().getWidth();
     }
 
-    public RowNumberTable getRowNumberTable() {
-      return myRowNumberTable;
+    public RowHeaderTable getRowHeaderTable() {
+      return myRowHeaderTable;
     }
 
-    public void setRowNumberTable(RowNumberTable rowNumberTable) {
-      myRowNumberTable = rowNumberTable;
+    public void setRowHeaderTable(RowHeaderTable rowHeaderTable) {
+      myRowHeaderTable = rowHeaderTable;
     }
 
     public EditorTextField getSliceField() {
@@ -124,7 +124,6 @@ public class ArrayTableForm {
   public void setDefaultStatus() {
     if (myTable != null) {
       myTable.getEmptyText().setText(DATA_LOADING_IN_PROCESS);
-      myTable.setPaintBusy(true);
     }
   }
 
@@ -138,6 +137,10 @@ public class ArrayTableForm {
 
   public JBScrollPane getScrollPane() {
     return myScrollPane;
+  }
+
+  public void setBusy(boolean busy) {
+    myBusyTable.setPaintBusy(busy);
   }
 
   public static class CustomTableHeader extends JTableHeader {

@@ -15,46 +15,40 @@
  */
 package com.jetbrains.python.actions.view.array;
 
-/**
- * @author amarch
- */
-
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Queue;
 
-import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.util.LinkedList;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-/**
- * @author Brian Cole
- * @author amarch
- */
 public abstract class PagingTableModel extends AbstractTableModel {
   private static final int CHUNK_COL_SIZE = 10;
   private static final int CHUNK_ROW_SIZE = 10;
   private static final int DEFAULT_MAX_CACHED_SIZE = 100;
   public static final String EMPTY_CELL_VALUE = "...";
 
-  // wait for debugger response and then run again
-  private static final int RESPONSE_TIMEOUT = 10000;
-
   private HashMap<String, Object[][]> myCachedData = new HashMap<String, Object[][]>();
   private SortedSet<ComparableArrayChunk> myPendingSet = new TreeSet<ComparableArrayChunk>();
   private Queue<String> cachedChunkKeys = new Queue<String>(DEFAULT_MAX_CACHED_SIZE + 1);
 
+  private LinkedList<Thread> myThreadList = new LinkedList<Thread>();
+  private Thread evaluatedThread;
+
   private boolean myRendered;
   private int myRows = 0;
   private int myColumns = 0;
+  private NumpyArrayValueProvider myProvider;
 
-  public PagingTableModel(int rows, int columns, boolean rendered) {
+  public PagingTableModel(int rows, int columns, boolean rendered, NumpyArrayValueProvider provider) {
     myRows = rows;
     myColumns = columns;
     myRendered = rendered;
+    myProvider = provider;
   }
 
   @Override
@@ -75,7 +69,7 @@ public abstract class PagingTableModel extends AbstractTableModel {
 
     String key = formMapKey(row, col);
     if (!myCachedData.containsKey(key)) {
-      schedule(row, col);
+      scheduleChunkAt(row, col);
       return EMPTY_CELL_VALUE;
     }
 
@@ -95,7 +89,7 @@ public abstract class PagingTableModel extends AbstractTableModel {
     return colOffset - (colOffset % CHUNK_COL_SIZE);
   }
 
-  private void schedule(int rOffset, int cOffset) {
+  private void scheduleChunkAt(int rOffset, int cOffset) {
     if (isPending(rOffset, cOffset)) {
       return;
     }
@@ -106,7 +100,7 @@ public abstract class PagingTableModel extends AbstractTableModel {
     int startCOffset = getPageColStart(cOffset);
     int cLength = Math.min(CHUNK_COL_SIZE, myColumns - startCOffset);
 
-    load(startROffset, rLength, startCOffset, cLength);
+    scheduleLoadData(startROffset, rLength, startCOffset, cLength);
   }
 
   private boolean isPending(int rOffset, int cOffset) {
@@ -131,45 +125,34 @@ public abstract class PagingTableModel extends AbstractTableModel {
 
   protected abstract Runnable getDataEvaluator(final ComparableArrayChunk chunk);
 
-  private void load(final int rOffset, final int rLength, final int cOffset, final int cLength) {
+  public void runNextThread() {
+    if (evaluatedThread != null) {
+      myThreadList.remove(evaluatedThread);
+    }
+
+    if (myThreadList.size() > 0) {
+      evaluatedThread = myThreadList.get(0);
+      evaluatedThread.start();
+      myProvider.setBusy(true);
+    }
+    else {
+      myProvider.completeCurrentLoad();
+    }
+  }
+
+  private void scheduleLoadData(final int rOffset, final int rLength, final int cOffset, final int cLength) {
     final ComparableArrayChunk segment = createChunk(rLength, cLength, rOffset, cOffset);
     myPendingSet.add(segment);
 
-    // set up code to run in another thread
     Runnable evaluator = getDataEvaluator(segment);
     final Thread evalThread = new Thread(evaluator);
-    evalThread.start();
-
-    final long until = System.currentTimeMillis() + RESPONSE_TIMEOUT;
-
-    // delete segment if wait too long
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myPendingSet) {
-          do {
-            try {
-              myPendingSet.wait(1000);
-            }
-            catch (InterruptedException ignore) {
-            }
-          }
-          while (evalThread.isAlive() && System.currentTimeMillis() < until);
-          myPendingSet.remove(segment);
-          if (evalThread.isAlive()) {
-            evalThread.interrupt();
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                fireTableCellUpdated(segment.rOffset, segment.cOffset);
-              }
-            });
-          }
-        }
-      }
-    }).start();
+    myThreadList.add(evalThread);
+    if (myThreadList.size() == 1) {
+      runNextThread();
+    }
   }
 
-  protected void setData(int rOffset, int cOffset, Object[][] newData) {
+  protected void addDataInCache(int rOffset, int cOffset, Object[][] newData) {
     String key = formMapKey(rOffset, cOffset);
     myCachedData.put(key, newData);
     cachedChunkKeys.addLast(key);
@@ -206,6 +189,9 @@ public abstract class PagingTableModel extends AbstractTableModel {
     myCachedData = new HashMap<String, Object[][]>();
     myPendingSet = new TreeSet<ComparableArrayChunk>();
     cachedChunkKeys = new Queue<String>(DEFAULT_MAX_CACHED_SIZE + 1);
+    evaluatedThread.interrupt();
+    evaluatedThread = null;
+    myThreadList = new LinkedList<Thread>();
   }
 
   public static class LazyViewport extends JBViewport {
@@ -220,11 +206,11 @@ public abstract class PagingTableModel extends AbstractTableModel {
     public void setViewPosition(Point p) {
       Component parent = getParent();
       if (parent instanceof JBScrollPane &&
-          ((JBScrollPane)parent).getVerticalScrollBar().getValueIsAdjusting()) {
+          (((JBScrollPane)parent).getVerticalScrollBar().getValueIsAdjusting() ||
+           ((JBScrollPane)parent).getHorizontalScrollBar().getValueIsAdjusting())) {
         return;
       }
       super.setViewPosition(p);
     }
   }
 }
-

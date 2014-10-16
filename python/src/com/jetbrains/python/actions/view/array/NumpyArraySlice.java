@@ -88,9 +88,7 @@ class NumpyArraySlice extends ComparableArrayChunk {
 
         @Override
         public void errorOccurred(@NotNull String errorMessage) {
-          if (!errorMessage.contains("Timeout waiting for response on")) {
-            myValueProvider.showError(errorMessage);
-          }
+          myValueProvider.showError(errorMessage);
         }
       };
 
@@ -128,7 +126,12 @@ class NumpyArraySlice extends ComparableArrayChunk {
 
           if (row != -1 && myData[row][0] == null) {
             for (int i = 0; i < node.getChildCount() - 1; i++) {
-              myData[row][i] = ((XValueNodeImpl)node.getChildAt(i + 1)).getRawValue();
+              String rawValue = ((XValueNodeImpl)node.getChildAt(i + 1)).getRawValue();
+              if (myValueProvider.isNumeric()) {
+                //remove str quotes in case of numeric
+                rawValue = rawValue.substring(1, rawValue.length() - 1);
+              }
+              myData[row][i] = rawValue;
             }
             myFilledRows += 1;
             if (myFilledRows == rows) {
@@ -171,14 +174,6 @@ class NumpyArraySlice extends ComparableArrayChunk {
 
   public Object[][] getData() {
     return myDataEvaluator.getData();
-  }
-
-  public void applyFormat(@NotNull String newFormat, Runnable callback) {
-    if (newFormat.equals(myFormat)) {
-      return;
-    }
-    myFormat = newFormat;
-    myDataEvaluator.evaluateData(callback);
   }
 
   public String getFormat() {
