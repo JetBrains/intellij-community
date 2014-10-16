@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Ilya.Kazakevich
  */
-@SuppressWarnings("PackageVisibleField")
-  // This is an utility class to be used only in package. Fields are open to type less code
 class TypeEvalConstraints {
   final boolean myAllowDataFlow;
   final boolean myAllowStubToAST;
@@ -27,7 +25,6 @@ class TypeEvalConstraints {
     myAllowStubToAST = allowStubToAST;
     myOrigin = origin;
   }
-
 
   @Override
   public boolean equals(Object o) {
