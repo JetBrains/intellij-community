@@ -828,21 +828,16 @@ class PyDB:
                     else:
                         #Note: this else should be removed after PyCharm migrates to setting
                         #breakpoints by id (and ideally also provides func_name).
-                        type, file, line, condition, expression = text.split('\t', 4)
+                        type, file, line, func_name, condition, expression = text.split('\t', 5)
                         # If we don't have an id given for each breakpoint, consider
                         # the id to be the line.
                         breakpoint_id = line = int(line)
-                        if condition.startswith('**FUNC**'):
-                            func_name, condition = condition.split("@_@TAB_CHAR@_@", 1)
 
-                            # We must restore new lines and tabs as done in
-                            # AbstractDebugTarget.breakpointAdded
-                            condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n').\
-                                replace("@_@TAB_CHAR@_@", '\t').strip()
+                        condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n'). \
+                            replace("@_@TAB_CHAR@_@", '\t').strip()
 
-                            func_name = func_name[8:]
-                        else:
-                            func_name = 'None'  # Match anything if not specified.
+                        expression = expression.replace("@_@NEW_LINE_CHAR@_@", '\n'). \
+                            replace("@_@TAB_CHAR@_@", '\t').strip()
 
                     if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                         file = file.encode(file_system_encoding)
