@@ -1541,14 +1541,16 @@ public class Mappings {
         final FieldRepr field = f.first;
 
         debug("Field: ", field.name);
-
-        if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK) {
+        
+        // only if the field was a compile-time constant
+        if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK && d.hadValue()) { 
           final int changedModifiers = d.addedModifiers() | d.removedModifiers();
           final boolean harmful = (changedModifiers & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)) > 0;
           final boolean accessChanged = (changedModifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) > 0;
-          final boolean valueChanged = (d.base() & Difference.VALUE) > 0 && d.hadValue();
+          final boolean becameLessAccessible = accessChanged && !d.weakedAccess();
+          final boolean valueChanged = (d.base() & Difference.VALUE) > 0;
 
-          if (harmful || valueChanged || (accessChanged && !d.weakedAccess())) {
+          if (harmful || valueChanged || becameLessAccessible) {
             debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
             if (myConstantSearch != null) {
               myDelayedWorks.addConstantWork(it.name, field, false, accessChanged);
