@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.project.DumbService;
@@ -149,6 +150,7 @@ public class FoldingUpdate {
     final Project project = file.getProject();
     Document document = editor.getDocument();
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).isUncommited(document));
+    final FoldingModel foldingModel = editor.getFoldingModel();
 
     final long timeStamp = document.getModificationStamp();
     Object lastTimeStamp = editor.getUserData(LAST_UPDATE_INJECTED_STAMP_KEY);
@@ -182,14 +184,22 @@ public class FoldingUpdate {
     return new Runnable() {
       @Override
       public void run() {
+        final ArrayList<Runnable> updateOperations = new ArrayList<Runnable>(injectedEditors.size());
         for (int i = 0; i < injectedEditors.size(); i++) {
           EditorWindow injectedEditor = injectedEditors.get(i);
           PsiFile injectedFile = injectedFiles.get(i);
           if (!injectedEditor.getDocument().isValid()) continue;
           FoldingMap map = maps.get(i);
-          UpdateFoldRegionsOperation op = new UpdateFoldRegionsOperation(project, injectedEditor, injectedFile, map, applyDefaultState, true);
-          injectedEditor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(op);
+          updateOperations.add(new UpdateFoldRegionsOperation(project, injectedEditor, injectedFile, map, applyDefaultState, true));
         }
+        foldingModel.runBatchFoldingOperation(new Runnable() {
+          @Override
+          public void run() {
+            for (Runnable operation : updateOperations) {
+              operation.run();
+            }
+          }
+        });
 
         editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, timeStamp);
       }
