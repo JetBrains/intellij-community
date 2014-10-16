@@ -27,4 +27,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface ExpectContract {
   String value() default "";
+  boolean pure() default false;
 }

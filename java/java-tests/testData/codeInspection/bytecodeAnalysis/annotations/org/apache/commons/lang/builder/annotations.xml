@@ -8,6 +8,11 @@
   <item name="org.apache.commons.lang.builder.CompareToBuilder int reflectionCompare(java.lang.Object, java.lang.Object, java.util.Collection) 2">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.builder.CompareToBuilder int toComparison()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(boolean, boolean)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -127,6 +132,11 @@
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder void reflectionAppend(java.lang.Object, java.lang.Object, java.lang.Class, org.apache.commons.lang.builder.CompareToBuilder, boolean, java.lang.String[]) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.builder.EqualsBuilder boolean isEquals()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder boolean reflectionEquals(java.lang.Object, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -320,6 +330,11 @@
   <item name="org.apache.commons.lang.builder.HashCodeBuilder int reflectionHashCode(java.lang.Object, java.util.Collection) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.builder.HashCodeBuilder int toHashCode()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder java.lang.Integer toIdentityHashCodeInteger(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -434,6 +449,21 @@
   <item name="org.apache.commons.lang.builder.ReflectionToStringBuilder boolean accept(java.lang.reflect.Field) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.builder.ReflectionToStringBuilder boolean isAppendStatics()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ReflectionToStringBuilder boolean isAppendTransients()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ReflectionToStringBuilder java.lang.Class getUpToClass()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.builder.ReflectionToStringBuilder java.lang.Object getValue(java.lang.reflect.Field) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -455,6 +485,11 @@
   <item name="org.apache.commons.lang.builder.ReflectionToStringBuilder java.lang.String toStringExclude(java.lang.Object, java.util.Collection) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.builder.ReflectionToStringBuilder java.lang.String[] getExcludeFieldNames()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.builder.ReflectionToStringBuilder java.lang.String[] toNoNullStringArray(java.lang.Object[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -472,6 +507,111 @@
   </item>
   <item name="org.apache.commons.lang.builder.ReflectionToStringBuilder void appendFieldsIn(java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle boolean isArrayContentDetail()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle boolean isDefaultFullDetail()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle boolean isFieldSeparatorAtEnd()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle boolean isFieldSeparatorAtStart()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle boolean isShortClassName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle boolean isUseClassName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle boolean isUseFieldNames()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle boolean isUseIdentityHashCode()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle boolean isUseShortClassName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getArrayEnd()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getArraySeparator()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getArrayStart()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getContentEnd()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getContentStart()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getFieldNameValueSeparator()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getFieldSeparator()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getNullText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getSizeEndText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getSizeStartText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getSummaryObjectEndText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.StandardToStringStyle java.lang.String getSummaryObjectStartText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.builder.StandardToStringStyle void setArrayEnd(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -518,6 +658,11 @@
   <item name="org.apache.commons.lang.builder.ToStringBuilder ToStringBuilder(java.lang.Object, org.apache.commons.lang.builder.ToStringStyle, java.lang.StringBuffer) 2">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.builder.ToStringBuilder java.lang.Object getObject()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.builder.ToStringBuilder java.lang.String reflectionToString(java.lang.Object, org.apache.commons.lang.builder.ToStringStyle) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -529,6 +674,11 @@
   </item>
   <item name="org.apache.commons.lang.builder.ToStringBuilder java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringBuilder java.lang.StringBuffer getStringBuffer()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.builder.ToStringBuilder org.apache.commons.lang.builder.ToStringBuilder append(boolean)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -686,17 +836,137 @@
   <item name="org.apache.commons.lang.builder.ToStringBuilder org.apache.commons.lang.builder.ToStringBuilder appendToString(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.builder.ToStringBuilder org.apache.commons.lang.builder.ToStringStyle getDefaultStyle()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringBuilder org.apache.commons.lang.builder.ToStringStyle getStyle()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.builder.ToStringBuilder void setDefaultStyle(org.apache.commons.lang.builder.ToStringStyle) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle boolean isArrayContentDetail()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle boolean isDefaultFullDetail()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle boolean isFieldSeparatorAtEnd()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle boolean isFieldSeparatorAtStart()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.builder.ToStringStyle boolean isFullDetail(java.lang.Boolean) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle boolean isFullDetail(java.lang.Boolean)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle boolean isShortClassName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle boolean isUseClassName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle boolean isUseFieldNames()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle boolean isUseIdentityHashCode()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle boolean isUseShortClassName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getArrayEnd()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getArraySeparator()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getArrayStart()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getContentEnd()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getContentStart()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getFieldNameValueSeparator()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getFieldSeparator()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getNullText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getShortClassName(java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getShortClassName(java.lang.Class)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getSizeEndText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getSizeStartText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getSummaryObjectEndText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getSummaryObjectStartText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.builder.ToStringStyle void append(java.lang.StringBuffer, java.lang.String, boolean[], java.lang.Boolean) 2">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -988,5 +1258,30 @@
   </item>
   <item name="org.apache.commons.lang.builder.ToStringStyle.1 java.lang.Object initialValue()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle.DefaultToStringStyle java.lang.Object readResolve()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle.MultiLineToStringStyle java.lang.Object readResolve()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle.NoFieldNameToStringStyle java.lang.Object readResolve()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle.ShortPrefixToStringStyle java.lang.Object readResolve()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.builder.ToStringStyle.SimpleToStringStyle java.lang.Object readResolve()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
 </root>

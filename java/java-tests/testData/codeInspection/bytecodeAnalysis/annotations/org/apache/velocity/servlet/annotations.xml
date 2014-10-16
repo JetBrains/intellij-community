@@ -41,6 +41,11 @@
   <item name="org.apache.velocity.servlet.VelocityServlet void requestCleanup(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, org.apache.velocity.context.Context) 2">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.velocity.servlet.VelocityServlet void requestCleanup(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, org.apache.velocity.context.Context)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.servlet.VelocityServlet void setContentType(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

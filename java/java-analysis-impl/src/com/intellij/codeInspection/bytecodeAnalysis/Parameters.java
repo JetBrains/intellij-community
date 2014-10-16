@@ -750,7 +750,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
 class NotNullInterpreter extends NullityInterpreter {
 
   NotNullInterpreter() {
-    super(false, In.NOT_NULL);
+    super(false, In.NOT_NULL_MASK);
   }
 
   @Override
@@ -762,7 +762,7 @@ class NotNullInterpreter extends NullityInterpreter {
 class NullableInterpreter extends NullityInterpreter {
 
   NullableInterpreter() {
-    super(true, In.NULLABLE);
+    super(true, In.NULLABLE_MASK);
   }
 
   @Override
