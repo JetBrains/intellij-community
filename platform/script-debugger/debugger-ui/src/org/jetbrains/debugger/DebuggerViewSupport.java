@@ -44,10 +44,10 @@ public interface DebuggerViewSupport {
    */
   boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context);
 
-  void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable);
+  void computeSourcePosition(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable);
 
   @NotNull
-  ThreeState computeInlineDebuggerData(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XInlineDebuggerDataCallback callback);
+  ThreeState computeInlineDebuggerData(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XInlineDebuggerDataCallback callback);
 
   // return null if you don't need to add additional properties
   @Nullable
