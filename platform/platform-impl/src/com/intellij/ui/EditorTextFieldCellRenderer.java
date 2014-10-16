@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
@@ -32,7 +31,10 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -72,11 +74,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     MyPanel panel = getEditorPanel(table);
     EditorEx editor = panel.myEditor;
-    Font font = table.getFont();
-    Font editorFont = editor.getColorsScheme().getFont(EditorFontType.PLAIN);
-    if (!Comparing.equal(font, editorFont)) {
-      editor.getColorsScheme().setEditorFontSize(font.getSize());
-    }
+    updateFonts(editor.getColorsScheme(), getColorScheme(), table.getFont().getSize());
     String text = getText(((EditorImpl)editor).getFontMetrics(Font.PLAIN), table, value, row, column);
     TextAttributes textAttributes = getTextAttributes(value, isSelected, row, column);
     panel.setText(text, textAttributes);
@@ -90,6 +88,13 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     panel.setBorder(null); // prevents double border painting when ExtendedItemRendererComponentWrapper is used
 
     return panel;
+  }
+
+  private static void updateFonts(EditorColorsScheme target, EditorColorsScheme source, int fontSize) {
+    target.setEditorFontName(source.getEditorFontName());
+    target.setEditorFontSize(fontSize);
+    target.setLineSpacing(source.getLineSpacing());
+    target.setFontPreferences(source.getFontPreferences());
   }
 
   public static Color getCellBackgroundColor(EditorColorsScheme colorsScheme, JTable table, boolean isSelected, int row) {
