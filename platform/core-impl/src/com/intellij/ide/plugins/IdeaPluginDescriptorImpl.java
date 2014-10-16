@@ -102,23 +102,31 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myPath = pluginPath;
   }
 
+  /**
+   * @deprecated
+   * use {@link com.intellij.util.containers.StringInterner#intern(Object)} directly instead
+   */
   @NotNull
   public static String intern(@NotNull String s) {
     return ourInterner.intern(s);
   }
 
+  /**
+   * @deprecated 
+   * use {@link com.intellij.openapi.util.JDOMUtil#internElement(org.jdom.Element, com.intellij.util.containers.StringInterner)}
+   */
   public static void internJDOMElement(@NotNull Element rootElement) {
     JDOMUtil.internElement(rootElement, ourInterner);
   }
 
   @Nullable
-  private static List<Element> copyElements(final Element[] elements) {
+  private static List<Element> copyElements(final Element[] elements, final WeakStringInterner interner) {
     if (elements != null) {
       List<Element> result = new ArrayList<Element>();
       for (Element extensionsRoot : elements) {
         for (final Object o : extensionsRoot.getChildren()) {
           Element element = (Element)o;
-          internJDOMElement(element);
+          JDOMUtil.internElement(element, interner);
           result.add(element);
         }
       }
@@ -159,7 +167,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude) throws InvalidDataException, FileNotFoundException {
     document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude);
     Element rootElement = document.getRootElement();
-    internJDOMElement(rootElement);
+    JDOMUtil.internElement(rootElement, new WeakStringInterner());
     readExternal(document.getRootElement());
   }
 
@@ -259,7 +267,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
     if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
-    List<Element> extensions = copyElements(pluginBean.extensions);
+    WeakStringInterner interner = new WeakStringInterner();
+    List<Element> extensions = copyElements(pluginBean.extensions, interner);
     if (extensions != null) {
       myExtensions = new MultiMap<String, Element>();
       for (Element extension : extensions) {
@@ -267,7 +276,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    List<Element> extensionPoints = copyElements(pluginBean.extensionPoints);
+    List<Element> extensionPoints = copyElements(pluginBean.extensionPoints, interner);
     if (extensionPoints != null) {
       myExtensionsPoints = new MultiMap<String, Element>();
       for (Element extensionPoint : extensionPoints) {
@@ -275,7 +284,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    myActionsElements = copyElements(pluginBean.actions);
+    myActionsElements = copyElements(pluginBean.actions, interner);
 
     if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
       myModules = pluginBean.modules;
