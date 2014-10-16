@@ -590,7 +590,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   @NotNull
   PeekableIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
-    TextRange.assertProperRange(rangeInterval);
 
     l.readLock().lock();
 

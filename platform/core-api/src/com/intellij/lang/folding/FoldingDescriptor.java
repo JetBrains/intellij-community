@@ -95,7 +95,6 @@ public class FoldingDescriptor {
                            boolean neverExpands) {
     assert range.getLength() > 0 : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
     myElement = node;
-    TextRange.assertProperRange(range);
     myRange = range;
     myGroup = group;
     myDependencies = dependencies;
