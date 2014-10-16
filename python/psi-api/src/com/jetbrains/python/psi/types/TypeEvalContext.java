@@ -30,6 +30,7 @@ import java.util.*;
  * @author yole
  */
 public class TypeEvalContext {
+
   /**
    * Contexts are cached here to prevent useless recreations (and cache loss)
    */
@@ -45,7 +46,6 @@ public class TypeEvalContext {
 
   @NotNull
   private final TypeEvalConstraints myConstraints;
-
 
   private List<String> myTrace;
   private String myTraceIndent = "";
@@ -71,8 +71,8 @@ public class TypeEvalContext {
 
   @Override
   public String toString() {
-    return String
-      .format("TypeEvalContext(%b, %b, %s)", myConstraints.myAllowDataFlow, myConstraints.myAllowStubToAST, myConstraints.myOrigin);
+    return String.format("TypeEvalContext(%b, %b, %s)", myConstraints.myAllowDataFlow, myConstraints.myAllowStubToAST,
+                         myConstraints.myOrigin);
   }
 
   public boolean allowDataFlow(PsiElement element) {
