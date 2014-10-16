@@ -13,37 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.xml;
+package com.intellij.codeInsight.generation;
 
 import com.intellij.lang.Commenter;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
 
 /**
- * @author max
+ * @author Dmitry Avdeev
  */
-public class XmlCommenter implements Commenter {
+public interface EscapingCommenter extends Commenter {
 
-  @Override
-  public String getLineCommentPrefix() {
-    return null;
-  }
+  void escape(Document document, TextRange range);
 
-  @Override
-  public String getBlockCommentPrefix() {
-    return "<!--";
-  }
-
-  @Override
-  public String getBlockCommentSuffix() {
-    return "-->";
-  }
-
-  @Override
-  public String getCommentedBlockCommentPrefix() {
-    return "&lt;!&ndash;";
-  }
-
-  @Override
-  public String getCommentedBlockCommentSuffix() {
-    return "&ndash;&gt;";
-  }
+  void unescape(Document document, TextRange range);
 }

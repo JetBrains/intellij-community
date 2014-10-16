@@ -387,7 +387,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
   }
 
   public void commentRange(int startOffset, int endOffset, String commentPrefix, String commentSuffix, Commenter commenter) {
-    CharSequence chars = myDocument.getCharsSequence();
+    final CharSequence chars = myDocument.getCharsSequence();
     LogicalPosition caretPosition = myCaret.getLogicalPosition();
 
     if (startOffset == 0 || chars.charAt(startOffset - 1) == '\n') {
@@ -416,7 +416,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
         nestingSuffix.append(commentSuffix.startsWith("\n") ? commentSuffix.substring(1) : commentSuffix);
         nestingSuffix.append("\n");
         TextRange range =
-          insertNestedComments(chars, startOffset, endOffset, nestingPrefix.toString(), nestingSuffix.toString(), commenter);
+          insertNestedComments(startOffset, endOffset, nestingPrefix.toString(), nestingSuffix.toString(), commenter);
         myCaret.setSelection(range.getStartOffset(), range.getEndOffset());
         LogicalPosition pos = new LogicalPosition(caretPosition.line + 1, caretPosition.column);
         myCaret.moveToLogicalPosition(pos);
@@ -424,7 +424,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       }
     }
 
-    TextRange range = insertNestedComments(chars, startOffset, endOffset, commentPrefix, commentSuffix, commenter);
+    TextRange range = insertNestedComments(startOffset, endOffset, commentPrefix, commentSuffix, commenter);
     myCaret.setSelection(range.getStartOffset(), range.getEndOffset());
     LogicalPosition pos = new LogicalPosition(caretPosition.line, caretPosition.column + commentPrefix.length());
     myCaret.moveToLogicalPosition(pos);
@@ -449,8 +449,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     }
   }
 
-  private TextRange insertNestedComments(CharSequence chars,
-                                         int startOffset,
+  private TextRange insertNestedComments(int startOffset,
                                          int endOffset,
                                          String commentPrefix,
                                          String commentSuffix,
@@ -471,6 +470,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     IntArrayList nestedCommentSuffixes = new IntArrayList();
     String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
     String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
+    CharSequence chars = myDocument.getCharsSequence();
     for (int i = startOffset; i < endOffset; ++i) {
       if (CharArrayUtil.regionMatches(chars, i, normalizedPrefix)) {
         nestedCommentPrefixes.add(i);
@@ -523,7 +523,20 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       shift += commentPrefix.length();
     }
 
-    return new TextRange(startOffset, endOffset + shift);
+    TextRange range = new TextRange(startOffset, endOffset + shift);
+    return processDocument(range, commenter, true);
+  }
+
+  private TextRange processDocument(TextRange range, Commenter commenter, boolean escape) {
+    if (!(commenter instanceof EscapingCommenter)) return range;
+    RangeMarker marker = myDocument.createRangeMarker(range);
+    if (escape) {
+      ((EscapingCommenter)commenter).escape(myDocument, range);
+    }
+    else {
+      ((EscapingCommenter)commenter).unescape(myDocument, range);
+    }
+    return TextRange.create(marker.getStartOffset(), marker.getEndOffset());
   }
 
   private static int getNearest(String text, String pattern, int position) {
@@ -641,6 +654,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       return;
     }
 
+    RangeMarker marker = myDocument.createRangeMarker(range);
     String text = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     int startOffset = range.getStartOffset();
     //boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);
@@ -670,5 +684,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
                               commenter);
       }
     }
+
+    processDocument(TextRange.create(marker.getStartOffset(), marker.getEndOffset()), commenter, false);
   }
 }
