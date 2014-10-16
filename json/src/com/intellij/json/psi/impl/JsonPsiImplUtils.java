@@ -90,7 +90,7 @@ public class JsonPsiImplUtils {
       @Nullable
       @Override
       public Icon getIcon(boolean unused) {
-        return AllIcons.Json.Object;
+        return AllIcons.Json.Array;
       }
     };
   }
@@ -113,7 +113,7 @@ public class JsonPsiImplUtils {
       @Nullable
       @Override
       public Icon getIcon(boolean unused) {
-        return AllIcons.Json.Array;
+        return AllIcons.Json.Object;
       }
     };
   }
