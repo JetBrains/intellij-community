@@ -54,7 +54,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
 
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
                                                int rowIndex, int vColIndex) {
-    myEditor = new MyTableEditor(myProject, new PyDebuggerEditorsProvider(), "arrayTableView", null,
+    myEditor = new MyTableEditor(myProject, new PyDebuggerEditorsProvider(), "numpy.array.table.view", null,
                                  new XExpressionImpl(value.toString(), PythonLanguage.getInstance(), "", EvaluationMode.CODE_FRAGMENT));
     lastValue = value;
     JComponent editorComponent = myEditor.getComponent();
@@ -100,7 +100,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
       }
     }.execute();
     myEditor.getComponent().repaint();
-    myEditor.getComponent().requestFocus();
+    stopCellEditing();
   }
 
   public class MyTableEditor extends XDebuggerEditorBase {
