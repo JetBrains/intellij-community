@@ -68,6 +68,7 @@ import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
@@ -749,6 +750,18 @@ public class PyUtil {
       currentElement = resolve;
     }
     return currentElement;
+  }
+
+  @NotNull
+  public static List<PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
+    if (element instanceof PyReferenceOwner) {
+      final PsiPolyVariantReference ref = ((PyReferenceOwner)element).getReference(resolveContext);
+      return filterTopPriorityResults(ref.multiResolve(false));
+    }
+    else {
+      final PsiReference reference = element.getReference();
+      return reference != null ? Collections.singletonList(reference.resolve()) : Collections.<PsiElement>emptyList();
+    }
   }
 
   @NotNull
