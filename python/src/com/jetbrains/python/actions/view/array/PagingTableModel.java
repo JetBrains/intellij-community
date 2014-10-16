@@ -53,6 +53,9 @@ public abstract class PagingTableModel extends AbstractTableModel {
 
   @Override
   public boolean isCellEditable(int row, int column) {
+    if (getValueAt(row, column).equals(EMPTY_CELL_VALUE)){
+      return false;
+    }
     return true;
   }
 

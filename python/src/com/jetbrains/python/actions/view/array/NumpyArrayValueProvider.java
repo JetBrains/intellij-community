@@ -63,8 +63,9 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   private final static int COLUMNS_IN_DEFAULT_VIEW = 1000;
   private final static int ROWS_IN_DEFAULT_VIEW = 1000;
 
-  private final static int HUGE_ARRAY_SIZE = 1024 * 1024;
+  private final static int HUGE_ARRAY_SIZE = 1000 * 1000;
   private final static String LOAD_SMALLER_SLICE = "Full slice too large and would slow down debugger, shrunk to smaller slice.";
+  private final static String DISABLE_COLOR_FOR_HUGE_ARRAY = "Disable color because array too big and calculating min and max would slow down debugging.";
 
   public NumpyArrayValueProvider(@NotNull XValueNode node, @NotNull PyViewArrayAction.MyDialog dialog, @NotNull Project project) {
     super(node);
@@ -133,30 +134,6 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     //add table renderer
     myTableCellRenderer = new ArrayTableCellRenderer(Double.MIN_VALUE, Double.MIN_VALUE, myDtypeKind);
 
-    myComponent.getScrollPane().getHorizontalScrollBar().addFocusListener(new FocusListener() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        clearErrorMessage();
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-
-      }
-    });
-
-    myComponent.getScrollPane().getVerticalScrollBar().addFocusListener(new FocusListener() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        clearErrorMessage();
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-
-      }
-    });
-
     myComponent.getScrollPane().getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
@@ -164,16 +141,16 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       }
     });
 
+    myComponent.getScrollPane().getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+      @Override
+      public void adjustmentValueChanged(AdjustmentEvent e) {
+        clearErrorMessage();
+      }
+    });
 
     //add color checkbox listener
     if (!isNumeric()) {
-      DebuggerUIUtil.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myComponent.getColoredCheckbox().setSelected(false);
-          myComponent.getColoredCheckbox().setEnabled(false);
-        }
-      });
+      disableColor();
     }
     else {
       myComponent.getColoredCheckbox().addItemListener(new ItemListener() {
@@ -181,7 +158,9 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
         public void itemStateChanged(ItemEvent e) {
           if (e.getSource() == myComponent.getColoredCheckbox()) {
 
-            if (myTable.getCellRenderer(0, 0) instanceof ArrayTableCellRenderer) {
+            if (myTable.getRowCount() > 0 &&
+                myTable.getColumnCount() > 0 &&
+                myTable.getCellRenderer(0, 0) instanceof ArrayTableCellRenderer) {
               ArrayTableCellRenderer renderer = (ArrayTableCellRenderer)myTable.getCellRenderer(0, 0);
               if (myComponent.getColoredCheckbox().isSelected()) {
                 renderer.setColored(true);
@@ -216,6 +195,19 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
 
     //add format actions
     initFormatTextFieldAction();
+  }
+
+  public void disableColor() {
+    myTableCellRenderer.setMin(Double.MAX_VALUE);
+    myTableCellRenderer.setMax(Double.MIN_VALUE);
+    myTableCellRenderer.setColored(false);
+    DebuggerUIUtil.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        myComponent.getColoredCheckbox().setSelected(false);
+        myComponent.getColoredCheckbox().setEnabled(false);
+      }
+    });
   }
 
   private void initSliceTextFieldAction() {
@@ -327,9 +319,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     };
 
     if (getMaxRow(myShape) * getMaxColumn(myShape) > HUGE_ARRAY_SIZE) {
-      //ndarray too big, calculating min and max would slow down debugging
-      myTableCellRenderer.setMin(1.);
-      myTableCellRenderer.setMax(1.);
+      disableColor();
       returnToMain.run();
     }
 
@@ -421,7 +411,8 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     //todo: see special case with 1D arrays arr[i, :] - row,
     //but arr[:, i] - column with equal shape and ndim
     //http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
-    String[] dimensions = shape.substring(1, shape.length() - 1).trim().split(",");
+
+    String[] dimensions = shape.replace(",)", ", )").substring(1, shape.length() - 1).trim().split(",");
     if (dimensions.length > 1) {
       int[] result = new int[dimensions.length];
       for (int i = 0; i < dimensions.length; i++) {
@@ -576,7 +567,11 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   public void completeCurrentLoad() {
     setBusy(false);
     if (myPagingModel.getColumnCount() < getMaxColumn(myShape) || myPagingModel.getRowCount() < getMaxRow(myShape)) {
-      showSliceInfoHint(LOAD_SMALLER_SLICE);
+      String hintMessage = LOAD_SMALLER_SLICE;
+      if (isNumeric()) {
+        hintMessage += "\n" + DISABLE_COLOR_FOR_HUGE_ARRAY;
+      }
+      showInfoHint(hintMessage);
     }
   }
 
@@ -585,7 +580,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     setBusy(false);
   }
 
-  public void showSliceInfoHint(final String message) {
+  public void showInfoHint(final String message) {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
