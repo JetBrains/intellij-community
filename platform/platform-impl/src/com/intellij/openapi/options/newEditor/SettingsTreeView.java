@@ -67,9 +67,10 @@ import java.util.List;
  */
 final class SettingsTreeView extends JComponent implements Disposable, OptionsEditorColleague {
   private static final String NODE_ICON = "settings.tree.view.icon";
-  private static final Color NORMAL_NODE = new JBColor(Gray._60, Gray._140);
   private static final Color WRONG_CONTENT = JBColor.RED;
   private static final Color MODIFIED_CONTENT = JBColor.BLUE;
+  public static final Color FOREGROUND = new JBColor(0x1A1A1A, 0xBBBBBB);
+  public static final Color BACKGROUND = new JBColor(0xE6EBF0, 0x3E434C);
 
   final SimpleTree myTree;
   final FilteringTreeBuilder myBuilder;
@@ -91,7 +92,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myRoot = new MyRoot(groups);
     myTree = new MyTree();
     myTree.putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, Boolean.TRUE);
-    myTree.setBackground(UIUtil.getSidePanelColor());
+    myTree.setBackground(BACKGROUND);
     myTree.getInputMap().clear();
     TreeUtil.installActions(myTree);
 
@@ -107,9 +108,9 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
     myScroller = ScrollPaneFactory.createScrollPane(myTree, true);
     myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    myScroller.setBackground(UIUtil.getSidePanelColor());
-    myScroller.getViewport().setBackground(UIUtil.getSidePanelColor());
-    myScroller.getVerticalScrollBar().setBackground(UIUtil.getSidePanelColor());
+    myScroller.setBackground(BACKGROUND);
+    myScroller.getViewport().setBackground(BACKGROUND);
+    myScroller.getVerticalScrollBar().setBackground(BACKGROUND);
     add(myScroller);
 
     myTree.addComponentListener(new ComponentAdapter() {
@@ -269,7 +270,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     }
     if (mySeparator == null) {
       mySeparator = new JLabel();
-      mySeparator.setForeground(NORMAL_NODE);
+      mySeparator.setForeground(FOREGROUND);
       mySeparator.setFont(UIUtil.getLabelFont());
       mySeparator.setFont(getFont().deriveFont(Font.BOLD));
     }
@@ -493,7 +494,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         }
       }
       // update font color for modified configurables
-      myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : NORMAL_NODE);
+      myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : FOREGROUND);
       if (!selected && node != null) {
         Configurable configurable = node.myConfigurable;
         if (configurable != null) {
