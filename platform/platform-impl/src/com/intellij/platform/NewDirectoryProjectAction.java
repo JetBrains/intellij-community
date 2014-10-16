@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenedCallback;
@@ -55,9 +56,9 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
 
   @Nullable
   protected Project generateProject(Project project, NewDirectoryProjectDialog dlg) {
-    final File location = new File(dlg.getNewProjectLocation());
+    final File location = new File(FileUtil.toSystemDependentName(dlg.getNewProjectLocation()));
     if (!location.exists() && !location.mkdirs()) {
-      String message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location);
+      String message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location.getAbsolutePath());
       Messages.showErrorDialog(project, message, ActionsBundle.message("action.NewDirectoryProject.title"));
       return null;
     }
@@ -74,7 +75,7 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
     baseDir.refresh(false, true);
 
     if (baseDir.getChildren().length > 0) {
-      String message = ActionsBundle.message("action.NewDirectoryProject.not.empty", location);
+      String message = ActionsBundle.message("action.NewDirectoryProject.not.empty", location.getAbsolutePath());
       int rc = Messages.showYesNoDialog(project, message, ActionsBundle.message("action.NewDirectoryProject.title"), Messages.getQuestionIcon());
       if (rc == Messages.YES) {
         return PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
