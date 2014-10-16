@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.actions.view.array;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.RangeMarker;
@@ -54,7 +55,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   private String myDtypeKind;
   private int[] myShape;
   private ArrayTableCellRenderer myTableCellRenderer;
-  private PagingTableModel pagingModel;
+  private PagingTableModel myPagingModel;
 
   private final static int COLUMNS_IN_DEFAULT_SLICE = 40;
   private final static int ROWS_IN_DEFAULT_SLICE = 40;
@@ -63,6 +64,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   private final static int ROWS_IN_DEFAULT_VIEW = 1000;
 
   private final static int HUGE_ARRAY_SIZE = 1024 * 1024;
+  private final static String LOAD_SMALLER_SLICE = "Full slice too large and would slow down debugger, shrunk to smaller slice.";
 
   public NumpyArrayValueProvider(@NotNull XValueNode node, @NotNull PyViewArrayAction.MyDialog dialog, @NotNull Project project) {
     super(node);
@@ -75,13 +77,13 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
 
   private PagingTableModel getPagingModel(int[] shape, boolean rendered) {
     assert shape != null;
-    int columns = Math.min(getMaxColumn(shape), COLUMNS_IN_DEFAULT_VIEW);
+    final int columns = Math.min(getMaxColumn(shape), COLUMNS_IN_DEFAULT_VIEW);
     if (columns == 0) {
       showError("Slice with zero axis shape.");
     }
-    int rows = Math.min(getMaxRow(shape), ROWS_IN_DEFAULT_VIEW * COLUMNS_IN_DEFAULT_VIEW / columns);
+    int rows = Math.min(getMaxRow(shape), ROWS_IN_DEFAULT_VIEW);
 
-    return new PagingTableModel(rows, columns, rendered) {
+    return new PagingTableModel(rows, columns, rendered, this) {
 
       private String myFormat = getFormat();
       private String myBaseSlice = getSliceText();
@@ -107,15 +109,15 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
                 @Override
                 public void run() {
                   myLastPresentation = arraySlice;
-
+                  getPendingSet().remove(chunk);
+                  notifyNextThread();
+                  fireTableCellUpdated(chunk.rOffset, chunk.cOffset);
                   SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
-                      setData(arraySlice.rOffset, arraySlice.cOffset, arraySlice.getData());
-                      getPendingSet().remove(chunk);
+                      addDataInCache(arraySlice.rOffset, arraySlice.cOffset, arraySlice.getData());
 
                       myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
                       myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
-                      myTable.setPaintBusy(false);
                     }
                   });
                 }
@@ -341,6 +343,12 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     for (int index = 0; index < defaultSlice.size() - 2; index++) {
       mySlicePresentation += "[" + defaultSlice.get(index).getFirst() + "]";
     }
+
+    // fill current slice
+    final int columns = Math.min(getMaxColumn(myShape), COLUMNS_IN_DEFAULT_VIEW);
+    int rows = Math.min(getMaxRow(myShape), ROWS_IN_DEFAULT_VIEW);
+    mySlicePresentation += "[0:" + rows + ", 0:" + columns + "]";
+
     return mySlicePresentation;
   }
 
@@ -410,6 +418,9 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   }
 
   private int[] parseShape(String shape) throws InvalidAttributeValueException {
+    //todo: see special case with 1D arrays arr[i, :] - row,
+    //but arr[:, i] - column with equal shape and ndim
+    //http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
     String[] dimensions = shape.substring(1, shape.length() - 1).trim().split(",");
     if (dimensions.length > 1) {
       int[] result = new int[dimensions.length];
@@ -444,26 +455,21 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       return;
     }
 
-    pagingModel = getPagingModel(myShape, rendered);
+    myPagingModel = getPagingModel(myShape, rendered);
 
     DebuggerUIUtil.invokeLater(new Runnable() {
       @Override
       public void run() {
-        myTable.setPaintBusy(true);
-        myTable.setModel(pagingModel);
+        myTable.setModel(myPagingModel);
         if (!inPlace) {
           myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
+          RowHeaderTable rowTable = ((ArrayTableForm.JBTableWithRows)myTable).getRowHeaderTable();
+          rowTable.setRowShift(0);
         }
-        RowNumberTable rowTable = ((ArrayTableForm.JBTableWithRows)myTable).getRowNumberTable();
-        rowTable.setRowShift(0);
         ((PagingTableModel)myTable.getModel()).fireTableDataChanged();
         ((PagingTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
       }
     });
-  }
-
-  private void cancelPreviousFill() {
-    // todo: close Threads and init
   }
 
   private TableCellEditor getArrayTableCellEditor() {
@@ -555,14 +561,6 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     };
   }
 
-  private static String[] range(int min, int max) {
-    String[] array = new String[max - min + 1];
-    for (int i = min; i <= max; i++) {
-      array[i] = Integer.toString(i);
-    }
-    return array;
-  }
-
   public void setDtypeKind(String dtype) {
     this.myDtypeKind = dtype;
   }
@@ -575,9 +573,25 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     this.myShape = shape;
   }
 
+  public void completeCurrentLoad() {
+    setBusy(false);
+    if (myPagingModel.getColumnCount() < getMaxColumn(myShape) || myPagingModel.getRowCount() < getMaxRow(myShape)) {
+      showSliceInfoHint(LOAD_SMALLER_SLICE);
+    }
+  }
+
   public void showError(String message) {
     myDialog.setError(message);
-    myTable.setPaintBusy(false);
+    setBusy(false);
+  }
+
+  public void showSliceInfoHint(final String message) {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        HintManager.getInstance().showInformationHint(myComponent.getSliceTextField().getEditor(), message);
+      }
+    });
   }
 
   public String getDefaultFormat() {
@@ -672,23 +686,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   }
 
   public String evalTypeFunc(String format) {
-    String typeCommand = "(\'" + format + "\' % l)";
-    if (myDtypeKind.equals("f")) {
-      typeCommand = "float" + typeCommand;
-    }
-    else if (myDtypeKind.equals("i") || myDtypeKind.equals("u")) {
-      typeCommand = "int" + typeCommand;
-    }
-    else if (myDtypeKind.equals("b")) {
-      typeCommand = "l";
-    }
-    else if (myDtypeKind.equals("c")) {
-      typeCommand = "complex" + typeCommand;
-    }
-    else {
-      typeCommand = "str" + typeCommand;
-    }
-    return typeCommand;
+    return "\'" + format + "\' % l";
   }
 
   public int getMaxRow(int[] shape) {
@@ -703,5 +701,18 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       return shape[shape.length - 1];
     }
     return 0;
+  }
+
+  public void notifyNextThread() {
+    myPagingModel.runNextThread();
+  }
+
+  public void setBusy(final boolean busy) {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        myComponent.setBusy(busy);
+      }
+    });
   }
 }

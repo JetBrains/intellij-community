@@ -83,7 +83,7 @@ class ArrayTableComponent extends JPanel {
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-    JTable rowTable = new RowNumberTable(myTable);
+    JTable rowTable = new RowHeaderTable(myTable);
     myScrollPane.setRowHeaderView(rowTable);
     myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
                            rowTable.getTableHeader());
