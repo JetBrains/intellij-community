@@ -91,7 +91,7 @@ import java.util.List;
     @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml"),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_PLATFORM)
   },
-  storageChooser = LastStorageChooserForWrite.class
+  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
 )
 public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
