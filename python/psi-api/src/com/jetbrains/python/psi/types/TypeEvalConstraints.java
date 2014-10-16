@@ -50,4 +50,9 @@ class TypeEvalConstraints {
     result = 31 * result + (myOrigin != null ? myOrigin.hashCode() : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return String.format("TypeEvalConstraints(%b, %b, %s)", myAllowDataFlow, myAllowStubToAST, myOrigin);
+  }
 }
