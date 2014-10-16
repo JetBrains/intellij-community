@@ -23,6 +23,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -88,6 +89,8 @@ public class PyCharmInitialConfigurator {
         }
       });
     }
+
+    Registry.get("ide.scratch.enabled").setValue(false); //disable scratch till it is ready
   }
 
   private static void showInitialConfigurationDialog() {
