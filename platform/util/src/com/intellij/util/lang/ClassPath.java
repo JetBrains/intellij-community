@@ -175,9 +175,9 @@ public class ClassPath {
         loader = new FileLoader(url, index);
       }
       else if (file.isFile()) {
-        loader = new JarLoader(url, myCanLockJars, index);
-        if (myPreloadJarContents) {
-          ((JarLoader)loader).preloadClasses();
+        JarLoader jarLoader = new JarLoader(url, myCanLockJars, index);
+        if (jarLoader.checkArchive(myPreloadJarContents)) {
+          loader = jarLoader;
         }
       }
     }
