@@ -23,11 +23,13 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.GETTER
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.OVERRIDDEN
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PROTECTED
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.SETTER
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
 
 class ArrangementSettingsRulesPriorityTest extends AbstractRearrangerTest {
-  
+
   def getRulesSortedByPriority(List<StdArrangementMatchRule> rules) {
     def sectionRules = getSectionRules(rules)
     List<ArrangementGroupingRule> groupingRules = Collections.emptyList();
@@ -44,5 +46,24 @@ class ArrangementSettingsRulesPriorityTest extends AbstractRearrangerTest {
     def rules = getRulesSortedByPriority([rule(INTERFACE), publicMethod, method, getter, rule(FIELD), setter, rule(FIELD, PUBLIC)])
     assert rules.indexOf(getter) < rules.indexOf(publicMethod) && rules.indexOf(getter) < rules.indexOf(method)
     assert rules.indexOf(setter) < rules.indexOf(publicMethod) && rules.indexOf(setter) < rules.indexOf(method)
+  }
+
+  void "test overriden rule comes before"() {
+    def publicMethod = rule(PUBLIC, METHOD)
+    def protectedMethod = rule(PROTECTED, METHOD)
+    def method = rule(METHOD)
+    def getter = rule(GETTER)
+    def setter = rule(SETTER)
+    def overridenMethod = rule(OVERRIDDEN)
+
+    def rules = [rule(INTERFACE), publicMethod, method, rule(FIELD), rule(FIELD, PUBLIC), overridenMethod, protectedMethod, getter, setter]
+    def sortedRules = getRulesSortedByPriority(rules)
+    def overridenRuleIndex = sortedRules.indexOf(overridenMethod)
+
+    assert overridenRuleIndex < sortedRules.indexOf(publicMethod)
+    assert overridenRuleIndex < sortedRules.indexOf(method)
+    assert overridenRuleIndex < sortedRules.indexOf(protectedMethod)
+    assert overridenRuleIndex < sortedRules.indexOf(getter)
+    assert overridenRuleIndex < sortedRules.indexOf(setter)
   }
 }
