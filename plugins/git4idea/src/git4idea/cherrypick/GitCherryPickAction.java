@@ -177,7 +177,10 @@ public class GitCherryPickAction extends DumbAwareAction {
         return false;
       }
       GitRepository repository = myPlatformFacade.getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
-      assert repository != null;
+      if (repository == null) {
+        //it may be a non-git repository
+        return false;
+      }
       GitLocalBranch currentBranch = repository.getCurrentBranch();
       Collection<String> containingBranches = log.getContainingBranches(commit.getId());
       if (currentBranch != null &&  containingBranches != null && containingBranches.contains(currentBranch.getName())) {
