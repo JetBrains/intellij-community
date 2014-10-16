@@ -206,7 +206,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @Override
   @NotNull
   public TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange) {
-    TextRange.assertProperRange(injectedTextRange);
     PsiFile file = injectedContext.getContainingFile();
     if (file == null) return injectedTextRange;
     Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
@@ -469,7 +468,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
         @Override
         public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost, @NonNls @Nullable String prefix, @NonNls @Nullable String suffix) {
-          TextRange.assertProperRange(rangeInsideHost);
           injectionPlacesRegistrar
             .startInjecting(language)
             .addPlace(prefix, suffix, host, rangeInsideHost)

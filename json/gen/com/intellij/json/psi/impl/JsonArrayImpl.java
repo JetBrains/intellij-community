@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
+import com.intellij.navigation.ItemPresentation;
 
 public class JsonArrayImpl extends JsonContainerImpl implements JsonArray {
 
@@ -25,6 +26,11 @@ public class JsonArrayImpl extends JsonContainerImpl implements JsonArray {
   @NotNull
   public List<JsonValue> getValueList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonValue.class);
+  }
+
+  @Nullable
+  public ItemPresentation getPresentation() {
+    return JsonPsiImplUtils.getPresentation(this);
   }
 
 }

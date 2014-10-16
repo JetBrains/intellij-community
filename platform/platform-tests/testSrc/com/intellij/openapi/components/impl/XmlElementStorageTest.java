@@ -56,7 +56,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
 
   public void testGetStateSucceeded() throws Exception {
     MyXmlElementStorage storage =
-        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))), myParentDisposable);
+        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))));
     Element state = storage.getState(this, "test", Element.class, null);
     assertNotNull(state);
     assertEquals("component", state.getName());
@@ -64,18 +64,18 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
   }
 
   public void testGetStateNotSucceeded() throws Exception {
-    MyXmlElementStorage storage = new MyXmlElementStorage(tag("root"), myParentDisposable);
+    MyXmlElementStorage storage = new MyXmlElementStorage(tag("root"));
     Element state = storage.getState(this, "test", Element.class, null);
     assertNull(state);
   }
 
   public void testSetStateOverridesOldState() throws Exception {
     MyXmlElementStorage storage =
-        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))), myParentDisposable);
+        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))));
     Element newState = tag("component", attr("name", "test"), tag("bar"));
     StateStorage.ExternalizationSession externalizationSession = storage.startExternalization();
     externalizationSession.setState(this, "test", newState, null);
-    storage.startSave(externalizationSession).save();
+    externalizationSession.createSaveSession().save();
     assertNotNull(storage.mySavedElement);
     assertNotNull(storage.mySavedElement.getChild("component").getChild("bar"));
     assertNull(storage.mySavedElement.getChild("component").getChild("foo"));
@@ -86,7 +86,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     private final Element myElement;
     private Element mySavedElement;
 
-    public MyXmlElementStorage(Element element, final Disposable parentDisposable) throws StateStorageException {
+    public MyXmlElementStorage(Element element) throws StateStorageException {
       super("", RoamingType.PER_USER, new MyPathMacroManager(), "root", null, ComponentVersionProvider.EMPTY);
       myElement = element;
     }

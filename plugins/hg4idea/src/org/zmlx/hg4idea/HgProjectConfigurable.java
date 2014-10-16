@@ -23,6 +23,8 @@ import javax.swing.*;
 
 public class HgProjectConfigurable implements SearchableConfigurable {
 
+  public static final String DISPLAY_NAME = HgVcsMessages.message("hg4idea.mercurial");
+
   private final HgConfigurationProjectPanel myPanel;
   @NotNull private final Project myProject;
 
@@ -33,7 +35,7 @@ public class HgProjectConfigurable implements SearchableConfigurable {
 
   @Nls
   public String getDisplayName() {
-    return HgVcsMessages.message("hg4idea.mercurial");
+    return DISPLAY_NAME;
   }
 
   public String getHelpTopic() {

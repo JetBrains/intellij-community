@@ -200,7 +200,8 @@ public class IfHelper {
             lstOperands.add(statexpr.getCondition());
             lstOperands.add(ifchild.getHeadexprent().getCondition());
 
-            statexpr.setCondition(new FunctionExprent(FunctionExprent.FUNCTION_CADD, lstOperands));
+            statexpr.setCondition(new FunctionExprent(FunctionExprent.FUNCTION_CADD, lstOperands, null));
+            statexpr.addBytecodeOffsets(ifchild.getHeadexprent().bytecode);
 
             return true;
           }
@@ -252,8 +253,9 @@ public class IfHelper {
             List<Exprent> lstOperands = new ArrayList<Exprent>();
             lstOperands.add(statexpr.getCondition());
             lstOperands.add(new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT,
-                                                Arrays.asList(new Exprent[]{ifchild.getHeadexprent().getCondition()})));
-            statexpr.setCondition(new FunctionExprent(FunctionExprent.FUNCTION_CADD, lstOperands));
+                                                Arrays.asList(ifchild.getHeadexprent().getCondition()), null));
+            statexpr.setCondition(new FunctionExprent(FunctionExprent.FUNCTION_CADD, lstOperands, null));
+            statexpr.addBytecodeOffsets(ifchild.getHeadexprent().bytecode);
 
             return true;
           }
@@ -309,13 +311,13 @@ public class IfHelper {
 
             if (path == 2) {
               lstOperands.set(0, new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT,
-                                                     Arrays.asList(new Exprent[]{lstOperands.get(0)})));
+                                                     Arrays.asList(lstOperands.get(0)), null));
             }
 
             lstOperands.add(statexpr.getCondition());
 
             statexpr
-              .setCondition(new FunctionExprent(path == 1 ? FunctionExprent.FUNCTION_COR : FunctionExprent.FUNCTION_CADD, lstOperands));
+              .setCondition(new FunctionExprent(path == 1 ? FunctionExprent.FUNCTION_COR : FunctionExprent.FUNCTION_CADD, lstOperands, null));
 
             if (secondif.getFirst().getExprents().isEmpty() &&
                 !firstif.getFirst().getExprents().isEmpty()) {
@@ -359,7 +361,7 @@ public class IfHelper {
           // negate the if condition
           IfExprent statexpr = firstif.getHeadexprent();
           statexpr
-            .setCondition(new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT, Arrays.asList(new Exprent[]{statexpr.getCondition()})));
+            .setCondition(new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT, Arrays.asList(statexpr.getCondition()), null));
 
           return true;
         }
@@ -554,7 +556,7 @@ public class IfHelper {
 
       // negate the if condition
       IfExprent statexpr = ifstat.getHeadexprent();
-      statexpr.setCondition(new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT, Arrays.asList(new Exprent[]{statexpr.getCondition()})));
+      statexpr.setCondition(new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT, Arrays.asList(statexpr.getCondition()), null));
 
       if (noelsestat) {
         StatEdge ifedge = ifstat.getIfEdge();

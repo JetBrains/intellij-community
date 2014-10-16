@@ -48,6 +48,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.settings.GitPushSettings;
 import git4idea.update.GitUpdateProcess;
 import git4idea.update.GitUpdateResult;
@@ -79,6 +80,7 @@ public class GitPushOperation {
   private final GitVcsSettings mySettings;
   private final GitPushSettings myPushSettings;
   private final GitPlatformFacade myPlatformFacade;
+  private final GitRepositoryManager myRepositoryManager;
 
   public GitPushOperation(@NotNull Project project,
                           @NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
@@ -93,6 +95,7 @@ public class GitPushOperation {
     mySettings = GitVcsSettings.getInstance(myProject);
     myPushSettings = GitPushSettings.getInstance(myProject);
     myPlatformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
+    myRepositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
 
     Map<GitRepository, GitRevisionNumber> currentHeads = ContainerUtil.newHashMap();
     for (GitRepository repository : pushSpecs.keySet()) {
@@ -156,7 +159,7 @@ public class GitPushOperation {
             beforePushLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before push");
           }
           Collection<GitRepository> rootsToUpdate = updateSettings.shouldUpdateAllRoots() ?
-                                                    myPushSpecs.keySet() :
+                                                    myRepositoryManager.getRepositories() :
                                                     result.rejected.keySet();
           GitUpdateResult updateResult = update(rootsToUpdate, updateSettings.getUpdateMethod());
           for (GitRepository repository : rootsToUpdate) {

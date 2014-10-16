@@ -287,7 +287,7 @@ public class ClassesProcessor {
         mapper.addTotalOffset(total_offset_lines);
 
         buffer.append(lineSeparator);
-        mapper.dumpMapping(buffer);
+        mapper.dumpMapping(buffer, true);
       }
     }
     finally {
@@ -347,30 +347,19 @@ public class ClassesProcessor {
     public static final int CLASS_LAMBDA = 8;
 
     public int type;
-
     public int access;
-
     public String simpleName;
-
     public StructClass classStruct;
-
     public ClassWrapper wrapper;
-
     public String enclosingMethod;
-
     public InvocationExprent superInvocation;
-
-    public HashMap<String, VarVersionPaar> mapFieldsToVars = new HashMap<String, VarVersionPaar>();
-
+    public Map<String, VarVersionPaar> mapFieldsToVars = new HashMap<String, VarVersionPaar>();
     public VarType anonymousClassType;
-
     public List<ClassNode> nested = new ArrayList<ClassNode>();
-
     public Set<String> enclosingClasses = new HashSet<String>();
-
     public ClassNode parent;
-
-    public LambdaInformation lambda_information;
+    public LambdaInformation lambdaInformation;
+    public boolean namelessConstructorStub = false;
 
     public ClassNode(String content_class_name,
                      String content_method_name,
@@ -383,19 +372,19 @@ public class ClassesProcessor {
       this.type = CLASS_LAMBDA;
       this.classStruct = classStruct; // 'parent' class containing the static function
 
-      lambda_information = new LambdaInformation();
+      lambdaInformation = new LambdaInformation();
 
-      lambda_information.class_name = lambda_class_name;
-      lambda_information.method_name = lambda_method_name;
-      lambda_information.method_descriptor = lambda_method_descriptor;
+      lambdaInformation.class_name = lambda_class_name;
+      lambdaInformation.method_name = lambda_method_name;
+      lambdaInformation.method_descriptor = lambda_method_descriptor;
 
-      lambda_information.content_class_name = content_class_name;
-      lambda_information.content_method_name = content_method_name;
-      lambda_information.content_method_descriptor = content_method_descriptor;
-      lambda_information.content_method_invocation_type = content_method_invocation_type;
+      lambdaInformation.content_class_name = content_class_name;
+      lambdaInformation.content_method_name = content_method_name;
+      lambdaInformation.content_method_descriptor = content_method_descriptor;
+      lambdaInformation.content_method_invocation_type = content_method_invocation_type;
 
-      lambda_information.content_method_key =
-        InterpreterUtil.makeUniqueKey(lambda_information.content_method_name, lambda_information.content_method_descriptor);
+      lambdaInformation.content_method_key =
+        InterpreterUtil.makeUniqueKey(lambdaInformation.content_method_name, lambdaInformation.content_method_descriptor);
 
       anonymousClassType = new VarType(lambda_class_name, true);
 
@@ -405,9 +394,9 @@ public class ClassesProcessor {
         is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
       }
 
-      lambda_information.is_method_reference = is_method_reference;
-      lambda_information.is_content_method_static =
-        (lambda_information.content_method_invocation_type == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic); // FIXME: redundant?
+      lambdaInformation.is_method_reference = is_method_reference;
+      lambdaInformation.is_content_method_static =
+        (lambdaInformation.content_method_invocation_type == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic); // FIXME: redundant?
     }
 
     public ClassNode(int type, StructClass classStruct) {
@@ -435,7 +424,6 @@ public class ClassesProcessor {
       public String content_method_name;
       public String content_method_descriptor;
       public int content_method_invocation_type; // values from CONSTANT_MethodHandle_REF_*
-
       public String content_method_key;
 
       public boolean is_method_reference;

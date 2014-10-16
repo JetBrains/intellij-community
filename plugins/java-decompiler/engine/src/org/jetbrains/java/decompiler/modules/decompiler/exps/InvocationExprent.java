@@ -80,7 +80,7 @@ public class InvocationExprent extends Exprent {
   public InvocationExprent() {
   }
 
-  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamic_invokation_type) {
+  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamic_invokation_type, Set<Integer> bytecode_offsets) {
 
     name = cn.elementname;
     classname = cn.classname;
@@ -134,6 +134,8 @@ public class InvocationExprent extends Exprent {
     else {
       instance = stack.pop();
     }
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
   private InvocationExprent(InvocationExprent expr) {
@@ -152,6 +154,7 @@ public class InvocationExprent extends Exprent {
     for (int i = 0; i < lstParameters.size(); i++) {
       lstParameters.set(i, lstParameters.get(i).copy());
     }
+    bytecode.addAll(expr.bytecode);
   }
 
 
@@ -184,6 +187,7 @@ public class InvocationExprent extends Exprent {
   }
 
 
+  @Override
   public Exprent copy() {
     return new InvocationExprent(this);
   }

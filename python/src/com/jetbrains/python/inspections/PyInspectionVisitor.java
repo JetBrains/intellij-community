@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -45,7 +46,8 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     synchronized (INSPECTION_TYPE_EVAL_CONTEXT) {
       context = session.getUserData(INSPECTION_TYPE_EVAL_CONTEXT);
       if (context == null) {
-        context = TypeEvalContext.codeAnalysis(session.getFile());
+        PsiFile file = session.getFile();
+        context = TypeEvalContext.codeAnalysis(file.getProject(), file);
         session.putUserData(INSPECTION_TYPE_EVAL_CONTEXT, context);
       }
     }

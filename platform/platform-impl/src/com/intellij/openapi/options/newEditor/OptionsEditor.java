@@ -146,7 +146,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
     };
     if (Registry.is("ide.new.settings.dialog")) {
-      mySearch.setBackground(UIUtil.getSidePanelColor());
+      mySearch.setBackground(SettingsTreeView.BACKGROUND);
       mySearch.setBorder(new EmptyBorder(5, 10, 2, 10));
     }
 
@@ -947,7 +947,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       final MouseEvent me = (MouseEvent)event;
       if (SwingUtilities.isDescendingFrom(me.getComponent(), SwingUtilities.getWindowAncestor(myContentWrapper)) || isPopupOverEditor(me.getComponent())) {
         queueModificationCheck();
-        myFilter.setHoldingFilter(false);
       }
     }
     else if (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED) {

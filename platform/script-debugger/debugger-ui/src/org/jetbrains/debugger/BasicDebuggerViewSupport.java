@@ -71,12 +71,12 @@ public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilt
   }
 
   @Override
-  public void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable) {
+  public void computeSourcePosition(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable) {
   }
 
   @NotNull
   @Override
-  public ThreeState computeInlineDebuggerData(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XInlineDebuggerDataCallback callback) {
+  public ThreeState computeInlineDebuggerData(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XInlineDebuggerDataCallback callback) {
     return ThreeState.UNSURE;
   }
 

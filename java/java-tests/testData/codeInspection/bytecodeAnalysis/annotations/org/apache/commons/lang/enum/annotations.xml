@@ -5,8 +5,18 @@
   <item name="org.apache.commons.lang.enum.Enum boolean equals(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.enum.Enum int hashCode()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.enum.Enum java.lang.Object readResolve()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.enum.Enum java.lang.String getName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.enum.Enum java.lang.String getNameInOtherClassLoader(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -32,6 +42,11 @@
   <item name="org.apache.commons.lang.enum.Enum org.apache.commons.lang.enum.Enum.Entry getEntry(java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.enum.EnumUtils EnumUtils()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.enum.EnumUtils java.util.Iterator iterator(java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -55,6 +70,16 @@
   </item>
   <item name="org.apache.commons.lang.enum.ValuedEnum int compareTo(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enum.ValuedEnum int compareTo(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.enum.ValuedEnum int getValue()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.enum.ValuedEnum org.apache.commons.lang.enum.Enum getEnum(java.lang.Class, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

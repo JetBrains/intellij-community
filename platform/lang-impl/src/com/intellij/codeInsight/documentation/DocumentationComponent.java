@@ -336,20 +336,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, actions, true);
 
-    myControlPanel = new JPanel();
-    myControlPanel.setLayout(new BorderLayout());
+    myControlPanel = new JPanel(new BorderLayout(5, 5));
     myControlPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
-    JPanel dummyPanel = new JPanel();
 
     myElementLabel = new JLabel();
-
-    dummyPanel.setLayout(new BorderLayout());
-    dummyPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-
-    dummyPanel.add(myElementLabel, BorderLayout.EAST);
+    myElementLabel.setMinimumSize(new Dimension(100, 0)); // do not recalculate size according to the text
 
     myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
-    myControlPanel.add(dummyPanel, BorderLayout.CENTER);
+    myControlPanel.add(myElementLabel, BorderLayout.CENTER);
     myControlPanel.add(myShowSettingsButton = new MyShowSettingsButton(), BorderLayout.EAST);
     myControlPanelVisible = false;
 

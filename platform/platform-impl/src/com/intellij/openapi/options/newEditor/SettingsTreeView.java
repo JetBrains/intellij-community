@@ -67,9 +67,10 @@ import java.util.List;
  */
 final class SettingsTreeView extends JComponent implements Disposable, OptionsEditorColleague {
   private static final String NODE_ICON = "settings.tree.view.icon";
-  private static final Color NORMAL_NODE = new JBColor(Gray._60, Gray._140);
   private static final Color WRONG_CONTENT = JBColor.RED;
   private static final Color MODIFIED_CONTENT = JBColor.BLUE;
+  public static final Color FOREGROUND = new JBColor(0x1A1A1A, 0xBBBBBB);
+  public static final Color BACKGROUND = new JBColor(0xE6EBF0, 0x3E434C);
 
   final SimpleTree myTree;
   final FilteringTreeBuilder myBuilder;
@@ -91,7 +92,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myRoot = new MyRoot(groups);
     myTree = new MyTree();
     myTree.putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, Boolean.TRUE);
-    myTree.setBackground(UIUtil.getSidePanelColor());
+    myTree.setBackground(BACKGROUND);
     myTree.getInputMap().clear();
     TreeUtil.installActions(myTree);
 
@@ -104,13 +105,17 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
     myTree.setExpandableItemsEnabled(false);
+    RelativeFont.BOLD.install(myTree);
 
     myScroller = ScrollPaneFactory.createScrollPane(myTree, true);
     myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    myScroller.setBackground(UIUtil.getSidePanelColor());
-    myScroller.getViewport().setBackground(UIUtil.getSidePanelColor());
-    myScroller.getVerticalScrollBar().setBackground(UIUtil.getSidePanelColor());
+    myScroller.setBackground(BACKGROUND);
+    myScroller.getViewport().setBackground(BACKGROUND);
+    myScroller.getVerticalScrollBar().setBackground(BACKGROUND);
     add(myScroller);
+
+    mySeparator = new JLabel();
+    mySeparator.setForeground(FOREGROUND);
 
     myTree.addComponentListener(new ComponentAdapter() {
       @Override
@@ -267,12 +272,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     if (0 == myTree.getY()) {
       return; // separator is not needed without scrolling
     }
-    if (mySeparator == null) {
-      mySeparator = new JLabel();
-      mySeparator.setForeground(NORMAL_NODE);
-      mySeparator.setFont(UIUtil.getLabelFont());
-      mySeparator.setFont(getFont().deriveFont(Font.BOLD));
-    }
+    mySeparator.setFont(myTree.getFont());
     int height = mySeparator.getPreferredSize().height;
     String group = findGroupNameAt(0, height);
     if (group != null && group.equals(findGroupNameAt(0, 0))) {
@@ -489,11 +489,11 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         myTextLabel.setText(node.myDisplayName);
         // show groups in bold
         if (myRoot == node.getParent()) {
-          myTextLabel.setFont(myTextLabel.getFont().deriveFont(Font.BOLD));
+          myTextLabel.setFont(myTree.getFont());
         }
       }
       // update font color for modified configurables
-      myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : NORMAL_NODE);
+      myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : FOREGROUND);
       if (!selected && node != null) {
         Configurable configurable = node.myConfigurable;
         if (configurable != null) {

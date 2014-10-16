@@ -833,7 +833,7 @@ class PyDB:
                         # the id to be the line.
                         breakpoint_id = line = int(line)
                         if condition.startswith('**FUNC**'):
-                            func_name, condition = condition.split('\t', 1)
+                            func_name, condition = condition.split("@_@TAB_CHAR@_@", 1)
 
                             # We must restore new lines and tabs as done in
                             # AbstractDebugTarget.breakpointAdded

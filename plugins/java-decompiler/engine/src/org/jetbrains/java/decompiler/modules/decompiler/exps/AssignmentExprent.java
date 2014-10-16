@@ -15,6 +15,10 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.TextBuffer;
@@ -25,9 +29,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class AssignmentExprent extends Exprent {
@@ -60,9 +61,11 @@ public class AssignmentExprent extends Exprent {
   }
 
 
-  public AssignmentExprent(Exprent left, Exprent right) {
+  public AssignmentExprent(Exprent left, Exprent right, Set<Integer> bytecode_offsets) {
     this.left = left;
     this.right = right;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
 
@@ -97,8 +100,9 @@ public class AssignmentExprent extends Exprent {
     return lst;
   }
 
+  @Override
   public Exprent copy() {
-    return new AssignmentExprent(left.copy(), right.copy());
+    return new AssignmentExprent(left.copy(), right.copy(), bytecode);
   }
 
   public int getPrecedence() {

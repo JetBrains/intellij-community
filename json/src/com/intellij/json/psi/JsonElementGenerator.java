@@ -55,4 +55,11 @@ public class JsonElementGenerator {
   public JsonStringLiteral createStringLiteral(@NotNull String unescapedContent) {
     return createValue('"' + StringUtil.escapeStringCharacters(unescapedContent) + '"');
   }
+
+  @NotNull
+  public JsonProperty createProperty(@NotNull final String name, @NotNull final String value) {
+    final PsiFile file = createDummyFile("{\"" + name + "\": " + value + "}");
+    //noinspection unchecked,ConstantConditions
+    return ((JsonObject) file.getFirstChild()).getPropertyList().get(0);
+  }
 }

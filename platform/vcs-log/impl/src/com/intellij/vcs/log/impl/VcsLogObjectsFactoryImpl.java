@@ -25,34 +25,36 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
 
   @NotNull
   @Override
-  public VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp,
+  public VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime,
                                                   @NotNull VirtualFile root, @NotNull String subject,
-                                                  @NotNull String authorName, String authorEmail) {
+                                                  @NotNull String authorName, String authorEmail,
+                                                  @NotNull String committerName, @NotNull String committerEmail, long authorTime) {
     VcsUser author = createUser(authorName, authorEmail);
-    return new VcsShortCommitDetailsImpl(hash, parents, timeStamp, root, subject, author);
+    VcsUser committer = createUser(committerName, committerEmail);
+    return new VcsShortCommitDetailsImpl(hash, parents, commitTime, root, subject, author, committer, authorTime);
   }
 
   @NotNull
   @Override
-  public VcsCommitMetadata createCommitMetadata(@NotNull Hash hash, @NotNull List<Hash> parents, long time, @NotNull VirtualFile root,
+  public VcsCommitMetadata createCommitMetadata(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                                                 @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
                                                 @NotNull String message, @NotNull String committerName,
                                                 @NotNull String committerEmail, long authorTime) {
     VcsUser author = createUser(authorName, authorEmail);
     VcsUser committer = createUser(committerName, committerEmail);
-    return new VcsCommitMetadataImpl(hash, parents, time, root, subject, author, message, committer, authorTime);
+    return new VcsCommitMetadataImpl(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
   }
 
   @NotNull
   @Override
-  public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long time, VirtualFile root,
+  public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, VirtualFile root,
                                                 @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
                                                 @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
                                                 long authorTime,
                                                 @NotNull ThrowableComputable<Collection<Change>, ? extends Exception> changesGetter) {
     VcsUser author = createUser(authorName, authorEmail);
     VcsUser committer = createUser(committerName, committerEmail);
-    return new VcsChangesLazilyParsedDetails(hash, parents, time, root, subject, author, message, committer, authorTime, changesGetter);
+    return new VcsChangesLazilyParsedDetails(hash, parents, commitTime, root, subject, author, message, committer, authorTime, changesGetter);
   }
 
   @NotNull

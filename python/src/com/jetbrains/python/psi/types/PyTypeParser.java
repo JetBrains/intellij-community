@@ -343,7 +343,7 @@ public class PyTypeParser {
 
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
-        final TypeEvalContext context = TypeEvalContext.codeInsightFallback();
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(file.getProject());
         final Map<TextRange, PyType> types = new HashMap<TextRange, PyType>();
         final Map<PyType, TextRange> fullRanges = new HashMap<PyType, TextRange>();
         final Map<PyType, PyImportElement> imports = new HashMap<PyType, PyImportElement>();

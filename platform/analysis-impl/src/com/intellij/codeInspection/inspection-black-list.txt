@@ -1,5 +1,6 @@
 com.intellij.codeInspection.canBeFinal.CanBeFinalInspection
 com.intellij.codeInspection.dataFlow.DataFlowInspection
+com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection
 com.intellij.codeInspection.defUse.DefUseInspection
 com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection
@@ -16,6 +17,7 @@ com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspect
 com.intellij.codeInspection.nullable.NullableStuffInspection
 com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection
 com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection
+com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection
 com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection
 com.intellij.codeInspection.visibility.VisibilityInspection
 com.intellij.lang.javascript.inspections.JSMismatchedCollectionQueryUpdateInspection

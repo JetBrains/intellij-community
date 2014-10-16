@@ -152,7 +152,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     ChainIterable<String> cat = new ChainIterable<String>();
     final String name = fun.getName();
     cat.addItem("def ").addWith(func_name_wrapper, $(name));
-    final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getProject(), fun.getContainingFile());
     final List<PyParameter> parameters = PyUtil.getParameters(fun, context);
     final String paramStr = "(" +
                             StringUtil.join(parameters,
@@ -195,12 +195,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   static String describeType(@NotNull PyTypedElement element) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(element.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
     return String.format("Inferred type: %s", getTypeName(context.getType(element), context));
   }
 
   public static void getTypeDescription(@NotNull PyFunction fun, ChainIterable<String> body) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getProject(), fun.getContainingFile());
     PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
     builder.build(context.getType(fun), true).toBodyWithLinks(body, fun);
   }
@@ -524,7 +524,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @Nullable
   private static PyClass inferClassOfParameter(PsiElement context) {
     if (context instanceof PyNamedParameter) {
-      final PyType type = TypeEvalContext.userInitiated(context.getContainingFile()).getType((PyNamedParameter)context);
+      final PyType type = TypeEvalContext.userInitiated(context.getProject(), context.getContainingFile()).getType((PyNamedParameter)context);
       if (type instanceof PyClassType) {
         return ((PyClassType)type).getPyClass();
       }
@@ -594,7 +594,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     //TODO: this code duplicates PyDocstringGenerator in some parts
 
     final StringBuilder builder = new StringBuilder(offset);
-    final TypeEvalContext context = TypeEvalContext.userInitiated(function.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), function.getContainingFile());
     PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
     final PyDecoratorList decoratorList = function.getDecoratorList();
     final PyDecorator classMethod = decoratorList == null ? null : decoratorList.findDecorator(PyNames.CLASSMETHOD);

@@ -220,6 +220,7 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
   private PsiFile createFile(final String fileName, final String fileText) throws IOException {
     final VirtualFile file = myFixture.getTempDirFixture().createFile(fileName);
     VfsUtil.saveText(file, fileText);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     return myFixture.getPsiManager().findFile(file);
   }
 

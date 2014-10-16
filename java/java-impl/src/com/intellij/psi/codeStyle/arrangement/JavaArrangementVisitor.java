@@ -441,21 +441,19 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   private void parseProperties(PsiMethod method, JavaElementArrangementEntry entry) {
-    if (!myGroupingRules.contains(StdArrangementTokens.Grouping.GETTERS_AND_SETTERS)) {
-      return;
-    }
-
     String propertyName = null;
     boolean getter = true;
     if (PropertyUtil.isSimplePropertyGetter(method)) {
+      entry.addModifier(GETTER);
       propertyName = PropertyUtil.getPropertyNameByGetter(method);
     }
     else if (PropertyUtil.isSimplePropertySetter(method)) {
+      entry.addModifier(SETTER);
       propertyName = PropertyUtil.getPropertyNameBySetter(method);
       getter = false;
     }
 
-    if (propertyName == null) {
+    if (!myGroupingRules.contains(StdArrangementTokens.Grouping.GETTERS_AND_SETTERS) || propertyName == null) {
       return;
     }
 

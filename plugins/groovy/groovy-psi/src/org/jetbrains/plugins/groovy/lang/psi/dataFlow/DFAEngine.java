@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.WorkingTimeMeasurer;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
@@ -31,7 +31,6 @@ import java.util.*;
  * @author ven
  */
 public class DFAEngine<E> {
-  private static final long ourTimeLimit = DataFlowRunner.ourTimeLimit;
 
   private final Instruction[] myFlow;
 
@@ -79,7 +78,8 @@ public class DFAEngine<E> {
 
   @Nullable
   private ArrayList<E> performDFA(boolean timeout) {
-    WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(ourTimeLimit);
+    long msLimit = Registry.intValue("ide.dfa.time.limit.online");
+    WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(msLimit * 1000 * 1000);
 
     ArrayList<E> info = new ArrayList<E>(myFlow.length);
     CallEnvironment env = new MyCallEnvironment(myFlow.length);

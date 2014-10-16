@@ -40,11 +40,11 @@ import java.util.List;
  */
 public final class GitCommit extends VcsChangesLazilyParsedDetails {
 
-  public GitCommit(Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long time, @NotNull VirtualFile root,
+  public GitCommit(Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                    @NotNull String subject, @NotNull VcsUser author, @NotNull String message, @NotNull VcsUser committer,
                    long authorTime, @NotNull List<GitLogStatusInfo> reportedChanges) {
-    super(hash, parents, time, root, subject, author, message, committer, authorTime,
-          new MyChangesComputable(new Data(project, root, reportedChanges, hash, time, parents)));
+    super(hash, parents, commitTime, root, subject, author, message, committer, authorTime,
+          new MyChangesComputable(new Data(project, root, reportedChanges, hash, commitTime, parents)));
 
   }
 

@@ -65,7 +65,7 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
     final Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
     if (document == null) return;
     final int offset = element.getTextOffset();
-    final TypeEvalContext context = TypeEvalContext.userInitiated(file);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file);
 
     final PyClassType strType = PyBuiltinCache.getInstance(element).getStrType();
     final PyClassType floatType = PyBuiltinCache.getInstance(element).getFloatType();

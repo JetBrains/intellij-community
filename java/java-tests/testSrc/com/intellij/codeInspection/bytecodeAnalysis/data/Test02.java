@@ -15,17 +15,20 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis.data;
 
+import com.intellij.codeInspection.bytecodeAnalysis.ExpectContract;
 import com.intellij.codeInspection.bytecodeAnalysis.ExpectNotNull;
 
 /**
  * @author lambdamix
  */
 public final class Test02 {
+  @ExpectContract(pure = true)
   @ExpectNotNull
   public String notNullString() {
     return "";
   }
 
+  @ExpectContract(pure = true)
   @ExpectNotNull
   public String notNullStringDelegate() {
     return notNullString();

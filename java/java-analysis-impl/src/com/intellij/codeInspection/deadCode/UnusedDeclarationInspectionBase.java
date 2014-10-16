@@ -165,8 +165,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    super.writeSettings(node);
     myLocalInspectionBase.writeSettings(node);
+    writeUnusedDeclarationSettings(node);
+  }
+
+  protected void writeUnusedDeclarationSettings(Element node) throws WriteExternalException {
+    super.writeSettings(node);
     for (EntryPoint extension : myExtensions) {
       extension.writeExternal(node);
     }
@@ -322,7 +326,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
             private void findExternalClassReferences(final RefClass refElement) {
               PsiClass psiClass = refElement.getElement();
-              String qualifiedName = refElement != null ? psiClass.getQualifiedName() : null;
+              String qualifiedName = psiClass.getQualifiedName();
               if (qualifiedName != null) {
                 helper.processUsagesInNonJavaFiles(qualifiedName,
                                                    new PsiNonJavaFileReferenceProcessor() {

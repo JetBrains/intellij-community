@@ -122,7 +122,6 @@ public class EditorActionUtil {
 
     editor.getCaretModel().moveCaretRelatively(columnShift, lineShift, withSelection, false, false);
 
-    //editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     VisualPosition caretPos = editor.getCaretModel().getVisualPosition();
     Point caretLocation2 = editor.visualPositionToXY(caretPos);
     final boolean scrollToCaret = !(editor instanceof EditorImpl) || ((EditorImpl)editor).isScrollToCaret();
@@ -624,9 +623,7 @@ public class EditorActionUtil {
       }
     }
     caretModel.moveToOffset(newOffset);
-    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
+    EditorModificationUtil.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
@@ -698,9 +695,7 @@ public class EditorActionUtil {
       if (isWordOrLexemeStart(editor, newOffset, camel)) break;
     }
     editor.getCaretModel().moveToOffset(newOffset);
-    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
+    EditorModificationUtil.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }

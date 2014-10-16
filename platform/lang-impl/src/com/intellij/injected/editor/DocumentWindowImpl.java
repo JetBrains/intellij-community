@@ -746,7 +746,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @Override
   @NotNull
   public ProperTextRange injectedToHost(@NotNull TextRange injected) {
-    ProperTextRange.assertProperRange(injected);
     int start = injectedToHost(injected.getStartOffset(), false);
     int end = injectedToHost(injected.getEndOffset(), true);
     if (end < start) {

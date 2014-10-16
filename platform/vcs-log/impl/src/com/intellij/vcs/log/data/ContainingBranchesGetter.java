@@ -18,12 +18,13 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogListener;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * Provides capabilities to asynchronously calculate "contained in branches" information.
  */
-public class ContainingBranchesGetter {
+public class ContainingBranchesGetter implements VcsLogListener {
 
   private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
 
@@ -48,7 +49,7 @@ public class ContainingBranchesGetter {
   @Nullable private Runnable myLoadingFinishedListener; // access only from EDT
   private int myCurrentBranchesChecksum;
 
-  ContainingBranchesGetter(@NotNull Project project, @NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
+  ContainingBranchesGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
     myDataHolder = dataHolder;
     myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, new ThrowableConsumer<Task, Throwable>() {
       @Override
@@ -65,17 +66,18 @@ public class ContainingBranchesGetter {
         });
       }
     });
-    project.getMessageBus().connect(parentDisposable).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new VcsLogRefreshListener() {
-      @Override
-      public void refresh(@NotNull DataPack dataPack) {
-        Collection<VcsRef> currentBranches = dataPack.getRefs().getBranches();
-        int checksum = currentBranches.hashCode();
-        if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
-          clearCache();
-        }
-        myCurrentBranchesChecksum = checksum;
+  }
+
+  @Override
+  public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+    if (refreshHappened) {
+      Collection<VcsRef> currentBranches = dataPack.getRefs().getBranches();
+      int checksum = currentBranches.hashCode();
+      if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
+        clearCache();
       }
-    });
+      myCurrentBranchesChecksum = checksum;
+    }
   }
 
   private void clearCache() {

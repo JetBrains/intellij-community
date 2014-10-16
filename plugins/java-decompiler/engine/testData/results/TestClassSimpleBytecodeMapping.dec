@@ -1,0 +1,36 @@
+package pkg;
+
+public class TestClassSimpleBytecodeMapping {
+   public int test() {
+      System.out.println("before");
+      if(Math.random() > 0.0D) {
+         System.out.println("0");
+         return 0;
+      } else {
+         System.out.println("1");
+         return 1;
+      }
+   }
+}
+
+class pkg/TestClassSimpleBytecodeMapping{
+   method test ()I{
+      0      4
+      3      4
+      5      4
+      8      5
+      b      5
+      c      5
+      d      5
+      10      6
+      13      6
+      15      6
+      18      7
+      19      7
+      1a      9
+      1d      9
+      1f      9
+      22      10
+      23      10
+   }
+}
