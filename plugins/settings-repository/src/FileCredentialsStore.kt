@@ -13,11 +13,12 @@ class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
 
   private var dataLoaded = !storeFile.exists()
 
-  fun ensureLoaded() {
+  private fun ensureLoaded() {
     if (dataLoaded) {
       return
     }
 
+    dataLoaded = true
     if (storeFile.exists()) {
       try {
         var hasErrors = true
@@ -47,6 +48,9 @@ class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
 
   override fun reset(uri: URIish) {
     if (credentials != null) {
+      dataLoaded = true
+      storeFile.delete()
+
       credentials = Credentials(credentials!!.username, null)
     }
   }
