@@ -7,10 +7,8 @@
           <element id="archive" name="settings-repository.jar">
             <element id="module-output" name="settings-repository" />
           </element>
-          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/org.eclipse.jgit-3.5.0-rc1.jar" />
-          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/osxkeychain.jar" />
           <element id="file-copy" path="$PROJECT_DIR$/community/build/kotlinc/lib/kotlin-runtime.jar" />
-          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/osxkeychain.so" />
+          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/org.eclipse.jgit-3.5.2-SNAPSHOT.jar" />
         </element>
       </element>
     </root>
