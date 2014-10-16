@@ -989,7 +989,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public int getFoldingAreaWidth() {
     return isFoldingOutlineShown()
            ? getFoldingAnchorWidth() + 2
-           : isLineNumbersShown() ? getFoldingAnchorWidth() / 2 : 0;
+           : 0;
   }
 
   @Override
