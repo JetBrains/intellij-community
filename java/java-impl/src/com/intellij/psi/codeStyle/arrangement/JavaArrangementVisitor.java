@@ -415,6 +415,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     myInfo.onMethodEntryCreated(method, entry);
     MethodSignatureBackedByPsiMethod overridden = SuperMethodsSearch.search(method, null, true, false).findFirst();
     if (overridden != null) {
+      entry.addModifier(OVERRIDDEN);
       myInfo.onOverriddenMethod(overridden.getMethod(), method);
     }
     boolean reset = myMethodBodyProcessor.setBaseMethod(method);

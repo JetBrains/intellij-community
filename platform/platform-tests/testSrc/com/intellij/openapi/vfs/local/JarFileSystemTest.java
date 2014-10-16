@@ -68,6 +68,29 @@ public class JarFileSystemTest extends PlatformLangTestCase {
     assertNotNull(metaInf.findChild("MANIFEST.MF"));
   }
 
+  public void testJarRefreshOnRenameOrMove() throws IOException {
+    File jar = IoTestUtil.createTestJar();
+    assertTrue(jar.setLastModified(jar.lastModified() - 1000));
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
+    assertNotNull(vFile);
+
+    ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(
+      VirtualFileManager.VFS_CHANGES,
+      new BulkFileListener.Adapter() {
+        @Override
+        public void before(@NotNull List<? extends VFileEvent> events) {
+          for (VFileEvent event : events) {
+            //if (event instanceof VFileContentChangeEvent && entry.equals(event.getFile())) {
+            //  updated.set(true);
+            //  break;
+            //}
+          }
+        }
+      }
+    );
+
+    assertTrue(jar.renameTo(new File(jar.getParentFile(), jar.getName() + ".jar")));
+  }
   public void testJarRefresh() throws IOException {
     File jar = IoTestUtil.createTestJar();
     assertTrue(jar.setLastModified(jar.lastModified() - 1000));
