@@ -13,7 +13,7 @@ public class TestClassSimpleBytecodeMapping {
    }
 }
 
-class test/TestClassSimpleBytecodeMapping{
+class pkg/TestClassSimpleBytecodeMapping{
    method test ()I{
       0      4
       3      4

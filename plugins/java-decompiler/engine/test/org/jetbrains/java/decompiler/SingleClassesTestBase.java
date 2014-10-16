@@ -15,21 +15,24 @@
  */
 package org.jetbrains.java.decompiler;
 
-import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
-import org.junit.After;
-import org.junit.Before;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.junit.After;
+import org.junit.Before;
 
 public abstract class SingleClassesTestBase {
   private DecompilerTestFixture fixture;
@@ -51,12 +54,24 @@ public abstract class SingleClassesTestBase {
   }
 
   protected void doTest(String testFile) {
+    doTest(testFile, null);
+  }
+
+  protected void doTest(String testFile, Map<String, Object> options) {
+
     try {
       File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
       assertTrue(classFile.isFile());
       String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
 
       ConsoleDecompiler decompiler = fixture.getDecompiler();
+      if(options != null) {
+        for(Entry<String, Object> option : options.entrySet()) {
+          // overwrite with user-supplied value
+          DecompilerContext.setProperty(option.getKey(), option.getValue());
+        }
+      }
+
       for (File file : collectClasses(classFile)) decompiler.addSpace(file, true);
       decompiler.decompileContext();
 

@@ -15,6 +15,9 @@
  */
 package org.jetbrains.java.decompiler;
 
+import java.util.HashMap;
+
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.junit.Test;
 
 public class SingleClassesTest extends SingleClassesTestBase {
@@ -36,4 +39,10 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testInvalidMethodSignature() { doTest("InvalidMethodSignature"); }
   @Test public void testInnerClassConstructor() { doTest("pkg/TestInnerClassConstructor"); }
   @Test public void testInnerClassConstructor11() { doTest("v11/TestInnerClassConstructor"); }
+  @Test
+  public void testSimpleBytecodeMapping() {
+    doTest("pkg/TestClassSimpleBytecodeMapping", new HashMap<String, Object>(){{
+                                                 put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");}});
+  }
+
 }
