@@ -74,6 +74,7 @@ public class IpnbUtils {
   public static void addLatexToPanel(@NotNull final String source, @NotNull final JPanel panel) {
     final JEditorPane editorPane = new JEditorPane();
     editorPane.setContentType(new HTMLEditorKit().getContentType());
+    editorPane.setEditorKit(new HTMLEditorKit());
 
     final StyleSheet sheet = ((HTMLDocument)editorPane.getDocument()).getStyleSheet();
     sheet.addRule(ourBodyRule);
