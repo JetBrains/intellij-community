@@ -33,13 +33,19 @@ import java.util.ArrayList
 import org.jetbrains.settingsRepository.ImmutableUpdateResult
 import org.jetbrains.settingsRepository.UpdateResult
 import org.jetbrains.settingsRepository.EMPTY_UPDATE_RESULT
+import org.eclipse.jgit.errors.NoRemoteRepositoryException
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
-  val message = e.getMessage()!!
-  if (message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") || message.contains(": reject HostKey:") /* JSch */) {
-    throw AuthenticationException(message, e)
+  if (e.getStatus() == TransportException.Status.CANNOT_RESOLVE_REPO) {
+    throw org.jetbrains.settingsRepository.NoRemoteRepositoryException(e)
   }
-  else if (message == "Download cancelled") {
+
+  val message = e.getMessage()!!
+  if (e.getStatus() == TransportException.Status.NOT_AUTHORIZED || e.getStatus() == TransportException.Status.NOT_PERMITTED ||
+      message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") || message.contains(": reject HostKey:") /* JSch */) {
+    throw AuthenticationException(e)
+  }
+  else if (e.getStatus() == TransportException.Status.CANCELLED || message == "Download cancelled") {
     throw ProcessCanceledException()
   }
   else {

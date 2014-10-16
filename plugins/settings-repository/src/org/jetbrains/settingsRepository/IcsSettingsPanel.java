@@ -46,18 +46,21 @@ public class IcsSettingsPanel extends DialogWrapper {
       final SyncType syncType = syncTypes[i];
       syncActions[i] = new DialogWrapperAction(IcsBundle.OBJECT$.message(
         "action." + (syncType == SyncType.MERGE ? "Merge" : (syncType == SyncType.RESET_TO_THEIRS ? "ResetToTheirs" : "ResetToMy")) + "Settings.text")) {
+        @SuppressWarnings("InstanceofCatchParameter")
         @Override
         protected void doAction(ActionEvent event) {
           boolean repositoryWillBeCreated = !icsManager.getRepositoryManager().isRepositoryExists();
-          if (!saveRemoteRepositoryUrl()) {
-            if (repositoryWillBeCreated) {
-              // remove created repository
-              icsManager.getRepositoryManager().deleteRepository();
-            }
-            return;
-          }
-
+          boolean upstreamSet = false;
           try {
+            if (!saveRemoteRepositoryUrl()) {
+              if (repositoryWillBeCreated) {
+                // remove created repository
+                icsManager.getRepositoryManager().deleteRepository();
+              }
+              return;
+            }
+            upstreamSet = true;
+
             if (repositoryWillBeCreated && syncType != SyncType.RESET_TO_THEIRS) {
               ApplicationManager.getApplication().saveSettings();
 
@@ -79,7 +82,16 @@ public class IcsSettingsPanel extends DialogWrapper {
               icsManager.getRepositoryManager().deleteRepository();
             }
 
-            Messages.showErrorDialog(getContentPane(), StringUtil.notNullize(e.getMessage(), "Internal error"), IcsBundle.OBJECT$.message("sync.rejected.title"));
+            SettingsRepositoryPackage.getLOG().warn(e);
+
+            if (!upstreamSet || e instanceof NoRemoteRepositoryException) {
+              Messages.showErrorDialog(getContentPane(), IcsBundle.OBJECT$.message("set.upstream.failed.message", e.getMessage()), IcsBundle.OBJECT$.message("set.upstream.failed.title"));
+            }
+            else {
+              Messages.showErrorDialog(getContentPane(),
+                                       StringUtil.notNullize(e.getMessage(), "Internal error"),
+                                       IcsBundle.OBJECT$.message(e instanceof AuthenticationException ? "sync.not.authorized.title" : "sync.rejected.title"));
+            }
             return;
           }
 
@@ -136,8 +148,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     return syncActions;
   }
 
-  private boolean saveRemoteRepositoryUrl() {
-    try {
+  private boolean saveRemoteRepositoryUrl() throws Exception {
       String url = StringUtil.nullize(urlTextField.getText());
       if (url != null && !icsManager.getRepositoryService().checkUrl(url, getContentPane())) {
         return false;
@@ -147,11 +158,5 @@ public class IcsSettingsPanel extends DialogWrapper {
       repositoryManager.createRepositoryIfNeed();
       repositoryManager.setUpstream(url, null);
       return true;
-    }
-    catch (Throwable e) {
-      SettingsRepositoryPackage.getLOG().warn(e);
-      Messages.showErrorDialog(getContentPane(), IcsBundle.OBJECT$.message("set.upstream.failed.message", e.getMessage()), IcsBundle.OBJECT$.message("set.upstream.failed.title"));
-      return false;
-    }
   }
 }

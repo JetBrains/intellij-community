@@ -23,6 +23,7 @@ import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.eclipse.jgit.revwalk.RevCommit
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.settingsRepository.AuthenticationException
+import kotlin.properties.Delegates
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {
@@ -46,15 +47,9 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   var repository: Repository
     private set
 
-  private var _credentialsProvider: CredentialsProvider? = null
-
-  val credentialsProvider: CredentialsProvider
-    get() {
-      if (_credentialsProvider == null) {
-        _credentialsProvider = JGitCredentialsProvider(credentialsStore, repository)
-      }
-      return _credentialsProvider!!
-    }
+  val credentialsProvider: CredentialsProvider by Delegates.lazy {
+    JGitCredentialsProvider(credentialsStore, repository)
+  };
 
   {
     $repository = FileRepositoryBuilder().setWorkTree(dir).build()
@@ -143,13 +138,12 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
           break;
         }
         catch (e: TransportException) {
-          val message = e.getMessage()!!
-          if (message.endsWith(": -pack not permitted")) {
+          if (e.getStatus() == TransportException.Status.NOT_PERMITTED) {
             if (attempt == 0) {
               credentialsProvider.reset(transport.getURI())
             }
             else {
-              throw AuthenticationException(message, e)
+              throw AuthenticationException(e)
             }
           }
           else {
