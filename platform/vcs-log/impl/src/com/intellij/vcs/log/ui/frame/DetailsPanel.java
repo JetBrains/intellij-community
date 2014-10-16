@@ -22,14 +22,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -41,12 +38,11 @@ import com.intellij.vcs.log.printer.idea.PrintParameters;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RefPainter;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -68,28 +64,26 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private final VcsLogGraphTable myGraphTable;
 
   @NotNull private final RefsPanel myRefsPanel;
-  @NotNull private final DataPanel myMessageDataPanel;
-  @NotNull private final ContainingBranchesPanel myContainingBranchesPanel;
-  @NotNull private final JLabel myMessageLabel;
+  @NotNull private final DataPanel myCommitDetailsPanel;
+  @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final JBLoadingPanel myLoadingPanel;
 
   @NotNull private VisiblePack myDataPack;
 
-  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogGraphTable graphTable, @NotNull VcsLogColorManager colorManager,
+  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder,
+               @NotNull VcsLogGraphTable graphTable,
+               @NotNull VcsLogColorManager colorManager,
                @NotNull VisiblePack initialDataPack) {
     myLogDataHolder = logDataHolder;
     myGraphTable = graphTable;
     myDataPack = initialDataPack;
 
     myRefsPanel = new RefsPanel(colorManager);
+    myCommitDetailsPanel = new DataPanel(logDataHolder.getProject());
 
-    final JScrollPane scrollPane = new JBScrollPane() {
-      @Override
-      public Border getBorder() {
-        return getVerticalScrollBar().isVisible() ? super.getBorder() : null;
-      }
-    };
-    myMessageDataPanel = new DataPanel(logDataHolder.getProject()) {
+    final JScrollPane scrollPane =
+      ScrollPaneFactory.createScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    JPanel content = new JPanel(new MigLayout("flowy, ins 0, hidemode 3, gapy 0")) {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
@@ -97,33 +91,33 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return size;
       }
     };
+    content.setOpaque(false);
     scrollPane.setOpaque(false);
     scrollPane.getViewport().setOpaque(false);
-    scrollPane.setViewportView(myMessageDataPanel);
-
-    myContainingBranchesPanel = new ContainingBranchesPanel();
-    myMessageLabel = new JLabel();
-    myMessageLabel.setForeground(UIUtil.getInactiveTextColor());
-    myMessageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    myMessageLabel.setVerticalAlignment(SwingConstants.CENTER);
+    scrollPane.setViewportView(content);
+    content.add(myRefsPanel, "");
+    content.add(myCommitDetailsPanel, "");
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
-    myLoadingPanel.add(myRefsPanel, BorderLayout.NORTH);
-    myLoadingPanel.add(scrollPane, BorderLayout.CENTER);
-    myLoadingPanel.add(myContainingBranchesPanel, BorderLayout.SOUTH);
-    myLoadingPanel.setOpaque(false);
+    myLoadingPanel.add(scrollPane);
+
+    myMessagePanel = new MessagePanel();
+    setBackground(UIUtil.getTableBackground());
 
     setLayout(new CardLayout());
     add(myLoadingPanel, STANDARD_LAYER);
-    add(myMessageLabel, MESSAGE_LAYER);
+    add(myMessagePanel, MESSAGE_LAYER);
 
-    setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
     showMessage("No commits selected");
   }
 
   @Override
   public Color getBackground() {
-    return UIUtil.getTableBackground();
+    return getDetailsBackground();
+  }
+
+  private static Color getDetailsBackground() {
+    return UIUtil.isUnderGTKLookAndFeel() ? UIManager.getColor("EditorPane.background") : UIUtil.getPanelBackground();
   }
 
   void updateDataPack(@NotNull VisiblePack dataPack) {
@@ -151,12 +145,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
-        myMessageDataPanel.setData(null);
+        myCommitDetailsPanel.setData(null);
         myRefsPanel.setRefs(Collections.<VcsRef>emptyList());
       }
       else {
         myLoadingPanel.stopLoading();
-        myMessageDataPanel.setData(commitData);
+        myCommitDetailsPanel.setData(commitData);
         myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
       }
 
@@ -164,14 +158,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       if (!(commitData instanceof LoadingDetails)) {
         branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), hash);
       }
-      myContainingBranchesPanel.setBranches(branches);
+      myCommitDetailsPanel.setBranches(branches);
     }
   }
 
   private void showMessage(String text) {
     myLoadingPanel.stopLoading();
     ((CardLayout)getLayout()).show(this, MESSAGE_LAYER);
-    myMessageLabel.setText(text);
+    myMessagePanel.setText(text);
   }
 
   @NotNull
@@ -183,6 +177,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   private static class DataPanel extends JEditorPane {
 
     @NotNull private final Project myProject;
+    @Nullable private String myBranchesText = null;
+    private String myMainText;
 
     DataPanel(@NotNull Project project) {
       super(UIUtil.HTML_MIME, "");
@@ -195,11 +191,40 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     void setData(@Nullable VcsFullCommitDetails commit) {
       if (commit == null) {
+        myMainText = null;
+      }
+      else {
+        String body = getMessageText(commit);
+        String header = commit.getId().toShortString() + " " + getAuthorText(commit);
+        myMainText = header + "<br/>" + body;
+      }
+      update();
+    }
+
+    void setBranches(@Nullable List<String> branches) {
+      if (branches == null) {
+        myBranchesText = null;
+      }
+      else {
+        myBranchesText = StringUtil.join(branches, ", ");
+      }
+      update();
+    }
+
+    private void update() {
+      if (myMainText == null) {
         setText("");
       }
       else {
-        String body = commit.getId().toShortString() + " " + getAuthorText(commit) + "<br>" + getMessageText(commit);
-        setText("<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + body + "</body></html>");
+        setText("<html><head>" +
+                UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
+                "</head><body>" +
+                myMainText +
+                "<br/>" +
+                "<br/>" +
+                "<i>Contained in branches:</i> " +
+                (myBranchesText == null ? "<i>loading...</i>" : myBranchesText) +
+                "</body></html>");
         setCaretPosition(0);
       }
       revalidate();
@@ -209,7 +234,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      size.height = Math.max(size.height, 7 * getFontMetrics(getFont()).getHeight());
+      size.height = Math.max(size.height, 4 * getFontMetrics(getFont()).getHeight());
       return size;
     }
 
@@ -239,62 +264,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
       return authorText;
     }
-  }
 
-  private static class ContainingBranchesPanel extends JPanel {
-
-    private final JComponent myLoadingComponent;
-    private final JTextArea myBranchesText;
-
-    ContainingBranchesPanel() {
-      JLabel label = new JBLabel("Contained in branches: ") {
-        @Override
-        public Font getFont() {
-          return UIUtil.getLabelFont().deriveFont(Font.ITALIC);
-        }
-      };
-      myLoadingComponent = new NonOpaquePanel(new BorderLayout());
-      myLoadingComponent.add(new AsyncProcessIcon("Loading..."), BorderLayout.WEST);
-      myLoadingComponent.add(Box.createHorizontalGlue(), BorderLayout.CENTER);
-      myBranchesText = new JTextArea("") {
-        private final Border gtkBorder = new LineBorder(UIUtil.getTextFieldBackground(), 3) {
-          @Override
-          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            lineColor = UIUtil.getTextFieldBackground();
-            super.paintBorder(c, g, x, y, width, height);
-          }
-        };
-        private final Border emptyBorder = IdeBorderFactory.createEmptyBorder();
-
-        @Override
-        public Border getBorder() {
-          // setting border to empty does not help with gtk l&f
-          // so I just cover it completely with my line border
-          return UIUtil.isUnderGTKLookAndFeel() ? gtkBorder : emptyBorder;
-        }
-      };
-      myBranchesText.setOpaque(false);
-      myBranchesText.setEditable(false);
-      myBranchesText.setWrapStyleWord(true);
-      myBranchesText.setLineWrap(true);
-      setOpaque(false);
-      setLayout(new BorderLayout());
-      add(label, BorderLayout.WEST);
-      add(Box.createHorizontalGlue(), BorderLayout.EAST);
-    }
-
-    void setBranches(@Nullable List<String> branches) {
-      if (branches == null) {
-        remove(myBranchesText);
-        add(myLoadingComponent, BorderLayout.CENTER);
-      }
-      else {
-        remove(myLoadingComponent);
-        myBranchesText.setText(StringUtil.join(branches, ", "));
-        add(myBranchesText, BorderLayout.CENTER);
-      }
-      revalidate();
-      repaint();
+    @Override
+    public Color getBackground() {
+      return getDetailsBackground();
     }
   }
 
@@ -304,22 +277,76 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     @NotNull private List<VcsRef> myRefs;
 
     RefsPanel(@NotNull VcsLogColorManager colorManager) {
+      super(new FlowLayout(FlowLayout.LEADING, 0, 2));
       myRefPainter = new RefPainter(colorManager, false);
       myRefs = Collections.emptyList();
-      setPreferredSize(new Dimension(-1, PrintParameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
+      setOpaque(false);
+    }
+
+    void setRefs(@NotNull List<VcsRef> refs) {
+      removeAll();
+      myRefs = refs;
+      for (VcsRef ref : refs) {
+        add(new SingleRefPanel(myRefPainter, ref));
+      }
+      setVisible(!myRefs.isEmpty());
+      revalidate();
+      repaint();
+    }
+
+    @Override
+    public Color getBackground() {
+      return getDetailsBackground();
+    }
+  }
+
+  private static class SingleRefPanel extends JPanel {
+    @NotNull private final RefPainter myRefPainter;
+    @NotNull private VcsRef myRef;
+
+    SingleRefPanel(@NotNull RefPainter refPainter, @NotNull VcsRef ref) {
+      myRefPainter = refPainter;
+      myRef = ref;
       setOpaque(false);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      // TODO when the right margin reaches, draw on the second line
-      myRefPainter.draw((Graphics2D)g, myRefs, 0, getWidth());
+      myRefPainter.draw((Graphics2D)g, Collections.singleton(myRef), 0, getWidth());
     }
 
-    void setRefs(@NotNull List<VcsRef> refs) {
-      myRefs = refs;
-      setVisible(!myRefs.isEmpty());
-      repaint();
+    @Override
+    public Color getBackground() {
+      return getDetailsBackground();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      int width = myRefPainter.getComponentWidth(myRef.getName(), getFontMetrics(RefPainter.DEFAULT_FONT));
+      return new Dimension(width, PrintParameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP);
+    }
+  }
+
+  private static class MessagePanel extends NonOpaquePanel {
+
+    private final JLabel myLabel;
+
+    MessagePanel() {
+      super(new BorderLayout());
+      myLabel = new JLabel();
+      myLabel.setForeground(UIUtil.getInactiveTextColor());
+      myLabel.setHorizontalAlignment(SwingConstants.CENTER);
+      myLabel.setVerticalAlignment(SwingConstants.CENTER);
+      add(myLabel);
+    }
+
+    void setText(String text) {
+      myLabel.setText(text);
+    }
+
+    @Override
+    public Color getBackground() {
+      return getDetailsBackground();
     }
   }
 }

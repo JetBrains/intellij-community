@@ -71,12 +71,12 @@ public class FloatingPointEqualityInspection extends BaseInspection {
       if (value instanceof Double) {
         final Double aDouble = (Double)value;
         final double v = aDouble.doubleValue();
-        return v == Double.NEGATIVE_INFINITY || v == Double.POSITIVE_INFINITY || v == 0.0;
+        return Double.isInfinite(v) || v == 0.0;
       }
       else if (value instanceof Float) {
         final Float aFloat = (Float)value;
-        final float f = aFloat.floatValue();
-        return f == Float.NEGATIVE_INFINITY || f == Float.POSITIVE_INFINITY || f == 0.0f;
+        final float v = aFloat.floatValue();
+        return Float.isInfinite(v) || v == 0.0f;
       }
       return false;
     }

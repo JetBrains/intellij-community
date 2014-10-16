@@ -492,7 +492,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       if (directory != null) {
         directories.add(directory);
         Object parentValue = node.getParent().getValue();
-        if (parentValue instanceof PsiDirectory) {
+        if (parentValue instanceof PsiDirectory && Registry.is("projectView.choose.directory.on.compacted.middle.packages")) {
           while (true) {
             directory = directory.getParentDirectory();
             if (directory == null || directory.equals(parentValue)) {

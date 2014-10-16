@@ -197,9 +197,10 @@ public class StdArrangementTokens {
     @NotNull public static final ArrangementSettingsToken OVERRIDE        = invertible("OVERRIDE", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken GETTER          = compositeToken("GETTER", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC);
     @NotNull public static final ArrangementSettingsToken SETTER          = compositeToken("SETTER", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC);
+    @NotNull public static final ArrangementSettingsToken OVERRIDDEN      = compositeToken("OVERRIDDEN", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC, PROTECTED);
     private static final NotNullLazyValue<Set<ArrangementSettingsToken>> TOKENS = collectFields(Modifier.class);
 
-    public static final Set<ArrangementSettingsToken> MODIFIER_AS_TYPE = ContainerUtil.newHashSet(GETTER, SETTER);
+    public static final Set<ArrangementSettingsToken> MODIFIER_AS_TYPE = ContainerUtil.newHashSet(GETTER, SETTER, OVERRIDDEN);
     
     private Modifier() {
     }

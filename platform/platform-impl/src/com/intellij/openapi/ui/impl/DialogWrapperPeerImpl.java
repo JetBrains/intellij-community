@@ -505,15 +505,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
 
       if (StackingPopupDispatcher.getInstance().isPopupFocused()) return;
-
-      if (focusOwner instanceof JTree) {
-        JTree tree = (JTree)focusOwner;
+      JTree tree = UIUtil.getParentOfType(JTree.class, focusOwner);
+      JTable table = UIUtil.getParentOfType(JTable.class, focusOwner);
+      
+      if (tree != null) {
         if (!tree.isEditing()) {
           e.getPresentation().setEnabled(true);
         }
       }
-      else if (focusOwner instanceof JTable) {
-        JTable table = (JTable)focusOwner;
+      else if (table != null) {
         if (!table.isEditing()) {
           e.getPresentation().setEnabled(true);
         }

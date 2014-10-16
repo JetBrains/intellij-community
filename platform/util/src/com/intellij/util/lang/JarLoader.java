@@ -30,8 +30,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
-  private static final Logger LOG = Logger.getInstance(JarLoader.class);
-
   private final URL myURL;
   private final boolean myCanLockJar;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
@@ -57,22 +55,24 @@ class JarLoader extends Loader {
     }
   }
 
-  void preloadClasses() {
+  boolean checkArchive(boolean preloadContents) {
     ZipFile zipFile;
 
     try {
       zipFile = acquireZipFile();
     }
     catch (Exception e) {
-      LOG.debug("url: " + myURL, e);
-      return;
+      Logger.getInstance(JarLoader.class).debug("url: " + myURL, e);
+      return false;
     }
 
     try {
       try {
-        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL());
-        if (loader != null) {
-          myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+        if (preloadContents) {
+          JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL());
+          if (loader != null) {
+            myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+          }
         }
       }
       finally {
@@ -80,8 +80,11 @@ class JarLoader extends Loader {
       }
     }
     catch (Exception e) {
-      LOG.error(e);
+      Logger.getInstance(JarLoader.class).error(e);
+      return false;
     }
+
+    return true;
   }
 
   @Override
@@ -123,7 +126,7 @@ class JarLoader extends Loader {
       }
     }
     catch (Exception e) {
-      LOG.error("file: " + myURL, e);
+      Logger.getInstance(JarLoader.class).error("url: " + myURL, e);
     }
 
     return null;
