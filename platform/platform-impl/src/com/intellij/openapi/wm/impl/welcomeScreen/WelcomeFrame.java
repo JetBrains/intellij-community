@@ -158,7 +158,10 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     }
     return screen;
   }
-
+  
+  public static void resetInstance() {
+    ourInstance = null;
+  }
 
   public static void showNow() {
     if (ourInstance == null) {
