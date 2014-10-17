@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.actions.view.array;
+package com.jetbrains.python.debugger.array;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.Result;
@@ -434,6 +434,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       //special case with 1D arrays arr[i, :] - row,
       //but arr[:, i] - column with equal shape and ndim
       //http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
+      //explanation: http://stackoverflow.com/questions/15165170/how-do-i-maintain-row-column-orientation-of-vectors-in-numpy?rq=1
       //we use kind of a hack - use information about memory from C_CONTIGUOUS
 
       boolean isRow = value.substring(value.indexOf("#") + 1).equals("True");
