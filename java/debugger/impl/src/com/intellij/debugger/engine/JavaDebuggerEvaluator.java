@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -33,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
@@ -125,5 +127,14 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
       return textProvider.findExpression(element, allowMethodCalls);
     }
     return null;
+  }
+
+  @Override
+  public EvaluationMode getEvaluationMode(@NotNull String text, int startOffset, int endOffset, @Nullable PsiFile psiFile) {
+    if (psiFile != null) {
+      PsiElement[] range = CodeInsightUtil.findStatementsInRange(psiFile, startOffset, endOffset);
+      return range.length > 1 ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION;
+    }
+    return super.getEvaluationMode(text, startOffset, endOffset, null);
   }
 }
