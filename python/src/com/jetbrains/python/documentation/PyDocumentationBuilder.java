@@ -84,7 +84,7 @@ class PyDocumentationBuilder {
     PsiElement outer = null;
     boolean is_property = false;
     String accessor_kind = "None";
-    final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
     if (myOriginalElement != null) {
       String elementName = myOriginalElement.getText();
       if (PyUtil.isPythonIdentifier(elementName)) {

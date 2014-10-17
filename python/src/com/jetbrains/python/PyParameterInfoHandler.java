@@ -54,7 +54,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   public PyArgumentList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
-      final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(arglist.getContainingFile());
+      final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(arglist.getProject(), arglist.getContainingFile());
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
       CallArgumentsMapping result = arglist.analyzeCall(resolveContext);
       if (result.getMarkedCallee() != null) {
@@ -130,7 +130,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     final PyArgumentList argList = prevResult.getArgumentList();
     if (!argList.isValid()) return;
     // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argList.getContainingFile());
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argList.getProject(), argList.getContainingFile());
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
     final CallArgumentsMapping argumentsMapping = argList.analyzeCall(resolveContext);
     final PyMarkedCallee marked = argumentsMapping.getMarkedCallee();

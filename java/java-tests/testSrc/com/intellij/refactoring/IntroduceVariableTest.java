@@ -441,6 +441,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("i3", false, false, false, "int"));
   }
 
+  public void testNoNameConflict() {
+    doTest(new MockIntroduceVariableHandler("cTest", false, false, false, "cTest"));
+  }
+
   public void testMethodReferenceExpr() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo.I"));
   }

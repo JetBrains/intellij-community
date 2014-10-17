@@ -76,6 +76,14 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       if (dataContextElement == null) {
         dataContextElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       }
+
+      if (dataContextElement == null) {
+        final Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        if (selectedTextEditor != null) {
+          dataContextElement = PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
+        }
+      }
+
       if (dataContextElement != null) {
         if (!PlatformUtils.isCidr()) { // TODO: have an API to disable module scopes.
           Module module = ModuleUtilCore.findModuleForPsiElement(dataContextElement);

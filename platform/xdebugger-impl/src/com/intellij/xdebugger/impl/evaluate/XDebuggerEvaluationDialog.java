@@ -300,6 +300,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
   }
 
+  public void evaluationDone() {
+    mySession.rebuildViews();
+  }
+
   @Override
   public JComponent getPreferredFocusedComponent() {
     return getInputEditor().getPreferredFocusedComponent();

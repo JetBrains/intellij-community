@@ -78,7 +78,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
       if (!(problemElement instanceof PyQualifiedExpression)) return;
       final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
       if (qualifier == null) return;
-      final PyType type = TypeEvalContext.userInitiated(problemElement.getContainingFile()).getType(qualifier);
+      final PyType type = TypeEvalContext.userInitiated(problemElement.getProject(), problemElement.getContainingFile()).getType(qualifier);
       if (!(type instanceof PyModuleType)) return;
       final PyFile file = ((PyModuleType)type).getModule();
       sure(file);

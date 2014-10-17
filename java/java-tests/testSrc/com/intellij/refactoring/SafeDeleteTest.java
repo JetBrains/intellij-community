@@ -85,6 +85,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("foo.C1");
   }
 
+  public void testOverloadedMethods() throws Exception {
+    doTest("foo.A");
+  }
+
   public void testTopParameterInHierarchy() throws Exception {
     doTest("I");
   }

@@ -15,8 +15,9 @@
  */
 package git4idea.cherrypick;
 
-import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,9 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.util.Function;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
@@ -35,13 +34,9 @@ import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
-import git4idea.history.browser.GitHeavyCommit;
-import git4idea.history.wholeTree.AbstractHash;
-import git4idea.history.wholeTree.GitCommitDetailsProvider;
 import git4idea.repo.GitRepository;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -66,12 +61,9 @@ public class GitCherryPickAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getProject();
-    final List<? extends VcsFullCommitDetails> commits = getSelectedCommits(e);
-    if (project == null || commits == null || commits.isEmpty()) {
-      LOG.info(String.format("Cherry-pick action should be disabled. Project: %s, commits: %s", project, commits));
-      return;
-    }
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
+    final List<? extends VcsFullCommitDetails> commits = log.getSelectedDetails();
 
     for (VcsFullCommitDetails commit : commits) {
       myIdsInProgress.add(commit.getId());
@@ -136,24 +128,47 @@ public class GitCherryPickAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    VcsLog log = getVcsLog(e);
+    VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     Project project = getEventProject(e);
-    if (project == null || log == null || !DvcsUtil.logHasRootForVcs(log, GitVcs.getKey())) {
+    if (project == null || log == null || !logHasGitRoots(log)) {
       e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
-    else {
-      e.getPresentation().setEnabled(enabled(e));
-      e.getPresentation().setText(isAutoCommit(project) ? NAME : NAME + "...");
+
+    List<VcsFullCommitDetails> details = log.getSelectedDetails();
+    if (notFromGitAndProject(project, details)) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
+
+    e.getPresentation().setEnabled(enabled(project, log, details));
+    e.getPresentation().setText(isAutoCommit(project) ? NAME : NAME + "...");
   }
 
-  private boolean enabled(AnActionEvent e) {
-    final List<? extends VcsFullCommitDetails> commits = getSelectedCommits(e);
-    final Project project = e.getProject();
+  public static boolean logHasGitRoots(@NotNull VcsLog log) {
+    return ContainerUtil.find(log.getLogProviders(), new Condition<VcsLogProvider>() {
+      @Override
+      public boolean value(VcsLogProvider logProvider) {
+        return logProvider.getSupportedVcs().equals(GitVcs.getKey());
+      }
+    }) != null;
+  }
 
-    if (commits == null || commits.isEmpty() || project == null) {
+  private boolean notFromGitAndProject(@NotNull Project project, @NotNull List<VcsFullCommitDetails> details) {
+    final RepositoryManager<GitRepository> manager = myPlatformFacade.getRepositoryManager(project);
+    return ContainerUtil.and(details, new Condition<VcsFullCommitDetails>() {
+      @Override
+      public boolean value(VcsFullCommitDetails commit) {
+        GitRepository repository = manager.getRepositoryForRoot(commit.getRoot());
+        return repository != null && manager.isExternal(repository);
+      }
+    });
+  }
+
+  private boolean enabled(@NotNull Project project, @NotNull VcsLog log, @NotNull List<VcsFullCommitDetails> commits) {
+    if (commits.isEmpty()) {
       return false;
     }
 
@@ -163,97 +178,17 @@ public class GitCherryPickAction extends DumbAwareAction {
       }
       GitRepository repository = myPlatformFacade.getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
       if (repository == null) {
+        //it may be a non-git repository
         return false;
       }
       GitLocalBranch currentBranch = repository.getCurrentBranch();
-      Collection<String> containingBranches = getContainingBranches(e, commit, repository);
+      Collection<String> containingBranches = log.getContainingBranches(commit.getId());
       if (currentBranch != null &&  containingBranches != null && containingBranches.contains(currentBranch.getName())) {
         // already is contained in the current branch
         return false;
       }
     }
     return true;
-  }
-
-  // TODO remove after removing the old Vcs Log implementation
-  @Nullable
-  private List<? extends VcsFullCommitDetails> getSelectedCommits(AnActionEvent e) {
-    final Project project = e.getProject();
-    if (project == null) {
-      return null;
-    }
-    List<GitHeavyCommit> commits = e.getData(GitVcs.SELECTED_COMMITS);
-    if (commits != null) {
-      return convertHeavyCommitToFullDetails(commits, project);
-    }
-    final VcsLog log = getVcsLog(e);
-    if (log == null) {
-      return null;
-    }
-
-    List<Hash> selectedCommits = log.getSelectedCommits();
-    List<VcsFullCommitDetails> selectedDetails = ContainerUtil.newArrayList();
-    for (Hash commit : selectedCommits) {
-      VcsFullCommitDetails details = log.getDetailsIfAvailable(commit);
-      if (details == null) { // let the action be unavailable until all details are loaded
-        return null;
-      }
-      GitRepository root = myPlatformFacade.getRepositoryManager(project).getRepositoryForRoot(details.getRoot());
-      // don't allow to cherry-pick if a non-Git commit was selected
-      // we could cherry-pick just Git commits filtered from the list, but it might provide confusion
-      if (root == null) {
-        return null;
-      }
-      selectedDetails.add(details);
-    }
-    return selectedDetails;
-  }
-
-  private static List<? extends VcsFullCommitDetails> convertHeavyCommitToFullDetails(List<GitHeavyCommit> commits, final Project project) {
-    return ContainerUtil.map(commits, new Function<GitHeavyCommit, VcsFullCommitDetails>() {
-      @Override
-      public VcsFullCommitDetails fun(GitHeavyCommit commit) {
-        final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
-        List<Hash> parents = ContainerUtil.map(commit.getParentsHashes(), new Function<String, Hash>() {
-          @Override
-          public Hash fun(String hashValue) {
-            return factory.createHash(hashValue);
-          }
-        });
-        final List<Change> changes = commit.getChanges();
-        return factory.createFullDetails(
-          factory.createHash(commit.getHash().getValue()), parents, commit.getAuthorTime(), commit.getRoot(), commit.getSubject(),
-          commit.getAuthor(), commit.getAuthorEmail(), commit.getDescription(), commit.getCommitter(), commit.getCommitterEmail(),
-          commit.getDate().getTime(), new ThrowableComputable<Collection<Change>, Exception>() {
-            @Override
-            public Collection<Change> compute() throws Exception {
-              return changes;
-            }
-          }
-        );
-      }
-    });
-  }
-
-  private static VcsLog getVcsLog(@NotNull AnActionEvent event) {
-    return event.getData(VcsLogDataKeys.VSC_LOG);
-  }
-
-  // TODO remove after removing the old Vcs Log implementation
-  @Nullable
-  private static Collection<String> getContainingBranches(AnActionEvent event, VcsFullCommitDetails commit, GitRepository repository) {
-    GitCommitDetailsProvider detailsProvider = event.getData(GitVcs.COMMIT_DETAILS_PROVIDER);
-    if (detailsProvider != null) {
-      return detailsProvider.getContainingBranches(repository.getRoot(), AbstractHash.create(commit.getId().toShortString()));
-    }
-    if (event.getProject() == null) {
-      return null;
-    }
-    VcsLog log = getVcsLog(event);
-    if (log == null) {
-      return null;
-    }
-    return log.getContainingBranches(commit.getId());
   }
 
 }

@@ -82,7 +82,7 @@ public class PyCallableTypeImpl implements PyCallableType {
   @Nullable
   @Override
   public String getName() {
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback();
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(null);
     return String.format("(%s) -> %s",
                          myParameters != null ?
                          StringUtil.join(myParameters,

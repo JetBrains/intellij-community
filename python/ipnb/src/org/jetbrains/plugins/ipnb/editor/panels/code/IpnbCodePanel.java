@@ -31,7 +31,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   private final List<IpnbPanel> myOutputPanels = Lists.newArrayList();
 
   public IpnbCodePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final IpnbCodeCell cell) {
-    super(cell);
+    super(cell, new BorderLayout());
     myProject = project;
     myParent = parent;
 
@@ -141,6 +141,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     updatePanel(myCell.getCellOutputs());
     final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(myProject);
     connectionManager.executeCell(this);
+    setEditing(false);
   }
 
   @Override

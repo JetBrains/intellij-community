@@ -256,8 +256,10 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiResolveHelper helper = facade.getResolveHelper();
     if (manager.areElementsEquivalent(refClass, helper.resolveReferencedClass(referenceText, psiReference))) {
-      PsiElement parent = psiReference.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement && parent.getParent() instanceof PsiNewExpression) return true;
+      if (psiReference instanceof PsiJavaCodeReferenceElement) {
+        PsiElement parent = psiReference.getParent();
+        if (parent instanceof PsiNewExpression || parent.getParent() instanceof PsiNewExpression) return true;
+      }
       return helper.resolveReferencedVariable(referenceText, psiReference) == null;
     }
     return false;

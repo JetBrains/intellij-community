@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -32,7 +33,10 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -40,6 +44,8 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 /**
@@ -87,8 +93,9 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
             if (LambdaUtil.isValidLambdaContext(lambdaContext) || !(lambdaContext instanceof PsiExpressionStatement)) {
               final PsiMethod[] methods = aClass.getMethods();
               if (methods.length == 1 && aClass.getFields().length == 0) {
-                final PsiCodeBlock body = methods[0].getBody();
-                if (body != null && !hasForbiddenRefsInsideBody(methods[0], aClass)) {
+                final PsiMethod psiMethod = methods[0];
+                final PsiCodeBlock body = psiMethod.getBody();
+                if (body != null && !hasForbiddenRefsInsideBody(psiMethod, aClass) && !hasRuntimeAnnotations(psiMethod)) {
                   final PsiElement lBrace = aClass.getLBrace();
                   LOG.assertTrue(lBrace != null);
                   final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
@@ -101,6 +108,30 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         }
       }
     };
+  }
+
+  private static boolean hasRuntimeAnnotations(PsiMethod method) {
+    PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
+    for (PsiAnnotation annotation : annotations) {
+      PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+      PsiElement target = ref != null ? ref.resolve() : null;
+      if (target instanceof PsiClass) {
+        final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation((PsiClass)target, Retention.class.getName());
+        if (retentionAnno != null) {
+          PsiAnnotationMemberValue value = retentionAnno.findAttributeValue("value");
+          if (value instanceof PsiReferenceExpression) {
+            final PsiElement resolved = ((PsiReferenceExpression)value).resolve();
+            if (resolved instanceof PsiField && RetentionPolicy.RUNTIME.name().equals(((PsiField)resolved).getName())) {
+              final PsiClass containingClass = ((PsiField)resolved).getContainingClass();
+              if (containingClass != null && RetentionPolicy.class.getName().equals(containingClass.getQualifiedName())) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   public static boolean hasForbiddenRefsInsideBody(PsiMethod method, PsiAnonymousClass aClass) {

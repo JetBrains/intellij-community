@@ -16,6 +16,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -136,7 +137,8 @@ public class ClassPath {
         loader = getLoader(url, myLoaders.size());
         if (loader == null) continue;
       }
-      catch (IOException ioexception) {
+      catch (IOException e) {
+        Logger.getInstance(ClassPath.class).debug("url: " + url, e);
         continue;
       }
 
@@ -161,9 +163,8 @@ public class ClassPath {
       try {
         path = url.toURI().getSchemeSpecificPart();
       }
-      catch (URISyntaxException thisShouldNotHappen) {
-        //noinspection CallToPrintStackTrace
-        thisShouldNotHappen.printStackTrace();
+      catch (URISyntaxException e) {
+        Logger.getInstance(ClassPath.class).error("url: " + url, e);
         path = url.getFile();
       }
     }
@@ -175,22 +176,14 @@ public class ClassPath {
         loader = new FileLoader(url, index);
       }
       else if (file.isFile()) {
-        loader = new JarLoader(url, myCanLockJars, index);
-        if (myPreloadJarContents) {
-          ((JarLoader)loader).preloadClasses();
-        }
+        loader = new JarLoader(url, myCanLockJars, index, myPreloadJarContents);
       }
     }
 
     if (loader != null && myCanUseCache) {
-      try {
-        ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData(loader);
-        loader.buildCache(loaderData);
-        myCache.applyLoaderData(loaderData);
-      }
-      catch (Throwable e) {
-        // TODO: log can't create loader
-      }
+      ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData(loader);
+      loader.buildCache(loaderData);
+      myCache.applyLoaderData(loaderData);
     }
 
     return loader;

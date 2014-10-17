@@ -79,20 +79,10 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void setUp(final String testName) throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (myFixture == null) {
-            PyUnitTestTask.super.setUp(testName);
-            mySetUp = true;
-          }
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    if (myFixture == null) {
+      PyUnitTestTask.super.setUp(testName);
+      mySetUp = true;
+    }
   }
 
   @NotNull

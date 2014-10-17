@@ -37,6 +37,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ScrollUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +95,7 @@ public class DiffSideView {
       if (fileEditor != null) {
         ScrollUtil.scrollVertically(fileEditor.getComponent(), 0);
         ScrollUtil.scrollHorizontally(fileEditor.getComponent(), 0);
-
+        UIUtil.removeScrollBorder(fileEditor.getComponent());
       }
     } else {
       DataManager.removeDataProvider(myPanel);
@@ -103,6 +104,7 @@ public class DiffSideView {
       applyHighlighter();
       setMouseListeners(source);
       MyEditorFocusListener.install(this);
+      UIUtil.removeScrollBorder(editor.getComponent());
 
       state.restore();
     }

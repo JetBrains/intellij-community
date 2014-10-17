@@ -257,6 +257,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           else {
             new HeadlessValueEvaluationCallback(XValueNodeImpl.this).startFetchingValue(myFullValueEvaluator);
           }
+          event.consume();
         }
       };
     }

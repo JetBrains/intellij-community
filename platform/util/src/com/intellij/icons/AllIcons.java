@@ -704,6 +704,12 @@ public class AllIcons {
     public static final Icon WebServiceClient = IconLoader.getIcon("/javaee/WebServiceClient.png"); // 16x16
 
   }
+  
+  public static class Json {
+    public static final Icon Array = IconLoader.getIcon("/json/array.png"); // 16x16
+    public static final Icon Object = IconLoader.getIcon("/json/object.png"); // 16x16
+
+  }
   public static final Icon Logo_welcomeScreen = IconLoader.getIcon("/Logo_welcomeScreen.png"); // 80x80
   
   public static class Mac {

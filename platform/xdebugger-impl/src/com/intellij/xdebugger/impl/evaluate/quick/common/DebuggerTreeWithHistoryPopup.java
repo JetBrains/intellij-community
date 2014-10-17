@@ -15,13 +15,11 @@
  */
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
@@ -93,9 +91,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
       })
       .createPopup();
 
-    if (tree instanceof Disposable) {
-      Disposer.register(myPopup, (Disposable)tree);
-    }
+    registerTreeDisposable(myPopup, tree);
 
     //Editor may be disposed before later invokator process this action
     if (myEditor.getComponent().getRootPane() == null) {

@@ -23,6 +23,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -166,6 +167,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (ranges.isEmpty()) {
       return;
     }
+    boolean isFullReformat = ranges.size() == 1 && file.getTextRange().equals(ranges.iterator().next());
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -232,6 +234,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     if (caretKeeper != null) {
       caretKeeper.restoreCaretPosition();
+    }
+    if (editor instanceof EditorEx && isFullReformat) {
+      ((EditorEx)editor).reinitSettings();
     }
   }
 
