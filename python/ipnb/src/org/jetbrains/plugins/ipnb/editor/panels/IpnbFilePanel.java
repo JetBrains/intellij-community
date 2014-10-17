@@ -155,11 +155,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     c.gridwidth = 1;
     c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
 
-    if (myIpnbPanels.isEmpty()) {
-      final int width = IpnbEditorUtil.PANEL_WIDTH + IpnbEditorUtil.PROMPT_SIZE.width;
-      final JLabel label = new JLabel("<html><body style='width: " + width + "px'></body></html>");
-      add(label, c);
-    }
     final IpnbEditablePanel selectedCell = getSelectedCell();
     final int index = myIpnbPanels.indexOf(selectedCell);
     myIpnbFile.addCell(cell, index + 1);
