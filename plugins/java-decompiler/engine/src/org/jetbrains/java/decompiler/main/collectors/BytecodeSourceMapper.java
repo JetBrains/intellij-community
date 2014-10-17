@@ -10,6 +10,8 @@ public class BytecodeSourceMapper {
 
   private int offset_total;
 
+  private final HashMap<Integer, Integer> myOriginalLinesMapping = new HashMap<Integer, Integer>();
+
   // class, method, bytecode offset, source line
   private final HashMap<String, HashMap<String, HashMap<Integer, Integer>>> mapping = new LinkedHashMap<String, HashMap<String, HashMap<Integer, Integer>>>(); // need to preserve order
 
@@ -35,6 +37,7 @@ public class BytecodeSourceMapper {
     for(Entry<Integer, Integer> entry : tracer.getMapping().entrySet()) {
       addMapping(classname, methodname, entry.getKey(), entry.getValue());
     }
+    myOriginalLinesMapping.putAll(tracer.getOriginalLinesMapping());
   }
 
   public void dumpMapping(TextBuffer buffer, boolean offsetsToHex) {
@@ -69,6 +72,13 @@ public class BytecodeSourceMapper {
       }
       buffer.append("}").appendLineSeparator();
     }
+
+    // lines mapping
+    buffer.append("Lines mapping:").appendLineSeparator();
+    int[] mapping = getOriginalLinesMapping();
+    for (int i = 0; i < mapping.length; i+=2) {
+      buffer.append(mapping[i]).append(" <-> ").append(mapping[i+1]).appendLineSeparator();
+    }
   }
 
   public int getTotalOffset() {
@@ -83,5 +93,17 @@ public class BytecodeSourceMapper {
     this.offset_total += offset_total;
   }
 
-
+  /**
+   * original to our line mapping
+   */
+  public int[] getOriginalLinesMapping() {
+    int[] res = new int[myOriginalLinesMapping.size()*2];
+    int i = 0;
+    for (Entry<Integer, Integer> entry : myOriginalLinesMapping.entrySet()) {
+      res[i] = entry.getKey();
+      res[i+1] = entry.getValue() + offset_total + 1; // make it 1 based
+      i+=2;
+    }
+    return res;
+  }
 }

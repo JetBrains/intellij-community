@@ -63,4 +63,8 @@ public class StructLineNumberTableAttribute extends StructGeneralAttribute {
     }
     return -1;
   }
+
+  public int[] getRawData() {
+    return myLineInfo;
+  }
 }

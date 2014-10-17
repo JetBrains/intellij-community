@@ -55,3 +55,13 @@ class pkg/TestClassSimpleBytecodeMapping{
       1      20
    }
 }
+Lines mapping:
+17 <-> 8
+21 <-> 11
+22 <-> 12
+23 <-> 13
+25 <-> 15
+26 <-> 16
+12 <-> 5
+14 <-> 6
+31 <-> 21
