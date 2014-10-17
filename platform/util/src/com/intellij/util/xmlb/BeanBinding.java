@@ -24,6 +24,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.annotations.*;
@@ -199,25 +200,34 @@ class BeanBinding implements Binding {
   }
 
   private static void collectPropertyAccessors(Class<?> aClass, List<Accessor> accessors) {
-    final Map<String, Couple<Method>> candidates = ContainerUtil.newTreeMap();  // (name,(getter,setter))
+    final Map<String, Couple<Method>> candidates = ContainerUtilRt.newTreeMap(); // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
-      if (!Modifier.isPublic(method.getModifiers())) continue;
-      final Pair<String, Boolean> propertyData = getPropertyData(method.getName());  // (name,isSetter)
-      if (propertyData == null || propertyData.first.equals("class")) continue;
-      if (method.getParameterTypes().length != (propertyData.second ? 1 : 0)) continue;
+      if (!Modifier.isPublic(method.getModifiers())) {
+        continue;
+      }
+
+      Pair<String, Boolean> propertyData = getPropertyData(method.getName()); // (name,isSetter)
+      if (propertyData == null || propertyData.first.equals("class") ||
+          method.getParameterTypes().length != (propertyData.second ? 1 : 0)) {
+        continue;
+      }
 
       Couple<Method> candidate = candidates.get(propertyData.first);
-      if (candidate == null) candidate = Couple.getEmpty();
-      if ((propertyData.second ? candidate.second : candidate.first) != null) continue;
+      if (candidate == null) {
+        candidate = Couple.getEmpty();
+      }
+      if ((propertyData.second ? candidate.second : candidate.first) != null) {
+        continue;
+      }
       candidate = Couple.of(propertyData.second ? candidate.first : method, propertyData.second ? method : candidate.second);
       candidates.put(propertyData.first, candidate);
     }
     for (Map.Entry<String, Couple<Method>> candidate: candidates.entrySet()) {
-      final Couple<Method> methods = candidate.getValue();  // (getter,setter)
+      Couple<Method> methods = candidate.getValue(); // (getter,setter)
       if (methods.first != null && methods.second != null &&
           methods.first.getReturnType().equals(methods.second.getParameterTypes()[0]) &&
-          XmlSerializerImpl.findAnnotation(methods.first.getAnnotations(), Transient.class) == null &&
-          XmlSerializerImpl.findAnnotation(methods.second.getAnnotations(), Transient.class) == null) {
+          methods.first.getAnnotation(Transient.class) == null &&
+          methods.second.getAnnotation(Transient.class) == null) {
         accessors.add(new PropertyAccessor(candidate.getKey(), methods.first.getReturnType(), methods.first, methods.second));
       }
     }
@@ -228,14 +238,14 @@ class BeanBinding implements Binding {
       final int modifiers = field.getModifiers();
       if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) &&
           !Modifier.isFinal(modifiers) && !Modifier.isTransient(modifiers) &&
-          XmlSerializerImpl.findAnnotation(field.getAnnotations(), Transient.class) == null) {
+          field.getAnnotation(Transient.class) == null) {
         accessors.add(new FieldAccessor(field));
       }
     }
   }
 
   @Nullable
-  private static Pair<String, Boolean> getPropertyData(final String methodName) {
+  private static Pair<String, Boolean> getPropertyData(@NotNull String methodName) {
     String part = "";
     boolean isSetter = false;
     if (methodName.startsWith("get")) {
@@ -248,7 +258,7 @@ class BeanBinding implements Binding {
       part = methodName.substring(3, methodName.length());
       isSetter = true;
     }
-    return !part.isEmpty() ? Pair.create(Introspector.decapitalize(part), isSetter) : null;
+    return part.isEmpty() ? null : Pair.create(Introspector.decapitalize(part), isSetter);
   }
 
   public String toString() {
