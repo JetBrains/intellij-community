@@ -374,8 +374,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
-  private void addTemplateImpl(Template template) {
-    final TemplateImpl templateImpl = (TemplateImpl)template;
+  private void addTemplateImpl(@NotNull Template template) {
+    TemplateImpl templateImpl = (TemplateImpl)template;
     if (getTemplate(templateImpl.getKey(), templateImpl.getGroupName()) == null) {
       myTemplates.putValue(template.getKey(), templateImpl);
     }
