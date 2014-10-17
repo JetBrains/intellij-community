@@ -340,7 +340,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     myTitle = title;
   }
 
-  public void addDisposable(Disposable disposable) {
+  public void addDisposable(@NotNull Disposable disposable) {
     Disposer.register(this, disposable);
   }
 

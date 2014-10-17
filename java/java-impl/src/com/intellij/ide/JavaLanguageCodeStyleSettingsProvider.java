@@ -184,7 +184,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public DisplayPriority getDisplayPriority() {
-    if (PlatformUtils.isIdeaUltimate()) return DisplayPriority.KEY_LANGUAGE_SETTINGS;
+    if (PlatformUtils.isIntelliJ()) return DisplayPriority.KEY_LANGUAGE_SETTINGS;
     return DisplayPriority.LANGUAGE_SETTINGS;
   }
 

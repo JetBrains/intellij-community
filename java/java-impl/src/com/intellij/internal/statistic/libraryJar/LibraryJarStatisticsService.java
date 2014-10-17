@@ -32,9 +32,9 @@ import java.net.URL;
  */
 public class LibraryJarStatisticsService extends SettingsConnectionService {
 
-  private static final String FILE_NAME = "library-jar-statistics.xml";
-  private static final String DEFAULT_SETTINGS_URL = "http://jetbrains.com/idea/" + FILE_NAME;
-  private static final String DEFAULT_SERVICE_URL = "http://frameworks.jetbrains.com/statistics";
+  private static final String FILE_NAME = "statistics/library-jar-statistics.xml";
+  private static final String DEFAULT_SETTINGS_URL = "http://www.jetbrains.com/idea/download-assistant.xml";
+  private static final String DEFAULT_SERVICE_URL = "http://frameworks.jetbrains.com";
 
   private static final LibraryJarStatisticsService myInstance = new LibraryJarStatisticsService();
   private LibraryJarDescriptor[] myDescriptors;

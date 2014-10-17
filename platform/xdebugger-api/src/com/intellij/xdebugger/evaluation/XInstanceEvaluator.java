@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.history.browser;
+package com.intellij.xdebugger.evaluation;
 
-public interface PageSizes {
-  int LOAD_SIZE = 50;
-  int VISIBLE_PAGE_SIZE = 50;
+import com.intellij.xdebugger.frame.XStackFrame;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Subclass to allow to recalculate instance value in a different context
+ *
+ * @author egor
+ */
+public interface XInstanceEvaluator {
+  /**
+   * Recalculates instance value in the context of the provided stack frame
+   * @see XDebuggerEvaluator
+   */
+  void evaluate(@NotNull XDebuggerEvaluator.XEvaluationCallback callback, @NotNull XStackFrame frame);
 }

@@ -105,7 +105,7 @@ public class IdeBorderFactory {
   }
 
   private static Color getBorderColor() {
-    return UIUtil.getBorderColor();
+    return JBColor.border();
   }
 
 

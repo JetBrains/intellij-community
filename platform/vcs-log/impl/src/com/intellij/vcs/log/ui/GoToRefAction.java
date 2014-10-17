@@ -34,7 +34,7 @@ public class GoToRefAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
-    final VcsLog log = e.getData(VcsLogDataKeys.VSC_LOG);
+    final VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     if (project == null || log == null) {
       return;
     }
@@ -60,7 +60,7 @@ public class GoToRefAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    VcsLog log = e.getData(VcsLogDataKeys.VSC_LOG);
+    VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null);
   }
 
