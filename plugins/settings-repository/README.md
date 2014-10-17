@@ -1,6 +1,6 @@
 # Installation
 
-Available for all IntelliJ Platform based products (build number greater than 140.2). Settings | Plugins | Browse repositories -> type in Settings Repository.
+Available for all IntelliJ Platform based products (build number greater than 139.69/140.2). Settings | Plugins | Browse repositories -> type in Settings Repository.
 
 Don't try to install plugin from disk — otherwise you have to be aware of compatibility.
 
