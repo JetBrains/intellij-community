@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.collect.Ordering;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,14 +11,9 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.RefGroup;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsLogRefManager;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogRefreshListener;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -84,11 +78,12 @@ public class BranchesPanel extends JPanel {
       }
     });
 
-    Project project = dataHolder.getProject();
-    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new VcsLogRefreshListener() {
+    myUI.addLogListener(new VcsLogListener() {
       @Override
-      public void refresh(@NotNull DataPack dataPack) {
-        rebuild(dataPack.getRefsModel());
+      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refresh) {
+        if (refresh) {
+          rebuild(dataPack.getRefs());
+        }
       }
     });
   }
@@ -119,13 +114,13 @@ public class BranchesPanel extends JPanel {
     }
   }
 
-  public void rebuild(@NotNull RefsModel refsModel) {
+  public void rebuild(@NotNull VcsLogRefs refsModel) {
     myRefGroups = getRefsToDisplayOnPanel(refsModel);
     getParent().repaint();
   }
 
   @NotNull
-  private List<RefGroup> getRefsToDisplayOnPanel(@NotNull RefsModel refsModel) {
+  private List<RefGroup> getRefsToDisplayOnPanel(@NotNull VcsLogRefs refsModel) {
     Collection<VcsRef> allRefs = refsModel.getBranches();
 
     List<RefGroup> groups = ContainerUtil.newArrayList();

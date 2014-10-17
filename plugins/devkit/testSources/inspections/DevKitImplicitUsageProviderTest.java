@@ -15,8 +15,7 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -52,7 +51,7 @@ public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTest
   }
 
   private void enableImplicitUsageInspections() {
-    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection());
+    myFixture.enableInspections(new UnusedDeclarationInspectionBase(true));
   }
 
 

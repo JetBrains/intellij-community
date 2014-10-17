@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class PyImportReference extends PyReferenceImpl {
     }
 
     PyExpression qualifier = myElement.getQualifier();
-    final TypeEvalContext context = TypeEvalContext.userInitiated(CompletionUtil.getOriginalOrSelf(myElement).getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), CompletionUtil.getOriginalOrSelf(myElement).getContainingFile());
     if (qualifier != null) {
       // qualifier's type must be module, it should know how to complete
       PyType type = context.getType(qualifier);

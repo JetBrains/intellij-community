@@ -17,11 +17,12 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
-    <lang.syntaxHighlighterFactory key="JSON" implementationClass="com.intellij.json.JsonSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory key="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
 
     <!-- Code style and formatting -->
     <codeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonLanguageCodeStyleSettingsProvider"/>
+    <colorSettingsPage implementation="com.intellij.json.highlighting.JsonColorsPage"/>
     <lang.formatter language="JSON" implementationClass="com.intellij.json.formatter.JsonFormattingBuilderModel"/>
     <lang.braceMatcher language="JSON" implementationClass="com.intellij.json.JsonBraceMatcher"/>
     <quoteHandler fileType="JSON" className="com.intellij.json.JsonQuoteHandler"/>
@@ -47,7 +48,7 @@
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
     <!-- Inspections -->
-    <localInspection language="JSON" groupPath="JSON" shortName="JsonStandardCompliance" key="name.standard.compliance.inspection"
+    <localInspection language="JSON" shortName="JsonStandardCompliance" key="name.standard.compliance.inspection"
                      groupKey="name.json.inspection.group" enabledByDefault="true" level="ERROR"
                      bundle="com.intellij.json.JsonBundle"
                      implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>

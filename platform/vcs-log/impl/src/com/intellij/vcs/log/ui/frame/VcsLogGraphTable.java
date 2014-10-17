@@ -30,10 +30,11 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableScrollingUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
@@ -116,6 +117,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     MouseAdapter mouseAdapter = new MyMouseAdapter();
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
+
+    getTableHeader().setReorderingAllowed(false);
 
     PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
     TableScrollingUtil.installActions(this, false);
@@ -206,7 +209,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     if (column == GraphTableModel.ROOT_COLUMN) {
       Object at = getValueAt(row, column);
       if (at instanceof VirtualFile) {
-        return "<html><b>" + ((VirtualFile)at).getPresentableUrl() + "</b><br/>Click to " + (myUI.isShowRootNames() ? "collapse" : "expand") + "</html>";
+        return "<html><b>" + ((VirtualFile)at).getPresentableUrl() + "</b><br/>Double-click to " + (myUI.isShowRootNames() ? "collapse" : "expand") + "</html>";
       }
     }
     return null;
@@ -270,15 +273,14 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    List<String> hashes = ContainerUtil.newArrayList();
-    for (int row : getSelectedRows()) {
-      Hash hash = ((GraphTableModel)getModel()).getHashAtRow(row);
-      if (hash != null) {
-        hashes.add(hash.asString());
-      }
-    }
-    if (!hashes.isEmpty()) {
-      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(hashes, "\n")));
+    List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
+    if (!details.isEmpty()) {
+      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(details, new Function<VcsFullCommitDetails, String>() {
+        @Override
+        public String fun(VcsFullCommitDetails details) {
+          return details.getSubject();
+        }
+      }, "\n")));
     }
   }
 
@@ -349,9 +351,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         return;
       }
 
-      if (e.getClickCount() == 1) {
-        if (expandOrCollapseRoots(e)) return;
-
+      if (e.getClickCount() > 1) {
+        expandOrCollapseRoots(e);
+      } else if (e.getClickCount() == 1) {
         performAction(e, MyGraphMouseAction.Type.CLICK);
       }
     }

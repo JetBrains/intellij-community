@@ -45,6 +45,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.IdeaDecompiler;
 
 import java.security.MessageDigest;
@@ -168,6 +169,10 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
       @Override
       public void visitPackage(PsiPackage aPackage) {
+        // annotations are in classpaths, but we are not interested in inferred annotations for them
+        if ("org.intellij.lang.annotations".equals(aPackage.getQualifiedName())) {
+          return;
+        }
         for (PsiPackage subPackage : aPackage.getSubPackages(scope)) {
           visitPackage(subPackage);
         }
@@ -237,21 +242,23 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     PsiAnnotation externalContractAnnotation = findExternalAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
     PsiAnnotation inferredContractAnnotation = findInferredAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
 
-    String externalContractAnnotationString =
-      externalContractAnnotation == null ? "null" : "@Contract(" + AnnotationUtil.getStringAttributeValue(externalContractAnnotation, null) + ")";
-    String inferredContractAnnotationString =
-      inferredContractAnnotation == null ? "null" : "@Contract(" + AnnotationUtil.getStringAttributeValue(inferredContractAnnotation, null) + ")";
+    String externalContractAnnotationText =
+      externalContractAnnotation == null ? "null" : externalContractAnnotation.getText();
+    String inferredContractAnnotationText =
+      inferredContractAnnotation == null ? "null" : inferredContractAnnotation.getText();
 
-    if (!externalContractAnnotationString.equals(inferredContractAnnotationString)) {
-      diffs.add(methodKey + ": " + externalContractAnnotationString + " != " + inferredContractAnnotationString);
+    if (!externalContractAnnotationText.equals(inferredContractAnnotationText)) {
+      diffs.add(methodKey + ": " + externalContractAnnotationText + " != " + inferredContractAnnotationText);
     }
 
   }
 
+  @Nullable
   private PsiAnnotation findInferredAnnotation(PsiModifierListOwner owner, String fqn) {
     return InferredAnnotationsManager.getInstance(myModule.getProject()).findInferredAnnotation(owner, fqn);
   }
 
+  @Nullable
   private PsiAnnotation findExternalAnnotation(PsiModifierListOwner owner, String fqn) {
     return ExternalAnnotationsManager.getInstance(myModule.getProject()).findExternalAnnotation(owner, fqn);
   }

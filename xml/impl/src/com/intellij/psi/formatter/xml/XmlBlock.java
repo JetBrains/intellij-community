@@ -171,7 +171,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
 
     ASTNode child = node.getFirstChildNode();
-    if (child == null && !(node instanceof PsiWhiteSpace) && node.getElementType() != TokenType.ERROR_ELEMENT) {
+    if (child == null && !(node instanceof PsiWhiteSpace) && node.getElementType() != TokenType.ERROR_ELEMENT && node.getTextLength() > 0) {
       result.add(new ReadOnlyBlock(node));
       return;
     }

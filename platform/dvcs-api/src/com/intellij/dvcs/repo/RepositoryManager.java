@@ -30,11 +30,16 @@ import java.util.List;
 public interface RepositoryManager<T extends Repository> {
 
   /**
-   * Returns the {@link Repository} which tracks the Git or Hg repository located in the given directory,
-   * or {@code null} if the given file is not a vcs root known to this {@link com.intellij.openapi.project.Project}.
+   * Returns the Repository instance which tracks the VCS repository located in the given root directory,
+   * or {@code null} if the given root is not a valid registered vcs root.
+   * <p/>
+   * The method checks both project roots and external roots previously registered
+   * via {@link #addExternalRepository(VirtualFile, Repository)}.
    */
   @Nullable
   T getRepositoryForRoot(@Nullable VirtualFile root);
+
+  boolean isExternal(@NotNull T repository);
 
   /**
    * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git or Hg repository.
@@ -53,6 +58,16 @@ public interface RepositoryManager<T extends Repository> {
    */
   @NotNull
   List<T> getRepositories();
+
+  /**
+   * Registers a repository which doesn't belong to the project.
+   */
+  void addExternalRepository(@NotNull VirtualFile root, @NotNull T repository);
+
+  /**
+   * Removes the repository not from the project, when it is not interesting anymore.
+   */
+  void removeExternalRepository(@NotNull VirtualFile root);
 
   boolean moreThanOneRoot();
 

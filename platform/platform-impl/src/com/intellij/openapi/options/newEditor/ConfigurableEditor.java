@@ -32,6 +32,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -58,6 +59,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private static final String RESET_DESCRIPTION = "Rollback changes for this configuration element";
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this);
   private final IdentityHashMap<Configurable, JComponent> myConfigurableContent = new IdentityHashMap<Configurable, JComponent>();
+  private final CardLayout myCardLayout = new CardLayout();
+  private final JPanel myCardPanel = new JPanel(myCardLayout);
   private final JLabel myErrorLabel = new JLabel();
   private final AbstractAction myApplyAction = new AbstractAction(CommonBundle.getApplyButtonText()) {
     @Override
@@ -86,7 +89,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     myErrorLabel.setVerticalTextPosition(SwingConstants.TOP);
     myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
     myErrorLabel.setBackground(ERROR_BACKGROUND);
-    add(BorderLayout.SOUTH, myErrorLabel);
+    add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
+    add(BorderLayout.CENTER, myCardPanel);
     ActionManager.getInstance().addAnActionListener(this, this);
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     myConfigurable = configurable;
@@ -187,13 +191,11 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   private void setCurrent(Configurable configurable, JComponent content) {
-    if (this != content.getParent()) {
-      removeAll();
-      add(BorderLayout.CENTER, content);
-      add(BorderLayout.SOUTH, myErrorLabel);
-      revalidate();
-      repaint();
+    if (myCardPanel != content.getParent()) {
+      content.setName(configurable != null ? ConfigurableVisitor.ByID.getID(configurable) + configurable.hashCode() : "null configurable");
+      myCardPanel.add(content, content.getName());
     }
+    myCardLayout.show(myCardPanel, content.getName());
     updateCurrent(configurable, false);
   }
 
@@ -234,10 +236,6 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     if (exception == null) {
       myErrorLabel.setVisible(false);
       return true;
-    }
-    Font font = myErrorLabel.getFont();
-    if (font != null) {
-      myErrorLabel.setFont(font.deriveFont(2f + font.getSize()));
     }
     myErrorLabel.setText("<html><body><strong>Changes were not applied because of the following error</strong>:<br>" + exception.getMessage());
     myErrorLabel.setVisible(true);

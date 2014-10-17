@@ -96,6 +96,7 @@ public class IpnbEditorUtil {
     final String promptText = prompt(promptNumber, type);
     JLabel promptLabel = new JLabel(promptText);
     promptLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+    promptLabel.setMinimumSize(PROMPT_SIZE);
     promptLabel.setPreferredSize(PROMPT_SIZE);
     final Font font = promptLabel.getFont();
     assert font != null;

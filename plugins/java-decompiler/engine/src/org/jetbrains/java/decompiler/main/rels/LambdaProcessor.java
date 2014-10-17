@@ -122,7 +122,7 @@ public class LambdaProcessor {
               node_lambda.parent = node;
 
               clprocessor.getMapRootClasses().put(node_lambda.simpleName, node_lambda);
-              mapMethodsLambda.put(node_lambda.lambda_information.content_method_key, node_lambda.simpleName);
+              mapMethodsLambda.put(node_lambda.lambdaInformation.content_method_key, node_lambda.simpleName);
             }
           }
         }

@@ -21,7 +21,6 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,9 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -55,7 +52,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.annotate.GitRepositoryForAnnotationsListener;
@@ -69,11 +65,6 @@ import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
-import git4idea.history.browser.GitHeavyCommit;
-import git4idea.history.browser.GitProjectLogManager;
-import git4idea.history.wholeTree.GitCommitDetailsProvider;
-import git4idea.history.wholeTree.GitCommitsSequentialIndex;
-import git4idea.history.wholeTree.GitCommitsSequentially;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
@@ -106,28 +97,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   public static final String NAME = "Git";
 
-  /**
-   * Provide selected Git commit in some commit list. Use this, when {@link Change} is not enough.
-   * @see VcsDataKeys#CHANGES
-   * @deprecated Use {@link VcsLog#getSelectedCommits()}
-   */
-  @Deprecated
-  public static final DataKey<GitHeavyCommit> GIT_COMMIT = DataKey.create("Git.Commit");
-
-  /**
-   * Provides the list of Git commits selected in some list, for example, in the Git log.
-   * @deprecated Use {@link VcsLog#getSelectedCommits()}
-   */
-  @Deprecated
-  public static final DataKey<List<GitHeavyCommit>> SELECTED_COMMITS = DataKey.create("Git.Selected.Commits");
-
-  /**
-   * Provides the possibility to receive on demand those commit details which usually are not accessible from the {@link git4idea.history.browser.GitHeavyCommit} object.
-   * @deprecated Use {@link VcsLog#getSelectedCommits()}
-   */
-  @Deprecated
-  public static final DataKey<GitCommitDetailsProvider> COMMIT_DETAILS_PROVIDER = DataKey.create("Git.Commits.Details.Provider");
-
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
 
@@ -144,7 +113,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final Configurable myConfigurable;
   private final RevisionSelector myRevSelector;
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
-  private final @NotNull GitPlatformFacade myPlatformFacade;
 
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
@@ -192,8 +160,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
-    myExecutableValidator = new GitExecutableValidator(myProject, this);
-    myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
+    myExecutableValidator = new GitExecutableValidator(myProject);
   }
 
 
@@ -330,9 +297,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myVFSListener = new GitVFSListener(myProject, this, myGit);
     }
     ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
-    if (!Registry.is("git.new.log")) {
-      GitProjectLogManager.getInstance(myProject).activate();
-    }
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myBranchWidget = new GitBranchWidget(myProject);
@@ -341,7 +305,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myRepositoryForAnnotationsListener == null) {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
-    ((GitCommitsSequentialIndex) ServiceManager.getService(GitCommitsSequentially.class)).activate();
     ServiceManager.getService(myProject, GitUserRegistry.class).activate();
   }
 
@@ -369,13 +332,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
-    GitProjectLogManager.getInstance(myProject).deactivate();
 
     if (myBranchWidget != null) {
       DvcsUtil.removeStatusBarWidget(myProject, myBranchWidget);
       myBranchWidget = null;
     }
-    ((GitCommitsSequentialIndex) ServiceManager.getService(GitCommitsSequentially.class)).deactivate();
   }
 
   @NotNull

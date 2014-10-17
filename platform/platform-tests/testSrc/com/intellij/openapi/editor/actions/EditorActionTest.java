@@ -20,9 +20,11 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 
 public class EditorActionTest extends AbstractEditorTest {
@@ -146,9 +148,23 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("text\n<caret>");
   }
 
-  public void testEscapeCharsImpactOnWordBoundaries() throws Exception {
+  public void testPasteInOneLineMode() throws Exception {
+    init("", TestFileType.TEXT);
+    ((EditorEx)myEditor).setOneLineMode(true);
+    CopyPasteManager.getInstance().setContents(new StringSelection("a\rb"));
+    executeAction(IdeActions.ACTION_EDITOR_PASTE);
+    checkResultByText("a b<caret>");
+  }
+
+  public void testDeleteToWordStartWithEscapeChars() throws Exception {
     init("class Foo { String s = \"a\\nb<caret>\"; }", TestFileType.JAVA);
     executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START);
     checkResultByText("class Foo { String s = \"a\\n<caret>\"; }");
+  }
+
+  public void testDeleteToWordEndWithEscapeChars() throws Exception {
+    init("class Foo { String s = \"a\\<caret>nb\"; }", TestFileType.JAVA);
+    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
+    checkResultByText("class Foo { String s = \"a\\<caret>b\"; }");
   }
 }

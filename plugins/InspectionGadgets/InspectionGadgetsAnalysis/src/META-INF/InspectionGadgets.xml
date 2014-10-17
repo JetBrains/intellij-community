@@ -2450,7 +2450,8 @@
                      key="unqualified.static.usage.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.UnqualifiedStaticUsageInspection" cleanupTool="true"/>
-    <localInspection language="JAVA" shortName="UnclearBinaryExpression" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection language="JAVA" suppressId="UnclearExpression" alternativeId="UnclearBinaryExpression"
+                     shortName="UnclearBinaryExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unclear.binary.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.UnclearBinaryExpressionInspection"/>

@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.Topic;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.util.StopWatch;
@@ -41,8 +40,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
-
-  public static final Topic<VcsLogRefreshListener> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", VcsLogRefreshListener.class);
 
   private static final Logger LOG = Logger.getInstance(VcsLogDataHolder.class);
 
@@ -92,12 +89,12 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
 
     try {
-      myHashMap = new VcsLogHashMap(myProject);
+      myHashMap = new VcsLogHashMap(myProject, logProviders);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // TODO: show a message to the user & fallback to using in-memory Hashes
     }
-    myContainingBranchesGetter = new ContainingBranchesGetter(project, this, this);
+    myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
 
     myFilterer = new VcsLogFiltererImpl(myProject, myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter,
                                                        uiProperties.isBek() ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal,
@@ -107,7 +104,6 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
       @Override
       public void consume(DataPack dataPack) {
         myFilterer.onRefresh(dataPack);
-        myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).refresh(dataPack);
       }
     };
 

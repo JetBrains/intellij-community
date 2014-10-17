@@ -15,6 +15,11 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
@@ -29,10 +34,6 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class NewExprent extends Exprent {
 
@@ -56,19 +57,21 @@ public class NewExprent extends Exprent {
     this.type = EXPRENT_NEW;
   }
 
-  public NewExprent(VarType newtype, ListStack<Exprent> stack, int arraydim) {
+  public NewExprent(VarType newtype, ListStack<Exprent> stack, int arraydim, Set<Integer> bytecode_offsets) {
     this.newtype = newtype;
     for (int i = 0; i < arraydim; i++) {
       lstDims.add(0, stack.pop());
     }
 
+    addBytecodeOffsets(bytecode_offsets);
     setAnonymous();
   }
 
-  public NewExprent(VarType newtype, List<Exprent> lstDims) {
+  public NewExprent(VarType newtype, List<Exprent> lstDims, Set<Integer> bytecode_offsets) {
     this.newtype = newtype;
     this.lstDims = lstDims;
 
+    addBytecodeOffsets(bytecode_offsets);
     setAnonymous();
   }
 
@@ -152,13 +155,14 @@ public class NewExprent extends Exprent {
     return lst;
   }
 
+  @Override
   public Exprent copy() {
     List<Exprent> lst = new ArrayList<Exprent>();
     for (Exprent expr : lstDims) {
       lst.add(expr.copy());
     }
 
-    NewExprent ret = new NewExprent(newtype, lst);
+    NewExprent ret = new NewExprent(newtype, lst, bytecode);
     ret.setConstructor(constructor == null ? null : (InvocationExprent)constructor.copy());
     ret.setLstArrayElements(lstArrayElements);
     ret.setDirectArrayInit(directArrayInit);
@@ -266,9 +270,11 @@ public class NewExprent extends Exprent {
         }
         Exprent methodObject = constructor == null ? null : constructor.getInstance();
         new ClassWriter().classLambdaToJava(child, buf, methodObject, indent);
+        tracer.incrementCurrentSourceLine(buf.countLines());
       }
       else {
-        new ClassWriter().classToJava(child, buf, indent);
+        new ClassWriter().classToJava(child, buf, indent, tracer);
+        tracer.incrementCurrentSourceLine(buf.countLines());
       }
     }
     else if (directArrayInit) {
@@ -311,20 +317,31 @@ public class NewExprent extends Exprent {
           if (!enumconst || start < lstParameters.size()) {
             buf.append("(");
 
-            boolean firstpar = true;
+            boolean firstParam = true;
             for (int i = start; i < lstParameters.size(); i++) {
               if (sigFields == null || sigFields.get(i) == null) {
-                if (!firstpar) {
+                Exprent expr = lstParameters.get(i);
+                VarType leftType = constructor.getDescriptor().params[i];
+
+                if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
+                  ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);
+                  if (node != null && node.namelessConstructorStub) {
+                    break;  // skip last parameter of synthetic constructor call
+                  }
+                }
+
+                if (!firstParam) {
                   buf.append(", ");
                 }
 
                 TextBuffer buff = new TextBuffer();
-                ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buff, indent, true, tracer);
-
+                ExprProcessor.getCastedExprent(expr, leftType, buff, indent, true, tracer);
                 buf.append(buff);
-                firstpar = false;
+
+                firstParam = false;
               }
             }
+
             buf.append(")");
           }
         }

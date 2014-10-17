@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,8 +183,10 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
         indicator.setFraction((double)i / size);
         if (needBinaryList(name)) {
           indicator.setText2(name);
+          final PySkeletonRefresher.PyBinaryItem item = binaries.modules.get(name);
+          final String modulePath = item != null ? item.getPath() : "";
           //noinspection unchecked
-          refresher.generateSkeleton(name, "", new ArrayList<String>(), Consumer.EMPTY_CONSUMER);
+          refresher.generateSkeleton(name, modulePath, new ArrayList<String>(), Consumer.EMPTY_CONSUMER);
         }
       }
     }

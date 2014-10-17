@@ -149,17 +149,29 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
       // contracts
       ExpectContract expectedContract = javaMethod.getAnnotation(ExpectContract.class);
-      PsiAnnotation actualContractAnnotation = myInferredAnnotationsManager.findInferredAnnotation(psiMethod, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+      PsiAnnotation actualContract = myInferredAnnotationsManager.findInferredAnnotation(psiMethod, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
 
-      assertEquals(expectedContract == null, actualContractAnnotation == null);
+      String expectedText = expectedContract == null ? "null" : expectedContract.toString();
+      String inferredText = actualContract == null ? "null" : actualContract.getText();
 
-      if (expectedContract != null) {
+      assertEquals(javaMethod.toString() + ":" + expectedText + " <> " + inferredText,
+                   expectedContract == null, actualContract == null);
+
+      if (expectedContract != null && actualContract != null) {
         String expectedContractValue = expectedContract.value();
-        String actualContractValue = AnnotationUtil.getStringAttributeValue(actualContractAnnotation, null);
+        String actualContractValue = AnnotationUtil.getStringAttributeValue(actualContract, null);
         assertEquals(javaMethod.toString(), expectedContractValue, actualContractValue);
-      }
 
+        boolean expectedPureValue = expectedContract.pure();
+        boolean actualPureValue = getPureAttribute(actualContract);
+        assertEquals(javaMethod.toString(), expectedPureValue, actualPureValue);
+      }
     }
+  }
+
+  private static boolean getPureAttribute(PsiAnnotation annotation) {
+    Boolean pureValue = AnnotationUtil.getBooleanAttributeValue(annotation, "pure");
+    return pureValue != null && pureValue.booleanValue();
   }
 
   private void checkCompoundIds(Class<?> javaClass) throws IOException {

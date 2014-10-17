@@ -96,13 +96,6 @@ public class FileStatusMap implements Disposable {
     }
   }
 
-  public boolean isMarkedDirtyDefensively(@NotNull Document document) {
-    synchronized(myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.get(document);
-      return status != null && status.defensivelyMarked;
-    }
-  }
-
   private static class FileStatus {
     public boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinished;
@@ -115,12 +108,12 @@ public class FileStatusMap implements Disposable {
     }
 
     private void markWholeFileDirty(@NotNull Project project) {
-      dirtyScopes.put(Pass.UPDATE_ALL, WHOLE_FILE_DIRTY_MARKER);
-      dirtyScopes.put(Pass.EXTERNAL_TOOLS, WHOLE_FILE_DIRTY_MARKER);
-      dirtyScopes.put(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(Pass.UPDATE_ALL, WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(Pass.EXTERNAL_TOOLS, WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_DIRTY_MARKER);
       TextEditorHighlightingPassRegistrarEx registrar = (TextEditorHighlightingPassRegistrarEx) TextEditorHighlightingPassRegistrar.getInstance(project);
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
-        dirtyScopes.put(factory.getPassId(), WHOLE_FILE_DIRTY_MARKER);
+        setDirtyScope(factory.getPassId(), WHOLE_FILE_DIRTY_MARKER);
       }
     }
 
@@ -136,7 +129,9 @@ public class FileStatusMap implements Disposable {
         @Override
         public RangeMarker execute(RangeMarker oldScope) {
           RangeMarker newScope = combineScopes(oldScope, scope, fileLength, document);
-          if (newScope != oldScope && oldScope != null) oldScope.dispose();
+          if (newScope != oldScope && oldScope != null) {
+            oldScope.dispose();
+          }
           return newScope;
         }
       });
@@ -158,6 +153,16 @@ public class FileStatusMap implements Disposable {
       });
       s.append(")");
       return s.toString();
+    }
+
+    private void setDirtyScope(int passId, RangeMarker scope) {
+      RangeMarker marker = dirtyScopes.get(passId);
+      if (marker != scope) {
+        if (marker != null) {
+          marker.dispose();
+        }
+        dirtyScopes.put(passId, scope);
+      }
     }
   }
 
@@ -190,11 +195,7 @@ public class FileStatusMap implements Disposable {
         status.wolfPassFinished = true;
       }
       else if (status.dirtyScopes.containsKey(passId)) {
-        RangeMarker marker = status.dirtyScopes.get(passId);
-        if (marker != null) {
-          marker.dispose();
-          status.dirtyScopes.put(passId, null);
-        }
+        status.setDirtyScope(passId, null);
       }
     }
   }
@@ -233,11 +234,7 @@ public class FileStatusMap implements Disposable {
       }
       else {
         LOG.assertTrue(status.dirtyScopes.containsKey(passId));
-        RangeMarker marker = status.dirtyScopes.get(passId);
-        if (marker != null) {
-          marker.dispose();
-        }
-        status.dirtyScopes.put(passId, WHOLE_FILE_DIRTY_MARKER);
+        status.setDirtyScope(passId, WHOLE_FILE_DIRTY_MARKER);
       }
     }
   }
@@ -364,7 +361,7 @@ public class FileStatusMap implements Disposable {
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      throw new UnsupportedOperationException();
+      throw null;
     }
 
     @Override

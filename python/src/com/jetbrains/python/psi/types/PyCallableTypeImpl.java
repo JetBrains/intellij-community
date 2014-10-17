@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class PyCallableTypeImpl implements PyCallableType {
   @Nullable
   @Override
   public String getName() {
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback();
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(null);
     return String.format("(%s) -> %s",
                          myParameters != null ?
                          StringUtil.join(myParameters,

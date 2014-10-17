@@ -41,6 +41,10 @@ public class RefPainter {
     myDrawMultiRepoIndicator = drawMultiRepoIndicator;
   }
 
+  public int getComponentWidth(@NotNull String str, FontMetrics metrics) {
+    return metrics.stringWidth(str) + REF_PADDING + flagWidth();
+  }
+
   private double paddingStr(@NotNull String str, @NotNull FontRenderContext renderContext) {
     return getStringWidth(str, renderContext) + REF_PADDING + flagWidth();
   }

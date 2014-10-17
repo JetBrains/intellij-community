@@ -126,7 +126,7 @@ public class CommandRuntime {
 
   private boolean handleErrorText(CommandExecutor executor, Command command) throws SvnBindException {
     final String errText = executor.getErrorOutput().trim();
-    final AuthCallbackCase callback = executor instanceof TerminalExecutor ? null : createCallback(errText, command.getRepositoryUrl());
+    final AuthCallbackCase callback = createCallback(errText, command.getRepositoryUrl(), executor instanceof TerminalExecutor);
     // do not handle possible authentication errors if command was manually cancelled
     // force checking if command is cancelled and not just use corresponding value from executor - as there could be cases when command
     // finishes quickly but with some auth error - this way checkCancelled() is not called by executor itself and so command is repeated
@@ -166,13 +166,25 @@ public class CommandRuntime {
   }
 
   @Nullable
-  private AuthCallbackCase createCallback(@NotNull final String errText, @Nullable final SVNURL url) {
+  private AuthCallbackCase createCallback(@NotNull final String errText, @Nullable final SVNURL url, boolean isUnderTerminal) {
     List<AuthCallbackCase> authCases = ContainerUtil.newArrayList();
 
-    authCases.add(new CertificateCallbackCase(myAuthenticationService, url));
-    authCases.add(new ProxyCallback(myAuthenticationService, url));
-    authCases.add(new TwoWaySslCallback(myAuthenticationService, url));
-    authCases.add(new UsernamePasswordCallback(myAuthenticationService, url));
+    if (isUnderTerminal) {
+      // Subversion client does not prompt for proxy credentials (just fails with error) even in terminal mode. So we handle this case the
+      // same way as in non-terminal mode - repeat command with new credentials.
+      // NOTE: We could also try getting proxy credentials from user in advance (by issuing separate request and asking for credentials if
+      // NOTE: required) - not to execute same command several times like it is currently for all other cases in terminal mode. But such
+      // NOTE: behaviour is not mandatory for now - so we just use "repeat command" logic.
+      authCases.add(new ProxyCallback(myAuthenticationService, url));
+      // Same situation (described above) as with proxy settings is here.
+      authCases.add(new TwoWaySslCallback(myAuthenticationService, url));
+    }
+    else {
+      authCases.add(new CertificateCallbackCase(myAuthenticationService, url));
+      authCases.add(new ProxyCallback(myAuthenticationService, url));
+      authCases.add(new TwoWaySslCallback(myAuthenticationService, url));
+      authCases.add(new UsernamePasswordCallback(myAuthenticationService, url));
+    }
 
     return ContainerUtil.find(authCases, new Condition<AuthCallbackCase>() {
       @Override

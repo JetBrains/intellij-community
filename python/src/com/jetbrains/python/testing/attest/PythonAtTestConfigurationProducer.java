@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class PythonAtTestConfigurationProducer extends
 
   @Override
   protected boolean isTestClass(@NotNull final PyClass pyClass, @Nullable final AbstractPythonTestRunConfiguration configuration) {
-    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback(pyClass.getProject()))) {
       if (type != null && "TestBase".equals(type.getName()) && hasTestFunction(pyClass)) {
         return true;
       }

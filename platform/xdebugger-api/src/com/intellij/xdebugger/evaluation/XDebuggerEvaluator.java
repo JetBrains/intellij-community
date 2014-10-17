@@ -16,10 +16,14 @@
 package com.intellij.xdebugger.evaluation;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -167,6 +171,30 @@ public abstract class XDebuggerEvaluator {
   @NotNull
   public String formatTextForEvaluation(@NotNull String text) {
     return text;
+  }
+
+  /**
+   * Returns expression that is selected or under the cursor in the Editor
+   */
+  public XExpression getEditorExpression(@NotNull Editor editor, @Nullable PsiFile psiFile) {
+    String text = editor.getSelectionModel().getSelectedText();
+    if (text != null) {
+      text = formatTextForEvaluation(text);
+    }
+    else if (editor.getProject() != null) {
+      Document document = editor.getDocument();
+      ExpressionInfo info = getExpressionInfoAtOffset(editor.getProject(), document, editor.getCaretModel().getOffset(), true);
+      if (info != null) {
+        text = info.getExpressionText();
+        if (text == null) {
+          text = document.getText(info.getTextRange());
+        }
+      }
+    }
+    if (!StringUtil.isEmpty(text)) {
+      return XDebuggerUtil.getInstance().createExpression(text, null, null, text.contains("\n") ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION);
+    }
+    return null;
   }
 
   @Deprecated

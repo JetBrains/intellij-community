@@ -22,7 +22,6 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -71,11 +70,11 @@ public abstract class ExecutableValidator {
   protected abstract String getCurrentExecutable();
 
   /**
-   * @return the settings configurable where the executable is shown and can be fixed.
+   * @return the settings configurable display name, where the executable is shown and can be fixed.
    *         This configurable will be opened if user presses "Fix" on the notification about invalid executable.
    */
   @NotNull
-  protected abstract Configurable getConfigurable();
+  protected abstract String getConfigurableDisplayName();
 
   /**
    * Returns true if the supplied executable is valid.
@@ -150,8 +149,7 @@ public abstract class ExecutableValidator {
   }
 
   protected void showSettings() {
-    Configurable configurable = getConfigurable();
-    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable.getDisplayName());
+    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurableDisplayName());
   }
 
   /**

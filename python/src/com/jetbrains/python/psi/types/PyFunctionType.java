@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class PyFunctionType implements PyCallableType {
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(location.getContainingFile());
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(location.getProject(), location.getContainingFile());
     final PyClassType delegate;
     if (location instanceof PyReferenceExpression) {
       delegate = selectFakeType(((PyReferenceExpression)location).getQualifier(), typeEvalContext);

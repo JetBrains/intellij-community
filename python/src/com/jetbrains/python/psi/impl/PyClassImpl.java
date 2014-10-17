@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,7 +201,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @NotNull
   @Override
   public List<PyClass> getAncestorClasses() {
-    return getAncestorClasses(TypeEvalContext.codeInsightFallback());
+    return getAncestorClasses(TypeEvalContext.codeInsightFallback(getProject()));
   }
 
   @NotNull
@@ -231,7 +231,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (superClassQName.equals(getQualifiedName())) {
       return true;
     }
-    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
+    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.codeInsightFallback(getProject()))) {
       if (type != null && superClassQName.equals(type.getClassQName())) {
         return true;
       }
@@ -279,7 +279,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @NotNull
   public PyClass[] getSuperClasses() {
-    final List<PyClassLikeType> superTypes = getSuperClassTypes(TypeEvalContext.codeInsightFallback());
+    final List<PyClassLikeType> superTypes = getSuperClassTypes(TypeEvalContext.codeInsightFallback(getProject()));
     if (superTypes.isEmpty()) {
       return EMPTY_ARRAY;
     }
@@ -1033,7 +1033,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyClass objClass = PyBuiltinCache.getInstance(this).getClass("object");
     if (this == objClass) return true; // a rare but possible case
     if (hasNewStyleMetaClass(this)) return true;
-    for (PyClassLikeType type : getOldStyleAncestorTypes(TypeEvalContext.codeInsightFallback())) {
+    for (PyClassLikeType type : getOldStyleAncestorTypes(TypeEvalContext.codeInsightFallback(getProject()))) {
       if (type == null) {
         // unknown, assume new-style class
         return true;

@@ -51,10 +51,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
@@ -207,6 +204,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     setCancelButtonText("&Close");
     Disposer.register(myProject, getDisposable());
     EditorEx editor = null;
+    final Ref<Integer> initOffset = Ref.create();
     if (myCurrentFile == null) {
       setTitle("PSI Viewer");
     }
@@ -215,6 +213,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       myFileType = myCurrentFile.getLanguage().getDisplayName();
       if (currentEditor != null) {
         myInitText = currentEditor.getSelectionModel().getSelectedText();
+        if (myInitText == null) {
+          initOffset.set(currentEditor.getCaretModel().getOffset());
+        }
       }
       if (myInitText == null) {
         myInitText = currentFile.getText();
@@ -230,6 +231,16 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     init();
     if (myCurrentFile != null) {
       doOKAction();
+
+      if (!initOffset.isNull()) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            myEditor.getCaretModel().moveToOffset(initOffset.get());
+            myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+          }
+        });
+      }
     }
   }
 

@@ -319,7 +319,7 @@ public class ExitHelper {
 
     ExitExprent retexpr = new ExitExprent(ExitExprent.EXIT_RETURN, null,
                                           ((MethodDescriptor)DecompilerContext
-                                            .getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR)).ret);
+                                            .getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR)).ret, null);
     // a changeable list needed
     bstat.setExprents(new ArrayList<Exprent>(Arrays.asList(new Exprent[]{retexpr})));
 

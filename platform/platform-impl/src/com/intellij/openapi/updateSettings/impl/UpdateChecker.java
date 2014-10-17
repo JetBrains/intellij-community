@@ -235,8 +235,7 @@ public final class UpdateChecker {
       installedTxt.deleteOnExit();
     }
 
-    final PluginManagerUISettings updateSettings = PluginManagerUISettings.getInstance();
-    updateSettings.myOutdatedPlugins.clear();
+    UpdateSettings.getInstance().myOutdatedPlugins.clear();
     if (!toUpdate.isEmpty()) {
       try {
         final List<IdeaPluginDescriptor> process = RepositoryHelper.loadPluginsFromRepository(indicator, buildNumber);

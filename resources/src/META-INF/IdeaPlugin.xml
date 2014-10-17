@@ -314,7 +314,7 @@
 
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedNameIdentifier" id="javaNameIdentifier"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.FocusInJavadoc" id="javadoc" order="before javaComments"/>
-    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments" id="javaComments"/>
+    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionConfidence" id="javaReflection" />
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
@@ -504,8 +504,9 @@
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
 
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionMerger"/>
 
-    <globalInspection language="JAVA" shortName="UnusedDeclaration" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
+    <globalInspection language="JAVA" shortName="unused" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"
                      presentation="com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation"/>
@@ -619,9 +620,6 @@
                       groupName="Declaration redundancy" enabledByDefault="false" level="WARNING"
                       implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
 
-    <localInspection language="JAVA" suppressId="UnusedDeclaration" alternativeId="unused" shortName="UNUSED_SYMBOL" displayName="Unused symbol"
-                     groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection" unfair="true"/>
     <localInspection language="JAVA" shortName="UNUSED_IMPORT" displayName="Unused import (editor light)" groupName="Imports" enabledByDefault="true"
                      level="WARNING" implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection" unfair="true"/>
 

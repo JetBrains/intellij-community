@@ -78,7 +78,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return myFilter;
   }
   private static class WeakUnreferencedFilter extends UnreferencedFilter {
-    private WeakUnreferencedFilter(@NotNull UnusedDeclarationInspection tool, @NotNull GlobalInspectionContextImpl context) {
+    private WeakUnreferencedFilter(@NotNull UnusedDeclarationInspectionBase tool, @NotNull GlobalInspectionContextImpl context) {
       super(tool, context);
     }
 
@@ -92,8 +92,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @NotNull
-  private UnusedDeclarationInspection getTool() {
-    return (UnusedDeclarationInspection)getToolWrapper().getTool();
+  private UnusedDeclarationInspectionBase getTool() {
+    return (UnusedDeclarationInspectionBase)getToolWrapper().getTool();
   }
 
 

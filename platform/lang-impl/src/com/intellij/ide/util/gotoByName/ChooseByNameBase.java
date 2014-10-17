@@ -1237,10 +1237,12 @@ public abstract class ChooseByNameBase {
 
     private MyTextField() {
       super(40);
-      if (!(getUI() instanceof DarculaTextFieldUI)) {
-        setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(this));
+      if (!UIUtil.isUnderGTKLookAndFeel()) {
+        if (!(getUI() instanceof DarculaTextFieldUI)) {
+          setUI(DarculaTextFieldUI.createUI(this));
+        }
+        setBorder(new DarculaTextBorder());
       }
-      setBorder(new DarculaTextBorder());
       enableEvents(AWTEvent.KEY_EVENT_MASK);
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);
       forwardStroke = getShortcut(IdeActions.ACTION_GOTO_FORWARD);

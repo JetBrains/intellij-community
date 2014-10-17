@@ -24,30 +24,45 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Stack;
 
 public class HeavyProcessLatch {
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
-  private final AtomicInteger myHeavyProcessCounter = new AtomicInteger();
+  private final Stack<String> myHeavyProcesses = new Stack<String>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
 
   private HeavyProcessLatch() {
   }
 
+  /**
+   * @deprecated use {@link #processStarted(java.lang.String)} instead
+   */
+  @Deprecated
   public void processStarted() {
-    myHeavyProcessCounter.incrementAndGet();
+    processStarted("");
+  }
+
+  public void processStarted(@NotNull String operationName) {
+    myHeavyProcesses.push(operationName);
     myEventDispatcher.getMulticaster().processStarted();
   }
 
   public void processFinished() {
-    myHeavyProcessCounter.decrementAndGet();
+    myHeavyProcesses.pop();
     myEventDispatcher.getMulticaster().processFinished();
   }
 
   public boolean isRunning() {
-    return myHeavyProcessCounter.get() != 0;
+    return !myHeavyProcesses.isEmpty();
   }
+
+  public String getRunningOperationName() {
+    synchronized (myHeavyProcesses) {
+      return myHeavyProcesses.isEmpty() ? null : myHeavyProcesses.peek();
+    }
+  }
+
 
   public interface HeavyProcessListener extends EventListener {
     public void processStarted();

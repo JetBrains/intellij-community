@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
 
     PyCollectionType type = (PyCollectionType)o;
 
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback();
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myClass.getProject());
     if (myElementType != null ? !myElementType.equals(type.getElementType(context)) : type.getElementType(context) != null) return false;
 
     return true;

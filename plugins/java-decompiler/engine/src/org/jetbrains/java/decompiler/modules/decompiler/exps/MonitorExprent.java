@@ -16,11 +16,12 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.TextBuffer;
-import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 
 public class MonitorExprent extends Exprent {
@@ -36,13 +37,16 @@ public class MonitorExprent extends Exprent {
     this.type = EXPRENT_MONITOR;
   }
 
-  public MonitorExprent(int montype, Exprent value) {
+  public MonitorExprent(int montype, Exprent value, Set<Integer> bytecode_offsets) {
     this.montype = montype;
     this.value = value;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
+  @Override
   public Exprent copy() {
-    return new MonitorExprent(montype, value.copy());
+    return new MonitorExprent(montype, value.copy(), bytecode);
   }
 
   public List<Exprent> getAllExprents() {

@@ -74,7 +74,7 @@ public class RefreshQueueImpl extends RefreshQueue {
       public void run() {
         try {
           myRefreshIndicator.start();
-          HeavyProcessLatch.INSTANCE.processStarted();
+          HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. "+session.toString());
           try {
             doScan(session);
           }

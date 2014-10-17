@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,8 @@ public class PyUserSkeletonsUtil {
       assert owner != element;
       final PsiElement originalOwner = getUserSkeleton(owner, skeletonFile);
       if (originalOwner instanceof PyClass) {
-        final PyType type = TypeEvalContext.codeInsightFallback().getType((PyClass)originalOwner);
+        final PyClass classOwner = (PyClass)originalOwner;
+        final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);
         if (type instanceof PyClassLikeType) {
           final PyClassLikeType classType = (PyClassLikeType)type;
           final PyClassLikeType instanceType = classType.toInstance();

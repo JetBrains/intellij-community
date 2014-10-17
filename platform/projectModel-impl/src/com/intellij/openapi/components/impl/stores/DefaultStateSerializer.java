@@ -34,8 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings({"deprecation"})
-class DefaultStateSerializer {
-
+public class DefaultStateSerializer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DefaultStateSerializer");
 
   private DefaultStateSerializer() {
@@ -54,8 +53,8 @@ class DefaultStateSerializer {
     else {
       return XmlSerializer.serialize(state, new SkipDefaultValuesSerializationFilters() {
         @Override
-        public boolean accepts(final Accessor accessor, final Object bean) {
-          if (!super.accepts(accessor, bean)) {
+        protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
+          if (!super.accepts(accessor, bean, beanValue)) {
             return false;
           }
 
@@ -75,7 +74,7 @@ class DefaultStateSerializer {
 
   @SuppressWarnings({"unchecked"})
   @Nullable
-  static <T> T deserializeState(@Nullable Element stateElement, Class <T> stateClass, @Nullable T mergeInto) throws StateStorageException {
+  public static <T> T deserializeState(@Nullable Element stateElement, Class <T> stateClass, @Nullable T mergeInto) throws StateStorageException {
     if (stateElement == null) return mergeInto;
 
     if (stateClass.equals(Element.class)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -60,6 +61,7 @@ public class FindClassTest extends PsiTestCase {
           myPackDir = mySrcDir1.createChildDirectory(null, "p");
           VirtualFile file1 = myPackDir.createChildData(null, "A.java");
           VfsUtil.saveText(file1, "package p; public class A{ public void foo(); }");
+          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
           PsiTestUtil.addContentRoot(myModule, myPrjDir1);
           PsiTestUtil.addSourceRoot(myModule, mySrcDir1);

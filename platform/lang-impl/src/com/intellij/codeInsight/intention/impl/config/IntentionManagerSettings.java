@@ -26,7 +26,6 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +34,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.WeakStringInterner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +56,9 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   private static final Alarm ourRegisterMetaDataAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   private static class MetaDataKey extends Pair<String, String> {
+    private static final StringInterner ourInterner = new WeakStringInterner();
     private MetaDataKey(@NotNull String[] categoryNames, @NotNull final String familyName) {
-      super(StringUtil.join(categoryNames, ":"), IdeaPluginDescriptorImpl.intern(familyName));
+      super(StringUtil.join(categoryNames, ":"), ourInterner.intern(familyName));
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (text != null) {
       candidates.addAll(NameSuggesterUtil.generateNames(text));
     }
-    final TypeEvalContext context = TypeEvalContext.userInitiated(expression.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(expression.getProject(), expression.getContainingFile());
     PyType type = context.getType(expression);
     if (type != null && type != PyNoneType.INSTANCE) {
       String typeName = type.getName();

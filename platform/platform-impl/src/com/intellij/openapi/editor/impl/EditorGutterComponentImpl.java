@@ -228,7 +228,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void paintEditorBackgrounds(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     Color defaultBackgroundColor = myEditor.getBackgroundColor();
     int startX = getWhitespaceSeparatorOffset() + 1;
-    IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, true, false);
+    IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true);
     while (!state.atEnd()) {
       VisualPosition visualStart = myEditor.offsetToVisualPosition(state.getStartOffset());
       VisualPosition visualEnd   = myEditor.offsetToVisualPosition(state.getEndOffset());
@@ -989,7 +989,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public int getFoldingAreaWidth() {
     return isFoldingOutlineShown()
            ? getFoldingAnchorWidth() + 2
-           : isLineNumbersShown() ? getFoldingAnchorWidth() / 2 : 0;
+           : 0;
   }
 
   @Override

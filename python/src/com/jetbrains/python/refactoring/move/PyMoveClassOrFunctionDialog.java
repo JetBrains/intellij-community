@@ -29,6 +29,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 
@@ -36,9 +37,46 @@ import javax.swing.*;
  * @author vlan
  */
 public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
+  /**
+   * Instance to be injected to mimic this class in tests
+   */
+  private static PyMoveClassOrFunctionDialog ourInstanceToReplace = null;
   private PyMoveClassOrFunctionPanel myPanel;
 
-  public PyMoveClassOrFunctionDialog(@NotNull Project project, @NotNull PsiNamedElement[] elements, @Nullable String destination) {
+  /**
+   * Creates dialog
+   *
+   * @param project dialog project
+   * @param elements elements to move
+   * @param destination destination where elements have to be moved
+   * @return dialog
+   */
+  public static PyMoveClassOrFunctionDialog getInstance(@NotNull final Project project,
+                                                        @NotNull final PsiNamedElement[] elements,
+                                                        @Nullable final String destination) {
+    return ((ourInstanceToReplace != null) ?
+            ourInstanceToReplace :
+            new PyMoveClassOrFunctionDialog(project, elements, destination));
+  }
+
+  /**
+   * Injects instance to be used in tests
+   *
+   * @param instanceToReplace instance to be used in tests
+   */
+  @TestOnly
+  public static void setInstanceToReplace(@NotNull final PyMoveClassOrFunctionDialog instanceToReplace) {
+    ourInstanceToReplace = instanceToReplace;
+  }
+
+  /**
+   *
+   * @param project dialog project
+   * @param elements elements to move
+   * @param destination destination where elements have to be moved
+   * @return dialog
+   */
+  protected PyMoveClassOrFunctionDialog(@NotNull Project project, @NotNull PsiNamedElement[] elements, @Nullable String destination) {
     super(project, true);
     assert elements.length > 0;
     final String moveText;
@@ -67,9 +105,10 @@ public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
     descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
     descriptor.withTreeRootVisible(true);
 
-    myPanel.getBrowseTargetFileButton().addBrowseFolderListener(PyBundle.message("refactoring.move.class.or.function.choose.destination.file.title"),
-                                                                null, project, descriptor,
-                                                                TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myPanel.getBrowseTargetFileButton()
+      .addBrowseFolderListener(PyBundle.message("refactoring.move.class.or.function.choose.destination.file.title"),
+                               null, project, descriptor,
+                               TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     init();
   }
 

@@ -11,14 +11,47 @@
   <item name="java.security.Identity boolean keyEquals(java.security.Key, java.security.Key) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.security.Identity java.lang.String getInfo()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.security.Identity java.lang.String getName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.security.Identity java.lang.String printKeys()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.security.Identity java.security.Certificate[] certificates()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.security.Identity java.security.IdentityScope getScope()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.security.Identity java.security.PublicKey getPublicKey()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.security.Identity void addCertificate(java.security.Certificate) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.security.Policy Policy()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.security.Policy boolean isSet()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.security.Policy java.security.PermissionCollection getPermissions(java.security.ProtectionDomain) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -33,6 +66,21 @@
   </item>
   <item name="java.security.Policy void initPolicy(java.security.Policy) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.security.Provider double getVersion()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.security.Provider java.lang.String getInfo()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.security.Provider java.lang.String getName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.security.Provider java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -78,6 +126,11 @@
   </item>
   <item name="java.security.Provider void removeService(java.security.Provider.Service) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.security.Security Security()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.security.Security boolean isConstraintSatisfied(java.lang.String, java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

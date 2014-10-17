@@ -46,6 +46,11 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     myExpressionComboBox = new XDebuggerExpressionComboBox(project, editorsProvider, "evaluateExpression", sourcePosition);
     myExpressionComboBox.getComboBox().setMinimumAndPreferredWidth(250);
     myMainPanel.add(myExpressionComboBox.getComponent(), BorderLayout.CENTER);
+    final JBLabel help = new JBLabel(XDebuggerBundle.message("xdebugger.evaluate.addtowatches.hint"), SwingConstants.RIGHT);
+    help.setBorder(IdeBorderFactory.createEmptyBorder(2,0,6,0));
+    help.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    help.setFontColor(UIUtil.FontColor.BRIGHTER);
+    myMainPanel.add(help, BorderLayout.SOUTH);
     if (expression != null) {
       myExpressionComboBox.setExpression(expression);
     }
@@ -56,11 +61,6 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
   public void addComponent(JPanel contentPanel, JPanel resultPanel) {
     contentPanel.add(resultPanel, BorderLayout.CENTER);
     contentPanel.add(myMainPanel, BorderLayout.NORTH);
-    final JBLabel hint = new JBLabel(XDebuggerBundle.message("xdebugger.evaluate.addtowatches.hint"), SwingConstants.RIGHT);
-    hint.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 6, 0));
-    hint.setComponentStyle(UIUtil.ComponentStyle.SMALL);
-    hint.setFontColor(UIUtil.FontColor.BRIGHTER);
-    contentPanel.add(hint, BorderLayout.SOUTH);
   }
 
   @NotNull

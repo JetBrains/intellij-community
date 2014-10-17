@@ -7,6 +7,7 @@ import uk.ac.ed.ph.snuggletex.dombuilding.EqnArrayHandler;
 import uk.ac.ed.ph.snuggletex.internal.DOMBuilder;
 import uk.ac.ed.ph.snuggletex.internal.SnuggleParseException;
 import uk.ac.ed.ph.snuggletex.semantics.Interpretation;
+import uk.ac.ed.ph.snuggletex.semantics.MathOperatorInterpretation;
 import uk.ac.ed.ph.snuggletex.tokens.CommandToken;
 import uk.ac.ed.ph.snuggletex.tokens.FlowToken;
 
@@ -46,6 +47,8 @@ public final class IpnbTexPackageDefinitions {
         }
       }, null);
       ourPackage.addEnvironment("eqnarray", ALL_MODES, MATH, Interpretation.TABULAR, new EqnArrayHandler(), START_NEW_XHTML_BLOCK);
+      ourPackage.addSimpleMathCommand("lt", new MathOperatorInterpretation("<"));
+      ourPackage.addSimpleMathCommand("gt", new MathOperatorInterpretation(">"));
 
       ourPackage.loadMathCharacterDefinitions(ourMathCharacters);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,7 +193,7 @@ public class PyOverrideImplementUtil {
     if (anno != null) {
       pyFunctionBuilder.annotation(anno.getText());
     }
-    final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getProject(), baseFunction.getContainingFile());
     final List<PyParameter> baseParams = PyUtil.getParameters(baseFunction, context);
     for (PyParameter parameter : baseParams) {
       pyFunctionBuilder.parameter(parameter.getText());

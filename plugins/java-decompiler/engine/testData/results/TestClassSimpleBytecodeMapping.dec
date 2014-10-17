@@ -1,0 +1,57 @@
+package pkg;
+
+public class TestClassSimpleBytecodeMapping {
+   public int test() {
+      System.out.println("before");
+      this.run(new Runnable() {
+         public void run() {
+            System.out.println("Runnable");
+         }
+      });
+      if(Math.random() > 0.0D) {
+         System.out.println("0");
+         return 0;
+      } else {
+         System.out.println("1");
+         return 1;
+      }
+   }
+
+   void run(Runnable var1) {
+      var1.run();
+   }
+}
+
+class pkg/TestClassSimpleBytecodeMapping{
+   method run (Ljava/lang/Runnable;)V{
+      1      20
+   }
+
+   method test ()I{
+      0      4
+      3      4
+      5      4
+      11      5
+      14      10
+      17      10
+      18      10
+      19      10
+      1c      11
+      1f      11
+      21      11
+      24      12
+      25      12
+      26      14
+      29      14
+      2b      14
+      2e      15
+      2f      15
+   }
+}
+class pkg/TestClassSimpleBytecodeMapping$1{
+   method run ()V{
+      0      7
+      3      7
+      5      7
+   }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,7 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
   public void testChangeGeneratedExternally() throws IOException {
     PsiFile file = myFixture.configureByText("Gen.txt", "");
     VfsUtil.saveText(file.getVirtualFile(), "abc");
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertFalse(isEditedGeneratedFile(file));
   }
 

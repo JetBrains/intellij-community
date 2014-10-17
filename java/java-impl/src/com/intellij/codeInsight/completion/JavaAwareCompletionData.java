@@ -19,8 +19,10 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.filters.ContextGetter;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,9 +45,6 @@ public class JavaAwareCompletionData extends CompletionData{
     if(_ret == null || !(_ret instanceof LookupItem)) return;
 
     LookupItem ret = (LookupItem)_ret;
-    final InsertHandler insertHandler = variant.getInsertHandler();
-    if(insertHandler != null && ret.getInsertHandler() == null) {
-    }
     ret.setInsertHandler(new InsertHandler<LookupElement>() {
       @Override
       public void handleInsert(InsertionContext context, LookupElement item) {
@@ -66,43 +65,24 @@ public class JavaAwareCompletionData extends CompletionData{
     set.add(ret);
   }
 
-  @Override
-  protected void addKeywords(final Set<LookupElement> set, final PsiElement position, final PrefixMatcher matcher, final PsiFile file,
-                                  final CompletionVariant variant, final Object comp, final TailType tailType) {
+  protected void addKeyword(Set<LookupElement> set,
+                            final TailType tailType,
+                            final Object comp,
+                            final PrefixMatcher matcher,
+                            final PsiFile file,
+                            final CompletionVariant variant) {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
-    if (comp instanceof String) {
-      addKeyword(factory, set, tailType, comp, matcher, file, variant);
-    }
-    else {
-      final CompletionContext context = position.getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-      if (comp instanceof ContextGetter) {
-        final Object[] elements = ((ContextGetter)comp).get(position, context);
-        for (Object element : elements) {
-          addLookupItem(set, tailType, element, file, variant);
-        }
-      }
-    }
-  }
-
-  private void addKeyword(PsiElementFactory factory, Set<LookupElement> set, final TailType tailType, final Object comp, final PrefixMatcher matcher,
-                                final PsiFile file,
-                                final CompletionVariant variant) {
     for (final LookupElement item : set) {
       if (item.getObject().toString().equals(comp.toString())) {
         return;
       }
     }
-    if(factory == null){
-      addLookupItem(set, tailType, comp, file, variant);
+    try{
+      final PsiKeyword keyword = factory.createKeyword((String)comp);
+      addLookupItem(set, tailType, keyword, file, variant);
     }
-    else{
-      try{
-        final PsiKeyword keyword = factory.createKeyword((String)comp);
-        addLookupItem(set, tailType, keyword, file, variant);
-      }
-      catch(IncorrectOperationException e){
-        addLookupItem(set, tailType, comp, file, variant);
-      }
+    catch(IncorrectOperationException e){
+      addLookupItem(set, tailType, comp, file, variant);
     }
   }
 

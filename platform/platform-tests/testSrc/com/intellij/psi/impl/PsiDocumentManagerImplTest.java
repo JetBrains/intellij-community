@@ -456,6 +456,7 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
       @Override
       public Object compute() throws Exception {
         VfsUtil.saveText(vFile, StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1));
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
         return null;
       }
     });
