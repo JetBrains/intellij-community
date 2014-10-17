@@ -16,12 +16,6 @@
 
 package com.intellij.codeInspection.unusedSymbol;
 
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;
-import org.intellij.lang.annotations.Pattern;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,56 +26,13 @@ import java.awt.event.ActionListener;
  * User: anna
  * Date: 17-Feb-2006
  */
-public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase implements PairedUnfairLocalInspectionTool {
+public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase {
 
   /**
    * use {@link com.intellij.codeInspection.deadCode.UnusedDeclarationInspection} instead
    */
   @Deprecated
   public UnusedSymbolLocalInspection() {
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return SHORT_NAME;
-  }
-
-  @Override
-  @Pattern(VALID_ID_PATTERN)
-  @NotNull
-  @NonNls
-  public String getID() {
-    return "unused";
-  }
-
-  @Override
-  public String getAlternativeID() {
-    return UnusedDeclarationInspection.ALTERNATIVE_ID;
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @NotNull
-  @Override
-  public String getInspectionForBatchShortName() {
-    return UnusedDeclarationInspection.SHORT_NAME;
   }
 
   public class OptionsPanel {
