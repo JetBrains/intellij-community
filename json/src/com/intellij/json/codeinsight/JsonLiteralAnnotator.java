@@ -1,12 +1,13 @@
 package com.intellij.json.codeinsight;
 
 import com.intellij.json.JsonBundle;
+import com.intellij.json.highlighting.JsonSyntaxHighlighterFactory;
+import com.intellij.json.psi.JsonNumberLiteral;
 import com.intellij.json.psi.JsonPsiUtil;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -18,10 +19,11 @@ import java.util.regex.Pattern;
 /**
  * @author Mikhail Golubev
  */
-public class JsonStringLiteralAnnotator implements Annotator {
+public class JsonLiteralAnnotator implements Annotator {
   private static final Pattern VALID_ESCAPE = Pattern.compile("\\\\([\"\\\\/bfnrt]|u[0-9a-fA-F]{4})");
+  private static final Pattern VALID_NUMBER_LITERAL = Pattern.compile("-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?");
 
-  private static boolean debug = ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode();
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
@@ -29,14 +31,14 @@ public class JsonStringLiteralAnnotator implements Annotator {
       final JsonStringLiteral stringLiteral = (JsonStringLiteral)element;
       final int elementOffset = element.getTextOffset();
       if (JsonPsiUtil.isPropertyKey(element)) {
-        holder.createInfoAnnotation(element, debug ? "instance field" : null).setTextAttributes(
-          DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+        holder.createInfoAnnotation(element, DEBUG ? "property key" : null).setTextAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY);
       }
       final String text = element.getText();
       final int length = text.length();
+
       // Check that string literal is closed properly
       if (length <= 1 || text.charAt(0) != text.charAt(length - 1) || quoteEscaped(text, length - 1)) {
-        holder.createErrorAnnotation(element.getTextRange(), JsonBundle.message("msg.missing.closing.quote"));
+        holder.createErrorAnnotation(element, JsonBundle.message("msg.missing.closing.quote"));
       }
 
       // Check escapes
@@ -52,6 +54,11 @@ public class JsonStringLiteralAnnotator implements Annotator {
             holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), JsonBundle.message("msg.illegal.escape.sequence"));
           }
         }
+      }
+    }
+    else if (element instanceof JsonNumberLiteral) {
+      if (!VALID_NUMBER_LITERAL.matcher(element.getText()).matches()) {
+        holder.createErrorAnnotation(element, JsonBundle.message("msg.illegal.floating.point.literal"));
       }
     }
   }

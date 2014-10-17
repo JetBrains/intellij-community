@@ -74,7 +74,7 @@ public class GraphTableModel extends AbstractTableModel {
     sb.append("LAST 100 COMMITS:\n");
     List<GraphCommit<Integer>> commits = myDataPack.getPermanentGraph().getAllCommits();
     for (int i = 0; i < 100 && i < commits.size(); i++) {
-      GraphCommit<Integer> commit = commits.get(0);
+      GraphCommit<Integer> commit = commits.get(i);
       sb.append(myDataHolder.getHash(commit.getId()) + "\n");
     }
     sb.append("\nALL REFS:\n");
@@ -170,14 +170,14 @@ public class GraphTableModel extends AbstractTableModel {
           return "";
         }
         else {
-          return data.getAuthor().getName();
+          return data.getAuthor().getName() + (data.getAuthor().equals(data.getCommitter()) ? "" : "*");
         }
       case DATE_COLUMN:
-        if (data == null || data.getTimestamp() < 0) {
+        if (data == null || data.getAuthorTime() < 0) {
           return "";
         }
         else {
-          return DateFormatUtil.formatDateTime(data.getTimestamp());
+          return DateFormatUtil.formatDateTime(data.getAuthorTime());
         }
       default:
         throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (COLUMN_COUNT - 1));

@@ -447,7 +447,7 @@ public class TypeConversionUtil {
     return PsiType.VOID.equals(type);
   }
 
-  public static boolean isBooleanType(PsiType type) {
+  public static boolean isBooleanType(@Nullable PsiType type) {
     return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 

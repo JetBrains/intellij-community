@@ -181,7 +181,7 @@ public class PyExtractMethodUtil {
       scope.add(owner);
       final PyClass containingClass = ((PyFunction)owner).getContainingClass();
       if (containingClass != null) {
-        for (PyFunction function : containingClass.getMethods()) {
+        for (PyFunction function : containingClass.getMethods(false)) {
           if (!function.equals(owner) && !function.equals(generatedMethod))
             scope.add(function);
         }

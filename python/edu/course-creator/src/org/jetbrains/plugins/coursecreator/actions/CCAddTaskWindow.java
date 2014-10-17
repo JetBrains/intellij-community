@@ -100,6 +100,11 @@ public class CCAddTaskWindow extends DumbAwareAction {
     if (lessonDir == null) return;
 
     final Lesson lesson = course.getLesson(lessonDir.getName());
+    if (lesson == null) {
+      presentation.setVisible(false);
+      presentation.setEnabled(false);
+      return;
+    }
     final Task task = lesson.getTask(taskDir.getName());
     if (task == null) {
       presentation.setVisible(false);

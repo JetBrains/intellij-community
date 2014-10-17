@@ -2,12 +2,14 @@ package org.jetbrains.plugins.ipnb.configuration;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.HyperlinkAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
@@ -16,6 +18,7 @@ import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -45,7 +48,14 @@ public final class IpnbConnectionManager implements ProjectComponent {
         final String url = IpnbSettings.getInstance(myProject).getURL();
         if (StringUtil.isEmptyOrSpaces(url)) {
           BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-            "Please, specify IPython Notebook URL in Settings->IPython Notebook", null, MessageType.WARNING.getPopupBackground(), null);
+            "Please, specify IPython Notebook URL in <a href=\"\">Settings->IPython Notebook</a>", null,
+            MessageType.WARNING.getPopupBackground(),
+            new HyperlinkAdapter() {
+              @Override
+              protected void hyperlinkActivated(HyperlinkEvent e) {
+                ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "IPython Notebook");
+              }
+            });
           final Balloon balloon = balloonBuilder.createBalloon();
           balloon.showInCenterOf(fileEditor.getRunCellButton());
           return;

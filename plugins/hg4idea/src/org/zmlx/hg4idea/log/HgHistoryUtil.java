@@ -258,7 +258,7 @@ public class HgHistoryUtil {
         }
         return factory.createShortDetails(factory.createHash(changeset), parentsHash,
                                           revisionDate.getTime(), root,
-                                          subject, author, email);
+                                          subject, author, email, author, email, revisionDate.getTime());
       }
     });
   }

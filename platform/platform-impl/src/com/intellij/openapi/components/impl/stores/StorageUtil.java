@@ -59,7 +59,7 @@ import java.util.List;
  * @author mike
  */
 public class StorageUtil {
-  private static final Logger LOG = Logger.getInstance(StorageUtil.class);
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
 
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
@@ -74,7 +74,7 @@ public class StorageUtil {
 
   public static void notifyUnknownMacros(@NotNull TrackingPathMacroSubstitutor substitutor,
                                          @NotNull final Project project,
-                                         @Nullable String componentName) {
+                                         @Nullable final String componentName) {
     final LinkedHashSet<String> macros = new LinkedHashSet<String>(substitutor.getUnknownMacros(componentName));
     if (macros.isEmpty()) {
       return;
@@ -86,6 +86,7 @@ public class StorageUtil {
         macros.removeAll(getMacrosFromExistingNotifications(project));
 
         if (!macros.isEmpty()) {
+          LOG.debug("Reporting unknown path macros " + macros + " in component " + componentName);
           String format = "<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a></p>";
           String productName = ApplicationNamesInfo.getInstance().getProductName();
           String content = String.format(format, StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are") +
@@ -324,7 +325,6 @@ public class StorageUtil {
     }
   }
 
-  @SuppressWarnings("Contract")
   @Nullable
   public static Document loadDocument(@Nullable InputStream stream) {
     if (stream == null) {

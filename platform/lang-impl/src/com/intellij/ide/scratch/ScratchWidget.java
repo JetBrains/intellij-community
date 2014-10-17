@@ -56,7 +56,7 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
         final LightVirtualFile selectedFile = getScratchFile();
         if (project == null || editor == null || selectedFile == null) return false;
 
-        ListPopup popup = NewScratchFileAction.buildLanguagePopup(selectedFile.getLanguage(), new Consumer<Language>() {
+        ListPopup popup = NewScratchFileAction.buildLanguagePopup(project, selectedFile.getLanguage(), new Consumer<Language>() {
           @Override
           public void consume(Language language) {
             selectedFile.setLanguage(LanguageSubstitutors.INSTANCE.substituteLanguage(language, selectedFile, myProject));

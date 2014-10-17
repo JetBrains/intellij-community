@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -134,17 +135,19 @@ public class PropertiesCompletionContributor extends CompletionContributor {
   }
 
   public static LookupElement[] getVariants(Set<Object> variants) {
-    return ContainerUtil.map2Array(variants, LookupElement.class, new NullableFunction < Object, LookupElement > () {
+    List<LookupElement> elements = ContainerUtil.mapNotNull(variants, new NullableFunction<Object, LookupElement>() {
       @Override
       public LookupElement fun(Object o) {
         if (o instanceof String) return LookupElementBuilder.create((String)o).withIcon(PlatformIcons.PROPERTY_ICON);
-        IProperty property = (IProperty)o;
-        String key = property.getKey();
-        if (key == null) return null;
-
-        return LookupElementBuilder.create(property, key).withRenderer(LOOKUP_ELEMENT_RENDERER);
+        return createVariant((IProperty)o);
       }
     });
+    return elements.toArray(new LookupElement[elements.size()]);
+  }
+
+  public static LookupElement createVariant(IProperty property) {
+    String key = property.getKey();
+    return key == null ? null : LookupElementBuilder.create(property, key).withRenderer(LOOKUP_ELEMENT_RENDERER);
   }
 
   @Override

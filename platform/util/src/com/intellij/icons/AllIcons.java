@@ -101,6 +101,7 @@ public class AllIcons {
     public static final Icon Move_to_button_top = IconLoader.getIcon("/actions/move-to-button-top.png"); // 11x12
     public static final Icon Move_to_button = IconLoader.getIcon("/actions/move-to-button.png"); // 11x10
     public static final Icon MoveDown = IconLoader.getIcon("/actions/moveDown.png"); // 14x14
+    public static final Icon MoveTo2 = IconLoader.getIcon("/actions/MoveTo2.png"); // 16x16
     public static final Icon MoveToAnotherChangelist = IconLoader.getIcon("/actions/moveToAnotherChangelist.png"); // 16x16
     public static final Icon MoveToStandardPlace = IconLoader.getIcon("/actions/moveToStandardPlace.png"); // 16x16
     public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.png"); // 14x14
@@ -701,6 +702,12 @@ public class AllIcons {
     public static final Icon WebModuleGroup = IconLoader.getIcon("/javaee/webModuleGroup.png"); // 16x16
     public static final Icon WebService = IconLoader.getIcon("/javaee/WebService.png"); // 16x16
     public static final Icon WebServiceClient = IconLoader.getIcon("/javaee/WebServiceClient.png"); // 16x16
+
+  }
+  
+  public static class Json {
+    public static final Icon Array = IconLoader.getIcon("/json/array.png"); // 16x16
+    public static final Icon Object = IconLoader.getIcon("/json/object.png"); // 16x16
 
   }
   public static final Icon Logo_welcomeScreen = IconLoader.getIcon("/Logo_welcomeScreen.png"); // 80x80

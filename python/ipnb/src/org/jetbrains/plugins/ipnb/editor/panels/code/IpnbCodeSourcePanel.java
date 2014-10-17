@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -43,7 +44,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
   @NotNull private final String mySource;
 
   public IpnbCodeSourcePanel(@NotNull final Project project, @NotNull final IpnbCodePanel parent, @NotNull final IpnbCodeCell cell) {
-    super(cell);
+    super(cell, new BorderLayout());
     myProject = project;
     myParent = parent;
     mySource = cell.getSourceAsString();
@@ -64,7 +65,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
 
   @Override
   protected JComponent createViewPanel() {
-    final JPanel panel = new JPanel(new VerticalFlowLayout(FlowLayout.LEFT, true, true));
+    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, true, true));
     panel.setBackground(UIUtil.isUnderDarcula() ? IpnbEditorUtil.getBackground() : Gray._247);
 
     if (mySource.startsWith("%")) {
@@ -93,7 +94,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
           }
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) {
             final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
-            action.runCell(ipnbFilePanel);
+            action.runCell(ipnbFilePanel, false);
           }
         }
 
@@ -116,7 +117,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     panel.add(component);
 
     component.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, component.getPreferredSize().height));
-    //setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1, true));
+    setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1));
     return panel;
   }
 }

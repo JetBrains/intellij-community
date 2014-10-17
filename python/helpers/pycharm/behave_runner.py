@@ -44,7 +44,7 @@ def _get_dirs_to_run(base_dir_to_search):
         if os.path.basename(folder) == _FEATURES_FOLDER and os.path.isdir(folder):
             result.add(os.path.abspath(folder))
         if step == _MAX_STEPS_SEARCH_FEATURES:  # Guard
-            err = "Folder {} is too deep to find any features folder. Please provider concrete folder".format(
+            err = "Folder {0} is too deep to find any features folder. Please provider concrete folder".format(
                 base_dir_to_search)
             raise Exception(err)
     return list(result)
@@ -138,7 +138,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         element.location.file = element.location.filename  # To preserve _bdd_utils contract
         if isinstance(element, Step):
             # Process step
-            step_name = "{} {}".format(element.keyword, element.name)
+            step_name = "{0} {1}".format(element.keyword, element.name)
             if is_started:
                 self._test_started(step_name, element.location)
             elif element.status == 'passed':
@@ -255,7 +255,7 @@ if __name__ == "__main__":
             features |= set(_get_dirs_to_run(feature))  # Find "features" subfolder
     my_config.paths = list(features)
     if what_to_run and not my_config.paths:
-        raise Exception("Nothing to run in {}".format(what_to_run))
+        raise Exception("Nothing to run in {0}".format(what_to_run))
     _BehaveRunner(my_config, base_dir).run()
 
 

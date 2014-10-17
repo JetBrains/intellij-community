@@ -54,9 +54,7 @@ public class EditorModificationUtil {
     }
     selectionModel.removeSelection();
     editor.getDocument().deleteString(selectionStart, selectionEnd);
-    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
+    scrollToCaret(editor);
   }
 
   public static void deleteSelectedTextForAllCarets(@NotNull final Editor editor) {
@@ -116,8 +114,8 @@ public class EditorModificationUtil {
 
   public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
     int result = insertStringAtCaretNoScrolling(editor, s, toProcessOverwriteMode, toMoveCaret, caretShift);
-    if (toMoveCaret && editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    if (toMoveCaret) {
+      scrollToCaret(editor);
     }
     return result;
   }
@@ -474,5 +472,16 @@ public class EditorModificationUtil {
   public static void moveCaretRelatively(@NotNull Editor editor, final int caretShift) {
     CaretModel caretModel = editor.getCaretModel();
     caretModel.moveToOffset(caretModel.getOffset() + caretShift);
+  }
+
+  /**
+   * This method is safe to run both in and out of {@link com.intellij.openapi.editor.CaretModel#runForEachCaret(CaretAction)} context.
+   * It scrolls to primary caret in both cases, and, in the former case, avoids performing excessive scrolling in case of large number
+   * of carets.
+   */
+  public static void scrollToCaret(@NotNull Editor editor) {
+    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
   }
 }

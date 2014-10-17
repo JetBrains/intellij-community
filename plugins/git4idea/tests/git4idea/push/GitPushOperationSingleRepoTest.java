@@ -245,15 +245,6 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     return new GitPushOperation(myProject, Collections.singletonMap(myRepository, spec), null, force).execute();
   }
 
-  private void agreeToUpdate(final int exitCode) {
-    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler() {
-      @Override
-      public int handleDialog(DialogWrapper dialog) {
-        return exitCode;
-      }
-    });
-  }
-
   private String pushCommitFromBro() throws IOException {
     cd(myBroRepo.getPath());
     String hash = makeCommit("bro.txt");

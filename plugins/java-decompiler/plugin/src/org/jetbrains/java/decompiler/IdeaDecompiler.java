@@ -23,10 +23,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
@@ -97,8 +94,11 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
           if (file.getFileType() == StdFileTypes.CLASS) {
             FileEditor editor = source.getSelectedEditor(file);
-            if (editor != null) {
-              showLegalNotice(source.getProject(), file);
+            if (editor instanceof TextEditor) {
+              CharSequence text = ((TextEditor)editor).getEditor().getDocument().getImmutableCharSequence();
+              if (StringUtil.startsWith(text, BANNER)) {
+                showLegalNotice(source.getProject(), file);
+              }
             }
           }
         }

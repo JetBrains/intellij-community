@@ -205,26 +205,27 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
       if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
         final LanguageLevel effectiveLanguageLevel = module != null ? getEffectiveLanguageLevel(module) : null;
-        if (effectiveLanguageLevel != null &&
-            !effectiveLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) &&
-            JavaVersionService.getInstance().getJavaSdkVersion(aClass).isAtLeast(JavaSdkVersion.JDK_1_8)) {
-          final List<PsiMethod> methods = new ArrayList<PsiMethod>();
-          for (HierarchicalMethodSignature methodSignature : aClass.getVisibleSignatures()) {
-            final PsiMethod method = methodSignature.getMethod();
-            if (ourDefaultMethods.contains(getSignature(method))) {
-              methods.add(method);
+        if (effectiveLanguageLevel != null && !effectiveLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+          final JavaSdkVersion version = JavaVersionService.getInstance().getJavaSdkVersion(aClass);
+          if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_8)) {
+            final List<PsiMethod> methods = new ArrayList<PsiMethod>();
+            for (HierarchicalMethodSignature methodSignature : aClass.getVisibleSignatures()) {
+              final PsiMethod method = methodSignature.getMethod();
+              if (ourDefaultMethods.contains(getSignature(method))) {
+                methods.add(method);
+              }
             }
-          }
-
-          if (!methods.isEmpty()) {
-            PsiElement element2Highlight = aClass.getNameIdentifier();
-            if (element2Highlight == null) {
-              element2Highlight = aClass;
+  
+            if (!methods.isEmpty()) {
+              PsiElement element2Highlight = aClass.getNameIdentifier();
+              if (element2Highlight == null) {
+                element2Highlight = aClass;
+              }
+              myHolder.registerProblem(element2Highlight,
+                                       methods.size() == 1 ? InspectionsBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel)) 
+                                                           : InspectionsBundle.message("inspection.1.8.problem.descriptor", methods.size(), getJdkName(effectiveLanguageLevel)),
+                                       QuickFixFactory.getInstance().createImplementMethodsFix(aClass));
             }
-            myHolder.registerProblem(element2Highlight,
-                                     methods.size() == 1 ? InspectionsBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel)) 
-                                                         : InspectionsBundle.message("inspection.1.8.problem.descriptor", methods.size(), getJdkName(effectiveLanguageLevel)),
-                                     QuickFixFactory.getInstance().createImplementMethodsFix(aClass));
           }
         }
       }

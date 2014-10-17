@@ -173,7 +173,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     }
 
     String newName = range.replace(myElement.getText(), newElementName);
-    myElement.updateText(newName);
+    myElement.replace(PyElementGenerator.getInstance(myElement.getProject()).createStringLiteralAlreadyEscaped(newName));
     return myElement;
   }
 }

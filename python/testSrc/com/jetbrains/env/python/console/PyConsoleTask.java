@@ -50,19 +50,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void setUp(final String testName) throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (myFixture == null) {
-            PyConsoleTask.super.setUp(testName);
-          }
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    if (myFixture == null) {
+      PyConsoleTask.super.setUp(testName);
+    }
   }
 
   @NotNull

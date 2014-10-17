@@ -53,11 +53,15 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
     }
+    createCourseArchive(project);
+  }
+
+  public void createCourseArchive(final Project project) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     if (course == null) return;
@@ -212,6 +216,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void generateJson(@NotNull final Project project) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
@@ -243,7 +248,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
   }
 
-  private static class InsertionListener extends CCDocumentListener {
+  public static class InsertionListener extends CCDocumentListener {
 
     public InsertionListener(TaskFile taskFile) {
       super(taskFile);
