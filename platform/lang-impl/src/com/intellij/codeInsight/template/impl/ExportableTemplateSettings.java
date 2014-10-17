@@ -20,55 +20,32 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.SmartList;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
-/**
- * Contains exportable part of TemplateSettings (can be shared via export/import settings).
- * @author Rustam Vishnyakov
- */
+@SuppressWarnings("deprecation")
+@Deprecated
 @State(
   name = "ExportableTemplateSettings",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/template.settings.xml")
 )
-public class ExportableTemplateSettings implements PersistentStateComponent<ExportableTemplateSettings> {
-  private Collection<TemplateSettings.TemplateKey> deletedKeys = new SmartList<TemplateSettings.TemplateKey>();
-  private boolean isLoaded = false;
-  private TemplateSettings parentSettings;
+final class ExportableTemplateSettings implements PersistentStateComponent<ExportableTemplateSettings> {
+  public Collection<TemplateSettings.TemplateKey> deletedKeys = new SmartList<TemplateSettings.TemplateKey>();
 
   @Nullable
   @Override
   public ExportableTemplateSettings getState() {
-    if (parentSettings != null) {
-      deletedKeys.clear();
-      deletedKeys.addAll(parentSettings.getDeletedTemplates());
-    }
     return this;
   }
 
   @Override
   public void loadState(ExportableTemplateSettings state) {
-    XmlSerializerUtil.copyBean(state, this);
-    isLoaded = true;
-  }
-
-  public boolean isLoaded() {
-    return isLoaded;
-  }
-
-  @SuppressWarnings("UnusedDeclaration") // Property via reflection
-  public Collection<TemplateSettings.TemplateKey> getDeletedKeys() {
-    return deletedKeys;
-  }
-
-  @SuppressWarnings("UnusedDeclaration") // Property via reflection
-  public void setDeletedKeys(Collection<TemplateSettings.TemplateKey> deletedKeys) {
-    this.deletedKeys = deletedKeys;
-  }
-
-  void setParentSettings(TemplateSettings settings) {
-    parentSettings = settings;
+    TemplateSettings templateSettings = TemplateSettings.getInstance();
+    List<TemplateSettings.TemplateKey> deletedTemplates = templateSettings.getDeletedTemplates();
+    deletedTemplates.clear();
+    deletedTemplates.addAll(state.deletedKeys);
+    templateSettings.applyNewDeletedTemplates();
   }
 }
