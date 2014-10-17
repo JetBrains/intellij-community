@@ -57,6 +57,8 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     public Map<String, String> names = ContainerUtil.newLinkedHashMap();
     public String lastPath;
 
+    public String lastProjectLocation;
+
     void validateRecentProjects() {
       //noinspection StatementWithEmptyBody
       while (recentPaths.remove(null)) ;
@@ -124,6 +126,17 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
         }
       }
     }
+  }
+
+  /**
+   * @return a path pointing to a directory where the last project was created or null if not available
+   */
+  public String getLastProjectCreationLocation() {
+    return myState.lastProjectLocation;
+  }
+
+  public void setLastProjectCreationLocation(String lastProjectLocation) {
+    myState.lastProjectLocation = lastProjectLocation;
   }
 
   public String getLastProjectPath() {

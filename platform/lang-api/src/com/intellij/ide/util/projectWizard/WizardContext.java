@@ -93,7 +93,7 @@ public class WizardContext extends UserDataHolderBase {
     if (myProjectFileDirectory != null) {
       return myProjectFileDirectory;
     }
-    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectCreationLocation();
+    final String lastProjectLocation = RecentProjectsManagerBase.getInstance().getLastProjectCreationLocation();
     if (lastProjectLocation != null) {
       return lastProjectLocation.replace('/', File.separatorChar);
     }

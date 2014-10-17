@@ -48,7 +48,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   private final PropertyChangeSupport myPropertyChangeSupport;
   private boolean myUseDefaultBrowser = true;
   private boolean myConfirmExtractFiles = true;
-  private String myLastProjectLocation;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
@@ -103,15 +102,21 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     return myBrowserPath;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   /**
-   * @return a path pointing to a directory where the last project was created or null if not available
+   * Use RecentProjectsManagerBase
    */
   public String getLastProjectCreationLocation() {
-    return myLastProjectLocation;
+    return null;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
+  /**
+   * Use RecentProjectsManagerBase
+   */
   public void setLastProjectCreationLocation(String lastProjectLocation) {
-    myLastProjectLocation = lastProjectLocation;
   }
 
   public void setBrowserPath(String browserPath) {
