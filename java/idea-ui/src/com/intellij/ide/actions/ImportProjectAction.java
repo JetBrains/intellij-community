@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.registry.Registry;
 
 /**
  * @author Dmitry Avdeev
@@ -31,6 +34,8 @@ public class ImportProjectAction extends ImportModuleAction {
 
   @Override
   public void update(AnActionEvent e) {
-
+    if (e.getPlace() == ActionPlaces.WELCOME_SCREEN && Registry.is("ide.new.welcome.screen")) {
+      e.getPresentation().setIcon(AllIcons.Welcome.ImportProject);
+    }
   }
 }
