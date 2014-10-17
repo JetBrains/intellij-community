@@ -1687,9 +1687,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void bulkUpdateStarted() {
+    myFoldingModel.onBulkDocumentUpdateStarted();
+    myCaretModel.onBulkDocumentUpdateStarted();
+    mySoftWrapModel.onBulkDocumentUpdateStarted();
   }
 
   private void bulkUpdateFinished() {
+    myFoldingModel.onBulkDocumentUpdateFinished();
+    myCaretModel.onBulkDocumentUpdateFinished();
+    mySoftWrapModel.onBulkDocumentUpdateFinished();
 
     clearTextWidthCache();
 
