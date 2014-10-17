@@ -20,8 +20,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.SmartList;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -34,24 +33,24 @@ import java.util.Collection;
   name = "ExportableTemplateSettings",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/template.settings.xml")
 )
-public class ExportableTemplateSettings implements PersistentStateComponent<Element> {
+public class ExportableTemplateSettings implements PersistentStateComponent<ExportableTemplateSettings> {
   private Collection<TemplateSettings.TemplateKey> deletedKeys = new SmartList<TemplateSettings.TemplateKey>();
   private boolean isLoaded = false;
   private TemplateSettings parentSettings;
 
   @Nullable
   @Override
-  public Element getState() {
+  public ExportableTemplateSettings getState() {
     if (parentSettings != null) {
       deletedKeys.clear();
       deletedKeys.addAll(parentSettings.getDeletedTemplates());
     }
-    return XmlSerializer.serialize(this);
+    return this;
   }
 
   @Override
-  public void loadState(Element state) {
-    XmlSerializer.deserializeInto(this, state);
+  public void loadState(ExportableTemplateSettings state) {
+    XmlSerializerUtil.copyBean(state, this);
     isLoaded = true;
   }
 
