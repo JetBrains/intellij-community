@@ -40,7 +40,11 @@ class AccessorBindingWrapper implements Binding {
   @Override
   @Nullable
   public Object deserialize(Object context, @NotNull Object... nodes) {
-    myAccessor.write(context, myBinding.deserialize(myAccessor.read(context), nodes));
+    Object currentValue = myAccessor.read(context);
+    Object deserializedValue = myBinding.deserialize(currentValue, nodes);
+    if (currentValue != deserializedValue) {
+      myAccessor.write(context, deserializedValue);
+    }
     return context;
   }
 

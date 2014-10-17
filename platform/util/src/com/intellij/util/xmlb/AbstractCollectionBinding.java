@@ -146,12 +146,22 @@ abstract class AbstractCollectionBinding implements Binding {
   public Object deserialize(Object o, @NotNull Object... nodes) {
     Collection result;
     if (getTagName(o) == null) {
-      result = new SmartList();
+      if (o instanceof Collection) {
+        result = (Collection)o;
+        result.clear();
+      }
+      else {
+        result = new SmartList();
+      }
       for (Object node : nodes) {
         if (!XmlSerializerImpl.isIgnoredNode(node)) {
           //noinspection unchecked
           result.add(getElementBinding(node).deserialize(o, node));
         }
+      }
+
+      if (result == o) {
+        return result;
       }
     }
     else {
