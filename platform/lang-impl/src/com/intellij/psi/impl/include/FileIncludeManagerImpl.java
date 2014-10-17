@@ -19,7 +19,6 @@ package com.intellij.psi.impl.include;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -33,7 +32,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -74,6 +76,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
       return VfsUtilCore.toVirtualFileArray(files);
     }
   };
+  private final Map<String, FileIncludeProvider> myProviderMap;
 
   public void processIncludes(PsiFile file, Processor<FileIncludeInfo> processor) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
@@ -127,9 +130,9 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     myPsiFileFactory = psiFileFactory;
 
     FileIncludeProvider[] providers = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
-    Map<String, FileIncludeProvider> providerMap = new HashMap<String, FileIncludeProvider>(providers.length);
+    myProviderMap = new HashMap<String, FileIncludeProvider>(providers.length);
     for (FileIncludeProvider provider : providers) {
-      FileIncludeProvider old = providerMap.put(provider.getId(), provider);
+      FileIncludeProvider old = myProviderMap.put(provider.getId(), provider);
       assert old == null;
     }
     myCachedValuesManager = cachedValuesManager;
@@ -163,14 +166,8 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   @Nullable
   private PsiFileSystemItem doResolve(@NotNull final FileIncludeInfo info, @NotNull final PsiFile context) {
     if (info instanceof FileIncludeInfoImpl) {
-      final FileIncludeProvider provider =
-        ContainerUtil.find(FileIncludeProvider.EP_NAME.getExtensions(), new Condition<FileIncludeProvider>() {
-          @Override
-          public boolean value(final FileIncludeProvider provider) {
-            return provider.getId().equals(((FileIncludeInfoImpl)info).providerId);
-          }
-        });
-
+      String id = ((FileIncludeInfoImpl)info).providerId;
+      FileIncludeProvider provider = id == null ? null : myProviderMap.get(id);
       final PsiFileSystemItem resolvedByProvider = provider == null ? null : provider.resolveIncludedFile(info, context);
       if (resolvedByProvider != null) {
         return resolvedByProvider;
