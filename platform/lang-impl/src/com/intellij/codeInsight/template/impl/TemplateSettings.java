@@ -88,7 +88,7 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String KEY = "key";
   @NonNls private static final String ID = "id";
 
-  private final MultiMap<String,TemplateImpl> myTemplates = MultiMap.createLinked();
+  private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
     
   private final Map<String,Template> myTemplatesById = new LinkedHashMap<String,Template>();
   private final Map<TemplateKey,TemplateImpl> myDefaultTemplates = new LinkedHashMap<TemplateKey, TemplateImpl>();
@@ -158,7 +158,6 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
   private TemplateKey myLastSelectedTemplate;
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
-
     SchemeProcessor<TemplateGroup> processor = new BaseSchemeProcessor<TemplateGroup>() {
       @Override
       @Nullable
@@ -221,6 +220,10 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
     loadTemplates();
   }
 
+  public static TemplateSettings getInstance() {
+    return ServiceManager.getService(TemplateSettings.class);
+  }
+
   private boolean differsFromDefault(TemplateImpl t) {
     TemplateImpl def = getDefaultTemplate(t);
     if (def == null) return true;
@@ -230,10 +233,6 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
   @Nullable
   public TemplateImpl getDefaultTemplate(TemplateImpl t) {
     return myDefaultTemplates.get(TemplateKey.keyOf(t));
-  }
-
-  public static TemplateSettings getInstance() {
-    return ServiceManager.getService(TemplateSettings.class);
   }
 
   @Override
@@ -256,9 +255,7 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
     else {
       Element deleted = parentNode.getChild(DELETED_TEMPLATES);
       if (deleted != null) {
-        List children = deleted.getChildren();
-        for (final Object aChildren : children) {
-          Element child = (Element)aChildren;
+        for (Element child : deleted.getChildren()) {
           myDeletedTemplates.add(new TemplateKey(child.getAttributeValue(GROUP), child.getAttributeValue(NAME)));
         }
       }
@@ -266,20 +263,17 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
 
     for (TemplateKey templateKey : myDeletedTemplates) {
       if (templateKey.groupName == null) {
-        final Collection<TemplateImpl> templates = new ArrayList<TemplateImpl>(myTemplates.get(templateKey.key));
-        for (TemplateImpl template : templates) {
+        for (TemplateImpl template : new ArrayList<TemplateImpl>(myTemplates.get(templateKey.key))) {
           removeTemplate(template);
         }
       }
       else {
-        final TemplateImpl toDelete = getTemplate(templateKey.key, templateKey.groupName);
+        TemplateImpl toDelete = getTemplate(templateKey.key, templateKey.groupName);
         if (toDelete != null) {
           removeTemplate(toDelete);
         }
       }
     }
-
-    //TODO lesya reload schemes
   }
 
   @Override
@@ -309,6 +303,7 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
     myLastSelectedTemplate = group == null ? null : new TemplateKey(group, key);
   }
 
+  @SuppressWarnings("unused")
   public Collection<? extends TemplateImpl> getTemplatesAsList() {
     return myTemplates.values();
   }
@@ -398,19 +393,15 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  public void removeTemplate(Template template) {
+  public void removeTemplate(@NotNull Template template) {
     myTemplates.remove(template.getKey(), (TemplateImpl)template);
 
-    TemplateImpl templateImpl = (TemplateImpl)template;
-    String groupName = templateImpl.getGroupName();
-    TemplateGroup group = mySchemesManager.findSchemeByName(groupName);
-
+    TemplateGroup group = mySchemesManager.findSchemeByName(((TemplateImpl)template).getGroupName());
     if (group != null) {
       group.removeElement((TemplateImpl)template);
       if (group.isEmpty()) {
         mySchemesManager.removeScheme(group);
       }
-
     }
   }
 
