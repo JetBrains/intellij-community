@@ -258,6 +258,10 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   @Override
   protected JScrollPane createTable() {
     pluginsModel = new InstalledPluginsTableModel();
+    if (PluginManagerUISettings.getInstance().installedSortByStatus) {
+      pluginsModel.setSortByStatus(true);
+    }
+
     pluginTable = new PluginTable(pluginsModel);
     pluginTable.setTableHeader(null);
 

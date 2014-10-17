@@ -27,9 +27,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -96,8 +99,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
       String serviceKey = key + "."+i;
       int value = DimensionService.getInstance().getExtendedState(serviceKey);
       if (value == -1) break;
-      double proportion = value * 0.001;
-      proportions.add(new Float(proportion));
+      proportions.add(new Float(value * 0.001));
     }
   }
 
@@ -126,6 +128,32 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
     }
     element.setAttribute(ATTRIBUTE_PROPORTIONS, result.toString());
     element.setAttribute(ATTRIBUTE_VERSION, DATA_VERSION);
+  }
+
+  public static final class SplitterProportionsConverter extends Converter<SplitterProportionsDataImpl> {
+    @Nullable
+    @Override
+    public SplitterProportionsDataImpl fromString(@NotNull String value) {
+      SplitterProportionsDataImpl data = new SplitterProportionsDataImpl();
+      StringTokenizer tokenizer = new StringTokenizer(value, ",");
+      while (tokenizer.hasMoreTokens()) {
+        data.proportions.add(Float.valueOf(tokenizer.nextToken()));
+      }
+      return data;
+    }
+
+    @NotNull
+    @Override
+    public String toString(@NotNull SplitterProportionsDataImpl data) {
+      StringBuilder result = new StringBuilder();
+      String sep = "";
+      for (Float proportion : data.proportions) {
+        result.append(sep);
+        result.append(proportion);
+        sep = ",";
+      }
+      return result.toString();
+    }
   }
 
   public List<Float> getProportions() {

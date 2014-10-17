@@ -39,7 +39,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
@@ -94,6 +93,10 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   protected JScrollPane createTable() {
     AvailablePluginsTableModel model = new AvailablePluginsTableModel();
     model.setVendor(myVendorFilter);
+    if (PluginManagerUISettings.getInstance().availableSortByStatus) {
+      pluginsModel.setSortByStatus(true);
+    }
+
     pluginsModel = model;
     pluginTable = new PluginTable(pluginsModel);
     return ScrollPaneFactory.createScrollPane(pluginTable);

@@ -18,52 +18,40 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
+import gnu.trove.THashSet;
 
 import javax.swing.*;
+import java.util.Set;
 
-/**
- * @author yole
- */
 @State(
   name = "PluginManagerConfigurable",
-  storages = {
-  @Storage(
-    file = StoragePathMacros.APP_CONFIG + "/plugin_ui.xml")
-  }
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/plugin_ui.xml")
 )
-public class PluginManagerUISettings implements PersistentStateComponent<Element>, PerformInBackgroundOption {
-  private static final SkipDefaultValuesSerializationFilters FILTERS = new SkipDefaultValuesSerializationFilters() {
-    @Override
-    protected void configure(@NotNull Object o) {
-      if (o instanceof SplitterProportionsDataImpl) {
-        ((SplitterProportionsDataImpl)o).getProportions().add(0.5f);
-      }
-    }
-  };
-
+public class PluginManagerUISettings implements PersistentStateComponent<PluginManagerUISettings>, PerformInBackgroundOption {
   public int AVAILABLE_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
 
-  public boolean AVAILABLE_SORT_BY_STATUS = false;
-  public boolean INSTALLED_SORT_BY_STATUS = false;
-  public boolean UPDATE_IN_BACKGROUND = false;
-  public JDOMExternalizableStringList myOutdatedPlugins = new JDOMExternalizableStringList();
+  public boolean availableSortByStatus;
+  public boolean installedSortByStatus;
 
-  private JDOMExternalizableStringList myInstalledPlugins = new JDOMExternalizableStringList();
+  public boolean UPDATE_IN_BACKGROUND;
 
-  @NonNls private static final String AVAILABLE_PROPORTIONS = "available-proportions";
+  // not stored
+  private final Set<String> myInstalledPlugins = new THashSet<String>();
 
-  private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
-  private final SplitterProportionsData myAvailableSplitterProportionsData = new SplitterProportionsDataImpl();
+  @Attribute(converter = SplitterProportionsDataImpl.SplitterProportionsConverter.class)
+  public SplitterProportionsDataImpl installedProportions = new SplitterProportionsDataImpl();
+  @Attribute(converter = SplitterProportionsDataImpl.SplitterProportionsConverter.class)
+  public SplitterProportionsDataImpl availableProportions = new SplitterProportionsDataImpl();
 
-  public JDOMExternalizableStringList getInstalledPlugins() {
+  public PluginManagerUISettings() {
+    Float defaultProportion = new Float(0.5);
+    installedProportions.getProportions().add(defaultProportion);
+    availableProportions.getProportions().add(defaultProportion);
+  }
+
+  public Set<String> getInstalledPlugins() {
     return myInstalledPlugins;
   }
 
@@ -72,35 +60,13 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   }
 
   @Override
-  public Element getState() {
-    Element element = new Element("state");
-    XmlSerializer.serializeInto(this, element, FILTERS);
-    XmlSerializer.serializeInto(mySplitterProportionsData, element, FILTERS);
-
-    final Element availableProportions = new Element(AVAILABLE_PROPORTIONS);
-    XmlSerializer.serializeInto(myAvailableSplitterProportionsData, availableProportions, FILTERS);
-    if (!JDOMUtil.isEmpty(availableProportions)) {
-      element.addContent(availableProportions);
-    }
-    return element;
+  public PluginManagerUISettings getState() {
+    return this;
   }
 
   @Override
-  public void loadState(final Element element) {
-    XmlSerializer.deserializeInto(this, element);
-    XmlSerializer.deserializeInto(mySplitterProportionsData, element);
-    final Element availableProportionsElement = element.getChild(AVAILABLE_PROPORTIONS);
-    if (availableProportionsElement != null) {
-      XmlSerializer.deserializeInto(myAvailableSplitterProportionsData, availableProportionsElement);
-    }
-  }
-
-  public SplitterProportionsData getSplitterProportionsData() {
-    return mySplitterProportionsData;
-  }
-  
-  public SplitterProportionsData getAvailableSplitterProportionsData() {
-    return myAvailableSplitterProportionsData;
+  public void loadState(PluginManagerUISettings state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 
   @Override

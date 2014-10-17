@@ -24,10 +24,12 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -254,14 +256,11 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     return false;
   }
 
-  private void installedPluginsToModel(ArrayList<PluginNode> list) {
+  private void installedPluginsToModel(@NotNull List<PluginNode> list) {
     for (PluginNode pluginNode : list) {
-      final String idString = pluginNode.getPluginId().getIdString();
-      final PluginManagerUISettings pluginManagerUISettings = PluginManagerUISettings.getInstance();
-      if (!pluginManagerUISettings.getInstalledPlugins().contains(idString)) {
-        pluginManagerUISettings.getInstalledPlugins().add(idString);
-      }
-      pluginManagerUISettings.myOutdatedPlugins.remove(idString);
+      String idString = pluginNode.getPluginId().getIdString();
+      PluginManagerUISettings.getInstance().getInstalledPlugins().add(idString);
+      UpdateSettings.getInstance().myOutdatedPlugins.remove(idString);
     }
 
     final InstalledPluginsTableModel installedPluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();

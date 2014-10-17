@@ -26,7 +26,6 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellEditor;
@@ -292,11 +291,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     int state = PluginDownloader.compareVersionsSkipBroken(existing, descr.getVersion());
     final PluginId pluginId = existing.getPluginId();
     final String idString = pluginId.getIdString();
-    final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().getInstalledPlugins();
-    if (!installedPlugins.contains(idString) && !((IdeaPluginDescriptorImpl)existing).isDeleted()){
-      installedPlugins.add(idString);
+    if (!((IdeaPluginDescriptorImpl)existing).isDeleted()){
+      PluginManagerUISettings.getInstance().getInstalledPlugins().add(idString);
     }
-    final PluginManagerUISettings updateSettings = PluginManagerUISettings.getInstance();
+    final UpdateSettings updateSettings = UpdateSettings.getInstance();
     if (state > 0 && !PluginManagerCore.isIncompatible(descr) && !updatedPlugins.contains(descr.getPluginId())) {
       NewVersions2Plugins.put(pluginId, 1);
       if (!updateSettings.myOutdatedPlugins.contains(idString)) {
@@ -348,7 +346,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   public static boolean hasNewerVersion(PluginId descr) {
     return !wasUpdated(descr) &&
            (NewVersions2Plugins.containsKey(descr) ||
-            PluginManagerUISettings.getInstance().myOutdatedPlugins.contains(descr.getIdString()));
+            UpdateSettings.getInstance().myOutdatedPlugins.contains(descr.getIdString()));
   }
 
   public static boolean wasUpdated(PluginId descr) {
