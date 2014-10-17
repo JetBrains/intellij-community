@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ import org.jetbrains.annotations.NotNull;
 @State(
   name = "RecentProjectsManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", roamingType = RoamingType.DISABLED),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/recentProjects.xml", roamingType = RoamingType.DISABLED)
   },
   storageChooser = LastStorageChooserForWrite.class
 )
-public class RecentProjectsManager extends RecentProjectsManagerBase {
-  public RecentProjectsManager(MessageBus messageBus) {
+public class RecentProjectsManagerImpl extends RecentProjectsManagerBase {
+  public RecentProjectsManagerImpl(MessageBus messageBus) {
     super(messageBus);
   }
 

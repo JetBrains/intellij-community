@@ -65,7 +65,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     if (!found) {
       List<Element> copy = new ArrayList<Element>(children.size());
       for (Element child : children) {
-        Element clone = (Element)child.clone();
+        Element clone = child.clone();
         JDOMUtil.internElement(clone, myInterner);
         copy.add(clone);
       }
@@ -87,8 +87,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     final List<Element> elements = configuration.getCopyableUserData(RUN_EXTENSIONS);
     if (elements != null) {
       for (Element el : elements) {
-        final String name = el.getAttributeValue(getIdAttrName());
-        map.put(name, (Element)el.clone());
+        map.put(el.getAttributeValue(getIdAttrName()), el.clone());
       }
     }
 

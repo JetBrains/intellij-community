@@ -23,6 +23,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
@@ -71,6 +72,7 @@ public class DirectoryStorageData extends StorageDataBase {
       return;
     }
 
+    StringInterner interner = new StringInterner();
     for (VirtualFile file : dir.getChildren()) {
       if (!isStorageFile(file)) {
         continue;
@@ -94,6 +96,7 @@ public class DirectoryStorageData extends StorageDataBase {
         }
 
         Element state = (Element)elementChildren.get(0).detach();
+        JDOMUtil.internElement(state, interner);
         if (pathMacroSubstitutor != null) {
           pathMacroSubstitutor.expandPaths(state);
           pathMacroSubstitutor.addUnknownMacros(name, PathMacrosCollector.getMacroNames(state));

@@ -31,8 +31,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
-
 @SuppressWarnings({"deprecation"})
 public class DefaultStateSerializer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DefaultStateSerializer");
@@ -59,10 +57,9 @@ public class DefaultStateSerializer {
           }
 
           if (storage != null) {
-            for (Annotation annotation : accessor.getAnnotations()) {
-              if (StorageId.class.isAssignableFrom(annotation.annotationType()) && !((StorageId)annotation).value().equals(storage.id())) {
-                return false;
-              }
+            StorageId storageId = accessor.getAnnotation(StorageId.class);
+            if (storageId != null && !storageId.value().equals(storage.id())) {
+              return false;
             }
             return storage.isDefault();
           }

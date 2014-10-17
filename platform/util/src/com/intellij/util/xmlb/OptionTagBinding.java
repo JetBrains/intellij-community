@@ -42,15 +42,20 @@ class OptionTagBinding extends BasePrimitiveBinding {
   public OptionTagBinding(@NotNull Accessor accessor, @Nullable OptionTag optionTag) {
     super(accessor, optionTag == null ? null : optionTag.value(), optionTag == null ? null : optionTag.converter());
 
-    if (optionTag != null) {
-      myTagName = optionTag.tag();
-      myNameAttribute = optionTag.nameAttribute();
-      myValueAttribute = optionTag.valueAttribute();
-    }
-    else {
+    if (optionTag == null) {
       myTagName = Constants.OPTION;
       myNameAttribute = Constants.NAME;
       myValueAttribute = Constants.VALUE;
+    }
+    else {
+      myNameAttribute = optionTag.nameAttribute();
+      myValueAttribute = optionTag.valueAttribute();
+
+      String tagName = optionTag.tag();
+      if (StringUtil.isEmpty(myNameAttribute) && Constants.OPTION.equals(tagName)) {
+        tagName = myAccessor.getName();
+      }
+      myTagName = tagName;
     }
   }
 

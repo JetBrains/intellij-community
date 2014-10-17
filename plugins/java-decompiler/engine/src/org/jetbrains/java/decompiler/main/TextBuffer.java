@@ -63,6 +63,11 @@ public class TextBuffer {
     return this;
   }
 
+  public TextBuffer append(int i) {
+    myStringBuilder.append(i);
+    return this;
+  }
+
   public TextBuffer appendLineSeparator() {
     myStringBuilder.append(myLineSeparator);
     return this;

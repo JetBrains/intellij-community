@@ -138,7 +138,7 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
   }
 
   private static String getXmlElementGroupName(FTManager manager) {
-    return manager.getName().toLowerCase(Locale.US) + "_" + "templates";
+    return manager.getName().toLowerCase(Locale.US) + "_templates";
   }
 
   public boolean isLoaded() {

@@ -1,12 +1,18 @@
 package org.jetbrains.java.decompiler.main.collectors;
 
+import org.jetbrains.java.decompiler.struct.attr.StructLineNumberTableAttribute;
+
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 public class BytecodeMappingTracer {
 
   private int current_sourceline;
+
+  private StructLineNumberTableAttribute myLineNumberTable = null;
 
   // bytecode offset, source line
   private HashMap<Integer, Integer> mapping = new HashMap<Integer, Integer>();
@@ -67,4 +73,30 @@ public class BytecodeMappingTracer {
     this.current_sourceline = current_sourceline;
   }
 
+  public void setLineNumberTable(StructLineNumberTableAttribute lineNumberTable) {
+    myLineNumberTable = lineNumberTable;
+  }
+
+  public Map<Integer, Integer> getOriginalLinesMapping() {
+    if (myLineNumberTable == null) {
+      return Collections.emptyMap();
+    }
+    HashMap<Integer, Integer> res = new HashMap<Integer, Integer>();
+    int[] data = myLineNumberTable.getRawData();
+    for (int i = 0; i < data.length; i+=2) {
+      int originalOffset = data[i];
+      int originalLine = data[i+1];
+      Integer newLine = mapping.get(originalOffset);
+      if (newLine != null) {
+        res.put(originalLine, newLine);
+      }
+    }
+    for (Entry<Integer, Integer> entry : mapping.entrySet()) {
+      int originalLine = myLineNumberTable.findLineNumber(entry.getKey());
+      if (originalLine > -1) {
+        res.put(originalLine, entry.getValue());
+      }
+    }
+    return res;
+  }
 }

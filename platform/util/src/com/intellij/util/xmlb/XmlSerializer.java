@@ -97,10 +97,7 @@ public class XmlSerializer {
 
   public static void deserializeInto(@NotNull Object bean, @NotNull Element element) {
     try {
-      final Binding binding = XmlSerializerImpl.getBinding(bean.getClass());
-      assert binding instanceof BeanBinding;
-
-      ((BeanBinding)binding).deserializeInto(bean, element);
+      ((BeanBinding)XmlSerializerImpl.getBinding(bean.getClass())).deserializeInto(bean, element);
     }
     catch (XmlSerializationException e) {
       throw e;

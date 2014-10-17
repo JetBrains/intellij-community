@@ -21,7 +21,7 @@ import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
@@ -86,7 +86,7 @@ public class PyCharmEduInitialConfigurator {
                                        final PropertiesComponent propertiesComponent,
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager,
-                                       RecentProjectsManagerBase recentProjectsManager) {
+                                       RecentProjectsManager recentProjectsManager) {
     if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");

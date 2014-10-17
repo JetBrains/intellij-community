@@ -69,8 +69,10 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   }
 
   public void setUrls(@NotNull List<String> urls) {
-    myUrls.clear();
-    myUrls.addAll(urls);
+    if (myUrls != urls) {
+      myUrls.clear();
+      myUrls.addAll(urls);
+    }
   }
 
   @Override

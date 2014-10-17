@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.newProject.actions;
 
-import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
@@ -133,7 +133,7 @@ public class GenerateProjectCallback implements NullableConsumer<AbstractProject
     String generatorName = generator == null ? "empty" : ConvertUsagesUtil.ensureProperKey(generator.getName());
     UsageTrigger.trigger("NewDirectoryProjectAction." + generatorName);
 
-    GeneralSettings.getInstance().setLastProjectCreationLocation(location.getParent());
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(location.getParent());
 
     return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, new ProjectOpenedCallback() {
       @Override

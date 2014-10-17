@@ -15,12 +15,11 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
@@ -29,15 +28,17 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 
 public class CloseProjectAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     assert project != null;
 
     ProjectUtil.closeAndDispose(project);
-    RecentProjectsManagerBase.getInstance().updateLastProjectPath();
+    RecentProjectsManager.getInstance().updateLastProjectPath();
     WelcomeFrame.showIfNoProjectOpened();
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);

@@ -70,7 +70,7 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[]{new ShowBranchesPanelAction()};
+      return new AnAction[]{new ShowBranchesPanelAction(), new ShowRootsColumnAction()};
     }
 
     private class ShowBranchesPanelAction extends ToggleAction implements DumbAware {
@@ -87,6 +87,32 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
       public void setSelected(AnActionEvent e, boolean state) {
         mySettings.setShowBranchesPanel(state);
         myUi.setBranchesPanelVisible(state);
+      }
+    }
+
+    private class ShowRootsColumnAction extends ToggleAction implements DumbAware {
+
+      public ShowRootsColumnAction() {
+        super("Show Root Names");
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+
+        boolean visible = myUi.isMultipleRoots();
+        e.getPresentation().setVisible(visible);
+        e.getPresentation().setEnabled(visible);
+      }
+
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return myUi.isShowRootNames();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        myUi.setShowRootNames(state);
       }
     }
   }

@@ -35,7 +35,9 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -79,11 +81,16 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
       @Override
       public void consume(Language language) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
-        VirtualFile file = ScratchpadManager.getInstance(project).createScratchFile(language);
+        VirtualFile file = ScratchpadManager.getInstance(project).createScratchFile(substitute(project, language));
         FileEditorManager.getInstance(project).openFile(file, true);
       }
     });
     popup.showCenteredInCurrentWindow(project);
+  }
+
+  @NotNull
+  public static Language substitute(@NotNull Project project, @NotNull Language language) {
+    return LanguageSubstitutors.INSTANCE.substituteLanguage(language, new LightVirtualFile(), project);
   }
 
   @NotNull

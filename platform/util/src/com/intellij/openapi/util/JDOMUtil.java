@@ -132,7 +132,12 @@ public class JDOMUtil {
     return i * 31 + s.hashCode();
   }
 
+  @SuppressWarnings("unused")
   @NotNull
+  @Deprecated
+  /**
+   * to remove in IDEA 15
+   */
   public static Object[] getChildNodesWithAttrs(@NotNull Element e) {
     ArrayList<Object> result = new ArrayList<Object>();
     result.addAll(e.getContent());
