@@ -23,8 +23,7 @@
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
                         serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
 
-    <applicationService serviceInterface="com.intellij.packageDependencies.DependencyUISettings"
-                        serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
+    <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
     <applicationService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
                         serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
@@ -35,10 +34,8 @@
     <applicationService serviceInterface="com.intellij.ide.PsiCopyPasteManager"
                         serviceImplementation="com.intellij.ide.PsiCopyPasteManager"/>
 
-    <applicationService serviceInterface="com.intellij.usages.UsageViewSettings"
-                        serviceImplementation="com.intellij.usages.UsageViewSettings"/>
-    <applicationService serviceInterface="com.intellij.refactoring.RefactoringSettings"
-                        serviceImplementation="com.intellij.refactoring.RefactoringSettings"/>
+    <applicationService serviceImplementation="com.intellij.usages.UsageViewSettings"/>
+    <applicationService serviceImplementation="com.intellij.refactoring.RefactoringSettings"/>
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringActionHandlerFactoryImpl"/>
 
@@ -50,26 +47,19 @@
     <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
                         serviceImplementation="com.intellij.lang.impl.PsiBuilderFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManagerUtil"
-                        serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManagerUtil"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManagerUtil"/>
 
-    <applicationService serviceInterface="com.intellij.navigation.ChooseByNameRegistry"
-                        serviceImplementation="com.intellij.navigation.ChooseByNameRegistry"/>
+    <applicationService serviceImplementation="com.intellij.navigation.ChooseByNameRegistry"/>
 
     <applicationService serviceInterface="com.intellij.application.options.CodeStyleSettingsUtil"
                         serviceImplementation="com.intellij.application.options.CodeStyleSettingsUtilImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.PsiActionSupportFactory"
                         serviceImplementation="com.intellij.ide.PsiActionSupportFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.codeInspection.ex.InspectionToolRegistrar"
-                        serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
-    <applicationService serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"
-                        serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings"/>
-    <applicationService serviceInterface="com.intellij.codeInsight.template.impl.ExportableTemplateSettings"
-                        serviceImplementation="com.intellij.codeInsight.template.impl.ExportableTemplateSettings"/>
-    <applicationService serviceInterface="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"
-                        serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
-    <exportable serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"/>
+    <applicationService serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.template.impl.ExportableTemplateSettings"/>
+    <applicationService serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
 
     <applicationService serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
