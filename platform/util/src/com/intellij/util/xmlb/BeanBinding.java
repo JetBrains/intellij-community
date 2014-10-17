@@ -85,7 +85,7 @@ class BeanBinding implements Binding {
       }
 
       //todo: optimize. Cache it.
-      Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
+      Property property = accessor.getAnnotation(Property.class);
       if (property != null && property.filter() != SerializationFilter.class) {
         try {
           if (!ReflectionUtil.newInstance(property.filter()).accepts(accessor, o)) {
@@ -277,23 +277,23 @@ class BeanBinding implements Binding {
       return binding;
     }
 
-    Attribute attribute = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Attribute.class);
+    Attribute attribute = accessor.getAnnotation(Attribute.class);
     if (attribute != null) {
       return new AttributeBinding(accessor, attribute);
     }
 
-    Tag tag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Tag.class);
+    Tag tag = accessor.getAnnotation(Tag.class);
     if (tag != null && !tag.value().isEmpty()) {
       return new TagBinding(accessor, tag);
     }
 
-    Text text = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Text.class);
+    Text text = accessor.getAnnotation(Text.class);
     if (text != null) {
       return new TextBinding(accessor);
     }
 
     boolean surroundWithTag = true;
-    Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
+    Property property = accessor.getAnnotation(Property.class);
     if (property != null) {
       surroundWithTag = property.surroundWithTag();
     }
@@ -305,7 +305,6 @@ class BeanBinding implements Binding {
       return new AccessorBindingWrapper(accessor, binding);
     }
 
-    OptionTag optionTag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), OptionTag.class);
-    return new OptionTagBinding(accessor, optionTag);
+    return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
   }
 }

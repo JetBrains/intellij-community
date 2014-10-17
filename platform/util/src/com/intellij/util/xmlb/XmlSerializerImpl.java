@@ -127,7 +127,11 @@ class XmlSerializerImpl {
   }
 
   @Nullable
-  @SuppressWarnings({"unchecked"})
+  @Deprecated
+  @SuppressWarnings({"unchecked", "unused"})
+  /**
+   * @deprecated to remove in IDEA 15
+   */
   static <T> T findAnnotation(Annotation[] annotations, Class<T> aClass) {
     if (annotations == null) return null;
 
