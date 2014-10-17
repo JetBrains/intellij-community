@@ -36,7 +36,7 @@ import javax.swing.*;
   name = "PluginManagerConfigurable",
   storages = {
   @Storage(
-    file = StoragePathMacros.APP_CONFIG + "/plugin_ui.xml")
+    file = StoragePathMacros.APP_CONFIG + "/plugin_ui.xml", roamingType = RoamingType.DISABLED)
   }
 )
 public class PluginManagerUISettings implements PersistentStateComponent<Element>, PerformInBackgroundOption {

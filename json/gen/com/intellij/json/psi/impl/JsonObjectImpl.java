@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
+import com.intellij.navigation.ItemPresentation;
 
 public class JsonObjectImpl extends JsonContainerImpl implements JsonObject {
 
@@ -30,6 +31,11 @@ public class JsonObjectImpl extends JsonContainerImpl implements JsonObject {
   @Nullable
   public JsonProperty findProperty(String name) {
     return JsonPsiImplUtils.findProperty(this, name);
+  }
+
+  @Nullable
+  public ItemPresentation getPresentation() {
+    return JsonPsiImplUtils.getPresentation(this);
   }
 
 }

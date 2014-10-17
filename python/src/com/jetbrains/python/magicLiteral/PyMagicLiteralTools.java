@@ -1,7 +1,11 @@
 package com.jetbrains.python.magicLiteral;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiCacheKey;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.Function;
 import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +16,13 @@ import org.jetbrains.annotations.Nullable;
  * @author Ilya.Kazakevich
  */
 public final class PyMagicLiteralTools {
+  /**
+   * Cache: ref (value may be null or extension point) by by string literal
+   */
+  private final static PsiCacheKey<Ref<PyMagicLiteralExtensionPoint>, StringLiteralExpression> MAGIC_LITERAL_POINT =
+    PsiCacheKey
+      .create(PyMagicLiteralTools.class.getName(), new MagicLiteralChecker(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+
   private PyMagicLiteralTools() {
   }
 
@@ -34,14 +45,24 @@ public final class PyMagicLiteralTools {
    */
   @Nullable
   public static PyMagicLiteralExtensionPoint getPoint(@NotNull final StringLiteralExpression element) {
-    final PyMagicLiteralExtensionPoint[] magicLiteralExtPoints =
-      ApplicationManager.getApplication().getExtensions(PyMagicLiteralExtensionPoint.EP_NAME);
+    return MAGIC_LITERAL_POINT.getValue(element).get();
+  }
 
-    for (final PyMagicLiteralExtensionPoint magicLiteralExtensionPoint : magicLiteralExtPoints) {
-      if (magicLiteralExtensionPoint.isMagicLiteral(element)) {
-        return magicLiteralExtensionPoint;
+  /**
+   * Obtains ref (value may be null or extension point) by by string literal
+   */
+  private static class MagicLiteralChecker implements Function<StringLiteralExpression, Ref<PyMagicLiteralExtensionPoint>> {
+    @Override
+    public Ref<PyMagicLiteralExtensionPoint> fun(StringLiteralExpression element) {
+      final PyMagicLiteralExtensionPoint[] magicLiteralExtPoints =
+        ApplicationManager.getApplication().getExtensions(PyMagicLiteralExtensionPoint.EP_NAME);
+
+      for (final PyMagicLiteralExtensionPoint magicLiteralExtensionPoint : magicLiteralExtPoints) {
+        if (magicLiteralExtensionPoint.isMagicLiteral(element)) {
+          return Ref.create(magicLiteralExtensionPoint);
+        }
       }
+      return new Ref<PyMagicLiteralExtensionPoint>();
     }
-    return null;
   }
 }

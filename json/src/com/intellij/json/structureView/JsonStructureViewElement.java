@@ -6,12 +6,9 @@ import com.intellij.json.psi.*;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 
 /**
@@ -48,53 +45,9 @@ public class JsonStructureViewElement implements StructureViewTreeElement {
   @NotNull
   @Override
   public ItemPresentation getPresentation() {
-    if (myElement instanceof JsonProperty) {
-      return new ItemPresentation() {
-        @Nullable
-        @Override
-        public String getPresentableText() {
-          return ((JsonProperty)myElement).getName();
-        }
-
-        @Nullable
-        @Override
-        public String getLocationString() {
-          return null;
-        }
-
-        @Nullable
-        @Override
-        public Icon getIcon(boolean unused) {
-          return PlatformIcons.PROPERTY_ICON;
-        }
-      };
-    }
-    else if (myElement instanceof JsonObject) {
-      return new ItemPresentation() {
-        @Nullable
-        @Override
-        public String getPresentableText() {
-          return "object";
-        }
-
-        @Nullable
-        @Override
-        public String getLocationString() {
-          return null;
-        }
-
-        @Nullable
-        @Override
-        public Icon getIcon(boolean unused) {
-          return PlatformIcons.CLASS_ICON;
-        }
-      };
-    }
-    else if (myElement instanceof JsonFile) {
-      //noinspection ConstantConditions
-      return myElement.getPresentation();
-    }
-    throw new AssertionError("Attempting to create presentation for illegal element: " + myElement);
+    final ItemPresentation presentation = myElement.getPresentation();
+    assert presentation != null;
+    return presentation;
   }
 
   @NotNull

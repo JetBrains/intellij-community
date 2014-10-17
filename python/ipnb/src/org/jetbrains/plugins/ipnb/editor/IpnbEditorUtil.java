@@ -44,7 +44,7 @@ public class IpnbEditorUtil {
   public enum PromptType { In, Out, None }
 
   public static Dimension PROMPT_SIZE = new Dimension(80, 30);
-  public static int PANEL_WIDTH = 900;
+  public static int PANEL_WIDTH = (int)(Toolkit.getDefaultToolkit().getScreenSize().width * 0.5);
 
   public static Editor createPythonCodeEditor(@NotNull final Project project, @NotNull final IpnbCodeSourcePanel codeSourcePanel) {
     final EditorFactory editorFactory = EditorFactory.getInstance();

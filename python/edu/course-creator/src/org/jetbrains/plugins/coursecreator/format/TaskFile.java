@@ -86,7 +86,7 @@ public class TaskFile {
         boolean coveredByPrevTW = false;
         int prevIndex = w.getIndex() - 1;
         if (CCProjectService.indexIsValid(prevIndex, task_windows)) {
-          TaskWindow prevTW = task_windows.get(prevIndex);
+          TaskWindow prevTW = task_windows.get(prevIndex - 1);
           if (prevTW.getLine() == line) {
             int prevLength = useLength ? prevTW.getLength() : prevTW.getReplacementLength();
             int endOffset = prevTW.getStart() + prevLength;

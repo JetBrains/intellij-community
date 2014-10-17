@@ -97,8 +97,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     Project project = e.getProject();
     List<Pair<TaskInfo, ProgressIndicator>> backgroundTasks = getCancellableProcesses(project);
     if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
-      if (activeProcessHandler != null && !activeProcessHandler.isProcessTerminating() && !activeProcessHandler.isProcessTerminated()
-          && backgroundTasks.isEmpty()) {
+      if (canBeStopped(activeProcessHandler) && backgroundTasks.isEmpty()) {
         stopProcess(activeProcessHandler);
         return;
       }
@@ -254,12 +253,17 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     }
     final List<RunContentDescriptor> activeDescriptors = new ArrayList<RunContentDescriptor>();
     for (RunContentDescriptor descriptor : runningProcesses) {
-      final ProcessHandler processHandler = descriptor.getProcessHandler();
-      if (processHandler != null && !processHandler.isProcessTerminating() && !processHandler.isProcessTerminated()) {
+      if (canBeStopped(descriptor.getProcessHandler())) {
         activeDescriptors.add(descriptor);
       }
     }
     return activeDescriptors;
+  }
+
+  private static boolean canBeStopped(@Nullable ProcessHandler processHandler) {
+    return processHandler != null && !processHandler.isProcessTerminated()
+           && (!processHandler.isProcessTerminating()
+               || processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess());
   }
 
   private abstract static class HandlerItem {

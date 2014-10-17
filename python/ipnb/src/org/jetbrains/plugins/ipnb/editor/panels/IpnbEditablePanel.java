@@ -26,6 +26,10 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     super(cell);
   }
 
+  public IpnbEditablePanel(@NotNull K cell, @NotNull final LayoutManager layoutManager) {
+    super(cell, layoutManager);
+  }
+
 
   protected void initPanel() {
     myViewPanel = createViewPanel();

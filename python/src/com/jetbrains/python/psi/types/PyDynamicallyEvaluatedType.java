@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +50,7 @@ public class PyDynamicallyEvaluatedType extends PyUnionType {
 
   @Override
   public String getName() {
-    PyType res = excludeNull(TypeEvalContext.codeInsightFallback());
+    PyType res = excludeNull(TypeEvalContext.codeInsightFallback(null));
     return res != null ? res.getName() : PyNames.UNKNOWN_TYPE;
   }
 }
