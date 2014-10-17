@@ -29,7 +29,7 @@ public class BytecodeSourceMapper {
   private final Map<String, Map<String, Map<Integer, Integer>>> mapping = new LinkedHashMap<String, Map<String, Map<Integer, Integer>>>();
 
   // original line to decompiled line
-  private final Map<Integer, Integer> linesMapping = new LinkedHashMap<Integer, Integer>();
+  private final Map<Integer, Integer> linesMapping = new HashMap<Integer, Integer>();
 
   public void addMapping(String className, String methodName, int bytecodeOffset, int sourceLine) {
     Map<String, Map<Integer, Integer>> class_mapping = mapping.get(className);
@@ -56,6 +56,10 @@ public class BytecodeSourceMapper {
   }
 
   public void dumpMapping(TextBuffer buffer, boolean offsetsToHex) {
+    if (mapping.isEmpty() && linesMapping.isEmpty()) {
+      return;
+    }
+
     String lineSeparator = DecompilerContext.getNewLineSeparator();
 
     for (Entry<String, Map<String, Map<Integer, Integer>>> class_entry : mapping.entrySet()) {
@@ -91,9 +95,9 @@ public class BytecodeSourceMapper {
 
     // lines mapping
     buffer.append("Lines mapping:").appendLineSeparator();
-    int[] mapping = getOriginalLinesMapping();
-    for (int i = 0; i < mapping.length; i += 2) {
-      buffer.append(mapping[i]).append(" <-> ").append(mapping[i + 1]).appendLineSeparator();
+    Map<Integer, Integer> sorted = new TreeMap<Integer, Integer>(linesMapping);
+    for (Entry<Integer, Integer> entry : sorted.entrySet()) {
+      buffer.append(entry.getKey()).append(" <-> ").append(entry.getValue()).appendLineSeparator();
     }
   }
 
