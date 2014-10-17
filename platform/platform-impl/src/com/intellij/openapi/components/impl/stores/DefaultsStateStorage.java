@@ -41,7 +41,7 @@ class DefaultsStateStorage implements StateStorage {
   }
 
   @Nullable
-  public Element getState(final Object component, final String componentName) throws StateStorageException {
+  private Element getState(final Object component, final String componentName) throws StateStorageException {
     final URL url = DecodeDefaultsUtil.getDefaults(component, componentName);
     if (url == null) {
       return null;
@@ -50,7 +50,7 @@ class DefaultsStateStorage implements StateStorage {
     try {
       Document document = JDOMUtil.loadDocument(url);
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
-      final Element documentElement = document.getRootElement();
+      final Element documentElement = document.detachRootElement();
 
       if (myPathMacroManager != null) {
         myPathMacroManager.expandPaths(documentElement);
@@ -78,9 +78,9 @@ class DefaultsStateStorage implements StateStorage {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public ExternalizationSession startExternalization() {
-    throw new UnsupportedOperationException("Method startExternalization not implemented in " + getClass());
+    return null;
   }
 
   @Override
