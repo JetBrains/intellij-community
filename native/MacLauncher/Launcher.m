@@ -67,7 +67,7 @@ static NSString *const JVMOptions = @"JVMOptions";
 
 
 void appendBundle(NSString *path, NSMutableArray *sink) {
-    if ([path hasSuffix:@".jdk"] || [path hasSuffix:@".jre"]) {
+    if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"]) {
         NSBundle *bundle = [NSBundle bundleWithPath:path];
         if (bundle != nil) {
             [sink addObject:bundle];
