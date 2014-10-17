@@ -22,11 +22,14 @@ public class TestClassSimpleBytecodeMapping {
    }
 }
 
-class pkg/TestClassSimpleBytecodeMapping{
-   method run (Ljava/lang/Runnable;)V{
-      1      20
+class pkg/TestClassSimpleBytecodeMapping$1{
+   method run ()V{
+      0      7
+      3      7
+      5      7
    }
-
+}
+class pkg/TestClassSimpleBytecodeMapping{
    method test ()I{
       0      4
       3      4
@@ -47,11 +50,8 @@ class pkg/TestClassSimpleBytecodeMapping{
       2e      15
       2f      15
    }
-}
-class pkg/TestClassSimpleBytecodeMapping$1{
-   method run ()V{
-      0      7
-      3      7
-      5      7
+
+   method run (Ljava/lang/Runnable;)V{
+      1      20
    }
 }
