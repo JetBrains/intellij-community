@@ -38,11 +38,19 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
   }
 
   private void doTest(String evaluatedText, String expectedCallSite, String expectedClass) throws Exception {
+    doTest(evaluatedText, expectedCallSite, expectedClass, true);
+  }
+
+  private void doTest(String evaluatedText,
+                      String expectedCallSite,
+                      String expectedClass,
+                      boolean codeBlock) throws Exception {
     final String testName = getTestName(false);
     configureByFile("/refactoring/extractMethodObject4Debugger/" + testName + ".java");
     final int offset = getEditor().getCaretModel().getOffset();
     final PsiElement context = getFile().findElementAt(offset);
-    final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(getProject()).createCodeBlockCodeFragment(evaluatedText, context, false);
+    final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(getProject());
+    final JavaCodeFragment fragment = codeBlock ? fragmentFactory.createCodeBlockCodeFragment(evaluatedText, context, false) : fragmentFactory.createExpressionCodeFragment(evaluatedText, context, null, false);
     final ExtractLightMethodObjectHandler.ExtractedData extractedData =
       ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), getFile(), fragment, "test");
     assertNotNull(extractedData);
@@ -178,6 +186,19 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
                                                "            };\n" +
                                                "        }\n" +
                                                "    }");
+  }
+
+  public void testArrayInitializer() throws Exception {
+    doTest("{new Runnable() {public void run(){} } }", 
+           "Runnable[] result = new Test().invoke();",
+           "public class Test {\n" +
+           "        public Runnable[] invoke() {\n" +
+           "            return new Runnable[]{new Runnable() {\n" +
+           "                public void run() {\n" +
+           "                }\n" +
+           "            }};\n" +
+           "        }\n" +
+           "    }", false);
   }
 
   @Override
