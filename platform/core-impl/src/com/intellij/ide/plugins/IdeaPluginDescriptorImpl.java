@@ -31,6 +31,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.containers.WeakStringInterner;
@@ -120,19 +121,19 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Nullable
-  private static List<Element> copyElements(final Element[] elements, final WeakStringInterner interner) {
-    if (elements != null) {
-      List<Element> result = new ArrayList<Element>();
-      for (Element extensionsRoot : elements) {
-        for (final Object o : extensionsRoot.getChildren()) {
-          Element element = (Element)o;
-          JDOMUtil.internElement(element, interner);
-          result.add(element);
-        }
-      }
-      return result;
+  private static List<Element> copyElements(@Nullable Element[] elements, StringInterner interner) {
+    if (elements == null || elements.length == 0) {
+      return null;
     }
-    return null;
+
+    List<Element> result = new SmartList<Element>();
+    for (Element extensionsRoot : elements) {
+      for (Element element : extensionsRoot.getChildren()) {
+        JDOMUtil.internElement(element, interner);
+        result.add(element);
+      }
+    }
+    return result;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -167,7 +168,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude) throws InvalidDataException, FileNotFoundException {
     document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude);
     Element rootElement = document.getRootElement();
-    JDOMUtil.internElement(rootElement, new WeakStringInterner());
+    JDOMUtil.internElement(rootElement, new StringInterner());
     readExternal(document.getRootElement());
   }
 
@@ -267,7 +268,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
     if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
-    WeakStringInterner interner = new WeakStringInterner();
+    StringInterner interner = new StringInterner();
     List<Element> extensions = copyElements(pluginBean.extensions, interner);
     if (extensions != null) {
       myExtensions = new MultiMap<String, Element>();
