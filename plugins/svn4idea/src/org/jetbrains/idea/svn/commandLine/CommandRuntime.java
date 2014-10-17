@@ -176,6 +176,8 @@ public class CommandRuntime {
       // NOTE: required) - not to execute same command several times like it is currently for all other cases in terminal mode. But such
       // NOTE: behaviour is not mandatory for now - so we just use "repeat command" logic.
       authCases.add(new ProxyCallback(myAuthenticationService, url));
+      // Same situation (described above) as with proxy settings is here.
+      authCases.add(new TwoWaySslCallback(myAuthenticationService, url));
     }
     else {
       authCases.add(new CertificateCallbackCase(myAuthenticationService, url));
