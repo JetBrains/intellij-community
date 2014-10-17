@@ -81,13 +81,14 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  private State myState;
+  private State myState = new State();
 
   static class State {
     @Attribute(value = "version", converter = UseMavenConverter.class)
-    public boolean useMaven2 = false;
+    public boolean useMaven2;
     @Attribute
     public String vmOptions = DEFAULT_VM_OPTIONS;
+    @Attribute
     public String embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
   }
 
