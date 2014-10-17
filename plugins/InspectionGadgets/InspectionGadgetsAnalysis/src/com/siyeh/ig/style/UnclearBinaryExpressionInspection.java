@@ -207,7 +207,10 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
 
   private static boolean isSimpleAssignment(PsiAssignmentExpression assignmentExpression, PsiElement parent) {
     final IElementType parentTokenType;
-    if (parent instanceof PsiAssignmentExpression) {
+    if (parent instanceof PsiExpressionStatement) {
+      return true;
+    }
+    else if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression parentAssignmentExpression = (PsiAssignmentExpression)parent;
       parentTokenType = parentAssignmentExpression.getOperationTokenType();
     }
