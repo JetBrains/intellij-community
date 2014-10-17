@@ -490,6 +490,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     @NotNull private Color myColor = UIUtil.getTableBackground();
     @NotNull private Color myBorderColor = UIUtil.getTableBackground();
     private boolean isNarrow = true;
+    @NotNull
+    private TableCellRenderer myRenderer = new DefaultTableCellRenderer();
 
     RootCellRenderer(@NotNull VcsLogUiImpl ui) {
       super("", CENTER);
@@ -540,7 +542,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       //noinspection UseJBColor
       Color transparentColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), 50);
       myColor = new JBColor(transparentColor, transparentColor);
-      myBorderColor = UIUtil.getTableBackground(isSelected);
+      myBorderColor = myRenderer.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column).getBackground();
       setForeground(UIUtil.getTableForeground(false));
 
       if (myUi.isShowRootNames()) {
