@@ -115,7 +115,7 @@ public class TextBuffer {
         while (currentLine < srcLines.length) {
           String line = srcLines[currentLine];
           int lineEnd = currentLineStartOffset + line.length() + myLineSeparator.length();
-          if (markOffset >= currentLineStartOffset && markOffset <= lineEnd) {
+          if (markOffset <= lineEnd) {
             int requiredLine = markLine - 1;
             int linesToAdd = requiredLine - dumpedLines;
             dumpedLines = requiredLine;
@@ -221,6 +221,14 @@ public class TextBuffer {
     myStringBuilder.insert(offset, s);
     shiftMapping(offset, s.length());
     return this;
+  }
+
+  public int countLines() {
+    return countLines(0);
+  }
+
+  public int countLines(int from) {
+    return count(myLineSeparator, from);
   }
 
   public int count(String substring, int from) {

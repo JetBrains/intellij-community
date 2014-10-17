@@ -256,7 +256,7 @@ public class ClassesProcessor {
       new NestedMemberAccess().propagateMemberAccess(root);
 
       TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
-      new ClassWriter().classToJava(root, classBuffer, 0);
+      new ClassWriter().classToJava(root, classBuffer, 0, null);
 
       String lineSeparator = DecompilerContext.getNewLineSeparator();
       int total_offset_lines = 0;
