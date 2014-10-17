@@ -460,7 +460,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
     GlobalInspectionContextImpl globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrapper);
 
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext, inspectionManager);
+    InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
     InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, new File(getTestDataPath(), testDir).getPath());
   }
 

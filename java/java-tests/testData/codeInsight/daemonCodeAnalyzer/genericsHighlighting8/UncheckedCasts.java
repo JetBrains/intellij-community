@@ -45,7 +45,7 @@ class AllPredicate<T>
     }
 
     public static void foo(SortedMap<?, ?> sourceSortedMap) {
-        new TreeMap<Object, Object>(<warning descr="Unchecked cast: 'java.util.Comparator<capture<?>>' to 'java.util.Comparator<? super java.lang.Object>'">(Comparator<? super Object>) sourceSortedMap.comparator()</warning>);
+        new TreeMap<Object, Object>(<warning descr="Unchecked cast: 'java.util.Comparator<capture<? super capture<?>>>' to 'java.util.Comparator<? super java.lang.Object>'">(Comparator<? super Object>) sourceSortedMap.comparator()</warning>);
     }
 }
 

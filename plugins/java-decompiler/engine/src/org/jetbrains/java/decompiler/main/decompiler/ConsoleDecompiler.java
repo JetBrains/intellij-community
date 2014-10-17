@@ -181,7 +181,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   }
 
   @Override
-  public void saveClassFile(String path, String qualifiedName, String entryName, String content) {
+  public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
     File file = new File(getAbsolutePath(path), entryName);
     try {
       Writer out = new OutputStreamWriter(new FileOutputStream(file), "UTF8");

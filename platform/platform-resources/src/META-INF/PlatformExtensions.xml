@@ -6,6 +6,7 @@
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
 
+    <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
     <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
                         serviceImplementation="com.intellij.ide.util.AppPropertiesComponentImpl"/>
     <projectService serviceInterface="com.intellij.ide.util.PropertiesComponent"

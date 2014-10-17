@@ -181,6 +181,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   }
 
   public static class FontFilter implements SerializationFilter {
+    @Override
     public boolean accepts(Accessor accessor, Object bean) {
       UISettings settings = (UISettings)bean;
       return !hasDefaultFontSetting(settings);
@@ -192,10 +193,12 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     return fontData.first.equals(settings.FONT_FACE) && fontData.second.equals(settings.FONT_SIZE);
   }
 
+  @Override
   public UISettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(UISettings object) {
     XmlSerializerUtil.copyBean(object, this);
 

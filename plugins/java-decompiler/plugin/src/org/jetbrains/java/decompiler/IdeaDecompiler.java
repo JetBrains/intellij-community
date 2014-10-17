@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler;
 
+import com.intellij.debugger.PositionManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -146,12 +147,26 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       MyBytecodeProvider provider = new MyBytecodeProvider(files);
       MyResultSaver saver = new MyResultSaver();
 
-      myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, Registry.is("decompiler.use.line.table") ? "1" : "0");
+      if (Registry.is("decompiler.use.line.mapping")) {
+        myOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
+        myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0");
+      }
+      else if (Registry.is("decompiler.use.line.table")) {
+        myOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "0");
+        myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1");
+      }
+      else {
+        myOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "0");
+        myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0");
+      }
+
       BaseDecompiler decompiler = new BaseDecompiler(provider, saver, myOptions, myLogger);
       for (String path : files.keySet()) {
         decompiler.addSpace(new File(path), true);
       }
       decompiler.decompileContext();
+
+      file.putUserData(PositionManager.LINE_NUMBERS_MAPPING_KEY, saver.myMapping);
 
       return saver.myResult;
     }
@@ -190,11 +205,13 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
 
   private static class MyResultSaver implements IResultSaver {
     private String myResult = "";
+    private int[] myMapping = null;
 
     @Override
-    public void saveClassFile(String path, String qualifiedName, String entryName, String content) {
+    public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
       if (myResult.isEmpty()) {
         myResult = content;
+        myMapping = mapping;
       }
     }
 

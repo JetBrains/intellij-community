@@ -41,7 +41,7 @@ abstract class AbstractCollectionBinding implements Binding {
     myElementType = elementType;
     myTagName = tagName;
     myAccessor = accessor;
-    myAnnotation = accessor == null ? null : XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), AbstractCollection.class);
+    myAnnotation = accessor == null ? null : accessor.getAnnotation(AbstractCollection.class);
   }
 
   @Override

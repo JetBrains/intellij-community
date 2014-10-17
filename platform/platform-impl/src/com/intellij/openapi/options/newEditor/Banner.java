@@ -21,10 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.SwingActionLink;
+import com.intellij.ui.components.panels.HorizontalLayout;
 
 import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
@@ -39,7 +38,7 @@ final class Banner extends JPanel {
 
   Banner(Action action) {
     super(new BorderLayout(10, 0));
-    myLeftPanel.setLayout(new BoxLayout(myLeftPanel, BoxLayout.X_AXIS));
+    myLeftPanel.setLayout(new HorizontalLayout(5));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurableBanner);
     myProjectIcon.setForeground(JBColor.GRAY);
     myProjectIcon.setVisible(false);
@@ -67,11 +66,9 @@ final class Banner extends JPanel {
         }
         else {
           if (i > 0) {
-            JLabel label = new JLabel("\u203A");
-            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
-            myLeftPanel.add(RelativeFont.HUGE.install(label));
+            myLeftPanel.add(HorizontalLayout.LEFT, RelativeFont.HUGE.install(new JLabel("\u203A")));
           }
-          myLeftPanel.add(RelativeFont.BOLD.install(new JLabel(name)));
+          myLeftPanel.add(HorizontalLayout.LEFT, RelativeFont.BOLD.install(new JLabel(name)));
         }
         i += 2;
       }

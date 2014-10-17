@@ -26,6 +26,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -362,6 +363,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         myBuilders.put(typeName, builder);
         Disposer.register(this, builder);
+        Disposer.register(builder, new Disposable() {
+          @Override
+          public void dispose() {
+            myBuilders.remove(typeName);
+          }
+        });
 
         final HierarchyNodeDescriptor descriptor = structure.getBaseDescriptor();
         builder.select(descriptor, new Runnable() {
@@ -500,7 +507,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     if (currentBuilderOnly) {
       Disposer.dispose(getCurrentBuilder());
-      myBuilders.remove(myCurrentViewType);
     }
     else {
       disposeBuilders();

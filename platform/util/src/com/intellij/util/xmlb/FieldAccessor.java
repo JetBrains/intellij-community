@@ -62,6 +62,11 @@ class FieldAccessor implements Accessor {
   }
 
   @Override
+  public <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass) {
+    return myField.getAnnotation(annotationClass);
+  }
+
+  @Override
   public String getName() {
     return myField.getName();
   }
