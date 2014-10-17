@@ -61,7 +61,7 @@ public class TipPanel extends JPanel {
     JCheckBox showOnStartCheckBox = new JCheckBox(IdeBundle.message("checkbox.show.tips.on.startup"), true);
     showOnStartCheckBox.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
     final GeneralSettings settings = GeneralSettings.getInstance();
-    showOnStartCheckBox.setSelected(settings.showTipsOnStartup());
+    showOnStartCheckBox.setSelected(settings.isShowTipsOnStartup());
     showOnStartCheckBox.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         settings.setShowTipsOnStartup(e.getStateChange() == ItemEvent.SELECTED);
