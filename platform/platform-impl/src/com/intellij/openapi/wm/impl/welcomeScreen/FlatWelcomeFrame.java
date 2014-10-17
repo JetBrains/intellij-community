@@ -32,6 +32,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
@@ -144,7 +145,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
 
   @Override
   public IdeFrame createFrame() {
-    return this;
+    return Registry.is("ide.new.welcome.screen") ? this : null;
   }
 
   private static class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
