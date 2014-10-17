@@ -162,7 +162,14 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
   public static void showNow() {
     if (ourInstance == null) {
-      IdeFrame frame = EP.getExtensions().length == 0 ? new WelcomeFrame() : EP.getExtensions()[0].createFrame();
+      IdeFrame frame = null;
+      for (WelcomeFrameProvider provider : EP.getExtensions()) {
+        frame = provider.createFrame();
+        if (frame != null) break;
+      }
+      if (frame == null) {
+        frame = new WelcomeFrame();
+      }
       IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
       ((JFrame)frame).setVisible(true);
       ourInstance = frame;
