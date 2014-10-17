@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +22,7 @@ class AccessorBindingWrapper implements Binding {
   private final Accessor myAccessor;
   private final Binding myBinding;
 
-  public AccessorBindingWrapper(final Accessor accessor, final Binding binding) {
+  public AccessorBindingWrapper(@NotNull Accessor accessor, @NotNull Binding binding) {
     myAccessor = accessor;
     myBinding = binding;
   }

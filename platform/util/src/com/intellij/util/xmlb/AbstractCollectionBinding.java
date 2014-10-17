@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@ package com.intellij.util.xmlb;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
+import gnu.trove.THashMap;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 abstract class AbstractCollectionBinding implements Binding {
   private Map<Class, Binding> myElementBindings;
@@ -67,14 +70,11 @@ abstract class AbstractCollectionBinding implements Binding {
 
   private synchronized Map<Class, Binding> getElementBindings() {
     if (myElementBindings == null) {
-      myElementBindings = new HashMap<Class, Binding>();
-
+      myElementBindings = new THashMap<Class, Binding>();
       myElementBindings.put(myElementType, getBinding(myElementType));
-
       if (myAnnotation != null) {
         for (Class aClass : myAnnotation.elementTypes()) {
           myElementBindings.put(aClass, getBinding(aClass));
-
         }
       }
     }
@@ -149,10 +149,7 @@ abstract class AbstractCollectionBinding implements Binding {
       assert nodes.length == 1;
       Element e = (Element)nodes[0];
       result = createCollection(e.getName());
-      List<Content> content = e.getContent();
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0, size = content.size(); i < size; i++) {
-        Content child = content.get(i);
+      for (Content child : e.getContent()) {
         if (!XmlSerializerImpl.isIgnoredNode(child)) {
           //noinspection unchecked
           result.add(getElementBinding(child).deserialize(o, child));
@@ -171,8 +168,8 @@ abstract class AbstractCollectionBinding implements Binding {
     return processResult(result, o);
   }
 
-  protected Collection createCollection(final String tagName) {
-    return new ArrayList();
+  protected Collection createCollection(@NotNull String tagName) {
+    return new SmartList();
   }
 
   @Override
