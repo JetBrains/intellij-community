@@ -500,6 +500,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     @Override
     protected void paintComponent(Graphics g) {
+      setFont(UIManager.getFont("Table.font"));
       g.setColor(myColor);
 
       int width = getWidth();
@@ -572,13 +573,13 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   private class RootHeaderRenderer implements TableCellRenderer {
     private final JLabel myRightArrow = new JLabel(AllIcons.General.ComboArrowRight);
-    private final JLabel myDownArrow = new JLabel("Root", SwingConstants.CENTER);
+    private final JLabel myRootLabel = new JLabel("Root", SwingConstants.CENTER);
 
     @NotNull
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (myUI.isShowRootNames()) {
-        return myDownArrow;
+        return myRootLabel;
       }
       return myRightArrow;
     }
