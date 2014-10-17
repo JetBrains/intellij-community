@@ -37,9 +37,16 @@ class NumpyArraySlice extends ComparableArrayChunk {
 
   public String getPresentation() {
     String onlyChunkSlice = "[" + rOffset + ":" + (rOffset + rows) + ", " + cOffset + ":" + (cOffset + columns) + "]";
-    if (isOneRow()) {
+    if (isOneColumn() && isOneRow()) {
+      onlyChunkSlice = "";
+    }
+    else if (isOneRow()) {
       onlyChunkSlice = "[" + cOffset + ":" + (cOffset + columns) + "]";
     }
+    else if (isOneColumn()) {
+      onlyChunkSlice = "[" + rOffset + ":" + (rOffset + rows) + "]";
+    }
+
     if (baseSlice.endsWith(onlyChunkSlice)) {
       return baseSlice;
     }
@@ -88,7 +95,7 @@ class NumpyArraySlice extends ComparableArrayChunk {
 
         @Override
         public void errorOccurred(@NotNull String errorMessage) {
-          myValueProvider.showError(errorMessage);
+          myValueProvider.showError(errorMessage, getInstance());
         }
       };
 
@@ -99,6 +106,10 @@ class NumpyArraySlice extends ComparableArrayChunk {
 
         @Override
         public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
+          if (!(node instanceof XValueNodeImpl)) {
+            return;
+          }
+
           String fullName = ((XValueNodeImpl)node).getName();
           if (!fullName.contains(getPresentation())) {
             return;
@@ -109,14 +120,12 @@ class NumpyArraySlice extends ComparableArrayChunk {
             row = 0;
           }
           else {
-            if (fullName != null && fullName.contains("[")) {
+            if (isOneColumn()) {
+              row = Integer.parseInt(fullName.substring(fullName.lastIndexOf('[') + 1, fullName.length() - 1));
+            }
+            else {
               fullName = fullName.substring(0, fullName.lastIndexOf(","));
-            }
-            if (fullName != null && fullName.contains("[")) {
               row = Integer.parseInt(fullName.substring(fullName.lastIndexOf('[') + 1, fullName.length()));
-            }
-            else if (fullName != null && !fullName.contains("[")) {
-              row = 0;
             }
           }
 
@@ -132,6 +141,14 @@ class NumpyArraySlice extends ComparableArrayChunk {
                 rawValue = rawValue.substring(1, rawValue.length() - 1);
               }
               myData[row][i] = rawValue;
+            }
+            if (node.getChildCount() == 0) {
+              String rawValue = ((XValueNodeImpl)node).getRawValue();
+              if (myValueProvider.isNumeric()) {
+                //remove str quotes in case of numeric
+                rawValue = rawValue.substring(1, rawValue.length() - 1);
+              }
+              myData[row][0] = rawValue;
             }
             myFilledRows += 1;
             if (myFilledRows == rows) {
@@ -160,16 +177,30 @@ class NumpyArraySlice extends ComparableArrayChunk {
       }
 
       String evalRowCommand = "map(lambda l: " + myValueProvider.evalTypeFunc(myFormat) + ", list(" + getPresentation();
-      if (!isOneRow()) {
-        evalRowCommand += "[" + nextRow + ", 0:" + columns + "]";
+      if (!isOneRow() && !isOneColumn()) {
+        evalRowCommand += "[" + nextRow + ", 0:" + columns + "]))";
       }
-      evalRowCommand += "))";
+
+      if (isOneRow() && isOneColumn()) {
+        evalRowCommand = "\'" + myFormat + "\'" + " % " + getPresentation();
+      }
+      else if (isOneColumn()) {
+        evalRowCommand = "\'" + myFormat + "\'" + " % " + getPresentation();
+        evalRowCommand += "[" + nextRow + "]";
+      }
+      else if (isOneRow()) {
+        evalRowCommand += "[0:" + columns + "]))";
+      }
       myValueProvider.getEvaluator().evaluate(evalRowCommand, callback, null);
     }
   }
 
   private boolean isOneRow() {
     return rows == 1;
+  }
+
+  private boolean isOneColumn() {
+    return columns == 1;
   }
 
   public Object[][] getData() {
