@@ -1,98 +1,111 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.struct.attr.StructLineNumberTableAttribute;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class BytecodeMappingTracer {
 
-  private int current_sourceline;
+  private int currentSourceLine;
 
-  private StructLineNumberTableAttribute myLineNumberTable = null;
+  private StructLineNumberTableAttribute lineNumberTable = null;
 
   // bytecode offset, source line
-  private HashMap<Integer, Integer> mapping = new HashMap<Integer, Integer>();
+  private Map<Integer, Integer> mapping = new HashMap<Integer, Integer>();
 
-  public BytecodeMappingTracer() {}
+  public BytecodeMappingTracer() { }
 
   public BytecodeMappingTracer(int initial_source_line) {
-    current_sourceline = initial_source_line;
+    currentSourceLine = initial_source_line;
   }
 
   public void incrementCurrentSourceLine() {
-    current_sourceline++;
+    currentSourceLine++;
   }
 
   public void incrementCurrentSourceLine(int number_lines) {
-    current_sourceline += number_lines;
+    currentSourceLine += number_lines;
   }
 
   public void shiftSourceLines(int shift) {
-    for(Entry<Integer, Integer> entry : mapping.entrySet()) {
+    for (Entry<Integer, Integer> entry : mapping.entrySet()) {
       entry.setValue(entry.getValue() + shift);
     }
   }
 
   public void addMapping(int bytecode_offset) {
-    if(!mapping.containsKey(bytecode_offset)) {
-      mapping.put(bytecode_offset, current_sourceline);
+    if (!mapping.containsKey(bytecode_offset)) {
+      mapping.put(bytecode_offset, currentSourceLine);
     }
   }
 
   public void addMapping(Set<Integer> bytecode_offsets) {
-    if(bytecode_offsets != null) {
-      for(Integer bytecode_offset : bytecode_offsets) {
+    if (bytecode_offsets != null) {
+      for (Integer bytecode_offset : bytecode_offsets) {
         addMapping(bytecode_offset);
       }
     }
   }
 
   public void addTracer(BytecodeMappingTracer tracer) {
-    if(tracer != null) {
-      for(Entry<Integer, Integer> entry : tracer.mapping.entrySet()) {
-        if(!mapping.containsKey(entry.getKey())) {
+    if (tracer != null) {
+      for (Entry<Integer, Integer> entry : tracer.mapping.entrySet()) {
+        if (!mapping.containsKey(entry.getKey())) {
           mapping.put(entry.getKey(), entry.getValue());
         }
       }
     }
   }
 
-  public HashMap<Integer, Integer> getMapping() {
+  public Map<Integer, Integer> getMapping() {
     return mapping;
   }
 
   public int getCurrentSourceLine() {
-    return current_sourceline;
+    return currentSourceLine;
   }
 
-  public void setCurrentSourceLine(int current_sourceline) {
-    this.current_sourceline = current_sourceline;
+  public void setCurrentSourceLine(int currentSourceLine) {
+    this.currentSourceLine = currentSourceLine;
   }
 
   public void setLineNumberTable(StructLineNumberTableAttribute lineNumberTable) {
-    myLineNumberTable = lineNumberTable;
+    this.lineNumberTable = lineNumberTable;
   }
 
   public Map<Integer, Integer> getOriginalLinesMapping() {
-    if (myLineNumberTable == null) {
+    if (lineNumberTable == null) {
       return Collections.emptyMap();
     }
-    HashMap<Integer, Integer> res = new HashMap<Integer, Integer>();
-    int[] data = myLineNumberTable.getRawData();
-    for (int i = 0; i < data.length; i+=2) {
+
+    Map<Integer, Integer> res = new HashMap<Integer, Integer>();
+    int[] data = lineNumberTable.getRawData();
+    for (int i = 0; i < data.length; i += 2) {
       int originalOffset = data[i];
-      int originalLine = data[i+1];
+      int originalLine = data[i + 1];
       Integer newLine = mapping.get(originalOffset);
       if (newLine != null) {
         res.put(originalLine, newLine);
       }
     }
     for (Entry<Integer, Integer> entry : mapping.entrySet()) {
-      int originalLine = myLineNumberTable.findLineNumber(entry.getKey());
+      int originalLine = lineNumberTable.findLineNumber(entry.getKey());
       if (originalLine > -1) {
         res.put(originalLine, entry.getValue());
       }
