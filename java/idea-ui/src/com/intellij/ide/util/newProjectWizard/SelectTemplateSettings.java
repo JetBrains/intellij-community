@@ -23,8 +23,13 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  *         Date: 10/9/12
  */
-@State(name = "SelectProjectTemplateSettings", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")})
+@State(
+  name = "SelectProjectTemplateSettings",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/projectSelectTemplate.xml", roamingType = RoamingType.DISABLED)
+)
 public class SelectTemplateSettings implements PersistentStateComponent<SelectTemplateSettings> {
+  public boolean EXPERT_MODE = false;
+  public String LAST_TEMPLATE = null;
 
   public static SelectTemplateSettings getInstance() {
     return ServiceManager.getService(SelectTemplateSettings.class);
@@ -61,7 +66,4 @@ public class SelectTemplateSettings implements PersistentStateComponent<SelectTe
     EXPERT_MODE = state.EXPERT_MODE;
     LAST_TEMPLATE = state.LAST_TEMPLATE;
   }
-
-  public boolean EXPERT_MODE = false;
-  public String LAST_TEMPLATE = null;
 }
