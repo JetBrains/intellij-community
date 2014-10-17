@@ -1,9 +1,6 @@
 package org.jetbrains.java.decompiler.main.collectors;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -14,13 +11,13 @@ public class BytecodeSourceMapper {
   private int offset_total;
 
   // class, method, bytecode offset, source line
-  private HashMap<String, HashMap<String, HashMap<Integer, Integer>>> mapping = new HashMap<String, HashMap<String, HashMap<Integer, Integer>>>();
+  private final HashMap<String, HashMap<String, HashMap<Integer, Integer>>> mapping = new LinkedHashMap<String, HashMap<String, HashMap<Integer, Integer>>>(); // need to preserve order
 
   public void addMapping(String classname, String methodname, int bytecode_offset, int source_line) {
 
     HashMap<String, HashMap<Integer, Integer>> class_mapping = mapping.get(classname);
     if(class_mapping == null) {
-      mapping.put(classname, class_mapping = new HashMap<String, HashMap<Integer, Integer>>());
+      mapping.put(classname, class_mapping = new LinkedHashMap<String, HashMap<Integer, Integer>>()); // need to preserve order
     }
 
     HashMap<Integer, Integer> method_mapping = class_mapping.get(methodname);
