@@ -29,7 +29,7 @@ class JDOMElementBinding implements Binding {
 
   public JDOMElementBinding(final Accessor accessor) {
     myAccessor = accessor;
-    final Tag tag = XmlSerializerImpl.findAnnotation(myAccessor.getAnnotations(), Tag.class);
+    Tag tag = myAccessor.getAnnotation(Tag.class);
     assert tag != null : "jdom.Element property without @Tag annotation: " + accessor;
     myTagName = tag.value();
   }

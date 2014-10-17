@@ -25,12 +25,10 @@ import com.intellij.debugger.impl.EditorTextProvider;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -39,7 +37,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,14 +130,11 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
   }
 
   @Override
-  public XExpression getEditorExpression(@NotNull Editor editor, @Nullable PsiFile psiFile) {
-    String text = editor.getSelectionModel().getSelectedText();
-    if (psiFile == null || StringUtil.isEmpty(text)) {
-      return super.getEditorExpression(editor, psiFile);
+  public EvaluationMode getEvaluationMode(@NotNull String text, int startOffset, int endOffset, @Nullable PsiFile psiFile) {
+    if (psiFile != null) {
+      PsiElement[] range = CodeInsightUtil.findStatementsInRange(psiFile, startOffset, endOffset);
+      return range.length > 1 ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION;
     }
-    PsiElement[] range = CodeInsightUtil.findStatementsInRange(psiFile, editor.getSelectionModel().getSelectionStart(),
-                                                               editor.getSelectionModel().getSelectionEnd());
-    return new XExpressionImpl(formatTextForEvaluation(text), XDebuggerEditorBase.getFileTypeLanguage(psiFile.getFileType()), null,
-                               range.length > 1 ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION);
+    return super.getEvaluationMode(text, startOffset, endOffset, null);
   }
 }

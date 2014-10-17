@@ -18,7 +18,9 @@ package org.jetbrains.idea.devkit;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
@@ -26,11 +28,13 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 /**
  * @author peter
  */
 public class DevKitUseScopeEnlarger extends UseScopeEnlarger {
+
   @Override
   public SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
     if (element instanceof PomTargetPsiElement) {
@@ -38,11 +42,21 @@ public class DevKitUseScopeEnlarger extends UseScopeEnlarger {
       if (target instanceof DomTarget) {
         DomElement domElement = ((DomTarget)target).getDomElement();
         if (domElement instanceof ExtensionPoint) {
-          return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(element.getProject()),
-                                                                 XmlFileType.INSTANCE);
+          return createProjectXmlFilesScope(element);
         }
       }
     }
+
+    if (element instanceof PsiClass &&
+        PsiUtil.isIdeaProject(element.getProject()) &&
+        ((PsiClass)element).hasModifierProperty(PsiModifier.PUBLIC)) {
+      return createProjectXmlFilesScope(element);
+    }
     return null;
+  }
+
+  private static SearchScope createProjectXmlFilesScope(PsiElement element) {
+    return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(element.getProject()),
+                                                           XmlFileType.INSTANCE);
   }
 }

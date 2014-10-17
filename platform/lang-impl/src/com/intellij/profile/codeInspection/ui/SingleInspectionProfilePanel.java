@@ -86,6 +86,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
@@ -902,8 +904,15 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           });
 
-
-        final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions();
+        final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions().setRemoveActionUpdater(
+          new AnActionButtonUpdater() {
+            @Override
+            public boolean isEnabled(AnActionEvent e) {
+              final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
+              final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
+              return rowCount - 1 != selectedRow;
+            }
+          });
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
         severityPanel.add(new JBLabel("Severity by Scope"),
@@ -961,7 +970,20 @@ public class SingleInspectionProfilePanel extends JPanel {
     configPanelAnchor.removeAll();
     final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
     if (additionalConfigPanel != null) {
-      configPanelAnchor.add(ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE));
+      final JScrollPane pane = ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE);
+      FocusManager.getCurrentManager().addPropertyChangeListener("focusOwner", new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if (!(evt.getNewValue() instanceof JComponent)) {
+            return;
+          }
+          final JComponent component = (JComponent)evt.getNewValue();
+          if (component.isAncestorOf(pane)) {
+            pane.scrollRectToVisible(component.getBounds());
+          }
+        }
+      });
+      configPanelAnchor.add(pane);
     }
     UIUtil.setEnabled(configPanelAnchor, state.isEnabled(), true);
   }

@@ -105,7 +105,7 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   @NotNull
   @Override
-  protected String convertLocalPathToRootPath(@NotNull String localPath) {
+  protected String convertLocalToRootPath(@NotNull String localPath) {
     return localPath + JAR_SEPARATOR;
   }
 
@@ -123,7 +123,7 @@ public class JarFileSystemImpl extends JarFileSystem {
   @Nullable
   @Override
   public VirtualFile getRootByLocal(@NotNull VirtualFile file) {
-    return findFileByPath(convertLocalPathToRootPath(file.getPath()));
+    return findFileByPath(convertLocalToRootPath(file.getPath()));
   }
 
   @Override

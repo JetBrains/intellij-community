@@ -20,13 +20,20 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.LayoutManager;
+import java.awt.LayoutManager2;
 import java.util.ArrayList;
 
 /**
+ * This class is intended to lay out added components horizontally.
+ * It allows to add them into the LEFT, CENTER, or RIGHT group, which are aligned separately.
+ * Every group can contain any amount of components. The specified gap is added between components,
+ * and the double gap is added between groups of components.
+ * <p><b>NB!: this class must be modified together with the <code>VerticalLayout</code> class accordingly</b></p>
+ *
  * @author Sergey.Malenkov
+ * @see VerticalLayout
  */
-public final class HorizontalLayout implements LayoutManager {
+public final class HorizontalLayout implements LayoutManager2 {
   public static final String LEFT = "LEFT";
   public static final String RIGHT = "RIGHT";
   public static final String CENTER = "CENTER";
@@ -71,6 +78,35 @@ public final class HorizontalLayout implements LayoutManager {
       default:
         throw new IllegalArgumentException("unsupported alignment: " + alignment);
     }
+  }
+
+  @Override
+  public void addLayoutComponent(Component component, Object constraints) {
+    if ((constraints == null) || (constraints instanceof String)) {
+      addLayoutComponent((String)constraints, component);
+    }
+    else {
+      throw new IllegalArgumentException("unsupported constraints: " + constraints);
+    }
+  }
+
+  @Override
+  public Dimension maximumLayoutSize(Container target) {
+    return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+  }
+
+  @Override
+  public float getLayoutAlignmentX(Container target) {
+    return .5f;
+  }
+
+  @Override
+  public float getLayoutAlignmentY(Container target) {
+    return .5f;
+  }
+
+  @Override
+  public void invalidateLayout(Container target) {
   }
 
   @Override
@@ -154,19 +190,21 @@ public final class HorizontalLayout implements LayoutManager {
 
   private int layout(ArrayList<Component> list, int x, int height, Insets insets) {
     for (Component component : list) {
-      Dimension size = component.getPreferredSize();
-      int y = 0;
-      if (myAlignment == -1) {
-        size.height = height;
-      }
-      else if (myAlignment != SwingConstants.TOP) {
-        y = height - size.height;
-        if (myAlignment == SwingConstants.CENTER) {
-          y /= 2;
+      if (component.isVisible()) {
+        Dimension size = component.getPreferredSize();
+        int y = 0;
+        if (myAlignment == -1) {
+          size.height = height;
         }
+        else if (myAlignment != SwingConstants.TOP) {
+          y = height - size.height;
+          if (myAlignment == SwingConstants.CENTER) {
+            y /= 2;
+          }
+        }
+        component.setBounds(x + insets.left, y + insets.top, size.width, size.height);
+        x += size.width + myGap;
       }
-      component.setBounds(x + insets.left, y + insets.top, size.width, size.height);
-      x += size.width + myGap;
     }
     return x;
   }
@@ -188,7 +226,9 @@ public final class HorizontalLayout implements LayoutManager {
   private Dimension getPreferredSize(ArrayList<Component> list) {
     Dimension result = null;
     for (Component component : list) {
-      result = join(result, myGap, component.getPreferredSize());
+      if (component.isVisible()) {
+        result = join(result, myGap, component.getPreferredSize());
+      }
     }
     return result;
   }

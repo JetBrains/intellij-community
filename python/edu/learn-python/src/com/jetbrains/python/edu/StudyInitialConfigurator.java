@@ -1,7 +1,7 @@
 package com.jetbrains.python.edu;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.PathManager;
@@ -33,7 +33,7 @@ public class StudyInitialConfigurator {
                                   final PropertiesComponent propertiesComponent,
                                   FileTypeManager fileTypeManager,
                                   final ProjectManagerEx projectManager,
-                                  RecentProjectsManagerBase recentProjectsManager) {
+                                  RecentProjectsManager recentProjectsManager) {
     if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
       final File file = new File(getCoursesRoot(), "introduction_course.zip");
       final File newCourses = new File(PathManager.getConfigPath(), "courses");

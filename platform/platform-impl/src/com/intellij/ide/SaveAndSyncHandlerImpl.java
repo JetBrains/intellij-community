@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Vladimir Kondratyev
  */
 public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSyncHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SaveAndSyncHandler");
+  private static final Logger LOG = Logger.getInstance(SaveAndSyncHandler.class);
 
   private final Runnable myIdleListener;
   private final PropertyChangeListener myGeneralSettingsListener;
@@ -55,18 +55,26 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
 
   private final AtomicInteger myBlockSaveOnFrameDeactivationCount = new AtomicInteger();
   private final AtomicInteger myBlockSyncOnFrameActivationCount = new AtomicInteger();
-  private final Alarm myRefreshDelayAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final SingleAlarm myRefreshDelayAlarm = new SingleAlarm(new Runnable() {
+    @Override
+    public void run() {
+      if (canSyncOrSave()) {
+        refreshOpenFiles();
+      }
+      maybeRefresh(ModalityState.NON_MODAL);
+    }
+  }, 300);
 
   private long myRefreshSessionId = 0;
 
-  public static SaveAndSyncHandlerImpl getInstance(){
-    return (SaveAndSyncHandlerImpl) ApplicationManager.getApplication().getComponent(SaveAndSyncHandler.class);
+  public static SaveAndSyncHandlerImpl getInstance() {
+    return (SaveAndSyncHandlerImpl)ApplicationManager.getApplication().getComponent(SaveAndSyncHandler.class);
   }
 
-  public SaveAndSyncHandlerImpl(final FrameStateManager frameStateManager,
-                                final FileDocumentManager fileDocumentManager,
-                                final GeneralSettings generalSettings,
-                                final ProgressManager progressManager) {
+  public SaveAndSyncHandlerImpl(@NotNull FrameStateManager frameStateManager,
+                                @NotNull final FileDocumentManager fileDocumentManager,
+                                @NotNull final GeneralSettings generalSettings,
+                                @NotNull ProgressManager progressManager) {
     myProgressManager = progressManager;
 
     myIdleListener = new Runnable() {
@@ -78,14 +86,11 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
       }
     };
 
-    IdeEventQueue.getInstance().addIdleListener(
-      myIdleListener,
-      generalSettings.getInactiveTimeout() * 1000
-    );
+    IdeEventQueue.getInstance().addIdleListener(myIdleListener, generalSettings.getInactiveTimeout() * 1000);
 
     myGeneralSettingsListener = new PropertyChangeListener() {
       @Override
-      public void propertyChange(PropertyChangeEvent e) {
+      public void propertyChange(@NotNull PropertyChangeEvent e) {
         if (GeneralSettings.PROP_INACTIVE_TIMEOUT.equals(e.getPropertyName())) {
           IdeEventQueue eventQueue = IdeEventQueue.getInstance();
           eventQueue.removeIdleListener(myIdleListener);
@@ -94,6 +99,7 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
         }
       }
     };
+
     generalSettings.addPropertyChangeListener(myGeneralSettingsListener);
 
     frameStateManager.addListener(new FrameStateListener() {
@@ -106,7 +112,13 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
 
       @Override
       public void onFrameActivated() {
-        refreshFiles();
+        if (ApplicationManager.getApplication().isDisposed() || !generalSettings.isSyncOnFrameActivation()) {
+          return;
+        }
+
+        LOG.debug("enter: refreshFiles()");
+        myRefreshDelayAlarm.cancelAndRequest();
+        LOG.debug("exit: refreshFiles()");
       }
     });
   }
@@ -156,25 +168,6 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
         LOG.debug("exit: save()");
       }
     }
-  }
-
-  private void refreshFiles() {
-    if (ApplicationManager.getApplication().isDisposed() || !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
-      return;
-    }
-
-    LOG.debug("enter: refreshFiles()");
-    myRefreshDelayAlarm.cancelAllRequests();
-    myRefreshDelayAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (canSyncOrSave()) {
-          refreshOpenFiles();
-        }
-        maybeRefresh(ModalityState.NON_MODAL);
-      }
-    }, 300, ModalityState.NON_MODAL);
-    LOG.debug("exit: refreshFiles()");
   }
 
   public void maybeRefresh(@NotNull ModalityState modalityState) {

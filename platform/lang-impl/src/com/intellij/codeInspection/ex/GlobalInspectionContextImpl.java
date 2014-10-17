@@ -312,7 +312,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly) {
-    final InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
+    final InspectionManager inspectionManager = InspectionManager.getInstance(getProject());
     List<Tools> globalTools = new ArrayList<Tools>();
     final List<Tools> localTools = new ArrayList<Tools>();
     final List<Tools> globalSimpleTools = new ArrayList<Tools>();
@@ -403,7 +403,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private void runGlobalTools(@NotNull AnalysisScope scope, @NotNull InspectionManagerEx inspectionManager, @NotNull List<Tools> globalTools) {
+  private void runGlobalTools(@NotNull AnalysisScope scope, @NotNull InspectionManager inspectionManager, @NotNull List<Tools> globalTools) {
     final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
 
     final boolean surelyNoExternalUsages = scope.getScopeType() == AnalysisScope.PROJECT;
@@ -678,8 +678,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                                                                      range != null ? range.getEndOffset() : file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                      HighlightInfoProcessor.getEmpty());
           Runnable runnable = new Runnable() {
+            @Override
             public void run() {
-              pass.doInspectInBatch(GlobalInspectionContextImpl.this, (InspectionManagerEx)InspectionManager.getInstance(project), lTools);
+              pass.doInspectInBatch(GlobalInspectionContextImpl.this, InspectionManager.getInstance(project), lTools);
             }
           };
           ApplicationManager.getApplication().runReadAction(runnable);

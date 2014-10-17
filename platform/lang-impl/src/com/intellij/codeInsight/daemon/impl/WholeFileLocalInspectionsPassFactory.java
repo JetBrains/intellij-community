@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.Disposable;
@@ -122,7 +122,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       void inspectInjectedPsi(@NotNull List<PsiElement> elements,
                               boolean onTheFly,
                               @NotNull ProgressIndicator indicator,
-                              @NotNull InspectionManagerEx iManager,
+                              @NotNull InspectionManager iManager,
                               boolean inVisibleRange,
                               boolean checkDumbAwareness,
                               @NotNull List<LocalInspectionToolWrapper> wrappers) {

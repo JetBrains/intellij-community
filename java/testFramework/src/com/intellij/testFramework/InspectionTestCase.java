@@ -148,7 +148,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     final GlobalInspectionContextImpl globalContext =
       CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrappers);
 
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext, inspectionManager);
+    InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
     return globalContext;
   }
 

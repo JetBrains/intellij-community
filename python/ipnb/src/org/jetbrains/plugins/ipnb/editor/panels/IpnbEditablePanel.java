@@ -6,14 +6,14 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbEditableCell;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Utilities;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEditableCell> extends IpnbPanel<T, K> {
   private static final Logger LOG = Logger.getInstance(IpnbEditablePanel.class);
@@ -84,6 +84,24 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   private JTextArea createEditablePanel() {
     final JTextArea textArea = new JTextArea(getRawCellText());
+    addHierarchyBoundsListener(new IpnbUtils.IpnbHierarchyBoundsAdapter(this));
+    textArea.addHierarchyBoundsListener(new IpnbUtils.IpnbHierarchyBoundsAdapter(textArea));
+
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        final int height = Math.max(textArea.getFontMetrics(getFont()).getHeight() * getLineCount(textArea),
+                                    myViewPanel.getPreferredSize().height);
+        setPreferredSize(new Dimension(textArea.getWidth(), height));
+        final Container parent = getParent();
+        if (parent instanceof IpnbFilePanel) {
+          IpnbFilePanel filePanel = (IpnbFilePanel)parent;
+          filePanel.revalidate();
+          filePanel.repaint();
+        }
+      }
+    });
+
     textArea.setLineWrap(true);
     textArea.setEditable(true);
     textArea.setBorder(BorderFactory.createLineBorder(JBColor.lightGray));
@@ -104,7 +122,17 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     });
     textArea.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyPressed(KeyEvent e) {
+      public void keyReleased(KeyEvent e) {
+        final int height = textArea.getFontMetrics(getFont()).getHeight() * getLineCount(textArea);
+        final Dimension preferredSize = myViewPanel.getPreferredSize();
+        setPreferredSize(new Dimension(preferredSize.width, Math.max(height, preferredSize.height)));
+        textArea.setPreferredSize(new Dimension(textArea.getWidth(), height));
+        textArea.revalidate();
+        textArea.repaint();
+
+        revalidate();
+        repaint();
+
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           setEditing(false);
           final Container parent = getParent();
@@ -116,6 +144,22 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       }
     });
     return textArea;
+  }
+
+  public int getLineCount(@NotNull final JTextArea textArea) {
+    int totalCharacters = textArea.getText().length();
+    int lineCount = 1;
+
+    try {
+      int offset = totalCharacters;
+      while (offset > 0) {
+        offset = Utilities.getRowStart(textArea, offset) - 1;
+        lineCount++;
+      }
+    } catch (BadLocationException e) {
+      return 1;
+    }
+    return lineCount;
   }
 
   public boolean contains(int y) {
