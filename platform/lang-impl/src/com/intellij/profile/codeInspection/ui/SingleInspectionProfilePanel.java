@@ -902,8 +902,15 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           });
 
-
-        final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions();
+        final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions().setRemoveActionUpdater(
+          new AnActionButtonUpdater() {
+            @Override
+            public boolean isEnabled(AnActionEvent e) {
+              final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
+              final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
+              return rowCount - 1 != selectedRow;
+            }
+          });
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
         severityPanel.add(new JBLabel("Severity by Scope"),
