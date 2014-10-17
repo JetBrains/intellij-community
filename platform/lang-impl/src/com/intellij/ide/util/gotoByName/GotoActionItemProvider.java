@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.ui.OptionsTopHitProvider;
-import com.intellij.ide.ui.TooMuchOptionsProvider;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -90,7 +89,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<Object>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
-      if (provider instanceof TooMuchOptionsProvider) continue;
+      if (provider instanceof OptionsTopHitProvider.Optional) continue;
       if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) continue;
       if (provider instanceof OptionsTopHitProvider && !StringUtil.startsWith(pattern, "#")) {
         String prefix = "#" + ((OptionsTopHitProvider)provider).getId() + " ";
