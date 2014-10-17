@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -98,11 +99,15 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     content.add(myRefsPanel, "");
     content.add(myCommitDetailsPanel, "");
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+      @Override
+      public Color getBackground() {
+        return getDetailsBackground();
+      }
+    };
     myLoadingPanel.add(scrollPane);
 
     myMessagePanel = new MessagePanel();
-    setBackground(UIUtil.getTableBackground());
 
     setLayout(new CardLayout());
     add(myLoadingPanel, STANDARD_LAYER);
@@ -117,7 +122,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   }
 
   private static Color getDetailsBackground() {
-    return UIUtil.isUnderGTKLookAndFeel() ? UIManager.getColor("EditorPane.background") : UIUtil.getPanelBackground();
+    return UIUtil.getTableBackground();
   }
 
   void updateDataPack(@NotNull VisiblePack dataPack) {
