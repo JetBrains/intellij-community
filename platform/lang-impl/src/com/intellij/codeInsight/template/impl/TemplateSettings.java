@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.AbstractBundle;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,22 +36,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-
 @State(
-  name="TemplateSettings",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+  name = "TemplateSettings",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
 )
-public class TemplateSettings implements PersistentStateComponent<Element>, ExportableComponent {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateSettings");
+public class TemplateSettings implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
 
   @NonNls public static final String USER_GROUP_NAME = "user";
   @NonNls private static final String TEMPLATE_SET = "templateSet";
@@ -96,8 +87,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   @NonNls private static final String RESOURCE_BUNDLE = "resource-bundle";
   @NonNls private static final String KEY = "key";
   @NonNls private static final String ID = "id";
-
-  @NonNls private static final String TEMPLATES_CONFIG_FOLDER = "templates";
 
   private final MultiMap<String,TemplateImpl> myTemplates = MultiMap.createLinked();
     
@@ -173,8 +162,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     SchemeProcessor<TemplateGroup> processor = new BaseSchemeProcessor<TemplateGroup>() {
       @Override
       @Nullable
-      public TemplateGroup readScheme(@NotNull final Document schemeContent)
-        throws InvalidDataException, IOException, JDOMException {
+      public TemplateGroup readScheme(@NotNull final Document schemeContent) throws InvalidDataException {
         return readTemplateFile(schemeContent, schemeContent.getRootElement().getAttributeValue("group"), false, false,
                                 getClass().getClassLoader());
       }
@@ -191,7 +179,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
       @Override
-      public Element writeScheme(@NotNull final TemplateGroup template) throws WriteExternalException {
+      public Element writeScheme(@NotNull final TemplateGroup template) {
         Element templateSetElement = new Element(TEMPLATE_SET);
         templateSetElement.setAttribute(GROUP, template.getName());
 
@@ -242,20 +230,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   @Nullable
   public TemplateImpl getDefaultTemplate(TemplateImpl t) {
     return myDefaultTemplates.get(TemplateKey.keyOf(t));
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    File exportableSettingsFile =
-      new File(PathManager.getOptionsPath() + File.separator + ExportableTemplateSettings.EXPORTABLE_SETTINGS_FILE);
-    return new File[]{getTemplateDirectory(true), exportableSettingsFile };
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return CodeInsightBundle.message("templates.export.display.name");
   }
 
   public static TemplateSettings getInstance() {
@@ -460,24 +434,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return template;
   }
 
-  @Nullable
-  private static File getTemplateDirectory(boolean toCreate) {
-    String directoryPath = PathManager.getConfigPath() + File.separator + TEMPLATES_CONFIG_FOLDER;
-    File directory = new File(directoryPath);
-    if (!directory.exists()) {
-      if (!toCreate) {
-        return null;
-      }
-      if (!directory.mkdir()) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("cannot create directory: " + directory.getAbsolutePath());
-        }
-        return null;
-      }
-    }
-    return directory;
-  }
-
   private void loadTemplates() {
     Collection<TemplateGroup> loaded = mySchemesManager.loadSchemes();
     for (TemplateGroup group : loaded) {
@@ -539,7 +495,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       throw new InvalidDataException();
     }
     Element root = document.getRootElement();
-    if (root == null || !TEMPLATE_SET.equals(root.getName())) {
+    if (!TEMPLATE_SET.equals(root.getName())) {
       throw new InvalidDataException();
     }
 
