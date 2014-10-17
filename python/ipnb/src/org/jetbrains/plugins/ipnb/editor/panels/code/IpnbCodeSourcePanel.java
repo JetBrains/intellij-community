@@ -80,9 +80,13 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
       @Override
       public void keyReleased(KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1);
-        component.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, height));
         final Container parent = myParent.getParent();
+
+        final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 5;
+        contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+        myParent.revalidate();
+        myParent.repaint();
+
         if (parent instanceof IpnbFilePanel) {
           IpnbFilePanel ipnbFilePanel = (IpnbFilePanel)parent;
           ipnbFilePanel.revalidate();
@@ -115,16 +119,6 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
 
     panel.add(component);
 
-    component.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
-      @Override
-      public void ancestorResized(HierarchyEvent e) {
-        if (e.getChanged() instanceof IpnbFilePanel) {
-          myParent.setPreferredSize(new Dimension(e.getChanged().getWidth() - 200, myParent.getPreferredSize().height));
-        }
-      }
-    });
-    component.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, component.getPreferredSize().height));
-    component.setMinimumSize(new Dimension(100, component.getPreferredSize().height));
     return panel;
   }
 }
