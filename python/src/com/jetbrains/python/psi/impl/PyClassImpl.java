@@ -1059,8 +1059,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
       if (type instanceof PyClassType) {
         final PyClass pyClass = ((PyClassType)type).getPyClass();
-        if (pyClass == objClass) return true;
-        if (hasNewStyleMetaClass(pyClass)) {
+        if (pyClass == objClass || hasNewStyleMetaClass(pyClass)) {
           return true;
         }
       }
@@ -1310,7 +1309,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @NotNull
   private List<PyClassLikeType> getOldStyleAncestorTypes(@NotNull TypeEvalContext context) {
     final List<PyClassLikeType> results = new ArrayList<PyClassLikeType>();
-    final List<PyClassLikeType> toProcess = new ArrayList<PyClassLikeType>();
+    final Deque<PyClassLikeType> toProcess = new LinkedList<PyClassLikeType>();
     final Set<PyClassLikeType> seen = new HashSet<PyClassLikeType>();
     final Set<PyClassLikeType> visited = new HashSet<PyClassLikeType>();
     final PyType thisType = context.getType(this);
@@ -1318,15 +1317,17 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       toProcess.add((PyClassLikeType)thisType);
     }
     while (!toProcess.isEmpty()) {
-      final PyClassLikeType currentType = toProcess.remove(0);
-      visited.add(currentType);
+      final PyClassLikeType currentType = toProcess.pollFirst();
+      if (!visited.add(currentType)) {
+        continue;
+      }
       for (PyClassLikeType superType : currentType.getSuperClassTypes(context)) {
         if (superType == null || !seen.contains(superType)) {
           results.add(superType);
           seen.add(superType);
         }
         if (superType != null && !visited.contains(superType)) {
-          toProcess.add(superType);
+          toProcess.addLast(superType);
         }
       }
     }

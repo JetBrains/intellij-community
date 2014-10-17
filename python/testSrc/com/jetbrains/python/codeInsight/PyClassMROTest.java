@@ -72,16 +72,19 @@ public class PyClassMROTest extends PyTestCase {
     assertMRO(getClass("H"), "E", "F", "B", "G", "C", "D", "A", "object");
   }
 
-  public void testTangledInheritance() throws Exception {
+  public void testTangledInheritance() {
+    final int numClasses = 100;
+
     final List<String> expectedMRO = new ArrayList<String>();
-    for (int i = 29; i >= 1; i--) {
+    for (int i = numClasses - 1; i >= 1; i--) {
       expectedMRO.add(String.format("Class%03d", i));
     }
     expectedMRO.add("object");
+    final PyClass pyClass = getClass(String.format("Class%03d", numClasses));
     final long startTime = System.currentTimeMillis();
-    assertMRO(getClass("Class030"), ArrayUtil.toStringArray(expectedMRO));
+    assertMRO(pyClass, ArrayUtil.toStringArray(expectedMRO));
     final long elapsed = System.currentTimeMillis() - startTime;
-    assertTrue("Calculation of MRO takes too much time: " + elapsed + " ms", elapsed < 5000);
+    assertTrue("Calculation of MRO takes too much time: " + elapsed + " ms", elapsed < 1000);
   }
 
   public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {
