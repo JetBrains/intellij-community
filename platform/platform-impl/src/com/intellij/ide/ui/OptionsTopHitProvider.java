@@ -76,4 +76,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
   static String messageKeyMap(String property) {
     return StringUtil.stripHtml(KeyMapBundle.message(property), false);
   }
+
+  public interface Optional { // for search everywhere only
+  }
 }
