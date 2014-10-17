@@ -47,7 +47,7 @@ import java.util.*;
   name = "TemplateSettings",
   storages = {
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/template.settings.xml")
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/templates.xml")
   },
   storageChooser = LastStorageChooserForWrite.class
 )
