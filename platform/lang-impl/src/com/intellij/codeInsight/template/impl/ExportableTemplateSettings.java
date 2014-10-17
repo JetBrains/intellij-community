@@ -35,7 +35,6 @@ import java.util.Collection;
 )
 public class ExportableTemplateSettings implements PersistentStateComponent<ExportableTemplateSettings> {
   private Collection<TemplateSettings.TemplateKey> deletedKeys = new SmartList<TemplateSettings.TemplateKey>();
-  private boolean isLoaded = false;
   private TemplateSettings parentSettings;
 
   @Nullable
@@ -51,11 +50,6 @@ public class ExportableTemplateSettings implements PersistentStateComponent<Expo
   @Override
   public void loadState(ExportableTemplateSettings state) {
     XmlSerializerUtil.copyBean(state, this);
-    isLoaded = true;
-  }
-
-  public boolean isLoaded() {
-    return isLoaded;
   }
 
   @SuppressWarnings("UnusedDeclaration") // Property via reflection

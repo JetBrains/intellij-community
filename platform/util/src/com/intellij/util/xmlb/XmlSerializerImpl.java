@@ -144,21 +144,38 @@ class XmlSerializerImpl {
   @Nullable
   @SuppressWarnings({"unchecked"})
   static <T> T convert(Object value, Class<T> type) {
-    if (value == null) return null;
-    if (type.isInstance(value)) return (T)value;
-    if (String.class.isAssignableFrom(type)) return (T)String.valueOf(value);
-    if (int.class.isAssignableFrom(type) || Integer.class.isAssignableFrom(type)) return (T)Integer.valueOf(String.valueOf(value));
-    if (double.class.isAssignableFrom(type) || Double.class.isAssignableFrom(type)) return (T)Double.valueOf(String.valueOf(value));
-    if (float.class.isAssignableFrom(type) || Float.class.isAssignableFrom(type)) return (T)Float.valueOf(String.valueOf(value));
-    if (long.class.isAssignableFrom(type) || Long.class.isAssignableFrom(type)) return (T)Long.valueOf(String.valueOf(value));
-    if (boolean.class.isAssignableFrom(type) || Boolean.class.isAssignableFrom(type)) return (T)Boolean.valueOf(String.valueOf(value));
-
+    if (value == null) {
+      return null;
+    }
+    if (type.isInstance(value)) {
+      return (T)value;
+    }
+    if (String.class.isAssignableFrom(type)) {
+      return (T)String.valueOf(value);
+    }
+    if (int.class.isAssignableFrom(type) || Integer.class.isAssignableFrom(type)) {
+      return (T)Integer.valueOf(String.valueOf(value));
+    }
+    if (double.class.isAssignableFrom(type) || Double.class.isAssignableFrom(type)) {
+      return (T)Double.valueOf(String.valueOf(value));
+    }
+    if (float.class.isAssignableFrom(type) || Float.class.isAssignableFrom(type)) {
+      return (T)Float.valueOf(String.valueOf(value));
+    }
+    if (long.class.isAssignableFrom(type) || Long.class.isAssignableFrom(type)) {
+      return (T)Long.valueOf(String.valueOf(value));
+    }
+    if (boolean.class.isAssignableFrom(type) || Boolean.class.isAssignableFrom(type)) {
+      return (T)Boolean.valueOf(String.valueOf(value));
+    }
+    if (char.class.isAssignableFrom(type) || Character.class.isAssignableFrom(type)) {
+      return (T)value;
+    }
     if (type.isEnum()) {
       final T[] enumConstants = type.getEnumConstants();
       for (T enumConstant : enumConstants) {
         if (enumConstant.toString().equals(value.toString())) return enumConstant;
       }
-
       return null;
     }
 

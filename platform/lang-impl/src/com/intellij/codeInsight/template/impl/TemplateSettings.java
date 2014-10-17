@@ -29,6 +29,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.xmlb.Converter;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -44,15 +46,16 @@ import java.util.*;
   name = "TemplateSettings",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
 )
-public class TemplateSettings implements PersistentStateComponent<Element> {
+public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
+
+  private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/templates";
 
   @NonNls public static final String USER_GROUP_NAME = "user";
   @NonNls private static final String TEMPLATE_SET = "templateSet";
   @NonNls private static final String GROUP = "group";
   @NonNls private static final String TEMPLATE = "template";
 
-  @NonNls private static final String DELETED_TEMPLATES = "deleted_templates";
   private final List<TemplateKey> myDeletedTemplates = new ArrayList<TemplateKey>();
 
   public static final char SPACE_CHAR = ' ';
@@ -81,7 +84,6 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
   @NonNls private static final String USE_STATIC_IMPORT = "useStaticImport";
 
-  @NonNls private static final String DEFAULT_SHORTCUT = "defaultShortcut";
   @NonNls private static final String DEACTIVATED = "deactivated";
 
   @NonNls private static final String RESOURCE_BUNDLE = "resource-bundle";
@@ -94,9 +96,34 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
   private final Map<TemplateKey,TemplateImpl> myDefaultTemplates = new LinkedHashMap<TemplateKey, TemplateImpl>();
 
   private int myMaxKeyLength = 0;
-  private char myDefaultShortcutChar = TAB_CHAR;
   private final SchemesManager<TemplateGroup, TemplateGroup> mySchemesManager;
-  private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/templates";
+
+  private State myState = new State();
+
+  static final class ShortcutConverter extends Converter<Character> {
+    @Nullable
+    @Override
+    public Character fromString(@NotNull String shortcut) {
+      return TAB.equals(shortcut) ? TAB_CHAR :
+             ENTER.equals(shortcut) ? ENTER_CHAR :
+             CUSTOM.equals(shortcut) ? CUSTOM_CHAR :
+             SPACE_CHAR;
+    }
+
+    @NotNull
+    @Override
+    public String toString(@NotNull Character shortcut) {
+      return shortcut == TAB_CHAR ? TAB :
+             shortcut == ENTER_CHAR ? ENTER :
+             shortcut == CUSTOM_CHAR ? CUSTOM :
+             SPACE;
+    }
+  }
+
+  final static class State {
+    @OptionTag(nameAttribute = "", valueAttribute = "shortcut", converter = ShortcutConverter.class)
+    public char defaultShortcut = TAB_CHAR;
+  }
 
   public static class TemplateKey {
     private String groupName;
@@ -236,30 +263,19 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public void loadState(Element parentNode) {
-    Element element = parentNode.getChild(DEFAULT_SHORTCUT);
-    if (element != null) {
-      String shortcut = element.getAttributeValue(SHORTCUT);
-      myDefaultShortcutChar = TAB.equals(shortcut) ? TAB_CHAR :
-                              ENTER.equals(shortcut) ? ENTER_CHAR :
-                              CUSTOM.equals(shortcut) ? CUSTOM_CHAR :
-                              SPACE_CHAR;
-    }
+  public State getState() {
+    return myState;
+  }
+
+  @Override
+  public void loadState(State state) {
+    myState = state;
 
     ExportableTemplateSettings exportableSettings = ServiceManager.getService(ExportableTemplateSettings.class);
     assert exportableSettings != null : "Can't find required ExportableTemplateSettings service.";
     exportableSettings.setParentSettings(this);
-    if (exportableSettings.isLoaded()) {
-      myDeletedTemplates.addAll(exportableSettings.getDeletedKeys());
-    }
-    else {
-      Element deleted = parentNode.getChild(DELETED_TEMPLATES);
-      if (deleted != null) {
-        for (Element child : deleted.getChildren()) {
-          myDeletedTemplates.add(new TemplateKey(child.getAttributeValue(GROUP), child.getAttributeValue(NAME)));
-        }
-      }
-    }
+    myDeletedTemplates.clear();
+    myDeletedTemplates.addAll(exportableSettings.getDeletedKeys());
 
     for (TemplateKey templateKey : myDeletedTemplates) {
       if (templateKey.groupName == null) {
@@ -274,19 +290,6 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
         }
       }
     }
-  }
-
-  @Override
-  public Element getState()  {
-    Element parentNode = new Element("TemplateSettings");
-    Element element = new Element(DEFAULT_SHORTCUT);
-    element.setAttribute(SHORTCUT, myDefaultShortcutChar == TAB_CHAR ? TAB :
-                                   myDefaultShortcutChar == ENTER_CHAR ? ENTER :
-                                   myDefaultShortcutChar == CUSTOM_CHAR ? CUSTOM :
-                                   SPACE);
-    parentNode.addContent(element);
-
-    return parentNode;
   }
 
   @Nullable
@@ -314,11 +317,11 @@ public class TemplateSettings implements PersistentStateComponent<Element> {
   }
 
   public char getDefaultShortcutChar() {
-    return myDefaultShortcutChar;
+    return myState.defaultShortcut;
   }
 
   public void setDefaultShortcutChar(char defaultShortcutChar) {
-    myDefaultShortcutChar = defaultShortcutChar;
+    myState.defaultShortcut = defaultShortcutChar;
   }
 
   public Collection<TemplateImpl> getTemplates(@NonNls String key) {
