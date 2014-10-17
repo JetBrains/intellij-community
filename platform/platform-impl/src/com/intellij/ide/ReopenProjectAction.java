@@ -18,7 +18,6 @@ package com.intellij.ide;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -46,6 +45,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
   }
 
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final int modifiers = e.getModifiers();
     final boolean forceOpenInNewFrame = (modifiers & InputEvent.CTRL_MASK) != 0 || (modifiers & InputEvent.SHIFT_MASK) != 0;
@@ -54,11 +54,11 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
       if (Messages.showDialog(project, "The path " + FileUtil.toSystemDependentName(myProjectPath) + " does not exist.\n" +
                                        "If it is on a removable or network drive, please make sure that the drive is connected.",
                                        "Reopen Project", new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
-        RecentProjectsManagerBase.getInstance().removePath(myProjectPath);
+        RecentProjectsManager.getInstance().removePath(myProjectPath);
       }
       return;
     }
-    RecentProjectsManagerBase.getInstance().doOpenProject(myProjectPath, project, forceOpenInNewFrame);
+    RecentProjectsManagerBase.getInstanceEx().doOpenProject(myProjectPath, project, forceOpenInNewFrame);
   }
 
   public String getProjectPath() {

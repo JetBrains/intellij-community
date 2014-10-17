@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.ui.playback.util;
 
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.playback.PlaybackContext;
@@ -44,7 +44,7 @@ public class ProjectPlaybackCall {
   }
 
   public static AsyncResult<String> openLastProject(final PlaybackContext context) {
-    return openProject(context, RecentProjectsManagerBase.getInstance().getLastProjectPath());
+    return openProject(context, RecentProjectsManager.getInstance().getLastProjectPath());
   }
 
   public static AsyncResult<String> openProject(final PlaybackContext context, final String path) {

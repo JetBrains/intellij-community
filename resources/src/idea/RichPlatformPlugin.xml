@@ -111,8 +111,8 @@
     <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
-    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManagerBase"
-                        serviceImplementation="com.intellij.ide.RecentProjectsManager"/>
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
+                        serviceImplementation="com.intellij.ide.RecentProjectsManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.util.descriptors.ConfigFileFactory"
                         serviceImplementation="com.intellij.util.descriptors.impl.ConfigFileFactoryImpl"/>

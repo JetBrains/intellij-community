@@ -15,8 +15,7 @@
  */
 package com.intellij.platform;
 
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
@@ -97,7 +96,7 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
         return null;
       }
     }
-    RecentProjectsManagerBase.getInstance().setLastProjectCreationLocation(location.getParent());
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(location.getParent());
     final Object finalSettings = settings;
     return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, new ProjectOpenedCallback() {
       @Override

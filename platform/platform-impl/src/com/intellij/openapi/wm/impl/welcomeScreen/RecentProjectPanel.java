@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -54,7 +55,7 @@ public class RecentProjectPanel extends JPanel {
   public RecentProjectPanel(WelcomeScreen screen) {
     super(new BorderLayout());
 
-    final AnAction[] recentProjectActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
+    final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false);
 
     myPathShortener = new UniqueNameBuilder<ReopenProjectAction>(SystemProperties.getUserHome(), File.separator, 40);
     for (AnAction action : recentProjectActions) {
@@ -112,7 +113,7 @@ public class RecentProjectPanel extends JPanel {
                                                      "Remove Recent Project",
                                                      Messages.getQuestionIcon());
           if (rc == Messages.OK) {
-            final RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstance();
+            RecentProjectsManager manager = RecentProjectsManagerBase.getInstance();
             for (Object projectAction : selection) {
               manager.removePath(((ReopenProjectAction)projectAction).getProjectPath());
             }
