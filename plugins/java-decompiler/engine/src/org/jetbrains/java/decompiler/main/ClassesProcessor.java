@@ -282,12 +282,13 @@ public class ClassesProcessor {
 
       buffer.append(classBuffer);
 
-      if(DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
+      if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
         BytecodeSourceMapper mapper = DecompilerContext.getBytecodeSourceMapper();
         mapper.addTotalOffset(total_offset_lines);
-
-        buffer.append(lineSeparator);
-        mapper.dumpMapping(buffer, true);
+        if (DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE)) {
+          buffer.append(lineSeparator);
+          mapper.dumpMapping(buffer, true);
+        }
       }
     }
     finally {

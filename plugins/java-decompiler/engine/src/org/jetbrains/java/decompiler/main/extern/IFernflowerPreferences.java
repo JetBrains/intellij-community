@@ -43,7 +43,6 @@ public interface IFernflowerPreferences {
   String FINALLY_DEINLINE = "fdi";
   String IDEA_NOT_NULL_ANNOTATION = "inn";
   String LAMBDA_TO_ANONYMOUS_CLASS = "lac";
-
   String BYTECODE_SOURCE_MAPPING = "bsm";
   String USE_DEBUG_LINE_NUMBERS = "udl";
 
@@ -53,8 +52,9 @@ public interface IFernflowerPreferences {
   String USER_RENAMER_CLASS = "urc";
   String NEW_LINE_SEPARATOR = "nls";
   String INDENT_STRING = "ind";
-
   String BANNER = "ban";
+
+  String UNIT_TEST_MODE = "__unit_test_mode__";
 
   String LINE_SEPARATOR_WIN = "\r\n";
   String LINE_SEPARATOR_LIN = "\n";
@@ -81,16 +81,15 @@ public interface IFernflowerPreferences {
     put(FINALLY_DEINLINE, "1");
     put(IDEA_NOT_NULL_ANNOTATION, "1");
     put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
-
     put(BYTECODE_SOURCE_MAPPING, "0");
     put(USE_DEBUG_LINE_NUMBERS, "0");
-
-    put(BANNER, "");
 
     put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     put(MAX_PROCESSING_METHOD, "0");
     put(RENAME_ENTITIES, "0");
     put(NEW_LINE_SEPARATOR, (InterpreterUtil.IS_WINDOWS ? "0" : "1"));
     put(INDENT_STRING, "   ");
+    put(BANNER, "");
+    put(UNIT_TEST_MODE, "0");
   }});
 }
