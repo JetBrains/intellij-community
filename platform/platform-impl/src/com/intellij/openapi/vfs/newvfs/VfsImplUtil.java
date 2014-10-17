@@ -253,7 +253,7 @@ public class VfsImplUtil {
             if (event instanceof VFileCreateEvent) continue; // created file should not invalidate + getFile is costly
 
             if (event instanceof VFilePropertyChangeEvent &&
-                VirtualFile.PROP_HIDDEN.equals(((VFilePropertyChangeEvent)event).getPropertyName())) {
+                !VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName())) {
               continue;
             }
 
@@ -307,7 +307,7 @@ public class VfsImplUtil {
     }
 
     private void registerPathToRefresh(Pair<ArchiveFileSystem, ArchiveHandler> handlerPair, String path) {
-      String rootPath = handlerPair.first.convertLocalPathToRootPath(path);
+      String rootPath = handlerPair.first.convertLocalToRootPath(path);
       NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, handlerPair.first);
       if (root != null) {
         root.markDirtyRecursively();
