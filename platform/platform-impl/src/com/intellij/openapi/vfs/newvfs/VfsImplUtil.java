@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -243,7 +244,7 @@ public class VfsImplUtil {
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        Map<String, VirtualFile> rootsToRefresh = null;
+        InvalidationState state = null;
 
         synchronized (ourLock) {
           for (VFileEvent event : events) {
@@ -252,56 +253,75 @@ public class VfsImplUtil {
             if (event instanceof VFileCreateEvent) continue; // created file should not invalidate + getFile is costly
 
             if (event instanceof VFilePropertyChangeEvent &&
-                VirtualFile.PROP_HIDDEN.equals(((VFilePropertyChangeEvent)event).getPropertyName())) {
+                !VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName())) {
               continue;
             }
 
             VirtualFile file = event.getFile();
-            String path = event.getPath(); // todo: this path is new file path for moved / renamed file and invalidation doesn't take place
+            String path = event.getPath();
+            if (event instanceof VFilePropertyChangeEvent) {
+              path = ((VFilePropertyChangeEvent)event).getOldPath();
+            } else if (event instanceof VFileMoveEvent) {
+              path = ((VFileMoveEvent)event).getOldPath();
+            }
             if (file == null || !file.isDirectory()) {
-              rootsToRefresh = invalidateHandlerForPath(path, rootsToRefresh);
+              if (state == null) state = new InvalidationState();
+              state.invalidateHandlerForPath(path);
             } else {
               Collection<String> affectedPaths = ourDominatorsMap.get(path);
               if (affectedPaths != null) {
                 affectedPaths = new ArrayList<String>(affectedPaths); // defensive copying, we will modify original during invalidate
-                for (String affectedPath : affectedPaths) rootsToRefresh = invalidateHandlerForPath(affectedPath, rootsToRefresh);
+                if (state == null) state = new InvalidationState();
+                for (String affectedPath : affectedPaths) state.invalidateHandlerForPath(affectedPath);
               }
             }
           }
         }
 
-        if (rootsToRefresh != null) {
-          ZipFileCache.reset(rootsToRefresh.keySet());
-          boolean async = !ApplicationManager.getApplication().isUnitTestMode();
-          RefreshQueue.getInstance().refresh(async, true, null, rootsToRefresh.values());
-        }
+        if (state != null) state.scheduleRefresh();
       }
     });
   }
 
-  private static Map<String, VirtualFile> invalidateHandlerForPath(final String path, Map<String, VirtualFile> rootsToRefresh) {
-    Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlers.remove(path);
-    if (handlerPair != null) {
-      String rootPath = handlerPair.first.convertLocalPathToRootPath(path);
+  private static class InvalidationState {
+    private Map<String, VirtualFile> rootsToRefresh;
+
+    boolean invalidateHandlerForPath(final String path) {
+      Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlers.remove(path);
+      if (handlerPair != null) {
+        forEachDirectoryComponent(path, new Processor<String>() {
+          @Override
+          public boolean process(String containingDirectoryPath) {
+            Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
+            if (handlers != null) {
+              if(handlers.remove(path) && handlers.size() == 0) {
+                ourDominatorsMap.remove(containingDirectoryPath);
+              }
+            }
+            return true;
+          }
+        });
+        registerPathToRefresh(handlerPair, path);
+      }
+      return handlerPair != null;
+    }
+
+    private void registerPathToRefresh(Pair<ArchiveFileSystem, ArchiveHandler> handlerPair, String path) {
+      String rootPath = handlerPair.first.convertLocalToRootPath(path);
       NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, handlerPair.first);
       if (root != null) {
         root.markDirtyRecursively();
         if (rootsToRefresh == null) rootsToRefresh = ContainerUtil.newHashMap();
         rootsToRefresh.put(rootPath, root);
       }
-      forEachDirectoryComponent(path, new Processor<String>() {
-        @Override
-        public boolean process(String containingDirectoryPath) {
-          Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
-          if (handlers != null) {
-            if(handlers.remove(path) && handlers.size() == 0) {
-              ourDominatorsMap.remove(containingDirectoryPath);
-            }
-          }
-          return true;
-        }
-      });
     }
-    return rootsToRefresh;
+
+    void scheduleRefresh() {
+      if (rootsToRefresh != null) {
+        ZipFileCache.reset(rootsToRefresh.keySet());
+        boolean async = !ApplicationManager.getApplication().isUnitTestMode();
+        RefreshQueue.getInstance().refresh(async, true, null, rootsToRefresh.values());
+      }
+    }
   }
 }

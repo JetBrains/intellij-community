@@ -174,27 +174,10 @@ public abstract class XDebuggerEvaluator {
   }
 
   /**
-   * Returns expression that is selected or under the cursor in the Editor
+   * Returns mode which should be used to evaluate the text
    */
-  public XExpression getEditorExpression(@NotNull Editor editor, @Nullable PsiFile psiFile) {
-    String text = editor.getSelectionModel().getSelectedText();
-    if (text != null) {
-      text = formatTextForEvaluation(text);
-    }
-    else if (editor.getProject() != null) {
-      Document document = editor.getDocument();
-      ExpressionInfo info = getExpressionInfoAtOffset(editor.getProject(), document, editor.getCaretModel().getOffset(), true);
-      if (info != null) {
-        text = info.getExpressionText();
-        if (text == null) {
-          text = document.getText(info.getTextRange());
-        }
-      }
-    }
-    if (!StringUtil.isEmpty(text)) {
-      return XDebuggerUtil.getInstance().createExpression(text, null, null, text.contains("\n") ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION);
-    }
-    return null;
+  public EvaluationMode getEvaluationMode(@NotNull String text, int startOffset, int endOffset, @Nullable PsiFile psiFile) {
+    return text.contains("\n") ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION;
   }
 
   @Deprecated

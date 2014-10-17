@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -74,7 +75,9 @@ import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
 public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
 
-  private static final int ROOT_INDICATOR_WIDTH = 5;
+  private static final int ROOT_INDICATOR_COLORED_WIDTH = 8;
+  private static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
+  private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + ROOT_INDICATOR_COLORED_WIDTH;
   private static final int ROOT_NAME_MAX_WIDTH = 200;
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
@@ -103,8 +106,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     myUI = UI;
     myLogDataHolder = logDataHolder;
     myDataPack = initialDataPack;
-    myGraphCommitCellRender = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter,
-                                                        myDataPack.getVisibleGraph(), this);
+    myGraphCommitCellRender = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, myDataPack.getVisibleGraph(), this);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRender);
@@ -117,6 +119,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     MouseAdapter mouseAdapter = new MyMouseAdapter();
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
+    MyHeaderMouseAdapter headerAdapter = new MyHeaderMouseAdapter();
+    getTableHeader().addMouseListener(headerAdapter);
+    getTableHeader().addMouseMotionListener(headerAdapter);
 
     getTableHeader().setReorderingAllowed(false);
 
@@ -132,6 +137,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       myColumnsSizeInitialized = true;
       setColumnPreferredSize();
       setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
+
+      getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).setHeaderRenderer(new RootHeaderRenderer());
     }
   }
 
@@ -164,7 +171,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   private void setRootColumnSize(TableColumn column) {
     int rootWidth;
-    if (!myUI.getColorManager().isMultipleRoots()) {
+    if (!myUI.isMultipleRoots()) {
       rootWidth = 0;
     }
     else if (!myUI.isShowRootNames()) {
@@ -209,7 +216,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     if (column == GraphTableModel.ROOT_COLUMN) {
       Object at = getValueAt(row, column);
       if (at instanceof VirtualFile) {
-        return "<html><b>" + ((VirtualFile)at).getPresentableUrl() + "</b><br/>Double-click to " + (myUI.isShowRootNames() ? "collapse" : "expand") + "</html>";
+        return "<html><b>" + ((VirtualFile)at).getPresentableUrl() + "</b><br/>Click to " + (myUI.isShowRootNames() ? "collapse" : "expand") + "</html>";
       }
     }
     return null;
@@ -338,6 +345,52 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     });
   }
 
+  private boolean expandOrCollapseRoots(MouseEvent e) {
+    TableColumn column = getRootColumnOrNull(e);
+    if (column != null) {
+      myUI.setShowRootNames(!myUI.isShowRootNames());
+      return true;
+    }
+    return false;
+  }
+
+  public void rootColumnUpdated() {
+    setColumnPreferredSize();
+    setRootColumnSize(getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN));
+  }
+
+  @Nullable
+  private TableColumn getRootColumnOrNull(MouseEvent e) {
+    if (!myLogDataHolder.isMultiRoot()) return null;
+    int column = convertColumnIndexToModel(columnAtPoint(e.getPoint()));
+    if (column == GraphTableModel.ROOT_COLUMN) {
+      return getColumnModel().getColumn(column);
+    }
+    return null;
+  }
+
+  private class MyHeaderMouseAdapter extends MouseAdapter {
+    @Override
+    public void mouseMoved(MouseEvent e) {
+      Component component = e.getComponent();
+      if (component != null) {
+        if (getRootColumnOrNull(e) != null) {
+          component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+        else {
+          component.setCursor(null);
+        }
+      }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      if (e.getClickCount() == 1) {
+        expandOrCollapseRoots(e);
+      }
+    }
+  }
+
   private class MyMouseAdapter extends MouseAdapter {
     private final TableLinkMouseListener myLinkListener;
 
@@ -351,32 +404,20 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         return;
       }
 
-      if (e.getClickCount() > 1) {
-        expandOrCollapseRoots(e);
-      } else if (e.getClickCount() == 1) {
+      if (e.getClickCount() == 1) {
+        if (expandOrCollapseRoots(e)) return;
         performAction(e, MyGraphMouseAction.Type.CLICK);
       }
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-      if (isAboveLink(e)) {
+      if (isAboveLink(e) || isAboveRoots(e)) {
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
       else {
         performAction(e, MyGraphMouseAction.Type.OVER);
       }
-    }
-
-    private boolean expandOrCollapseRoots(MouseEvent e) {
-      int column = convertColumnIndexToModel(columnAtPoint(e.getPoint()));
-      if (column == GraphTableModel.ROOT_COLUMN && myLogDataHolder.isMultiRoot()) {
-        myUI.setShowRootNames(!myUI.isShowRootNames());
-        setColumnPreferredSize();
-        setRootColumnSize(getColumnModel().getColumn(column));
-        return true;
-      }
-      return false;
     }
 
     private void performAction(@NotNull MouseEvent e, @NotNull final MyGraphMouseAction.Type actionType) {
@@ -395,6 +436,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     private boolean isAboveLink(MouseEvent e) {
       return myLinkListener.getTagAt(e) != null;
+    }
+
+    private boolean isAboveRoots(MouseEvent e) {
+      TableColumn column = getRootColumnOrNull(e);
+      int row = rowAtPoint(e.getPoint());
+      return column != null && (row >= 0 && row < getRowCount());
     }
 
     @Override
@@ -443,7 +490,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private static class RootCellRenderer extends JBLabel implements TableCellRenderer {
     @NotNull private final VcsLogUiImpl myUi;
     @NotNull private Color myColor = UIUtil.getTableBackground();
-    private boolean myHasBorder;
+    @NotNull private Color myBorderColor = UIUtil.getTableBackground();
+    private boolean isNarrow = true;
 
     RootCellRenderer(@NotNull VcsLogUiImpl ui) {
       super("", CENTER);
@@ -456,13 +504,14 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
       int width = getWidth();
 
-      if (myHasBorder) {
-        g.fillRect(0, 0, width - 1, HEIGHT_CELL);
-        UIUtil.drawLine((Graphics2D)g, width - 1, 0, width - 1, HEIGHT_CELL, null, myUi.getColorManager().getRootIndicatorBorder());
-      }
-      else {
+      if (isNarrow) {
+        g.fillRect(0, 0, width - ROOT_INDICATOR_WHITE_WIDTH, HEIGHT_CELL);
+        g.setColor(myBorderColor);
+        g.fillRect(width - ROOT_INDICATOR_WHITE_WIDTH, 0, ROOT_INDICATOR_WHITE_WIDTH, HEIGHT_CELL);
+      } else {
         g.fillRect(0, 0, width, HEIGHT_CELL);
       }
+
       super.paintComponent(g);
     }
 
@@ -488,28 +537,20 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         color = UIUtil.getTableBackground(isSelected);
       }
 
-      if (myUi.isShowRootNames()) {
-        // pale colors, honors selection, does not have border
-        if (isSelected) {
-          myColor = UIUtil.getTableBackground(isSelected);
-        }
-        else {
-          //we create JBColor later
-          //noinspection UseJBColor
-          Color transparentColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), 50);
-          myColor = new JBColor(transparentColor, transparentColor);
-        }
+      //we create JBColor later
+      //noinspection UseJBColor
+      Color transparentColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), 50);
+      myColor = new JBColor(transparentColor, transparentColor);
+      myBorderColor = UIUtil.getTableBackground(isSelected);
+      setForeground(UIUtil.getTableForeground(false));
 
-        setForeground(UIUtil.getTableForeground(isSelected));
+      if (myUi.isShowRootNames()) {
         setText(text);
-        myHasBorder = false;
+        isNarrow = false;
       }
       else {
-        // bright colors, does not know about the selection, has border
-        setForeground(UIUtil.getTableForeground(false));
-        myColor = color;
         setText("");
-        myHasBorder = true;
+        isNarrow = true;
       }
 
       return this;
@@ -527,5 +568,19 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       setBorder(null);
     }
 
+  }
+
+  private class RootHeaderRenderer implements TableCellRenderer {
+    private final JLabel myRightArrow = new JLabel(AllIcons.General.ComboArrowRight);
+    private final JLabel myDownArrow = new JLabel("Root", SwingConstants.CENTER);
+
+    @NotNull
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      if (myUI.isShowRootNames()) {
+        return myDownArrow;
+      }
+      return myRightArrow;
+    }
   }
 }

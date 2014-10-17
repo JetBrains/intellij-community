@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -34,7 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -46,16 +45,18 @@ import java.util.*;
 /**
  * @author yole
  */
-public abstract class RecentProjectsManagerBase implements ProjectManagerListener, PersistentStateComponent<RecentProjectsManagerBase.State> {
-  public static RecentProjectsManagerBase getInstance() {
-    return ServiceManager.getService(RecentProjectsManagerBase.class);
+public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements ProjectManagerListener, PersistentStateComponent<RecentProjectsManagerBase.State> {
+  public static RecentProjectsManagerBase getInstanceEx() {
+    return (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
   }
 
   public static class State {
-    public List<String> recentPaths = ContainerUtil.newArrayList();
-    public List<String> openPaths = ContainerUtil.newArrayList();
+    public List<String> recentPaths = new SmartList<String>();
+    public List<String> openPaths = new SmartList<String>();
     public Map<String, String> names = ContainerUtil.newLinkedHashMap();
     public String lastPath;
+
+    public String lastProjectLocation;
 
     void validateRecentProjects() {
       //noinspection StatementWithEmptyBody
@@ -69,11 +70,6 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
         names.remove(recentPaths.get(index));
         recentPaths.remove(index);
       }
-    }
-
-    void removePath(String path) {
-      recentPaths.remove(path);
-      names.remove(path);
     }
   }
 
@@ -96,52 +92,69 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
 
   @Override
   public void loadState(final State state) {
-    synchronized (myStateLock) {
-      myState = state;
-      if (myState.lastPath != null && !new File(myState.lastPath).exists()) {
-        myState.lastPath = null;
-      }
-      if (myState.lastPath != null) {
-        File lastFile = new File(myState.lastPath);
-        if (lastFile.isDirectory() && !new File(lastFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
-          myState.lastPath = null;
-        }
+    if (state.lastPath != null && !new File(state.lastPath).exists()) {
+      state.lastPath = null;
+    }
+    if (state.lastPath != null) {
+      File lastFile = new File(state.lastPath);
+      if (lastFile.isDirectory() && !new File(lastFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
+        state.lastPath = null;
       }
     }
+    myState = state;
   }
 
-  public void removePath(final String path) {
-    if (path == null) return;
+  @Override
+  public void removePath(@Nullable String path) {
+    if (path == null) {
+      return;
+    }
+
     synchronized (myStateLock) {
       if (SystemInfo.isFileSystemCaseSensitive) {
-        myState.removePath(path);
+        myState.recentPaths.remove(path);
+        myState.names.remove(path);
       }
       else {
-        for (String p : ArrayUtil.toStringArray(myState.recentPaths)) {
-          if (path.equalsIgnoreCase(p)) {
-            myState.removePath(path);
+        for (Iterator<String> iterator = myState.recentPaths.iterator(); iterator.hasNext(); ) {
+          if (path.equalsIgnoreCase(iterator.next())) {
+            iterator.remove();
+            myState.names.remove(path);
           }
         }
       }
     }
   }
 
-  public String getLastProjectPath() {
-    synchronized (myStateLock) {
-      return myState.lastPath;
-    }
+  /**
+   * @return a path pointing to a directory where the last project was created or null if not available
+   */
+  @Override
+  @Nullable
+  public String getLastProjectCreationLocation() {
+    return myState.lastProjectLocation;
   }
 
+  @Override
+  public void setLastProjectCreationLocation(@Nullable String lastProjectLocation) {
+    myState.lastProjectLocation = StringUtil.nullize(lastProjectLocation, true);
+  }
+
+  @Override
+  public String getLastProjectPath() {
+    return myState.lastPath;
+  }
+
+  @Override
   public void updateLastProjectPath() {
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     synchronized (myStateLock) {
+      myState.openPaths.clear();
       if (openProjects.length == 0) {
         myState.lastPath = null;
-        myState.openPaths = Collections.emptyList();
       }
       else {
         myState.lastPath = getProjectPath(openProjects[openProjects.length - 1]);
-        myState.openPaths = ContainerUtil.newArrayList();
         for (Project openProject : openProjects) {
           String path = getProjectPath(openProject);
           if (path != null) {
@@ -169,9 +182,7 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     return duplicates;
   }
 
-  /**
-   * @param addClearListItem whether the "Clear List" action should be added to the end of the list.
-   */
+  @Override
   public AnAction[] getRecentProjectsActions(boolean addClearListItem) {
     final Set<String> paths;
     synchronized (myStateLock) {
@@ -187,7 +198,7 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     paths.remove(null);
     paths.removeAll(openedPaths);
 
-    List<AnAction> actions = new ArrayList<AnAction>();
+    List<AnAction> actions = new SmartList<AnAction>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
     for (final String path : paths) {
       String projectName = getProjectName(path);
@@ -295,6 +306,7 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     return result;
   }
 
+  @Override
   public void clearNameCache() {
     myNameCache.clear();
   }

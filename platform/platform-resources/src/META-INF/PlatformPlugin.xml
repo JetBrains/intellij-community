@@ -24,7 +24,7 @@
     <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
 
-    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManagerBase"
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.RecentDirectoryProjectsManager"/>
 
     <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"

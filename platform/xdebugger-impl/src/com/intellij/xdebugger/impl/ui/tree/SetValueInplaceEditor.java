@@ -22,6 +22,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -82,6 +83,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
             myTree.rebuildAndRestore(treeState);
           }
         });
+        XDebuggerUtilImpl.rebuildAllSessionsViews(getProject());
       }
 
       @Override
@@ -100,6 +102,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
             }
           }
         });
+        XDebuggerUtilImpl.rebuildAllSessionsViews(getProject());
       }
     });
     super.doOKAction();

@@ -21,10 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.SwingActionLink;
+import com.intellij.ui.components.panels.HorizontalLayout;
 
 import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
@@ -39,7 +38,7 @@ final class Banner extends JPanel {
 
   Banner(Action action) {
     super(new BorderLayout(10, 0));
-    myLeftPanel.setLayout(new BoxLayout(myLeftPanel, BoxLayout.X_AXIS));
+    myLeftPanel.setLayout(new HorizontalLayout(5));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurableBanner);
     myProjectIcon.setForeground(JBColor.GRAY);
     myProjectIcon.setVisible(false);
@@ -48,27 +47,31 @@ final class Banner extends JPanel {
     add(BorderLayout.EAST, RelativeFont.BOLD.install(new SwingActionLink(action)));
   }
 
-  void setText(String... text) {
+  void setText(String... names) {
     Component[] components = myLeftPanel.getComponents();
-    int length = text == null ? 0 : text.length;
-    for (int i = 0; i < length; i++) {
-      if (i < components.length) {
-        components[i].setVisible(true);
-        if (components[i] instanceof JLabel) {
-          ((JLabel)components[i]).setText(text[i]);
-        }
-      }
-      else {
-        JLabel label = new JLabel(text[i]);
-        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-        if (i > 0) {
-          label.setIcon(AllIcons.General.Divider);
-        }
-        myLeftPanel.add(RelativeFont.BOLD.install(label));
-      }
+    for (Component component : components) {
+      component.setVisible(false);
     }
-    while (length < components.length) {
-      components[length++].setVisible(false);
+    if (names != null) {
+      int i = 0;
+      for (String name : names) {
+        if (i < components.length) {
+          if (i > 0) {
+            components[i - 1].setVisible(true);
+          }
+          components[i].setVisible(true);
+          if (components[i] instanceof JLabel) {
+            ((JLabel)components[i]).setText(name);
+          }
+        }
+        else {
+          if (i > 0) {
+            myLeftPanel.add(HorizontalLayout.LEFT, RelativeFont.HUGE.install(new JLabel("\u203A")));
+          }
+          myLeftPanel.add(HorizontalLayout.LEFT, RelativeFont.BOLD.install(new JLabel(name)));
+        }
+        i += 2;
+      }
     }
   }
 

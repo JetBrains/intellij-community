@@ -15,8 +15,13 @@
  */
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -26,8 +31,17 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -70,27 +84,67 @@ public class JarFileSystemTest extends PlatformLangTestCase {
 
   public void testJarRefreshOnRenameOrMove() throws IOException {
     File jar = IoTestUtil.createTestJar();
-    assertTrue(jar.setLastModified(jar.lastModified() - 1000));
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
+    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
+    new WriteCommandAction.Simple(myProject) {
 
-    ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(
-      VirtualFileManager.VFS_CHANGES,
-      new BulkFileListener.Adapter() {
-        @Override
-        public void before(@NotNull List<? extends VFileEvent> events) {
-          for (VFileEvent event : events) {
-            //if (event instanceof VFileContentChangeEvent && entry.equals(event.getFile())) {
-            //  updated.set(true);
-            //  break;
-            //}
-          }
-        }
+      @Override
+      protected void run() throws Throwable {
+        PsiTestUtil.addContentRoot(myModule, vFile.getParent());
       }
-    );
+    }.execute();
 
-    assertTrue(jar.renameTo(new File(jar.getParentFile(), jar.getName() + ".jar")));
+    VirtualFile jarRoot = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
+    final PsiFile file = getPsiManager().findFile(vFile);
+    final String newName = vFile.getName() + ".jar";
+    rename(file, newName);
+
+    assertFalse(jarRoot.isValid());
+
+    checkMove(jar, vFile, file);
   }
+
+  private void checkMove(File jar, VirtualFile vFile, final PsiFile file) {
+    VirtualFile jarRoot;
+    File libDir = new File(jar.getParent(), "lib");
+    assertTrue(libDir.mkdir());
+    final VirtualFile vLibDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libDir);
+    assertNotNull(vLibDir);
+
+    jarRoot = findByPath(vFile.getPath() + JarFileSystem.JAR_SEPARATOR);
+    assertTrue(jarRoot.isValid());
+    PsiDirectory directory = getPsiManager().findDirectory(vLibDir);
+    final DataContext
+      psiDataContext = SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), directory);
+    new WriteCommandAction.Simple(myProject) {
+
+      @Override
+      protected void run() throws Throwable {
+        new MoveHandler().invoke(myProject, new PsiElement[] {file}, psiDataContext);
+      }
+    }.execute();
+    assertFalse(jarRoot.isValid());
+
+    jarRoot = findByPath(vFile.getPath() + JarFileSystem.JAR_SEPARATOR);
+    assertTrue(jarRoot.isValid());
+    rename(directory, "lib2");
+    assertFalse(jarRoot.isValid());
+  }
+
+  private static void rename(final PsiNamedElement file, final String newName) {
+    final DataContext psiDataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), file);
+    final RenameHandler renameHandler =
+      RenameHandlerRegistry.getInstance().getRenameHandler(psiDataContext);
+    assertNotNull(renameHandler);
+
+    new WriteCommandAction.Simple(file.getProject()) {
+      @Override
+      public void run() {
+        PsiElementRenameHandler.rename(file, file.getProject(), file, null, newName);
+      }
+    }.execute();
+  }
+
   public void testJarRefresh() throws IOException {
     File jar = IoTestUtil.createTestJar();
     assertTrue(jar.setLastModified(jar.lastModified() - 1000));

@@ -19,7 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -29,8 +29,11 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.stores.*;
+import com.intellij.openapi.components.impl.stores.ComponentStoreImpl;
 import com.intellij.openapi.components.impl.stores.ComponentStoreImpl.ReloadComponentStoreStatus;
+import com.intellij.openapi.components.impl.stores.FileBasedStorage;
+import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -124,7 +127,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   /** @noinspection UnusedParameters*/
   public ProjectManagerImpl(@NotNull VirtualFileManager virtualFileManager,
-                            RecentProjectsManagerBase recentProjectsManager,
+                            RecentProjectsManager recentProjectsManager,
                             ProgressManager progressManager) {
     myProgressManager = progressManager;
     Application app = ApplicationManager.getApplication();

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.memory;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -24,11 +25,16 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Bas Leijdekkers
  */
 public class ReturnOfInnerClassInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField") public boolean ignoreNonPublic = false;
 
   private enum ClassType { ANONYMOUS_CLASS, LOCAL_CLASS, INNER_CLASS }
 
@@ -58,12 +64,19 @@ public class ReturnOfInnerClassInspection extends BaseInspection {
     }
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("return.of.inner.class.ignore.non.public.option"),
+                                          this, "ignoreNonPublic");
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReturnOfInnerClassVisitor();
   }
 
-  private static class ReturnOfInnerClassVisitor extends BaseInspectionVisitor {
+  private  class ReturnOfInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitReturnStatement(PsiReturnStatement statement) {
@@ -74,6 +87,10 @@ public class ReturnOfInnerClassInspection extends BaseInspection {
       }
       final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiLambdaExpression.class);
       if (method == null || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      else if (ignoreNonPublic &&
+               (method.hasModifierProperty(PsiModifier.PROTECTED) || method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL))) {
         return;
       }
       if (expression instanceof PsiNewExpression) {

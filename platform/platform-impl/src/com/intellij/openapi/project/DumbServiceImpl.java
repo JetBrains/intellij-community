@@ -153,7 +153,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
         indicator.pushState();
       }
       try {
-        HeavyProcessLatch.INSTANCE.processStarted();
+        HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task");
         task.performInDumbMode(indicator != null ? indicator : new EmptyProgressIndicator());
       }
       finally {
@@ -309,6 +309,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
     return wrapper;
   }
 
+  @Override
   public void smartInvokeLater(@NotNull final Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -318,6 +319,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
     }, myProject.getDisposed());
   }
 
+  @Override
   public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -335,7 +337,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
         final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
         final Thread self = Thread.currentThread();
         try {
-          HeavyProcessLatch.INSTANCE.processStarted();
+          HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks");
           shutdownTracker.registerStopperThread(self);
 
           if (visibleIndicator instanceof ProgressIndicatorEx) {

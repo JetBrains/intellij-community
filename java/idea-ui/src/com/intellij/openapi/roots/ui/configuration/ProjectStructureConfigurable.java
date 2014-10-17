@@ -352,7 +352,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public void reset() {
     // need this to ensure VFS operations will not block because of storage flushing
     // and other maintenance IO tasks run in background
-    HeavyProcessLatch.INSTANCE.processStarted();
+    HeavyProcessLatch.INSTANCE.processStarted("Resetting Project Structure");
 
     try {
       myWasUiDisposed = false;

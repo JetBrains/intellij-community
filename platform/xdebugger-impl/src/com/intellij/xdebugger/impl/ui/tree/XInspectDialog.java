@@ -49,7 +49,7 @@ public class XInspectDialog extends DialogWrapper {
                         @NotNull String name,
                         @NotNull XValue value,
                         XValueMarkers<?, ?> markers,
-                        XDebugSession session,
+                        @NotNull XDebugSession session,
                         boolean rebuildOnSessionEvents) {
     super(project, false);
     myRebuildOnSessionEvents = rebuildOnSessionEvents;
