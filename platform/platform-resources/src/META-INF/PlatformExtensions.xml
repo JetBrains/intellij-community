@@ -207,6 +207,8 @@
 
     <projectService serviceInterface="com.intellij.openapi.project.ProjectReloadState"
                     serviceImplementation="com.intellij.openapi.project.impl.ProjectReloadStateImpl"/>
+    
+    <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.AwesomeWelcomeFrame"/>
 
     <!-- General -->
     <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general"
