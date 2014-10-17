@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
@@ -127,6 +128,33 @@ public class LinearGraphUtils {
         return null;
       }
     });
+  }
+
+  @NotNull
+  public static LiteLinearGraph asLiteLinearGraph(@NotNull final LinearGraph graph) {
+    return new LiteLinearGraph() {
+      @Override
+      public int nodesCount() {
+        return graph.nodesCount();
+      }
+
+      @NotNull
+      @Override
+      public List<Integer> getNodes(final int nodeIndex, final NodeFilter filter) {
+        return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex), new Function<GraphEdge, Integer>() {
+          @Nullable
+          @Override
+          public Integer fun(GraphEdge edge) {
+            if (isEdgeToDown(edge, nodeIndex) && filter.down)
+              return edge.getDownNodeIndex();
+
+            if (isEdgeToUp(edge, nodeIndex) && filter.up)
+              return edge.getUpNodeIndex();
+            return null;
+          }
+        });
+      }
+    };
   }
 
 }
