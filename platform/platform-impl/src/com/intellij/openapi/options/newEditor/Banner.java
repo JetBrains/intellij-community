@@ -48,27 +48,33 @@ final class Banner extends JPanel {
     add(BorderLayout.EAST, RelativeFont.BOLD.install(new SwingActionLink(action)));
   }
 
-  void setText(String... text) {
+  void setText(String... names) {
     Component[] components = myLeftPanel.getComponents();
-    int length = text == null ? 0 : text.length;
-    for (int i = 0; i < length; i++) {
-      if (i < components.length) {
-        components[i].setVisible(true);
-        if (components[i] instanceof JLabel) {
-          ((JLabel)components[i]).setText(text[i]);
-        }
-      }
-      else {
-        JLabel label = new JLabel(text[i]);
-        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-        if (i > 0) {
-          label.setIcon(AllIcons.General.Divider);
-        }
-        myLeftPanel.add(RelativeFont.BOLD.install(label));
-      }
+    for (Component component : components) {
+      component.setVisible(false);
     }
-    while (length < components.length) {
-      components[length++].setVisible(false);
+    if (names != null) {
+      int i = 0;
+      for (String name : names) {
+        if (i < components.length) {
+          if (i > 0) {
+            components[i - 1].setVisible(true);
+          }
+          components[i].setVisible(true);
+          if (components[i] instanceof JLabel) {
+            ((JLabel)components[i]).setText(name);
+          }
+        }
+        else {
+          if (i > 0) {
+            JLabel label = new JLabel("\u203A");
+            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+            myLeftPanel.add(RelativeFont.HUGE.install(label));
+          }
+          myLeftPanel.add(RelativeFont.BOLD.install(new JLabel(name)));
+        }
+        i += 2;
+      }
     }
   }
 
