@@ -52,15 +52,13 @@ import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
@@ -492,6 +490,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     @NotNull private Color myColor = UIUtil.getTableBackground();
     @NotNull private Color myBorderColor = UIUtil.getTableBackground();
     private boolean isNarrow = true;
+    @NotNull
+    private TableCellRenderer myRenderer = new DefaultTableCellRenderer();
 
     RootCellRenderer(@NotNull VcsLogUiImpl ui) {
       super("", CENTER);
@@ -500,6 +500,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     @Override
     protected void paintComponent(Graphics g) {
+      setFont(UIManager.getFont("Table.font"));
       g.setColor(myColor);
 
       int width = getWidth();
@@ -541,7 +542,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       //noinspection UseJBColor
       Color transparentColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), 50);
       myColor = new JBColor(transparentColor, transparentColor);
-      myBorderColor = UIUtil.getTableBackground(isSelected);
+      myBorderColor = myRenderer.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column).getBackground();
       setForeground(UIUtil.getTableForeground(false));
 
       if (myUi.isShowRootNames()) {
@@ -570,17 +571,46 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   }
 
-  private class RootHeaderRenderer implements TableCellRenderer {
-    private final JLabel myRightArrow = new JLabel(AllIcons.General.ComboArrowRight);
-    private final JLabel myDownArrow = new JLabel("Root", SwingConstants.CENTER);
+  private class RootHeaderRenderer extends DefaultTableCellHeaderRenderer {
+
+    private Icon myIcon = AllIcons.General.ComboArrowRight;
 
     @NotNull
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      if (myUI.isShowRootNames()) {
-        return myDownArrow;
+      super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      if (table != null) {
+        JTableHeader tableHeader = table.getTableHeader();
+        if (tableHeader != null) {
+          setForeground(tableHeader.getForeground());
+          setBackground(tableHeader.getBackground());
+          setFont(tableHeader.getFont());
+        }
       }
-      return myRightArrow;
+
+      setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+
+      if (myUI.isShowRootNames()) {
+        setIcon(null);
+        setText("Roots");
+      }
+      else {
+        setIcon(myIcon);
+        setText("");
+      }
+      return this;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension dimension = super.getPreferredSize();
+      if (getText() == null || getText().isEmpty()) {
+        setText("Roots");
+        dimension.height = super.getPreferredSize().height;
+        setText("");
+        return dimension;
+      }
+      return dimension;
     }
   }
 }

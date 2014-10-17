@@ -132,14 +132,13 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       }
 
       if (aClass != null) {
-        aClass = (PsiClass) aClass.getNavigationElement();
-        for (PsiField field : aClass.getFields()) {
-          if (fieldName.equals(field.getName())) {
-            if (nearest) {
-              return DebuggerContextUtil.findNearest(context, field, aClass.getContainingFile());
-            }
-            return SourcePosition.createFromOffset(field.getContainingFile(), field.getTextOffset());
+        PsiField field = aClass.findFieldByName(fieldName, false);
+        if (field != null) {
+          PsiElement element = field.getNavigationElement();
+          if (nearest) {
+            return DebuggerContextUtil.findNearest(context, element, aClass.getContainingFile());
           }
+          return SourcePosition.createFromOffset(element.getContainingFile(), element.getTextOffset());
         }
       }
       return null;
