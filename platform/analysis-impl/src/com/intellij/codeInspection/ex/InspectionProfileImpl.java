@@ -42,7 +42,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakStringInterner;
+import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -254,15 +254,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       ((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().readExternal(highlightElement);
     }
 
-    WeakStringInterner interner = new WeakStringInterner();
-    for (final Object o : element.getChildren(INSPECTION_TOOL_TAG)) {
+    StringInterner interner = new StringInterner();
+    for (Element toolElement : element.getChildren(INSPECTION_TOOL_TAG)) {
       // make clone to avoid retaining memory via o.parent pointers
-      Element toolElement = ((Element)o).clone();
+      toolElement = toolElement.clone();
       JDOMUtil.internElement(toolElement, interner);
-
-      String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
-
-      myDeinstalledInspectionsSettings.put(toolClassName, toolElement);
+      myDeinstalledInspectionsSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement);
     }
   }
 
