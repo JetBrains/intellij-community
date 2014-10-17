@@ -96,4 +96,8 @@ public class VFileMoveEvent extends VFileEvent {
     result = 31 * result + myNewParent.hashCode();
     return result;
   }
+
+  public String getOldPath() {
+    return myOldParent.getPath() + "/" + myFile.getName();
+  }
 }
