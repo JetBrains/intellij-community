@@ -17,7 +17,6 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
@@ -92,7 +91,7 @@ public class VarExprent extends Exprent {
 
     if (classdef) {
       ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(vartype.value);
-      new ClassWriter().classToJava(child, buffer, indent);
+      new ClassWriter().classToJava(child, buffer, indent, tracer);
     }
     else {
       String name = null;

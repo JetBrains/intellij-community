@@ -48,7 +48,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   private final PropertyChangeSupport myPropertyChangeSupport;
   private boolean myUseDefaultBrowser = true;
   private boolean myConfirmExtractFiles = true;
-  private String myLastProjectLocation;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
@@ -73,7 +72,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls private static final String OPTION_CONFIRM_EXIT = "confirmExit";
   @NonNls private static final String OPTION_CONFIRM_OPEN_NEW_PROJECT = "confirmOpenNewProject2";
   @NonNls private static final String OPTION_CYCLIC_BUFFER_SIZE = "cyclicBufferSize";
-  @NonNls private static final String OPTION_LAST_PROJECT_LOCATION = "lastProjectLocation";
 
   public static GeneralSettings getInstance(){
     return ApplicationManager.getApplication().getComponent(GeneralSettings.class);
@@ -103,15 +101,21 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     return myBrowserPath;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   /**
-   * @return a path pointing to a directory where the last project was created or null if not available
+   * Use RecentProjectsManagerBase
    */
   public String getLastProjectCreationLocation() {
-    return myLastProjectLocation;
+    return null;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
+  /**
+   * Use RecentProjectsManagerBase
+   */
   public void setLastProjectCreationLocation(String lastProjectLocation) {
-    myLastProjectLocation = lastProjectLocation;
   }
 
   public void setBrowserPath(String browserPath) {
@@ -323,15 +327,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
           myConfirmOpenNewProject = OPEN_PROJECT_ASK;
         }
       }
-
-      if (OPTION_LAST_PROJECT_LOCATION.equals(name)) {
-        try {
-          myLastProjectLocation = value;
-        }
-        catch (Exception ex) {
-          myLastProjectLocation = null;
-        }
-      }
     }
 
     if (!safeWriteSettingRead && "true".equals(System.getProperty("idea.no.safe.write"))) {
@@ -417,13 +412,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_CONFIRM_OPEN_NEW_PROJECT);
     optionElement.setAttribute(ATTRIBUTE_VALUE, Integer.toString(myConfirmOpenNewProject));
     parentNode.addContent(optionElement);
-
-    if (myLastProjectLocation != null) {
-      optionElement = new Element(ELEMENT_OPTION);
-      optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_LAST_PROJECT_LOCATION);
-      optionElement.setAttribute(ATTRIBUTE_VALUE, myLastProjectLocation);
-      parentNode.addContent(optionElement);
-    }
   }
 
   @Override

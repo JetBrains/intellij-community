@@ -43,10 +43,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.*;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ClassWriter {
 
@@ -160,11 +157,11 @@ public class ClassWriter {
     DecompilerContext.getLogger().endWriteClass();
   }
 
-  public void classToJava(ClassNode node, TextBuffer buffer, int indent) {
+  public void classToJava(ClassNode node, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
     ClassNode outerNode = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, node);
 
-    int total_offset_lines = 0;
+    final int startLine = tracer != null ? tracer.getCurrentSourceLine() : 0;
     BytecodeMappingTracer dummy_tracer = new BytecodeMappingTracer();
 
     try {
@@ -176,14 +173,12 @@ public class ClassWriter {
 
       DecompilerContext.getLogger().startWriteClass(cl.qualifiedName);
 
-      String lineSeparator = DecompilerContext.getNewLineSeparator();
-
       // write class definition
       int start_class_def = buffer.length();
       writeClassDefinition(node, buffer, indent);
 
 //      // count lines in class definition the easiest way
-//      total_offset_lines = buffer.substring(start_class_def).toString().split(lineSeparator, -1).length - 1;
+//      startLine = buffer.substring(start_class_def).toString().split(lineSeparator, -1).length - 1;
 
       boolean hasContent = false;
 
@@ -199,14 +194,14 @@ public class ClassWriter {
         if (isEnum) {
           if (enumFields) {
             buffer.append(',');
-            buffer.append(lineSeparator);
+            buffer.appendLineSeparator();
           }
           enumFields = true;
         }
         else if (enumFields) {
           buffer.append(';');
-          buffer.append(lineSeparator);
-          buffer.append(lineSeparator);
+          buffer.appendLineSeparator();
+          buffer.appendLineSeparator();
           enumFields = false;
         }
 
@@ -217,11 +212,11 @@ public class ClassWriter {
 
       if (enumFields) {
         buffer.append(';');
-        buffer.append(lineSeparator);
+        buffer.appendLineSeparator();
       }
 
       // FIXME: fields don't matter at the moment
-      total_offset_lines = buffer.count(lineSeparator, start_class_def);
+      //startLine = buffer.countLines(start_class_def);
 
       // methods
       for (StructMethod mt : cl.getMethods()) {
@@ -232,15 +227,15 @@ public class ClassWriter {
 
         int position = buffer.length();
         if (hasContent) {
-          buffer.append(lineSeparator);
+          buffer.appendLineSeparator();
         }
-        BytecodeMappingTracer method_tracer = new BytecodeMappingTracer(total_offset_lines);
+        BytecodeMappingTracer method_tracer = new BytecodeMappingTracer(buffer.countLines() + startLine);
         boolean methodSkipped = !methodToJava(node, mt, buffer, indent + 1, method_tracer);
         if (!methodSkipped) {
           hasContent = true;
           DecompilerContext.getBytecodeSourceMapper().addTracer(cl.qualifiedName,
                                   InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()), method_tracer);
-          total_offset_lines = (method_tracer.getCurrentSourceLine() + 1); // zero-based line index
+          //startLine = (method_tracer.getCurrentSourceLine() + 1); // zero-based line index
         }
         else {
           buffer.setLength(position);
@@ -257,9 +252,9 @@ public class ClassWriter {
           if (hide) continue;
 
           if (hasContent) {
-            buffer.append(lineSeparator);
+            buffer.appendLineSeparator();
           }
-          classToJava(inner, buffer, indent + 1);
+          classToJava(inner, buffer, indent + 1, tracer);
 
           hasContent = true;
         }
@@ -268,7 +263,7 @@ public class ClassWriter {
       buffer.appendIndent(indent).append('}');
 
       if (node.type != ClassNode.CLASS_ANONYMOUS) {
-        buffer.append(lineSeparator);
+        buffer.appendLineSeparator();
       }
     }
     finally {
@@ -794,7 +789,7 @@ public class ClassWriter {
         }
 
         buffer.append(';');
-        buffer.append(lineSeparator);
+        buffer.appendLineSeparator();
       }
       else {
         if (!clinit && !dinit) {
@@ -811,7 +806,7 @@ public class ClassWriter {
 
         if (root != null && !methodWrapper.decompiledWithErrors) { // check for existence
           try {
-            tracer.incrementCurrentSourceLine(buffer.count(lineSeparator, start_index_method));
+            tracer.incrementCurrentSourceLine(buffer.countLines(start_index_method));
             int startLine = tracer.getCurrentSourceLine();
 
             TextBuffer code = root.toJava(indent + 1, tracer);
@@ -845,31 +840,36 @@ public class ClassWriter {
 
     // save total lines
     // TODO: optimize
-    tracer.setCurrentSourceLine(buffer.count(lineSeparator, start_index_method));
+    tracer.setCurrentSourceLine(buffer.countLines(start_index_method));
 
     return !hideMethod;
   }
 
   private void mapLines(TextBuffer code, StructLineNumberTableAttribute table, BytecodeMappingTracer tracer, int startLine) {
     // build line start offsets map
-    HashMap<Integer, Integer> lineStartOffsets = new HashMap<Integer, Integer>();
+    HashMap<Integer, Set<Integer>> lineStartOffsets = new HashMap<Integer, Set<Integer>>();
     for (Map.Entry<Integer, Integer> entry : tracer.getMapping().entrySet()) {
       Integer lineNumber = entry.getValue() - startLine;
-      Integer curr = lineStartOffsets.get(lineNumber);
-      if (curr == null || curr > entry.getKey()) {
-        lineStartOffsets.put(lineNumber, entry.getKey());
+      Set<Integer> curr = lineStartOffsets.get(lineNumber);
+      if (curr == null) {
+        curr = new TreeSet<Integer>(); // requires natural sorting!
       }
+      curr.add(entry.getKey());
+      lineStartOffsets.put(lineNumber, curr);
     }
     String lineSeparator = DecompilerContext.getNewLineSeparator();
     StringBuilder text = code.getOriginalText();
     int pos = text.indexOf(lineSeparator);
     int lineNumber = 0;
     while (pos != -1) {
-      Integer startOffset = lineStartOffsets.get(lineNumber);
-      if (startOffset != null) {
-        int number = table.findLineNumber(startOffset);
-        if (number >= 0) {
-          code.setLineMapping(number, pos);
+      Set<Integer> startOffsets = lineStartOffsets.get(lineNumber);
+      if (startOffsets != null) {
+        for (Integer offset : startOffsets) {
+          int number = table.findLineNumber(offset);
+          if (number >= 0) {
+            code.setLineMapping(number, pos);
+            break;
+          }
         }
       }
       pos = text.indexOf(lineSeparator, pos+1);

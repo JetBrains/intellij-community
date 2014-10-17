@@ -270,9 +270,11 @@ public class NewExprent extends Exprent {
         }
         Exprent methodObject = constructor == null ? null : constructor.getInstance();
         new ClassWriter().classLambdaToJava(child, buf, methodObject, indent);
+        tracer.incrementCurrentSourceLine(buf.countLines());
       }
       else {
-        new ClassWriter().classToJava(child, buf, indent);
+        new ClassWriter().classToJava(child, buf, indent, tracer);
+        tracer.incrementCurrentSourceLine(buf.countLines());
       }
     }
     else if (directArrayInit) {

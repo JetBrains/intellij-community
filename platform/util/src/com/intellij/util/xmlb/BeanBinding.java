@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,12 +21,13 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.annotations.*;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,23 +36,20 @@ import java.beans.Introspector;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 class BeanBinding implements Binding {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xmlb.BeanBinding");
+  private static final Logger LOG = Logger.getInstance(BeanBinding.class);
 
   private static final Map<Class, List<Accessor>> ourAccessorCache = new ConcurrentSoftValueHashMap<Class, List<Accessor>>();
 
   private final String myTagName;
-  private final Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
-  private final List<Binding> myPropertyBindingsList = new ArrayList<Binding>();
+  private final LinkedHashMap<Binding, Accessor> myPropertyBindings = new LinkedHashMap<Binding, Accessor>();
   private final Class<?> myBeanClass;
-  @NonNls private static final String CLASS_PROPERTY = "class";
-  private final Accessor myAccessor;
 
-  public BeanBinding(Class<?> beanClass, @Nullable Accessor accessor) {
-    myAccessor = accessor;
+  public BeanBinding(Class<?> beanClass) {
     assert !beanClass.isArray() : "Bean is an array: " + beanClass;
     assert !beanClass.isPrimitive() : "Bean is primitive type: " + beanClass;
     myBeanClass = beanClass;
@@ -67,9 +64,7 @@ class BeanBinding implements Binding {
 
   private synchronized void initPropertyBindings(Class<?> beanClass) {
     for (Accessor accessor : getAccessors(beanClass)) {
-      final Binding binding = createBindingByAccessor(accessor);
-      myPropertyBindingsList.add(binding);
-      myPropertyBindings.put(binding, accessor);
+      myPropertyBindings.put(createBindingByAccessor(accessor), accessor);
     }
   }
 
@@ -82,20 +77,21 @@ class BeanBinding implements Binding {
   }
 
   public void serializeInto(@NotNull Object o, @NotNull Element element, @NotNull SerializationFilter filter) {
-    for (Binding binding : myPropertyBindingsList) {
+    for (Binding binding : myPropertyBindings.keySet()) {
       Accessor accessor = myPropertyBindings.get(binding);
-      if (!filter.accepts(accessor, o)) continue;
+      if (!filter.accepts(accessor, o)) {
+        continue;
+      }
 
       //todo: optimize. Cache it.
-      final Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
-      if (property != null) {
+      Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
+      if (property != null && property.filter() != SerializationFilter.class) {
         try {
-          if (!property.filter().newInstance().accepts(accessor, o)) continue;
+          if (!ReflectionUtil.newInstance(property.filter()).accepts(accessor, o)) {
+            continue;
+          }
         }
-        catch (InstantiationException e) {
-          throw new XmlSerializationException(e);
-        }
-        catch (IllegalAccessException e) {
+        catch (RuntimeException e) {
           throw new XmlSerializationException(e);
         }
       }
@@ -112,39 +108,30 @@ class BeanBinding implements Binding {
     }
   }
 
-  public void deserializeInto(final Object bean, @NotNull Element element) {
-    _deserializeInto(bean, element);
-  }
-
   @Override
   public Object deserialize(Object o, @NotNull Object... nodes) {
-    return _deserializeInto(instantiateBean(), nodes);
+    Element element = null;
+    for (Object aNode : nodes) {
+      if (!XmlSerializerImpl.isIgnoredNode(aNode)) {
+        element = (Element)aNode;
+        break;
+      }
+    }
+
+    if (element == null) {
+      return o;
+    }
+    return deserializeInto(XmlSerializerImpl.newInstance(myBeanClass), element);
   }
 
-  private Object _deserializeInto(final Object result, @NotNull Object... aNodes) {
-    List<Object> nodes = new ArrayList<Object>();
-    for (Object aNode : aNodes) {
-      if (XmlSerializerImpl.isIgnoredNode(aNode)) continue;
-      nodes.add(aNode);
-    }
-
-    if (nodes.size() != 1) {
-      if (nodes.isEmpty()) {
-        return result;
-      }
-      throw new XmlSerializationException("Wrong set of nodes: " + nodes + " for bean" + myBeanClass + " in " + myAccessor);
-    }
-    assert nodes.get(0) instanceof Element : "Wrong node: " + nodes;
-    Element e = (Element)nodes.get(0);
-
-    ArrayList<Binding> bindings = new ArrayList<Binding>(myPropertyBindings.keySet());
-
-    MultiMap<Binding, Object> data = new MultiMap<Binding, Object>();
-
-    final Object[] children = JDOMUtil.getChildNodesWithAttrs(e);
+  public Object deserializeInto(@NotNull Object result, @NotNull Element element) {
+    Set<Binding> bindings = myPropertyBindings.keySet();
+    MultiMap<Binding, Object> data = MultiMap.createSmartList();
     nextNode:
-    for (Object child : children) {
-      if (XmlSerializerImpl.isIgnoredNode(child)) continue;
+    for (Object child : ContainerUtil.concat(element.getContent(), element.getAttributes())) {
+      if (XmlSerializerImpl.isIgnoredNode(child)) {
+        continue;
+      }
 
       for (Binding binding : bindings) {
         if (binding.isBoundTo(child)) {
@@ -153,25 +140,17 @@ class BeanBinding implements Binding {
         }
       }
 
-      {
-        final String message = "Format error: no binding for " + child + " inside " + this;
-        LOG.debug(message);
-        Logger.getInstance(myBeanClass.getName()).debug(message);
-        Logger.getInstance("#" + myBeanClass.getName()).debug(message);
-      }
+      final String message = "Format error: no binding for " + child + " inside " + this;
+      LOG.debug(message);
+      Logger.getInstance(myBeanClass.getName()).debug(message);
+      Logger.getInstance("#" + myBeanClass.getName()).debug(message);
     }
 
-    for (Object o1 : data.keySet()) {
-      Binding binding = (Binding)o1;
-      Collection<Object> nn = data.get(binding);
-      binding.deserialize(result, ArrayUtil.toObjectArray(nn));
+    for (Binding binding : data.keySet()) {
+      binding.deserialize(result, ArrayUtil.toObjectArray(data.get(binding)));
     }
 
     return result;
-  }
-
-  private Object instantiateBean() {
-    return XmlSerializerImpl.newInstance(myBeanClass);
   }
 
   @Override
@@ -224,7 +203,7 @@ class BeanBinding implements Binding {
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) continue;
       final Pair<String, Boolean> propertyData = getPropertyData(method.getName());  // (name,isSetter)
-      if (propertyData == null || propertyData.first.equals(CLASS_PROPERTY)) continue;
+      if (propertyData == null || propertyData.first.equals("class")) continue;
       if (method.getParameterTypes().length != (propertyData.second ? 1 : 0)) continue;
 
       Couple<Method> candidate = candidates.get(propertyData.first);
@@ -276,7 +255,7 @@ class BeanBinding implements Binding {
     return "BeanBinding[" + myBeanClass.getName() + ", tagName=" + myTagName + "]";
   }
 
-  private static Binding createBindingByAccessor(final Accessor accessor) {
+  private static Binding createBindingByAccessor(@NotNull Accessor accessor) {
     final Binding binding = _createBinding(accessor);
     binding.init();
     return binding;

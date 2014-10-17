@@ -40,7 +40,7 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public DisplayPriority getPriority() {
-    return PlatformUtils.isIdeaUltimate() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
+    return PlatformUtils.isIntelliJ() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   @Override

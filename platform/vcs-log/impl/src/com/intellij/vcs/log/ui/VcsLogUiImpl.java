@@ -190,6 +190,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public void setShowRootNames(boolean isShowRootNames) {
     myUiProperties.setShowRootNames(isShowRootNames);
+    myMainFrame.getGraphTable().rootColumnUpdated();
   }
 
   public boolean isShowRootNames() {
@@ -284,6 +285,11 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     else {
       showMessage(MessageType.WARNING, "Commit " + commitHash + " doesn't exist or doesn't match the active filters");
     }
+  }
+
+  @Override
+  public boolean isMultipleRoots() {
+    return myColorManager.isMultipleRoots(); // somewhy color manager knows about this
   }
 
   @NotNull

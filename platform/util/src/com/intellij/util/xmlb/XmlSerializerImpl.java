@@ -123,7 +123,7 @@ class XmlSerializerImpl {
     if (Date.class.isAssignableFrom(aClass)) return new DateBinding();
     if (aClass.isEnum()) return new PrimitiveValueBinding(aClass);
 
-    return new BeanBinding(aClass, accessor);
+    return new BeanBinding(aClass);
   }
 
   @Nullable

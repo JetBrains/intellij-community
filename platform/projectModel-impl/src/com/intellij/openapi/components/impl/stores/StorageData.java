@@ -26,7 +26,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.containers.WeakStringInterner;
+import com.intellij.util.containers.StringInterner;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -67,8 +67,7 @@ public class StorageData extends StorageDataBase {
       pathMacroSubstitutor.expandPaths(rootElement);
     }
 
-    WeakStringInterner interner = intern ? new WeakStringInterner() : null;
-
+    StringInterner interner = intern ? new StringInterner() : null;
     for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
       Element element = iterator.next();
       String name = getComponentNameIfValid(element);

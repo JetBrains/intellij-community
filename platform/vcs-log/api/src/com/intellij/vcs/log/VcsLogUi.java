@@ -33,4 +33,7 @@ public interface VcsLogUi {
 
   void setBranchesPanelVisible(boolean visible);
 
+  boolean isMultipleRoots();
+  boolean isShowRootNames();
+  void setShowRootNames(boolean showRootNames);
 }
