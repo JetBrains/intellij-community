@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -65,6 +66,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     project.getMessageBus().connect(this).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
       public void beforeAllDocumentsSaving() {
+        if (!new File(vFile.getPath()).exists()) return;
         final IpnbFilePanel filePanel = myIpnbFilePanel;
         if (filePanel != null) {
           IpnbParser.saveIpnbFile(filePanel);
@@ -77,8 +79,9 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
       @Override
       public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        if (!new File(file.getPath()).exists()) return;
         IpnbParser.saveIpnbFile(myIpnbFilePanel);
-        file.refresh(false, false);
+          file.refresh(false, false);
       }
     });
     myFile = vFile;
