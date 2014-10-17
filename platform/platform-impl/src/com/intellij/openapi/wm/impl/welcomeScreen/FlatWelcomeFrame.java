@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -64,12 +65,16 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
     final IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
     setGlassPane(glassPane);
     glassPane.setVisible(false);
-    setUndecorated(true);
+    //setUndecorated(true);
     setContentPane(myScreen.getWelcomePanel());
-    setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
+    setTitle("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
     Rectangle bounds = ScreenUtil.getMainScreenBounds();
-    setSize(666, 450);
+    if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
+      setSize(666, 450);
+    } else {
+      setSize(555, 450);
+    }
     int x = bounds.x + (bounds.width - getWidth()) / 2;
     int y = bounds.y + (bounds.height - getHeight()) / 2;
     setLocation(x, y);
@@ -136,11 +141,11 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
   }
   
   public static Color getMainBackground() {
-    return Color.WHITE;
+    return new JBColor(Gray.xFF, Gray.x2B);
   }
   
   public static Color getProjectsBackGround() {
-    return Gray._245;
+    return new JBColor(Gray._245, new Color(0x3c3f41));
   }
 
   @Override
@@ -152,7 +157,9 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
     public FlatWelcomeScreen() {
       super(new BorderLayout());
       setBackground(getMainBackground());
-      add(createRecentProjects(), BorderLayout.WEST);
+      if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
+        add(createRecentProjects(), BorderLayout.WEST);
+      }
       add(createBody(), BorderLayout.CENTER);
     }
 
@@ -180,13 +187,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
       DefaultActionGroup group = new DefaultActionGroup();
-      for (AnAction action : quickStart.getChildren(null)) {
-        if (action instanceof ActionGroup) {
-          group.addAll((ActionGroup)action);
-        } else {
-          group.add(action);
-        }
-      }
+      collectAllActions(group, quickStart);
 
       // so, we sure this is the last action
       final AnAction register = actionManager.getAction("WelcomeScreen.Register");
@@ -202,7 +203,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
           }
         };
         button.setOpaque(false);
-        button.setBorder(new EmptyBorder(4, 30, 0, 30));
+        button.setBorder(new EmptyBorder(4, 50, 4, 30));
         Presentation presentation = action.getTemplatePresentation();
         action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
                                         ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
@@ -220,6 +221,16 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
       JPanel panel = new NonOpaquePanel(new BorderLayout());
       panel.add(actions, BorderLayout.NORTH);
       return panel;
+    }
+
+    private static void collectAllActions(DefaultActionGroup group, ActionGroup actionGroup) {
+      for (AnAction action : actionGroup.getChildren(null)) {
+        if (action instanceof ActionGroup) {
+          collectAllActions(group, (ActionGroup)action);
+        } else {
+          group.add(action);
+        }
+      }
     }
 
     private JComponent createLogo() {
