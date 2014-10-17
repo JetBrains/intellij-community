@@ -1,4 +1,4 @@
-package com.jetbrains.python.actions.view.array;
+package com.jetbrains.python.debugger.array;
 
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
