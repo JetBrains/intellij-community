@@ -53,7 +53,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
   }
 
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
-                                               int rowIndex, int vColIndex) {
+                                               final int rowIndex, final int vColIndex) {
     myEditor = new MyTableEditor(myProject, new PyDebuggerEditorsProvider(), "numpy.array.table.view", null,
                                  new XExpressionImpl(value.toString(), PythonLanguage.getInstance(), "", EvaluationMode.CODE_FRAGMENT));
     lastValue = value;
@@ -64,7 +64,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
     editorComponent.getActionMap().put("strokeEnter", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        doOKAction();
+        doOKAction(rowIndex, vColIndex);
       }
     });
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
@@ -88,7 +88,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
     }
   }
 
-  public void doOKAction() {
+  public void doOKAction(int rowIndex, int vColIndex) {
   }
 
   public void cancelEditing() {
