@@ -59,6 +59,7 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @Nullable private GitPushTarget myCurrentTarget;
   @Nullable private Runnable myFireOnChangeAction;
+  @NotNull private ExtraEditControl myEditRemoteControl;
 
   public GitPushTargetPanel(@NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
     myRepository = repository;
@@ -76,8 +77,14 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       initialRemote = getRemoteLabelText(defaultTarget.getBranch().getRemote().getName());
     }
 
-    myTargetTextField = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), initialBranch);
+    myEditRemoteControl = new ExtraEditControl() {
+      @Override
+      public void click(@NotNull MouseEvent event) {
+        showRemoteSelector(event);
+      }
+    };
 
+    myTargetTextField = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), initialBranch);
     myRemoteLabel = new JBLabel(initialRemote);
 
     setLayout(new BorderLayout());
@@ -92,13 +99,7 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private void showRemoteSelector(@NotNull MouseEvent event) {
-    final List<String> remotes = ContainerUtil.map(myRepository.getRemotes(), new Function<GitRemote, String>() {
-      @Override
-      public String fun(GitRemote remote) {
-        return remote.getName();
-      }
-    });
-
+    final List<String> remotes = getRemotes();
     if (remotes.size() <= 1) {
       return;
     }
@@ -116,6 +117,16 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     popup.show(new RelativePoint(event));
   }
 
+  @NotNull
+  private List<String> getRemotes() {
+    return ContainerUtil.map(myRepository.getRemotes(), new Function<GitRemote, String>() {
+      @Override
+      public String fun(GitRemote remote) {
+        return remote.getName();
+      }
+    });
+  }
+
   @Override
   public void render(@NotNull final ColoredTreeCellRenderer renderer) {
     String targetName = myTargetTextField.getText();
@@ -123,14 +134,15 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       renderer.append(NO_REMOTES, SimpleTextAttributes.ERROR_ATTRIBUTES, this);
     }
     else {
-      GitPushTarget target = getValue();
-      renderer.append(myRemoteLabel.getText(), SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, new ExtraEditControl() {
-        @Override
-        public void click(@NotNull MouseEvent event) {
-          showRemoteSelector(event);
-        }
+      String currentRemote = myRemoteLabel.getText();
+      if (getRemotes().size() > 1) {
+        renderer.append(currentRemote, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, myEditRemoteControl);
+      }
+      else {
+        renderer.append(currentRemote, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
 
-      });
+      GitPushTarget target = getValue();
       if (target.isNewBranchCreated()) {
         renderer.append("+", SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
       }
