@@ -19,4 +19,4 @@ If you still want to use username/password instead of access token or your Git h
 OS X Keychain is supported. It means that your credentials could be shared between all IntelliJ Platform based products (you will be prompted to grant access if origin application differs from requestor application (credentials were saved in IntelliJ IDEA, but requested from WebStorm).
 
 ## How to report issues
-Use [JetBrains YouTrack](https://youtrack.jetbrains.com) — project IntelliJ IDEA, subsystem IDE Configuration, assignee Vladimir Krivosheev ([issue template](https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Assignee+develar&c=Subsystem+IDE+Configuration)).
+Use [JetBrains YouTrack](https://youtrack.jetbrains.com) — project IntelliJ IDEA, subsystem IDE Configuration, assignee Vladimir Krivosheev ([issue template](https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Subsystem+IDE+Configuration)).
