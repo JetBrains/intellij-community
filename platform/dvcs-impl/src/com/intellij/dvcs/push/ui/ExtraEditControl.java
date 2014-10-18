@@ -13,28 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.push;
+package com.intellij.dvcs.push.ui;
 
-import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.awt.event.MouseEvent;
 
-public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
+/**
+ *
+ */
+public interface ExtraEditControl {
 
-  abstract public void render(@NotNull ColoredTreeCellRenderer renderer);
+  void click(@NotNull MouseEvent event);
 
-  @NotNull
-  abstract public T getValue();
-
-  public abstract void fireOnCancel();
-
-  public abstract void fireOnChange();
-
-  @Nullable
-  public abstract ValidationInfo verify();
-
-  public abstract void setFireOnChangeAction(@NotNull Runnable action);
 }

@@ -86,4 +86,9 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
     }
     return null;
   }
+
+  @Override
+  public void setFireOnChangeAction(@NotNull Runnable action) {
+    // no extra changing components => ignore
+  }
 }
