@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -167,13 +168,21 @@ public class PushController implements Disposable {
     if (target == null) {
       model.setError(VcsError.createEmptyTargetError(repoName));
     }
+
     final PushTargetPanel<T> pushTargetPanel = support.createTargetPanel(repository, target);
-    RepositoryWithBranchPanel<T> repoPanel = new RepositoryWithBranchPanel<T>(myProject, repoName,
-                                                                              source.getPresentation(), pushTargetPanel);
+    final RepositoryWithBranchPanel<T> repoPanel = new RepositoryWithBranchPanel<T>(myProject, repoName,
+                                                                                    source.getPresentation(), pushTargetPanel);
     CheckBoxModel checkBoxModel = model.getCheckBoxModel();
     final RepositoryNode repoNode = mySingleRepoProject
                                     ? new SingleRepositoryNode(repoPanel, checkBoxModel)
                                     : new RepositoryNode(repoPanel, checkBoxModel, target != null);
+    pushTargetPanel.setFireOnChangeAction(new Runnable() {
+      @Override
+      public void run() {
+        repoPanel.fireOnChange();
+        ((DefaultTreeModel)myPushLog.getTree().getModel()).nodeChanged(repoNode); // tell the tree to repaint the changed node
+      }
+    });
     myView2Model.put(repoNode, model);
     repoPanel.addRepoNodeListener(new RepositoryNodeListener<T>() {
       @Override
