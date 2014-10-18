@@ -201,6 +201,19 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "    }", false);
   }
 
+  public void testNewArrayInitializer() throws Exception {
+    doTest("new Runnable[] {new Runnable() {public void run(){} } }",
+           "Runnable[] result = new Test().invoke();",
+           "public class Test {\n" +
+           "        public Runnable[] invoke() {\n" +
+           "            return new Runnable[]{new Runnable() {\n" +
+           "                public void run() {\n" +
+           "                }\n" +
+           "            }};\n" +
+           "        }\n" +
+           "    }", false);
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();
