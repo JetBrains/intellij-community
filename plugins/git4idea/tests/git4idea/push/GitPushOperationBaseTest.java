@@ -138,7 +138,7 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
     else {
       newBranch = false;
     }
-    return new PushSpec<GitPushSource, GitPushTarget>(new GitPushSource(source), new GitPushTarget(target, newBranch));
+    return new PushSpec<GitPushSource, GitPushTarget>(GitPushSource.create(source), new GitPushTarget(target, newBranch));
   }
 
   @NotNull
