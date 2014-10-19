@@ -122,7 +122,6 @@ public class LinkLabel<T> extends JLabel {
   }
 
   protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
     final Border border = getBorder();
     int shiftX = 0;
     int shiftY = 0;
