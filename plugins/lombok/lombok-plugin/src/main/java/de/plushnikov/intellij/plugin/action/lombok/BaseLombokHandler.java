@@ -20,6 +20,7 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
+import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +78,8 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
         propertyMethod.delete();
       }
     }
+
+    UserMapKeys.updateLombokPresent(psiClass, true);
   }
 
   private boolean isNotAnnotatedWithOrSameAccessLevelAs(PsiClass psiClass, PsiMethod firstPropertyMethod, Class<? extends Annotation> annotationClass) {
@@ -107,10 +110,11 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
     addAnnotation(targetElement, newPsiAnnotation, annotationClass);
   }
 
-  protected void addAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull Class<? extends Annotation> annotationClass) {
+  protected void addAnnotation(@NotNull PsiClass targetElement, @NotNull Class<? extends Annotation> annotationClass) {
     final PsiAnnotation newPsiAnnotation = PsiAnnotationUtil.createPsiAnnotation(targetElement, annotationClass);
 
     addAnnotation(targetElement, newPsiAnnotation, annotationClass);
+    UserMapKeys.updateLombokPresent(targetElement, true);
   }
 
   private void addAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull PsiAnnotation newPsiAnnotation,
