@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -56,8 +58,25 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
   @Override
   protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
-    JBList list = super.createList(recentProjectActions, size);
+    final JBList list = super.createList(recentProjectActions, size);
     list.setBackground(FlatWelcomeFrame.getProjectsBackGround());
+    list.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+          FlatWelcomeFrame frame = UIUtil.getParentOfType(FlatWelcomeFrame.class, list);
+          if (frame != null) {
+            FocusTraversalPolicy policy = frame.getFocusTraversalPolicy();
+            if (policy != null) {
+              Component next = policy.getComponentAfter(frame, list);
+              if (next != null) {
+                next.requestFocus();
+              }
+            }
+          }
+        }
+      }
+    });
     return list;
   }
 
