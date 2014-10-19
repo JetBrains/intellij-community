@@ -67,7 +67,14 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
     final JRootPane rootPane = getRootPane();
     myScreen = new FlatWelcomeScreen();
 
-    final IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
+    final IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
+      @Override
+      public void addNotify() {
+        super.addNotify();
+        rootPane.remove(getProxyComponent());
+      }
+    };
+
     setGlassPane(glassPane);
     glassPane.setVisible(false);
     //setUndecorated(true);
