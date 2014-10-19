@@ -386,9 +386,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
 
     JBPopup _oldHint = getDocInfoHint();
-    PreviewManager previewManager = PreviewManager.SERVICE.getInstance(myProject);
-    if (previewManager != null &&
-        previewManager.preview(DocumentationPreviewPanelProvider.ID, Couple.of(element, originalElement), requestFocus) != null) {
+    if (PreviewManager.SERVICE.preview(myProject, DocumentationPreviewPanelProvider.ID, Couple.of(element, originalElement), requestFocus) != null) {
       return;
     }
 
