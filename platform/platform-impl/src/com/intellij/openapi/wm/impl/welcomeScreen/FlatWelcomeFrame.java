@@ -83,9 +83,9 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
     AppUIUtil.updateWindowIcon(this);
     Rectangle bounds = ScreenUtil.getMainScreenBounds();
     if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
-      setSize(666, 450);
+      setSize(666, 460);
     } else {
-      setSize(555, 450);
+      setSize(555, 460);
     }
     int x = bounds.x + (bounds.width - getWidth()) / 2;
     int y = bounds.y + (bounds.height - getHeight()) / 2;
