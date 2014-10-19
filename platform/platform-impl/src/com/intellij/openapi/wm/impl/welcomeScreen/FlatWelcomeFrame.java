@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.Disposable;
@@ -31,8 +32,10 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -40,6 +43,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,6 +54,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
@@ -59,7 +64,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
   private final FlatWelcomeScreen myScreen;
 
   public FlatWelcomeFrame() {
-    JRootPane rootPane = getRootPane();
+    final JRootPane rootPane = getRootPane();
     myScreen = new FlatWelcomeScreen();
 
     final IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
@@ -141,7 +146,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
   }
   
   public static Color getMainBackground() {
-    return new JBColor(Gray.xFF, Gray.x2B);
+    return new JBColor(Gray.xFF, new Color(58, 61, 63));
   }
   
   public static Color getProjectsBackGround() {
@@ -153,7 +158,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
     return Registry.is("ide.new.welcome.screen") ? this : null;
   }
 
-  private static class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
+  private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
     public FlatWelcomeScreen() {
       super(new BorderLayout());
       setBackground(getMainBackground());
@@ -172,17 +177,43 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.add(createLogo(), BorderLayout.NORTH);
       panel.add(createActionPanel(), BorderLayout.CENTER);
-      //panel.add(createSettingsAndDocs(), BorderLayout.SOUTH);
+      panel.add(createSettingsAndDocs(), BorderLayout.SOUTH);
       return panel;
     }
 
     private JComponent createSettingsAndDocs() {
-      return null;
+      NonOpaquePanel toolbar = new NonOpaquePanel();
+      toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
+      toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.Settings));
+      toolbar.add(createActionLink("Get Help", IdeActions.GROUP_WELCOME_SCREEN_DOC, AllIcons.General.Help_small));
+      JPanel panel = new NonOpaquePanel(new BorderLayout());
+      panel.add(toolbar, BorderLayout.WEST);
+      return panel;
+    }
+    
+    private JComponent createActionLink(final String text, final String groupId, Icon icon) {
+      final Ref<ActionLink> settings = new Ref<ActionLink>(null);
+      AnAction action = new AnAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
+          JBPopupFactory.getInstance()
+            .createActionGroupPopup(text, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
+                                    10, null)
+            .showUnderneathOf(settings.get());
+        }
+      };
+      settings.set(new ActionLink(text, icon, action));
+      settings.get().setPaintUnderline(false);
+      installFocusable(settings.get(), action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, !Arrays.asList("Get Help", "Register").contains(text));
+      NonOpaquePanel panel = new NonOpaquePanel();
+      panel.setBorder(new EmptyBorder(0, 20, 2, 0));
+      panel.add(settings.get());
+      return panel;
     }
 
     private JComponent createActionPanel() {
-      JPanel actions = new JPanel();
-      actions.setOpaque(false);
+      JPanel actions = new NonOpaquePanel();
       actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
@@ -203,14 +234,16 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
           }
         };
         button.setOpaque(false);
-        button.setBorder(new EmptyBorder(4, 50, 4, 30));
+        button.setBorder(new EmptyBorder(0, 50, 0, 30));
         Presentation presentation = action.getTemplatePresentation();
         action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
                                         ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
         if (presentation.isVisible()) {
           ActionLink link = new ActionLink(presentation.getText(), presentation.getIcon(), action);
+          link.setPaintUnderline(false);
+          link.setNormalColor(new JBColor(Gray._0, Gray.xBB));
           link.setBorder(new EmptyBorder(2, 5, 2, 5));
-          installFocusable(link, action);
+          installFocusable(link, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           button.add(link);
           actions.add(button);
         }
@@ -223,7 +256,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
       return panel;
     }
 
-    private static void collectAllActions(DefaultActionGroup group, ActionGroup actionGroup) {
+    private void collectAllActions(DefaultActionGroup group, ActionGroup actionGroup) {
       for (AnAction action : actionGroup.getChildren(null)) {
         if (action instanceof ActionGroup) {
           collectAllActions(group, (ActionGroup)action);
@@ -236,13 +269,13 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
     private JComponent createLogo() {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       JLabel logo = new JLabel(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()));
-      logo.setBorder(new EmptyBorder(20, 0, 0, 30));
+      logo.setBorder(new EmptyBorder(20, 0, 0, 0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
       JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
       Font font = getProductFont();
+      appName.setForeground(JBColor.foreground());
       appName.setFont(font.deriveFont(36f).deriveFont(Font.PLAIN));
-      appName.setForeground(Gray._0);
       appName.setHorizontalAlignment(SwingConstants.CENTER);
       JLabel version = new JLabel("Version " + ApplicationInfoEx.getInstanceEx().getFullVersion());
       version.setFont(font.deriveFont(16f).deriveFont(Font.PLAIN));
@@ -254,7 +287,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
       return panel;
     }
 
-    private static Font getProductFont() {
+    private Font getProductFont() {
       String name = "/fonts/Roboto-Light.ttf";
       URL url = AppUIUtil.class.getResource(name);
         if (url == null) {
@@ -284,35 +317,70 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
       return panel;
     }
 
-    private void installFocusable(final JComponent comp, final AnAction action) {
-      comp.setBorder(new EmptyBorder(2, 2, 2, 2));
+    private void installFocusable(final ActionLink comp, final AnAction action, final int prevKeyCode, final int nextKeyCode, final boolean focusListOnLeft) {
+      comp.setBorder(new EmptyBorder(6, 2, 6, 2));
       comp.setFocusable(true);
       comp.setFocusTraversalKeysEnabled(true);
       comp.addKeyListener(new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
+          final JList list = UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class);
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            action.actionPerformed(new AnActionEvent(e, 
-                                                     DataManager.getInstance().getDataContext(), 
-                                                     ActionPlaces.WELCOME_SCREEN, 
-                                                     action.getTemplatePresentation().clone(), 
-                                                     ActionManager.getInstance(), 
+            action.actionPerformed(new AnActionEvent(e,
+                                                     DataManager.getInstance().getDataContext(),
+                                                     ActionPlaces.WELCOME_SCREEN,
+                                                     action.getTemplatePresentation().clone(),
+                                                     ActionManager.getInstance(),
                                                      0));
+          } else if (e.getKeyCode() == prevKeyCode) {
+            focusPrev(comp);
+          } else if (e.getKeyCode() == nextKeyCode) {
+            focusNext(comp);
+          } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            if (focusListOnLeft) {
+              if (list != null) {
+                list.requestFocus();
+              }  
+            } else {
+              focusPrev(comp);
+            }
+          } else if (e.getKeyCode() == KeyEvent.VK_RIGHT && Arrays.asList("Configure", "Get Help").contains(comp.getText())) {
+            focusNext(comp);
           }
         }
       });
       comp.addFocusListener(new FocusListener() {
         @Override
         public void focusGained(FocusEvent e) {
-          comp.setBorder(new CompoundBorder(new DottedBorder(new Insets(1, 1, 1, 1), Gray._128), new EmptyBorder(1,1,1,1)));
+          comp.setBorder(new CompoundBorder(new DottedBorder(new Insets(1, 1, 1, 1), Gray._128), new EmptyBorder(5,1,5,1)));
         }
 
         @Override
         public void focusLost(FocusEvent e) {
-          comp.setBorder(new EmptyBorder(2, 2, 2, 2));
+          comp.setBorder(new EmptyBorder(6, 2, 6, 2));
         }
       });
 
+    }
+
+    protected void focusPrev(JComponent comp) {
+      FocusTraversalPolicy policy = FlatWelcomeFrame.this.getFocusTraversalPolicy();
+      if (policy != null) {
+        Component prev = policy.getComponentBefore(FlatWelcomeFrame.this, comp);
+        if (prev != null) {
+          prev.requestFocus();
+        }
+      }
+    }
+
+    protected void focusNext(JComponent comp) {
+      FocusTraversalPolicy policy = FlatWelcomeFrame.this.getFocusTraversalPolicy();
+      if (policy != null) {
+        Component next = policy.getComponentAfter(FlatWelcomeFrame.this, comp);
+        if (next != null) {
+          next.requestFocus();
+        }
+      }
     }
 
     @Override
@@ -323,6 +391,52 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
     @Override
     public void dispose() {
 
+    }
+
+    private class IconsFreeActionGroup extends ActionGroup {
+      private final ActionGroup myGroup;
+
+      public IconsFreeActionGroup(ActionGroup group) {
+        myGroup = group;
+      }
+
+      @NotNull
+      @Override
+      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+        AnAction[] children = myGroup.getChildren(e);
+        AnAction[] patched = new AnAction[children.length];
+        for (int i = 0; i < children.length; i++) {
+          patched[i] = patch(children[i]);
+        }
+        return patched;
+      }
+
+      private AnAction patch(final AnAction child) {
+        if (child instanceof ActionGroup) {
+          return new IconsFreeActionGroup((ActionGroup)child);
+        }
+        
+          Presentation presentation = child.getTemplatePresentation();
+        return new AnAction(presentation.getText(),
+                            presentation.getDescription(),
+                            null) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            child.actionPerformed(e);
+          }
+
+          @Override
+          public void update(@NotNull AnActionEvent e) {
+            child.update(e);
+            e.getPresentation().setIcon(null);
+          }
+
+          @Override
+          public boolean isDumbAware() {
+            return child.isDumbAware();
+          }
+        };
+      }
     }
   }
 
