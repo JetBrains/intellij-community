@@ -8,7 +8,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeInferenceFromUsedAttributesUtil;
+import com.jetbrains.python.psi.types.PyTypeFromUsedAttributesHelper;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,7 +233,7 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyReferenceExpression referenceExpression = findLastReferenceByText("x");
     assertNotNull(referenceExpression);
-    assertSameElements(PyTypeInferenceFromUsedAttributesUtil.collectUsedAttributes(referenceExpression), attributesExpected);
+    assertSameElements(PyTypeFromUsedAttributesHelper.collectUsedAttributes(referenceExpression), attributesExpected);
   }
 
   @Nullable

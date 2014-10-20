@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.stubs.*;
-import com.jetbrains.python.psi.types.PyTypeInferenceFromUsedAttributesUtil;
+import com.jetbrains.python.psi.types.PyTypeFromUsedAttributesHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -107,7 +107,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       sink.occurrence(PyClassNameIndexInsensitive.KEY, name.toLowerCase());
     }
     final PyClass pyClass = createPsi(stub);
-    for (String attribute: PyTypeInferenceFromUsedAttributesUtil.getAllDeclaredAttributeNames(pyClass)) {
+    for (String attribute: PyTypeFromUsedAttributesHelper.getAllDeclaredAttributeNames(pyClass)) {
       sink.occurrence(PyClassAttributesIndex.KEY, attribute);
     }
     for (QualifiedName s : stub.getSuperClasses()) {

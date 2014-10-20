@@ -27,7 +27,7 @@ import static com.jetbrains.python.psi.resolve.QualifiedNameFinder.findShortestI
 /**
  * @author Mikhail Golubev
  */
-public class PyTypeInferenceFromUsedAttributesUtil {
+public class PyTypeFromUsedAttributesHelper {
   public static final int MAX_CANDIDATES = 5;
   // Not final so it can be changed in debugger
   private static boolean ENABLED = Boolean.parseBoolean(System.getProperty("py.infer.types.from.used.attributes", "true"));
@@ -43,29 +43,31 @@ public class PyTypeInferenceFromUsedAttributesUtil {
     "__dict__"
   );
 
-  private static final Logger LOG = Logger.getInstance(PyTypeInferenceFromUsedAttributesUtil.class);
+  private static final Logger LOG = Logger.getInstance(PyTypeFromUsedAttributesHelper.class);
 
-  private PyTypeInferenceFromUsedAttributesUtil() {
-    // empty
+  private final TypeEvalContext myContext;
+  private final Map<PyClass, Set<PyClass>> myAncestorsCache = Maps.newHashMap();
+
+  public PyTypeFromUsedAttributesHelper(@NotNull TypeEvalContext context) {
+    myContext = context;
   }
 
   /**
    * Attempts to guess type of given expression based on what attributes (including special names) were accessed on it. If several types
-   * fit their union will be returned.
+   * fit their union will be returned. Suggested classes will be ordered according to their {@link PyTypeFromUsedAttributesHelper.Priority}.
+   * Currently at most {@link #MAX_CANDIDATES} can be returned in union.
    *
-   * @param expression expression which type should be inferred
-   * @param context    type evaluation context
    * @return described type or {@code null} if nothing suits
    */
   @Nullable
-  public static PyType getType(@NotNull PyExpression expression, @NotNull final TypeEvalContext context) {
-    if (!ENABLED || !context.allowLocalUsages(expression)) {
+  public PyType getType(@NotNull PyExpression expression) {
+    if (!ENABLED || !myContext.allowLocalUsages(expression)) {
       return null;
     }
     final long startTime = System.currentTimeMillis();
     final Set<String> seenAttrs = collectUsedAttributes(expression);
     LOG.debug(String.format("Attempting to infer type for expression: %s. Used attributes: %s", expression.getText(), seenAttrs));
-    final List<CandidateClass> allCandidates = suggestCandidateClasses(expression, seenAttrs, context);
+    final List<CandidateClass> allCandidates = suggestCandidateClasses(expression, seenAttrs);
     LOG.debug("Total " + (System.currentTimeMillis() - startTime) + " ms to infer candidate classes");
 
     final List<CandidateClass> bestCandidates = allCandidates.subList(0, Math.min(allCandidates.size(), MAX_CANDIDATES));
@@ -78,11 +80,8 @@ public class PyTypeInferenceFromUsedAttributesUtil {
   }
 
   @NotNull
-  private static List<CandidateClass> suggestCandidateClasses(@NotNull final PyExpression expression,
-                                                              @NotNull Set<String> seenAttrs,
-                                                              @NotNull TypeEvalContext context) {
+  private List<CandidateClass> suggestCandidateClasses(@NotNull final PyExpression expression, @NotNull Set<String> seenAttrs) {
     final Set<PyClass> candidates = Sets.newHashSet();
-    final Map<PyClass, Set<PyClass>> localAncestorsCache = Maps.newHashMap();
     for (String attribute : seenAttrs) {
       // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
       // and we probably don't want to confuse user with __Classobj anyway
@@ -101,13 +100,13 @@ public class PyTypeInferenceFromUsedAttributesUtil {
       if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
         continue;
       }
-      if (getAllInheritedAttributeNames(candidate, context, localAncestorsCache).containsAll(seenAttrs)) {
+      if (getAllInheritedAttributeNames(candidate).containsAll(seenAttrs)) {
         suitableClasses.add(candidate);
       }
     }
 
     for (PyClass candidate : Lists.newArrayList(suitableClasses)) {
-      for (PyClass ancestor : getAncestorClassesFast(candidate, context, localAncestorsCache)) {
+      for (PyClass ancestor : getAncestorClassesFast(candidate)) {
         if (suitableClasses.contains(ancestor)) {
           suitableClasses.remove(candidate);
         }
@@ -124,11 +123,9 @@ public class PyTypeInferenceFromUsedAttributesUtil {
   }
 
   @NotNull
-  private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
-                                                           @NotNull TypeEvalContext context,
-                                                           Map<PyClass, Set<PyClass>> ancestorsCache) {
+  private Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate) {
     final Set<String> availableAttrs = Sets.newHashSet(getAllDeclaredAttributeNames(candidate));
-    for (PyClass parent : getAncestorClassesFast(candidate, context, ancestorsCache)) {
+    for (PyClass parent : getAncestorClassesFast(candidate)) {
       availableAttrs.addAll(getAllDeclaredAttributeNames(parent));
     }
     return availableAttrs;
@@ -212,6 +209,38 @@ public class PyTypeInferenceFromUsedAttributesUtil {
     });
   }
 
+  /**
+   * Simpler and faster alternative to {@link com.jetbrains.python.psi.impl.PyClassImpl#getAncestorClasses()}.
+   * Approach used here does not require proper MRO order of ancestors and performance is greatly improved by reusing
+   * of intermediate results in case of large class hierarchy.
+   */
+  @NotNull
+  private Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass) {
+    final Set<PyClass> ancestors = myAncestorsCache.get(pyClass);
+    if (ancestors != null) {
+      return ancestors;
+    }
+    // Sentinel value to prevent infinite recursion
+    myAncestorsCache.put(pyClass, Collections.<PyClass>emptySet());
+    final Set<PyClass> result = Sets.newHashSet();
+    try {
+      for (final PyClassLikeType baseType : pyClass.getSuperClassTypes(myContext)) {
+        if (!(baseType instanceof PyClassType)) {
+          continue;
+        }
+        final PyClass baseClass = ((PyClassType)baseType).getPyClass();
+        result.add(baseClass);
+        result.addAll(getAncestorClassesFast(baseClass));
+      }
+    }
+    finally {
+      // May happen in case of cyclic inheritance
+      result.remove(pyClass);
+      myAncestorsCache.put(pyClass, Collections.unmodifiableSet(result));
+    }
+    return result;
+  }
+
   private static class CandidateClass implements Comparable<CandidateClass> {
     final PyClass myClass;
     final Priority myPriority;
@@ -276,35 +305,6 @@ public class PyTypeInferenceFromUsedAttributesUtil {
     public String toString() {
       return String.format("ClassCandidate(name='%s' priority=%s)", myClass.getName(), myPriority);
     }
-  }
-
-  @NotNull
-  private static Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
-                                                     @NotNull TypeEvalContext context,
-                                                     @NotNull Map<PyClass, Set<PyClass>> cache) {
-    final Set<PyClass> ancestors = cache.get(pyClass);
-    if (ancestors != null) {
-      return ancestors;
-    }
-    // Sentinel value to prevent infinite recursion
-    cache.put(pyClass, Collections.<PyClass>emptySet());
-    final Set<PyClass> result = Sets.newHashSet();
-    try {
-      for (final PyClassLikeType baseType : pyClass.getSuperClassTypes(context)) {
-        if (!(baseType instanceof PyClassType)) {
-          continue;
-        }
-        final PyClass baseClass = ((PyClassType)baseType).getPyClass();
-        result.add(baseClass);
-        result.addAll(getAncestorClassesFast(baseClass, context, cache));
-      }
-    }
-    finally {
-      // May happen in case of cyclic inheritance
-      result.remove(pyClass);
-      cache.put(pyClass, Collections.unmodifiableSet(result));
-    }
-    return result;
   }
 
   enum Priority {
