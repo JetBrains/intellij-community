@@ -66,6 +66,18 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
       
       ProjectViewNode node1 = (ProjectViewNode)descriptor1;
       ProjectViewNode node2 = (ProjectViewNode)descriptor2;
+      
+      if (isManualOrder()) {
+        final Comparable key1 = node1.getManualOrderKey();
+        final Comparable key2 = node2.getManualOrderKey();
+        if (!(key1 == null && key2 == null)) {
+          if (key1 == null) return 1;
+          if (key2 == null) return -1;
+          //noinspection unchecked
+          final int result = key1.compareTo(key2);
+          if (result != 0) return result;
+        }
+      }
 
       boolean isFoldersOnTop = !(projectView instanceof ProjectViewImpl && !((ProjectViewImpl)projectView).isFoldersAlwaysOnTop());
       if (isFoldersOnTop) {
@@ -116,6 +128,13 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
     return AlphaComparator.INSTANCE.compare(descriptor1, descriptor2);
   }
 
+  protected boolean isManualOrder() {
+    if (myProjectView != null) {
+      return myProjectView.isManualOrder(myPaneId);
+    }
+    return true;
+  }
+  
   protected boolean isSortByType() {
     if (myProjectView != null) {
       return myProjectView.isSortByType(myPaneId);

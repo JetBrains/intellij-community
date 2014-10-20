@@ -155,6 +155,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
+  public boolean supportsManualOrder() {
+    return false;
+  }
+
   /**
    * @return all supported sub views IDs.
    * should return empty array if there is no subViews as in Project/Packages view.
