@@ -5,7 +5,6 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
@@ -20,18 +19,14 @@ import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.CustomPortServerManager;
 import org.jetbrains.io.CustomPortServerManagerBase;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 
 @State(
   name = "BuiltInServerOptions",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
 )
-public class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions>, ExportableComponent, Getter<BuiltInServerOptions> {
+public class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions>, Getter<BuiltInServerOptions> {
   @Attribute
   public int builtInServerPort = 63342;
   @Attribute
@@ -55,18 +50,6 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
       }
       return Collections.emptyList();
     }
-  }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("other")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return "Built-in server";
   }
 
   @Nullable
