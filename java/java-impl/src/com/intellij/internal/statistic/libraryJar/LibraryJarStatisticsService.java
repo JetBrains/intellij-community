@@ -19,9 +19,9 @@ import com.intellij.facet.frameworks.SettingsConnectionService;
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.xmlb.XmlSerializationException;
@@ -36,7 +36,7 @@ import java.net.URL;
 /**
  * @author Ivan Chirkov
  */
-public class LibraryJarStatisticsService extends SettingsConnectionService implements StartupActivity {
+public class LibraryJarStatisticsService extends SettingsConnectionService implements StartupActivity, DumbAware {
 
   private static final String FILE_NAME = "statistics/library-jar-statistics.xml";
   private static final String DEFAULT_SETTINGS_URL = "http://www.jetbrains.com/idea/download-assistant.xml";
@@ -103,16 +103,12 @@ public class LibraryJarStatisticsService extends SettingsConnectionService imple
   public void runActivity(@NotNull Project project) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            getInstance().getTechnologyDescriptors();
-          }
-        });
+        getInstance().getTechnologyDescriptors();
       }
     });
+    ;
   }
 }
