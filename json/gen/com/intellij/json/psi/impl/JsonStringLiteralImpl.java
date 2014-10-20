@@ -35,10 +35,6 @@ public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements Jso
     return findChildByType(SINGLE_QUOTED_STRING);
   }
 
-  public boolean isQuotedString() {
-    return JsonPsiImplUtils.isQuotedString(this);
-  }
-
   @NotNull
   public List<Pair<TextRange, String>> getTextFragments() {
     return JsonPsiImplUtils.getTextFragments(this);

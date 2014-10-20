@@ -35,7 +35,7 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
   public void mouseMoved(MouseEvent e) {
     Component component = (Component)e.getSource();
     Object tag = getTagAt(e);
-    if (tag instanceof PushTargetPanel || tag instanceof TextWithLinkNode) {
+    if (tag instanceof PushTargetPanel || tag instanceof TextWithLinkNode || tag instanceof ExtraEditControl) {
       component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
     else {
@@ -49,10 +49,16 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
     return PushLogTreeUtil.getTagAtForRenderer(myRenderer, e);
   }
 
-  protected void handleTagClick(@Nullable Object tag, @NotNull MouseEvent event) {
+  protected void handleTagClick(@Nullable final Object tag, @NotNull MouseEvent event) {
     if (tag instanceof TextWithLinkNode) {
       TextWithLinkNode textWithLink = (TextWithLinkNode)tag;
       textWithLink.fireOnClick(textWithLink);
+    }
+    if (tag instanceof ExtraEditControl) {
+      ((ExtraEditControl)tag).click(event);
+    }
+    if (tag instanceof Runnable) {
+      ((Runnable)tag).run();
     }
   }
 }

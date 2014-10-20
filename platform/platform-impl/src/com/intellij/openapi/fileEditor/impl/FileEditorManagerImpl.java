@@ -635,14 +635,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     if (wndToOpenIn == null || !wndToOpenIn.isFileOpen(file)) {
-      PreviewManager previewManager = PreviewManager.SERVICE.getInstance(myProject);
-      if (previewManager != null) {
-        Pair<FileEditor[], FileEditorProvider[]> previewResult = previewManager.preview(FilePreviewPanelProvider.ID, file, focusEditor);
+      Pair<FileEditor[], FileEditorProvider[]> previewResult =
+        PreviewManager.SERVICE.preview(myProject, FilePreviewPanelProvider.ID, file, focusEditor);
         if (previewResult != null) {
           return previewResult;
         }
       }
-    }
 
     EditorsSplitters splitters = getSplitters();
 

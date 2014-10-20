@@ -227,7 +227,7 @@ public class RecentProjectPanel extends JPanel {
 
     @Override
     public Dimension getPreferredScrollableViewportSize() {
-      return mySize;
+      return mySize == null ? super.getPreferredScrollableViewportSize() : mySize;
     }
   }
 

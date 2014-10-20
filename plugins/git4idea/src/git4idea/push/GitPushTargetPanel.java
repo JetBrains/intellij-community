@@ -16,6 +16,7 @@
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
+import com.intellij.dvcs.push.ui.ExtraEditControl;
 import com.intellij.dvcs.push.ui.PushTargetTextField;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -24,7 +25,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ClickListener;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
@@ -32,7 +32,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitRemoteBranch;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -59,6 +58,8 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   private final JLabel myRemoteLabel;
 
   @Nullable private GitPushTarget myCurrentTarget;
+  @Nullable private Runnable myFireOnChangeAction;
+  @NotNull private ExtraEditControl myEditRemoteControl;
 
   public GitPushTargetPanel(@NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
     myRepository = repository;
@@ -76,16 +77,15 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       initialRemote = getRemoteLabelText(defaultTarget.getBranch().getRemote().getName());
     }
 
-    myTargetTextField = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), initialBranch);
-
-    myRemoteLabel = new JBLabel(initialRemote);
-    new ClickListener() {
+    myEditRemoteControl = new ExtraEditControl() {
       @Override
-      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        showRemoteSelector();
-        return true;
+      public void click(@NotNull MouseEvent event) {
+        showRemoteSelector(event);
       }
-    }.installOn(myRemoteLabel);
+    };
+
+    myTargetTextField = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), initialBranch);
+    myRemoteLabel = new JBLabel(initialRemote);
 
     setLayout(new BorderLayout());
     setOpaque(false);
@@ -98,14 +98,8 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myTargetTextField.setVisible(!myRepository.getRemotes().isEmpty());
   }
 
-  private void showRemoteSelector() {
-    final List<String> remotes = ContainerUtil.map(myRepository.getRemotes(), new Function<GitRemote, String>() {
-      @Override
-      public String fun(GitRemote remote) {
-        return remote.getName();
-      }
-    });
-
+  private void showRemoteSelector(@NotNull MouseEvent event) {
+    final List<String> remotes = getRemotes();
     if (remotes.size() <= 1) {
       return;
     }
@@ -114,22 +108,41 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
         myRemoteLabel.setText(getRemoteLabelText(selectedValue));
+        if (myFireOnChangeAction != null) {
+          myFireOnChangeAction.run();
+        }
         return super.onChosen(selectedValue, finalChoice);
       }
     });
-    // underneath, but so that list popup items are aligned with the label
-    popup.show(new RelativePoint(myRemoteLabel, new Point(-UIUtil.getListCellHPadding(), myRemoteLabel.getHeight())));
+    popup.show(new RelativePoint(event));
+  }
+
+  @NotNull
+  private List<String> getRemotes() {
+    return ContainerUtil.map(myRepository.getRemotes(), new Function<GitRemote, String>() {
+      @Override
+      public String fun(GitRemote remote) {
+        return remote.getName();
+      }
+    });
   }
 
   @Override
-  public void render(@NotNull ColoredTreeCellRenderer renderer) {
+  public void render(@NotNull final ColoredTreeCellRenderer renderer) {
     String targetName = myTargetTextField.getText();
     if (StringUtil.isEmptyOrSpaces(targetName)) {
       renderer.append(NO_REMOTES, SimpleTextAttributes.ERROR_ATTRIBUTES, this);
     }
     else {
+      String currentRemote = myRemoteLabel.getText();
+      if (getRemotes().size() > 1) {
+        renderer.append(currentRemote, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, myEditRemoteControl);
+      }
+      else {
+        renderer.append(currentRemote, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+
       GitPushTarget target = getValue();
-      renderer.append(myRemoteLabel.getText(), SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
       if (target.isNewBranchCreated()) {
         renderer.append("+", SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
       }
@@ -180,6 +193,11 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     catch (ParseException e) {
       return new ValidationInfo(e.getMessage(), myTargetTextField);
     }
+  }
+
+  @Override
+  public void setFireOnChangeAction(@NotNull Runnable action) {
+    myFireOnChangeAction = action;
   }
 
   @Nullable

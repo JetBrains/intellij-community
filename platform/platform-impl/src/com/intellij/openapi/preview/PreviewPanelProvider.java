@@ -15,15 +15,15 @@
  */
 package com.intellij.openapi.preview;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class PreviewPanelProvider<V, C> {
-  public static final ExtensionPointName<PreviewPanelProvider> EP_NAME =
-    new ExtensionPointName<PreviewPanelProvider>("com.intellij.previewPanelProvider");
+public abstract class PreviewPanelProvider<V, C> implements Disposable {
+  public static final ExtensionPointName<PreviewPanelProvider> EP_NAME = new ExtensionPointName<PreviewPanelProvider>("com.intellij.previewPanelProvider");
   private final PreviewProviderId<V, C> myId;
 
   public PreviewPanelProvider(PreviewProviderId<V, C> id) {
@@ -34,8 +34,6 @@ public abstract class PreviewPanelProvider<V, C> {
   public final PreviewProviderId<V, C> getId() {
     return myId;
   }
-
-  public abstract boolean shouldBeEnabledByDefault();
 
   //Let's share single specific component for all provided previews (if possible)
   @NotNull
@@ -49,7 +47,22 @@ public abstract class PreviewPanelProvider<V, C> {
 
   public abstract float getMenuOrder();
 
-  public abstract boolean moveContentToStandardView(@NotNull V content);
+  public abstract void showInStandardPlace(@NotNull V content);
 
-  protected abstract C initComponent(V content, boolean requestFocus);
+  @Nullable protected abstract C initComponent(V content, boolean requestFocus);
+
+  public abstract boolean isModified(V content, boolean beforeReuse);
+
+  public abstract void release(@NotNull V content);
+
+  public abstract boolean contentsAreEqual(@NotNull V content1, @NotNull V content2);
+
+  @Override
+  public final String toString() {
+    return myId.getVisualName();
+  }
+
+  public boolean supportsStandardPlace() {
+    return true;
+  }
 }

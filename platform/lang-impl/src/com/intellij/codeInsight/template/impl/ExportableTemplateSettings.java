@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +26,7 @@ import java.util.List;
 @Deprecated
 @State(
   name = "ExportableTemplateSettings",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/template.settings.xml")
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/template.settings.xml", roamingType = RoamingType.DISABLED)
 )
 final class ExportableTemplateSettings implements PersistentStateComponent<ExportableTemplateSettings> {
   public Collection<TemplateSettings.TemplateKey> deletedKeys = new SmartList<TemplateSettings.TemplateKey>();
