@@ -58,11 +58,21 @@ public class XmlCommenter implements EscapingCommenter {
 
   @Override
   public void escape(Document document, TextRange range) {
-    for (int i = range.getEndOffset() - getBlockCommentSuffix().length() - DOUBLE_DASH.length();
-         i >= range.getStartOffset() + getBlockCommentPrefix().length();
-         i--) {
+    String prefix = getBlockCommentPrefix();
+    String suffix = getBlockCommentSuffix();
+
+    int start = range.getStartOffset();
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), start, prefix)) {
+      start += prefix.length();
+    }
+    int end = range.getEndOffset();
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), end - suffix.length(), suffix)) {
+      end -= suffix.length();
+    }
+    for (int i = end - DOUBLE_DASH.length(); i >= start; i--) {
       if (CharArrayUtil.regionMatches(document.getCharsSequence(), i, DOUBLE_DASH) &&
-          !CharArrayUtil.regionMatches(document.getCharsSequence(), i, getBlockCommentSuffix())) {
+          !CharArrayUtil.regionMatches(document.getCharsSequence(), i, suffix) &&
+          !CharArrayUtil.regionMatches(document.getCharsSequence(), i - 2, prefix)) {
         document.replaceString(i, i + DOUBLE_DASH.length(), ESCAPED);
       }
     }
