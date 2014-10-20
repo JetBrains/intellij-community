@@ -15,26 +15,63 @@
  */
 package git4idea.push;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.PushSource;
 import git4idea.GitLocalBranch;
 import org.jetbrains.annotations.NotNull;
 
-class GitPushSource implements PushSource {
+abstract class GitPushSource implements PushSource {
 
-  @NotNull private final GitLocalBranch myBranch;
-
-  GitPushSource(@NotNull GitLocalBranch branch) {
-    myBranch = branch;
+  @NotNull
+  static GitPushSource create(@NotNull GitLocalBranch branch) {
+    return new OnBranch(branch);
   }
 
   @NotNull
-  @Override
-  public String getPresentation() {
-    return myBranch.getName();
+  static GitPushSource create(@NotNull String revision) {
+    return new DetachedHead(revision);
   }
 
   @NotNull
-  public GitLocalBranch getBranch() {
-    return myBranch;
+  abstract GitLocalBranch getBranch();
+
+  private static class OnBranch extends GitPushSource {
+    @NotNull private final GitLocalBranch myBranch;
+
+    private OnBranch(@NotNull GitLocalBranch branch) {
+      myBranch = branch;
+    }
+
+    @NotNull
+    @Override
+    public String getPresentation() {
+      return myBranch.getName();
+    }
+
+    @NotNull
+    @Override
+    GitLocalBranch getBranch() {
+      return myBranch;
+    }
+  }
+
+  private static class DetachedHead extends GitPushSource {
+    @NotNull private final String myRevision;
+
+    public DetachedHead(@NotNull String revision) {
+      myRevision = revision;
+    }
+
+    @NotNull
+    @Override
+    public String getPresentation() {
+      return DvcsUtil.getShortHash(myRevision);
+    }
+
+    @NotNull
+    @Override
+    GitLocalBranch getBranch() {
+      throw new IllegalStateException("Push is not allowed from detached HEAD");
+    }
   }
 }

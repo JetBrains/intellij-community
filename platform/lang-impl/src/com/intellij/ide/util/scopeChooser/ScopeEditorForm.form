@@ -125,7 +125,7 @@
             <properties>
               <opaque value="true"/>
             </properties>
-            <border type="etched"/>
+            <border type="none"/>
             <children>
               <component id="61c42" class="javax.swing.JLabel">
                 <constraints>

@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.runners;
+package com.siyeh.ig.cloneable;
 
-import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
-@SuppressWarnings({"ClassNameSameAsAncestorName", "UnusedDeclaration"})
-@Deprecated
 /**
- * @deprecated Use {@link ProcessBackedConsoleExecuteActionHandler}
- * to remove in IDEA 15
+ * @author Bas Leijdekkers
  */
-public class ConsoleExecuteActionHandler extends ProcessBackedConsoleExecuteActionHandler {
-  public ConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
-    super(processHandler, preserveMarkup);
+public class CloneInNonCloneableClassInspectionTest extends LightInspectionTestCase {
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new CloneInNonCloneableClassInspection();
   }
+
+  public void testCloneInNonCloneableClass() { doTest(); }
 }

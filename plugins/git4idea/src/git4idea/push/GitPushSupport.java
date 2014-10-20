@@ -81,6 +81,9 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Nullable
   @Override
   public GitPushTarget getDefaultTarget(@NotNull GitRepository repository) {
+    if (repository.isFresh()) {
+      return null;
+    }
     GitLocalBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch == null) {
       return null;
@@ -123,7 +126,10 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @NotNull
   @Override
   public GitPushSource getSource(@NotNull GitRepository repository) {
-    return new GitPushSource(repository.getCurrentBranch()); // TODO assert: detached head => not possible to push
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
+    return currentBranch != null
+           ? GitPushSource.create(currentBranch)
+           : GitPushSource.create(ObjectUtils.assertNotNull(repository.getCurrentRevision())); // fresh repository is on branch
   }
 
   @NotNull
