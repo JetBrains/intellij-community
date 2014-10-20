@@ -69,7 +69,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   private static final String NODE_ICON = "settings.tree.view.icon";
   private static final Color WRONG_CONTENT = JBColor.RED;
   private static final Color MODIFIED_CONTENT = JBColor.BLUE;
-  public static final Color FOREGROUND = new JBColor(0x1A1A1A, 0xBBBBBB);
+  public static final Color FOREGROUND = new JBColor(Gray.x1A, Gray.xBB);
   public static final Color BACKGROUND = new JBColor(0xE6EBF0, 0x3E434C);
 
   final SimpleTree myTree;
