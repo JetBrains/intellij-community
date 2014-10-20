@@ -43,7 +43,8 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -498,28 +499,21 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   @State(
-      name = "PlaybackDebugger",
-      storages = {
-          @Storage(
-              file = StoragePathMacros.APP_CONFIG + "/other.xml")}
+    name = "PlaybackDebugger",
+    storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/playbackDebugger.xml", roamingType = RoamingType.PER_PLATFORM)
   )
-  public static class PlaybackDebuggerState implements PersistentStateComponent<Element> {
-    private static final String ATTR_CURRENT_SCRIPT = "currentScript";
+  public static class PlaybackDebuggerState implements PersistentStateComponent<PlaybackDebuggerState> {
+    @Attribute
     public String currentScript = "";
 
     @Override
-    public Element getState() {
-      final Element element = new Element("playback");
-      element.setAttribute(ATTR_CURRENT_SCRIPT, currentScript);
-      return element;
+    public PlaybackDebuggerState getState() {
+      return this;
     }
 
     @Override
-    public void loadState(Element state) {
-      final String path = state.getAttributeValue(ATTR_CURRENT_SCRIPT);
-      if (path != null) {
-        currentScript = path;
-      }
+    public void loadState(PlaybackDebuggerState state) {
+      XmlSerializerUtil.copyBean(state, this);
     }
   }
 
