@@ -22,7 +22,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
@@ -42,10 +42,7 @@ import java.util.Map;
  */
 @State(
   name = "LastSelectedPropertiesFileStore",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
 )
 public class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
   private final Map<String, String> lastSelectedUrls = new THashMap<String, String>();
@@ -96,7 +93,7 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
       VirtualFile containingDir = virtualFile.getParent();
       lastSelectedUrls.put(containingDir.getUrl(), url);
       lastSelectedFileUrl = url;
-      StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtil.urlToPath(url))));
+      StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(url))));
     }
   }
 
@@ -130,12 +127,14 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
     }
   }
 
+  @Override
   public Element getState() {
     final Element e = new Element("state");
     writeExternal(e);
     return e;
   }
 
+  @Override
   public void loadState(Element state) {
     readExternal(state);
   }
