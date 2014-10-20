@@ -105,13 +105,13 @@ public class PyTypeInferenceFromUsedAttributesUtil {
       if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
         continue;
       }
-      if (getAllInheritedAttributeNames(candidate).containsAll(seenAttrs)) {
+      if (getAllInheritedAttributeNames(candidate, context).containsAll(seenAttrs)) {
         suitableClasses.add(candidate);
       }
     }
 
     for (PyClass candidate : Lists.newArrayList(suitableClasses)) {
-      for (PyClass ancestor : getAncestorClassesFast(candidate)) {
+      for (PyClass ancestor : getAncestorClassesFast(candidate, context)) {
         if (suitableClasses.contains(ancestor)) {
           suitableClasses.remove(candidate);
         }
@@ -128,9 +128,9 @@ public class PyTypeInferenceFromUsedAttributesUtil {
   }
 
   @NotNull
-  private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate) {
+  private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate, @NotNull TypeEvalContext context) {
     final Set<String> availableAttrs = Sets.newHashSet(getAllDeclaredAttributeNames(candidate));
-    for (PyClass parent : getAncestorClassesFast(candidate)) {
+    for (PyClass parent : getAncestorClassesFast(candidate, context)) {
       availableAttrs.addAll(getAllDeclaredAttributeNames(parent));
     }
     return availableAttrs;
@@ -281,23 +281,30 @@ public class PyTypeInferenceFromUsedAttributesUtil {
   }
 
   @NotNull
-  private static Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass) {
+  private static Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
     final CachedValuesManager manager = CachedValuesManager.getManager(pyClass.getProject());
-    return manager.getParameterizedCachedValue(pyClass, CachedAncestorsFastProvider.KEY, ourCachedAncestorsProvider, false, pyClass);
+    final Pair<PyClass, TypeEvalContext> param = Pair.create(pyClass, context);
+    return manager.getParameterizedCachedValue(pyClass, CachedAncestorsFastProvider.KEY, ourCachedAncestorsProvider, false, param);
   }
 
-  private static class CachedAncestorsFastProvider implements ParameterizedCachedValueProvider<Set<PyClass>, PyClass> {
-    static Key<ParameterizedCachedValue<Set<PyClass>, PyClass>> KEY = Key.create("py.types.from.attrs.cached.ancestors.fast");
+  private static class CachedAncestorsFastProvider implements ParameterizedCachedValueProvider<Set<PyClass>, Pair<PyClass, TypeEvalContext>> {
+    static Key<ParameterizedCachedValue<Set<PyClass>, Pair<PyClass, TypeEvalContext>>> KEY = Key.create("py.types.from.attrs.cached.ancestors.fast");
 
     @NotNull
     @Override
-    public CachedValueProvider.Result<Set<PyClass>> compute(@NotNull PyClass pyClass) {
+    public CachedValueProvider.Result<Set<PyClass>> compute(@NotNull Pair<PyClass, TypeEvalContext> param) {
+      final PyClass pyClass = param.getFirst();
+      final TypeEvalContext context = param.getSecond();
       final HashSet<PyClass> result = Sets.newHashSet();
-      for (final PyClass baseClass : pyClass.getSuperClasses()) {
+      for (final PyClassLikeType baseType : pyClass.getSuperClassTypes(context)) {
+        if (!(baseType instanceof PyClassType)) {
+          continue;
+        }
+        final PyClass baseClass = ((PyClassType)baseType).getPyClass();
         final Computable<Set<PyClass>> computable = new Computable<Set<PyClass>>() {
           @Override
           public Set<PyClass> compute() {
-            return getAncestorClassesFast(baseClass);
+            return getAncestorClassesFast(baseClass, context);
           }
         };
         final Set<PyClass> baseClassAncestors = ourRecursionGuard.doPreventingRecursion(baseClass, false, computable);
