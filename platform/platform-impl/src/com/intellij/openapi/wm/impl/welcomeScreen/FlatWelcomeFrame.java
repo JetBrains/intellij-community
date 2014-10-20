@@ -37,13 +37,14 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ import java.util.Arrays;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, IdeFrame {
+public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   private final BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
 
@@ -169,12 +170,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
   public static Color getProjectsBackGround() {
     return new JBColor(Gray._245, new Color(0x3c3f41));
   }
-
-  @Override
-  public IdeFrame createFrame() {
-    return Registry.is("ide.new.welcome.screen") && (PlatformUtils.isIntelliJ() || PlatformUtils.isCidr()) ? this : null;
-  }
-
+  
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
     public FlatWelcomeScreen() {
       super(new BorderLayout());
