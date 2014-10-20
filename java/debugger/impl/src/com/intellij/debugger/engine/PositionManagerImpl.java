@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -139,6 +140,19 @@ public class PositionManagerImpl implements PositionManager {
       lineNumber = -1;
     }
 
+    if (psiFile instanceof PsiCompiledElement && lineNumber > -1) {
+      VirtualFile file = psiFile.getVirtualFile();
+      if (file != null) {
+        int[] data = file.getUserData(LINE_NUMBERS_MAPPING_KEY);
+        if (data != null) {
+          int line = mapLine(lineNumber+1, data);
+          if (line > -1) {
+            return SourcePosition.createFromLine(psiFile, line-1);
+          }
+        }
+      }
+    }
+
     if (psiFile instanceof PsiCompiledElement || lineNumber < 0) {
       final String methodSignature = location.method().signature();
       if (methodSignature == null) {
@@ -163,6 +177,15 @@ public class PositionManagerImpl implements PositionManager {
     }
 
     return SourcePosition.createFromLine(psiFile, lineNumber);
+  }
+
+  private static int mapLine(int line, int[] mapping) {
+    for (int i = 0; i < mapping.length; i+=2) {
+      if (mapping[i] == line) {
+        return mapping[i+1];
+      }
+    }
+    return -1;
   }
 
   @Nullable
