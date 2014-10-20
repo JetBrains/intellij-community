@@ -328,7 +328,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
 
     private JComponent createRecentProjects() {
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(new NewRecentProjectPanel(this), BorderLayout.NORTH);
+      panel.add(new NewRecentProjectPanel(this), BorderLayout.CENTER);
       panel.setBackground(getProjectsBackGround());
       return panel;
     }
