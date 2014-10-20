@@ -1,16 +1,13 @@
 package com.jetbrains.python.psi.types;
 
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -47,8 +44,6 @@ public class PyTypeInferenceFromUsedAttributesUtil {
   );
 
   private static final Logger LOG = Logger.getInstance(PyTypeInferenceFromUsedAttributesUtil.class);
-  private static final CachedAncestorsFastProvider ourCachedAncestorsProvider = new CachedAncestorsFastProvider();
-  private static final RecursionGuard ourRecursionGuard = RecursionManager.createGuard("py.types.from.attrs.rec.guard");
 
   private PyTypeInferenceFromUsedAttributesUtil() {
     // empty
@@ -87,6 +82,7 @@ public class PyTypeInferenceFromUsedAttributesUtil {
                                                               @NotNull Set<String> seenAttrs,
                                                               @NotNull TypeEvalContext context) {
     final Set<PyClass> candidates = Sets.newHashSet();
+    final Map<PyClass, Set<PyClass>> localAncestorsCache = Maps.newHashMap();
     for (String attribute : seenAttrs) {
       // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
       // and we probably don't want to confuse user with __Classobj anyway
@@ -105,13 +101,13 @@ public class PyTypeInferenceFromUsedAttributesUtil {
       if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
         continue;
       }
-      if (getAllInheritedAttributeNames(candidate, context).containsAll(seenAttrs)) {
+      if (getAllInheritedAttributeNames(candidate, context, localAncestorsCache).containsAll(seenAttrs)) {
         suitableClasses.add(candidate);
       }
     }
 
     for (PyClass candidate : Lists.newArrayList(suitableClasses)) {
-      for (PyClass ancestor : getAncestorClassesFast(candidate, context)) {
+      for (PyClass ancestor : getAncestorClassesFast(candidate, context, localAncestorsCache)) {
         if (suitableClasses.contains(ancestor)) {
           suitableClasses.remove(candidate);
         }
@@ -128,9 +124,11 @@ public class PyTypeInferenceFromUsedAttributesUtil {
   }
 
   @NotNull
-  private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate, @NotNull TypeEvalContext context) {
+  private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
+                                                           @NotNull TypeEvalContext context,
+                                                           Map<PyClass, Set<PyClass>> ancestorsCache) {
     final Set<String> availableAttrs = Sets.newHashSet(getAllDeclaredAttributeNames(candidate));
-    for (PyClass parent : getAncestorClassesFast(candidate, context)) {
+    for (PyClass parent : getAncestorClassesFast(candidate, context, ancestorsCache)) {
       availableAttrs.addAll(getAllDeclaredAttributeNames(parent));
     }
     return availableAttrs;
@@ -281,41 +279,32 @@ public class PyTypeInferenceFromUsedAttributesUtil {
   }
 
   @NotNull
-  private static Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
-    final CachedValuesManager manager = CachedValuesManager.getManager(pyClass.getProject());
-    final Pair<PyClass, TypeEvalContext> param = Pair.create(pyClass, context);
-    return manager.getParameterizedCachedValue(pyClass, CachedAncestorsFastProvider.KEY, ourCachedAncestorsProvider, false, param);
-  }
-
-  private static class CachedAncestorsFastProvider implements ParameterizedCachedValueProvider<Set<PyClass>, Pair<PyClass, TypeEvalContext>> {
-    static Key<ParameterizedCachedValue<Set<PyClass>, Pair<PyClass, TypeEvalContext>>> KEY = Key.create("py.types.from.attrs.cached.ancestors.fast");
-
-    @NotNull
-    @Override
-    public CachedValueProvider.Result<Set<PyClass>> compute(@NotNull Pair<PyClass, TypeEvalContext> param) {
-      final PyClass pyClass = param.getFirst();
-      final TypeEvalContext context = param.getSecond();
-      final HashSet<PyClass> result = Sets.newHashSet();
+  private static Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
+                                                     @NotNull TypeEvalContext context,
+                                                     @NotNull Map<PyClass, Set<PyClass>> cache) {
+    final Set<PyClass> ancestors = cache.get(pyClass);
+    if (ancestors != null) {
+      return ancestors;
+    }
+    // Sentinel value to prevent infinite recursion
+    cache.put(pyClass, Collections.<PyClass>emptySet());
+    final Set<PyClass> result = Sets.newHashSet();
+    try {
       for (final PyClassLikeType baseType : pyClass.getSuperClassTypes(context)) {
         if (!(baseType instanceof PyClassType)) {
           continue;
         }
         final PyClass baseClass = ((PyClassType)baseType).getPyClass();
-        final Computable<Set<PyClass>> computable = new Computable<Set<PyClass>>() {
-          @Override
-          public Set<PyClass> compute() {
-            return getAncestorClassesFast(baseClass, context);
-          }
-        };
-        final Set<PyClass> baseClassAncestors = ourRecursionGuard.doPreventingRecursion(baseClass, false, computable);
         result.add(baseClass);
-        if (baseClassAncestors != null) {
-          result.addAll(baseClassAncestors);
-        }
+        result.addAll(getAncestorClassesFast(baseClass, context, cache));
       }
-      return CachedValueProvider.Result.create(Collections.unmodifiableSet(result),
-                                               PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
+    finally {
+      // May happen in case of cyclic inheritance
+      result.remove(pyClass);
+      cache.put(pyClass, Collections.unmodifiableSet(result));
+    }
+    return result;
   }
 
   enum Priority {

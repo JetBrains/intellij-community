@@ -198,7 +198,25 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
     final TypeEvalContext context = TypeEvalContext.userInitiated(referenceExpression.getContainingFile()).withTracing();
     final PyType actual = context.getType(referenceExpression);
     final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals("unknown", actualType);
+    assertEquals("B | unknown", actualType);
+  }
+
+  public void testLongInheritanceChain() {
+    // This obvious test is needed because of custom method for resolution of class ancestors
+    doTestType("class C1(object):\n" +
+               "    attr = 'top'\n" +
+               "class C2(C1):\n" +
+               "    pass\n" +
+               "class C3(C2):\n" +
+               "    pass\n" +
+               "class C4(C3):\n" +
+               "    pass\n" +
+               "class C5(C4):\n" +
+               "    attr = 'bottom'\n" +
+               "x = undefined()\n" +
+               "x.attr\n" +
+               "x",
+               "C1 | unknown");
   }
 
   private void doTestType(@NotNull String text, @NotNull String expectedType) {
