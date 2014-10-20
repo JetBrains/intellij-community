@@ -150,4 +150,18 @@ public class FoldingTest extends AbstractEditorTest {
     FoldRegion[] topLevelRegions = myModel.fetchTopLevel();
     assertArrayEquals(new FoldRegion[]{region}, topLevelRegions);
   }
+
+  public void testLastCollapsedRegionBefore() {
+    addCollapsedFoldRegion(1, 3, "...");
+    addCollapsedFoldRegion(5, 6, "...");
+
+    assertEquals(-1, myModel.getLastCollapsedRegionBefore(0));
+    assertEquals(-1, myModel.getLastCollapsedRegionBefore(1));
+    assertEquals(-1, myModel.getLastCollapsedRegionBefore(2));
+    assertEquals(0, myModel.getLastCollapsedRegionBefore(3));
+    assertEquals(0, myModel.getLastCollapsedRegionBefore(4));
+    assertEquals(0, myModel.getLastCollapsedRegionBefore(5));
+    assertEquals(1, myModel.getLastCollapsedRegionBefore(6));
+    assertEquals(1, myModel.getLastCollapsedRegionBefore(7));
+  }
 }

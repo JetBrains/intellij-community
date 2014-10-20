@@ -523,18 +523,18 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       shift += commentPrefix.length();
     }
 
-    TextRange range = new TextRange(startOffset, endOffset + shift);
-    return processDocument(range, commenter, true);
+    return processDocument(myDocument, myDocument.createRangeMarker(startOffset, endOffset + shift), commenter, true);
   }
 
-  private TextRange processDocument(TextRange range, Commenter commenter, boolean escape) {
-    if (!(commenter instanceof EscapingCommenter)) return range;
-    RangeMarker marker = myDocument.createRangeMarker(range);
-    if (escape) {
-      ((EscapingCommenter)commenter).escape(myDocument, range);
-    }
-    else {
-      ((EscapingCommenter)commenter).unescape(myDocument, range);
+  static TextRange processDocument(Document document, RangeMarker marker, Commenter commenter, boolean escape) {
+    if (commenter instanceof EscapingCommenter) {
+      TextRange range = TextRange.create(marker.getStartOffset(), marker.getEndOffset());
+      if (escape) {
+        ((EscapingCommenter)commenter).escape(document, range);
+      }
+      else {
+        ((EscapingCommenter)commenter).unescape(document, range);
+      }
     }
     return TextRange.create(marker.getStartOffset(), marker.getEndOffset());
   }
@@ -685,6 +685,6 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       }
     }
 
-    processDocument(TextRange.create(marker.getStartOffset(), marker.getEndOffset()), commenter, false);
+    processDocument(myDocument, marker, commenter, false);
   }
 }

@@ -136,7 +136,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   public static MultiMap<File, ExportableComponent> getExportableComponentsMap(final boolean onlyExisting) {
     ExportableApplicationComponent[] components1 = ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class);
     List<ExportableComponent> components2 = ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent.class);
-    final MultiMap<File, ExportableComponent> result = MultiMap.createSet();
+    final MultiMap<File, ExportableComponent> result = MultiMap.createLinkedSet();
     for (ExportableComponent component : ContainerUtil.concat(Arrays.asList(components1), components2)) {
       for (File exportFile : component.getExportFiles()) {
         result.putValue(exportFile, component);

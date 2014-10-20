@@ -16,26 +16,18 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.xml.XmlBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 /**
  * @author spleaner
  */
 @State(
-  name="XmlEditorOptions",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/editor.xml"
-    )}
+  name = "XmlEditorOptions",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml")
 )
-public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions>, ExportableComponent {
+public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions> {
   private boolean myBreadcrumbsEnabled = true;
   private boolean myBreadcrumbsEnabledInXml = false;
   private boolean myShowCssColorPreviewInGutter = true;
@@ -144,18 +136,6 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setTagTreeHighlightingEnabled(boolean tagTreeHighlightingEnabled) {
     myTagTreeHighlightingEnabled = tagTreeHighlightingEnabled;
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("editor")};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return XmlBundle.message("xml.options");
   }
 
   @Override

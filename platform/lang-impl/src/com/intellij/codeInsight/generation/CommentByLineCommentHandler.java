@@ -512,6 +512,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     if (startOffset == endOffset) {
       return;
     }
+    RangeMarker marker = endOffset > startOffset ? block.editor.getDocument().createRangeMarker(startOffset, endOffset) : null;
     String prefix = commenter.getLineCommentPrefix();
     if (prefix != null) {
       CharSequence chars = document.getCharsSequence();
@@ -580,6 +581,9 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     for (int i = prefixes.size() - 1; i >= 0; i--) {
       uncommentRange(document, startOffset + prefixes.get(i), Math.min(startOffset + suffixes.get(i) + suffix.length(), endOffset), commenter);
     }
+    if (marker != null) {
+      CommentByBlockCommentHandler.processDocument(document, marker, commenter, false);
+    }
   }
 
   private static void commentLine(Block block, int line, int offset) {
@@ -594,9 +598,10 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     }
 
     String prefix = commenter.getLineCommentPrefix();
+    int endOffset = document.getLineEndOffset(line);
+    RangeMarker marker = document.createRangeMarker(offset, endOffset);
     if (prefix != null) {
       if (commenter instanceof CommenterWithLineSuffix) {
-        int endOffset = document.getLineEndOffset(line);
         endOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), endOffset, " \t");
         int shiftedStartOffset = CharArrayUtil.shiftForward(document.getCharsSequence(), offset, " \t");
         String lineSuffix = ((CommenterWithLineSuffix)commenter).getLineCommentSuffix();
@@ -615,7 +620,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       prefix = commenter.getBlockCommentPrefix();
       String suffix = commenter.getBlockCommentSuffix();
       if (prefix == null || suffix == null) return;
-      int endOffset = document.getLineEndOffset(line);
       if (endOffset == offset && block.startLine != block.endLine) return;
       final int textLength = document.getTextLength();
       final CharSequence chars = document.getCharsSequence();
@@ -688,6 +692,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
         document.insertString(offset, prefix);
       }
     }
+    CommentByBlockCommentHandler.processDocument(document, marker, commenter, true);
   }
 
   private static class Block {
