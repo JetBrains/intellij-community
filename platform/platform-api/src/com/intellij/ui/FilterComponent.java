@@ -25,6 +25,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -160,5 +161,13 @@ public abstract class FilterComponent extends JPanel {
 
   protected void setHistory(List<String> strings) {
     myFilter.setHistory(strings);
+  }
+  
+  protected void appendItemToHistory(String item) {
+    if (!myFilter.getHistory().contains(item)) {
+      final List<String> history = new ArrayList<String>(myFilter.getHistory());
+      history.add(item);
+      myFilter.setHistory(history);
+    }
   }
 }

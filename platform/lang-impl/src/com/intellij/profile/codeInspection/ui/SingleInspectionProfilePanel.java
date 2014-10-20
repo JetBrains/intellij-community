@@ -35,6 +35,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -1268,12 +1269,17 @@ public class SingleInspectionProfilePanel extends JPanel {
   private class MyFilterComponent extends FilterComponent {
     private MyFilterComponent() {
       super(INSPECTION_FILTER_HISTORY, 10);
-      setHistory(Arrays.asList("\"New in 13\""));
     }
 
     @Override
     public void filter() {
       filterTree(getFilter());
+    }
+
+    @Override
+    public void reset() {
+      super.reset();
+      appendItemToHistory("\"New in " + ApplicationInfo.getInstance().getMajorVersion() + "\"");
     }
 
     @Override
