@@ -11,10 +11,18 @@ public class ReturnOfInnerClass {
 
   class B {}
   public Object three() {
-    <warning descr="Return of instance of non-static inner class 'B'">return</warning> new B();
+    <warning descr = "Return of instance of non-static inner class 'B'" > return</warning > new B();
   }
 
   private Object four() {
+    return new B();
+  }
+
+  protected Object five() {
+    return new B();
+  }
+
+  Object six() {
     return new B();
   }
 }
