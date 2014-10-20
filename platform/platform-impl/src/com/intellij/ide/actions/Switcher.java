@@ -329,8 +329,10 @@ public class Switcher extends AnAction implements DumbAware {
       final ArrayList<FileInfo> filesData = new ArrayList<FileInfo>();
       final ArrayList<FileInfo> editors = new ArrayList<FileInfo>();
       if (!pinned) {
-        for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
-          editors.add(new FileInfo(pair.first, pair.second, project));
+        if (UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
+          for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
+            editors.add(new FileInfo(pair.first, pair.second, project));
+          }
         }
       }
       if (editors.size() < 2 || isPinnedMode()) {
