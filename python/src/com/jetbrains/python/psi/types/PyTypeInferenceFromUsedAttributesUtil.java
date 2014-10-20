@@ -115,7 +115,7 @@ public class PyTypeInferenceFromUsedAttributesUtil {
         }
       }
     }
-    final List<CandidateClass> result = ContainerUtil.map(candidates, new Function<PyClass, CandidateClass>() {
+    final List<CandidateClass> result = ContainerUtil.map(suitableClasses, new Function<PyClass, CandidateClass>() {
       @Override
       public CandidateClass fun(PyClass pyClass) {
         return new CandidateClass(pyClass, expression);

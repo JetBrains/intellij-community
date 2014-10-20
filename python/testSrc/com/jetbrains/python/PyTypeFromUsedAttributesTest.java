@@ -180,6 +180,16 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "object | unknown");
   }
 
+  public void testResultsOrdering() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    doTestType("class MySortable(object):\n" +
+               "    def sort(self):\n" +
+               "        pass\n" +
+               "x = undefined()\n" +
+               "x.sort()",
+               "list | MySortable | OtherClassA | OtherClassB | unknown");
+  }
+
   private void doTestType(@NotNull String text, @NotNull String expectedType) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyReferenceExpression referenceExpression = findLastReferenceByText("x");
@@ -206,5 +216,10 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
       }
     });
     return (PyReferenceExpression)ArrayUtil.getLastElement(elements);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/typesFromAttributes/";
   }
 }
