@@ -21,8 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -105,24 +104,11 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
 
   private static class ProblematicWhitespaceVisitor extends BaseInspectionVisitor {
 
-    private static boolean isLanguageFileType(FileType fileType) {
-      return (fileType != StdFileTypes.GUI_DESIGNER_FORM) &&
-             (fileType != StdFileTypes.IDEA_MODULE) &&
-             (fileType != StdFileTypes.IDEA_PROJECT) &&
-             (fileType != StdFileTypes.IDEA_WORKSPACE) &&
-             (fileType != FileTypes.ARCHIVE) &&
-             (fileType != FileTypes.UNKNOWN) &&
-             (fileType != FileTypes.PLAIN_TEXT) &&
-             //!(fileType instanceof AbstractFileType) && // not sure about this one
-             !fileType.isBinary() &&
-             !fileType.isReadOnly();
-    }
-
     @Override
     public void visitFile(PsiFile file) {
       super.visitFile(file);
       final FileType fileType = file.getFileType();
-      if (!isLanguageFileType(fileType)) {
+      if (!(fileType instanceof LanguageFileType)) {
         return;
       }
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
