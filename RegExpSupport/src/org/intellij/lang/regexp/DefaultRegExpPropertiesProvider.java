@@ -71,7 +71,6 @@ public final class DefaultRegExpPropertiesProvider {
           { "javaTitleCase", },
           { "javaAlphabetic", },
           { "javaIdeographic", },
-          { "javaTitleCase", },
           { "javaDigit", },
           { "javaDefined", },
           { "javaLetter", },
