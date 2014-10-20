@@ -3729,7 +3729,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     FoldRegion[] topLevel = myFoldingModel.fetchTopLevel();
     LogicalPosition anchorFoldingPosition = logicalPos;
-    for (int idx = myFoldingModel.getLastTopLevelIndexBefore(offset); idx >= 0 && topLevel != null; idx--) {
+    for (int idx = myFoldingModel.getLastCollapsedRegionBefore(offset); idx >= 0 && topLevel != null; idx--) {
       FoldRegion region = topLevel[idx];
       if (region.isValid()) {
         if (region.getDocument().getLineNumber(region.getEndOffset()) == anchorFoldingPosition.line && region.getEndOffset() <= offset) {
