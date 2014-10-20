@@ -23,7 +23,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
  */
 @State(
   name = "VcsApplicationSettings",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml")
 )
 public class VcsApplicationSettings implements PersistentStateComponent<VcsApplicationSettings> {
   public String PATCH_STORAGE_LOCATION = null;
