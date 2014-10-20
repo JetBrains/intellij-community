@@ -631,7 +631,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           }
           catch (Throwable e) {
             CompositeException result = new CompositeException(e);
-            disposeProject(result);
+            try {
+              tearDown();
+            }
+            catch (Throwable th) {
+              result.add(th);
+            }
             throw result;
           }
           try {
