@@ -3,8 +3,9 @@ package com.jetbrains.python.psi.types;
 import com.google.common.collect.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
@@ -67,10 +68,10 @@ public class PyTypeFromUsedAttributesHelper {
     final long startTime = System.currentTimeMillis();
     final Set<String> seenAttrs = collectUsedAttributes(expression);
     LOG.debug(String.format("Attempting to infer type for expression: %s. Used attributes: %s", expression.getText(), seenAttrs));
-    final List<CandidateClass> allCandidates = suggestCandidateClasses(expression, seenAttrs);
+    final Set<PyClass> allCandidates = suggestCandidateClasses(expression, seenAttrs);
+    final List<CandidateClass> bestCandidates = prepareCandidates(allCandidates, expression);
     LOG.debug("Total " + (System.currentTimeMillis() - startTime) + " ms to infer candidate classes");
 
-    final List<CandidateClass> bestCandidates = allCandidates.subList(0, Math.min(allCandidates.size(), MAX_CANDIDATES));
     return PyUnionType.createWeakType(PyUnionType.union(ContainerUtil.map(bestCandidates, new Function<CandidateClass, PyType>() {
       @Override
       public PyType fun(CandidateClass cls) {
@@ -79,8 +80,11 @@ public class PyTypeFromUsedAttributesHelper {
     })));
   }
 
+  /**
+   * Main algorithm
+   */
   @NotNull
-  private List<CandidateClass> suggestCandidateClasses(@NotNull final PyExpression expression, @NotNull Set<String> seenAttrs) {
+  private Set<PyClass> suggestCandidateClasses(@NotNull final PyExpression expression, @NotNull Set<String> seenAttrs) {
     final Set<PyClass> candidates = Sets.newHashSet();
     for (String attribute : seenAttrs) {
       // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
@@ -112,14 +116,67 @@ public class PyTypeFromUsedAttributesHelper {
         }
       }
     }
-    final List<CandidateClass> result = ContainerUtil.map(suitableClasses, new Function<PyClass, CandidateClass>() {
-      @Override
-      public CandidateClass fun(PyClass pyClass) {
-        return new CandidateClass(pyClass, expression);
+    return Collections.unmodifiableSet(suitableClasses);
+  }
+
+  /**
+   * Re-order and filter results
+   */
+  @NotNull
+  private List<CandidateClass> prepareCandidates(@NotNull Set<PyClass> candidates, @NotNull final PyExpression expression) {
+    final PsiFile originalFile = expression.getContainingFile();
+    // Heuristic: use qualified names of imported modules to find possibly imported classes
+    final List<QualifiedName> importQualifiers = Lists.newArrayList();
+    if (originalFile instanceof PyFile) {
+      final PyFile originalModule = (PyFile)originalFile;
+      for (PyFromImportStatement fromImport : originalModule.getFromImports()) {
+        if (fromImport.isFromFuture()) {
+          continue;
+        }
+        final PsiFileSystemItem importedModule = PyUtil.as(fromImport.resolveImportSource(), PsiFileSystemItem.class);
+        if (importedModule != null) {
+          final QualifiedName qName = findShortestImportableQName(expression, importedModule.getVirtualFile());
+          ContainerUtil.addIfNotNull(qName, importQualifiers);
+        }
       }
-    });
-    Collections.sort(result);
-    return result;
+      for (PyImportElement normalImport : originalModule.getImportTargets()) {
+        ContainerUtil.addIfNotNull(importQualifiers, normalImport.getImportedQName());
+      }
+    }
+
+    final List<CandidateClass> prioritizedCandidates = Lists.newArrayList();
+    for (PyClass candidate : candidates) {
+      final PsiFile candidateFile = candidate.getContainingFile();
+
+      final Priority priority;
+      if (PyBuiltinCache.getInstance(expression).isBuiltin(candidate)) {
+        priority = Priority.BUILTIN;
+      }
+      else if (candidateFile == originalFile) {
+        priority = Priority.SAME_FILE;
+      }
+      else {
+        final String qualifiedName = candidate.getQualifiedName();
+        final boolean probablyImported = qualifiedName != null && ContainerUtil.exists(importQualifiers, new Condition<QualifiedName>() {
+          @Override
+          public boolean value(QualifiedName qualifier) {
+            return QualifiedName.fromDottedString(qualifiedName).matchesPrefix(qualifier);
+          }
+        });
+        if (probablyImported) {
+          priority = Priority.IMPORTED;
+        }
+        else if (ProjectRootManager.getInstance(expression.getProject()).getFileIndex().isInSource(candidateFile.getVirtualFile())) {
+          priority = Priority.PROJECT;
+        }
+        else {
+          priority = Priority.OTHER;
+        }
+      }
+      prioritizedCandidates.add(new CandidateClass(candidate, priority));
+    }
+    Collections.sort(prioritizedCandidates);
+    return prioritizedCandidates.subList(0, Math.min(prioritizedCandidates.size(), MAX_CANDIDATES));
   }
 
   @NotNull
@@ -244,51 +301,10 @@ public class PyTypeFromUsedAttributesHelper {
   private static class CandidateClass implements Comparable<CandidateClass> {
     final PyClass myClass;
     final Priority myPriority;
-    private final PyExpression myAnchor;
 
-    public CandidateClass(@NotNull PyClass cls, @NotNull PyExpression anchor) {
+    public CandidateClass(@NotNull PyClass cls, @NotNull Priority priority) {
       myClass = cls;
-      myAnchor = anchor;
-      myPriority = findPriority();
-    }
-
-    @NotNull
-    private Priority findPriority() {
-      if (PyBuiltinCache.getInstance(myClass).isBuiltin(myClass)) {
-        return Priority.BUILTIN;
-      }
-      final PsiFile originalFile = myAnchor.getContainingFile();
-      final PsiFile candidateFile = myClass.getContainingFile();
-      if (candidateFile == originalFile) {
-        return Priority.SAME_FILE;
-      }
-      if (originalFile instanceof PyFile) {
-        final PyFile anchorModule = (PyFile)originalFile;
-
-        final QualifiedName moduleQName = findShortestImportableQName(myAnchor, candidateFile.getVirtualFile());
-        for (PyFromImportStatement fromImportStatement : anchorModule.getFromImports()) {
-          if (Comparing.equal(fromImportStatement.getImportSourceQName(), moduleQName)) {
-            if (fromImportStatement.isStarImport()) {
-              return Priority.IMPORTED;
-            }
-            for (PyImportElement importElement : fromImportStatement.getImportElements()) {
-              final PyReferenceExpression expression = importElement.getImportReferenceExpression();
-              if (expression != null && Comparing.equal(expression.getName(), myClass.getName())) {
-                return Priority.IMPORTED;
-              }
-            }
-          }
-        }
-        for (PyImportElement importElement : anchorModule.getImportTargets()) {
-          if (Comparing.equal(importElement.getImportedQName(), moduleQName)) {
-            return Priority.IMPORTED;
-          }
-        }
-      }
-      if (ProjectRootManager.getInstance(myAnchor.getProject()).getFileIndex().isInSource(candidateFile.getVirtualFile())) {
-        return Priority.PROJECT;
-      }
-      return Priority.OTHER;
+      myPriority = priority;
     }
 
     @Override
