@@ -56,6 +56,16 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     super.tearDown();
   }
 
+  public void testSortByName() throws Exception {
+    myProjectView.setSortByType(myPane.getId(), false);
+    assertTree("-sortByName\n" +
+               " a.java\n" +
+               " a-a.java\n" +
+               " a-b.java\n" +
+               " ab.java\n" +
+               " b.java\n");
+  }
+
   public void testSortByType() throws Exception {
     myProjectView.setSortByType(myPane.getId(), false);
     assertTree("-sortByType\n" +
