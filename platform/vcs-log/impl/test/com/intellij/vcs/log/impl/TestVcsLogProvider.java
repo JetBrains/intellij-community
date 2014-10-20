@@ -17,6 +17,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -131,7 +132,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public VcsKey getSupportedVcs() {
-    throw new UnsupportedOperationException();
+    return MockAbstractVcs.getKey();
   }
 
   @NotNull

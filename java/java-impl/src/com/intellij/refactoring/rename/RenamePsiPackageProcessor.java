@@ -66,10 +66,21 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
         return new String[]{((PsiPackage)element).getQualifiedName()};
       }
 
+      @Override
+      public String getNewName() {
+        final PsiPackage psiPackage = (PsiPackage)element;
+        final String oldName = psiPackage.getQualifiedName();
+        final String newName = super.getNewName();
+        if (!Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(newName))) {
+          return newName;
+        }
+        return StringUtil.getShortName(newName);
+      }
+
       protected void doAction() {
         final PsiPackage psiPackage = (PsiPackage)element;
         final String oldName = psiPackage.getQualifiedName();
-        final String newName = getNewName();
+        final String newName = super.getNewName();
         if (!Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(newName))) {
           invokeRefactoring(createRenameMoveProcessor(newName, psiPackage, isSearchInComments(), isSearchInNonJavaFiles()));
         } else {

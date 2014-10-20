@@ -59,6 +59,18 @@ public class JsonStructureViewTest extends JsonTestCase {
            "    +object\n");
   }
 
+  // IDEA-131502
+  public void testArrayNodesAreShownIfNecessary() {
+    doTest("-ArrayNodesAreShownIfNecessary.json\n" +
+           " -array\n" +
+           "  -object\n" +
+           "   nestedObject\n" +
+           " -array\n" +
+           "  +array\n" +
+           " -object\n" +
+           "  siblingObject\n");
+  }
+
   // Moved from JavaScript
 
   public void testSimpleStructure() {

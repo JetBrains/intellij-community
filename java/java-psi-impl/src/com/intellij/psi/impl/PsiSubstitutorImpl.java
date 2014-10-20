@@ -167,8 +167,9 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
               return newBound;
             }
           }
-          if (!wildcard.isBounded()) return PsiWildcardType.createUnbounded(wildcardType.getManager());
-          return newBound;
+          if (wildcard.isBounded()) {
+            return newBound;
+          }
         }
 
         return newBound == PsiType.NULL ? newBound : rebound(wildcardType, newBound);

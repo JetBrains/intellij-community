@@ -16,15 +16,17 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -103,11 +105,28 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
 
   private static class ProblematicWhitespaceVisitor extends BaseInspectionVisitor {
 
+    private static boolean isLanguageFileType(FileType fileType) {
+      return (fileType != StdFileTypes.GUI_DESIGNER_FORM) &&
+             (fileType != StdFileTypes.IDEA_MODULE) &&
+             (fileType != StdFileTypes.IDEA_PROJECT) &&
+             (fileType != StdFileTypes.IDEA_WORKSPACE) &&
+             (fileType != FileTypes.ARCHIVE) &&
+             (fileType != FileTypes.UNKNOWN) &&
+             (fileType != FileTypes.PLAIN_TEXT) &&
+             //!(fileType instanceof AbstractFileType) && // not sure about this one
+             !fileType.isBinary() &&
+             !fileType.isReadOnly();
+    }
+
     @Override
-    public void visitJavaFile(PsiJavaFile file) {
-      super.visitJavaFile(file);
+    public void visitFile(PsiFile file) {
+      super.visitFile(file);
+      final FileType fileType = file.getFileType();
+      if (!isLanguageFileType(fileType)) {
+        return;
+      }
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
-      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
+      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(fileType);
       final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
       final boolean smartTabs = indentOptions.SMART_TABS;
       final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);

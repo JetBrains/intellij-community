@@ -1169,6 +1169,10 @@ public class AllIcons {
   
   public static class Welcome {
     public static final Icon CreateDesktopEntry = IconLoader.getIcon("/welcome/createDesktopEntry.png"); // 32x32
+    public static final Icon CreateNewProject = IconLoader.getIcon("/welcome/createNewProject.png"); // 32x32
+    public static final Icon FromVCS = IconLoader.getIcon("/welcome/fromVCS.png"); // 32x32
+    public static final Icon ImportProject = IconLoader.getIcon("/welcome/importProject.png"); // 32x32
+    public static final Icon OpenProject = IconLoader.getIcon("/welcome/openProject.png"); // 32x32
     public static final Icon Register = IconLoader.getIcon("/welcome/register.png"); // 32x32
 
   }

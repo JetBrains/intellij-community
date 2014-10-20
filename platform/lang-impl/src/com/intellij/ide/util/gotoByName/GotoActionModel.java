@@ -494,9 +494,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return MatchMode.NONE;
     }
     if (groupName == null) {
-      return matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
+      return matches(pattern, compiledPattern, matcher, text) ? MatchMode.NON_MENU : MatchMode.NONE;
     }
-    return matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
+    if (matches(pattern, compiledPattern, matcher, groupName + " " + text)) {
+      return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
+    }
+    return matches(pattern, compiledPattern, matcher, text + " " + groupName) ? MatchMode.GROUP : MatchMode.NONE;
+  }
+
+  private static boolean matches(String pattern, Pattern compiledPattern, PatternMatcher matcher, String str) {
+    return StringUtil.containsIgnoreCase(str, pattern) || matcher.matches(str, compiledPattern);
   }
 
   @Nullable
@@ -600,7 +607,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         firstIdentifierLetter = true;
       }
       else if (c == ' ') {
-        buffer.append("[^A-Z]*\\ ");
+        buffer.append(".*\\ ");
         firstIdentifierLetter = true;
       }
       else {

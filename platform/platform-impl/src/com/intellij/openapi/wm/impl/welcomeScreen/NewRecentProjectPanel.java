@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -39,6 +41,9 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
     if (scrollPane != null) {
       scrollPane.setBackground(FlatWelcomeFrame.getProjectsBackGround());
+      scrollPane.setSize(245, 460);
+      scrollPane.setMinimumSize(new Dimension(245, 460));
+      scrollPane.setPreferredSize(new Dimension(245, 460));
     }
     ListWithFilter panel = UIUtil.findComponentOfType(this, ListWithFilter.class);
     if (panel != null) {
@@ -47,17 +52,30 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   }
 
   protected Dimension getPreferredScrollableViewportSize() {
-    return new Dimension(250, 420);
+    return null;//new Dimension(250, 430);
   }
-
-  @Override
-  protected void addMouseMotionListener() {
-  }
-
+  
   @Override
   protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
-    JBList list = super.createList(recentProjectActions, size);
+    final JBList list = super.createList(recentProjectActions, size);
     list.setBackground(FlatWelcomeFrame.getProjectsBackGround());
+    list.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+          FlatWelcomeFrame frame = UIUtil.getParentOfType(FlatWelcomeFrame.class, list);
+          if (frame != null) {
+            FocusTraversalPolicy policy = frame.getFocusTraversalPolicy();
+            if (policy != null) {
+              Component next = policy.getComponentAfter(frame, list);
+              if (next != null) {
+                next.requestFocus();
+              }
+            }
+          }
+        }
+      }
+    });
     return list;
   }
 
@@ -69,12 +87,12 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       }
       @Override
       protected Color getListBackground(boolean isSelected, boolean hasFocus) {
-        return isSelected && hasFocus ? new Color(0x2484fd) : FlatWelcomeFrame.getProjectsBackGround();
+        return isSelected ? new Color(0x2484fd) : FlatWelcomeFrame.getProjectsBackGround();
       }
 
       @Override
       protected Color getListForeground(boolean isSelected, boolean hasFocus) {
-        return UIUtil.getListForeground(isSelected && hasFocus);
+        return UIUtil.getListForeground(isSelected);
       }
     };
   }

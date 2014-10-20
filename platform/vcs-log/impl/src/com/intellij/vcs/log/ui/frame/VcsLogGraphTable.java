@@ -572,23 +572,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   private class RootHeaderRenderer extends DefaultTableCellHeaderRenderer {
-
-    private Icon myIcon = AllIcons.General.ComboArrowRight;
+    private final Icon myIcon = AllIcons.General.ComboArrowRight;
 
     @NotNull
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (table != null) {
-        JTableHeader tableHeader = table.getTableHeader();
-        if (tableHeader != null) {
-          setForeground(tableHeader.getForeground());
-          setBackground(tableHeader.getBackground());
-          setFont(tableHeader.getFont());
-        }
-      }
-
-      setBorder(UIManager.getBorder("TableHeader.cellBorder"));
 
       if (myUI.isShowRootNames()) {
         setIcon(null);

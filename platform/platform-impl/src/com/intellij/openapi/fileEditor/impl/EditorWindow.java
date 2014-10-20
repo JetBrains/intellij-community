@@ -555,7 +555,13 @@ public class EditorWindow {
     if (myTabbedPane != null) {
       myTabbedPane.requestFocus(forced);
     } else {
-      IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myPanel, forced);
+      EditorWithProviderComposite editor = getSelectedEditor();
+      if (editor != null) {
+        JComponent toFocus = editor.getPreferredFocusedComponent();
+        IdeFocusManager.findInstanceByComponent(toFocus).requestFocus(toFocus, forced);
+      } else {
+        IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myPanel, forced);
+      }
     }
   }
 

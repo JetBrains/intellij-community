@@ -15,8 +15,10 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -34,6 +36,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -66,6 +69,13 @@ public class OpenFileAction extends AnAction implements DumbAware {
         doOpenFile(project, files);
       }
     });
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (e.getPlace() == ActionPlaces.WELCOME_SCREEN && Registry.is("ide.new.welcome.screen")) {
+      e.getPresentation().setIcon(AllIcons.Welcome.OpenProject);
+    }
   }
 
   private static void doOpenFile(@Nullable Project project, @NotNull List<VirtualFile> result) {

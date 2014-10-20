@@ -35,4 +35,6 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
 
   @Nullable
   public abstract ValidationInfo verify();
+
+  public abstract void setFireOnChangeAction(@NotNull Runnable action);
 }

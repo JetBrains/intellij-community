@@ -148,8 +148,14 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaBatchLocalIn
       if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", false)) return;
       if (!method.isVarArgs()) return;
 
-      final PsiParameter psiParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
-      final PsiType componentType = ((PsiEllipsisType)psiParameter.getType()).getComponentType();
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final PsiParameter psiParameter = parameters[parameters.length - 1];
+      if (!psiParameter.isVarArgs()) return;
+
+      final PsiType type = psiParameter.getType();
+      LOG.assertTrue(type instanceof PsiEllipsisType, "type: " + type.getCanonicalText() + "; param: " + psiParameter);
+
+      final PsiType componentType = ((PsiEllipsisType)type).getComponentType();
       if (JavaGenericsUtil.isReifiableType(componentType)) {
         return;
       }
