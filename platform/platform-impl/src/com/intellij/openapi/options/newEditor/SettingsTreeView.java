@@ -97,7 +97,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     TreeUtil.installActions(myTree);
 
     myTree.setOpaque(true);
-    myTree.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
@@ -116,6 +115,8 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
     mySeparator = new JLabel();
     mySeparator.setForeground(FOREGROUND);
+    mySeparator.setIconTextGap(10);
+    mySeparator.setBorder(BorderFactory.createEmptyBorder(1, 19, 0, 0));
 
     myTree.addComponentListener(new ComponentAdapter() {
       @Override
@@ -273,10 +274,10 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       return; // separator is not needed without scrolling
     }
     mySeparator.setFont(myTree.getFont());
+    mySeparator.setIcon(myTree.getEmptyHandle());
     int height = mySeparator.getPreferredSize().height;
-    String group = findGroupNameAt(0, height);
+    String group = findGroupNameAt(0, height + 3);
     if (group != null && group.equals(findGroupNameAt(0, 0))) {
-      mySeparator.setBorder(BorderFactory.createEmptyBorder(1, 22, 0, 0));
       mySeparator.setText(group);
 
       Rectangle bounds = myScroller.getViewport().getBounds();
@@ -459,16 +460,16 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
   private final class MyRenderer extends JPanel implements TreeCellRenderer {
     private final JLabel myTextLabel = new ErrorLabel();
-    private final JLabel myNodeIcon = new JLabel(" ", SwingConstants.RIGHT);
-    private final JLabel myProjectIcon = new JLabel(" ", SwingConstants.LEFT);
+    private final JLabel myNodeIcon = new JLabel();
+    private final JLabel myProjectIcon = new JLabel();
 
     public MyRenderer() {
-      super(new BorderLayout());
+      super(new BorderLayout(10, 0));
       myNodeIcon.setName(NODE_ICON);
       add(BorderLayout.CENTER, myTextLabel);
       add(BorderLayout.WEST, myNodeIcon);
       add(BorderLayout.EAST, myProjectIcon);
-      setBorder(BorderFactory.createEmptyBorder(1, 0, 3, 0));
+      setBorder(BorderFactory.createEmptyBorder(1, 10, 3, 10));
     }
 
     public Component getTreeCellRendererComponent(JTree tree,
@@ -554,9 +555,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       myNodeIcon.setIcon(nodeIcon);
       // calculate minimum size
       if (node != null && tree.isVisible()) {
-        int width = getPreferredSize().width;
-        width += node.myLevel * UIUtil.getTreeLeftChildIndent();
-        width += node.myLevel * UIUtil.getTreeRightChildIndent();
+        int width = 10 * node.myLevel + getPreferredSize().width;
         Insets insets = tree.getInsets();
         if (insets != null) {
           width += insets.left + insets.right;
@@ -722,18 +721,20 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
                             boolean hasBeenExpanded,
                             boolean isLeaf) {
       if (tree != null) {
-        int width = tree.getWidth();
+        bounds.width = tree.getWidth();
         Container parent = tree.getParent();
         if (parent instanceof JViewport) {
           JViewport viewport = (JViewport)parent;
-          width = viewport.getWidth() - viewport.getViewPosition().x;
+          bounds.width = viewport.getWidth() - viewport.getViewPosition().x;
         }
-        width -= bounds.x;
-        if (bounds.width < width) {
-          bounds.width = width;
-        }
+        bounds.width -= bounds.x;
       }
       super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+    }
+
+    @Override
+    protected int getRowX(int row, int depth) {
+      return 10 * depth;
     }
   }
 
