@@ -253,31 +253,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
                                     consoleExecuteActionHandler);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 14
-   */
-  public static AnAction createConsoleExecAction(LanguageConsoleImpl languageConsole,
-                                                 ProcessHandler processHandler,
-                                                 @SuppressWarnings("deprecation") ConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return ConsoleExecuteAction.createAction(languageConsole, consoleExecuteActionHandler);
-  }
-
   @NotNull
-  protected ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler() {
-    //noinspection deprecation
-    return createConsoleExecuteActionHandler();
-  }
-
-  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 14
-   */
-  protected ConsoleExecuteActionHandler createConsoleExecuteActionHandler() {
-    throw new AbstractMethodError();
-  }
+  protected abstract ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler();
 
   public T getConsoleView() {
     return myConsoleView;

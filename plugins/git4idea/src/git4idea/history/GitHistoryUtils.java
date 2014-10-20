@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
@@ -47,6 +48,7 @@ import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
 import git4idea.history.browser.SymbolicRefsI;
 import git4idea.history.wholeTree.AbstractHash;
+import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -710,7 +712,7 @@ public class GitHistoryUtils {
     if (factory == null) {
       return LogDataImpl.empty();
     }
-    final Set<VcsRef> refs = ContainerUtil.newHashSet();
+    final Set<VcsRef> refs = new OpenTHashSet<VcsRef>(GitLogProvider.REF_ONLY_NAME_STRATEGY);
     final List<VcsCommitMetadata> commits =
       loadDetails(project, root, withRefs, false, new NullableFunction<GitLogRecord, VcsCommitMetadata>() {
         @Nullable
@@ -718,7 +720,12 @@ public class GitHistoryUtils {
         public VcsCommitMetadata fun(GitLogRecord record) {
           GitCommit commit = createCommit(project, root, record, factory);
           if (withRefs) {
-            refs.addAll(parseRefs(record.getRefs(), commit.getId(), factory, root));
+            Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
+            for (VcsRef ref : refsInRecord) {
+              if (!refs.add(ref)) {
+                LOG.error("Adding duplicate element to the set");
+              }
+            }
           }
           return commit;
         }

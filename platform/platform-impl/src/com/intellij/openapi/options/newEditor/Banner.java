@@ -66,9 +66,9 @@ final class Banner extends JPanel {
         }
         else {
           if (i > 0) {
-            myLeftPanel.add(HorizontalLayout.LEFT, RelativeFont.HUGE.install(new JLabel("\u203A")));
+            myLeftPanel.add(RelativeFont.HUGE.install(new JLabel("\u203A")));
           }
-          myLeftPanel.add(HorizontalLayout.LEFT, RelativeFont.BOLD.install(new JLabel(name)));
+          myLeftPanel.add(RelativeFont.BOLD.install(new JLabel(name)));
         }
         i += 2;
       }

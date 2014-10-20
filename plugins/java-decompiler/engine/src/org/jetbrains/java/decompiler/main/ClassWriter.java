@@ -254,8 +254,11 @@ public class ClassWriter {
 
           if (hasContent) {
             buffer.appendLineSeparator();
+            startLine++;
           }
-          classToJava(inner, buffer, indent + 1, tracer);
+          BytecodeMappingTracer class_tracer = new BytecodeMappingTracer(startLine);
+          classToJava(inner, buffer, indent + 1, class_tracer);
+          startLine = buffer.countLines();
 
           hasContent = true;
         }
@@ -840,7 +843,7 @@ public class ClassWriter {
 
     // save total lines
     // TODO: optimize
-    tracer.setCurrentSourceLine(buffer.countLines(start_index_method));
+    //tracer.setCurrentSourceLine(buffer.countLines(start_index_method));
 
     return !hideMethod;
   }

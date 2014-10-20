@@ -42,11 +42,12 @@ import java.util.Arrays;
 
 public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   public static final int FULL_DIFF_DIVIDER_POLYGONS_OFFSET = 3;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.DiffManagerImpl");
+  private static final Logger LOG = Logger.getInstance(DiffManagerImpl.class);
 
   private static final Externalizer<String> TOOL_PATH_UPDATE = new Externalizer<String>() {
     @NonNls private static final String NEW_VALUE = "newValue";
 
+    @Override
     public String readValue(Element dataElement) {
       String path = dataElement.getAttributeValue(NEW_VALUE);
       if (path != null) return path;
@@ -54,6 +55,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
       return prevValue != null ? prevValue.trim() : null;
     }
 
+    @Override
     public void writeValue(Element dataElement, String path) {
       dataElement.setAttribute(VALUE_ATTRIBUTE, path);
       dataElement.setAttribute(NEW_VALUE, path);
@@ -75,6 +77,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
 
   public static final Key<Boolean> EDITOR_IS_DIFF_KEY = new Key<Boolean>("EDITOR_IS_DIFF_KEY");
   private static final MarkupEditorFilter DIFF_EDITOR_FILTER = new MarkupEditorFilter() {
+    @Override
     public boolean avaliableIn(Editor editor) {
       return DiffUtil.isDiffEditor(editor);
     }
@@ -96,8 +99,10 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     myProperties.registerProperty(MERGE_TOOL_PARAMETERS);
   }
 
+  @Override
   public DiffTool getIdeaDiffTool() { return INTERNAL_DIFF; }
 
+  @Override
   public DiffTool getDiffTool() {
     DiffTool[] standardTools;
     // there is inner check in multiple tool for external viewers as well
@@ -131,21 +136,25 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     return new CompositeDiffTool(allTools);
   }
 
+  @Override
   public boolean registerDiffTool(@NotNull DiffTool tool) throws NullPointerException {
     if (myAdditionTools.contains(tool)) return false;
     myAdditionTools.add(tool);
     return true;
   }
 
+  @Override
   public void unregisterDiffTool(DiffTool tool) {
     myAdditionTools.remove(tool);
     LOG.assertTrue(!myAdditionTools.contains(tool));
   }
 
+  @Override
   public MarkupEditorFilter getDiffEditorFilter() {
     return DIFF_EDITOR_FILTER;
   }
 
+  @Override
   public DiffPanel createDiffPanel(Window window, Project project, DiffTool parentTool) {
     return new DiffPanelImpl(window, project, true, true, FULL_DIFF_DIVIDER_POLYGONS_OFFSET, parentTool);
   }
@@ -161,6 +170,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     return (DiffManagerImpl)DiffManager.getInstance();
   }
 
+  @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     myProperties.readExternal(element);
     readPolicy(element);
@@ -191,6 +201,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     }
   }
 
+  @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     myProperties.writeExternal(element);
     if (myComparisonPolicy != null) {

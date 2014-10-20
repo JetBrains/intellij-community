@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -102,7 +103,7 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
     return new ProblematicWhitespaceVisitor();
   }
 
-  private static class ProblematicWhitespaceVisitor extends BaseInspectionVisitor {
+  private class ProblematicWhitespaceVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitFile(PsiFile file) {
@@ -131,26 +132,30 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
           if (c == '\t') {
             if (useTabs) {
               if (smartTabs && spaceSeen) {
-                registerError(file, file.getName(), Boolean.valueOf(isOnTheFly()), Boolean.TRUE);
-                return;
+                if (registerError(file, startOffset, Boolean.TRUE)) {
+                  return;
+                }
               }
             }
             else {
-              registerError(file, file.getName(), Boolean.valueOf(isOnTheFly()), Boolean.FALSE);
-              return;
+              if (registerError(file, startOffset, Boolean.FALSE)) {
+                return;
+              }
             }
           }
           else if (c == ' ') {
             if (useTabs) {
               if (!smartTabs) {
-                registerError(file, file.getName(), Boolean.valueOf(isOnTheFly()), Boolean.TRUE);
-                return;
+                if (registerError(file, startOffset, Boolean.TRUE)) {
+                  return;
+                }
               }
               else if (!spaceSeen) {
                 final int currentIndent = Math.max(0, j);
                 if (currentIndent < previousLineIndent) {
-                  registerError(file, file.getName(), Boolean.valueOf(isOnTheFly()), Boolean.TRUE);
-                  return;
+                  if (registerError(file, startOffset, Boolean.TRUE)) {
+                    return;
+                  }
                 }
                 previousLineIndent = currentIndent;
               }
@@ -165,6 +170,15 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
           }
         }
       }
+    }
+
+    private boolean registerError(PsiFile file, int startOffset, Boolean tab) {
+      final PsiElement element = file.findElementAt(startOffset);
+      if (element != null && isSuppressedFor(element)) {
+        return false;
+      }
+      registerError(file, file.getName(), Boolean.valueOf(isOnTheFly()), tab);
+      return true;
     }
   }
 }

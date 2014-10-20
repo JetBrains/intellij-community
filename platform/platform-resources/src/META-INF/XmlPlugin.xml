@@ -537,9 +537,8 @@
     <customPortServerManager implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$MyCustomPortServerManager"/>
     <xdebugger.configurableProvider implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$BuiltInServerDebuggerConfigurableProvider"/>
 
-    <exportable serviceInterface="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
-    <applicationService serviceInterface="org.jetbrains.builtInWebServer.BuiltInServerOptions" serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
-    <projectService serviceInterface="org.jetbrains.builtInWebServer.WebServerPathToFileManager" serviceImplementation="org.jetbrains.builtInWebServer.WebServerPathToFileManager"/>
+    <applicationService serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
+    <projectService serviceImplementation="org.jetbrains.builtInWebServer.WebServerPathToFileManager"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
