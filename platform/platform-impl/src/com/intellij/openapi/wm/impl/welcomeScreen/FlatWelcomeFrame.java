@@ -52,6 +52,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -176,7 +178,34 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       super(new BorderLayout());
       setBackground(getMainBackground());
       if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
-        add(createRecentProjects(), BorderLayout.WEST);
+        final JComponent recentProjects = createRecentProjects();
+        add(recentProjects, BorderLayout.WEST);
+        final JList projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
+        if (projectsList != null) {
+          projectsList.getModel().addListDataListener(new ListDataListener() {
+            @Override
+            public void intervalAdded(ListDataEvent e) {             
+            }
+
+            @Override
+            public void intervalRemoved(ListDataEvent e) {
+              removeIfNeeded();
+            }
+
+            private void removeIfNeeded() {
+              if (projectsList.getModel().getSize() == 0) {
+                FlatWelcomeScreen.this.remove(recentProjects);
+                FlatWelcomeScreen.this.revalidate();
+                FlatWelcomeScreen.this.repaint();
+              }
+            }
+
+            @Override
+            public void contentsChanged(ListDataEvent e) {
+              removeIfNeeded();
+            }
+          });
+        }
       }
       add(createBody(), BorderLayout.CENTER);
     }
