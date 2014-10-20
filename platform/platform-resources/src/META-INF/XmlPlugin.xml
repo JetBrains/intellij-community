@@ -192,10 +192,7 @@
     <exportable serviceInterface="com.intellij.application.options.emmet.EmmetOptions"/>
 
 
-    <applicationService serviceInterface="com.intellij.application.options.editor.XmlFoldingSettings"
-                        serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
-
-    <exportable serviceInterface="com.intellij.application.options.editor.XmlFoldingSettings"/>
+    <applicationService serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
 
     <applicationService serviceInterface="com.intellij.application.options.XmlSettings"
                         serviceImplementation="com.intellij.application.options.XmlSettings"/>
