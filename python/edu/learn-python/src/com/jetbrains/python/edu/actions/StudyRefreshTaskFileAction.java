@@ -125,10 +125,12 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
         patternText.append("\n");
       }
       int patternLength = patternText.length();
-      if (patternText.charAt(patternLength - 1) == '\n') {
-        patternText.delete(patternLength - 1, patternLength);
+      if (patternLength != 0) {
+        if (patternText.charAt(patternLength - 1) == '\n') {
+          patternText.delete(patternLength - 1, patternLength);
+        }
+        document.setText(patternText);
       }
-      document.setText(patternText);
     }
     catch (FileNotFoundException e) {
       LOG.error(e);
