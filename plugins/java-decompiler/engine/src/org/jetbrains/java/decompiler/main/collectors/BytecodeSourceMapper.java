@@ -97,7 +97,7 @@ public class BytecodeSourceMapper {
     buffer.append("Lines mapping:").appendLineSeparator();
     Map<Integer, Integer> sorted = new TreeMap<Integer, Integer>(linesMapping);
     for (Entry<Integer, Integer> entry : sorted.entrySet()) {
-      buffer.append(entry.getKey()).append(" <-> ").append(entry.getValue()).appendLineSeparator();
+      buffer.append(entry.getKey()).append(" <-> ").append(entry.getValue()+ offset_total + 1).appendLineSeparator();
     }
   }
 
