@@ -16,6 +16,12 @@
 package com.intellij.internal.statistic.libraryJar;
 
 import com.intellij.facet.frameworks.SettingsConnectionService;
+import com.intellij.internal.statistic.StatisticsUploadAssistant;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.xmlb.XmlSerializationException;
@@ -30,7 +36,7 @@ import java.net.URL;
 /**
  * @author Ivan Chirkov
  */
-public class LibraryJarStatisticsService extends SettingsConnectionService {
+public class LibraryJarStatisticsService extends SettingsConnectionService implements StartupActivity {
 
   private static final String FILE_NAME = "statistics/library-jar-statistics.xml";
   private static final String DEFAULT_SETTINGS_URL = "http://www.jetbrains.com/idea/download-assistant.xml";
@@ -50,10 +56,11 @@ public class LibraryJarStatisticsService extends SettingsConnectionService {
   @NotNull
   public LibraryJarDescriptor[] getTechnologyDescriptors() {
     if (myDescriptors == null) {
+      if (!StatisticsUploadAssistant.isSendAllowed()) return LibraryJarDescriptor.EMPTY;
       final URL url = createVersionsUrl();
-      if (url == null) return new LibraryJarDescriptor[0];
+      if (url == null) return LibraryJarDescriptor.EMPTY;
       final LibraryJarDescriptors descriptors = deserialize(url);
-      myDescriptors = descriptors == null ? new LibraryJarDescriptor[0] : descriptors.getDescriptors();
+      myDescriptors = descriptors == null ? LibraryJarDescriptor.EMPTY : descriptors.getDescriptors();
     }
     return myDescriptors;
   }
@@ -90,5 +97,22 @@ public class LibraryJarStatisticsService extends SettingsConnectionService {
     }
 
     return null;
+  }
+
+  @Override
+  public void runActivity(@NotNull Project project) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            getInstance().getTechnologyDescriptors();
+          }
+        });
+      }
+    });
   }
 }
