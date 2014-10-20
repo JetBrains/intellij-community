@@ -791,7 +791,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private void showSettings() {
     myPopupField.setText("");
     final SearchListModel model = new SearchListModel();
-    model.addElement(new SEOption("Show current file structure elements", "search.everywhere.structure"));
+    //model.addElement(new SEOption("Show current file structure elements", "search.everywhere.structure"));
     model.addElement(new SEOption("Show files", "search.everywhere.files"));
     model.addElement(new SEOption("Show symbols", "search.everywhere.symbols"));
     model.addElement(new SEOption("Show tool windows", "search.everywhere.toolwindows"));
