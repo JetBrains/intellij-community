@@ -24,30 +24,27 @@ import javax.swing.plaf.FontUIResource;
 /**
  * @author Sergey.Malenkov
  */
-public final class RelativeFont implements PropertyChangeListener {
-  private static final String PROPERTY = "font";
+public enum RelativeFont implements PropertyChangeListener {
+  PLAIN(Font.PLAIN, 0),
+  BOLD(Font.BOLD, 0),
+  LARGE(1f),
+  SMALL(-1f),
+  HUGE(2f),
+  TINY(-2f);
 
-  public static final RelativeFont PLAIN = new RelativeFont(Font.PLAIN, 0);
-  public static final RelativeFont BOLD = new RelativeFont(Font.BOLD, 0);
-  public static final RelativeFont LARGE = new RelativeFont(1f);
-  public static final RelativeFont SMALL = new RelativeFont(-1f);
-  public static final RelativeFont HUGE = new RelativeFont(2f);
-  public static final RelativeFont TINY = new RelativeFont(-2f);
+  private static final String PROPERTY = "font";
 
   private final int myStyle;
   private final float mySize;
 
-  public RelativeFont(float size) {
+  RelativeFont(float size) {
     this.myStyle = -1;
     this.mySize = size;
   }
 
-  public RelativeFont(int style, float size) {
+  RelativeFont(int style, float size) {
     this.myStyle = style & (Font.BOLD | Font.ITALIC);
     this.mySize = size;
-    if (style != myStyle) {
-      throw new IllegalArgumentException("style");
-    }
   }
 
   public <T extends Component> T install(T component) {
