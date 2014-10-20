@@ -182,9 +182,7 @@
     <include.provider implementation="com.intellij.xml.util.XIncludeProvider"/>
     <indexedRootsProvider implementation="com.intellij.javaee.ExternalResourcesRootsProvider"/>
 
-    <applicationService serviceInterface="com.intellij.application.options.editor.WebEditorOptions"
-                        serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
-    <exportable serviceInterface="com.intellij.application.options.editor.WebEditorOptions"/>
+    <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
 
     <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
     <applicationService serviceInterface="com.intellij.application.options.emmet.EmmetOptions"
