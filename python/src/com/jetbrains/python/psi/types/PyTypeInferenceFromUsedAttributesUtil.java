@@ -6,11 +6,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.QualifiedName;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -47,6 +47,8 @@ public class PyTypeInferenceFromUsedAttributesUtil {
   );
 
   private static final Logger LOG = Logger.getInstance(PyTypeInferenceFromUsedAttributesUtil.class);
+  private static final CachedAncestorsFastProvider ourCachedAncestorsProvider = new CachedAncestorsFastProvider();
+  private static final RecursionGuard ourRecursionGuard = RecursionManager.createGuard("py.types.from.attrs.rec.guard");
 
   private PyTypeInferenceFromUsedAttributesUtil() {
     // empty
@@ -103,13 +105,13 @@ public class PyTypeInferenceFromUsedAttributesUtil {
       if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
         continue;
       }
-      if (getAllInheritedAttributeNames(candidate, context).containsAll(seenAttrs)) {
+      if (getAllInheritedAttributeNames(candidate).containsAll(seenAttrs)) {
         suitableClasses.add(candidate);
       }
     }
 
     for (PyClass candidate : Lists.newArrayList(suitableClasses)) {
-      for (PyClass ancestor : candidate.getAncestorClasses()) {
+      for (PyClass ancestor : getAncestorClassesFast(candidate)) {
         if (suitableClasses.contains(ancestor)) {
           suitableClasses.remove(candidate);
         }
@@ -126,9 +128,9 @@ public class PyTypeInferenceFromUsedAttributesUtil {
   }
 
   @NotNull
-  private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate, @NotNull TypeEvalContext context) {
+  private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate) {
     final Set<String> availableAttrs = Sets.newHashSet(getAllDeclaredAttributeNames(candidate));
-    for (PyClass parent : candidate.getAncestorClasses(context)) {
+    for (PyClass parent : getAncestorClassesFast(candidate)) {
       availableAttrs.addAll(getAllDeclaredAttributeNames(parent));
     }
     return availableAttrs;
@@ -275,6 +277,37 @@ public class PyTypeInferenceFromUsedAttributesUtil {
     @Override
     public String toString() {
       return String.format("ClassCandidate(name='%s' priority=%s)", myClass.getName(), myPriority);
+    }
+  }
+
+  @NotNull
+  private static Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass) {
+    final CachedValuesManager manager = CachedValuesManager.getManager(pyClass.getProject());
+    return manager.getParameterizedCachedValue(pyClass, CachedAncestorsFastProvider.KEY, ourCachedAncestorsProvider, false, pyClass);
+  }
+
+  private static class CachedAncestorsFastProvider implements ParameterizedCachedValueProvider<Set<PyClass>, PyClass> {
+    static Key<ParameterizedCachedValue<Set<PyClass>, PyClass>> KEY = Key.create("py.types.from.attrs.cached.ancestors.fast");
+
+    @NotNull
+    @Override
+    public CachedValueProvider.Result<Set<PyClass>> compute(@NotNull PyClass pyClass) {
+      final HashSet<PyClass> result = Sets.newHashSet();
+      for (final PyClass baseClass : pyClass.getSuperClasses()) {
+        final Computable<Set<PyClass>> computable = new Computable<Set<PyClass>>() {
+          @Override
+          public Set<PyClass> compute() {
+            return getAncestorClassesFast(baseClass);
+          }
+        };
+        final Set<PyClass> baseClassAncestors = ourRecursionGuard.doPreventingRecursion(baseClass, false, computable);
+        result.add(baseClass);
+        if (baseClassAncestors != null) {
+          result.addAll(baseClassAncestors);
+        }
+      }
+      return CachedValueProvider.Result.create(Collections.unmodifiableSet(result),
+                                               PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
   }
 

@@ -190,6 +190,17 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "list | MySortable | OtherClassA | OtherClassB | unknown");
   }
 
+  public void testCyclicInheritance() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("main.py");
+    final PyReferenceExpression referenceExpression = findLastReferenceByText("x");
+    assertNotNull(referenceExpression);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(referenceExpression.getContainingFile()).withTracing();
+    final PyType actual = context.getType(referenceExpression);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    assertEquals("unknown", actualType);
+  }
+
   private void doTestType(@NotNull String text, @NotNull String expectedType) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyReferenceExpression referenceExpression = findLastReferenceByText("x");
