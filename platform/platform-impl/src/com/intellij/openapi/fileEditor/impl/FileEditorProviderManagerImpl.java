@@ -16,10 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -47,7 +44,10 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-@State(name = "FileEditorProviderManager", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")})
+@State(
+  name = "FileEditorProviderManager",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/fileEditorProviderManager.xml", roamingType = RoamingType.DISABLED)
+)
 public final class FileEditorProviderManagerImpl extends FileEditorProviderManager
   implements PersistentStateComponent<FileEditorProviderManagerImpl> {
   private static final FileEditorProvider[] EMPTY_ARRAY = new FileEditorProvider[0];
