@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +172,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
 
   @Override
   public IdeFrame createFrame() {
-    return Registry.is("ide.new.welcome.screen") ? this : null;
+    return Registry.is("ide.new.welcome.screen") && (PlatformUtils.isIntelliJ() || PlatformUtils.isCidr()) ? this : null;
   }
 
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
