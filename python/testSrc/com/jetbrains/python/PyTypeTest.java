@@ -940,6 +940,60 @@ public class PyTypeTest extends PyTestCase {
            "print(expr)\n");
   }
 
+  public void testUnionTypeAttributeOfDifferentTypes() {
+    doTest("list | int",
+           "class Foo:\n" +
+           "    x = []\n" +
+           "\n" +
+           "class Bar:\n" +
+           "    x = 42\n" +
+           "\n" +
+           "def f(c):\n" +
+           "    o = Foo() if c else Bar()\n" +
+           "    expr = o.x\n");
+  }
+
+  // PY-11364
+  public void testUnionTypeAttributeCallOfDifferentTypes() {
+    doTest("C1 | C2",
+           "class C1:\n" +
+           "    def foo(self):\n" +
+           "        return self\n" +
+           "\n" +
+           "class C2:\n" +
+           "    def foo(self):\n" +
+           "        return self\n" +
+           "\n" +
+           "def f():\n" +
+           "    '''\n" +
+           "    :rtype: C1 | C2\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f().foo()\n");
+  }
+
+  // PY-12862
+  public void testUnionTypeAttributeSubscriptionOfDifferentTypes() {
+    doTest("C1 | C2",
+           "class C1:\n" +
+           "    def __getitem__(self, item):\n" +
+           "        return self\n" +
+           "\n" +
+           "class C2:\n" +
+           "    def __getitem__(self, item):\n" +
+           "        return self\n" +
+           "\n" +
+           "def f():\n" +
+           "    '''\n" +
+           "    :rtype: C1 | C2\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f()[0]\n" +
+           "print(expr)\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing();
   }
