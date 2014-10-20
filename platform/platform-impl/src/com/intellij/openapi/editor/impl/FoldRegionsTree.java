@@ -331,6 +331,7 @@ abstract class FoldRegionsTree {
     int[] endOffsets = myCachedEndOffsets;
     if (!isFoldingEnabledAndUpToDate() || endOffsets == null) return -1;
 
+    offset--; // end offsets are decremented in cache
     int start = 0;
     int end = endOffsets.length - 1;
 

@@ -38,6 +38,10 @@ public interface FoldingModelEx extends FoldingModel {
 
   FoldRegion fetchOutermost(int offset);
 
+  /**
+   * Returns an index in an array returned by {@link #fetchTopLevel()} method, for the last folding region lying entirely before given
+   * offset (region can touch given offset at its right edge).
+   */
   int getLastCollapsedRegionBefore(int offset);
 
   TextAttributes getPlaceholderAttributes();
