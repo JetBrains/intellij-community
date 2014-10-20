@@ -61,14 +61,29 @@ public class PyTypeInferenceFromUsedAttributesUtil {
    * @return described type or {@code null} if nothing suits
    */
   @Nullable
-  public static PyType getTypeFromUsedAttributes(@NotNull PyExpression expression, @NotNull final TypeEvalContext context) {
+  public static PyType getType(@NotNull PyExpression expression, @NotNull final TypeEvalContext context) {
     if (!ENABLED || !context.allowLocalUsages(expression)) {
       return null;
     }
+    final long startTime = System.currentTimeMillis();
     final Set<String> seenAttrs = collectUsedAttributes(expression);
-
     LOG.debug(String.format("Attempting to infer type for expression: %s. Used attributes: %s", expression.getText(), seenAttrs));
+    final List<CandidateClass> allCandidates = suggestCandidateClasses(expression, seenAttrs, context);
+    LOG.debug("Total " + (System.currentTimeMillis() - startTime) + " ms to infer candidate classes");
 
+    final List<CandidateClass> bestCandidates = allCandidates.subList(0, Math.min(allCandidates.size(), MAX_CANDIDATES));
+    return PyUnionType.createWeakType(PyUnionType.union(ContainerUtil.map(bestCandidates, new Function<CandidateClass, PyType>() {
+      @Override
+      public PyType fun(CandidateClass cls) {
+        return new PyClassTypeImpl(cls.myClass, false);
+      }
+    })));
+  }
+
+  @NotNull
+  private static List<CandidateClass> suggestCandidateClasses(@NotNull final PyExpression expression,
+                                                              @NotNull Set<String> seenAttrs,
+                                                              @NotNull TypeEvalContext context) {
     final Set<PyClass> candidates = Sets.newHashSet();
     for (String attribute : seenAttrs) {
       // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
@@ -100,15 +115,14 @@ public class PyTypeInferenceFromUsedAttributesUtil {
         }
       }
     }
-
-    final List<CandidateClass> finalists = prepareCandidates(suitableClasses, expression);
-
-    return PyUnionType.createWeakType(PyUnionType.union(ContainerUtil.map(finalists, new Function<CandidateClass, PyType>() {
+    final List<CandidateClass> result = ContainerUtil.map(candidates, new Function<PyClass, CandidateClass>() {
       @Override
-      public PyType fun(CandidateClass cls) {
-        return new PyClassTypeImpl(cls.myClass, false);
+      public CandidateClass fun(PyClass pyClass) {
+        return new CandidateClass(pyClass, expression);
       }
-    })));
+    });
+    Collections.sort(result);
+    return result;
   }
 
   @NotNull
@@ -118,19 +132,6 @@ public class PyTypeInferenceFromUsedAttributesUtil {
       availableAttrs.addAll(getAllDeclaredAttributeNames(parent));
     }
     return availableAttrs;
-  }
-
-  @NotNull
-  private static List<CandidateClass> prepareCandidates(@NotNull Collection<PyClass> candidates, @NotNull final PyExpression anchor) {
-    final List<CandidateClass> prepared = ContainerUtil.map(candidates, new Function<PyClass, CandidateClass>() {
-      @Override
-      public CandidateClass fun(PyClass pyClass) {
-        return new CandidateClass(pyClass, anchor);
-      }
-    });
-
-    Collections.sort(prepared);
-    return prepared.subList(0, Math.min(prepared.size(), MAX_CANDIDATES));
   }
 
   @NotNull
