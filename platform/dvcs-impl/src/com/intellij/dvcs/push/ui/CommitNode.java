@@ -17,8 +17,8 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -42,8 +42,9 @@ public class CommitNode extends DefaultMutableTreeNode implements CustomRendered
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    String subject = StringUtil.shortenTextWithEllipsis(getUserObject().getSubject(), 80, 0);
-    renderer.append(subject, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground()));
+    new IssueLinkRenderer(myProject, renderer).appendTextWithLinks(getUserObject().getSubject(),
+                                                                   new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER,
+                                                                                            renderer.getForeground()));
   }
 
   public String getTooltip() {
