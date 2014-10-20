@@ -23,6 +23,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -2783,6 +2784,43 @@ public class StringUtil extends StringUtilRt {
     }
 
     return true;
+  }
+
+  @Contract(pure = true)
+  public static boolean equalsTrimWhitespaces(@NotNull CharSequence s1, @NotNull CharSequence s2) {
+    int start1 = 0;
+    int end1 = s1.length();
+    int start2 = 0;
+    int end2 = s2.length();
+
+    while (start1 < end1) {
+      char c = s1.charAt(start1);
+      if (!isWhiteSpace(c)) break;
+      start1++;
+    }
+
+    while (start1 < end1) {
+      char c = s1.charAt(end1 - 1);
+      if (!isWhiteSpace(c)) break;
+      end1--;
+    }
+
+    while (start2 < end2) {
+      char c = s2.charAt(start2);
+      if (!isWhiteSpace(c)) break;
+      start2++;
+    }
+
+    while (start2 < end2) {
+      char c = s2.charAt(end2 - 1);
+      if (!isWhiteSpace(c)) break;
+      end2--;
+    }
+
+    CharSequence ts1 = new CharSequenceSubSequence(s1, start1, end1);
+    CharSequence ts2 = new CharSequenceSubSequence(s2, start2, end2);
+
+    return equals(ts1, ts2);
   }
 
   @Contract(pure = true)
