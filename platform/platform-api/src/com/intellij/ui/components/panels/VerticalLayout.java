@@ -112,11 +112,11 @@ public final class VerticalLayout implements LayoutManager2 {
   @Override
   public void addLayoutComponent(String name, Component component) {
     synchronized (component.getTreeLock()) {
-      if (name == null || CENTER.equalsIgnoreCase(name)) {
-        myCenter.add(component);
-      }
-      else if (TOP.equalsIgnoreCase(name)) {
+      if (name == null || TOP.equalsIgnoreCase(name)) {
         myTop.add(component);
+      }
+      else if (CENTER.equalsIgnoreCase(name)) {
+        myCenter.add(component);
       }
       else if (BOTTOM.equalsIgnoreCase(name)) {
         myBottom.add(component);
@@ -242,7 +242,7 @@ public final class VerticalLayout implements LayoutManager2 {
       if (result == null) {
         result = new Dimension();
       }
-      else if (aligned) {
+      else if (aligned && center != null) {
         int topHeight = top == null ? 0 : top.height;
         int bottomHeight = bottom == null ? 0 : bottom.height;
         result.width += Math.abs(topHeight - bottomHeight);
