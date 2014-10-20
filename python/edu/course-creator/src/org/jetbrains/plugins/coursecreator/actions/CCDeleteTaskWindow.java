@@ -60,7 +60,7 @@ public class CCDeleteTaskWindow extends DumbAwareAction {
       myTaskWindow.removeResources(project);
       taskWindows.remove(myTaskWindow);
       editor.getMarkupModel().removeAllHighlighters();
-      CCProjectService.drawTaskWindows(file.getVirtualFile(), editor, course);
+      CCProjectService.getInstance(project).drawTaskWindows(file.getVirtualFile(), editor, course);
       taskFile.createGuardedBlocks(editor);
       DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
     }

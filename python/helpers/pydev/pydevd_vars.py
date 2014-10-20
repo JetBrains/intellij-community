@@ -2,7 +2,6 @@
     resolution/conversion to XML.
 """
 import pickle
-from django_frame import DjangoTemplateFrame
 from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 

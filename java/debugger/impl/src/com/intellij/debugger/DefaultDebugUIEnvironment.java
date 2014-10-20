@@ -20,12 +20,13 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.Constraints;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,9 +63,7 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
   @Override
   public void initActions(RunContentDescriptor content, DefaultActionGroup actionGroup) {
     Executor executor = myExecutionEnvironment.getExecutor();
-    RestartAction restartAction = new RestartAction(content, myExecutionEnvironment);
-    actionGroup.add(restartAction, Constraints.FIRST);
-    restartAction.registerShortcut(content.getComponent());
+    actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN), Constraints.FIRST);
 
     actionGroup.add(new CloseAction(executor, content, myExecutionEnvironment.getProject()));
     actionGroup.add(new ContextHelpAction(executor.getHelpId()));

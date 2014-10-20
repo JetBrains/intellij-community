@@ -84,8 +84,11 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
 
         final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 5;
         contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+        panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
         myParent.revalidate();
         myParent.repaint();
+        panel.revalidate();
+        panel.repaint();
 
         if (parent instanceof IpnbFilePanel) {
           IpnbFilePanel ipnbFilePanel = (IpnbFilePanel)parent;
@@ -118,7 +121,32 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     });
 
     panel.add(component);
-
+    contentComponent.addHierarchyListener(new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        final Container parent = myParent.getParent();
+        if (parent != null) {
+          final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 5;
+          contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+          panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+        }
+      }
+    });
+    contentComponent.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
+      @Override
+      public void ancestorResized(HierarchyEvent e) {
+        final Container parent = myParent.getParent();
+        final Component component = e.getChanged();
+        if (parent != null && component instanceof IpnbFilePanel) {
+          final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 5;
+          contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+          panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+          panel.revalidate();
+          panel.repaint();
+          parent.repaint();
+        }
+      }
+    });
     return panel;
   }
 }

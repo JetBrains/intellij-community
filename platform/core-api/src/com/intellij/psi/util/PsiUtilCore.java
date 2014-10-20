@@ -31,7 +31,9 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -535,5 +537,15 @@ public class PsiUtilCore {
         return element.getProject();
       }
     });
+  }
+
+  @Contract("null -> null;!null -> !null")
+  public static IElementType getElementType(@Nullable ASTNode node) {
+    return node == null ? null : node.getElementType();
+  }
+
+  @Contract("null -> null;!null -> !null")
+  public static IElementType getElementType(@Nullable PsiElement element) {
+    return element == null ? null : getElementType(element.getNode());
   }
 }

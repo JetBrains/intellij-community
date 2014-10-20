@@ -280,6 +280,7 @@ public class ClassesProcessor {
       }
       //buffer.append(lineSeparator);
 
+      total_offset_lines = buffer.countLines();
       buffer.append(classBuffer);
 
       if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
