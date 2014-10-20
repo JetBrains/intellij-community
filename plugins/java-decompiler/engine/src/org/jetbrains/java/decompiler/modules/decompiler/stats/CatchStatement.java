@@ -187,7 +187,6 @@ public class CatchStatement extends Statement {
       tracer.incrementCurrentSourceLine();
       buf.append(ExprProcessor.jmpWrapper(stats.get(i), indent + 1, true, tracer)).append(indstr)
         .append("}");
-      tracer.incrementCurrentSourceLine();
     }
     buf.append(new_line_separator);
 
