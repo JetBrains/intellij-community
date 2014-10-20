@@ -50,7 +50,7 @@ public class GitLogProvider implements VcsLogProvider {
       return ref.getType() == GitRefManager.TAG ? ref.getName() : null;
     }
   };
-  private static final TObjectHashingStrategy<VcsRef> REF_ONLY_NAME_STRATEGY = new TObjectHashingStrategy<VcsRef>() {
+  public static final TObjectHashingStrategy<VcsRef> REF_ONLY_NAME_STRATEGY = new TObjectHashingStrategy<VcsRef>() {
     @Override
     public int computeHashCode(@NotNull VcsRef ref) {
       return ref.getName().hashCode();
