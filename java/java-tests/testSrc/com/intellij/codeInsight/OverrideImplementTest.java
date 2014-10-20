@@ -67,6 +67,7 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
   public void testMultipleInterfaceInheritance() { doTest(false); }
   public void testResolveTypeParamConflict() { doTest(false); }
   public void testRawInheritance() { doTest(false); }
+  public void testMethodTypeParameters() { doTest(false); }
 
   public void testImplementExtensionMethods() { doTest8(false, true); }
   public void testOverrideExtensionMethods() { doTest8(false, false); }
