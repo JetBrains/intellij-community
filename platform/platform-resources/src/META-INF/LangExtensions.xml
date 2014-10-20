@@ -88,7 +88,6 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"
                         serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettingsImpl"/>
-    <exportable serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"/>
 
     <applicationService serviceInterface="com.intellij.psi.statistics.StatisticsManager"
                         serviceImplementation="com.intellij.psi.statistics.impl.StatisticsManagerImpl"/>

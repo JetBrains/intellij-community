@@ -13,28 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.application.options.editor;
 
 import com.intellij.lang.XmlCodeFoldingSettings;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.xml.XmlBundle;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
-
 
 @State(
-  name="XmlFoldingSettings",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/editor.codeinsight.xml"
-    )}
+  name = "XmlFoldingSettings",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.codeinsight.xml")
 )
-public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings>, ExportableComponent {
-
+public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings> {
   public static XmlFoldingSettings getInstance() {
     return ServiceManager.getService(XmlFoldingSettings.class);
   }
@@ -59,18 +48,6 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
 
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_XML_TAGS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("editor.codeinsight")};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return XmlBundle.message("xml.folding.settings");
-  }
 
   @Override
   public XmlFoldingSettings getState() {
