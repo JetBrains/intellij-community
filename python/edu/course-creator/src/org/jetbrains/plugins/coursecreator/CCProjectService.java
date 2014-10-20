@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.coursecreator.format.*;
 
 import java.io.File;
@@ -90,32 +91,37 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     ProjectView.getInstance(project).refresh();
   }
 
-  public static void drawTaskWindows(@NotNull final VirtualFile virtualFile, @NotNull final Editor editor, @NotNull final Course course) {
+  @Nullable
+  public TaskFile getTaskFile(@NotNull final VirtualFile virtualFile) {
     VirtualFile taskDir = virtualFile.getParent();
     if (taskDir == null) {
-      return;
+      return null;
     }
     String taskDirName = taskDir.getName();
     if (!taskDirName.contains("task")) {
-      return;
+      return null;
     }
     VirtualFile lessonDir = taskDir.getParent();
     if (lessonDir == null) {
-      return;
+      return null;
     }
     String lessonDirName = lessonDir.getName();
     if (!lessonDirName.contains("lesson")) {
-      return;
+      return null;
     }
-    Lesson lesson = course.getLessonsMap().get(lessonDirName);
+    Lesson lesson = myCourse.getLessonsMap().get(lessonDirName);
     if (lesson == null) {
-      return;
+      return null;
     }
     Task task = lesson.getTask(taskDirName);
     if (task == null) {
-      return;
+      return null;
     }
-    TaskFile taskFile = task.getTaskFile(virtualFile.getName());
+    return task.getTaskFile(virtualFile.getName());
+  }
+
+  public void drawTaskWindows(@NotNull final VirtualFile virtualFile, @NotNull final Editor editor, @NotNull final Course course) {
+    TaskFile taskFile = getTaskFile(virtualFile);
     if (taskFile == null) {
       return;
     }
