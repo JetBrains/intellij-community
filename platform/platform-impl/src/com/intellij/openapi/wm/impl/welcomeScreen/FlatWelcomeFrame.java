@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
@@ -81,15 +82,22 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
     setContentPane(myScreen.getWelcomePanel());
     setTitle("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
-    Rectangle bounds = ScreenUtil.getMainScreenBounds();
+    //Rectangle bounds = ScreenUtil.getMainScreenBounds();
     if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
       setSize(666, 460);
     } else {
       setSize(555, 460);
     }
-    int x = bounds.x + (bounds.width - getWidth()) / 2;
-    int y = bounds.y + (bounds.height - getHeight()) / 2;
-    setLocation(x, y);
+    //int x = bounds.x + (bounds.width - getWidth()) / 2;
+    //int y = bounds.y + (bounds.height - getHeight()) / 2;
+    Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
+    Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
+    setLocation(new Point(
+      screenBounds.x + (screenBounds.width - getWidth()) / 2,
+      screenBounds.y + (screenBounds.height - getHeight()) / 3
+    ));
+
+    //setLocation(x, y);
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
       public void projectOpened(Project project) {
@@ -111,14 +119,15 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
 
   @Override
   public void dispose() {
-    Disposer.dispose(myScreen);
+    saveLocation(getBounds());
     super.dispose();
+    Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
   }
 
   private static void saveLocation(Rectangle location) {
     Point middle = new Point(location.x + location.width / 2, location.y = location.height / 2);
-    //DimensionService.getInstance().setLocation(DIMENSION_KEY, middle, null);
+    DimensionService.getInstance().setLocation(WelcomeFrame.DIMENSION_KEY, middle, null);
   }
 
   private void setupCloseAction() {
