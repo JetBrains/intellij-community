@@ -112,11 +112,11 @@ public final class HorizontalLayout implements LayoutManager2 {
   @Override
   public void addLayoutComponent(String name, Component component) {
     synchronized (component.getTreeLock()) {
-      if (name == null || CENTER.equalsIgnoreCase(name)) {
-        myCenter.add(component);
-      }
-      else if (LEFT.equalsIgnoreCase(name)) {
+      if (name == null || LEFT.equalsIgnoreCase(name)) {
         myLeft.add(component);
+      }
+      else if (CENTER.equalsIgnoreCase(name)) {
+        myCenter.add(component);
       }
       else if (RIGHT.equalsIgnoreCase(name)) {
         myRight.add(component);
@@ -242,7 +242,7 @@ public final class HorizontalLayout implements LayoutManager2 {
       if (result == null) {
         result = new Dimension();
       }
-      else if (aligned) {
+      else if (aligned && center != null) {
         int leftWidth = left == null ? 0 : left.width;
         int rightWidth = right == null ? 0 : right.width;
         result.width += Math.abs(leftWidth - rightWidth);
