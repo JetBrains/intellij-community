@@ -136,17 +136,13 @@ public class BraceMatchingUtil {
         }
         String tagName = getTagName(myMatcher, fileText, iterator);
         if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
-
-        final boolean isLeftBrace = isLBraceToken(iterator, fileText, fileType);
-        final boolean isRightBrace = isRBraceToken(iterator, fileText, fileType);
-
-        if (forward ? isLeftBrace : isRightBrace) {
+        if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)) {
           myBraceStack.push(tokenType);
           if (isStrict) {
             myTagNameStack.push(tagName);
           }
         }
-        else if (forward ? isRightBrace : isLeftBrace) {
+        else if (forward ? isRBraceToken(iterator, fileText, fileType) : isLBraceToken(iterator, fileText, fileType)) {
           IElementType topTokenType = myBraceStack.pop();
           String topTagName = null;
           if (isStrict) {
