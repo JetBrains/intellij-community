@@ -75,7 +75,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private final File myBaseDir;
   private VirtualFile myVFSBaseDir;
   private static final String DESCRIPTION = "description";
-  private static final boolean EXPORT_IS_AVAILABLE = false;
   private static final String USER = "user";
 
   private boolean myListenerAdded = false;
@@ -727,7 +726,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   @Override
   public boolean isExportAvailable() {
-    return EXPORT_IS_AVAILABLE;
+    return false;
   }
 
   @Override
@@ -737,7 +736,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   @Override
   public void save() throws WriteExternalException {
-
     if (myRefreshAlarm != null) {
       myRefreshAlarm.cancelAllRequests();
       myRefreshAlarm = null;
