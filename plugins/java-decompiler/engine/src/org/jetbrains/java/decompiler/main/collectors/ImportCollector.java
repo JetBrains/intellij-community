@@ -109,9 +109,7 @@ public class ImportCollector {
   }
 
   public int writeImports(TextBuffer buffer) {
-
     int importlines_written = 0;
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
 
     List<String> imports = packImports();
 
@@ -119,7 +117,7 @@ public class ImportCollector {
       buffer.append("import ");
       buffer.append(s);
       buffer.append(";");
-      buffer.append(new_line_separator);
+      buffer.appendLineSeparator();
 
       importlines_written++;
     }
