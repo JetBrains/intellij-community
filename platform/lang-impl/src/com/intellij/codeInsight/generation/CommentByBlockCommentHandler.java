@@ -532,12 +532,11 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
 
   static TextRange processDocument(Document document, RangeMarker marker, Commenter commenter, boolean escape) {
     if (commenter instanceof EscapingCommenter) {
-      TextRange range = TextRange.create(marker.getStartOffset(), marker.getEndOffset());
       if (escape) {
-        ((EscapingCommenter)commenter).escape(document, range);
+        ((EscapingCommenter)commenter).escape(document, marker);
       }
       else {
-        ((EscapingCommenter)commenter).unescape(document, range);
+        ((EscapingCommenter)commenter).unescape(document, marker);
       }
     }
     return TextRange.create(marker.getStartOffset(), marker.getEndOffset());

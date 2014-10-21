@@ -17,14 +17,14 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.lang.Commenter;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.RangeMarker;
 
 /**
  * @author Dmitry Avdeev
  */
 public interface EscapingCommenter extends Commenter {
 
-  void escape(Document document, TextRange range);
+  void escape(Document document, RangeMarker range);
 
-  void unescape(Document document, TextRange range);
+  void unescape(Document document, RangeMarker range);
 }
