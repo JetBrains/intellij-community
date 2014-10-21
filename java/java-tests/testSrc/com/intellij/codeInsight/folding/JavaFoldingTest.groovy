@@ -947,12 +947,12 @@ public class Test {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
-    assertEquals """int getField() {
+    assert """int getField() {
    return field;
- }""", myFixture.editor.selectionModel.selectedText
+ }""" == myFixture.editor.selectionModel.selectedText
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
-    assertEquals 'return field;', myFixture.editor.selectionModel.selectedText
+    assert 'return field;' == myFixture.editor.selectionModel.selectedText
   }
 
   public void "test expand and collapse regions in selection"() {
