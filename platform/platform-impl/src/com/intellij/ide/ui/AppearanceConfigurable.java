@@ -174,8 +174,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.SHOW_EDITOR_TOOLTIP != myComponent.myEditorTooltipCheckBox.isSelected();
     settings.SHOW_EDITOR_TOOLTIP = myComponent.myEditorTooltipCheckBox.isSelected();
 
-    update |= settings.NAVIGATE_TO_PREVIEW != myComponent.myNavigateToPreviewCheckBox.isSelected();
-    settings.NAVIGATE_TO_PREVIEW = myComponent.myNavigateToPreviewCheckBox.isSelected();
+    update |= settings.NAVIGATE_TO_PREVIEW != (myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected());
+    settings.NAVIGATE_TO_PREVIEW = myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected();
 
     update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.DISABLE_MNEMONICS_IN_CONTROLS = myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
@@ -284,6 +284,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myRightLayoutCheckBox.setSelected(settings.RIGHT_HORIZONTAL_SPLIT);
     myComponent.myEditorTooltipCheckBox.setSelected(settings.SHOW_EDITOR_TOOLTIP);
     myComponent.myNavigateToPreviewCheckBox.setSelected(settings.NAVIGATE_TO_PREVIEW);
+    myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled in 139 for a while
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.DISABLE_MNEMONICS_IN_CONTROLS);
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();

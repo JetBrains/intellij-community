@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.HttpConfigurable;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -70,6 +71,7 @@ public abstract class SettingsConnectionService {
     Map<String, String> settings = ContainerUtil.newLinkedHashMap();
     try {
       String url = getSettingsUrl();
+      HttpConfigurable.getInstance().prepareURL(url);
       String text = FileUtil.loadTextAndClose(getStream(new URL(url)));
       if (text.startsWith("<html>") || text.startsWith("<!DOCTYPE html>")) {
         LOG.info("HTML text obtained from " + url + ": " + StringUtil.first(text, 300, true));

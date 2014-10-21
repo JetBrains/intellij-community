@@ -71,7 +71,7 @@ class PreviewPanel extends JPanel {
   private EnumSet<ContentType> myTypes = EnumSet.noneOf(ContentType.class);
 
   static boolean isAvailable() {
-    return UISettings.getInstance().NAVIGATE_TO_PREVIEW;
+    return false;//UISettings.getInstance().NAVIGATE_TO_PREVIEW;//disabled in 139 for a while
   }
 
   PreviewPanel(Project project, FileEditorManagerImpl manager, DockManager dockManager) {

@@ -22,15 +22,14 @@ public class Digester {
   }
 
   public static long digestFile(File file) throws IOException {
-    if (Utils.isZipFile(file.getName())) {
+    if (!Runner.ZIP_AS_BINARY && Utils.isZipFile(file.getName())) {
       ZipFile zipFile;
       try {
         zipFile = new ZipFile(file);
       }
       catch (IOException e) {
-        // If this isn't a zip file, this isn't really an error, merely an info.
-        Runner.infoStackTrace("Can't open file as zip file: " + file.getPath() + "\n", e);
-        return doDigestRegularFile(file);
+        Runner.printStackTrace(e);
+        return digestRegularFile(file);
       }
 
       try {
@@ -40,10 +39,10 @@ public class Digester {
         zipFile.close();
       }
     }
-    return doDigestRegularFile(file);
+    return digestRegularFile(file);
   }
 
-  private static long doDigestRegularFile(File file) throws IOException {
+  public static long digestRegularFile(File file) throws IOException {
     InputStream in = new BufferedInputStream(new FileInputStream(file));
     try {
       return digestStream(in);

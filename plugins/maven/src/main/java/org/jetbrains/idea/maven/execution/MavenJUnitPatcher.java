@@ -63,7 +63,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
       }
     }
 
-    if (testRunningSettings.isPassEnvironmentVariables() && isEnabled("systemPropertyVariables")) {
+    if (testRunningSettings.isPassSystemProperties() && isEnabled("systemPropertyVariables")) {
       Element systemPropertyVariables = config.getChild("systemPropertyVariables");
       if (systemPropertyVariables != null) {
         for (Element element : systemPropertyVariables.getChildren()) {
