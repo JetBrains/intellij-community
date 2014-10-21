@@ -1,69 +1,44 @@
 package org.jetbrains.plugins.coursecreator.actions;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
-import org.jetbrains.plugins.coursecreator.format.*;
+import org.jetbrains.plugins.coursecreator.format.Course;
+import org.jetbrains.plugins.coursecreator.format.TaskFile;
+import org.jetbrains.plugins.coursecreator.format.TaskWindow;
 
 import java.util.List;
 
-@SuppressWarnings("ComponentNotRegistered")
-public class CCDeleteTaskWindow extends DumbAwareAction {
+public class CCDeleteTaskWindow extends CCTaskWindowAction {
   private static final Logger LOG = Logger.getInstance(CCDeleteTaskWindow.class);
-  @NotNull
-  private final TaskWindow myTaskWindow;
 
-  public CCDeleteTaskWindow(@NotNull final TaskWindow taskWindow) {
+  public CCDeleteTaskWindow() {
     super("Delete task window","Delete task window", null);
-    myTaskWindow = taskWindow;
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) return;
-    final PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    if (file == null) return;
-    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    if (editor == null) {
-      return;
-    }
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+  protected void performTaskWindowAction(@NotNull CCState state) {
+    Project project = state.getProject();
+    PsiFile psiFile = state.getFile();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return;
-
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
-    final PsiDirectory taskDir = file.getContainingDirectory();
-    final PsiDirectory lessonDir = taskDir.getParent();
-    if (lessonDir == null) return;
-
-    final Lesson lesson = course.getLesson(lessonDir.getName());
-    final Task task = lesson.getTask(taskDir.getName());
-    final TaskFile taskFile = task.getTaskFile(file.getName());
-    if (taskFile == null) {
-      LOG.info("could not find task file");
-      return;
-    }
+    TaskFile taskFile = state.getTaskFile();
+    TaskWindow taskWindow = state.getTaskWindow();
     final List<TaskWindow> taskWindows = taskFile.getTaskWindows();
-    if (taskWindows.contains(myTaskWindow)) {
-      myTaskWindow.removeResources(project);
-      taskWindows.remove(myTaskWindow);
+    if (taskWindows.contains(taskWindow)) {
+      taskWindow.removeResources(project);
+      taskWindows.remove(taskWindow);
+      final Editor editor = state.getEditor();
       editor.getMarkupModel().removeAllHighlighters();
-      CCProjectService.getInstance(project).drawTaskWindows(file.getVirtualFile(), editor, course);
+      CCProjectService.getInstance(project).drawTaskWindows(psiFile.getVirtualFile(), editor, course);
       taskFile.createGuardedBlocks(editor);
-      DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
     }
   }
-
 }
