@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiLiteralExpression
@@ -1022,6 +1023,35 @@ class Foo {
     assertEquals 2, expandedFoldRegionsCount
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_TO_LEVEL_1)
     assertEquals 1, expandedFoldRegionsCount
+  }
+
+  public void "test single line closure unfolds when converted to multiline"() {
+    boolean oldValue = Registry.is("editor.durable.folding.state")
+    try {
+      Registry.get("editor.durable.folding.state").setValue(false)
+
+      def text = """
+  class Foo {
+    void m() {
+      SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                  System.out.println();
+              }
+          });
+    }
+  }
+  """
+      configure text
+      assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(text.indexOf("new Runnable"))
+      myFixture.editor.caretModel.moveToOffset(text.indexOf("System"))
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+      myFixture.doHighlighting()
+      assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(text.indexOf("new Runnable")) == null
+    }
+    finally {
+      Registry.get("editor.durable.folding.state").setValue(oldValue)
+    }
   }
 
   private int getFoldRegionsCount() {
