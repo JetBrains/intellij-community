@@ -77,6 +77,11 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     return StringUtil.stripHtml(KeyMapBundle.message(property), false);
   }
 
-  public interface Optional { // for search everywhere only
+  /*
+   * Marker interface for option provider containing only descriptors which are backed by toggle actions.
+   * E.g. UiSettings.SHOW_STATUS_BAR is backed by View > Status Bar action.
+   */
+  @Deprecated
+  public interface CoveredByToggleActions { // for search everywhere only
   }
 }

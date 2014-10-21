@@ -89,7 +89,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<Object>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
-      if (provider instanceof OptionsTopHitProvider.Optional) continue;
+      if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) continue;
       if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) continue;
       if (provider instanceof OptionsTopHitProvider && !StringUtil.startsWith(pattern, "#")) {
         String prefix = "#" + ((OptionsTopHitProvider)provider).getId() + " ";
