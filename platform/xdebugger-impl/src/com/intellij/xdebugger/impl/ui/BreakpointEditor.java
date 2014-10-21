@@ -90,6 +90,10 @@ public class BreakpointEditor {
       }
 
       public void actionPerformed(AnActionEvent e) {
+        Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
+        if (component instanceof JComboBox && SwingUtilities.isDescendingFrom(component, getMainPanel())) {
+          ((JComboBox)component).hidePopup();
+        }
         done();
       }
     };
