@@ -182,7 +182,7 @@ public class IpnbParser {
       if (outputCell instanceof IpnbPngOutputCell) {
         raw.png = ((IpnbPngOutputCell)outputCell).getBase64String();
         raw.text = outputCell.getText();
-        //raw.output_type = "display_data";
+        raw.output_type = "display_data";
       }
       else if (outputCell instanceof IpnbSvgOutputCell) {
         raw.svg = ((IpnbSvgOutputCell)outputCell).getSvg();
