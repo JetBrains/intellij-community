@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
@@ -166,11 +167,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   }
   
   public static Color getMainBackground() {
-    return new JBColor(Gray.xFF, new Color(58, 61, 63));
+    return new JBColor(new Color(0xf5f6f8), new Color(0x3c3f41));
   }
   
   public static Color getProjectsBackGround() {
-    return new JBColor(Gray._245, new Color(0x3c3f41));
+    return new JBColor(Gray.xFF, new Color(58, 61, 63));
   }
   
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
@@ -356,6 +357,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(new NewRecentProjectPanel(this), BorderLayout.CENTER);
       panel.setBackground(getProjectsBackGround());
+      panel.setBorder(new CustomLineBorder(new JBColor(Gray.xEC, new Color(0x3c3f41)), 0,0,0,1));
       return panel;
     }
 
