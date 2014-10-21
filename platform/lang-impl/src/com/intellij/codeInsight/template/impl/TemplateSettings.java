@@ -48,7 +48,8 @@ import java.util.*;
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/templates.xml")
   },
-  storageChooser = LastStorageChooserForWrite.class
+  storageChooser = LastStorageChooserForWrite.class,
+  additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
 )
 public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
@@ -89,6 +90,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   @NonNls private static final String RESOURCE_BUNDLE = "resource-bundle";
   @NonNls private static final String KEY = "key";
   @NonNls private static final String ID = "id";
+
+  static final String TEMPLATES_DIR_PATH = StoragePathMacros.ROOT_CONFIG + "/templates";
 
   private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
 
@@ -183,7 +186,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private TemplateKey myLastSelectedTemplate;
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
-    mySchemesManager = schemesManagerFactory.createSchemesManager(StoragePathMacros.ROOT_CONFIG + "/templates", new BaseSchemeProcessor<TemplateGroup>() {
+    mySchemesManager = schemesManagerFactory.createSchemesManager(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup>() {
       @Override
       @Nullable
       public TemplateGroup readScheme(@NotNull final Document schemeContent) throws InvalidDataException {

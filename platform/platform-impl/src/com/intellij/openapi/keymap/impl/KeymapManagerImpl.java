@@ -16,9 +16,7 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -35,14 +33,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
-import java.io.File;
 import java.util.*;
 
 @State(
   name = "KeymapManager",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/keymap.xml", roamingType = RoamingType.PER_PLATFORM)
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/keymap.xml", roamingType = RoamingType.PER_PLATFORM),
+  additionalExportFile = KeymapManagerImpl.KEYMAPS_DIR_PATH
 )
-public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
+public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ApplicationComponent {
+  static final String KEYMAPS_DIR_PATH = StoragePathMacros.ROOT_CONFIG + "/keymaps";
+
   private final List<KeymapManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private String myActiveKeymapName;
   private final Map<String, String> myBoundShortcuts = new HashMap<String, String>();
@@ -55,7 +55,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   public static boolean ourKeymapManagerInitialized = false;
 
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
-    mySchemesManager = factory.createSchemesManager(StoragePathMacros.ROOT_CONFIG + "/keymaps",
+    mySchemesManager = factory.createSchemesManager(KEYMAPS_DIR_PATH,
                                                     new BaseSchemeProcessor<KeymapImpl>() {
                                                       @Override
                                                       public KeymapImpl readScheme(@NotNull final Document schemeContent) throws InvalidDataException {
@@ -93,18 +93,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourKeymapManagerInitialized = true;
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{new File(PathManager.getOptionsPath() + File.separatorChar + "keymap.xml"), mySchemesManager.getRootDirectory()};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return KeyMapBundle.message("key.maps.name");
   }
 
   @Override

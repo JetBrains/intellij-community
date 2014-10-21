@@ -59,8 +59,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   public void actionPerformed(@Nullable AnActionEvent e) {
     ApplicationManager.getApplication().saveSettings();
 
-    MultiMap<File, ExportableComponent> fileToComponents = getExportableComponentsMap(true);
-    ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(fileToComponents, true,
+    ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(getExportableComponentsMap(true), true,
                                                                                IdeBundle.message("title.select.components.to.export"),
                                                                                IdeBundle.message(
                                                                                  "prompt.please.check.all.components.to.export"));
@@ -183,8 +182,25 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
               !StringUtil.isEmpty(storage.file()) &&
               storage.file().startsWith(StoragePathMacros.APP_CONFIG)) {
             File file = new File(storageManager.expandMacros(storage.file()));
-            if (!onlyExisting || file.exists()) {
-              result.putValue(file, new MyExportableComponent(file, getExportableComponentPresentableName(stateAnnotation.name(), aClass, pluginDescriptor)));
+
+            File additionalExportFile = null;
+            if (!StringUtil.isEmpty(stateAnnotation.additionalExportFile())) {
+              additionalExportFile = new File(storageManager.expandMacros(stateAnnotation.additionalExportFile()));
+              if (onlyExisting && !additionalExportFile.exists()) {
+                additionalExportFile = null;
+              }
+            }
+
+            boolean fileExists = !onlyExisting || file.exists();
+            if (fileExists || additionalExportFile != null) {
+              File[] files;
+              if (additionalExportFile == null) {
+                files = new File[]{file};
+              }
+              else {
+                files = fileExists ? new File[]{file, additionalExportFile} : new File[]{additionalExportFile};
+              }
+              result.putValue(file, new MyExportableComponent(files, getExportableComponentPresentableName(stateAnnotation.name(), aClass, pluginDescriptor)));
             }
           }
         }
@@ -220,18 +236,18 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   }
 
   private static final class MyExportableComponent implements ExportableComponent {
-    private final File file;
+    private final File[] files;
     private final String name;
 
-    public MyExportableComponent(@NotNull File file, @NotNull String name) {
-      this.file = file;
+    public MyExportableComponent(@NotNull File[] files, @NotNull String name) {
+      this.files = files;
       this.name = name;
     }
 
     @NotNull
     @Override
     public File[] getExportFiles() {
-      return new File[]{file};
+      return files;
     }
 
     @NotNull
