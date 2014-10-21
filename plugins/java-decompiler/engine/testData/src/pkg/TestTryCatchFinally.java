@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.generation;
+package pkg;
 
-import com.intellij.lang.Commenter;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
-
-/**
- * @author Dmitry Avdeev
- */
-public interface EscapingCommenter extends Commenter {
-
-  void escape(Document document, RangeMarker range);
-
-  void unescape(Document document, RangeMarker range);
+public class TestTryCatchFinally {
+  public int test(String a) {
+    try {
+      return Integer.parseInt(a);
+    } catch (Exception e) {
+      System.out.println("Error" + e);
+    } finally {
+      System.out.println("Finally");
+    }
+    return -1;
+  }
 }

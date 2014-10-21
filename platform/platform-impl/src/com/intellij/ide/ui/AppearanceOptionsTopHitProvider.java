@@ -89,7 +89,7 @@ public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
     };
   }
 
-  public static class Ex extends OptionsTopHitProvider implements OptionsTopHitProvider.Optional {
+  public static class Ex extends OptionsTopHitProvider implements CoveredByToggleActions {
     private static final Collection<BooleanOptionDescription> ourOptions = ContainerUtil.immutableList(
       appearance("Window: " + "Hide Tool Window Bars", "HIDE_TOOL_STRIPES"),
       appearance("View: Show Main Toolbar", "SHOW_MAIN_TOOLBAR"),

@@ -1,0 +1,16 @@
+package pkg;
+
+public class TestTryCatchFinally {
+   public int test(String var1) {
+      try {
+         int var2 = Integer.parseInt(var1);
+         return var2;
+      } catch (Exception var6) {
+         System.out.println("Error" + var6);
+      } finally {
+         System.out.println("Finally");
+      }
+
+      return -1;
+   }
+}

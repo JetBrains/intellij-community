@@ -34,6 +34,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -259,6 +260,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
   @NotNull
   private Collection<OutputFileObject> compile(String target) throws EvaluateException {
+    if (!SystemInfo.isJavaVersionAtLeast(target)) {
+      throw new EvaluateException("Unable to compile for target level " + target + ". Need to run IDEA on java version at least " + target + ", currently running on " + SystemInfo.JAVA_RUNTIME_VERSION);
+    }
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     MemoryFileManager manager = new MemoryFileManager(compiler);
     DiagnosticCollector<JavaFileObject> diagnostic = new DiagnosticCollector<JavaFileObject>();

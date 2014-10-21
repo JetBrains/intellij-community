@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.generation;
+package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.lang.Commenter;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WelcomeFrameProvider;
+import com.intellij.util.PlatformUtils;
 
 /**
- * @author Dmitry Avdeev
+ * @author Konstantin Bulenkov
  */
-public interface EscapingCommenter extends Commenter {
-
-  void escape(Document document, RangeMarker range);
-
-  void unescape(Document document, RangeMarker range);
+public class FlatWelcomeFrameProvider implements WelcomeFrameProvider {
+  @Override
+  public IdeFrame createFrame() {
+    if (Registry.is("ide.new.welcome.screen") 
+        && (PlatformUtils.isIntelliJ() || PlatformUtils.isCidr())) {
+      return new FlatWelcomeFrame();
+    }
+    return null;
+  }
 }

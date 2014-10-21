@@ -110,9 +110,6 @@ public class XmlResourceResolver implements XMLEntityResolver {
           baseFile = myFile;
         }
 
-        PsiFile byLocation = resolveByLocation(myFile, systemId);
-        if (byLocation != null) return byLocation;
-
         String version = null;
         String tagName = null;
         if (baseFile == myFile) {
@@ -122,7 +119,15 @@ public class XmlResourceResolver implements XMLEntityResolver {
             version = rootTag.getAttributeValue("version");
           }
         }
-        
+        String resource = ((ExternalResourceManagerEx)ExternalResourceManager.getInstance()).getUserResource(myProject, systemId, version);
+        if (resource != null) {
+          XmlFile file = XmlUtil.findXmlFile(myFile, resource);
+          if (file != null) return file;
+        }
+
+        PsiFile byLocation = resolveByLocation(myFile, systemId);
+        if (byLocation != null) return byLocation;
+
         PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(systemId, baseFile, version);
         if (psiFile == null) {
           psiFile = XmlUtil.findXmlFile(baseFile, systemId);

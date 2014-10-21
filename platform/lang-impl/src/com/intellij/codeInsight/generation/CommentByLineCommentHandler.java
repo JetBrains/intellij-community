@@ -600,6 +600,8 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     String prefix = commenter.getLineCommentPrefix();
     int endOffset = document.getLineEndOffset(line);
     RangeMarker marker = document.createRangeMarker(offset, endOffset);
+    marker.setGreedyToLeft(true);
+    marker.setGreedyToRight(true);
     if (prefix != null) {
       if (commenter instanceof CommenterWithLineSuffix) {
         endOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), endOffset, " \t");

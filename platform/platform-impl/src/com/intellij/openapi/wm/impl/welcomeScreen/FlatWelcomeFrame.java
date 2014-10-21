@@ -37,13 +37,15 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +53,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -61,7 +65,7 @@ import java.util.Arrays;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, IdeFrame {
+public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   private final BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
 
@@ -163,24 +167,46 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
   }
   
   public static Color getMainBackground() {
-    return new JBColor(Gray.xFF, new Color(58, 61, 63));
+    return new JBColor(new Color(0xf5f6f8), new Color(0x3c3f41));
   }
   
   public static Color getProjectsBackGround() {
-    return new JBColor(Gray._245, new Color(0x3c3f41));
+    return new JBColor(Gray.xFF, new Color(58, 61, 63));
   }
-
-  @Override
-  public IdeFrame createFrame() {
-    return Registry.is("ide.new.welcome.screen") && (PlatformUtils.isIntelliJ() || PlatformUtils.isCidr()) ? this : null;
-  }
-
+  
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
     public FlatWelcomeScreen() {
       super(new BorderLayout());
       setBackground(getMainBackground());
       if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
-        add(createRecentProjects(), BorderLayout.WEST);
+        final JComponent recentProjects = createRecentProjects();
+        add(recentProjects, BorderLayout.WEST);
+        final JList projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
+        if (projectsList != null) {
+          projectsList.getModel().addListDataListener(new ListDataListener() {
+            @Override
+            public void intervalAdded(ListDataEvent e) {             
+            }
+
+            @Override
+            public void intervalRemoved(ListDataEvent e) {
+              removeIfNeeded();
+            }
+
+            private void removeIfNeeded() {
+              if (projectsList.getModel().getSize() == 0) {
+                FlatWelcomeScreen.this.remove(recentProjects);
+                FlatWelcomeScreen.this.revalidate();
+                FlatWelcomeScreen.this.repaint();
+              }
+            }
+
+            @Override
+            public void contentsChanged(ListDataEvent e) {
+              removeIfNeeded();
+            }
+          });
+        }
       }
       add(createBody(), BorderLayout.CENTER);
     }
@@ -331,6 +357,7 @@ public class FlatWelcomeFrame extends JFrame implements WelcomeFrameProvider, Id
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(new NewRecentProjectPanel(this), BorderLayout.CENTER);
       panel.setBackground(getProjectsBackGround());
+      panel.setBorder(new CustomLineBorder(new JBColor(Gray.xEC, new Color(0x3c3f41)), 0,0,0,1));
       return panel;
     }
 

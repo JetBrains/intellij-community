@@ -143,7 +143,7 @@ public class GitCherryPickAction extends DumbAwareAction {
       return;
     }
 
-    e.getPresentation().setEnabledAndVisible(enabled(project, log, details));
+    e.getPresentation().setEnabled(enabled(project, log, details));
     e.getPresentation().setText(isAutoCommit(project) ? NAME : NAME + "...");
   }
 

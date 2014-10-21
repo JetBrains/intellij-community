@@ -17,7 +17,7 @@ package com.intellij.lang.xml;
 
 import com.intellij.codeInsight.generation.EscapingCommenter;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +59,7 @@ public class XmlCommenter implements EscapingCommenter {
   }
 
   @Override
-  public void escape(Document document, TextRange range) {
+  public void escape(Document document, RangeMarker range) {
     String prefix = getBlockCommentPrefix();
     String suffix = getBlockCommentSuffix();
 
@@ -71,6 +71,8 @@ public class XmlCommenter implements EscapingCommenter {
     if (CharArrayUtil.regionMatches(document.getCharsSequence(), end - suffix.length(), suffix)) {
       end -= suffix.length();
     }
+    if (start >= end) return;
+
     for (int i = end - DOUBLE_DASH.length(); i >= start; i--) {
       if (CharArrayUtil.regionMatches(document.getCharsSequence(), i, DOUBLE_DASH) &&
           !CharArrayUtil.regionMatches(document.getCharsSequence(), i, suffix) &&
@@ -81,10 +83,16 @@ public class XmlCommenter implements EscapingCommenter {
     if (CharArrayUtil.regionMatches(document.getCharsSequence(), start, GT)) {
       document.replaceString(start, start + GT.length(), ESCAPED_GT);
     }
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), range.getStartOffset(), prefix + "-")) {
+      document.insertString(start, " ");
+    }
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), range.getEndOffset() - suffix.length() - 1, "-" + suffix)) {
+      document.insertString(range.getEndOffset() - suffix.length(), " ");
+    }
   }
 
   @Override
-  public void unescape(Document document, TextRange range) {
+  public void unescape(Document document, RangeMarker range) {
     final int start = range.getStartOffset();
     for (int i = range.getEndOffset(); i >= start; i--) {
       if (CharArrayUtil.regionMatches(document.getCharsSequence(), i, ESCAPED_DOUBLE_DASH)) {

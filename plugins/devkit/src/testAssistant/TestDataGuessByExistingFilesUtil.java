@@ -42,6 +42,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.io.File;
 import java.util.*;
@@ -320,7 +321,7 @@ public class TestDataGuessByExistingFilesUtil {
             continue;
           }
           final VirtualFile file = ((PsiFile)element).getVirtualFile();
-          if (file == null || fileIndex.isInSource(file)) {
+          if (file == null || fileIndex.isInSource(file) && !fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
             continue;
           }
 

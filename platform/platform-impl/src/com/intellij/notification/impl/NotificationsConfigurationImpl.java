@@ -18,7 +18,6 @@ package com.intellij.notification.impl;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationsConfiguration;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
@@ -29,15 +28,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 
 /**
  * @author spleaner
  */
-@State(name = "NotificationConfiguration",
-       storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/notifications.xml")})
-public class NotificationsConfigurationImpl extends NotificationsConfiguration implements ExportableApplicationComponent,
+@State(
+  name = "NotificationConfiguration",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/notifications.xml")
+)
+public class NotificationsConfigurationImpl extends NotificationsConfiguration implements ApplicationComponent,
                                                                                           PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
@@ -103,7 +103,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
     NotificationSettings[] result = settings.toArray(new NotificationSettings[settings.size()]);
     Arrays.sort(result, new Comparator<NotificationSettings>() {
       @Override
-      public int compare(NotificationSettings o1, NotificationSettings o2) {
+      public int compare(@NotNull NotificationSettings o1, @NotNull NotificationSettings o2) {
         return o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
       }
     });
@@ -238,17 +238,5 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
       SHOW_BALLOONS = false;
     }
-  }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("notifications")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return "Notifications";
   }
 }

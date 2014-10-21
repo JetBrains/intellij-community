@@ -24,7 +24,7 @@ import com.intellij.util.Consumer;
 /**
  * @author Konstantin Bulenkov
  */
-public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTopHitProvider.Optional {
+public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTopHitProvider.CoveredByToggleActions {
   private static OptionDescription CYCLING_SCROLLING = AppearanceOptionsTopHitProvider.appearance("Cyclic scrolling", "CYCLE_SCROLLING");
   private static OptionDescription MEMORY_INDICATOR = AppearanceOptionsTopHitProvider.appearance("Show Memory Indicator",
                                                                                                  "SHOW_MEMORY_INDICATOR");

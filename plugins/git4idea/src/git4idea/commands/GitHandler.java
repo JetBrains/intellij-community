@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
@@ -441,14 +442,14 @@ public abstract class GitHandler {
         myEnv.put(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
 
         if (useHttpProxy) {
-          myEnv.put(GitSSHHandler.SSH_PROXY_HOST_ENV, httpConfigurable.PROXY_HOST);
+          myEnv.put(GitSSHHandler.SSH_PROXY_HOST_ENV, StringUtil.notNullize(httpConfigurable.PROXY_HOST));
           myEnv.put(GitSSHHandler.SSH_PROXY_PORT_ENV, String.valueOf(httpConfigurable.PROXY_PORT));
           boolean proxyAuthentication = httpConfigurable.PROXY_AUTHENTICATION;
           myEnv.put(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV, String.valueOf(proxyAuthentication));
 
           if (proxyAuthentication) {
-            myEnv.put(GitSSHHandler.SSH_PROXY_USER_ENV, httpConfigurable.PROXY_LOGIN);
-            myEnv.put(GitSSHHandler.SSH_PROXY_PASSWORD_ENV, httpConfigurable.getPlainProxyPassword());
+            myEnv.put(GitSSHHandler.SSH_PROXY_USER_ENV, StringUtil.notNullize(httpConfigurable.PROXY_LOGIN));
+            myEnv.put(GitSSHHandler.SSH_PROXY_PASSWORD_ENV, StringUtil.notNullize(httpConfigurable.getPlainProxyPassword()));
           }
         }
       }

@@ -118,6 +118,33 @@ public class ProblematicWhitespaceInspectionTest extends LightInspectionTestCase
            "}}");
   }
 
+  public void testSuppression1() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = false;
+    myFixture.configureByText("X.html", "<!--suppress ProblematicWhitespace --><html>\n" +
+                                        "\t<body></body>\n" +
+                                        "</html>");
+    myFixture.testHighlighting(true, false, false);
+  }
+
+  public void testSuppression2() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = false;
+    myFixture.configureByText("x.css", "/*noinspection ProblematicWhitespace*/\n" +
+                                       "div {\n" +
+                                       " font-family: arial, helvetica;\n" +
+                                       "}");
+    myFixture.testHighlighting(true, false, false);
+  }
+
+  public void testSuppression3() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = false;
+    doTest("@SuppressWarnings(\"ProblematicWhitespace\") class X {\n" +
+           "\tString s;\n" +
+           "}\n");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new ProblematicWhitespaceInspection();

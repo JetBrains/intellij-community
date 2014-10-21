@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiLiteralExpression
@@ -209,7 +210,7 @@ class Test {
      new Runnable() {
       static final long serialVersionUID = 42L;
       public void run() {
-        System.out.println(<caret>);
+        System.out.println();
       }
     };
   }
@@ -223,6 +224,7 @@ class Test {
     assertFalse closureStartFold.expanded
     assert text.substring(closureStartFold.endOffset).startsWith('System') //one line closure
 
+    myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf("();") + 1)
     myFixture.type('2')
     myFixture.doHighlighting()
     closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
@@ -935,12 +937,21 @@ public class Test {
     configure """class Foo {
  int field;
 
- <selection>int getField() {
-   <caret>return field;
- }</selection>
+ int getField() {
+   return field;
+ }
 
 }"""
     assertSize 2, myFixture.editor.foldingModel.allFoldRegions
+    myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf("return"))
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+    assert """int getField() {
+   return field;
+ }""" == myFixture.editor.selectionModel.selectedText
+
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
     assert 'return field;' == myFixture.editor.selectionModel.selectedText
   }
@@ -1012,6 +1023,35 @@ class Foo {
     assertEquals 2, expandedFoldRegionsCount
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_TO_LEVEL_1)
     assertEquals 1, expandedFoldRegionsCount
+  }
+
+  public void "test single line closure unfolds when converted to multiline"() {
+    boolean oldValue = Registry.is("editor.durable.folding.state")
+    try {
+      Registry.get("editor.durable.folding.state").setValue(false)
+
+      def text = """
+  class Foo {
+    void m() {
+      SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                  System.out.println();
+              }
+          });
+    }
+  }
+  """
+      configure text
+      assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(text.indexOf("new Runnable"))
+      myFixture.editor.caretModel.moveToOffset(text.indexOf("System"))
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+      myFixture.doHighlighting()
+      assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(text.indexOf("new Runnable")) == null
+    }
+    finally {
+      Registry.get("editor.durable.folding.state").setValue(oldValue)
+    }
   }
 
   private int getFoldRegionsCount() {
