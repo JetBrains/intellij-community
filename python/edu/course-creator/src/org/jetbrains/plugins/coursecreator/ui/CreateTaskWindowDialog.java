@@ -48,14 +48,16 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     initValidation();
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void setHintText(Project project, TaskWindow taskWindow) {
     VirtualFile hints = project.getBaseDir().findChild("hints");
     if (hints != null) {
       File file = new File(hints.getPath(), taskWindow.getHintName());
       StringBuilder hintText = new StringBuilder();
       if (file.exists()) {
+        BufferedReader bufferedReader =  null;
         try {
-          BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+          bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
           String line;
           while ((line = bufferedReader.readLine()) != null) {
             hintText.append(line).append("\n");
@@ -69,6 +71,16 @@ public class CreateTaskWindowDialog extends DialogWrapper {
         }
         catch (IOException e) {
           LOG.error(e);
+        }
+        finally {
+          if (bufferedReader != null) {
+            try {
+              bufferedReader.close();
+            }
+            catch (IOException e) {
+              //close silently
+            }
+          }
         }
       }
     }
@@ -87,6 +99,7 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void createHint(String hintName, String hintText) {
     VirtualFile hintsDir = myProject.getBaseDir().findChild("hints");
     if (hintsDir != null) {
