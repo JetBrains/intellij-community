@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,7 @@ public class ConfigImportHelper {
    */
   @NonNls public static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
   
-  @NonNls private static final String BUILD_NUMBER_FILE = "build.txt";
+  @NonNls private static final String BUILD_NUMBER_FILE = SystemInfo.isMac ? "/Resources/build.txt" : "build.txt";
   @NonNls private static final String PLUGINS_PATH = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
   @NonNls private static final String CONFIG_RELATED_PATH = SystemInfo.isMac ? "" : "config/";
@@ -114,19 +113,15 @@ public class ConfigImportHelper {
     if (parent == null || !parent.exists()) return null;
     File maxFile = null;
     long lastModified = 0;
-    final String selector;
-    if (customPathSelector != null) {
-      selector = customPathSelector;
-    }
-    else {
-      selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
-    }
+    final String selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
 
-    final String prefix = (SystemInfo.isMac ? "" : ".") + selector.replaceAll("\\d", "");
+    final String prefix = getPrefixFromSelector(selector);
+    final String customPrefix = customPathSelector != null ? getPrefixFromSelector(customPathSelector) : null;
     for (File file : parent.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File file, String name) {
-        return StringUtil.startsWithIgnoreCase(name, prefix);
+        return StringUtil.startsWithIgnoreCase(name, prefix) ||
+               customPrefix != null && StringUtil.startsWithIgnoreCase(name, customPrefix);
       }
     })) {
       final File options = new File(file, CONFIG_RELATED_PATH + OPTIONS_XML);
@@ -138,6 +133,10 @@ public class ConfigImportHelper {
       }
     }
     return maxFile != null ? new File(maxFile, CONFIG_RELATED_PATH) : null;
+  }
+
+  private static String getPrefixFromSelector(String selector) {
+    return (SystemInfo.isMac ? "" : ".") + selector.replaceAll("\\d", "");
   }
 
   public static void doImport(final String newConfigPath, final File oldConfigDir) {
@@ -402,15 +401,12 @@ public class ConfigImportHelper {
       dir = dir.substring(1, dir.length() - 1);
     }
     if (replaceUserHome) {
-      if (dir.startsWith("~\\") || dir.startsWith("~//") || StringUtil.startsWithConcatenation(dir, "~", File.separator)) {
-        dir = SystemProperties.getUserHome() + dir.substring(1);
-      }
+      dir = FileUtil.expandUserHome(dir);
     }
     return dir;
   }
 
-  public static boolean isInstallationHomeOrConfig(@NotNull final String installationHome, 
-                                                   @NotNull final ConfigImportSettings settings) {
+  public static boolean isInstallationHomeOrConfig(@NotNull final String installationHome, @NotNull final ConfigImportSettings settings) {
     if (new File(installationHome, OPTIONS_XML).exists()) return true;
     if (new File(installationHome, CONFIG_RELATED_PATH + OPTIONS_XML).exists()) return true;
 
