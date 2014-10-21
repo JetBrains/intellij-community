@@ -32,11 +32,15 @@ public class StudyShowHintAction extends DumbAwareAction {
     super("Show hint", "Show hint", StudyIcons.ShowHint);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
     }
+    showHint(project);
+  }
+
+  public static void showHint(Project project) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) {
       return;
