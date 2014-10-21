@@ -12,6 +12,6 @@ def test_task_windows():
 
 if __name__ == '__main__':
     run_common_tests()
-    test_task_windows()
+    # test_task_windows()
 
 

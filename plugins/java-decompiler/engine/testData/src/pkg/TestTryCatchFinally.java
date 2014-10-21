@@ -16,6 +16,22 @@
 package pkg;
 
 public class TestTryCatchFinally {
+  public void test1(String x) {
+    try {
+      System.out.println("sout1");
+    } catch (Exception e) {
+      try {
+        System.out.println("sout2");
+      } catch (Exception e2) {
+        // Empty
+        // Empty
+        // Empty
+      }
+    } finally {
+      System.out.println("finally");
+    }
+  }
+
   public int test(String a) {
     try {
       return Integer.parseInt(a);

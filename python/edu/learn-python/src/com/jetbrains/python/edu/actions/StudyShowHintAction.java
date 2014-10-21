@@ -21,12 +21,15 @@ import com.jetbrains.python.edu.course.TaskWindow;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import icons.StudyIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public class StudyShowHintAction extends DumbAwareAction {
   public static final String ACTION_ID = "ShowHintAction";
   public static final String SHORTCUT = "ctrl pressed 7";
+  public static final String OUTSIDE_TASK_WINDOW_MESSAGE = "Put caret to task window to get hint for it.";
+  public static final String HINT_NOT_AVAILABLE = "There is no hint for this task window";
 
   public StudyShowHintAction() {
     super("Show hint", "Show hint", StudyIcons.ShowHint);
@@ -53,41 +56,49 @@ public class StudyShowHintAction extends DumbAwareAction {
     final Editor editor = studyState.getEditor();
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
     TaskWindow taskWindow = studyState.getTaskFile().getTaskWindow(editor.getDocument(), pos);
-    if (file == null || taskWindow == null) {
+    if (file == null) {
       return;
     }
-    String hint = taskWindow.getHint();
-    if (hint == null) {
-      return;
+    String hintText = OUTSIDE_TASK_WINDOW_MESSAGE;
+    if (taskWindow != null) {
+      hintText = getHintText(taskWindow, course);
     }
-    File resourceFile = new File(course.getResourcePath());
-    File resourceRoot = resourceFile.getParentFile();
-    if (resourceRoot == null || !resourceRoot.exists()) {
-      return;
-    }
-    File hintsDir = new File(resourceRoot, Course.HINTS_DIR);
-    if (hintsDir.exists()) {
-      String hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hint, true);
-      int offset = editor.getDocument().getLineStartOffset(pos.line) + pos.column;
-      PsiElement element = file.findElementAt(offset);
-      if (hintText == null || element == null) {
-        return;
-      }
+    int offset = editor.getDocument().getLineStartOffset(pos.line) + pos.column;
+    PsiElement element = file.findElementAt(offset);
+    DocumentationManager documentationManager = DocumentationManager.getInstance(project);
+    DocumentationComponent component = new DocumentationComponent(documentationManager);
+    component.setData(element != null ? element : file, element != null ? hintText : OUTSIDE_TASK_WINDOW_MESSAGE, true, null);
+    showHintPopUp(project, editor, component);
+  }
 
-      DocumentationManager documentationManager = DocumentationManager.getInstance(project);
-      DocumentationComponent component = new DocumentationComponent(documentationManager);
-      component.setData(element, hintText, true, null);
-      final JBPopup popup =
-        JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-          .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
-          .setResizable(true)
-          .setMovable(true)
-          .setRequestFocus(true)
-          .createPopup();
-      component.setHint(popup);
-      popup.showInBestPositionFor(editor);
-      Disposer.dispose(component);
+  @Nullable
+  private static String getHintText(@NotNull final TaskWindow taskWindow, @NotNull final Course course) {
+    String hintFileName = taskWindow.getHint();
+    String hintText = HINT_NOT_AVAILABLE;
+    if (hintFileName != null && !hintFileName.isEmpty()) {
+      File resourceFile = new File(course.getResourcePath());
+      File resourceRoot = resourceFile.getParentFile();
+      if (resourceRoot != null && resourceRoot.exists()) {
+        File hintsDir = new File(resourceRoot, Course.HINTS_DIR);
+        if (hintsDir.exists()) {
+          hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hintFileName, true);
+        }
+      }
     }
+    return  hintText != null ? hintText : OUTSIDE_TASK_WINDOW_MESSAGE;
+  }
+
+  private static void showHintPopUp(Project project, Editor editor, DocumentationComponent component) {
+    final JBPopup popup =
+      JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+        .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+        .setResizable(true)
+        .setMovable(true)
+        .setRequestFocus(true)
+        .createPopup();
+    component.setHint(popup);
+    popup.showInBestPositionFor(editor);
+    Disposer.dispose(component);
   }
 
   @Override
