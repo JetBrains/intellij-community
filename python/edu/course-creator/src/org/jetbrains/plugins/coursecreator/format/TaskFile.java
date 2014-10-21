@@ -115,10 +115,23 @@ public class TaskFile {
 
   public void update(@NotNull final TaskFile source) {
     for (TaskWindow taskWindow : source.getTaskWindows()) {
-      TaskWindow taskWindowUpdated = task_windows.get(taskWindow.getIndex() - 1);
+      TaskWindow taskWindowUpdated = getTaskWindow(taskWindow.getIndex());
+      if (taskWindowUpdated == null) {
+        break;
+      }
       taskWindowUpdated.setLine(taskWindow.getLine());
       taskWindowUpdated.setStart(taskWindow.getStart());
     }
+  }
+
+ @Nullable
+ public TaskWindow getTaskWindow(int index) {
+    for (TaskWindow taskWindow : task_windows) {
+      if (taskWindow.getIndex() == index) {
+        return taskWindow;
+      }
+    }
+   return null;
   }
 
   /**

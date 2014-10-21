@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.coursecreator.actions;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -65,7 +64,6 @@ public class CCAddTaskWindow extends DumbAwareAction {
     taskFile.addTaskWindow(taskWindow, index);
     taskWindow.drawHighlighter(editor, false);
     taskWindow.createGuardedBlocks(editor);
-    DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
   }
 
   @Override
