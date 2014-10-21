@@ -132,7 +132,7 @@ public class CatchAllStatement extends Statement {
     if (first.type == TYPE_TRYCATCH && first.varDefinitions.isEmpty() && isFinally &&
         !labeled && !first.isLabeled() && (lstSuccs.isEmpty() || !lstSuccs.get(0).explicit)) {
       TextBuffer content = ExprProcessor.jmpWrapper(first, indent, true, tracer);
-      content.setStart(content.length() - new_line_separator.length());
+      content.setLength(content.length() - new_line_separator.length());
       buf.append(content);
     }
     else {
