@@ -32,6 +32,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -88,9 +89,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
 
   public void setTextFieldPreferredWidth(final int charCount) {
     final Comp comp = getChildComponent();
-    Dimension size = comp.getPreferredSize();
-    FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
-    size.width = fontMetrics.charWidth('a') * charCount;
+    Dimension size = GuiUtils.getSizeByChars(charCount, comp);
     comp.setPreferredSize(size);
     final Dimension preferredSize = myBrowseButton.getPreferredSize();
     setPreferredSize(new Dimension(size.width + preferredSize.width + 2, UIUtil.isUnderAquaLookAndFeel() ? preferredSize.height : preferredSize.height + 2));
