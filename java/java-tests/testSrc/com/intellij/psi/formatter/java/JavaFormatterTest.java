@@ -3160,4 +3160,24 @@ public void testSCR260() throws Exception {
       "}"
     );
   }
+
+  public void testIdea114862() {
+    getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
+    CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getIndentOptions();
+    assertNotNull(indentOptions);
+    indentOptions.USE_TAB_CHARACTER = true;
+    doTextTest(
+      "// @formatter:off \n" +
+      "public class Test {\n" +
+      "      String foo;\n" +
+      "      String bar;\n" +
+      "}",
+
+      "// @formatter:off \n" +
+      "public class Test {\n" +
+      "      String foo;\n" +
+      "      String bar;\n" +
+      "}"
+    );
+  }
 }

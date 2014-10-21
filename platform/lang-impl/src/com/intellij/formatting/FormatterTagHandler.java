@@ -139,7 +139,7 @@ public class FormatterTagHandler {
           formatterEnabled = true;
         }
       }
-      if (start < myInitialRange.getEndOffset()) {
+      if (start < myInitialRange.getEndOffset() && formatterEnabled) {
         enabledRanges.add(new TextRange(start, myInitialRange.getEndOffset()));
       }
       return enabledRanges;
