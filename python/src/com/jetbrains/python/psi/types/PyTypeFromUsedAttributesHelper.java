@@ -126,7 +126,7 @@ public class PyTypeFromUsedAttributesHelper {
   private List<CandidateClass> prepareCandidates(@NotNull Set<PyClass> candidates, @NotNull final PyExpression expression) {
     final PsiFile originalFile = expression.getContainingFile();
     // Heuristic: use qualified names of imported modules to find possibly imported classes
-    final List<QualifiedName> importQualifiers = Lists.newArrayList();
+    final Set<QualifiedName> importQualifiers = Sets.newHashSet();
     if (originalFile instanceof PyFile) {
       final PyFile originalModule = (PyFile)originalFile;
       for (PyFromImportStatement fromImport : originalModule.getFromImports()) {
@@ -134,9 +134,25 @@ public class PyTypeFromUsedAttributesHelper {
           continue;
         }
         final PsiFileSystemItem importedModule = PyUtil.as(fromImport.resolveImportSource(), PsiFileSystemItem.class);
-        if (importedModule != null) {
-          final QualifiedName qName = findShortestImportableQName(expression, importedModule.getVirtualFile());
-          ContainerUtil.addIfNotNull(qName, importQualifiers);
+        if (importedModule == null) {
+          continue;
+        }
+        final QualifiedName qName = findShortestImportableQName(expression, importedModule.getVirtualFile());
+        if (qName == null) {
+          continue;
+        }
+        final PyImportElement[] importElements = fromImport.getImportElements();
+        if (fromImport.isStarImport() || importElements.length == 0) {
+          importQualifiers.add(qName);
+        }
+        else {
+          importQualifiers.addAll(ContainerUtil.mapNotNull(importElements, new Function<PyImportElement, QualifiedName>() {
+            @Override
+            public QualifiedName fun(PyImportElement element) {
+              final QualifiedName name = element.getImportedQName();
+              return name != null ? qName.append(name) : qName;
+            }
+          }));
         }
       }
       for (PyImportElement normalImport : originalModule.getImportTargets()) {
