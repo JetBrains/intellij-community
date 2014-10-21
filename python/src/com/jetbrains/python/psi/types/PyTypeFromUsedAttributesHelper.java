@@ -3,11 +3,11 @@ package com.jetbrains.python.psi.types;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -164,7 +164,7 @@ public class PyTypeFromUsedAttributesHelper {
         }
       }
     }
-    if (ProjectRootManager.getInstance(expression.getProject()).getFileIndex().isInSource(candidateFile.getVirtualFile())) {
+    if (ProjectScope.getProjectScope(candidate.getProject()).contains(candidateFile.getVirtualFile())) {
       return Priority.PROJECT;
     }
     return Priority.OTHER;
