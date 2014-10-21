@@ -21,8 +21,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +37,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
@@ -50,7 +47,6 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * There is a possible case that particular test class is not properly configured with test annotations but uses test data files.
@@ -531,7 +527,7 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   private static class TestDataDescriptor {
-    private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.emptyList());
+    private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.<TestLocationDescriptor>emptyList());
 
     private final List<TestLocationDescriptor> myDescriptors = new ArrayList<TestLocationDescriptor>();
 
