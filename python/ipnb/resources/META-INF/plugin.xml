@@ -28,6 +28,7 @@
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <dialectsTokenSetContributor implementation="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenSetContributor"/>
+    <visitorFilter language="IpnbPython" implementationClass="org.jetbrains.plugins.ipnb.IpnbVisitorFilter"/>
   </extensions>
   <actions>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction" id="IpnbRunCellAction" text="Run cell">
