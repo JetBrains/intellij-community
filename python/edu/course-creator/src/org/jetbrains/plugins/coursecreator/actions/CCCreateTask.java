@@ -12,9 +12,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
@@ -68,6 +70,10 @@ public class CCCreateTask extends DumbAwareAction {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
+                FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+                for (VirtualFile virtualFile : fileEditorManager.getOpenFiles()) {
+                  fileEditorManager.closeFile(virtualFile);
+                }
                 EditorHelper.openInEditor(testsFile, false);
                 EditorHelper.openInEditor(taskPyFile, false);
                 view.selectElement(taskFile);
