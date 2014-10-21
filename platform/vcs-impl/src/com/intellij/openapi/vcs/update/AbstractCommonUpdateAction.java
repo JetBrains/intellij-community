@@ -289,6 +289,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   }
 
   private class Updater extends Task.Backgroundable {
+    private final String LOCAL_HISTORY_ACTION = VcsBundle.message("local.history.update.from.vcs");
+
     private final Project myProject;
     private final ProjectLevelVcsManagerEx myProjectLevelVcsManager;
     private UpdatedFiles myUpdatedFiles;
@@ -304,6 +306,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     private Label myBefore;
     private Label myAfter;
+    private LocalHistoryAction myLocalHistoryAction;
 
     public Updater(final Project project, final FilePath[] roots, final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles) {
       super(project, getTemplatePresentation().getText(), true, VcsConfiguration.getInstance(project).getUpdateOption());
@@ -363,7 +366,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
       myBefore = LocalHistory.getInstance().putSystemLabel(myProject, "Before update");
-
+      myLocalHistoryAction = LocalHistory.getInstance().startAction(LOCAL_HISTORY_ACTION);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
       try {
@@ -431,19 +434,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     private void doVfsRefresh() {
-      final String actionName = VcsBundle.message("local.history.update.from.vcs");
-      final LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
-      try {
-        LOG.info("Calling refresh files after update for roots: " + Arrays.toString(myRoots));
-        RefreshVFsSynchronously.updateAllChanged(myUpdatedFiles);
-        notifyAnnotations();
-      }
-      finally {
-        action.finish();
-        if ((! myProject.isOpen()) || myProject.isDisposed()) {
-          LocalHistory.getInstance().putSystemLabel(myProject, actionName);
-        }
-      }
+      LOG.info("Calling refresh files after update for roots: " + Arrays.toString(myRoots));
+      RefreshVFsSynchronously.updateAllChanged(myUpdatedFiles);
+      notifyAnnotations();
     }
 
     private void notifyAnnotations() {
@@ -487,8 +480,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     private void onSuccessImpl(final boolean wasCanceled) {
-      if ((! myProject.isOpen()) || myProject.isDisposed()) {
+      if (!myProject.isOpen() || myProject.isDisposed()) {
         ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+        LocalHistory.getInstance().putSystemLabel(myProject, LOCAL_HISTORY_ACTION); // TODO check why this label is needed
         return;
       }
       boolean continueChain = false;
@@ -503,6 +497,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         updateSession.onRefreshFilesCompleted();
       }
       // only after conflicts are resolved, put a label
+      if (myLocalHistoryAction != null) {
+        myLocalHistoryAction.finish();
+      }
       myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
 
       if (myActionInfo.canChangeFileStatus()) {
