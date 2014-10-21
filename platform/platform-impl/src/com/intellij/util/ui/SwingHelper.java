@@ -435,7 +435,15 @@ public class SwingHelper {
     textPane.setFont(font != null ? font : UIUtil.getLabelFont());
     textPane.setContentType(UIUtil.HTML_MIME);
     textPane.setEditable(false);
-    textPane.setBackground(background != null ? background : UIUtil.getLabelBackground());
+    if (background != null) {
+      textPane.setBackground(background); // e.g. UIUtil.getOptionPaneBackground()
+    }
+    else {
+      textPane.setOpaque(false);
+      if (UIUtil.isUnderNimbusLookAndFeel()) {
+        textPane.setBackground(UIUtil.TRANSPARENT_COLOR);
+      }
+    }
     textPane.setForeground(foreground != null ? foreground : UIUtil.getLabelForeground());
     return textPane;
   }
