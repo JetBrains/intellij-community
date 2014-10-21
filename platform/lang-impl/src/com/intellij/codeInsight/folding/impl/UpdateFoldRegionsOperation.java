@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
@@ -198,8 +199,10 @@ class UpdateFoldRegionsOperation implements Runnable {
           }
         }
         if (!matchingDescriptorFound) {
-          for (FoldingDescriptor descriptor : descriptors) {
-            rangeToExpandStatusMap.put(descriptor.getRange(), region.isExpanded());
+          if (Registry.is("editor.durable.folding.state")) {
+            for (FoldingDescriptor descriptor : descriptors) {
+              rangeToExpandStatusMap.put(descriptor.getRange(), region.isExpanded());
+            }
           }
           toRemove.add(region);
         }
