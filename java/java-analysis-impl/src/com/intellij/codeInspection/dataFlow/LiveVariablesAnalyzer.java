@@ -99,6 +99,7 @@ public class LiveVariablesAnalyzer {
   private boolean isInterestingInstruction(Instruction instruction) {
     if (instruction == myInstructions[0]) return true;
     if (instruction instanceof PushInstruction) return ((PushInstruction)instruction).getValue() instanceof DfaVariableValue;
+    if (instruction instanceof AssignInstruction) return ((AssignInstruction)instruction).getAssignedValue() != null;
     return instruction instanceof FinishElementInstruction ||
            instruction instanceof FlushVariableInstruction ||
            instruction instanceof GotoInstruction ||
@@ -123,16 +124,21 @@ public class LiveVariablesAnalyzer {
           }
         }
 
+        if (instruction instanceof AssignInstruction) {
+          DfaValue value = ((AssignInstruction)instruction).getAssignedValue();
+          if (value instanceof DfaVariableValue) {
+            liveVars = (BitSet)liveVars.clone();
+            liveVars.clear(value.getID());
+            for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy((DfaVariableValue)value)) {
+              liveVars.clear(var.getID());
+            }
+          }
+        }
+
         if (instruction instanceof PushInstruction) {
           DfaValue value = ((PushInstruction)instruction).getValue();
           if (value instanceof DfaVariableValue) {
-            if (((PushInstruction)instruction).isReferenceWrite()) {
-              liveVars = (BitSet)liveVars.clone();
-              liveVars.clear(value.getID());
-              for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy((DfaVariableValue)value)) {
-                liveVars.clear(var.getID());
-              }
-            } else if (!liveVars.get(value.getID())) {
+            if (!((PushInstruction)instruction).isReferenceWrite() && !liveVars.get(value.getID())) {
               liveVars = (BitSet)liveVars.clone();
               liveVars.set(value.getID());
             }
