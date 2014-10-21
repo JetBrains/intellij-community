@@ -124,41 +124,7 @@ public class PyTypeFromUsedAttributesHelper {
    */
   @NotNull
   private List<CandidateClass> prepareCandidates(@NotNull Set<PyClass> candidates, @NotNull final PyExpression expression) {
-    final PsiFile originalFile = expression.getContainingFile();
-    // Heuristic: use qualified names of imported modules to find possibly imported classes
-    final Set<QualifiedName> importQualifiers = Sets.newHashSet();
-    if (originalFile instanceof PyFile) {
-      final PyFile originalModule = (PyFile)originalFile;
-      for (PyFromImportStatement fromImport : originalModule.getFromImports()) {
-        if (fromImport.isFromFuture()) {
-          continue;
-        }
-        final PsiFileSystemItem importedModule = PyUtil.as(fromImport.resolveImportSource(), PsiFileSystemItem.class);
-        if (importedModule == null) {
-          continue;
-        }
-        final QualifiedName qName = findShortestImportableQName(expression, importedModule.getVirtualFile());
-        if (qName == null) {
-          continue;
-        }
-        final PyImportElement[] importElements = fromImport.getImportElements();
-        if (fromImport.isStarImport() || importElements.length == 0) {
-          importQualifiers.add(qName);
-        }
-        else {
-          importQualifiers.addAll(ContainerUtil.mapNotNull(importElements, new Function<PyImportElement, QualifiedName>() {
-            @Override
-            public QualifiedName fun(PyImportElement element) {
-              final QualifiedName name = element.getImportedQName();
-              return name != null ? qName.append(name) : qName;
-            }
-          }));
-        }
-      }
-      for (PyImportElement normalImport : originalModule.getImportTargets()) {
-        ContainerUtil.addIfNotNull(importQualifiers, normalImport.getImportedQName());
-      }
-    }
+    final Set<QualifiedName> importQualifiers = collectImportQualifiers(expression.getContainingFile());
 
     final List<CandidateClass> prioritizedCandidates = Lists.newArrayList();
     for (PyClass candidate : candidates) {
@@ -168,7 +134,7 @@ public class PyTypeFromUsedAttributesHelper {
       if (PyBuiltinCache.getInstance(expression).isBuiltin(candidate)) {
         priority = Priority.BUILTIN;
       }
-      else if (candidateFile == originalFile) {
+      else if (candidateFile == expression.getContainingFile()) {
         priority = Priority.SAME_FILE;
       }
       else {
@@ -192,7 +158,53 @@ public class PyTypeFromUsedAttributesHelper {
       prioritizedCandidates.add(new CandidateClass(candidate, priority));
     }
     Collections.sort(prioritizedCandidates);
-    return prioritizedCandidates.subList(0, Math.min(prioritizedCandidates.size(), MAX_CANDIDATES));
+
+    final List<CandidateClass> result = Lists.newArrayList();
+    for (CandidateClass candidate : prioritizedCandidates) {
+      if (result.size() == MAX_CANDIDATES || candidate.myPriority.compareTo(Priority.PROJECT) >= 0) {
+        break;
+      }
+      result.add(candidate);
+    }
+    return Collections.unmodifiableList(result);
+  }
+
+  @NotNull
+  public Set<QualifiedName> collectImportQualifiers(@NotNull PsiFile file) {
+    final Set<QualifiedName> result = Sets.newHashSet();
+    if (file instanceof PyFile) {
+      final PyFile originalModule = (PyFile)file;
+      for (PyFromImportStatement fromImport : originalModule.getFromImports()) {
+        if (fromImport.isFromFuture()) {
+          continue;
+        }
+        final PsiFileSystemItem importedModule = PyUtil.as(fromImport.resolveImportSource(), PsiFileSystemItem.class);
+        if (importedModule == null) {
+          continue;
+        }
+        final QualifiedName qName = findShortestImportableQName(file.getFirstChild(), importedModule.getVirtualFile());
+        if (qName == null) {
+          continue;
+        }
+        final PyImportElement[] importElements = fromImport.getImportElements();
+        if (fromImport.isStarImport() || importElements.length == 0) {
+          result.add(qName);
+        }
+        else {
+          result.addAll(ContainerUtil.map(importElements, new Function<PyImportElement, QualifiedName>() {
+            @Override
+            public QualifiedName fun(PyImportElement element) {
+              final QualifiedName name = element.getImportedQName();
+              return name != null ? qName.append(name) : qName;
+            }
+          }));
+        }
+      }
+      for (PyImportElement normalImport : originalModule.getImportTargets()) {
+        ContainerUtil.addIfNotNull(result, normalImport.getImportedQName());
+      }
+    }
+    return Collections.unmodifiableSet(result);
   }
 
   @NotNull

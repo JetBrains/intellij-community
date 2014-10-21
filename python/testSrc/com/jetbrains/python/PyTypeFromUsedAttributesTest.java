@@ -3,7 +3,10 @@ package com.jetbrains.python;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -12,6 +15,8 @@ import com.jetbrains.python.psi.types.PyTypeFromUsedAttributesHelper;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author Mikhail Golubev
@@ -154,7 +159,7 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
 
     doTestType("def func(x):\n" +
                "    x.pop() and x.update()",
-               "dict | set | MutableMapping | unknown");
+               "dict | set | unknown");
   }
 
   public void testFunctionType() {
@@ -169,7 +174,7 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "    b.method_b\n" +
                "    return a\n" +
                "x = func\n" +
-               "x" ,
+               "x",
                "(a: A | unknown, b: B | unknown) -> A | unknown");
   }
 
@@ -182,7 +187,8 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
 
   public void testResultsOrdering() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
-    doTestType("class MySortable(object):\n" +
+    doTestType("import module\n" +
+               "class MySortable(object):\n" +
                "    def sort(self):\n" +
                "        pass\n" +
                "x = undefined()\n" +
@@ -219,11 +225,32 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "C1 | unknown");
   }
 
+  public void testImportQualifiers() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("pkg1/pkg2/main.py");
+    final TypeEvalContext context = TypeEvalContext.userInitiated(myFixture.getFile());
+    final Set<QualifiedName> qualifiers = new PyTypeFromUsedAttributesHelper(context).collectImportQualifiers(myFixture.getFile());
+    final Set<String> qualifiedNames = ContainerUtil.map2Set(qualifiers, new Function<QualifiedName, String>() {
+      @Override
+      public String fun(QualifiedName name) {
+        return name.toString();
+      }
+    });
+    assertSameElements(qualifiedNames,
+                       "root",
+                       "pkg1.pkg2.module2a",
+                       "pkg1.module1a",
+                       "pkg1.pkg2.module2b.C1",
+                       "pkg1.module1b.B1",
+                       "pkg1.pkg2.module2b",
+                       "pkg1.pkg2");
+  }
+
   private void doTestType(@NotNull String text, @NotNull String expectedType) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyReferenceExpression referenceExpression = findLastReferenceByText("x");
     assertNotNull(referenceExpression);
-    final TypeEvalContext context = TypeEvalContext.userInitiated(referenceExpression.getContainingFile()).withTracing();
+    final TypeEvalContext context = TypeEvalContext.userInitiated(referenceExpression.getContainingFile());
     final PyType actual = context.getType(referenceExpression);
     final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
     assertEquals(expectedType, actualType);
