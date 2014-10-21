@@ -122,7 +122,8 @@ public class IpnbParser {
         raw.outputs = outputRaws.toArray(new CellOutputRaw[outputRaws.size()]);
         raw.language = ((IpnbCodeCell)cell).getLanguage();
         raw.input = ((IpnbCodeCell)cell).getSource();
-        raw.prompt_number = ((IpnbCodeCell)cell).getPromptNumber();
+        final Integer promptNumber = ((IpnbCodeCell)cell).getPromptNumber();
+        raw.prompt_number = promptNumber != null && promptNumber >= 0 ? promptNumber : null;
       }
       else if (cell instanceof IpnbRawCell) {
         raw.cell_type = "raw";
