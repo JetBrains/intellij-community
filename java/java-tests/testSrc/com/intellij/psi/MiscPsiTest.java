@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -296,5 +297,24 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertTrue(file.isValid());
     assertFalse(leaf.isValid());
     assertNotSame(leaf, file.findElementAt(5));
+  }
+
+  public void testPsiModificationsWithNoDocumentDocument() {
+    final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A{}");
+
+    PsiClass aClass = file.getClasses()[0];
+    aClass.getNode();
+    assertNotNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
+    
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
+
+    aClass.add(JavaPsiFacade.getElementFactory(getProject()).createMethodFromText("void foo(){}", null));
+    assertNotNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
+
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+
+    assertTrue(file.getText(), file.getText().contains("foo() {\n"));
+
   }
 }
