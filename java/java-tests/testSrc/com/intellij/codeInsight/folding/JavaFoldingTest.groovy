@@ -209,7 +209,7 @@ class Test {
      new Runnable() {
       static final long serialVersionUID = 42L;
       public void run() {
-        System.out.println(<caret>);
+        System.out.println();
       }
     };
   }
@@ -223,6 +223,7 @@ class Test {
     assertFalse closureStartFold.expanded
     assert text.substring(closureStartFold.endOffset).startsWith('System') //one line closure
 
+    myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf("();") + 1)
     myFixture.type('2')
     myFixture.doHighlighting()
     closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
@@ -935,14 +936,23 @@ public class Test {
     configure """class Foo {
  int field;
 
- <selection>int getField() {
-   <caret>return field;
- }</selection>
+ int getField() {
+   return field;
+ }
 
 }"""
     assertSize 2, myFixture.editor.foldingModel.allFoldRegions
+    myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf("return"))
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+    assertEquals """int getField() {
+   return field;
+ }""", myFixture.editor.selectionModel.selectedText
+
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
-    assert 'return field;' == myFixture.editor.selectionModel.selectedText
+    assertEquals 'return field;', myFixture.editor.selectionModel.selectedText
   }
 
   public void "test expand and collapse regions in selection"() {
