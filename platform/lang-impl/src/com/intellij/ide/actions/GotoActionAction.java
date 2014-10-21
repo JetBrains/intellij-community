@@ -89,10 +89,14 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           @Override
           public void valueChanged(ListSelectionEvent e) {
             Object value = myList.getSelectedValue();
-            myDropdownPopup.setAdText(getText(value), SwingConstants.LEFT);
+            String text = getText(value);
+            if (text != null) {
+              myDropdownPopup.setAdText(text, SwingConstants.LEFT);
+            }
           }
 
-          private String getText(Object o) {
+          @Nullable
+          private String getText(@Nullable Object o) {
             if (o instanceof GotoActionModel.MatchedValue) {
               GotoActionModel.MatchedValue mv = (GotoActionModel.MatchedValue)o;
               if (mv.value instanceof BooleanOptionDescription ||
