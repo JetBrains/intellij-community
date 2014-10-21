@@ -18,7 +18,6 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -27,34 +26,28 @@ import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 @State(
   name = "KeymapManager",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/keymap.xml", roamingType = RoamingType.PER_PLATFORM)}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/keymap.xml", roamingType = RoamingType.PER_PLATFORM)
 )
 public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");
-
   private final List<KeymapManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private String myActiveKeymapName;
   private final Map<String, String> myBoundShortcuts = new HashMap<String, String>();
 
   @NonNls private static final String KEYMAP = "keymap";
-  @NonNls private static final String KEYMAPS = "keymaps";
   @NonNls private static final String ACTIVE_KEYMAP = "active_keymap";
   @NonNls private static final String NAME_ATTRIBUTE = "name";
   private final SchemesManager<Keymap, KeymapImpl> mySchemesManager;
@@ -62,25 +55,24 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   public static boolean ourKeymapManagerInitialized = false;
 
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
-    mySchemesManager = factory.createSchemesManager(
-      StoragePathMacros.ROOT_CONFIG + "/keymaps",
-      new BaseSchemeProcessor<KeymapImpl>() {
-        @Override
-        public KeymapImpl readScheme(@NotNull final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
-          return readKeymap(schemeContent);
-        }
+    mySchemesManager = factory.createSchemesManager(StoragePathMacros.ROOT_CONFIG + "/keymaps",
+                                                    new BaseSchemeProcessor<KeymapImpl>() {
+                                                      @Override
+                                                      public KeymapImpl readScheme(@NotNull final Document schemeContent) throws InvalidDataException {
+                                                        return readKeymap(schemeContent);
+                                                      }
 
-        @Override
-        public Element writeScheme(@NotNull final KeymapImpl scheme) throws WriteExternalException {
-          return scheme.writeExternal();
-        }
+                                                      @Override
+                                                      public Element writeScheme(@NotNull final KeymapImpl scheme) {
+                                                        return scheme.writeExternal();
+                                                      }
 
-        @Override
-        public boolean shouldBeSaved(@NotNull final KeymapImpl scheme) {
-          return scheme.canModify();
-        }
-      },
-      RoamingType.PER_USER);
+                                                      @Override
+                                                      public boolean shouldBeSaved(@NotNull final KeymapImpl scheme) {
+                                                        return scheme.canModify();
+                                                      }
+                                                    },
+                                                    RoamingType.PER_USER);
 
     Keymap[] keymaps = defaultKeymap.getKeymaps();
     String systemDefaultKeymap = defaultKeymap.getDefaultKeymapName();
@@ -90,7 +82,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
         setActiveKeymap(keymap);
       }
     }
-    load();
+    mySchemesManager.loadSchemes();
 
     if (Registry.is("editor.add.carets.on.double.control.arrows")) {
       ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE, KeyEvent.VK_CONTROL, KeyEvent.VK_UP);
@@ -99,13 +91,14 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
       ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION, KeyEvent.VK_CONTROL, KeyEvent.VK_RIGHT);
     }
 
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourKeymapManagerInitialized = true;
   }
 
   @Override
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{new File(PathManager.getOptionsPath() + File.separatorChar + "keymap.xml"), getKeymapDirectory(true)};
+    return new File[]{new File(PathManager.getOptionsPath() + File.separatorChar + "keymap.xml"), mySchemesManager.getRootDirectory()};
   }
 
   @Override
@@ -152,6 +145,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     myBoundShortcuts.put(targetActionId, sourceActionId);
   }
 
+  @Override
   public void unbindShortcuts(String targetActionId) {
     myBoundShortcuts.remove(targetActionId);
   }
@@ -189,34 +183,23 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     }
   }
 
-  public String getExternalFileName() {
-    return "keymap";
-  }
-
   @Override
   public Element getState() {
     Element result = new Element("component");
-    try {
-      writeExternal(result);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
+    if (mySchemesManager.getCurrentScheme() != null) {
+      Element e = new Element(ACTIVE_KEYMAP);
+      Keymap currentScheme = mySchemesManager.getCurrentScheme();
+      if (currentScheme != null) {
+        e.setAttribute(NAME_ATTRIBUTE, currentScheme.getName());
+      }
+      result.addContent(e);
     }
     return result;
   }
 
   @Override
   public void loadState(final Element state) {
-    try {
-      readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    Element child = element.getChild(ACTIVE_KEYMAP);
+    Element child = state.getChild(ACTIVE_KEYMAP);
     if (child != null) {
       myActiveKeymapName = child.getAttributeValue(NAME_ATTRIBUTE);
     }
@@ -229,46 +212,16 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    if (mySchemesManager.getCurrentScheme() != null) {
-      Element e = new Element(ACTIVE_KEYMAP);
-      Keymap currentScheme = mySchemesManager.getCurrentScheme();
-      if (currentScheme != null) {
-        e.setAttribute(NAME_ATTRIBUTE, currentScheme.getName());
-      }
-      element.addContent(e);
-    }
-  }
-
-  private void load() {
-    mySchemesManager.loadSchemes();
-  }
-
   @NotNull
-  private KeymapImpl readKeymap(Document document) throws JDOMException, InvalidDataException, IOException {
+  private KeymapImpl readKeymap(Document document) throws InvalidDataException {
     if (document == null) throw new InvalidDataException();
     Element root = document.getRootElement();
-    if (root == null || !KEYMAP.equals(root.getName())) {
+    if (!KEYMAP.equals(root.getName())) {
       throw new InvalidDataException();
     }
     KeymapImpl keymap = new KeymapImpl();
     keymap.readExternal(root, getAllIncludingDefaultsKeymaps());
-
     return keymap;
-  }
-
-  @Nullable
-  private static File getKeymapDirectory(boolean toCreate) {
-    String directoryPath = PathManager.getConfigPath() + File.separator + KEYMAPS;
-    File directory = new File(directoryPath);
-    if (!directory.exists()) {
-      if (!toCreate) return null;
-      if (!directory.mkdir()) {
-        LOG.error("Cannot create directory: " + directory.getAbsolutePath());
-        return null;
-      }
-    }
-    return directory;
   }
 
   private void fireActiveKeymapChanged() {

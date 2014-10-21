@@ -498,7 +498,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       String schemePath = rootElement.getAttributeValue(ORIGINAL_SCHEME_PATH);
 
       Document sharedDocument = loadGlobalScheme(schemePath);
-
       if (sharedDocument != null) {
         E result = readScheme(sharedDocument);
         if (result != null) {
@@ -530,7 +529,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     else {
       return myProcessor.readScheme(subDocument);
     }
-
   }
 
   @Nullable
@@ -554,7 +552,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Nullable
-  private org.jdom.Parent writeSchemeToDocument(@NotNull E scheme) throws WriteExternalException {
+  private Parent writeSchemeToDocument(@NotNull E scheme) throws WriteExternalException {
     if (isShared(scheme)) {
       String originalPath = scheme.getExternalInfo().getOriginalPath();
       if (originalPath != null) {
