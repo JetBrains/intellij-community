@@ -66,6 +66,7 @@ public class StudyEditor implements TextEditor {
   private JButton myRefreshButton;
   private static final Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
   private final Project myProject;
+  private JButton myShowHintButton;
 
   public JButton getCheckButton() {
     return myCheckButton;
@@ -196,6 +197,7 @@ public class StudyEditor implements TextEditor {
     myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", AllIcons.Actions.Forward);
     myRefreshButton = addButton(taskActionsPanel, "Start task again", AllIcons.Actions.Refresh);
+    myShowHintButton = addButton(taskActionsPanel, "Show hint", StudyIcons.ShowHint);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
       JButton runButton = addButton(taskActionsPanel, "Run", AllIcons.General.Run);
       runButton.addActionListener(new ActionListener() {
@@ -242,9 +244,14 @@ public class StudyEditor implements TextEditor {
     myRefreshButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        StudyRefreshTaskFileAction studyRefreshTaskAction =
-          (StudyRefreshTaskFileAction)ActionManager.getInstance().getAction("RefreshTaskAction");
-        studyRefreshTaskAction.refresh(myProject);
+        StudyRefreshTaskFileAction.refresh(myProject);
+      }
+    });
+
+    myShowHintButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        StudyShowHintAction.showHint(myProject);
       }
     });
   }
