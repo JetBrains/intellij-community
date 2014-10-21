@@ -1,9 +1,9 @@
 package com.jetbrains.python.psi.types;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
@@ -37,7 +37,7 @@ public class PyTypeFromUsedAttributesHelper {
     "__init__",
     "__new__",
     "__str__",
-    "__repr__", // TODO __module__ actually belongs to object's metaclass, it's not available to intances
+    "__repr__", // TODO __module__ actually belongs to object's metaclass, it's not available to instances
     "__doc__",
     "__class__",
     "__module__",
@@ -65,12 +65,15 @@ public class PyTypeFromUsedAttributesHelper {
     if (!ENABLED || !myContext.allowLocalUsages(expression)) {
       return null;
     }
-    final long startTime = System.currentTimeMillis();
+    final long startInference = System.currentTimeMillis();
     final Set<String> seenAttrs = collectUsedAttributes(expression);
     LOG.debug(String.format("Attempting to infer type for expression: %s. Used attributes: %s", expression.getText(), seenAttrs));
     final Set<PyClass> allCandidates = suggestCandidateClasses(expression, seenAttrs);
+
+    final long startPrioritization = System.currentTimeMillis();
     final List<CandidateClass> bestCandidates = prepareCandidates(allCandidates, expression);
-    LOG.debug("Total " + (System.currentTimeMillis() - startTime) + " ms to infer candidate classes");
+    LOG.debug("Total " + (System.currentTimeMillis() - startPrioritization) + " ms to prioritize candidate classes");
+    LOG.debug("Total " + (System.currentTimeMillis() - startInference) + " ms to infer candidate classes");
 
     return PyUnionType.createWeakType(PyUnionType.union(ContainerUtil.map(bestCandidates, new Function<CandidateClass, PyType>() {
       @Override
@@ -88,7 +91,7 @@ public class PyTypeFromUsedAttributesHelper {
     final Set<PyClass> candidates = Sets.newHashSet();
     for (String attribute : seenAttrs) {
       // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
-      // and we probably don't want to confuse user with __Classobj anyway
+      // and we probably don't want to confuse user with PyNames.FAKE_OLD_BASE anyway
       if (COMMON_OBJECT_ATTRIBUTES.contains(attribute)) {
         candidates.add(PyBuiltinCache.getInstance(expression).getClass(PyNames.OBJECT));
       }
@@ -126,37 +129,12 @@ public class PyTypeFromUsedAttributesHelper {
   private List<CandidateClass> prepareCandidates(@NotNull Set<PyClass> candidates, @NotNull final PyExpression expression) {
     final Set<QualifiedName> importQualifiers = collectImportQualifiers(expression.getContainingFile());
 
-    final List<CandidateClass> prioritizedCandidates = Lists.newArrayList();
-    for (PyClass candidate : candidates) {
-      final PsiFile candidateFile = candidate.getContainingFile();
-
-      final Priority priority;
-      if (PyBuiltinCache.getInstance(expression).isBuiltin(candidate)) {
-        priority = Priority.BUILTIN;
+    final List<CandidateClass> prioritizedCandidates = ContainerUtil.map(candidates, new Function<PyClass, CandidateClass>() {
+      @Override
+      public CandidateClass fun(PyClass candidate) {
+        return new CandidateClass(candidate, findPriority(candidate, expression, importQualifiers));
       }
-      else if (candidateFile == expression.getContainingFile()) {
-        priority = Priority.SAME_FILE;
-      }
-      else {
-        final String qualifiedName = candidate.getQualifiedName();
-        final boolean probablyImported = qualifiedName != null && ContainerUtil.exists(importQualifiers, new Condition<QualifiedName>() {
-          @Override
-          public boolean value(QualifiedName qualifier) {
-            return QualifiedName.fromDottedString(qualifiedName).matchesPrefix(qualifier);
-          }
-        });
-        if (probablyImported) {
-          priority = Priority.IMPORTED;
-        }
-        else if (ProjectRootManager.getInstance(expression.getProject()).getFileIndex().isInSource(candidateFile.getVirtualFile())) {
-          priority = Priority.PROJECT;
-        }
-        else {
-          priority = Priority.OTHER;
-        }
-      }
-      prioritizedCandidates.add(new CandidateClass(candidate, priority));
-    }
+    });
     Collections.sort(prioritizedCandidates);
 
     final List<CandidateClass> result = Lists.newArrayList();
@@ -169,6 +147,30 @@ public class PyTypeFromUsedAttributesHelper {
     return Collections.unmodifiableList(result);
   }
 
+  @NotNull
+  private Priority findPriority(@NotNull PyClass candidate, @NotNull PyExpression expression, @NotNull Set<QualifiedName> qualifiers) {
+    final PsiFile candidateFile = candidate.getContainingFile();
+    if (PyBuiltinCache.getInstance(expression).isBuiltin(candidate)) {
+      return Priority.BUILTIN;
+    }
+    if (candidateFile == expression.getContainingFile()) {
+      return Priority.SAME_FILE;
+    }
+    final String qualifiedName = candidate.getQualifiedName();
+    if (qualifiedName != null) {
+      for (QualifiedName qualifier : qualifiers) {
+        if (QualifiedName.fromDottedString(qualifiedName).matchesPrefix(qualifier)) {
+          return Priority.IMPORTED;
+        }
+      }
+    }
+    if (ProjectRootManager.getInstance(expression.getProject()).getFileIndex().isInSource(candidateFile.getVirtualFile())) {
+      return Priority.PROJECT;
+    }
+    return Priority.OTHER;
+  }
+
+  @VisibleForTesting
   @NotNull
   public Set<QualifiedName> collectImportQualifiers(@NotNull PsiFile file) {
     final Set<QualifiedName> result = Sets.newHashSet();
@@ -216,6 +218,7 @@ public class PyTypeFromUsedAttributesHelper {
     return availableAttrs;
   }
 
+  @VisibleForTesting
   @NotNull
   public static Set<String> collectUsedAttributes(@NotNull PyExpression element) {
     final QualifiedName qualifiedName;
