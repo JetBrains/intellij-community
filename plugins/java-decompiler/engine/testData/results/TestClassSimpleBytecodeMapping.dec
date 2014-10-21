@@ -21,8 +21,10 @@ public class TestClassSimpleBytecodeMapping {
    public void test2(String var1) {
       try {
          Integer.parseInt(var1);
-      } catch (Exception var3) {
-         System.out.println(var3);
+      } catch (Exception var6) {
+         System.out.println(var6);
+      } finally {
+         System.out.println("Finally");
       }
 
    }
@@ -81,23 +83,23 @@ class 'pkg/TestClassSimpleBytecodeMapping' {
    }
 
    method 'run (Ljava/lang/Runnable;)V' {
-      1      30
+      1      32
    }
 }
 
 class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
    method 'print ()V' {
-      0      35
-      3      35
-      5      35
+      0      37
+      3      37
+      5      37
    }
 }
 
 class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
    method 'print ()V' {
-      0      41
-      3      41
-      5      41
+      0      43
+      3      43
+      5      43
    }
 }
 
@@ -112,6 +114,6 @@ Lines mapping:
 27 <-> 16
 28 <-> 17
 34 <-> 23
-42 <-> 42
-47 <-> 31
-52 <-> 36
+44 <-> 44
+49 <-> 33
+54 <-> 38

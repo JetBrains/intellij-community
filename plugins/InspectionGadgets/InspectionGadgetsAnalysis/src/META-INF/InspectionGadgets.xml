@@ -1,6 +1,6 @@
 <idea-plugin version="2">
 
-  <extensions xmlns="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
 
     <!--group.names.abstraction.issues-->
     <localInspection language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
