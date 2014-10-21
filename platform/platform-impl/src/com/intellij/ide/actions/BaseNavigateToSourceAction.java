@@ -52,7 +52,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
       event.getPresentation().setEnabled(enabled);
     }
     //as myFocusEditor is always ignored - Main Menu|View always contains 2 actions with the same name and actually same behaviour
-    event.getPresentation().setVisible(target == null || myFocusEditor);
+    if(!myFocusEditor) event.getPresentation().setVisible(false);
     String navigateActionText = myFocusEditor && target instanceof NavigatableWithText?
                                 ((NavigatableWithText)target).getNavigateActionText(true) : null;
     event.getPresentation().setText(navigateActionText == null ? getTemplatePresentation().getText() : navigateActionText);
