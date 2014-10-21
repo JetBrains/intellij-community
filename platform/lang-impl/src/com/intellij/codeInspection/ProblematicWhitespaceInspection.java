@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.style;
+package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
@@ -26,56 +25,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ProblematicWhitespaceInspection extends BaseInspection {
+public class ProblematicWhitespaceInspection extends LocalInspectionTool {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("problematic.whitespace.display.name");
-  }
-
-  @NotNull
-  @Override
-  protected String buildErrorString(Object... infos) {
-    final Boolean useTabs = (Boolean)infos[2];
-    return useTabs.booleanValue()
-           ? InspectionGadgetsBundle.message("problematic.whitespace.spaces.problem.descriptor", (String)infos[0])
-           : InspectionGadgetsBundle.message("problematic.whitespace.tabs.problem.descriptor", (String)infos[0]);
-  }
-
-  @Nullable
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    final boolean buildFix = ((Boolean)infos[1]).booleanValue();
-    if (!buildFix) {
-      return null;
-    }
-    return new ShowWhitespaceFix();
-  }
-
-
-  private static class ShowWhitespaceFix extends InspectionGadgetsFix {
+  private static class ShowWhitespaceFix implements LocalQuickFix {
 
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("problematic.whitespace.show.whitespaces.quickfix");
+      return InspectionsBundle.message("problematic.whitespace.show.whitespaces.quickfix");
     }
 
     @NotNull
@@ -85,7 +52,7 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final FileEditorManager editorManager = FileEditorManager.getInstance(project);
       final Editor editor = editorManager.getSelectedTextEditor();
       if (editor == null) {
@@ -97,13 +64,21 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
     }
   }
 
-
+  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ProblematicWhitespaceVisitor();
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new ProblematicWhitespaceVisitor(holder, isOnTheFly);
   }
 
-  private class ProblematicWhitespaceVisitor extends BaseInspectionVisitor {
+  private class ProblematicWhitespaceVisitor extends PsiElementVisitor {
+
+    private final ProblemsHolder myHolder;
+    private final boolean myIsOnTheFly;
+
+    public ProblematicWhitespaceVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+      myHolder = holder;
+      myIsOnTheFly = isOnTheFly;
+    }
 
     @Override
     public void visitFile(PsiFile file) {
@@ -132,13 +107,13 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
           if (c == '\t') {
             if (useTabs) {
               if (smartTabs && spaceSeen) {
-                if (registerError(file, startOffset, Boolean.TRUE)) {
+                if (registerError(file, startOffset, true)) {
                   return;
                 }
               }
             }
             else {
-              if (registerError(file, startOffset, Boolean.FALSE)) {
+              if (registerError(file, startOffset, false)) {
                 return;
               }
             }
@@ -146,14 +121,14 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
           else if (c == ' ') {
             if (useTabs) {
               if (!smartTabs) {
-                if (registerError(file, startOffset, Boolean.TRUE)) {
+                if (registerError(file, startOffset, true)) {
                   return;
                 }
               }
               else if (!spaceSeen) {
                 final int currentIndent = Math.max(0, j);
                 if (currentIndent < previousLineIndent) {
-                  if (registerError(file, startOffset, Boolean.TRUE)) {
+                  if (registerError(file, startOffset, true)) {
                     return;
                   }
                 }
@@ -172,12 +147,20 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
       }
     }
 
-    private boolean registerError(PsiFile file, int startOffset, Boolean tab) {
+    private boolean registerError(PsiFile file, int startOffset, boolean tab) {
       final PsiElement element = file.findElementAt(startOffset);
       if (element != null && isSuppressedFor(element)) {
         return false;
       }
-      registerError(file, file.getName(), Boolean.valueOf(isOnTheFly()), tab);
+      final String description = tab
+                                 ? InspectionsBundle.message("problematic.whitespace.spaces.problem.descriptor", file.getName())
+                                 : InspectionsBundle.message("problematic.whitespace.tabs.problem.descriptor", file.getName());
+      if (myIsOnTheFly) {
+        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ShowWhitespaceFix());
+      }
+      else {
+        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      }
       return true;
     }
   }
