@@ -120,6 +120,16 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
         keys1.put(RegExpTT.QUOTE_BEGIN, QUOTE_CHARACTER);
         keys1.put(RegExpTT.QUOTE_END, QUOTE_CHARACTER);
 
+        keys1.put(RegExpTT.NON_CAPT_GROUP, PARENTHS);
+        keys1.put(RegExpTT.POS_LOOKBEHIND, PARENTHS);
+        keys1.put(RegExpTT.NEG_LOOKBEHIND, PARENTHS);
+        keys1.put(RegExpTT.POS_LOOKAHEAD, PARENTHS);
+        keys1.put(RegExpTT.NEG_LOOKAHEAD, PARENTHS);
+        keys1.put(RegExpTT.SET_OPTIONS, PARENTHS);
+        keys1.put(RegExpTT.PYTHON_NAMED_GROUP, PARENTHS);
+        keys1.put(RegExpTT.PYTHON_NAMED_GROUP_REF, PARENTHS);
+        keys1.put(RegExpTT.RUBY_NAMED_GROUP, PARENTHS);
+        keys1.put(RegExpTT.RUBY_QUOTED_NAMED_GROUP, PARENTHS);
         keys1.put(RegExpTT.GROUP_BEGIN, PARENTHS);
         keys1.put(RegExpTT.GROUP_END, PARENTHS);
 

@@ -1,10 +1,11 @@
-// Copyright (c) 2009 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 package org.jetbrains.protocolReader;
 
-import java.util.*;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class DynamicReader<ROOT> {
   final LinkedHashMap<Class<?>, TypeHandler<?>> typeToTypeHandler;
@@ -15,20 +16,20 @@ public class DynamicReader<ROOT> {
     root = new ReaderRoot<>(readerRootClass, typeToTypeHandler);
   }
 
-  public GeneratedCodeMap generateStaticReader(StringBuilder stringBuilder, String packageName, String className,
-                                               Collection<GeneratedCodeMap> basePackages) {
-    final GlobalScope globalScope = new GlobalScope(typeToTypeHandler.values(), basePackages);
+  @NotNull
+  public GeneratedCodeMap generateReader(StringBuilder stringBuilder, String packageName, String className,
+                                         Collection<GeneratedCodeMap> basePackages) {
+    GlobalScope globalScope = new GlobalScope(typeToTypeHandler.values(), basePackages);
     FileScope fileScope = globalScope.newFileScope(stringBuilder);
-    final TextOutput out = fileScope.getOutput();
+    TextOutput out = fileScope.getOutput();
     out.append("// Generated source");
     out.newLine().append("package ").append(packageName).append(';');
     out.newLine().newLine().append("import org.jetbrains.jsonProtocol.*;");
     out.newLine().newLine().append("import static org.jetbrains.jsonProtocol.JsonReaders.*;");
     out.newLine().newLine().append("public final class ").append(className).space();
-    out.append(root.getType().isInterface() ? "implements" : "extends").space().append(root.getType().getCanonicalName()).openBlock(
-      false);
+    out.append(root.getType().isInterface() ? "implements" : "extends").space().append(root.getType().getCanonicalName()).openBlock(false);
 
-    final ClassScope rootClassScope = fileScope.newClassScope();
+    ClassScope rootClassScope = fileScope.newClassScope();
     root.writeStaticMethodJava(rootClassScope);
 
     for (TypeHandler<?> typeHandler : typeToTypeHandler.values()) {
@@ -37,27 +38,31 @@ public class DynamicReader<ROOT> {
       out.newLine();
     }
 
+    boolean isFirst = true;
     for (TypeHandler<?> typeHandler : globalScope.getTypeFactories()) {
-      String name = globalScope.getTypeImplShortName(typeHandler);
+      if (isFirst) {
+        isFirst = false;
+      }
+      else {
+        out.newLine();
+      }
+
       String originName = typeHandler.getTypeClass().getCanonicalName();
-      out.newLine().append("static final class ").append(name).append(Util.TYPE_FACTORY_NAME_POSTFIX).append(" extends ObjectFactory<");
+      out.newLine().append("private static final class ").append(globalScope.getTypeImplShortName(typeHandler)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append(" extends ObjectFactory<");
       out.append(originName).append('>').openBlock();
       out.append("@Override").newLine().append("public ").append(originName).append(" read(").append(Util.JSON_READER_PARAMETER_DEF);
       out.append(')').openBlock();
       out.append("return ");
       typeHandler.writeInstantiateCode(rootClassScope, out);
-      out.append('(').append(Util.READER_NAME).append(");").closeBlock();
+      out.append('(').append(Util.READER_NAME).append(", null);").closeBlock();
       out.closeBlock();
-      out.newLine();
     }
 
     out.closeBlock();
 
-    Map<Class<?>, String> typeToImplClassName = new HashMap<>();
+    Map<Class<?>, String> typeToImplClassName = new THashMap<>();
     for (TypeHandler<?> typeHandler : typeToTypeHandler.values()) {
-      String shortName = fileScope.getTypeImplShortName(typeHandler);
-      String fullReference = packageName + "." + className + "." + shortName;
-      typeToImplClassName.put(typeHandler.getTypeClass(), fullReference);
+      typeToImplClassName.put(typeHandler.getTypeClass(), packageName + "." + className + "." + fileScope.getTypeImplShortName(typeHandler));
     }
 
     return new GeneratedCodeMap(typeToImplClassName);

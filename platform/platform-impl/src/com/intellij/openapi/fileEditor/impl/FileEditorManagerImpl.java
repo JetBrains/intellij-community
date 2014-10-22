@@ -771,15 +771,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         try {
           final FileEditorProvider provider = newProviders[i];
           LOG.assertTrue(provider != null, "Provider for file "+file+" is null. All providers: "+Arrays.asList(newProviders));
-          LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
-          if ((provider instanceof AsyncFileEditorProvider)) {
-            builders[i] = ApplicationManager.getApplication().runReadAction(new Computable<AsyncFileEditorProvider.Builder>() {
-              @Override
-              public AsyncFileEditorProvider.Builder compute() {
-                return ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file);
-              }
-            });
-          }
+          builders[i] = ApplicationManager.getApplication().runReadAction(new Computable<AsyncFileEditorProvider.Builder>() {
+            @Override
+            public AsyncFileEditorProvider.Builder compute() {
+              LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
+              return provider instanceof AsyncFileEditorProvider ? ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file) : null;
+            }
+          });
         }
         catch (Exception e) {
           LOG.error(e);

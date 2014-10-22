@@ -20,9 +20,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.jetbrains.python.edu.actions.StudyNextWindowAction;
-import com.jetbrains.python.edu.actions.StudyPrevWindowAction;
-import com.jetbrains.python.edu.actions.StudyShowHintAction;
+import com.jetbrains.python.edu.actions.*;
 import com.jetbrains.python.edu.course.Course;
 import com.jetbrains.python.edu.course.Lesson;
 import com.jetbrains.python.edu.course.Task;
@@ -155,6 +153,10 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               addShortcut(StudyPrevWindowAction.SHORTCUT, StudyPrevWindowAction.ACTION_ID);
               addShortcut(StudyShowHintAction.SHORTCUT, StudyShowHintAction.ACTION_ID);
               addShortcut(StudyNextWindowAction.SHORTCUT2, StudyNextWindowAction.ACTION_ID);
+              addShortcut(StudyCheckAction.SHORTCUT, StudyCheckAction.ACTION_ID);
+              addShortcut(StudyNextStudyTaskAction.SHORTCUT, StudyNextStudyTaskAction.ACTION_ID);
+              addShortcut(StudyPreviousStudyTaskAction.SHORTCUT, StudyPreviousStudyTaskAction.ACTION_ID);
+              addShortcut(StudyRefreshTaskFileAction.SHORTCUT, StudyRefreshTaskFileAction.ACTION_ID);
             }
           }
         });

@@ -15,9 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -111,6 +109,26 @@ public class DfaUtil {
       return Collections.singletonList(qualifierExpression);
     }
     return Collections.emptyList();
+  }
+
+  @Nullable
+  static PsiElement getClosureInside(Instruction instruction) {
+    if (instruction instanceof MethodCallInstruction) {
+      PsiCallExpression anchor = ((MethodCallInstruction)instruction).getCallExpression();
+      if (anchor instanceof PsiNewExpression) {
+        return ((PsiNewExpression)anchor).getAnonymousClass();
+      }
+    }
+    else if (instruction instanceof LambdaInstruction) {
+      return ((LambdaInstruction)instruction).getLambdaExpression();
+    }
+    else if (instruction instanceof EmptyInstruction) {
+      PsiElement anchor = ((EmptyInstruction)instruction).getAnchor();
+      if (anchor instanceof PsiClass) {
+        return anchor;
+      }
+    }
+    return null;
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

@@ -665,6 +665,15 @@ public final class JsonReaderEx implements Closeable {
    * Returns the next token, a {@link JsonToken#NAME property name}, and consumes it
    */
   public String nextName() {
+    String result = nextNameOrNull();
+    if (result == null) {
+      throw createParseError("Expected a name but was " + peek());
+    }
+    return result;
+  }
+
+  @Nullable
+  public String nextNameOrNull() {
     int p = peeked;
     if (p == PEEKED_NONE) {
       p = doPeek();
@@ -680,7 +689,10 @@ public final class JsonReaderEx implements Closeable {
       result = nextQuotedValue('"');
     }
     else {
-      throw createParseError("Expected a name but was " + peek());
+      if (p != PEEKED_END_OBJECT && p != PEEKED_END_ARRAY) {
+        throw createParseError("Expected a name but was " + peek());
+      }
+      return null;
     }
     peeked = PEEKED_NONE;
     return result;
@@ -713,6 +725,7 @@ public final class JsonReaderEx implements Closeable {
       return in.charAt(offset + index);
     }
 
+    @NotNull
     @Override
     public CharSequence subSequence(int start, int end) {
       if ((end - start) > length) {
@@ -1153,6 +1166,7 @@ public final class JsonReaderEx implements Closeable {
   /**
    * Closes this JSON reader and the underlying {@link java.io.Reader}.
    */
+  @Override
   public void close() {
     peeked = PEEKED_NONE;
     stack[0] = JsonScope.CLOSED;
@@ -1180,11 +1194,7 @@ public final class JsonReaderEx implements Closeable {
         push(JsonScope.EMPTY_OBJECT);
         count++;
       }
-      else if (p == PEEKED_END_ARRAY) {
-        stackSize--;
-        count--;
-      }
-      else if (p == PEEKED_END_OBJECT) {
+      else if (p == PEEKED_END_ARRAY || p == PEEKED_END_OBJECT) {
         stackSize--;
         count--;
       }
