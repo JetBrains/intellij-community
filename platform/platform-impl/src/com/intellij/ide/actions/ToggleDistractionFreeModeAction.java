@@ -29,7 +29,7 @@ public class ToggleDistractionFreeModeAction extends AnAction implements DumbAwa
   public void update(@NotNull AnActionEvent e) {
     RegistryValue value = Registry.get(key);
     boolean selected = value.asBoolean();
-    e.getPresentation().setText(selected ? "Exit Distraction Free Mode" : "Enter Distraction Free  Mode");
+    e.getPresentation().setText((selected ? "Exit" : "Enter") + " Distraction Free Mode");
   }
 
   @Override
