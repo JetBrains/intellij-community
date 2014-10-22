@@ -47,8 +47,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -175,27 +177,23 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return envToConfMap;
   }
 
-  private Map<AbstractVcs,Collection<FilePath>> createVcsToFilesMap(FilePath[] roots, Project project) {
-    HashMap<AbstractVcs, Collection<FilePath>> resultPrep = new HashMap<AbstractVcs, Collection<FilePath>>();
-
+  private Map<AbstractVcs, Collection<FilePath>> createVcsToFilesMap(@NotNull FilePath[] roots, @NotNull Project project) {
+    MultiMap<AbstractVcs, FilePath> resultPrep = MultiMap.createSet();
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs != null) {
         UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
         if (updateEnvironment != null) {
-          if (!resultPrep.containsKey(vcs)) resultPrep.put(vcs, new HashSet<FilePath>());
-          resultPrep.get(vcs).add(file);
+          resultPrep.putValue(vcs, file);
         }
       }
     }
 
-    final Map<AbstractVcs, Collection<FilePath>> result = new HashMap<AbstractVcs, Collection<FilePath>>();
+    final Map<AbstractVcs, Collection<FilePath>> result = new THashMap<AbstractVcs, Collection<FilePath>>();
     for (Map.Entry<AbstractVcs, Collection<FilePath>> entry : resultPrep.entrySet()) {
-      final AbstractVcs vcs = entry.getKey();
-      final List<FilePath> paths = new ArrayList<FilePath>(entry.getValue());
-      result.put(vcs, vcs.filterUniqueRoots(paths, ObjectsConvertor.FILEPATH_TO_VIRTUAL));
+      AbstractVcs vcs = entry.getKey();
+      result.put(vcs, vcs.filterUniqueRoots(new ArrayList<FilePath>(entry.getValue()), ObjectsConvertor.FILEPATH_TO_VIRTUAL));
     }
-
     return result;
   }
 
@@ -203,6 +201,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   private FilePath[] filterRoots(FilePath[] roots, VcsContext vcsContext) {
     final ArrayList<FilePath> result = new ArrayList<FilePath>();
     final Project project = vcsContext.getProject();
+    assert project != null;
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs != null) {
