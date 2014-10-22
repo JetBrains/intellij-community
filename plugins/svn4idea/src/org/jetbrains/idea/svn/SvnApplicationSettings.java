@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -43,6 +44,7 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
     public List<String> myCheckoutURLs = new ArrayList<String>();
     public List<String> myTypedURLs = new ArrayList<String>();
     public String mySvnCommandLine = "svn";
+    public String myExecutableLocale = SvnConfigurable.EN_US_LOCALE;
   }
 
   private ConfigurationBean myConfigurationBean;
@@ -72,6 +74,15 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   
   public String getCommandLinePath() {
     return myConfigurationBean.mySvnCommandLine;
+  }
+
+  @NotNull
+  public String getExecutableLocale() {
+    return myConfigurationBean.myExecutableLocale;
+  }
+
+  public void setExecutableLocale(@NotNull String locale) {
+    myConfigurationBean.myExecutableLocale = locale;
   }
 
   private LimitedStringsList getTypedList() {

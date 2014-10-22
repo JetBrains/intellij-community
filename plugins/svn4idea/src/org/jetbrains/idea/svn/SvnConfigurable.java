@@ -24,6 +24,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.FixedComboBoxEditor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,10 +33,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +53,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
+import java.util.List;
 
 public class SvnConfigurable implements Configurable {
 
   public static final String DISPLAY_NAME = SvnVcs.VCS_DISPLAY_NAME;
+
+  public static final String EN_US_LOCALE = "en_US.UTF-8";
+  public static final List<String> EXECUTABLE_LOCALES = ContainerUtil.newArrayList("", EN_US_LOCALE, "C.UTF-8", "C");
+
   private final Project myProject;
   private JCheckBox myUseDefaultCheckBox;
   private TextFieldWithBrowseButton myConfigurationDirectoryText;
@@ -68,11 +81,13 @@ public class SvnConfigurable implements Configurable {
   private JCheckBox myShowMergeSourceInAnnotate;
   private JBCheckBox myWithCommandLineClient;
   private JBCheckBox myRunUnderTerminal;
+  private ComboBox myLocalesList;
   private JSpinner myNumRevsInAnnotations;
   private JCheckBox myMaximumNumberOfRevisionsCheckBox;
   private JSpinner mySSHConnectionTimeout;
   private JSpinner mySSHReadTimeout;
   private TextFieldWithBrowseButton myCommandLineClient;
+  private JPanel myCommandLineClientOptions;
   private JSpinner myHttpTimeout;
   private JBRadioButton mySSLv3RadioButton;
   private JBRadioButton myTLSv1RadioButton;
@@ -85,12 +100,13 @@ public class SvnConfigurable implements Configurable {
   public SvnConfigurable(Project project) {
     myProject = project;
 
-    myWithCommandLineClient.addActionListener(new ActionListener() {
+    myWithCommandLineClient.addItemListener(new ItemListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        myRunUnderTerminal.setEnabled(myWithCommandLineClient.isSelected());
+      public void itemStateChanged(ItemEvent e) {
+        enableCommandLineClientOptions();
       }
     });
+    enableCommandLineClientOptions();
     myUseDefaultCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         boolean enabled = !myUseDefaultCheckBox.isSelected();
@@ -108,7 +124,28 @@ public class SvnConfigurable implements Configurable {
       }
     });
     myCommandLineClient.addBrowseFolderListener("Subversion", "Select path to Subversion executable (1.7+)", project,
-                                       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+                                                FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    //noinspection unchecked
+    myLocalesList.setModel(new CollectionComboBoxModel(EXECUTABLE_LOCALES));
+    myLocalesList.setEditable(true);
+    FixedComboBoxEditor editor = new FixedComboBoxEditor();
+    editor.getField().getEmptyText().setText(SvnBundle.message("command.line.locale.system.default.title"));
+    myLocalesList.setEditor(editor);
+    myLocalesList.setRenderer(new ListCellRendererWrapper<String>() {
+
+      @Override
+      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+        setText(StringUtil.isEmpty(value) ? SvnBundle.message("command.line.locale.system.default.title") : value);
+      }
+    });
+    myLocalesList.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          myLocalesList.getEditor().setItem(myLocalesList.getSelectedItem());
+        }
+      }
+    });
 
     myClearAuthButton.addActionListener(new ActionListener(){
       public void actionPerformed(final ActionEvent e) {
@@ -173,6 +210,10 @@ public class SvnConfigurable implements Configurable {
     }
 
     mySshSettingsPanel.load(SvnConfiguration.getInstance(myProject));
+  }
+
+  public void enableCommandLineClientOptions() {
+    UIUtil.setEnabled(myCommandLineClientOptions, myWithCommandLineClient.isSelected(), true);
   }
 
   public static void selectConfigurationDirectory(@NotNull String path,
@@ -263,6 +304,7 @@ public class SvnConfigurable implements Configurable {
     if (! getSelectedSSL().equals(configuration.getSslProtocols())) return true;
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     if (! Comparing.equal(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim())) return true;
+    if (!Comparing.equal(applicationSettings17.getExecutableLocale(), myLocalesList.getEditor().getItem())) return true;
     if (!configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim())) return true;
     return mySshSettingsPanel.isModified(configuration);
   }
@@ -292,13 +334,16 @@ public class SvnConfigurable implements Configurable {
 
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     boolean reloadWorkingCopies = !acceleration().equals(configuration.getUseAcceleration()) ||
-                                  !StringUtil.equals(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim());
+                                  !StringUtil.equals(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim()) ||
+                                  !StringUtil.equals(applicationSettings17.getExecutableLocale(),
+                                                     myLocalesList.getEditor().getItem().toString());
     configuration.setUseAcceleration(acceleration());
     configuration.setRunUnderTerminal(myRunUnderTerminal.isSelected());
     configuration.setSslProtocols(getSelectedSSL());
     SvnVcs.getInstance(myProject).getSvnKitManager().refreshSSLProperty();
 
     applicationSettings17.setCommandLinePath(myCommandLineClient.getText().trim());
+    applicationSettings17.setExecutableLocale(myLocalesList.getEditor().getItem().toString());
     boolean isClientValid = vcs17.checkCommandLineVersion();
     if (isClientValid && reloadWorkingCopies) {
       vcs17.invokeRefreshSvnRoots();
@@ -342,9 +387,9 @@ public class SvnConfigurable implements Configurable {
     myHttpTimeout.setValue(Long.valueOf(configuration.getHttpTimeout() / 1000));
     myWithCommandLineClient.setSelected(configuration.isCommandLine());
     myRunUnderTerminal.setSelected(configuration.isRunUnderTerminal());
-    myRunUnderTerminal.setEnabled(myWithCommandLineClient.isSelected());
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     myCommandLineClient.setText(applicationSettings17.getCommandLinePath());
+    myLocalesList.setSelectedItem(applicationSettings17.getExecutableLocale());
 
     if (SvnConfiguration.SSLProtocols.sslv3.equals(configuration.getSslProtocols())) {
       mySSLv3RadioButton.setSelected(true);
