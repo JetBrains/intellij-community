@@ -654,7 +654,17 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
         return;
       }
       myIterator = ((MarkupModelEx)markupModel).overlappingIterator(startOffset, endOffset);
-      findNextSuitableRange();
+      try {
+        findNextSuitableRange();
+      }
+      catch (RuntimeException e) {
+        myIterator.dispose();
+        throw e;
+      }
+      catch (Error e) {
+        myIterator.dispose();
+        throw e;
+      }
     }
 
     @Override
