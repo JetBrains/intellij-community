@@ -3,7 +3,6 @@ package com.intellij.json.formatter;
 import com.intellij.formatting.*;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.JsonParserDefinition;
 import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
@@ -23,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.json.JsonParserDefinition.JSON_BRACES;
-import static com.intellij.json.JsonParserDefinition.JSON_BRACKETS;
+import static com.intellij.json.JsonParserDefinition.*;
 import static com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment.ALIGN_ON_COLON;
 import static com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment.ALIGN_ON_VALUE;
 
@@ -115,21 +113,31 @@ public class JsonBlock implements ASTBlock {
     Alignment alignment = null;
     Wrap wrap = null;
 
-    JsonCodeStyleSettings customSettings = getCustomSettings();
-    if (isContainer() && childNodeType != JsonElementTypes.COMMA && !BRACES.contains(childNodeType)) {
-      assert myChildWrap != null;
-      wrap = myChildWrap;
-      indent = Indent.getNormalIndent();
+    final JsonCodeStyleSettings customSettings = getCustomSettings();
+    if (isContainer()) {
+      if (childNodeType != JsonElementTypes.COMMA && !BRACES.contains(childNodeType)) {
+        assert myChildWrap != null;
+        wrap = myChildWrap;
+        indent = Indent.getNormalIndent();
+      }
+      else if (OPEN_BRACES.contains(childNodeType)) {
+        if (JsonPsiUtil.isPropertyValue(myPsiElement) && customSettings.PROPERTY_ALIGNMENT == ALIGN_ON_VALUE) {
+          // WEB-13587 Align compound values on opening brace/bracket, not the whole block
+          assert myParent != null && myParent.myParent != null && myParent.myParent.myPropertyValueAlignment != null;
+          alignment = myParent.myParent.myPropertyValueAlignment;
+        }
+      }
     }
     // Handle properties alignment
     else if (myNode.getElementType() == JsonElementTypes.PROPERTY) {
-      assert myParent.myNode.getElementType() == JsonElementTypes.OBJECT;
-      assert myParent.myPropertyValueAlignment != null;
+      assert myParent != null && myParent.myPropertyValueAlignment != null;
       if (childNode.getElementType() == JsonElementTypes.COLON && customSettings.PROPERTY_ALIGNMENT == ALIGN_ON_COLON) {
         alignment = myParent.myPropertyValueAlignment;
       }
       else if (JsonPsiUtil.isPropertyValue(childNode.getPsi()) && customSettings.PROPERTY_ALIGNMENT == ALIGN_ON_VALUE) {
-        alignment = myParent.myPropertyValueAlignment;
+        if (!JSON_CONTAINERS.contains(childNodeType)) {
+          alignment = myParent.myPropertyValueAlignment;
+        }
       }
     }
     return new JsonBlock(this, childNode, mySettings, alignment, indent, wrap);
@@ -216,7 +224,7 @@ public class JsonBlock implements ASTBlock {
   }
 
   private boolean isContainer() {
-    return JsonParserDefinition.JSON_CONTAINERS.contains(myNode.getElementType());
+    return JSON_CONTAINERS.contains(myNode.getElementType());
   }
 
   private JsonCodeStyleSettings getCustomSettings() {
