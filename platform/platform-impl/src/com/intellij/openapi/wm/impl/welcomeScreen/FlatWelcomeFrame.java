@@ -303,7 +303,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.setBorder(new EmptyBorder(4, 10, 4, 10));
       panel.add(settings.get());
-      JLabel arrow = new JLabel(AllIcons.General.Combo2);
+      JLabel arrow = new JLabel(AllIcons.General.Combo3);
       arrow.setVerticalAlignment(SwingConstants.BOTTOM);
       panel.add(arrow, BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
