@@ -91,6 +91,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     } else {
       setSize(555, 460);
     }
+    setResizable(false);
     //int x = bounds.x + (bounds.width - getWidth()) / 2;
     //int y = bounds.y + (bounds.height - getHeight()) / 2;
     Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
@@ -176,8 +177,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     return new JBColor(Gray._0, Gray.xBB);
   }
   
-  public static Color getListSelectionColor() {
-    return new JBColor(0x3875d6, 0x4b6eaf);
+  public static Color getListSelectionColor(boolean hasFocus) {
+    return hasFocus ? new JBColor(0x3875d6, 0x4b6eaf) : new JBColor(Gray.xDD, Gray.x45);
   }
   
   public static Color getActionLinkSelectionColor() {
@@ -185,7 +186,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   }
 
   public static JBColor getSeparatorColor() {
-    return new JBColor(Gray.xEC, new Color(0x4e5154));
+    return new JBColor(Gray.xEC, new Color(72, 75, 78));
   }
 
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
@@ -218,6 +219,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
             @Override
             public void contentsChanged(ListDataEvent e) {
               removeIfNeeded();
+            }
+          });
+          projectsList.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+              projectsList.repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+              projectsList.repaint();
             }
           });
         }

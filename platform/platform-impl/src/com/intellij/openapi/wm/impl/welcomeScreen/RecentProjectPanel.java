@@ -256,8 +256,8 @@ public class RecentProjectPanel extends JPanel {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       ReopenProjectAction item = (ReopenProjectAction)value;
 
-      Color fore = getListForeground(isSelected, cellHasFocus);
-      Color back = getListBackground(isSelected, cellHasFocus);
+      Color fore = getListForeground(isSelected, list.hasFocus());
+      Color back = getListBackground(isSelected, list.hasFocus());
 
       myName.setForeground(fore);
       myPath.setForeground(isSelected ? fore : UIUtil.getInactiveTextColor());
