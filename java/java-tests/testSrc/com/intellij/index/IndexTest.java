@@ -15,22 +15,21 @@
  */
 package com.intellij.index;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.CurrentEditorProvider;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -42,10 +41,7 @@ import com.intellij.util.indexing.MapIndexStorage;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.beans.PropertyChangeListener;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
@@ -311,7 +307,6 @@ public class IndexTest extends CodeInsightTestCase {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         assertEquals(" Foo", file.getText());
         assertOneElement(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
-
       }
     });
   }
@@ -339,101 +334,13 @@ public class IndexTest extends CodeInsightTestCase {
     });
 
     final UndoManager undoManager = UndoManager.getInstance(getProject());
-    final Editor editor = createEditor(vFile);
-    final FileEditor selectedEditor = new TextEditor() {
-      @NotNull
+    final FileEditor selectedEditor = FileEditorManager.getInstance(myProject).openFile(vFile, false)[0];
+    ((UndoManagerImpl)undoManager).setEditorProvider(new CurrentEditorProvider() {
       @Override
-      public Editor getEditor() {
-        return editor;
+      public FileEditor getCurrentEditor() {
+        return selectedEditor;
       }
-
-      @Override
-      public boolean canNavigateTo(@NotNull Navigatable navigatable) {
-        return false;
-      }
-
-      @Override
-      public void navigateTo(@NotNull Navigatable navigatable) {}
-
-      @NotNull
-      @Override
-      public JComponent getComponent() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public JComponent getPreferredFocusedComponent() {
-        return null;
-      }
-
-      @NotNull
-      @Override
-      public String getName() {
-        return null;
-      }
-
-      @NotNull
-      @Override
-      public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-        return null;
-      }
-
-      @Override
-      public void setState(@NotNull FileEditorState state) {}
-
-      @Override
-      public boolean isModified() {
-        return false;
-      }
-
-      @Override
-      public boolean isValid() {
-        return false;
-      }
-
-      @Override
-      public void selectNotify() {}
-
-      @Override
-      public void deselectNotify() {}
-
-      @Override
-      public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {}
-
-      @Override
-      public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {}
-
-      @Nullable
-      @Override
-      public BackgroundEditorHighlighter getBackgroundHighlighter() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public FileEditorLocation getCurrentLocation() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public StructureViewBuilder getStructureViewBuilder() {
-        return null;
-      }
-
-      @Override
-      public void dispose() {}
-
-      @Nullable
-      @Override
-      public <T> T getUserData(@NotNull Key<T> key) {
-        return null;
-      }
-
-      @Override
-      public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {}
-    };
+    });
 
     assertTrue(undoManager.isUndoAvailable(selectedEditor));
     FileDocumentManager.getInstance().saveDocument(document);
