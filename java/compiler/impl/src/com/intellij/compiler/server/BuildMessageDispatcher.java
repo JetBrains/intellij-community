@@ -21,10 +21,12 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.SimpleChannelInboundHandlerAdapter;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
+import org.jetbrains.jps.api.RequestFuture;
 
 import java.util.Map;
 import java.util.Set;
@@ -41,19 +43,34 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
 
   private static final AttributeKey<SessionData> SESSION_DATA = AttributeKey.valueOf("BuildMessageDispatcher.sessionData");
 
-  private final Map<UUID, SessionData> myMessageHandlers = new ConcurrentHashMap<UUID, SessionData>(16, 0.75f, 1);
+  private final Map<UUID, SessionData> mySessionDescriptors = new ConcurrentHashMap<UUID, SessionData>(16, 0.75f, 1);
   private final Set<UUID> myCanceledSessions = new ConcurrentHashSet<UUID>();
 
-  public void registerBuildMessageHandler(UUID sessionId,
-                                          BuilderMessageHandler handler,
-                                          CmdlineRemoteProto.Message.ControllerMessage params) {
-    myMessageHandlers.put(sessionId, new SessionData(sessionId, handler, params));
+  public void registerBuildMessageHandler(@NotNull final RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {
+    final BuilderMessageHandler wrappedHandler = new DelegatingMessageHandler() {
+      @Override
+      protected BuilderMessageHandler getDelegateHandler() {
+        return future.getMessageHandler();
+      }
+      
+      @Override
+      public void sessionTerminated(UUID sessionId) {
+        try {
+          super.sessionTerminated(sessionId);
+        }
+        finally {
+          future.setDone();
+        }
+      }
+    };
+    final UUID sessionId = future.getRequestID();
+    mySessionDescriptors.put(sessionId, new SessionData(sessionId, wrappedHandler, params));
   }
 
   @Nullable
   public BuilderMessageHandler unregisterBuildMessageHandler(UUID sessionId) {
     myCanceledSessions.remove(sessionId);
-    final SessionData data = myMessageHandlers.remove(sessionId);
+    final SessionData data = mySessionDescriptors.remove(sessionId);
     return data != null? data.handler : null;
   }
 
@@ -74,11 +91,26 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
 
   @Nullable
   public Channel getAssociatedChannel(final UUID sessionId) {
-    final SessionData data = myMessageHandlers.get(sessionId);
+    final SessionData data = mySessionDescriptors.get(sessionId);
     return data != null? data.channel : null;
   }
 
-
+  public boolean acquirePreloadedSessionIfReady(final UUID sessionId) {
+    final SessionData data = mySessionDescriptors.get(sessionId);
+    return data != null && data.getAndClearWaitingFlag();
+  }
+  
+  public void sendBuildParameters(final UUID preloadedSessionId, CmdlineRemoteProto.Message.ControllerMessage params) {
+    final SessionData sessionData = mySessionDescriptors.get(preloadedSessionId);
+    if (sessionData != null) {
+      final Channel channel = sessionData.channel;
+      if (channel != null && channel.isActive() && sessionData.handler != null) {
+        sessionData.handler.buildStarted(preloadedSessionId);
+        channel.writeAndFlush(CmdlineProtoUtil.toMessage(preloadedSessionId, params));
+      }
+    }
+  }
+  
   @Override
   protected void messageReceived(ChannelHandlerContext context, CmdlineRemoteProto.Message message) throws Exception {
     SessionData sessionData = context.attr(SESSION_DATA).get();
@@ -89,7 +121,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
       final CmdlineRemoteProto.Message.UUID id = message.getSessionId();
       sessionId = new UUID(id.getMostSigBits(), id.getLeastSigBits());
 
-      sessionData = myMessageHandlers.get(sessionId);
+      sessionData = mySessionDescriptors.get(sessionId);
       if (sessionData != null) {
         sessionData.channel = context.channel();
         context.attr(SESSION_DATA).set(sessionData);
@@ -125,7 +157,9 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
             sessionData.params = null;
             context.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, params));
           }
-          else {
+          else if (!sessionData.setReadyAndWaiting()) {
+            // this message is expected to be sent only once.
+            // To be on the safe side, cancel the session
             cancelSession(sessionId);
           }
         }
@@ -169,11 +203,26 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
     final BuilderMessageHandler handler;
     volatile CmdlineRemoteProto.Message.ControllerMessage params;
     volatile Channel channel;
+    private boolean isReadyAndWaiting = false;
 
     private SessionData(UUID sessionId, BuilderMessageHandler handler, CmdlineRemoteProto.Message.ControllerMessage params) {
       this.sessionId = sessionId;
       this.handler = handler;
       this.params = params;
+    }
+
+    public synchronized boolean setReadyAndWaiting() {
+      if (!isReadyAndWaiting) {
+        isReadyAndWaiting = true;
+        return true;
+      }
+      return false;
+    }
+    
+    public synchronized boolean getAndClearWaitingFlag() {
+      final boolean wasWaiting = isReadyAndWaiting;
+      isReadyAndWaiting = false;
+      return wasWaiting;
     }
   }
 }

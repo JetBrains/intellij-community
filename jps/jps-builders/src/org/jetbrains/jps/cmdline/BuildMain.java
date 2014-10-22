@@ -35,7 +35,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
+import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.fs.FSState;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -49,6 +53,9 @@ import java.util.concurrent.TimeUnit;
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class BuildMain {
+  private static final String PRELOAD_PROJECT_PATH = "preload.project.path";
+  private static final String PRELOAD_CONFIG_PATH = "preload.config.path";
+  
   private static final String LOG_CONFIG_FILE_NAME = "build-log.xml";
   private static final String LOG_FILE_NAME = "build.log";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
@@ -65,6 +72,8 @@ public class BuildMain {
   private static final int SYSTEM_DIR_ARG = SESSION_ID_ARG + 1;
 
   private static NioEventLoopGroup ourEventLoopGroup;
+  @Nullable 
+  private static PreloadedData ourPreloadedData;
 
   public static void main(String[] args){
     System.out.println("Build process started. Classpath: " + System.getProperty("java.class.path"));
@@ -112,6 +121,56 @@ public class BuildMain {
     final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port)).awaitUninterruptibly();
     final boolean success = future.isSuccess();
     if (success) {
+      final String projectPathToPreload = System.getProperty(PRELOAD_PROJECT_PATH, null);
+      final String globalsPathToPreload = System.getProperty(PRELOAD_CONFIG_PATH, null); 
+      if (projectPathToPreload != null && globalsPathToPreload != null) {
+        final PreloadedData data = new PreloadedData();
+        ourPreloadedData = data;
+        try {
+          final BuildRunner runner = new BuildRunner(new JpsModelLoaderImpl(projectPathToPreload, globalsPathToPreload, null));
+          data.setRunner(runner);
+
+          final File dataStorageRoot = Utils.getDataStorageRoot(projectPathToPreload);
+          final BuildFSState fsState = new BuildFSState(false);
+          final ProjectDescriptor pd = runner.load(new MessageHandler() {
+            @Override
+            public void processMessage(BuildMessage msg) {
+              data.addMessage(msg);
+            }
+          }, dataStorageRoot, fsState);
+          data.setProjectDescriptor(pd);
+          
+          try {
+            final File fsStateFile = new File(dataStorageRoot, BuildSession.FS_STATE_FILE);
+            final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(fsStateFile)));
+            try {
+              final int version = in.readInt();
+              if (version == FSState.VERSION) {
+                final long savedOrdinal = in.readLong();
+                in.readBoolean(); // must skip "has-work-to-do" flag
+                fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
+                data.setFsEventOrdinal(savedOrdinal);
+              }
+            }
+            finally {
+              in.close();
+            }
+          }
+          catch (FileNotFoundException ignored) {
+          }
+          catch (IOException e) {
+            LOG.info("Error pre-loading FS state", e);
+            fsState.clearAll();
+          }
+        }
+        catch (Throwable e) {
+          LOG.info("Failed to pre-load project " + projectPathToPreload, e);
+          // just failed to preload the project, the situation will be handled later, when real build starts  
+        }
+      }
+      else if (projectPathToPreload != null || globalsPathToPreload != null){
+        LOG.info("Skipping project pre-loading step: both paths to project configuration files and path to global settings must be specified");
+      }
       future.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createParamRequest()));
     }
     else {
@@ -148,7 +207,7 @@ public class BuildMain {
           case BUILD_PARAMETERS: {
             if (mySession == null) {
               final CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta = controllerMessage.hasFsEvent()? controllerMessage.getFsEvent() : null;
-              final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta);
+              final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta, ourPreloadedData);
               mySession = session;
               SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
                 @Override

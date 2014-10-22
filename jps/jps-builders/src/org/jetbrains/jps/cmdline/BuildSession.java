@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
 import io.netty.channel.Channel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.api.*;
@@ -57,9 +58,11 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 */
 final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildSession");
-  private static final String FS_STATE_FILE = "fs_state.dat";
+  public static final String FS_STATE_FILE = "fs_state.dat";
   private final UUID mySessionId;
   private final Channel myChannel;
+  @Nullable 
+  private final PreloadedData myPreloadedData;
   private volatile boolean myCanceled = false;
   private final String myProjectPath;
   @Nullable
@@ -70,6 +73,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private volatile ProjectDescriptor myProjectDescriptor;
   private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<Pair<String, String>, ConstantSearchFuture>());
   private final ConstantSearch myConstantSearch = new ConstantSearch();
+  @NotNull
   private final BuildRunner myBuildRunner;
   private final boolean myForceModelLoading;
   private final BuildType myBuildType;
@@ -78,24 +82,31 @@ final class BuildSession implements Runnable, CanceledStatus {
   BuildSession(UUID sessionId,
                Channel channel,
                CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage params,
-               @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta) {
+               @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta, @Nullable PreloadedData preloaded) {
     mySessionId = sessionId;
     myChannel = channel;
-
+    myPreloadedData = preloaded;
+    
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
     myScopes = params.getScopeList();
     List<String> filePaths = params.getFilePathList();
-    Map<String, String> builderParams = new HashMap<String, String>();
+    final Map<String, String> builderParams = new HashMap<String, String>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
       builderParams.put(pair.getKey(), pair.getValue());
     }
     myInitialFSDelta = delta;
-    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, null);
-    myForceModelLoading = Boolean.parseBoolean(builderParams.get(BuildParametersKeys.FORCE_MODEL_LOADING));
-    myBuildRunner = new BuildRunner(loader, filePaths, builderParams);
+    if (preloaded == null || preloaded.getRunner() == null) {
+      myBuildRunner = new BuildRunner(new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, null));
+    }
+    else {
+      myBuildRunner = preloaded.getRunner();
+    }
+    myBuildRunner.setFilePaths(filePaths);
+    myBuildRunner.setBuilderParams(builderParams);
+    myForceModelLoading = (preloaded != null && preloaded.getProjectDescriptor() != null) || Boolean.parseBoolean(builderParams.get(BuildParametersKeys.FORCE_MODEL_LOADING));
   }
 
   @Override
@@ -185,8 +196,9 @@ final class BuildSession implements Runnable, CanceledStatus {
       // invoked the very first time for this project
       myBuildRunner.setForceCleanCaches(true);
     }
-
-    final DataInputStream fsStateStream = createFSDataStream(dataStorageRoot);
+    final ProjectDescriptor preloadedProject = myPreloadedData != null? myPreloadedData.getProjectDescriptor() : null;
+    final DataInputStream fsStateStream = 
+      preloadedProject != null || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
 
     if (fsStateStream != null) {
       // optimization: check whether we can skip the build
@@ -198,27 +210,56 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
     }
 
-    final BuildFSState fsState = new BuildFSState(false);
+    final BuildFSState fsState = preloadedProject != null? preloadedProject.fsState : new BuildFSState(false);
     try {
-      final ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
-      TimingLog.LOG.debug("Project descriptor loaded");
-      myProjectDescriptor = pd;
-      if (fsStateStream != null) {
-        try {
-          try {
-            fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
-            applyFSEvent(pd, myInitialFSDelta, false);
-            TimingLog.LOG.debug("FS Delta loaded");
-          }
-          finally {
-            fsStateStream.close();
+      final ProjectDescriptor pd;
+      if (preloadedProject != null) {
+        pd = preloadedProject;
+        final List<BuildMessage> preloadMessages = myPreloadedData.getLoadMessages();
+        if (!preloadMessages.isEmpty()) {
+          // replay preload-time messages, so that they are delivered to the IDE
+          for (BuildMessage message : preloadMessages) {
+            msgHandler.processMessage(message);
           }
         }
-        catch (Throwable e) {
-          LOG.error(e);
-          fsState.clearAll();
+        if (myInitialFSDelta == null || myPreloadedData.getFsEventOrdinal() + 1L != myInitialFSDelta.getOrdinal()) {
+          // FS rescan was forced
+          fsState.clearAll(); 
+        }
+        else {
+          // apply events to already loaded state
+          try {
+            applyFSEvent(pd, myInitialFSDelta, false);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+            fsState.clearAll();
+          }
         }
       }
+      else {
+        // standard case
+        pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
+        TimingLog.LOG.debug("Project descriptor loaded");
+        if (fsStateStream != null) {
+          try {
+            try {
+              fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
+              applyFSEvent(pd, myInitialFSDelta, false);
+              TimingLog.LOG.debug("FS Delta loaded");
+            }
+            finally {
+              fsStateStream.close();
+            }
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+            fsState.clearAll();
+          }
+        }
+      }
+      myProjectDescriptor = pd;
+      
       myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
 
       // free memory
@@ -466,11 +507,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   @Nullable
-  private DataInputStream createFSDataStream(File dataStorageRoot) {
-    if (myInitialFSDelta == null) {
-      // this will force FS rescan
-      return null;
-    }
+  private static DataInputStream createFSDataStream(File dataStorageRoot, final long currentEventOrdinal) {
     try {
       final File file = new File(dataStorageRoot, FS_STATE_FILE);
       byte[] bytes;
@@ -487,7 +524,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         return null;
       }
       final long savedOrdinal = in.readLong();
-      if (savedOrdinal + 1L != myInitialFSDelta.getOrdinal()) {
+      if (savedOrdinal + 1L != currentEventOrdinal) {
         return null;
       }
       return in;
