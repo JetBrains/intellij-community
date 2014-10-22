@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ipnb.configuration;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,13 +39,15 @@ public class IpnbConfigurable implements SearchableConfigurable {
   @Override
   public boolean isModified() {
     final String oldUrl = IpnbSettings.getInstance(myProject).getURL();
-    final String url = myFieldUrl.getText();
+    final String url = StringUtil.trimEnd(myFieldUrl.getText(), "/");
     return !url.equals(oldUrl);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    IpnbSettings.getInstance(myProject).setURL(myFieldUrl.getText());
+    String url = myFieldUrl.getText();
+    url = StringUtil.trimEnd(url, "/");
+    IpnbSettings.getInstance(myProject).setURL(url);
   }
 
   @Override
