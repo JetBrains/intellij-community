@@ -378,6 +378,7 @@ public class AllIcons {
     public static final Icon CollapseAllHover = IconLoader.getIcon("/general/collapseAllHover.png"); // 11x16
     public static final Icon Combo = IconLoader.getIcon("/general/combo.png"); // 16x16
     public static final Icon Combo2 = IconLoader.getIcon("/general/combo2.png"); // 16x16
+    public static final Icon Combo3 = IconLoader.getIcon("/general/combo3.png"); // 16x16
     public static final Icon ComboArrow = IconLoader.getIcon("/general/comboArrow.png"); // 16x16
     public static final Icon ComboArrowDown = IconLoader.getIcon("/general/comboArrowDown.png"); // 9x5
     public static final Icon ComboArrowLeft = IconLoader.getIcon("/general/comboArrowLeft.png"); // 5x9
