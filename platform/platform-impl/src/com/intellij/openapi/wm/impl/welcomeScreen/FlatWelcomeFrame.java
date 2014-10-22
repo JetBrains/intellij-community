@@ -209,7 +209,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
             }
 
             private void removeIfNeeded() {
-              if (projectsList.getModel().getSize() == 0) {
+              if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0) {
                 FlatWelcomeScreen.this.remove(recentProjects);
                 FlatWelcomeScreen.this.revalidate();
                 FlatWelcomeScreen.this.repaint();
