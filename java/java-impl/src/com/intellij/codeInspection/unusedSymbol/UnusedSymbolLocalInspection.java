@@ -18,9 +18,8 @@ package com.intellij.codeInspection.unusedSymbol;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManager;
-import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import org.intellij.lang.annotations.Pattern;
@@ -37,7 +36,7 @@ import java.awt.event.ActionListener;
  * User: anna
  * Date: 17-Feb-2006
  */
-public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase implements PairedUnfairLocalInspectionTool {
+public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase implements UnfairLocalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
@@ -73,12 +72,6 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
   @Override
   public boolean isEnabledByDefault() {
     return true;
-  }
-
-  @NotNull
-  @Override
-  public String getInspectionForBatchShortName() {
-    return UnusedDeclarationInspection.SHORT_NAME;
   }
 
   public class OptionsPanel {
