@@ -56,6 +56,10 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
            getNode().findChildByType(RegExpTT.RUBY_QUOTED_NAMED_GROUP) != null;
   }
 
+  public boolean isNamedGroup() {
+    return getNode().findChildByType(RegExpTT.RUBY_NAMED_GROUP) != null;
+  }
+
   public String getGroupName() {
     if (!isPythonNamedGroup()) {
       return null;

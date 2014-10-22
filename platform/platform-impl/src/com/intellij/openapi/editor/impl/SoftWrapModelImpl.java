@@ -51,7 +51,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, DocumentBulkUpdateListener, FoldingListener,
+public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
                                           PropertyChangeListener, Dumpable, Disposable
 {
 
@@ -153,8 +153,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myFontPreferences = myEditor.getColorsScheme().getFontPreferences();
     
     editor.addPropertyChangeListener(this);
-
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, this);
 
     myApplianceManager.addListener(myDataMapper);
   }
@@ -567,17 +565,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     }
   }
 
-  @Override
-  public void updateStarted(@NotNull Document doc) {
-    if (doc != myEditor.getDocument()) return;
-    
+  void onBulkDocumentUpdateStarted() {
     myBulkUpdateInProgress = true;
   }
 
-  @Override
-  public void updateFinished(@NotNull Document doc) {
-    if (doc != myEditor.getDocument()) return;
-    
+  void onBulkDocumentUpdateFinished() {
     myBulkUpdateInProgress = false;
     if (!isSoftWrappingEnabled()) {
       return;

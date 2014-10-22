@@ -2,6 +2,7 @@ package org.jetbrains.protocolReader;
 
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -84,7 +85,7 @@ public class GlobalScope {
       // Sort to produce consistent GeneratedCodeMap later.
       Collections.sort(list, new Comparator<TypeHandler<?>>() {
         @Override
-        public int compare(TypeHandler<?> o1, TypeHandler<?> o2) {
+        public int compare(@NotNull TypeHandler<?> o1, @NotNull TypeHandler<?> o2) {
           return getName(o1).compareTo(getName(o2));
         }
 

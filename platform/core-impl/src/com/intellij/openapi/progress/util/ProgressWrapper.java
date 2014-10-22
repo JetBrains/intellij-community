@@ -56,6 +56,7 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
 
   @Override
   public final void checkCanceled() {
+    myOriginal.checkCanceled();
     super.checkCanceled();
   }
 

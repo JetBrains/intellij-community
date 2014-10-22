@@ -222,24 +222,11 @@ public class DataFlowRunner {
 
   protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
-    if (instruction instanceof MethodCallInstruction) {
-      PsiCallExpression anchor = ((MethodCallInstruction)instruction).getCallExpression();
-      if (anchor instanceof PsiNewExpression) {
-        PsiAnonymousClass anonymousClass = ((PsiNewExpression)anchor).getAnonymousClass();
-        if (anonymousClass != null) {
-          registerNestedClosures(instructionState, anonymousClass);
-        }
-      }
-    }
-    else if (instruction instanceof LambdaInstruction) {
-      PsiLambdaExpression lambdaExpression = ((LambdaInstruction)instruction).getLambdaExpression();
-      registerNestedClosures(instructionState, lambdaExpression);
-    }
-    else if (instruction instanceof EmptyInstruction) {
-      PsiElement anchor = ((EmptyInstruction)instruction).getAnchor();
-      if (anchor instanceof PsiClass) {
-        registerNestedClosures(instructionState, (PsiClass)anchor);
-      }
+    PsiElement closure = DfaUtil.getClosureInside(instruction);
+    if (closure instanceof PsiClass) {
+      registerNestedClosures(instructionState, (PsiClass)closure);
+    } else if (closure instanceof PsiLambdaExpression) {
+      registerNestedClosures(instructionState, (PsiLambdaExpression)closure);
     }
 
     return instruction.accept(this, instructionState.getMemoryState(), visitor);

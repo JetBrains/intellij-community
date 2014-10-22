@@ -8,6 +8,9 @@ import javax.swing.*;
 
 public class StudyNextStudyTaskAction extends StudyTaskNavigationAction {
 
+  public static final String ACTION_ID = "NextTaskAction";
+  public static final String SHORTCUT = "ctrl pressed PERIOD";
+
   @Override
   protected JButton getButton(@NotNull final StudyEditor selectedStudyEditor) {
     return selectedStudyEditor.getNextTaskButton();

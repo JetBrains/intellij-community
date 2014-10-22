@@ -130,6 +130,7 @@ public class GitCherryPickAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
+    e.getPresentation().setVisible(true);
     VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     Project project = getEventProject(e);
     if (project == null || log == null || !logHasGitRoots(log)) {

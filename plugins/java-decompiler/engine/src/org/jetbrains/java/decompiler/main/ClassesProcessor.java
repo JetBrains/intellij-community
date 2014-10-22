@@ -285,6 +285,9 @@ public class ClassesProcessor {
       if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
         BytecodeSourceMapper mapper = DecompilerContext.getBytecodeSourceMapper();
         mapper.addTotalOffset(total_offset_lines);
+        if (DecompilerContext.getOption(IFernflowerPreferences.DUMP_ORIGINAL_LINES)) {
+          buffer.dumpOriginalLineNumbers(mapper.getOriginalLinesMapping());
+        }
         if (DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE)) {
           buffer.appendLineSeparator();
           mapper.dumpMapping(buffer, true);
