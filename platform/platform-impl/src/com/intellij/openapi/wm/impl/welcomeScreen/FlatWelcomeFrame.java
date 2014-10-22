@@ -165,17 +165,29 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   }
   
   public static Color getMainBackground() {
-    return new JBColor(new Color(0xf5f6f8), new Color(0x3c3f41));
+    return new JBColor(0xf7f7f7, 0x45474a);
   }
   
-  public static Color getProjectsBackGround() {
-    return new JBColor(Gray.xFF, new Color(58, 61, 63));
+  public static Color getProjectsBackground() {
+    return new JBColor(Gray.xFF, Gray.x39);
   }
   
   public static Color getLinkNormalColor() {
     return new JBColor(Gray._0, Gray.xBB);
   }
   
+  public static Color getListSelectionColor() {
+    return new JBColor(0x3875d6, 0x4b6eaf);
+  }
+  
+  public static Color getActionLinkSelectionColor() {
+    return new JBColor(0xdbe5f5, 0x485875);
+  }
+
+  public static JBColor getSeparatorColor() {
+    return new JBColor(Gray.xEC, new Color(0x4e5154));
+  }
+
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
     public FlatWelcomeScreen() {
       super(new BorderLayout());
@@ -374,8 +386,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     private JComponent createRecentProjects() {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(new NewRecentProjectPanel(this), BorderLayout.CENTER);
-      panel.setBackground(getProjectsBackGround());
-      panel.setBorder(new CustomLineBorder(new JBColor(Gray.xEC, new Color(0x3c3f41)), 0,0,0,1));
+      panel.setBackground(getProjectsBackground());
+      panel.setBorder(new CustomLineBorder(getSeparatorColor(), 0,0,0,1));
       return panel;
     }
 
@@ -414,7 +426,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         @Override
         public void focusGained(FocusEvent e) {
           comp.setOpaque(true);
-          comp.setBackground(new JBColor(new Color(0xd2e1f0), new Color(0x455565)));
+          comp.setBackground(getActionLinkSelectionColor());
         }
 
         @Override
