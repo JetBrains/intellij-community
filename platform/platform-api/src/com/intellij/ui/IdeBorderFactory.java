@@ -71,7 +71,8 @@ public class IdeBorderFactory {
   }
 
   public static Border createEmptyBorder(int top, int left, int bottom, int right) {
-    return new EmptyBorder(top, left, bottom, right);
+    int scale = UIUtil.getScale();
+    return new EmptyBorder(top * scale, left * scale, bottom * scale, right * scale);
   }
 
   public static TitledBorder createTitledBorder(String s) {

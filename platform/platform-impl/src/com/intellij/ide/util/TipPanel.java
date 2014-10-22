@@ -20,10 +20,12 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,8 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class TipPanel extends JPanel {
-  private static final int DEFAULT_WIDTH = 400;
-  private static final int DEFAULT_HEIGHT = 200;
+  private static final Dimension DEFAULT_SIZE = new Dimension(400, 200);
 
   private final JEditorPane myBrowser;
   private final JLabel myPoweredByLabel;
@@ -43,7 +44,7 @@ public class TipPanel extends JPanel {
   public TipPanel() {
     setLayout(new BorderLayout());
     JLabel jlabel = new JLabel(AllIcons.General.Tip);
-    jlabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+    jlabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 5));
     JLabel jlabel1 = new JLabel(IdeBundle.message("label.did.you.know"));
     Font font = jlabel1.getFont();
     jlabel1.setFont(font.deriveFont(Font.PLAIN, font.getSize() + 4));
@@ -51,7 +52,7 @@ public class TipPanel extends JPanel {
     jpanel.setLayout(new BorderLayout());
     jpanel.add(jlabel, BorderLayout.WEST);
     jpanel.add(jlabel1, BorderLayout.CENTER);
-    jpanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+    jpanel.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 0));
     add(jpanel, BorderLayout.NORTH);
     myBrowser = TipUIUtil.createTipBrowser();
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser);
@@ -59,7 +60,7 @@ public class TipPanel extends JPanel {
 
     JPanel southPanel = new JPanel(new BorderLayout());
     JCheckBox showOnStartCheckBox = new JCheckBox(IdeBundle.message("checkbox.show.tips.on.startup"), true);
-    showOnStartCheckBox.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+    showOnStartCheckBox.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
     final GeneralSettings settings = GeneralSettings.getInstance();
     showOnStartCheckBox.setSelected(settings.isShowTipsOnStartup());
     showOnStartCheckBox.addItemListener(new ItemListener() {
@@ -80,7 +81,7 @@ public class TipPanel extends JPanel {
   }
 
   public Dimension getPreferredSize() {
-    return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    return UIUtil.createScaledDimension(DEFAULT_SIZE);
   }
 
   public void prevTip() {
