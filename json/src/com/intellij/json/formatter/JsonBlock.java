@@ -48,8 +48,6 @@ public class JsonBlock implements ASTBlock {
   // lazy initialized on first call to #getSubBlocks()
   private List<Block> mySubBlocks = null;
 
-  private final Alignment myChildAlignment = Alignment.createAlignment();
-
   private final Alignment myPropertyValueAlignment;
   private final Wrap myChildWrap;
 
@@ -119,9 +117,8 @@ public class JsonBlock implements ASTBlock {
 
     JsonCodeStyleSettings customSettings = getCustomSettings();
     if (isContainer() && childNodeType != JsonElementTypes.COMMA && !BRACES.contains(childNodeType)) {
-      assert myChildWrap != null && myChildAlignment != null;
+      assert myChildWrap != null;
       wrap = myChildWrap;
-      alignment = myChildAlignment;
       indent = Indent.getNormalIndent();
     }
     // Handle properties alignment
@@ -184,7 +181,10 @@ public class JsonBlock implements ASTBlock {
   @Override
   public ChildAttributes getChildAttributes(int newChildIndex) {
     if (isContainer()) {
-      return new ChildAttributes(Indent.getNormalIndent(), myChildAlignment);
+      // WEB-13675: For some reason including alignment in child attributes causes
+      // indents to consist solely of spaces when both USE_TABS and SMART_TAB
+      // options are enabled.
+      return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     // Will use continuation indent for cases like { "foo"<caret>  }
     return new ChildAttributes(null, null);
@@ -192,8 +192,8 @@ public class JsonBlock implements ASTBlock {
 
   @Override
   public boolean isIncomplete() {
-    IElementType nodeType = myNode.getElementType();
-    ASTNode lastChildNode = myNode.getLastChildNode();
+    final IElementType nodeType = myNode.getElementType();
+    final ASTNode lastChildNode = myNode.getLastChildNode();
     if (nodeType == JsonElementTypes.OBJECT) {
       return lastChildNode != null && lastChildNode.getElementType() != JsonElementTypes.R_CURLY;
     }
