@@ -22,14 +22,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.impl.PomTargetPsiElementImpl;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider, ResolvingHint {
+public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider {
   private final GenericDomValue<T> myGenericValue;
 
   public GenericDomValueReference(GenericDomValue<T> domValue) {
@@ -49,11 +50,6 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     myGenericValue = domValue;
     assert DomUtil.hasXml(domValue);
     setRangeInElement(createTextRange());
-  }
-
-  @Override
-  public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
-    return ReflectionUtil.isAssignable(XmlElement.class, elementClass);
   }
 
   protected final PsiManager getPsiManager() {
