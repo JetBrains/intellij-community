@@ -30,7 +30,8 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
     Command command = new Command(SvnCommandName.version);
     command.put("--quiet");
 
-    CommandExecutor executor = new CommandExecutor(SvnApplicationSettings.getInstance().getCommandLinePath(), command);
+    SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
+    CommandExecutor executor = new CommandExecutor(settings.getCommandLinePath(), settings.getExecutableLocale(), command);
     executor.run(30 * 1000);
 
     return executor.getProcessOutput();
