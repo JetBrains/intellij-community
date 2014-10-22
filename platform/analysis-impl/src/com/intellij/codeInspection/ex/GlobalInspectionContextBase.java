@@ -273,7 +273,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected void notifyInspectionsFinished() {
   }
 
-  protected void performInspectionsWithProgress(@NotNull final AnalysisScope scope, final boolean runGlobalToolsOnly) {
+  public void performInspectionsWithProgress(@NotNull final AnalysisScope scope, final boolean runGlobalToolsOnly) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     myProgressIndicator = getProgressIndicator();
     //init manager in read action
