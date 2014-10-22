@@ -107,11 +107,14 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                                    @Nullable Set<CommitId> headsOfVisibleBranches,
                                                    @Nullable Condition<CommitId> filter) {
-    if (filter == null) {
-      return CollapsedVisibleGraph.newInstance(getBekPermanentGraphInfo(sortType), headsOfVisibleBranches);
-    } else {
-      return FilterVisibleGraph.newInstance(getBekPermanentGraphInfo(sortType), headsOfVisibleBranches, filter);
-    }
+    BaseLinearGraphController controller = new BaseLinearGraphController(this);
+    return new VisibleGraphImpl<CommitId>(controller, this);
+    //
+    //if (filter == null) {
+    //  return CollapsedVisibleGraph.newInstance(getBekPermanentGraphInfo(sortType), headsOfVisibleBranches);
+    //} else {
+    //  return FilterVisibleGraph.newInstance(getBekPermanentGraphInfo(sortType), headsOfVisibleBranches, filter);
+    //}
   }
 
   @NotNull
