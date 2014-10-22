@@ -54,6 +54,7 @@ public interface IFernflowerPreferences {
   String INDENT_STRING = "ind";
   String BANNER = "ban";
 
+  String DUMP_ORIGINAL_LINES = "__dump_original_lines__";
   String UNIT_TEST_MODE = "__unit_test_mode__";
 
   String LINE_SEPARATOR_WIN = "\r\n";
@@ -91,5 +92,6 @@ public interface IFernflowerPreferences {
     put(INDENT_STRING, "   ");
     put(BANNER, "");
     put(UNIT_TEST_MODE, "0");
+    put(DUMP_ORIGINAL_LINES, "0");
   }});
 }
