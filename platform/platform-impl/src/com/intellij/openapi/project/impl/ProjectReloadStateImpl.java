@@ -15,13 +15,16 @@
  */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.ProjectReloadState;
 import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "ProjectReloadState",
-  storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
+  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
 )
 class ProjectReloadStateImpl extends ProjectReloadState implements PersistentStateComponent<ProjectReloadStateImpl> {
   public static final int UNKNOWN = 0;
@@ -30,10 +33,6 @@ class ProjectReloadStateImpl extends ProjectReloadState implements PersistentSta
 
   public int STATE = UNKNOWN;
 
-  public void setBeforeReload() {
-    STATE = BEFORE_RELOAD;
-  }
-
   @Override
   public boolean isAfterAutomaticReload() {
     return STATE == AFTER_RELOAD;
@@ -41,7 +40,7 @@ class ProjectReloadStateImpl extends ProjectReloadState implements PersistentSta
 
   @Override
   public void onBeforeAutomaticProjectReload() {
-    setBeforeReload();
+    STATE = BEFORE_RELOAD;
   }
 
   @Nullable
