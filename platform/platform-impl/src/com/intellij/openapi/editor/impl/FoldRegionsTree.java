@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ abstract class FoldRegionsTree {
     }
   }
 
-  boolean addRegion(FoldRegion range) {
+  boolean addRegion(@NotNull FoldRegion range) {
     // During batchProcessing elements are inserted in ascending order,
     // binary search find acceptable insertion place first time
     final boolean canUseCachedValue;
@@ -312,7 +312,7 @@ abstract class FoldRegionsTree {
     return toFoldArray(myRegions);
   }
 
-  void removeRegion(FoldRegion range) {
+  void removeRegion(@NotNull FoldRegion range) {
     myRegions.remove(range);
   }
 

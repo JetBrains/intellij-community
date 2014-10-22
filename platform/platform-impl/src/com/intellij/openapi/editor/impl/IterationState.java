@@ -193,18 +193,28 @@ public final class IterationState {
     private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end) {
       myDisposableIterator = markupModel.overlappingIterator(start, end);
       myIterator = new PushBackIterator<RangeHighlighterEx>(myDisposableIterator);
-      int skipped = 0;
-      while (myIterator.hasNext()) {
-        RangeHighlighterEx highlighter = myIterator.next();
-        if (!skipHighlighter(highlighter)) {
-          myNextHighlighter = highlighter;
-          break;
+      try {
+        int skipped = 0;
+        while (myIterator.hasNext()) {
+          RangeHighlighterEx highlighter = myIterator.next();
+          if (!skipHighlighter(highlighter)) {
+            myNextHighlighter = highlighter;
+            break;
+          }
+          skipped++;
         }
-        skipped++;
+        if (skipped > Math.min(1000, markupModel.getDocument().getTextLength())) {
+          int i = 0;
+          //LOG.error("Inefficient iteration, limit the number of highlighters to iterate");
+        }
       }
-      if (skipped > Math.min(1000, markupModel.getDocument().getTextLength())) {
-        int i = 0;
-        //LOG.error("Inefficient iteration, limit the number of highlighters to iterate");
+      catch (RuntimeException e) {
+        myDisposableIterator.dispose();
+        throw e;
+      }
+      catch (Error e) {
+        myDisposableIterator.dispose();
+        throw e;
       }
     }
 
