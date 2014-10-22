@@ -9,6 +9,7 @@ import org.jetbrains.settingsRepository.PLUGIN_NAME
 import org.jetbrains.settingsRepository.SyncType
 import org.jetbrains.settingsRepository.IcsManager
 import org.jetbrains.settingsRepository.IcsBundle
+import com.intellij.openapi.project.Project
 
 val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
 
@@ -18,17 +19,20 @@ abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val project = event.getProject()!!
-    try {
-      IcsManager.getInstance().sync(syncType, project)
-    }
-    catch (e: Exception) {
-      NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.rejected.title"), e.getMessage() ?: "Internal error", NotificationType.ERROR, null).notify(project)
+    syncAndNotify(syncType, event.getProject())
+  }
+}
+
+fun syncAndNotify(syncType: SyncType, project: Project, notifyIfUpToDate: Boolean = true) {
+  try {
+    if (IcsManager.getInstance().sync(syncType, project) == null && !notifyIfUpToDate) {
       return
     }
-
-    NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(project)
   }
+  catch (e: Exception) {
+    NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.rejected.title"), e.getMessage() ?: "Internal error", NotificationType.ERROR, null).notify(project)
+  }
+  NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(project)
 }
 
 // we don't
