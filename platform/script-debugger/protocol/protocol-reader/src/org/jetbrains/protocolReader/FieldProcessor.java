@@ -1,5 +1,6 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jsonProtocol.JsonField;
 import org.jetbrains.jsonProtocol.JsonNullable;
 import org.jetbrains.jsonProtocol.JsonOptionalField;
@@ -28,7 +29,7 @@ class FieldProcessor<T> {
     // todo sort by source location
     Arrays.sort(methods, new Comparator<Method>() {
       @Override
-      public int compare(Method o1, Method o2) {
+      public int compare(@NotNull Method o1, @NotNull Method o2) {
         return o1.getName().compareTo(o2.getName());
       }
     });
@@ -120,20 +121,10 @@ class FieldProcessor<T> {
     int position = volatileFields.size();
     FieldTypeInfo fieldTypeInfo;
     if (internalType) {
-      fieldTypeInfo = new FieldTypeInfo() {
-        @Override
-        public void appendValueTypeNameJava(FileScope scope, TextOutput out) {
-          fieldTypeParser.appendInternalValueTypeName(scope, out);
-        }
-      };
+      fieldTypeInfo = fieldTypeParser::appendInternalValueTypeName;
     }
     else {
-      fieldTypeInfo = new FieldTypeInfo() {
-        @Override
-        public void appendValueTypeNameJava(FileScope scope, TextOutput out) {
-          fieldTypeParser.appendFinishedValueTypeName(out);
-        }
-      };
+      fieldTypeInfo = (scope, out) -> fieldTypeParser.appendFinishedValueTypeName(out);
     }
     VolatileFieldBinding binding = new VolatileFieldBinding(position, fieldTypeInfo);
     volatileFields.add(binding);

@@ -43,7 +43,7 @@ class ObjectValueReader<T> extends ValueReader {
     refToType.get().writeInstantiateCode(scope.getRootClassScope(), subtyping, out);
     out.append('(');
     addReaderParameter(subtyping, out);
-    if (subtyping && refToType.get().getSubtypeSupport() instanceof ExistingSubtypeAspect) {
+    if (subtyping && refToType.get().getSubtypeSupport() != null) {
       out.comma().append("this");
     }
     out.append(')');
