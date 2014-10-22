@@ -58,7 +58,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
 
     private void doBackSlashVariantsTest() throws Throwable {
         java.util.List<String> nameList = new ArrayList<String>(Arrays.asList("d", "D", "s", "S", "w", "W", "b", "B", "A", "G", "Z", "z", "Q", "E",
-                "t", "n", "r", "f", "a", "e"));
+                "t", "n", "r", "f", "a", "e", "h", "H", "v", "V"));
         for (String[] stringArray : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
             nameList.add("p{" + stringArray[0] + "}");
         }
