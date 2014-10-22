@@ -17,7 +17,6 @@ package com.intellij.util.net;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -53,7 +52,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
@@ -71,7 +69,7 @@ import java.util.Set;
   },
   storageChooser = LastStorageChooserForWrite.class
 )
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ExportableApplicationComponent {
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent {
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
   private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
 
@@ -541,18 +539,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     synchronized (myLock) {
       myGenericPasswords.remove(info);
     }
-  }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("proxy.settings")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return "Proxy Settings";
   }
 
   public static class ProxyInfo {

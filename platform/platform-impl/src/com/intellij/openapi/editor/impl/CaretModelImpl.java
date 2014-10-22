@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -61,28 +60,23 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public CaretModelImpl(EditorImpl editor) {
     myEditor = editor;
     myCarets.add(new CaretImpl(myEditor));
+  }
 
-    DocumentBulkUpdateListener bulkUpdateListener = new DocumentBulkUpdateListener() {
+  void onBulkDocumentUpdateStarted() {
+    for (CaretImpl caret : myCarets) {
+      caret.onBulkDocumentUpdateStarted();
+    }
+  }
+
+  void onBulkDocumentUpdateFinished() {
+    doWithCaretMerging(new Runnable() {
       @Override
-      public void updateStarted(@NotNull Document doc) {
+      public void run() {
         for (CaretImpl caret : myCarets) {
-          caret.onBulkDocumentUpdateStarted(doc);
+          caret.onBulkDocumentUpdateFinished();
         }
       }
-
-      @Override
-      public void updateFinished(@NotNull final Document doc) {
-        doWithCaretMerging(new Runnable() {
-          @Override
-          public void run() {
-            for (CaretImpl caret : myCarets) {
-              caret.onBulkDocumentUpdateFinished(doc);
-            }
-          }
-        });
-      }
-    };
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, bulkUpdateListener);
+    });
   }
 
   @Override

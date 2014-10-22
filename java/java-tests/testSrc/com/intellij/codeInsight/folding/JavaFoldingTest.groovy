@@ -21,10 +21,13 @@ import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder
 import com.intellij.find.FindManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiLiteralExpression
@@ -396,7 +399,7 @@ class Test {
   public void testCustomFolding() {
     myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
   }
-  
+
   public void "test custom folding IDEA-122715 and IDEA-87312"() {
     def text = """\
 public class Test {
@@ -428,7 +431,7 @@ public class Test {
         assert region.placeholderText == "Bar"
         count ++;
       }
-    }  
+    }
     assert count == 2 : "Not all custom regions are found";
   }
 
@@ -451,7 +454,7 @@ class Foo {
     assertEquals 1, foldRegionsCount
     assertEquals "Some", foldingModel.allFoldRegions[0].placeholderText
   }
-  
+
   public void "test custom folding collapsed by default"() {
     def text = """\
 class Test {
@@ -1022,6 +1025,66 @@ class Foo {
     assertEquals 2, expandedFoldRegionsCount
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_TO_LEVEL_1)
     assertEquals 1, expandedFoldRegionsCount
+  }
+
+  public void "test single line closure unfolds when converted to multiline"() {
+    boolean oldValue = Registry.is("editor.durable.folding.state")
+    try {
+      Registry.get("editor.durable.folding.state").setValue(false)
+
+      def text = """
+  class Foo {
+    void m() {
+      SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                  System.out.println();
+              }
+          });
+    }
+  }
+  """
+      configure text
+      assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(text.indexOf("new Runnable"))
+      myFixture.editor.caretModel.moveToOffset(text.indexOf("System"))
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+      myFixture.doHighlighting()
+      assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(text.indexOf("new Runnable")) == null
+    }
+    finally {
+      Registry.get("editor.durable.folding.state").setValue(oldValue)
+    }
+  }
+
+  public void "test folding state is preserved for unchanged text in bulk mode"() {
+    def text = """
+class Foo {
+    void m1() {
+
+    }
+    void m2() {
+
+    }
+}
+"""
+    configure text
+    assertEquals 2, foldRegionsCount
+    assertEquals 2, expandedFoldRegionsCount
+    myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS)
+    assertEquals 0, expandedFoldRegionsCount
+
+    def document = (DocumentEx)myFixture.editor.document
+    WriteCommandAction.runWriteCommandAction myFixture.project, {
+      document.inBulkUpdate = true;
+      try {
+        document.insertString(document.getText().indexOf("}") + 1, "\n");
+      }
+      finally {
+        document.inBulkUpdate = false;
+      }
+    }
+    assertEquals 2, foldRegionsCount
+    assertEquals 0, expandedFoldRegionsCount
   }
 
   private int getFoldRegionsCount() {

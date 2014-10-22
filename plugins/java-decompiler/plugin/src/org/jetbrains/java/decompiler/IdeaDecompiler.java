@@ -160,6 +160,10 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
         myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0");
       }
 
+      if (Registry.is("decompiler.dump.original.lines")) {
+        myOptions.put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
+      }
+
       BaseDecompiler decompiler = new BaseDecompiler(provider, saver, myOptions, myLogger);
       for (String path : files.keySet()) {
         decompiler.addSpace(new File(path), true);

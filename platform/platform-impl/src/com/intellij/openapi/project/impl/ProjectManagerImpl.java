@@ -694,16 +694,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   @Override
-  public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
-    for (Pair<VirtualFile, StateStorage> entry : myChangedProjectFiles.values()) {
-      if (entry.first.equals(candidate)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
   public void blockReloadingProjectOnExternalChanges() {
     myReloadBlockCount.incrementAndGet();
   }

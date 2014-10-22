@@ -66,6 +66,7 @@ import java.util.List;
  * @author Sergey.Malenkov
  */
 final class SettingsTreeView extends JComponent implements Disposable, OptionsEditorColleague {
+  private static final int ICON_GAP = 5;
   private static final String NODE_ICON = "settings.tree.view.icon";
   private static final Color WRONG_CONTENT = JBColor.RED;
   private static final Color MODIFIED_CONTENT = JBColor.BLUE;
@@ -115,8 +116,8 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
     mySeparator = new JLabel();
     mySeparator.setForeground(FOREGROUND);
-    mySeparator.setIconTextGap(10);
-    mySeparator.setBorder(BorderFactory.createEmptyBorder(1, 19, 0, 0));
+    mySeparator.setIconTextGap(ICON_GAP);
+    mySeparator.setBorder(BorderFactory.createEmptyBorder(1, 10 + getLeftMargin(0), 0, 0));
 
     myTree.addComponentListener(new ComponentAdapter() {
       @Override
@@ -226,6 +227,10 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     return null;
   }
 
+  private static int getLeftMargin(int level) {
+    return 3 + level * (11 + ICON_GAP);
+  }
+
   @Nullable
   private String findGroupNameAt(int x, int y) {
     TreePath path = myTree.getClosestPathForLocation(x - myTree.getX(), y - myTree.getY());
@@ -294,8 +299,8 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
           0, y + h, ColorUtil.toAlpha(g.getColor(), 0)));
         g.fillRect(bounds.x, y, bounds.width, h);
       }
-      mySeparator.setSize(bounds.width - 1, bounds.height);
-      mySeparator.paint(g.create(bounds.x + 1, bounds.y, bounds.width - 1, bounds.height));
+      mySeparator.setBounds(bounds);
+      mySeparator.paint(g);
     }
   }
 
@@ -464,7 +469,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     private final JLabel myProjectIcon = new JLabel();
 
     public MyRenderer() {
-      super(new BorderLayout(10, 0));
+      super(new BorderLayout(ICON_GAP, 0));
       myNodeIcon.setName(NODE_ICON);
       add(BorderLayout.CENTER, myTextLabel);
       add(BorderLayout.WEST, myNodeIcon);
@@ -555,7 +560,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       myNodeIcon.setIcon(nodeIcon);
       // calculate minimum size
       if (node != null && tree.isVisible()) {
-        int width = 10 * node.myLevel + getPreferredSize().width;
+        int width = getLeftMargin(node.myLevel) + getPreferredSize().width;
         Insets insets = tree.getInsets();
         if (insets != null) {
           width += insets.left + insets.right;
@@ -734,7 +739,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
     @Override
     protected int getRowX(int row, int depth) {
-      return 10 * depth;
+      return getLeftMargin(depth - 1);
     }
   }
 

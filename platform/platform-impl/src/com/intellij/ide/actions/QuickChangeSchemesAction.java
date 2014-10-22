@@ -32,6 +32,11 @@ public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements
     }
   }
 
+  @Override
+  protected String getPopupTitle(AnActionEvent e) {
+    return "Switch...";
+  }
+
   public void actionPerformed(@NotNull AnActionEvent e) {
     super.actionPerformed(e);
     FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.scheme.quickswitch");

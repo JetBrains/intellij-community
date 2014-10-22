@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -57,7 +58,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.*;
 
-public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener {
+public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, DocumentBulkUpdateListener {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
   private static final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REFERENCE_TO_PSI");
@@ -96,6 +97,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       public void transactionCompleted(@NotNull Document document, @NotNull PsiFile file) {
       }
     });
+    bus.connect().subscribe(DocumentBulkUpdateListener.TOPIC, this);
   }
 
   @Override
@@ -599,7 +601,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       if (file == null) {
         throw new AssertionError("View provider "+viewProvider+" ("+viewProvider.getClass()+") returned null in its files array: "+files+" for file "+viewProvider.getVirtualFile());
       }
-      mySmartPointerManager.fastenBelts(file, event.getOffset(), null);
+      if (!(document instanceof DocumentEx) || !((DocumentEx)document).isInBulkUpdate()) {
+        mySmartPointerManager.fastenBelts(file, event.getOffset(), null);
+      }
 
       if (mySynchronizer.isInsideAtomicChange(file)) {
         psiCause = file;
@@ -633,7 +637,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final List<PsiFile> files = viewProvider.getAllFiles();
     boolean commitNecessary = true;
     for (PsiFile file : files) {
-      mySmartPointerManager.unfastenBelts(file, event.getOffset());
+      if (!(document instanceof DocumentEx) || !((DocumentEx)document).isInBulkUpdate()) {
+        mySmartPointerManager.unfastenBelts(file, event.getOffset());
+      }
 
       if (mySynchronizer.isInsideAtomicChange(file)) {
         commitNecessary = false;
@@ -668,6 +674,28 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
     else {
       myLastCommittedTexts.remove(document);
+    }
+  }
+
+  @Override
+  public void updateStarted(@NotNull Document document) {
+    final FileViewProvider viewProvider = getCachedViewProvider(document);
+    if (viewProvider == null || !isRelevant(viewProvider)) return;
+
+    final List<PsiFile> files = viewProvider.getAllFiles();
+    for (PsiFile file : files) {
+      mySmartPointerManager.fastenBelts(file, 0, null);
+    }
+  }
+
+  @Override
+  public void updateFinished(@NotNull Document document) {
+    final FileViewProvider viewProvider = getCachedViewProvider(document);
+    if (viewProvider == null || !isRelevant(viewProvider)) return;
+
+    final List<PsiFile> files = viewProvider.getAllFiles();
+    for (PsiFile file : files) {
+      mySmartPointerManager.unfastenBelts(file, 0);
     }
   }
 

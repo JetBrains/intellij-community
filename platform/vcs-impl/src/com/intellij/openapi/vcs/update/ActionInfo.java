@@ -26,22 +26,27 @@ import java.util.LinkedHashMap;
 
 public interface ActionInfo {  
   ActionInfo UPDATE = new ActionInfo() {
+    @Override
     public boolean showOptions(Project project) {
       return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).getValue();
     }
 
+    @Override
     public UpdateEnvironment getEnvironment(AbstractVcs vcs) {
       return vcs.getUpdateEnvironment();
     }
 
+    @Override
     public String getActionName() {
       return VcsBundle.message("action.name.update");
     }
 
+    @Override
     public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project,
                                                            LinkedHashMap<Configurable, AbstractVcs> envToConfMap,
                                                            final String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
+        @Override
         protected String getRealTitle() {
           return VcsBundle.message("action.display.name.update.scope", scopeName);
         }
@@ -51,10 +56,12 @@ public interface ActionInfo {
           return "update";
         }
 
+        @Override
         protected boolean isToBeShown() {
           return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).getValue();
         }
 
+        @Override
         protected void setToBeShown(boolean value, boolean onOk) {
           if (onOk) {
             ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(value);
@@ -63,35 +70,43 @@ public interface ActionInfo {
       };
     }
 
+    @Override
     public String getActionName(String scopeName) {
       return VcsBundle.message("action.name.update.scope", scopeName);
     }
 
+    @Override
     public String getGroupName(FileGroup fileGroup) {
       return fileGroup.getUpdateName();
     }
 
+    @Override
     public boolean canGroupByChangelist() {
       return true;
     }
 
+    @Override
     public boolean canChangeFileStatus() {
       return false;
     }
   };
 
   ActionInfo STATUS = new ActionInfo() {
+    @Override
     public boolean showOptions(Project project) {
       return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.STATUS).getValue();
     }
 
+    @Override
     public UpdateEnvironment getEnvironment(AbstractVcs vcs) {
       return vcs.getStatusEnvironment();
     }
 
+    @Override
     public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project,
                                                            LinkedHashMap<Configurable, AbstractVcs> envToConfMap, final String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
+        @Override
         protected String getRealTitle() {
           return VcsBundle.message("action.display.name.check.scope.status", scopeName);
         }
@@ -101,10 +116,12 @@ public interface ActionInfo {
           return "status";
         }
 
+        @Override
         protected boolean isToBeShown() {
           return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.STATUS).getValue();
         }
 
+        @Override
         protected void setToBeShown(boolean value, boolean onOk) {
           if (onOk) {
             ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.STATUS).setValue(value);
@@ -113,39 +130,48 @@ public interface ActionInfo {
       };
     }
 
+    @Override
     public String getActionName() {
       return VcsBundle.message("action.name.check.status");
     }
 
+    @Override
     public String getActionName(String scopeName) {
       return VcsBundle.message("action.name.check.scope.status", scopeName);
     }
 
+    @Override
     public String getGroupName(FileGroup fileGroup) {
       return fileGroup.getStatusName();
     }
 
+    @Override
     public boolean canGroupByChangelist() {
       return false;
     }
 
+    @Override
     public boolean canChangeFileStatus() {
       return true;
     }
   };
 
   ActionInfo INTEGRATE = new ActionInfo() {
+    @Override
     public boolean showOptions(Project project) {
       return true;
     }
 
+    @Override
     public UpdateEnvironment getEnvironment(AbstractVcs vcs) {
       return vcs.getIntegrateEnvironment();
     }
 
+    @Override
     public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap,
                                                            final String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
+        @Override
         protected String getRealTitle() {
           return VcsBundle.message("action.display.name.integrate.scope", scopeName);
         }
@@ -155,40 +181,47 @@ public interface ActionInfo {
           return "integrate";
         }
 
+        @Override
         protected boolean canBeHidden() {
           return false;
         }
 
+        @Override
         protected boolean isToBeShown() {
           return true;
         }
 
+        @Override
         protected void setToBeShown(boolean value, boolean onOk) {
         }
       };
     }
 
+    @Override
     public boolean canChangeFileStatus() {
       return true;
     }
 
+    @Override
     public String getActionName(String scopeName) {
       return VcsBundle.message("action.name.integrate.scope", scopeName);
     }
 
+    @Override
     public String getActionName() {
       return VcsBundle.message("action.name.integrate");
     }
 
+    @Override
     public String getGroupName(FileGroup fileGroup) {
       return fileGroup.getUpdateName();
     }
 
+    @Override
     public boolean canGroupByChangelist() {
       return false;
     }
   };
-
 
   boolean showOptions(Project project);
 

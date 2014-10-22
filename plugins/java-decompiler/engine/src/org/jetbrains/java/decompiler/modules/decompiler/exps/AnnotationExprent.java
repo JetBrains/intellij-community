@@ -49,13 +49,9 @@ public class AnnotationExprent extends Exprent {
 
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
-
     TextBuffer buffer = new TextBuffer();
-    String indstr = InterpreterUtil.getIndentString(indent);
 
-    buffer.append(indstr);
+    buffer.appendIndent(indent);
     buffer.append("@");
     buffer.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
 
@@ -65,10 +61,8 @@ public class AnnotationExprent extends Exprent {
         buffer.append(parvalues.get(0).toJava(indent + 1, tracer));
       }
       else {
-        String indstr1 = InterpreterUtil.getIndentString(indent + 1);
-
         for (int i = 0; i < parnames.size(); i++) {
-          buffer.append(new_line_separator).append(indstr1);
+          buffer.appendLineSeparator().appendIndent(indent + 1);
           buffer.append(parnames.get(i));
           buffer.append(" = ");
           buffer.append(parvalues.get(i).toJava(indent + 2, tracer));
@@ -77,7 +71,7 @@ public class AnnotationExprent extends Exprent {
             buffer.append(",");
           }
         }
-        buffer.append(new_line_separator).append(indstr);
+        buffer.appendLineSeparator().appendIndent(indent);
       }
 
       buffer.append(")");

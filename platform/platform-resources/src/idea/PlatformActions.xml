@@ -314,6 +314,7 @@
         <group id="ToggleFullScreenGroup">
           <separator/>
           <action id="TogglePresentationMode" class="com.intellij.ide.actions.TogglePresentationModeAction"/>
+          <action id="ToggleDistractionFreeMode" class="com.intellij.ide.actions.ToggleDistractionFreeModeAction"/>
           <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleFullScreenAction"/>
         </group>
       </group>
@@ -582,6 +583,7 @@
       <action id="ChangeColorScheme" class="com.intellij.ide.actions.QuickChangeColorSchemeAction"/>
       <action id="ChangeKeymap" class="com.intellij.ide.actions.QuickChangeKeymapAction"/>
       <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel"/>
+      <action id="ChangeView" class="com.intellij.ide.actions.QuickChangeViewModeAction"/>
     </group>
 
     <action id="MaintenanceAction" class="com.intellij.ide.actions.MaintenanceAction"/>

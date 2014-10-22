@@ -34,4 +34,6 @@ public @interface State {
   Class<? extends StateStorageChooser> storageChooser() default StateStorageChooser.class;
 
   boolean reloadable() default true;
+
+  String additionalExportFile() default "";
 }

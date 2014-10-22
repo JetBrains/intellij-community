@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUiHandlerImpl;
@@ -94,6 +95,7 @@ public class GitResetOperation {
         results.put(repository, result);
         repository.update();
         VfsUtil.markDirtyAndRefresh(true, true, false, root);
+        VcsUtil.markFileAsDirty(myProject, root);
       }
     }
     finally {

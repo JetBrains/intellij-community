@@ -56,4 +56,10 @@ public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements Sc
   public static boolean isSpecial(@NotNull Url url) {
     return !url.isInLocalFileSystem() && (url.getScheme() == null || url.getScheme().equals(ScriptManager.VM_SCHEME) || url.getAuthority() == null);
   }
+
+  @Nullable
+  @Override
+  public Script findScriptById(@NotNull String id) {
+    return null;
+  }
 }

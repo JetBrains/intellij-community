@@ -39,7 +39,6 @@ import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,7 +112,8 @@ public class HgMergeProvider implements MergeProvider {
               .notifyError(null, HgVcsMessages.message("hg4idea.error.debugancestor.command.execution"),
                            HgVcsMessages.message("hg4idea.error.debugancestor.command.description"));
           }
-        } else {
+        }
+        else {
           // 2. local changes are not checked in.
           // then there is only one parent, which is server changes.
           // local changes are retrieved from the file system, they are not in the Mercurial yet.
@@ -121,18 +121,15 @@ public class HgMergeProvider implements MergeProvider {
           serverRevisionNumber = command.parents(repo, file).first;
           baseRevisionNumber = command.parents(repo, file, serverRevisionNumber).first;
           final File origFile = new File(file.getPath() + ".orig");
-          try {
-            mergeData.CURRENT = VcsUtil.getFileByteContent(origFile);
-          } catch (IOException e) {
-            LOG.info("Couldn't retrieve byte content of the file: " + origFile.getPath(), e);
-          }
+          mergeData.CURRENT = VcsUtil.getFileByteContent(origFile);
         }
 
         if (baseRevisionNumber != null) {
           final HgContentRevision base = new HgContentRevision(myProject, hgFile, baseRevisionNumber);
           //if file doesn't exist in ancestor revision the base revision should be empty
           mergeData.ORIGINAL = base.getContent() != null ? base.getContentAsBytes() : new byte[0];
-        } else { // no base revision means that the file was added simultaneously with different content in both repositories
+        }
+        else { // no base revision means that the file was added simultaneously with different content in both repositories
           mergeData.ORIGINAL = new byte[0];
         }
         final HgContentRevision server = new HgContentRevision(myProject, hgFile, serverRevisionNumber);

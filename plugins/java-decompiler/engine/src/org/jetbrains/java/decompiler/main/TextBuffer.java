@@ -104,6 +104,9 @@ public class TextBuffer {
   public String toString() {
     String original = myStringBuilder.toString();
     if (myLineToOffsetMapping == null || myLineToOffsetMapping.isEmpty()) {
+      if (myLineMapping != null) {
+        return addOriginalLineNumbers();
+      }
       return original;
     }
     else {
@@ -138,6 +141,26 @@ public class TextBuffer {
 
       return res.toString();
     }
+  }
+
+  private String addOriginalLineNumbers() {
+    StringBuilder sb = new StringBuilder();
+    int lineStart = 0, lineEnd;
+    int count = 0, length = myLineSeparator.length();
+    while ((lineEnd = myStringBuilder.indexOf(myLineSeparator, lineStart)) > 0) {
+      ++count;
+      sb.append(myStringBuilder.substring(lineStart, lineEnd));
+      Integer integer = myLineMapping.get(count);
+      if (integer != null) {
+        sb.append("// ").append(integer);
+      }
+      sb.append(myLineSeparator);
+      lineStart = lineEnd + length;
+    }
+    if (lineStart < myStringBuilder.length()) {
+      sb.append(myStringBuilder.substring(lineStart));
+    }
+    return sb.toString();
   }
 
   private void appendLines(StringBuilder res, String[] srcLines, int from, int to, int requiredLineNumber) {
@@ -277,5 +300,15 @@ public class TextBuffer {
 
   public StringBuilder getOriginalText() {
     return myStringBuilder;
+  }
+
+  private Map<Integer, Integer> myLineMapping = null; // new to original
+  public void dumpOriginalLineNumbers(int[] lineMapping) {
+    if (lineMapping.length > 0) {
+      myLineMapping = new HashMap<Integer, Integer>();
+      for (int i = 0; i < lineMapping.length; i+=2) {
+        myLineMapping.put(lineMapping[i+1], lineMapping[i]);
+      }
+    }
   }
 }

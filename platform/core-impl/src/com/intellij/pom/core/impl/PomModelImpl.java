@@ -300,7 +300,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     LOG.assertTrue(changeScope != null);
 
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
-    if (changeScope.isPhysical() && synchronizer.toProcessPsiEvent() && isDocumentUncommitted(containingFileByTree)) {
+    boolean physical = changeScope.isPhysical();
+    if (physical && synchronizer.toProcessPsiEvent() && isDocumentUncommitted(containingFileByTree)) {
       // fail-fast to prevent any psi modifications that would cause psi/document text mismatch
       // PsiToDocumentSynchronizer assertions happen inside event processing and are logged by PsiManagerImpl.fireEvent instead of being rethrown
       // so it's important to throw something outside event processing
@@ -308,7 +309,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
 
     BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);
-    Document document = containingFileByTree == null ? null : manager.getCachedDocument(containingFileByTree);
+    Document document = containingFileByTree == null ? null : 
+                        physical ? manager.getDocument(containingFileByTree) : 
+                        manager.getCachedDocument(containingFileByTree);
     if(document != null) {
       synchronizer.startTransaction(myProject, document, changeScope);
     }

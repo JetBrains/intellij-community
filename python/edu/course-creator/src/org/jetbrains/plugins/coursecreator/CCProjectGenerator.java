@@ -16,6 +16,7 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import icons.CourseCreatorIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ public class CCProjectGenerator extends PythonProjectGenerator implements Direct
   @Nullable
   @Override
   public Icon getLogo() {
-    return null;
+    return CourseCreatorIcons.CourseCreationProjectType;
   }
 
 
