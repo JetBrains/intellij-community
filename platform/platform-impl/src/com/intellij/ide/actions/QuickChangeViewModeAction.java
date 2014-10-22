@@ -15,38 +15,31 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
-public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware {
+import static com.intellij.openapi.util.Conditions.instanceOf;
+import static com.intellij.openapi.util.Conditions.not;
+
+public class QuickChangeViewModeAction extends QuickSwitchSchemeAction {
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    final AnAction[] actions = getGroup().getChildren(null);
-    for (AnAction action : actions) {
-      group.add(action);
+    for (AnAction child : getActions()) {
+      group.add(child);
     }
   }
 
-  @Override
-  protected String getPopupTitle(AnActionEvent e) {
-    return "Switch...";
-  }
-
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    super.actionPerformed(e);
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.scheme.quickswitch");
-  }
-
   protected boolean isEnabled() {
-    return true;
+    return getActions().length > 0;
   }
 
-  private static DefaultActionGroup getGroup() {
-    return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_CHANGE_SCHEME);
+  private static AnAction[] getActions() {
+    AnAction a = ActionManager.getInstance().getActionOrStub("ToggleFullScreenGroup");
+    AnAction[] actions = a instanceof DefaultActionGroup
+                         ? ((DefaultActionGroup)a).getChildActionsOrStubs()
+                         : a instanceof ActionGroup ? ((ActionGroup)a).getChildren(null) : EMPTY_ARRAY;
+    return ArrayUtil.toObjectArray(ContainerUtil.filter(actions, not(instanceOf(Separator.class))), AnAction.class);
   }
 }
