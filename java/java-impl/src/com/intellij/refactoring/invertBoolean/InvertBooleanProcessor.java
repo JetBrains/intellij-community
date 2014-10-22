@@ -16,6 +16,7 @@
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.codeInsight.CodeInsightServicesUtil;
+import com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -139,7 +140,8 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
           if (argumentList != null) {
             final PsiExpression[] args = argumentList.getExpressions();
             if (index < args.length) {
-              if (methodExpression == null || methodExpression.getQualifier() == null || !"super".equals(methodExpression.getQualifierExpression().getText())) {
+              if (methodExpression == null ||
+                  canInvert(methodExpression, args[index] instanceof PsiReferenceExpression && ((PsiReferenceExpression)args[index]).resolve() == myElement)) {
                 toInvert.add(mySmartPointerManager.createSmartPsiElementPointer(args[index]));
               }
             }
@@ -181,6 +183,19 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     return result.toArray(new UsageInfo[result.size()]);
   }
 
+  private static boolean canInvert(PsiReferenceExpression methodExpression, boolean checkRecursive) {
+    PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+    if (qualifierExpression == null || !"super".equals(qualifierExpression.getText())) {
+      PsiElement parent = methodExpression.getParent();
+      if (parent instanceof PsiMethodCallExpression) {
+        return !(checkRecursive && RecursiveCallLineMarkerProvider.isRecursiveMethodCall((PsiMethodCallExpression)parent));
+      } else {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void addRefsToInvert(final List<SmartPsiElementPointer> toInvert, final PsiNamedElement namedElement) {
     final Query<PsiReference> query = namedElement instanceof PsiMethod ?
                                       MethodReferencesSearch.search((PsiMethod)namedElement) :
@@ -197,9 +212,9 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
         }
         else {
           if (namedElement instanceof PsiParameter) { //filter usages in super method calls
-            if (refExpr.getParent().getParent() instanceof PsiMethodCallExpression) {
-              final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)refExpr.getParent().getParent()).getMethodExpression();
-              if (methodExpression.getQualifier() != null && "super".equals(methodExpression.getQualifierExpression().getText())) {
+            PsiElement gParent = refExpr.getParent().getParent();
+            if (gParent instanceof PsiMethodCallExpression) {
+              if (!canInvert(((PsiMethodCallExpression)gParent).getMethodExpression(), true)) {
                 continue;
               }
             }
