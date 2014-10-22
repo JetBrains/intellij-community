@@ -121,6 +121,7 @@ public class XFramesView extends XDebugView {
             XDebugSession session = getSession(e);
             if (session != null) {
               mySelectedFrameIndex = 0;
+              myRefresh = false;
               updateFrames((XExecutionStack)item, session);
             }
           }
@@ -305,7 +306,7 @@ public class XFramesView extends XDebugView {
     Object selected = myFramesList.getSelectedValue();
     if (selected instanceof XStackFrame) {
       if (session != null) {
-        if (force || !myRefresh) {
+        if (force || (!myRefresh && session.getCurrentStackFrame() != selected)) {
           session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, mySelectedFrameIndex == 0);
         }
       }
