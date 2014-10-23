@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -287,24 +288,24 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     }
     
     private JComponent createActionLink(final String text, final String groupId, Icon icon, boolean focusListOnLeft) {
-      final Ref<ActionLink> settings = new Ref<ActionLink>(null);
+      final Ref<ActionLink> ref = new Ref<ActionLink>(null);
       AnAction action = new AnAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
           JBPopupFactory.getInstance()
-            .createActionGroupPopup(text, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
+            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
                                     10, null)
-            .showUnderneathOf(settings.get());
+            .show(new RelativePoint(ref.get(), new Point(12, ref.get().getHeight() + 1)));
         }
       };
-      settings.set(new ActionLink(text, icon, action));
-      settings.get().setPaintUnderline(false);
-      settings.get().setNormalColor(getLinkNormalColor());
+      ref.set(new ActionLink(text, icon, action));
+      ref.get().setPaintUnderline(false);
+      ref.get().setNormalColor(getLinkNormalColor());
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.setBorder(new EmptyBorder(4, 10, 4, 10));
-      panel.add(settings.get());
-      panel.add(createArrow(settings.get()), BorderLayout.EAST);
+      panel.add(ref.get());
+      panel.add(createArrow(ref.get()), BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
       return panel;
     }
