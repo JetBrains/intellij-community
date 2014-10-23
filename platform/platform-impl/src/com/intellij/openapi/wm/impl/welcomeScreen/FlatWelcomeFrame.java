@@ -43,10 +43,10 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -292,16 +292,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       AnAction action = new AnAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          int offset = - UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding().left;
-          if (ref.get().getIcon() != null) {
-            offset += ref.get().getIcon().getIconWidth() + ref.get().getIconTextGap();
-          }
-          RelativePoint point = new RelativePoint(ref.get(), new Point(offset, ref.get().getHeight() + 1));
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
-          JBPopupFactory.getInstance()
+          final PopupFactoryImpl.ActionGroupPopup popup = (PopupFactoryImpl.ActionGroupPopup)JBPopupFactory.getInstance()
             .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
-                                    10, null)
-            .show(point);
+                                    10, null);
+          popup.showUnderneathOfLabel(ref.get());
         }
       };
       ref.set(new ActionLink(text, icon, action));
