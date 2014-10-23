@@ -39,7 +39,12 @@
     </action>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction" id="IpnbSaveAction" text="Save and Checkpoint">
     </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellAction" id="IpnbAddCellAction" text="Insert Cell Below"/>
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellBelowAction" id="IpnbAddCellBelowAction" text="Insert Cell Below">
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl EQUALS"/>
+    </action>
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellAboveAction" id="IpnbAddCellAboveAction" text="Insert Cell Above">
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift EQUALS"/>
+    </action>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCutCellAction" id="IpnbCutCellAction" text="Cut Cell" use-shortcut-of="$Cut"/>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCopyCellAction" id="IpnbCopyCellAction" text="Copy Cell" use-shortcut-of="$Copy"/>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbPasteCellAction" id="IpnbPasteCellAction" text="Paste Cell Below" use-shortcut-of="$Paste"/>

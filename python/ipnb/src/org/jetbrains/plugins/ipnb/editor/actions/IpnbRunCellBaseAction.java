@@ -17,7 +17,7 @@ public abstract class IpnbRunCellBaseAction extends AnAction {
     if (selectNext) {
       final int index = ipnbFilePanel.getSelectedIndex();
       if (ipnbFilePanel.getIpnbPanels().size()-1 == index) {
-        ipnbFilePanel.createAndAddCell();
+        ipnbFilePanel.createAndAddCell(true);
       }
       ipnbFilePanel.selectNext(cell);
     }

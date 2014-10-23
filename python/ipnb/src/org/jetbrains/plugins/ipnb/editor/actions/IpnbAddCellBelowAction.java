@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
-public class IpnbAddCellAction extends AnAction {
-  public IpnbAddCellAction() {
+public class IpnbAddCellBelowAction extends AnAction {
+  public IpnbAddCellBelowAction() {
     super(AllIcons.General.Run);
   }
 
@@ -26,6 +26,6 @@ public class IpnbAddCellAction extends AnAction {
   }
 
   public void addCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
-    ipnbFilePanel.createAndAddCell();
+    ipnbFilePanel.createAndAddCell(true);
   }
 }
