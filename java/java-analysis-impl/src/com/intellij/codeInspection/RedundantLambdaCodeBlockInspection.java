@@ -21,19 +21,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -77,7 +75,7 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
         final PsiElement body = expression.getBody();
         if (body instanceof PsiCodeBlock) {
           PsiExpression psiExpression = getExpression((PsiCodeBlock)body);
-          if (psiExpression != null) {
+          if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
             if (!expression.isVoidCompatible() && LambdaUtil.isExpressionStatementExpression(psiExpression)) {
               final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
               if (parent instanceof PsiExpressionList) {
@@ -109,6 +107,16 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
           }
         }
+      }
+
+      private boolean findCommentsOutsideExpression(PsiElement body, PsiExpression psiExpression) {
+        final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(body, PsiComment.class);
+        for (PsiComment comment : comments) {
+          if (!PsiTreeUtil.isAncestor(psiExpression, comment, true)) {
+            return true;
+          }
+        }
+        return false;
       }
     };
   }
