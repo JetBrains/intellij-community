@@ -429,7 +429,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         public void keyPressed(KeyEvent e) {
           final JList list = UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class);
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            action.actionPerformed(new AnActionEvent(e,
+            InputEvent event = e;
+            if (e.getComponent() instanceof JComponent) {
+              ActionLink link = UIUtil.findComponentOfType((JComponent)e.getComponent(), ActionLink.class);
+              if (link != null) {
+                event = new MouseEvent(link, MouseEvent.MOUSE_CLICKED, e.getWhen(), e.getModifiers(), 0, 0, 1, false, MouseEvent.BUTTON1);
+              }
+            }
+            action.actionPerformed(new AnActionEvent(event,
                                                      DataManager.getInstance().getDataContext(),
                                                      ActionPlaces.WELCOME_SCREEN,
                                                      action.getTemplatePresentation().clone(),
