@@ -100,7 +100,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     boolean refresh = requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh();
 
-    DetailedLogData data = GitHistoryUtils.loadMetadata(myProject, root, refresh, params);
+    DetailedLogData data = GitHistoryUtils.loadMetadata(myProject, root, true, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
     Set<VcsRef> allRefs = new OpenTHashSet<VcsRef>(safeRefs, REF_ONLY_NAME_STRATEGY);
