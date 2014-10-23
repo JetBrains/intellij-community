@@ -46,6 +46,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,7 +327,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
                                         ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
         if (presentation.isVisible()) {
-          ActionLink link = new ActionLink(presentation.getText(), presentation.getIcon(), action);
+          String text = presentation.getText();
+          if (text.endsWith("...")) {
+            text = text.substring(0, text.length() - 3);
+          }
+          Icon icon = presentation.getIcon();
+          if (icon.getIconHeight() != 16 || icon.getIconWidth() != 16) {
+            icon = EmptyIcon.ICON_16;
+          }
+          ActionLink link = new ActionLink(text, icon, action);
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
