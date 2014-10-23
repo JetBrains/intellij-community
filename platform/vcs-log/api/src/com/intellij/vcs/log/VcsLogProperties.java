@@ -15,21 +15,22 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+public class VcsLogProperties {
+  public static class VcsLogProperty<T> {
+    private final T defaultValue;
+    private VcsLogProperty(@NotNull T defaultValue) {
+      this.defaultValue = defaultValue;
+    }
+  }
 
-public interface VcsLogDataPack {
+  @NotNull public static final VcsLogProperty<Boolean> LIGHTWEIGHT_BRANCHES = new VcsLogProperty<Boolean>(false);
 
   @NotNull
-  Map<VirtualFile, VcsLogProvider> getLogProviders();
-
-  @NotNull
-  VcsLogRefs getRefs();
-
-  @NotNull
-  PermanentGraph<Integer> getPermanentGraph();
-
+  public static <T> T get(@NotNull VcsLogProvider provider, VcsLogProperty<T> property) {
+    T value = provider.getPropertyValue(property);
+    if (value == null) return property.defaultValue;
+    return value;
+  }
 }
