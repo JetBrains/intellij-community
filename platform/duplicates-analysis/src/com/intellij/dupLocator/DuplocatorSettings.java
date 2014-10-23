@@ -25,7 +25,7 @@ import java.util.Set;
   name = "DuplocatorSettings",
   storages = {
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/duplocator.xml")
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/duplocatorSettings.xml")
   },
   storageChooser = LastStorageChooserForWrite.class
 )

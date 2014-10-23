@@ -17,9 +17,7 @@ import java.util.Map;
  */
 @State(
   name = "MultiLanguageDuplocatorSettings",
-  storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/duplocatorSettings.xml")
-  }
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/duplocatorSettings.xml")
 )
 public class MultilanguageDuplocatorSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.dupLocator.MultiLanguageDuplocatorSettings");
