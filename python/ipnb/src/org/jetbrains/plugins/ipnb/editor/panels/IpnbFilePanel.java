@@ -144,10 +144,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     final IpnbCodeCell cell = new IpnbCodeCell("python", new String[]{""}, null, new ArrayList<IpnbOutputCell>());
     final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, cell);
 
-    addCell(cell, codePanel, below);
+    addCell(codePanel, below);
   }
 
-  private void addCell(IpnbEditableCell cell, IpnbEditablePanel panel, boolean below) {
+  private void addCell(@NotNull final IpnbEditablePanel panel, boolean below) {
     final GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
@@ -160,6 +160,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     if (below) {
       index += 1;
     }
+    final IpnbEditableCell cell = panel.getCell();
     myIpnbFile.addCell(cell, index);
     myIpnbPanels.add(index, panel);
 
@@ -195,11 +196,41 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
   public void cutCell() {
     myBufferPanel = getSelectedCell();
     if (myBufferPanel == null) return;
-    deleteCell();
+    deleteSelectedCell();
   }
 
-  public void deleteCell() {
+  public void moveCell(boolean down) {
+    final IpnbEditablePanel selectedCell = getSelectedCell();
+    if (selectedCell == null) return;
+
+    final int index = getSelectedIndex();
+    int siblingIndex = down ? index + 1 : index - 1;
+
+    if (myIpnbPanels.size() <= siblingIndex && down) {
+      return;
+    }
+    if (siblingIndex < 0 && !down) {
+      return;
+    }
+
+    if (down) {
+      deleteSelectedCell();
+      addCell(selectedCell, true);
+    }
+    else {
+      final IpnbEditablePanel siblingPanel = myIpnbPanels.get(siblingIndex);
+      deleteCell(siblingPanel);
+      addCell(siblingPanel, true);
+      setSelectedCell(selectedCell);
+    }
+  }
+
+  public void deleteSelectedCell() {
     final IpnbEditablePanel cell = getSelectedCell();
+    deleteCell(cell);
+  }
+
+  private void deleteCell(@NotNull final IpnbEditablePanel cell) {
     selectNextOrPrev(cell);
     final int index = myIpnbPanels.indexOf(cell);
     if (index < 0) return;
@@ -220,7 +251,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     if (myBufferPanel == null) return;
     removeAll();
     final IpnbEditablePanel editablePanel = (IpnbEditablePanel)myBufferPanel.clone();
-    addCell(editablePanel.getCell(), editablePanel, true);
+    addCell(editablePanel, true);
   }
 
   public void replaceComponent(@NotNull final IpnbEditablePanel from, @NotNull final IpnbCell cell) {
