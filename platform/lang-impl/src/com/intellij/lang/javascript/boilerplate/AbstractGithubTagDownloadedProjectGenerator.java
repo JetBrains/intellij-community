@@ -89,34 +89,22 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
                            @NotNull File extractToDir,
                            @NotNull GithubTagInfo tag) throws GeneratorException {
     File zipArchiveFile = getCacheFile(tag);
-    boolean brokenZip = true;
-    boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    if (!unitTestMode && zipArchiveFile.isFile()) {
+    String primaryUrl = getPrimaryZipArchiveUrlForDownload(tag);
+    boolean downloaded = false;
+    if (primaryUrl != null) {
       try {
-        ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, true);
-        brokenZip = false;
-      }
-      catch (GeneratorException ignored) {
+        downloadAndUnzip(project, primaryUrl, zipArchiveFile, extractToDir, false);
+        downloaded = true;
+      } catch (GeneratorException e) {
+        LOG.info("Can't download " + primaryUrl, e);
+        FileUtil.delete(zipArchiveFile);
       }
     }
-    if (brokenZip) {
-      String primaryUrl = getPrimaryZipArchiveUrlForDownload(tag);
-      boolean downloaded = false;
-      if (primaryUrl != null) {
-        try {
-          downloadAndUnzip(project, primaryUrl, zipArchiveFile, extractToDir, false);
-          downloaded = true;
-        } catch (GeneratorException e) {
-          LOG.info("Can't download " + primaryUrl, e);
-          FileUtil.delete(zipArchiveFile);
-        }
+    if (!downloaded) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new GeneratorException("Download " + tag.getZipballUrl() + " is skipped in unit test mode");
       }
-      if (!downloaded) {
-        if (unitTestMode) {
-          throw new GeneratorException("Download " + tag.getZipballUrl() + " is skipped in unit test mode");
-        }
-        downloadAndUnzip(project, tag.getZipballUrl(), zipArchiveFile, extractToDir, true);
-      }
+      downloadAndUnzip(project, tag.getZipballUrl(), zipArchiveFile, extractToDir, true);
     }
   }
 

@@ -24,7 +24,6 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
   protected volatile T vm;
 
   private final ActionCallback opened = new ActionCallback();
-
   private final AtomicBoolean closed = new AtomicBoolean();
 
   public final Vm getVm() {
