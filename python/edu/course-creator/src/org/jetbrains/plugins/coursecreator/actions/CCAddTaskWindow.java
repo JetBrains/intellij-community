@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.coursecreator.actions;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -23,11 +23,11 @@ public class CCAddTaskWindow extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCAddTaskWindow.class);
 
   public CCAddTaskWindow() {
-    super("Add task window","Add task window", null);
+    super("Add problem to solve","Add problem to solve", null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
@@ -65,7 +65,7 @@ public class CCAddTaskWindow extends DumbAwareAction {
     taskFile.addTaskWindow(taskWindow, index);
     taskWindow.drawHighlighter(editor, false);
     taskWindow.createGuardedBlocks(editor);
-    DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
+    DaemonCodeAnalyzer.getInstance(project).restart(file);
   }
 
   @Override

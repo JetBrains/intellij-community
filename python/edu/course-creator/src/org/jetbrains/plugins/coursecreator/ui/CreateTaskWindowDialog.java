@@ -18,7 +18,7 @@ import java.io.*;
 
 public class CreateTaskWindowDialog extends DialogWrapper {
 
-  public static final String TITLE = "New Task Window";
+  public static final String TITLE = "Add Problem to Solve";
   private static final Logger LOG = Logger.getInstance(CreateTaskWindowDialog.class.getName());
   private final TaskWindow myTaskWindow;
   private final CreateTaskWindowPanel myPanel;
