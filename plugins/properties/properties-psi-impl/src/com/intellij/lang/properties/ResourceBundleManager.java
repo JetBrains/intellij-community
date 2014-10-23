@@ -20,7 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -65,18 +67,31 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
         if (oldParentUrl == null || newParentUrl == null) {
           return;
         }
-        final String newUrl = propertiesFile.getVirtualFile().getUrl();
-        final String oldUrl = oldParentUrl + newUrl.substring(newParentUrl.length());
-        if (myState.getDissociatedFiles().remove(oldUrl)) {
-          myState.getDissociatedFiles().add(newUrl);
-        }
 
-        for (CustomResourceBundleState customResourceBundleState : myState.getCustomResourceBundles()) {
-          if (customResourceBundleState.getFileUrls().remove(oldUrl)) {
-            customResourceBundleState.getFileUrls().add(newUrl);
-            break;
+        final NotNullLazyValue<Pair<String, String>> oldAndNewUrls = new NotNullLazyValue<Pair<String, String>>() {
+          @NotNull
+          @Override
+          protected Pair<String, String> compute() {
+            final String newUrl = propertiesFile.getVirtualFile().getUrl();
+            return Pair.create(oldParentUrl + newUrl.substring(newParentUrl.length()), newUrl);
+          }
+        };
+
+        if (!myState.getDissociatedFiles().isEmpty()) {
+          if (myState.getDissociatedFiles().remove(oldAndNewUrls.getValue().getFirst())) {
+            myState.getDissociatedFiles().add(oldAndNewUrls.getValue().getSecond());
           }
         }
+
+        if (!myState.getCustomResourceBundles().isEmpty()) {
+          for (CustomResourceBundleState customResourceBundleState : myState.getCustomResourceBundles()) {
+            if (customResourceBundleState.getFileUrls().remove(oldAndNewUrls.getValue().getFirst())) {
+              customResourceBundleState.getFileUrls().add(oldAndNewUrls.getValue().getSecond());
+              break;
+            }
+          }
+        }
+
       }
 
       @Nullable
