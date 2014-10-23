@@ -48,5 +48,6 @@
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCutCellAction" id="IpnbCutCellAction" text="Cut Cell" use-shortcut-of="$Cut"/>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCopyCellAction" id="IpnbCopyCellAction" text="Copy Cell" use-shortcut-of="$Copy"/>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbPasteCellAction" id="IpnbPasteCellAction" text="Paste Cell Below" use-shortcut-of="$Paste"/>
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbDeleteCellAction" id="IpnbDeleteCellAction" text="Delete Cell" use-shortcut-of="$Delete"/>
   </actions>
 </idea-plugin>

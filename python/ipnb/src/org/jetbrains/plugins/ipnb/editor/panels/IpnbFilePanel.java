@@ -195,13 +195,18 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
   public void cutCell() {
     myBufferPanel = getSelectedCell();
     if (myBufferPanel == null) return;
-    selectNextOrPrev(myBufferPanel);
-    final int index = myIpnbPanels.indexOf(myBufferPanel);
+    deleteCell();
+  }
+
+  public void deleteCell() {
+    final IpnbEditablePanel cell = getSelectedCell();
+    selectNextOrPrev(cell);
+    final int index = myIpnbPanels.indexOf(cell);
     if (index < 0) return;
     myIpnbPanels.remove(index);
     myIpnbFile.removeCell(index);
 
-    remove(myBufferPanel);
+    remove(cell);
     if (myIpnbPanels.isEmpty()) {
       createAndAddCell(true);
     }
