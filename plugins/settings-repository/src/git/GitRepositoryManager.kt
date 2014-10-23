@@ -24,6 +24,8 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.settingsRepository.AuthenticationException
 import kotlin.properties.Delegates
+import org.eclipse.jgit.util.SystemReader
+import java.net.InetAddress
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {
@@ -84,8 +86,12 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   fun commit(message: String? = null, reflogComment: String? = null): RevCommit {
-    val author = PersonIdent(repository)
-    val committer = PersonIdent(ApplicationInfoEx.getInstanceEx()!!.getFullApplicationName(), author.getEmailAddress())
+    val currentTime = System.currentTimeMillis()
+    val config = repository.getConfig().get(UserConfig.KEY)
+    val timezone = SystemReader.getInstance().getTimezone(currentTime)
+
+    val author = PersonIdent(config.getAuthorName(), config.getAuthorEmail(), currentTime, timezone)
+    val committer = PersonIdent(ApplicationInfoEx.getInstanceEx()!!.getFullApplicationName(), System.getProperty("user.name", "unknown-user") + '@' + InetAddress.getLocalHost().getHostName(), currentTime, timezone)
     return repository.commit(message, reflogComment, author, committer)
   }
 
