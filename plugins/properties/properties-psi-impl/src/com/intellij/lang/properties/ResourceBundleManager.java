@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 /**
@@ -63,8 +64,11 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
           return;
         }
         final String oldParentUrl = getUrl(event.getOldParent());
+        if (oldParentUrl == null) {
+          return;
+        }
         final String newParentUrl = getUrl(event.getNewParent());
-        if (oldParentUrl == null || newParentUrl == null) {
+        if (newParentUrl == null) {
           return;
         }
 
@@ -125,11 +129,20 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
           return;
         }
         final VirtualFile virtualFile = file.getVirtualFile();
-        final String url = virtualFile.getUrl();
-        myState.getDissociatedFiles().remove(url);
+        final NotNullLazyValue<String> url = new NotNullLazyValue<String>() {
+          @NotNull
+          @Override
+          protected String compute() {
+            return virtualFile.getUrl();
+          }
+        };
+        if (!myState.getDissociatedFiles().isEmpty()) {
+          myState.getDissociatedFiles().remove(url.getValue());
+        }
         for (CustomResourceBundleState customResourceBundleState : myState.getCustomResourceBundles()) {
-          if (customResourceBundleState.getFileUrls().remove(url)) {
-            if (customResourceBundleState.getFileUrls().size() < 2) {
+          final Set<String> urls = customResourceBundleState.getFileUrls();
+          if (urls.remove(url.getValue())) {
+            if (urls.size() < 2) {
               myState.getCustomResourceBundles().remove(customResourceBundleState);
             }
             break;
