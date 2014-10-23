@@ -292,11 +292,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       AnAction action = new AnAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
+          int offset = - UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding().left;
+          if (ref.get().getIcon() != null) {
+            offset += ref.get().getIcon().getIconWidth() + ref.get().getIconTextGap();
+          }
+          RelativePoint point = new RelativePoint(ref.get(), new Point(offset, ref.get().getHeight() + 1));
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
           JBPopupFactory.getInstance()
             .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
                                     10, null)
-            .show(new RelativePoint(ref.get(), new Point(12, ref.get().getHeight() + 1)));
+            .show(point);
         }
       };
       ref.set(new ActionLink(text, icon, action));
