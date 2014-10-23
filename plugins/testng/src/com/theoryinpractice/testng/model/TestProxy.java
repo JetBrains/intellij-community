@@ -364,6 +364,9 @@ public class TestProxy extends AbstractTestProxy {
     if (appendDiffChuncks(result, s, printables, EXPECTED_BUT_WAS_PATTERN)) {
       return printables;
     }
+    if (appendDiffChuncks(result, s, printables, EXPECTED_BUT_WAS_HAMCREST_PATTERN)) {
+      return printables;
+    }
     if (appendDiffChuncks(result, s, printables, EXPECTED_BUT_WAS_SET_PATTERN)) {
       return printables;
     }
