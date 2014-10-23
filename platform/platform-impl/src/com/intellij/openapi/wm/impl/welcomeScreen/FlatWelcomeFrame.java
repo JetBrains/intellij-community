@@ -304,9 +304,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.setBorder(new EmptyBorder(4, 10, 4, 10));
       panel.add(settings.get());
-      JLabel arrow = new JLabel(AllIcons.General.Combo3);
-      arrow.setVerticalAlignment(SwingConstants.BOTTOM);
-      panel.add(arrow, BorderLayout.EAST);
+      panel.add(createArrow(settings.get()), BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
       return panel;
     }
@@ -338,8 +336,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           ActionLink link = new ActionLink(text, icon, action);
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
-          installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           button.add(link);
+          if (action instanceof WelcomePopupAction) {
+            button.add(createArrow(link), BorderLayout.EAST);
+          }
+          installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           actions.add(button);
         }
       }
@@ -534,6 +535,22 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         };
       }
     }
+  }
+
+  private static JLabel createArrow(final ActionLink link) {
+    JLabel arrow = new JLabel(AllIcons.General.Combo3);
+    arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    arrow.setVerticalAlignment(SwingConstants.BOTTOM);
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        final MouseEvent newEvent = new MouseEvent(link, e.getID(), e.getWhen(), e.getModifiers(), e.getX(), e.getY(), e.getClickCount(),
+                                                   e.isPopupTrigger(), e.getButton());
+        link.doClick(newEvent);
+        return true;
+      }
+    }.installOn(arrow);
+    return arrow;
   }
 
   @Override
