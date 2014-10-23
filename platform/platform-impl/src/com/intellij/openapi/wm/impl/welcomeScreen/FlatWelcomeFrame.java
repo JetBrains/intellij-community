@@ -43,9 +43,11 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -286,26 +288,29 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     }
     
     private JComponent createActionLink(final String text, final String groupId, Icon icon, boolean focusListOnLeft) {
-      final Ref<ActionLink> settings = new Ref<ActionLink>(null);
+      final Ref<ActionLink> ref = new Ref<ActionLink>(null);
       AnAction action = new AnAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
+          int offset = - UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding().left;
+          if (ref.get().getIcon() != null) {
+            offset += ref.get().getIcon().getIconWidth() + ref.get().getIconTextGap();
+          }
+          RelativePoint point = new RelativePoint(ref.get(), new Point(offset, ref.get().getHeight() + 1));
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
           JBPopupFactory.getInstance()
-            .createActionGroupPopup(text, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
+            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
                                     10, null)
-            .showUnderneathOf(settings.get());
+            .show(point);
         }
       };
-      settings.set(new ActionLink(text, icon, action));
-      settings.get().setPaintUnderline(false);
-      settings.get().setNormalColor(getLinkNormalColor());
+      ref.set(new ActionLink(text, icon, action));
+      ref.get().setPaintUnderline(false);
+      ref.get().setNormalColor(getLinkNormalColor());
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.setBorder(new EmptyBorder(4, 10, 4, 10));
-      panel.add(settings.get());
-      JLabel arrow = new JLabel(AllIcons.General.Combo3);
-      arrow.setVerticalAlignment(SwingConstants.BOTTOM);
-      panel.add(arrow, BorderLayout.EAST);
+      panel.add(ref.get());
+      panel.add(createArrow(ref.get()), BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
       return panel;
     }
@@ -326,11 +331,22 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
                                         ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
         if (presentation.isVisible()) {
-          ActionLink link = new ActionLink(presentation.getText(), presentation.getIcon(), action);
+          String text = presentation.getText();
+          if (text.endsWith("...")) {
+            text = text.substring(0, text.length() - 3);
+          }
+          Icon icon = presentation.getIcon();
+          if (icon.getIconHeight() != 16 || icon.getIconWidth() != 16) {
+            icon = EmptyIcon.ICON_16;
+          }
+          ActionLink link = new ActionLink(text, icon, action);
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
-          installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           button.add(link);
+          if (action instanceof WelcomePopupAction) {
+            button.add(createArrow(link), BorderLayout.EAST);
+          }
+          installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           actions.add(button);
         }
       }
@@ -525,6 +541,22 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         };
       }
     }
+  }
+
+  private static JLabel createArrow(final ActionLink link) {
+    JLabel arrow = new JLabel(AllIcons.General.Combo3);
+    arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    arrow.setVerticalAlignment(SwingConstants.BOTTOM);
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        final MouseEvent newEvent = new MouseEvent(link, e.getID(), e.getWhen(), e.getModifiers(), e.getX(), e.getY(), e.getClickCount(),
+                                                   e.isPopupTrigger(), e.getButton());
+        link.doClick(newEvent);
+        return true;
+      }
+    }.installOn(arrow);
+    return arrow;
   }
 
   @Override

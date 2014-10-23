@@ -774,6 +774,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           builders[i] = ApplicationManager.getApplication().runReadAction(new Computable<AsyncFileEditorProvider.Builder>() {
             @Override
             public AsyncFileEditorProvider.Builder compute() {
+              if (myProject.isDisposed() || !file.isValid()) {
+                return null;
+              }
               LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
               return provider instanceof AsyncFileEditorProvider ? ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file) : null;
             }

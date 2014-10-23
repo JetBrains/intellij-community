@@ -25,6 +25,7 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.ResolvingHint;
 import com.intellij.psi.impl.PomTargetPsiElementImpl;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -42,7 +43,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider {
+public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider, ResolvingHint {
   private final GenericDomValue<T> myGenericValue;
 
   public GenericDomValueReference(GenericDomValue<T> domValue) {
@@ -216,5 +217,11 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
       return result.toArray();
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
+    Converter<T> converter = getConverter();
+    return !(converter instanceof ResolvingConverter) || ((ResolvingConverter)converter).canResolveTo(elementClass);
   }
 }

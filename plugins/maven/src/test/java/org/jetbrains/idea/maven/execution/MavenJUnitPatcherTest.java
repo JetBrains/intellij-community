@@ -64,4 +64,37 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     assertEquals(asList("-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
                  javaParameters.getVMParametersList().getList());
   }
+
+  public void testVmPropertiesResolve() throws Exception {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>" +
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>test</groupId>" +
+                                           "    <artifactId>m2</artifactId>" +
+                                           "    <version>1</version>" +
+                                           "  </dependency>" +
+                                           "</dependencies>" +
+                                           "<build><plugins>" +
+                                           "  <plugin>" +
+                                           "    <groupId>org.apache.maven.plugins</groupId>" +
+                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
+                                           "    <version>2.16</version>" +
+                                           "    <configuration>" +
+                                           "      <argLine>-Xmx2048M -XX:MaxPermSize=512M \"-Dargs=can have spaces\" ${argLineApx}</argLine>" +
+                                           "    </configuration>" +
+                                           "  </plugin>" +
+                                           "</plugins></build>");
+
+    importProjects(m1);
+    Module module = getModule("m1");
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.getVMParametersList().addProperty("argLineApx", "-DsomeKey=someValue");
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    assertEquals(asList("-DargLineApx=-DsomeKey=someValue", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces", "-DsomeKey=someValue"),
+                 javaParameters.getVMParametersList().getList());
+  }
 }
