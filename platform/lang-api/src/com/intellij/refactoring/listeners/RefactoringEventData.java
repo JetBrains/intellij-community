@@ -33,6 +33,7 @@ import java.util.Map;
 public class RefactoringEventData extends UserDataHolderBase {
   public static final Key<Collection<? extends String>> CONFLICTS_KEY = Key.create("conflicts");
   public static final Key<PsiElement> PSI_ELEMENT_KEY = Key.create("element");
+  public static final Key<String[]> STRING_PROPERTIES = Key.create("stringProperties");
   public static final Key<PsiElement[]> PSI_ELEMENT_ARRAY_KEY = Key.create("elementArray");
   public static final Key<Collection<UsageInfo>> USAGE_INFOS_KEY = Key.create("usageInfos");
 
@@ -58,5 +59,9 @@ public class RefactoringEventData extends UserDataHolderBase {
 
   public void addUsages(Collection<UsageInfo> usageInfos) {
     putUserData(USAGE_INFOS_KEY, usageInfos);
+  }
+
+  public void addStringProperties(String... properties) {
+    putUserData(STRING_PROPERTIES, properties);
   }
 }

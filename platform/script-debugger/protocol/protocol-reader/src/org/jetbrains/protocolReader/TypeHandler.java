@@ -194,7 +194,7 @@ class TypeHandler<T> {
       }
 
       String fieldName = fieldLoader.getFieldName();
-      out.append(operator).append(" (").append(hasOnlyOneFieldLoader ? "reader.nextName()" : "name");
+      out.append(operator).append(" (name");
       out.append(".equals(\"").append(fieldName).append("\"))").openBlock();
       {
         assignField(out, fieldName);

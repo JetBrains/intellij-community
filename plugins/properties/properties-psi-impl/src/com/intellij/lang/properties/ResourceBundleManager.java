@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 /**
@@ -63,8 +64,11 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
           return;
         }
         final String oldParentUrl = getUrl(event.getOldParent());
+        if (oldParentUrl == null) {
+          return;
+        }
         final String newParentUrl = getUrl(event.getNewParent());
-        if (oldParentUrl == null || newParentUrl == null) {
+        if (newParentUrl == null) {
           return;
         }
 
@@ -83,12 +87,10 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
           }
         }
 
-        if (!myState.getCustomResourceBundles().isEmpty()) {
-          for (CustomResourceBundleState customResourceBundleState : myState.getCustomResourceBundles()) {
-            if (customResourceBundleState.getFileUrls().remove(oldAndNewUrls.getValue().getFirst())) {
-              customResourceBundleState.getFileUrls().add(oldAndNewUrls.getValue().getSecond());
-              break;
-            }
+        for (CustomResourceBundleState customResourceBundleState : myState.getCustomResourceBundles()) {
+          if (customResourceBundleState.getFileUrls().remove(oldAndNewUrls.getValue().getFirst())) {
+            customResourceBundleState.getFileUrls().add(oldAndNewUrls.getValue().getSecond());
+            break;
           }
         }
 
@@ -100,22 +102,7 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
       }
 
       @Override
-      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        super.childReplaced(event);
-      }
-
-      @Override
-      public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
-        super.beforeChildMovement(event);
-      }
-
-      @Override
-      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-        super.propertyChanged(event);
-      }
-
-      @Override
-      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
+      public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();
         if (!(child instanceof PsiFile)) {
           return;
@@ -125,11 +112,20 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
           return;
         }
         final VirtualFile virtualFile = file.getVirtualFile();
-        final String url = virtualFile.getUrl();
-        myState.getDissociatedFiles().remove(url);
+        final NotNullLazyValue<String> url = new NotNullLazyValue<String>() {
+          @NotNull
+          @Override
+          protected String compute() {
+            return virtualFile.getUrl();
+          }
+        };
+        if (!myState.getDissociatedFiles().isEmpty()) {
+          myState.getDissociatedFiles().remove(url.getValue());
+        }
         for (CustomResourceBundleState customResourceBundleState : myState.getCustomResourceBundles()) {
-          if (customResourceBundleState.getFileUrls().remove(url)) {
-            if (customResourceBundleState.getFileUrls().size() < 2) {
+          final Set<String> urls = customResourceBundleState.getFileUrls();
+          if (urls.remove(url.getValue())) {
+            if (urls.size() < 2) {
               myState.getCustomResourceBundles().remove(customResourceBundleState);
             }
             break;
@@ -243,7 +239,7 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
   }
 
   public boolean isDefaultDissociated(final @NotNull VirtualFile virtualFile) {
-    if (myState.getDissociatedFiles().isEmpty() || myState.getCustomResourceBundles().isEmpty()) {
+    if (myState.getDissociatedFiles().isEmpty() && myState.getCustomResourceBundles().isEmpty()) {
       return false;
     }
     final String url = virtualFile.getUrl();

@@ -21,6 +21,7 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -35,7 +36,9 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -62,6 +65,7 @@ import java.util.List;
  * User: anna
  */
 public class InstalledPluginsManagerMain extends PluginManagerMain {
+  private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
 
   public InstalledPluginsManagerMain(PluginManagerUISettings uiSettings) {
     super(uiSettings);
@@ -138,10 +142,13 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     };
     descriptor.setTitle("Choose Plugin File");
     descriptor.setDescription("JAR and ZIP archives are accepted");
-    FileChooser.chooseFile(descriptor, null, parent, null, new Consumer<VirtualFile>() {
+    final String oldPath = PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH);
+    final VirtualFile toSelect = oldPath == null ? null : VfsUtil.findFileByIoFile(new File(FileUtil.toSystemDependentName(oldPath)), false);
+    FileChooser.chooseFile(descriptor, null, parent, toSelect, new Consumer<VirtualFile>() {
       @Override
       public void consume(@NotNull VirtualFile virtualFile) {
         final File file = VfsUtilCore.virtualToIoFile(virtualFile);
+        PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, FileUtil.toSystemIndependentName(file.getParent()));
         try {
           final IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
           if (pluginDescriptor == null) {
