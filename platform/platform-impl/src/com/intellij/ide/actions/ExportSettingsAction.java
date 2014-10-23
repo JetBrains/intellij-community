@@ -33,6 +33,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -40,6 +41,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ZipUtil;
@@ -55,6 +57,8 @@ import java.util.*;
 import java.util.jar.JarOutputStream;
 
 public class ExportSettingsAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(ExportSettingsAction.class);
+
   @Override
   public void actionPerformed(@Nullable AnActionEvent e) {
     ApplicationManager.getApplication().saveSettings();
@@ -200,7 +204,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
               else {
                 files = fileExists ? new File[]{file, additionalExportFile} : new File[]{additionalExportFile};
               }
-              result.putValue(file, new MyExportableComponent(files, getExportableComponentPresentableName(stateAnnotation.name(), aClass, pluginDescriptor)));
+              result.putValue(file, new MyExportableComponent(files, getExportableComponentPresentableName(stateAnnotation, aClass, pluginDescriptor)));
             }
           }
         }
@@ -211,7 +215,17 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static String getExportableComponentPresentableName(@NotNull String defaultName, @NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
+  private static String getExportableComponentPresentableName(@NotNull State state, @NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
+    if (state.presentableName() != State.NameGetter.class) {
+      try {
+        return ReflectionUtil.newInstance(state.presentableName()).get();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    String defaultName = state.name();
     String resourceBundleName;
     if (pluginDescriptor != null && pluginDescriptor instanceof IdeaPluginDescriptor && !"com.intellij".equals(pluginDescriptor.getPluginId().getIdString())) {
       resourceBundleName = ((IdeaPluginDescriptor)pluginDescriptor).getResourceBundleBaseName();
