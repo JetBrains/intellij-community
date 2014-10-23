@@ -39,7 +39,7 @@ import java.util.List;
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/updates.xml", roamingType = RoamingType.DISABLED)
   },
-  storageChooser = LastStorageChooserForWrite.class
+  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
 )
 public class UpdateSettings implements PersistentStateComponent<Element>, UserUpdateSettings {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateSettings"); 

@@ -282,6 +282,7 @@ public class ChunkExtractor {
         ) {
         return true;
       }
+      if (key == null) continue;
       final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
       if (fallbackAttributeKey != null && isHighlightedAsComment(fallbackAttributeKey)) {
         return true;
@@ -295,6 +296,7 @@ public class ChunkExtractor {
       if (key == DefaultLanguageHighlighterColors.STRING || key == SyntaxHighlighterColors.STRING) {
         return true;
       }
+      if (key == null) continue;
       final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
       if (fallbackAttributeKey != null && isHighlightedAsString(fallbackAttributeKey)) {
         return true;

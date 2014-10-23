@@ -49,6 +49,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.ApplyDefaultStateMode.*;
+
 public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent {
   private final Project myProject;
 
@@ -246,7 +248,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         if (isFoldingsInitializedInEditor(editor)) return;
         if (DumbService.isDumb(myProject) && !FoldingUpdate.supportsDumbModeFolding(editor)) return;
 
-        foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, foldingMap, true, false));
+        foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, foldingMap, YES, false));
         initFolding(editor);
       }
     };

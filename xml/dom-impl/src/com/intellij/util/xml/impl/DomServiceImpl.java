@@ -164,12 +164,19 @@ public class DomServiceImpl extends DomService {
 
   @Override
   public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project) {
-    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, description.getName(), GlobalSearchScope.allScope(project));
+    return getDomFileCandidates(description, project, GlobalSearchScope.allScope(project));
+  }
+
+  @Override
+  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass,
+                                                      Project project,
+                                                      final GlobalSearchScope scope) {
+    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, rootElementClass.getName(), scope);
   }
 
   @Override
   public <T extends DomElement> List<DomFileElement<T>> getFileElements(final Class<T> clazz, final Project project, @Nullable final GlobalSearchScope scope) {
-    final Collection<VirtualFile> list = scope == null ? getDomFileCandidates(clazz, project) : getDomFileCandidates(clazz, project, scope);
+    final Collection<VirtualFile> list = getDomFileCandidates(clazz, project, scope != null ? scope : GlobalSearchScope.allScope(project));
     final ArrayList<DomFileElement<T>> result = new ArrayList<DomFileElement<T>>(list.size());
     for (VirtualFile file : list) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
@@ -189,5 +196,4 @@ public class DomServiceImpl extends DomService {
   public StructureViewBuilder createSimpleStructureViewBuilder(final XmlFile file, final Function<DomElement, StructureViewMode> modeProvider) {
     return new DomStructureViewBuilder(file, modeProvider);
   }
-
 }

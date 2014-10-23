@@ -63,6 +63,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PopFrameAction extends DebuggerAction {
@@ -195,7 +196,10 @@ public class PopFrameAction extends DebuggerAction {
     }
   }
 
-  private static List<PsiStatement> getFinallyStatements(SourcePosition position) {
+  private static List<PsiStatement> getFinallyStatements(@Nullable SourcePosition position) {
+    if (position == null) {
+      return Collections.emptyList();
+    }
     List<PsiStatement> res = new ArrayList<PsiStatement>();
     PsiElement element = position.getFile().findElementAt(position.getOffset());
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);

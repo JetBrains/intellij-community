@@ -224,11 +224,7 @@ public class OpenFileDescriptor implements Navigatable {
 
   private static void unfoldCurrentLine(@NotNull final Editor editor) {
     final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-    final int offset = editor.getCaretModel().getOffset();
-    int line = editor.getDocument().getLineNumber(offset);
-    int start = editor.getDocument().getLineStartOffset(line);
-    int end = editor.getDocument().getLineEndOffset(line);
-    final TextRange range = new TextRange(start, end);
+    final TextRange range = getRangeToUnfoldOnNavigation(editor);
     editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
       @Override
       public void run() {
@@ -239,6 +235,15 @@ public class OpenFileDescriptor implements Navigatable {
         }
       }
     });
+  }
+
+  @NotNull
+  public static TextRange getRangeToUnfoldOnNavigation(@NotNull Editor editor) {
+    final int offset = editor.getCaretModel().getOffset();
+    int line = editor.getDocument().getLineNumber(offset);
+    int start = editor.getDocument().getLineStartOffset(line);
+    int end = editor.getDocument().getLineEndOffset(line);
+    return new TextRange(start, end);
   }
 
   private static void scrollToCaret(@NotNull Editor e) {

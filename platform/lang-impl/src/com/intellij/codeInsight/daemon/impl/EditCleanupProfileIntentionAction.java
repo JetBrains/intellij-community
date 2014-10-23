@@ -24,9 +24,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
 * Created by anna on 5/13/2014.
@@ -55,21 +58,14 @@ class EditCleanupProfileIntentionAction implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
-    final IDEInspectionToolsConfigurable configurable =
-      new IDEInspectionToolsConfigurable(profileManager,
-                                         InspectionProfileManager.getInstance()) {
+    final ProjectInspectionToolsConfigurable configurable =
+      new ProjectInspectionToolsConfigurable(InspectionProfileManager.getInstance(), profileManager) {
         @Override
         protected boolean acceptTool(InspectionToolWrapper entry) {
           return super.acceptTool(entry) && entry.isCleanupTool();
         }
       };
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-      @Override
-      public void run() {
-        configurable.selectProfile(inspectionProfile.getName());
-      }
-    });
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
   }
 
   @Override

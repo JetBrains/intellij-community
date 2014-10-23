@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 /**
@@ -35,4 +37,43 @@ public class NextPrevWordTest extends LightPlatformCodeInsightFixtureTestCase {
     myFixture.checkResult("<caret><foo>");
   }
 
+  public void testPrevNextWordWithFolding() {
+    myFixture.configureByText("a.txt", "<caret>brown fox");
+    EditorTestUtil.addFoldRegion(myFixture.getEditor(), 4, 7, "...", true);
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
+    myFixture.checkResult("brow<caret>n fox");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
+    myFixture.checkResult("brown f<caret>ox");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
+    myFixture.checkResult("brown fox<caret>");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
+    myFixture.checkResult("brown f<caret>ox");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
+    myFixture.checkResult("brow<caret>n fox");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
+    myFixture.checkResult("<caret>brown fox");
+    FoldRegion[] foldRegions = myFixture.getEditor().getFoldingModel().getAllFoldRegions();
+    assertEquals(1, foldRegions.length);
+    assertFalse(foldRegions[0].isExpanded());
+  }
+
+  public void testPrevNextWordWithSelectionAndFolding() {
+    myFixture.configureByText("a.txt", "<caret>brown fox");
+    EditorTestUtil.addFoldRegion(myFixture.getEditor(), 4, 7, "...", true);
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD_WITH_SELECTION);
+    myFixture.checkResult("<selection>brow<caret></selection>n fox");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD_WITH_SELECTION);
+    myFixture.checkResult("<selection>brown f<caret></selection>ox");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD_WITH_SELECTION);
+    myFixture.checkResult("<selection>brown fox<caret></selection>");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD_WITH_SELECTION);
+    myFixture.checkResult("<selection>brown f<caret></selection>ox");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD_WITH_SELECTION);
+    myFixture.checkResult("<selection>brow<caret></selection>n fox");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD_WITH_SELECTION);
+    myFixture.checkResult("<caret>brown fox");
+    FoldRegion[] foldRegions = myFixture.getEditor().getFoldingModel().getAllFoldRegions();
+    assertEquals(1, foldRegions.length);
+    assertFalse(foldRegions[0].isExpanded());
+  }
 }

@@ -412,7 +412,7 @@ public class GenerateMembersUtil {
       final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope());
       @NonNls String paramName = parameter.getName();
       boolean isBaseNameGenerated = true;
-      final boolean isSubstituted = substituted.equals(parameterType);
+      final boolean isSubstituted = Comparing.strEqual(substituted.getCanonicalText(), parameterType.getCanonicalText());
       if (!isSubstituted && isBaseNameGenerated(codeStyleManager, TypeConversionUtil.erasure(parameterType), paramName)) {
         isBaseNameGenerated = false;
       }

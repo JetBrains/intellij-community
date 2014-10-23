@@ -51,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.ApplyDefaultStateMode.*;
+
 public class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingUpdate");
 
@@ -116,7 +118,8 @@ public class FoldingUpdate {
                                                                       final boolean applyDefaultState) {
 
     final FoldingMap elementsToFoldMap = getFoldingsFor(project, file, document, quick);
-    final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFoldMap, applyDefaultState, false);
+    final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFoldMap,
+                                                                                applyDefaultState ? EXCEPT_CARET_REGION : NO, false);
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -190,7 +193,8 @@ public class FoldingUpdate {
           PsiFile injectedFile = injectedFiles.get(i);
           if (!injectedEditor.getDocument().isValid()) continue;
           FoldingMap map = maps.get(i);
-          updateOperations.add(new UpdateFoldRegionsOperation(project, injectedEditor, injectedFile, map, applyDefaultState, true));
+          updateOperations.add(new UpdateFoldRegionsOperation(project, injectedEditor, injectedFile, map,
+                                                              applyDefaultState ? EXCEPT_CARET_REGION : NO, true));
         }
         foldingModel.runBatchFoldingOperation(new Runnable() {
           @Override

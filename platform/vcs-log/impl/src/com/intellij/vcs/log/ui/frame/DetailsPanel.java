@@ -18,13 +18,13 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,9 +68,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private final RefsPanel myRefsPanel;
   @NotNull private final DataPanel myCommitDetailsPanel;
   @NotNull private final MessagePanel myMessagePanel;
+  @NotNull private final JScrollPane myScrollPane;
   @NotNull private final JBLoadingPanel myLoadingPanel;
 
   @NotNull private VisiblePack myDataPack;
+
+  @Nullable private VcsFullCommitDetails myCurrentCommitDetails;
 
   DetailsPanel(@NotNull VcsLogDataHolder logDataHolder,
                @NotNull VcsLogGraphTable graphTable,
@@ -82,20 +86,19 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myRefsPanel = new RefsPanel(colorManager);
     myCommitDetailsPanel = new DataPanel(logDataHolder.getProject());
 
-    final JScrollPane scrollPane =
-      ScrollPaneFactory.createScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     JPanel content = new JPanel(new MigLayout("flowy, ins 0, hidemode 3, gapy 0")) {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
-        size.width = scrollPane.getViewport().getWidth() - 5;
+        size.width = myScrollPane.getViewport().getWidth() - 5;
         return size;
       }
     };
     content.setOpaque(false);
-    scrollPane.setOpaque(false);
-    scrollPane.getViewport().setOpaque(false);
-    scrollPane.setViewportView(content);
+    myScrollPane.setOpaque(false);
+    myScrollPane.getViewport().setOpaque(false);
+    myScrollPane.setViewportView(content);
     content.add(myRefsPanel, "");
     content.add(myCommitDetailsPanel, "");
 
@@ -105,7 +108,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return getDetailsBackground();
       }
     };
-    myLoadingPanel.add(scrollPane);
+    myLoadingPanel.add(myScrollPane);
 
     myMessagePanel = new MessagePanel();
 
@@ -131,6 +134,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   @Override
   public void valueChanged(@Nullable ListSelectionEvent notUsed) {
+    if (notUsed != null && notUsed.getValueIsAdjusting()) return;
+
+    VcsFullCommitDetails newCommitDetails = null;
+
     int[] rows = myGraphTable.getSelectedRows();
     if (rows.length < 1) {
       showMessage("No commits selected");
@@ -157,6 +164,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myLoadingPanel.stopLoading();
         myCommitDetailsPanel.setData(commitData);
         myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
+        newCommitDetails = commitData;
       }
 
       List<String> branches = null;
@@ -164,6 +172,11 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), hash);
       }
       myCommitDetailsPanel.setBranches(branches);
+
+      if (!Comparing.equal(myCurrentCommitDetails, newCommitDetails)) {
+        myCurrentCommitDetails = newCommitDetails;
+        myScrollPane.getVerticalScrollBar().setValue(0);
+      }
     }
   }
 
@@ -192,6 +205,9 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
       setOpaque(false);
       putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+
+      final DefaultCaret caret = (DefaultCaret) getCaret();
+      caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
     }
 
     void setData(@Nullable VcsFullCommitDetails commit) {
@@ -230,7 +246,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
                 "<i>Contained in branches:</i> " +
                 (myBranchesText == null ? "<i>loading...</i>" : myBranchesText) +
                 "</body></html>");
-        setCaretPosition(0);
       }
       revalidate();
       repaint();
