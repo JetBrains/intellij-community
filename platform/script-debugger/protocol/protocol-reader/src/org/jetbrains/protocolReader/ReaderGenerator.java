@@ -1,10 +1,7 @@
-// Copyright (c) 2011 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 package org.jetbrains.protocolReader;
 
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -12,8 +9,8 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.util.*;
 
-public class ReaderGenerator {
-  protected static void mainImpl(String[] args, GenerateConfiguration configuration) throws IOException {
+public final class ReaderGenerator {
+  public static void generate(String[] args, @NotNull GenerateConfiguration configuration) throws IOException {
     FileUpdater fileUpdater = new FileUpdater(FileSystems.getDefault().getPath(parseArgs(args).outputDirectory(),
                                                                                configuration.packageName.replace('.',
                                                                                                                  File.separatorChar),
@@ -22,7 +19,7 @@ public class ReaderGenerator {
     fileUpdater.update();
   }
 
-  protected static class GenerateConfiguration<ROOT> {
+  public static class GenerateConfiguration<ROOT> {
     private final String packageName;
     private final String className;
     final Collection<Map<Class<?>, String>> basePackagesMap;
@@ -64,17 +61,19 @@ public class ReaderGenerator {
       if (equalsPos == -1) {
         key = arg.substring(2).trim();
         value = null;
-      } else {
+      }
+      else {
         key = arg.substring(2, equalsPos).trim();
         value = arg.substring(equalsPos + 1).trim();
       }
-      ParamListener paramListener = paramMap.get(key);
+      StringParam paramListener = paramMap.get(key);
       if (paramListener == null) {
         throw new IllegalArgumentException("Unrecognized param name: " + key);
       }
       try {
         paramListener.setValue(value);
-      } catch (IllegalArgumentException e) {
+      }
+      catch (IllegalArgumentException e) {
         throw new IllegalArgumentException("Failed to set value of " + key, e);
       }
     }
@@ -87,14 +86,9 @@ public class ReaderGenerator {
     return outputDirParam::getValue;
   }
 
-  private interface ParamListener {
-    void setValue(String value);
-  }
-
-  private static class StringParam implements ParamListener {
+  private static class StringParam {
     private String value;
 
-    @Override
     public void setValue(String value) {
       if (value == null) {
         throw new IllegalArgumentException("Argument with value expected");
@@ -110,7 +104,7 @@ public class ReaderGenerator {
     }
   }
 
-  protected static Map<Class<?>, String> buildParserMap(GenerateConfiguration<?> configuration) {
+  public static Map<Class<?>, String> buildParserMap(GenerateConfiguration<?> configuration) {
     FileScope fileScope = generate(configuration, new StringBuilder());
 
     Map<Class<?>, String> typeToImplClassName = new THashMap<>();
@@ -120,6 +114,7 @@ public class ReaderGenerator {
     return typeToImplClassName;
   }
 
+  @NotNull
   private static FileScope generate(GenerateConfiguration<?> configuration, StringBuilder stringBuilder) {
     GlobalScope globalScope = new GlobalScope(configuration.typeToTypeHandler.values(), configuration.basePackagesMap);
     FileScope fileScope = globalScope.newFileScope(stringBuilder);
