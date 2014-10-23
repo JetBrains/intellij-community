@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.application.ModalityState
 import org.jetbrains.settingsRepository.actions.syncAndNotify
+import com.intellij.openapi.vcs.VcsNotifier
 
 val PLUGIN_NAME: String = "Settings Repository"
 
@@ -296,17 +297,23 @@ public class IcsManager : ApplicationLoadListener {
                 return
               }
 
-              if (notification.getGroupId() == VcsBalloonProblemNotifier.NOTIFICATION_GROUP.getDisplayId()) {
-                val message = notification.getContent()
-                if (message.startsWith("VCS Update Finished") ||
-                    message == VcsBundle.message("message.text.file.is.up.to.date") ||
-                    message == VcsBundle.message("message.text.all.files.are.up.to.date")) {
-                  ApplicationManager.getApplication().invokeLater({
-                    if (repositoryActive) {
-                      syncAndNotify(SyncType.MERGE, project, false)
-                    }
-                  }, ModalityState.NON_MODAL, project.getDisposed())
+              if (when {
+                notification.getGroupId() == VcsBalloonProblemNotifier.NOTIFICATION_GROUP.getDisplayId() -> {
+                  val message = notification.getContent()
+                  message.startsWith("VCS Update Finished") ||
+                      message == VcsBundle.message("message.text.file.is.up.to.date") ||
+                      message == VcsBundle.message("message.text.all.files.are.up.to.date")
                 }
+
+                notification.getGroupId() == VcsNotifier.NOTIFICATION_GROUP_ID.getDisplayId() && notification.getTitle() == "Push successful" -> true
+
+                else -> false
+              }) {
+                ApplicationManager.getApplication().invokeLater({
+                  if (repositoryActive) {
+                    syncAndNotify(SyncType.MERGE, project, false)
+                  }
+                }, ModalityState.NON_MODAL, project.getDisposed())
               }
             }
           })
