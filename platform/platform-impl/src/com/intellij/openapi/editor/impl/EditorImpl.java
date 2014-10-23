@@ -1964,7 +1964,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LogicalPosition clipEndPosition = xyToLogicalPosition(new Point(0, clip.y + clip.height + getLineHeight()));
     int clipEndOffset = logicalPositionToOffset(clipEndPosition);
     paintBackgrounds(g, clip, clipStartPosition, clipStartVisualPos, clipStartOffset, clipEndOffset);
-    if (paintPlaceholderText(g, clip)) return;
+    if (paintPlaceholderText(g, clip)) {
+      paintCaretCursor(g);
+      return;
+    }
 
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
@@ -2876,7 +2879,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
 
-    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent) {
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent &&
+      !Boolean.TRUE.equals(SHOW_PLACEHOLDER_WHEN_FOCUSED.get(this))) {
       // There is a possible case that placeholder text was painted and the editor gets focus now. We want to over-paint previously
       // used placeholder text then.
       myLastBackgroundColor = getBackgroundColor();
