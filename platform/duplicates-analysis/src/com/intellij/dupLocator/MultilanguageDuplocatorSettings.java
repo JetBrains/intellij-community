@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +22,7 @@ import java.util.Map;
 public class MultilanguageDuplocatorSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.dupLocator.MultiLanguageDuplocatorSettings");
 
-  private final Map<String, ExternalizableDuplocatorState> mySettingsMap = new HashMap<String, ExternalizableDuplocatorState>();
+  private final Map<String, ExternalizableDuplocatorState> mySettingsMap = new LinkedHashMap<String, ExternalizableDuplocatorState>();
 
   public static MultilanguageDuplocatorSettings getInstance() {
     return ServiceManager.getService(MultilanguageDuplocatorSettings.class);
