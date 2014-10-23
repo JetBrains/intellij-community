@@ -67,7 +67,7 @@ public class CopyRevisionNumberAction extends DumbAwareAction {
     return StringUtil.join(revisions, new Function<VcsRevisionNumber, String>() {
       @Override
       public String fun(VcsRevisionNumber revision) {
-        return revision instanceof ShortVcsRevisionNumber ? ((ShortVcsRevisionNumber)revision).toShortString() : revision.asString();
+        return revision.asString();
       }
     }, " ");
   }
