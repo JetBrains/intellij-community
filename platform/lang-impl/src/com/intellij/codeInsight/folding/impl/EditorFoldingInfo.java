@@ -19,8 +19,6 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -91,20 +89,5 @@ public class EditorFoldingInfo {
 
   public void dispose() {
     myFoldRegionToSmartPointerMap.clear();
-  }
-
-  public static void resetInfo(@NotNull Editor editor) {
-    EditorFoldingInfo info = editor.getUserData(KEY);
-    if (info != null) {
-      for (FoldRegion region : info.myFoldRegionToSmartPointerMap.keySet()) {
-        region.dispose();
-      }
-      info.myFoldRegionToSmartPointerMap.clear();
-    }
-    FoldingModel foldingModel = editor.getFoldingModel();
-    if (foldingModel instanceof FoldingModelEx) {
-      ((FoldingModelEx)foldingModel).rebuild();
-    }
-    editor.putUserData(KEY, null);
   }
 }

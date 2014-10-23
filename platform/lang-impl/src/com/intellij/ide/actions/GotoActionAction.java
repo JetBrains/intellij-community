@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -37,7 +38,11 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Set;
@@ -77,6 +82,33 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       oldPopup.close(false);
     }
     final ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
+      @Override
+      protected void initUI(Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
+        super.initUI(callback, modalityState, allowMultipleSelection);
+        myList.addListSelectionListener(new ListSelectionListener() {
+          @Override
+          public void valueChanged(ListSelectionEvent e) {
+            Object value = myList.getSelectedValue();
+            String text = getText(value);
+            if (text != null && myDropdownPopup != null) {
+              myDropdownPopup.setAdText(text, SwingConstants.LEFT);
+            }
+          }
+
+          @Nullable
+          private String getText(@Nullable Object o) {
+            if (o instanceof GotoActionModel.MatchedValue) {
+              GotoActionModel.MatchedValue mv = (GotoActionModel.MatchedValue)o;
+              if (mv.value instanceof BooleanOptionDescription ||
+                  mv.value instanceof GotoActionModel.ActionWrapper && ((GotoActionModel.ActionWrapper)mv.value).getAction() instanceof ToggleAction) {
+                return "Press " + KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) + " to toggle option";
+              }
+            }
+            return getAdText();
+          }
+        });
+      }
+
       @NotNull
       @Override
       protected Set<Object> filter(@NotNull Set<Object> elements) {

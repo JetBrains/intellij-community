@@ -33,7 +33,6 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -139,7 +138,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", exception[0].getMessage()), SvnBundle.message("message.title.check.out"));
         }
 
-        final VirtualFile vf = RefreshVFsSynchronously.findCreatedFile(target);
+        VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
         if (vf != null) {
           vf.refresh(true, true, new Runnable() {
             public void run() {

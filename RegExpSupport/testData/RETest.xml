@@ -1001,4 +1001,11 @@
       <expected>OK</expected>
     </test>
   </bug>
+
+  <bug id="IDEA-131542">
+    <test>
+      <pattern>\h \H \v \V</pattern>
+      <expected>OK</expected>
+    </test>
+  </bug>
 </tests>

@@ -19,6 +19,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -80,8 +81,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       //noinspection unchecked
       final List<SmartStepTarget> targets = new OrderedSet<SmartStepTarget>();
 
-      TextRange textRange = element.getTextRange();
-      final Range<Integer> lines = new Range<Integer>(doc.getLineNumber(textRange.getStartOffset()), doc.getLineNumber(textRange.getEndOffset()));
+      final Ref<TextRange> textRange = new Ref<TextRange>(lineRange);
 
       final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
         final Stack<PsiMethod> myContextStack = new Stack<PsiMethod>();
@@ -96,12 +96,12 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
           for (PsiMethod psiMethod : aClass.getMethods()) {
-            targets.add(new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true, lines));
+            targets.add(new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true, null));
           }
         }
 
         public void visitLambdaExpression(PsiLambdaExpression expression) {
-          targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++, lines));
+          targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++, null));
         }
 
         @Override
@@ -109,6 +109,15 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           if (lineRange.intersects(statement.getTextRange())) {
             super.visitStatement(statement);
           }
+        }
+
+        @Override
+        public void visitExpression(PsiExpression expression) {
+          TextRange range = expression.getTextRange();
+          if (lineRange.intersects(range)) {
+            textRange.set(textRange.get().union(range));
+          }
+          super.visitExpression(expression);
         }
 
         public void visitExpressionList(PsiExpressionList expressionList) {
@@ -146,7 +155,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                 ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
                 : expression instanceof PsiNewExpression? ((PsiNewExpression)expression).getClassOrAnonymousClassReference() : expression,
               false,
-              lines
+              null
             ));
           }
           try {
@@ -167,6 +176,11 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           break;
         }
         sibling.accept(methodCollector);
+      }
+
+      Range<Integer> lines = new Range<Integer>(doc.getLineNumber(textRange.get().getStartOffset()), doc.getLineNumber(textRange.get().getEndOffset()));
+      for (SmartStepTarget target : targets) {
+        target.setCallingExpressionLines(lines);
       }
       return targets;
     }

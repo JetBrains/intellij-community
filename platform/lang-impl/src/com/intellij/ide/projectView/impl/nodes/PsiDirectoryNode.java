@@ -319,6 +319,14 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   }
 
   @Override
+  public Comparable getTypeSortKey() {
+    VirtualFile file = getVirtualFile();
+    if (file == null) return null;
+    String extension = file.getExtension();
+    return extension == null ? null : new PsiFileNode.ExtensionSortKey(extension);
+  }
+
+  @Override
   public String getQualifiedNameSortKey() {
     final PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(getProject());
     return factory.getQualifiedName(getValue(), true);

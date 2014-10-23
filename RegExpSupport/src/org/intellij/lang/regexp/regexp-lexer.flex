@@ -33,6 +33,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
     private boolean allowOctalNoLeadingZero;
     private boolean allowHexDigitClass;
     private boolean allowEmptyCharacterClass;
+    private boolean allowHorizontalWhitespaceClass;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -42,6 +43,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
       this.allowOctalNoLeadingZero = capabilities.contains(RegExpCapability.OCTAL_NO_LEADING_ZERO);
       this.commentMode = capabilities.contains(RegExpCapability.COMMENT_MODE);
       this.allowHexDigitClass = capabilities.contains(RegExpCapability.ALLOW_HEX_DIGIT_CLASS);
+      this.allowHorizontalWhitespaceClass = capabilities.contains(RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS);
       this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
     }
 
@@ -99,7 +101,7 @@ META={ESCAPE} | {DOT} |
 CONTROL="t" | "n" | "r" | "f" | "a" | "e"
 BOUNDARY="b" | "B" | "A" | "z" | "Z" | "G"
 
-CLASS="w" | "W" | "s" | "S" | "d" | "D" | "X" | "C"
+CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X" | "C"
 XML_CLASS="c" | "C" | "i" | "I"
 PROP="p" | "P"
 
@@ -159,7 +161,7 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  {BOUNDARY}          { return yystate() != CLASS2 ? RegExpTT.BOUNDARY : RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CONTROL}           { return RegExpTT.ESC_CTRL_CHARACTER; }
 
-{ESCAPE} [hH]                 { return (allowHexDigitClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
+{ESCAPE} [hH]                 { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
 {ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 

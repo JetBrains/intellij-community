@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
@@ -61,12 +60,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   CodeFoldingManagerImpl(Project project) {
     myProject = project;
-    project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
-      @Override
-      public void updateStarted(@NotNull final Document doc) {
-        resetFoldingInfo(doc);
-      }
-    });
   }
 
   @Override
@@ -269,7 +262,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         documentFoldingInfo.setToEditor(editor);
         documentFoldingInfo.clear();
 
-        document.putUserData(FOLDING_STATE_KEY, Boolean.TRUE);
         editor.putUserData(FOLDING_STATE_KEY, Boolean.TRUE);
       }
     });
@@ -403,20 +395,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       }
     }
     return info;
-  }
-
-  private static void resetFoldingInfo(@NotNull final Document document) {
-    if (isFoldingsInitializedInDocument(document)) {
-      final Editor[] editors = EditorFactory.getInstance().getEditors(document);
-      for(Editor editor:editors) {
-        EditorFoldingInfo.resetInfo(editor);
-      }
-      document.putUserData(FOLDING_STATE_KEY, null);
-    }
-  }
-
-  static boolean isFoldingsInitializedInDocument(@NotNull Document document) {
-    return Boolean.TRUE.equals(document.getUserData(FOLDING_STATE_KEY));
   }
 
   static boolean isFoldingsInitializedInEditor(@NotNull Editor editor) {

@@ -182,7 +182,7 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @Override
   public void fireOnChange() {
-    if (myError == null) {
+    if (myError != null) {
       return;
     }
     String remoteName = myRemoteLabel.getText();

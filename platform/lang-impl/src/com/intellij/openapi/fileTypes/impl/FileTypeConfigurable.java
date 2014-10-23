@@ -419,10 +419,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
         .setRemoveActionUpdater(new AnActionButtonUpdater() {
           @Override
           public boolean isEnabled(AnActionEvent e) {
-            final FileType fileType = getSelectedFileType();
-            final boolean modified = canBeModified(fileType);
-            final boolean shared = getSchemesManager().isShared(fileType);
-            return shared || modified;
+            FileType fileType = getSelectedFileType();
+            return canBeModified(fileType) || getSchemesManager().isShared(fileType);
           }
         })
         .disableUpDownActions();
@@ -525,7 +523,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       }
     }
 
-    private SchemesManager<FileType, AbstractFileType> getSchemesManager() {
+    private static SchemesManager<FileType, AbstractFileType> getSchemesManager() {
       return ((FileTypeManagerEx)FileTypeManager.getInstance()).getSchemesManager();
     }
 

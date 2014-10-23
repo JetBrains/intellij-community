@@ -28,7 +28,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.*;
 
@@ -109,21 +108,16 @@ public class SwitchStatement extends Statement {
   }
 
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-
-    String indstr = InterpreterUtil.getIndentString(indent);
-
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
-
     TextBuffer buf = new TextBuffer();
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
     buf.append(first.toJava(indent, tracer));
 
     if (isLabeled()) {
-      buf.append(indstr).append("label").append(this.id.toString()).append(":").append(new_line_separator);
+      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 
-    buf.append(indstr).append(headexprent.get(0).toJava(indent, tracer)).append(" {").append(new_line_separator);
+    buf.appendIndent(indent).append(headexprent.get(0).toJava(indent, tracer)).append(" {").appendLineSeparator();
     tracer.incrementCurrentSourceLine();
 
     VarType switch_type = headexprent.get(0).getExprType();
@@ -136,14 +130,14 @@ public class SwitchStatement extends Statement {
 
       for (int j = 0; j < edges.size(); j++) {
         if (edges.get(j) == default_edge) {
-          buf.append(indstr).append("default:").append(new_line_separator);
+          buf.appendIndent(indent).append("default:").appendLineSeparator();
           tracer.incrementCurrentSourceLine();
         }
         else {
           ConstExprent value = (ConstExprent)values.get(j).copy();
           value.setConsttype(switch_type);
 
-          buf.append(indstr).append("case ").append(value.toJava(indent, tracer)).append(":").append(new_line_separator);
+          buf.appendIndent(indent).append("case ").append(value.toJava(indent, tracer)).append(":").appendLineSeparator();
           tracer.incrementCurrentSourceLine();
         }
       }
@@ -151,7 +145,7 @@ public class SwitchStatement extends Statement {
       buf.append(ExprProcessor.jmpWrapper(stat, indent + 1, false, tracer));
     }
 
-    buf.append(indstr).append("}").append(new_line_separator);
+    buf.appendIndent(indent).append("}").appendLineSeparator();
     tracer.incrementCurrentSourceLine();
 
     return buf;

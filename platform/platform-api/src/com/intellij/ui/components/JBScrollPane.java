@@ -101,7 +101,6 @@ public class JBScrollPane extends JScrollPane {
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
     updateViewportBorder();
-    setBorder(IdeBorderFactory.createBorder());
   }
 
   @Override

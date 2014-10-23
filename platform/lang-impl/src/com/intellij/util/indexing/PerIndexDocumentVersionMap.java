@@ -29,6 +29,7 @@ import java.util.List;
  * @author peter
  */
 public class PerIndexDocumentVersionMap {
+  private static final int INVALID_STAMP = -1; // 0 isn't acceptable as Document has 0 stamp when loaded from unchanged file
   private volatile int mapVersion;
   private static class IdVersionInfo {
     private final ID<?,?> id;
@@ -54,7 +55,7 @@ public class PerIndexDocumentVersionMap {
         if (info.id == indexId) {
           long old = info.docVersion;
           if (info.mapVersion != mapVersion) {
-            old = 0;
+            old = INVALID_STAMP;
             info.mapVersion = mapVersion;
           }
           info.docVersion = value;
@@ -62,7 +63,7 @@ public class PerIndexDocumentVersionMap {
         }
       }
       list.add(new IdVersionInfo(indexId, value, mapVersion));
-      return 0;
+      return INVALID_STAMP;
     }
   }
 

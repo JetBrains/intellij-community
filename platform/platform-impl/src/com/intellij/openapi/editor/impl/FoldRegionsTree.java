@@ -58,11 +58,7 @@ abstract class FoldRegionsTree {
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
   void clear() {
-    myCachedVisible = null;
-    myCachedTopLevelRegions = null;
-    myCachedEndOffsets = null;
-    myCachedStartOffsets = null;
-    myCachedFoldedLines = null;
+    clearCachedValues();
 
     if (myRegions != null) {
       for (FoldRegion region : myRegions) {
@@ -71,6 +67,14 @@ abstract class FoldRegionsTree {
     }
 
     myRegions = new ArrayList<FoldRegion>();
+  }
+
+  void clearCachedValues() {
+    myCachedVisible = null;
+    myCachedTopLevelRegions = null;
+    myCachedEndOffsets = null;
+    myCachedStartOffsets = null;
+    myCachedFoldedLines = null;
   }
 
   private boolean isFoldingEnabledAndUpToDate() {

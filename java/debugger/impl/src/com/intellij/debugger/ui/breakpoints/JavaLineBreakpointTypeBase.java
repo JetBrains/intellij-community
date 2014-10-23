@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -81,8 +82,8 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
   }
 
   @Override
-  public final boolean canPutAt(@NotNull VirtualFile file, final int line, @NotNull Project project) {
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+  public final boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull Project project) {
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     // JSPX supports jvm debugging, but not in XHTML files
     if (psiFile == null || psiFile.getVirtualFile().getFileType() == StdFileTypes.XHTML) {
       return false;
@@ -127,6 +128,9 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
               if (statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == line) {
                 result.set(JavaLineBreakpointType.class);
               }
+            }
+            else if (file.getUserData(PositionManager.LINE_NUMBERS_MAPPING_KEY) != null) {
+              result.set(JavaLineBreakpointType.class);
             }
           }
           if (result.isNull()) {

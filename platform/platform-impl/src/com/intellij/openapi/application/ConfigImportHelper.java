@@ -46,7 +46,7 @@ public class ConfigImportHelper {
    */
   @NonNls public static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
   
-  @NonNls private static final String BUILD_NUMBER_FILE = "build.txt";
+  @NonNls private static final String BUILD_NUMBER_FILE = SystemInfo.isMac ? "/Resources/build.txt" : "build.txt";
   @NonNls private static final String PLUGINS_PATH = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
   @NonNls private static final String CONFIG_RELATED_PATH = SystemInfo.isMac ? "" : "config/";

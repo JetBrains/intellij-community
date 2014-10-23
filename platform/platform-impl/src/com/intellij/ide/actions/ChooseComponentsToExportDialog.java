@@ -47,7 +47,7 @@ import java.util.*;
 import java.util.List;
 
 public class ChooseComponentsToExportDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ChooseComponentsToExportDialog");
+  private static final Logger LOG = Logger.getInstance(ChooseComponentsToExportDialog.class);
 
   private final ElementsChooser<ComponentElementProperties> myChooser;
   private final FieldPanel myPathPanel;
@@ -56,9 +56,10 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   private final boolean myShowFilePath;
   private final String myDescription;
 
-  public ChooseComponentsToExportDialog(MultiMap<File, ExportableComponent> fileToComponents,
+  public ChooseComponentsToExportDialog(@NotNull MultiMap<File, ExportableComponent> fileToComponents,
                                         boolean showFilePath, final String title, String description) {
     super(false);
+
     myDescription = description;
     myShowFilePath = showFilePath;
     Map<ExportableComponent, ComponentElementProperties> componentToContainingListElement = new LinkedHashMap<ExportableComponent, ComponentElementProperties>();
@@ -79,15 +80,14 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     }
     myChooser.sort(new Comparator<ComponentElementProperties>() {
       @Override
-      public int compare(ComponentElementProperties o1,
-                         ComponentElementProperties o2) {
+      public int compare(@NotNull ComponentElementProperties o1, @NotNull ComponentElementProperties o2) {
         return o1.toString().compareTo(o2.toString());
       }
     });
 
     final ActionListener browseAction = new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         chooseSettingsFile(myPathPanel.getText(), getWindow(), IdeBundle.message("title.export.file.location"), IdeBundle.message("prompt.choose.export.settings.file.path"))
           .doWhenDone(new Consumer<String>() {
             @Override
@@ -123,19 +123,19 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   protected Action[] createLeftSideActions() {
     AbstractAction selectAll = new AbstractAction("Select &All") {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         myChooser.setAllElementsMarked(true);
       }
     };
     AbstractAction selectNone = new AbstractAction("Select &None") {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         myChooser.setAllElementsMarked(false);
       }
     };
     AbstractAction invert = new AbstractAction("&Invert") {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         myChooser.invertSelection();
       }
     };
@@ -148,16 +148,16 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private static boolean addToExistingListElement(ExportableComponent component,
+  private static boolean addToExistingListElement(@NotNull ExportableComponent component,
                                                   Map<ExportableComponent, ComponentElementProperties> componentToContainingListElement,
-                                                  MultiMap<File, ExportableComponent> fileToComponents) {
-    final File[] exportFiles = component.getExportFiles();
+                                                  @NotNull MultiMap<File, ExportableComponent> fileToComponents) {
     File file = null;
-    for (File exportFile : exportFiles) {
-      Collection<ExportableComponent> tiedComponents = fileToComponents.get(exportFile);
+    for (File exportFile : component.getExportFiles()) {
+      for (ExportableComponent tiedComponent : fileToComponents.get(exportFile)) {
+        if (tiedComponent == component) {
+          continue;
+        }
 
-      for (ExportableComponent tiedComponent : tiedComponents) {
-        if (tiedComponent == component) continue;
         final ComponentElementProperties elementProperties = componentToContainingListElement.get(tiedComponent);
         if (elementProperties != null && !FileUtil.filesEqual(exportFile, file)) {
           LOG.assertTrue(file == null, "Component " + component + " serialize itself into " + file + " and " + exportFile);

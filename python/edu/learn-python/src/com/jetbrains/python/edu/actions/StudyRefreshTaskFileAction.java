@@ -28,6 +28,8 @@ import java.io.*;
 
 public class StudyRefreshTaskFileAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
+  public static final String ACTION_ID = "RefreshTaskAction";
+  public static final String SHORTCUT = "ctrl shift pressed X";
 
   public static void refresh(final Project project) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {

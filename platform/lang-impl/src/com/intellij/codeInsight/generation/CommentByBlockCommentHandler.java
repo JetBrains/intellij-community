@@ -527,7 +527,13 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       shift += commentPrefix.length();
     }
 
-    return processDocument(myDocument, myDocument.createRangeMarker(startOffset, endOffset + shift), commenter, true);
+    RangeMarker marker = myDocument.createRangeMarker(startOffset, endOffset + shift);
+    try {
+      return processDocument(myDocument, marker, commenter, true);
+    }
+    finally {
+      marker.dispose();
+    }
   }
 
   static TextRange processDocument(Document document, RangeMarker marker, Commenter commenter, boolean escape) {
@@ -657,7 +663,6 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       return;
     }
 
-    RangeMarker marker = myDocument.createRangeMarker(range);
     String text = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     int startOffset = range.getStartOffset();
     //boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);
@@ -693,18 +698,23 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       }
     }
 
-
-    for (int i = ranges.size() - 1; i >= 0; i--) {
-      Couple<TextRange> toDelete = ranges.get(i);
-      myDocument.deleteString(toDelete.first.getStartOffset(), toDelete.first.getEndOffset());
-      int shift = toDelete.first.getEndOffset() - toDelete.first.getStartOffset();
-      myDocument.deleteString(toDelete.second.getStartOffset() - shift, toDelete.second.getEndOffset() - shift);
-      if (commenter.getCommentedBlockCommentPrefix() != null) {
-        commentNestedComments(myDocument, new TextRange(toDelete.first.getEndOffset() - shift, toDelete.second.getStartOffset() - shift),
-                              commenter);
+    RangeMarker marker = myDocument.createRangeMarker(range);
+    try {
+      for (int i = ranges.size() - 1; i >= 0; i--) {
+        Couple<TextRange> toDelete = ranges.get(i);
+        myDocument.deleteString(toDelete.first.getStartOffset(), toDelete.first.getEndOffset());
+        int shift = toDelete.first.getEndOffset() - toDelete.first.getStartOffset();
+        myDocument.deleteString(toDelete.second.getStartOffset() - shift, toDelete.second.getEndOffset() - shift);
+        if (commenter.getCommentedBlockCommentPrefix() != null) {
+          commentNestedComments(myDocument, new TextRange(toDelete.first.getEndOffset() - shift, toDelete.second.getStartOffset() - shift),
+                                commenter);
+        }
       }
-    }
 
-    processDocument(myDocument, marker, commenter, false);
+      processDocument(myDocument, marker, commenter, false);
+    }
+    finally {
+      marker.dispose();
+    }
   }
 }

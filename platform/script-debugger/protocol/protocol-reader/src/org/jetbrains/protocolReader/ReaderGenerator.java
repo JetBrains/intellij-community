@@ -18,7 +18,7 @@ public class ReaderGenerator {
                                                                                configuration.getPackageName().replace('.',
                                                                                                                       File.separatorChar),
                                                                                configuration.getClassName() + ".java"));
-    generateImpl(configuration, fileUpdater.builder);
+    generate(configuration, fileUpdater.builder);
     fileUpdater.update();
   }
 
@@ -96,12 +96,7 @@ public class ReaderGenerator {
       }
     }
 
-    return new Params() {
-      @Override
-      public String outputDirectory() {
-        return outputDirParam.getValue();
-      }
-    };
+    return outputDirParam::getValue;
   }
 
   private interface ParamListener {
@@ -128,12 +123,12 @@ public class ReaderGenerator {
   }
 
   protected static GeneratedCodeMap buildParserMap(GenerateConfiguration configuration) {
-    return generateImpl(configuration, new StringBuilder());
+    return generate(configuration, new StringBuilder());
   }
 
-  private static GeneratedCodeMap generateImpl(GenerateConfiguration configuration, StringBuilder stringBuilder) {
-    return configuration.getParser().generateStaticReader(stringBuilder,
-                                                          configuration.getPackageName(), configuration.getClassName(),
-                                                          configuration.getBasePackagesMap());
+  private static GeneratedCodeMap generate(GenerateConfiguration configuration, StringBuilder stringBuilder) {
+    return configuration.getParser().generateReader(stringBuilder,
+                                                    configuration.getPackageName(), configuration.getClassName(),
+                                                    configuration.getBasePackagesMap());
   }
 }

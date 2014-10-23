@@ -22,6 +22,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
@@ -58,6 +59,11 @@ abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
       @Override
       protected void textChanged(DocumentEvent event) {
         update(event.getType(), true, false);
+        // request focus if needed on changing the filter text
+        IdeFocusManager manager = IdeFocusManager.findInstanceByComponent(mySearch);
+        if (manager.getFocusedDescendantFor(mySearch) == null) {
+          manager.requestFocus(mySearch, true);
+        }
       }
     });
     mySearch.getTextEditor().addMouseListener(new MouseAdapter() {

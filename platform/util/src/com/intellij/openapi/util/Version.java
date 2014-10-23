@@ -1,8 +1,9 @@
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Version {
+public class Version implements Comparable<Version> {
   public final int major;
   public final int minor;
   public final int bugfix;
@@ -47,6 +48,10 @@ public class Version {
 
   public boolean lessThan(@Nullable Integer major, @Nullable Integer minor, @Nullable Integer bugfix) {
     return compareTo(major, minor, bugfix) < 0;
+  }
+
+  public int compareTo(@NotNull Version version) {
+    return compareTo(version.major, version.minor, version.bugfix);
   }
 
   public int compareTo(@Nullable Integer major) {

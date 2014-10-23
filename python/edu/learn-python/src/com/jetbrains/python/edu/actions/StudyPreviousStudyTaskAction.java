@@ -9,6 +9,8 @@ import javax.swing.*;
 
 public class StudyPreviousStudyTaskAction extends StudyTaskNavigationAction {
 
+  public static final String ACTION_ID = "PreviousTaskAction";
+  public static final String SHORTCUT = "ctrl pressed COMMA";
   @Override
   protected JButton getButton(@NotNull final StudyEditor selectedStudyEditor) {
     return selectedStudyEditor.getPrevTaskButton();

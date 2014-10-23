@@ -132,11 +132,11 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
     assertTree("-foldersOnTop\n" +
                " a.java\n" +
+               " +b.java\n" +
                " c.java\n" +
                " a.txt\n" +
-               " c.txt\n" +
-               " +b.java\n" +
-               " +b.txt\n");
+               " +b.txt\n"+
+               " c.txt\n");
   }
 
   public void testSortByTypeBetweenFilesAndFolders() throws Exception {
@@ -156,11 +156,11 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     assertTree("-sortByTypeBetweenFilesAndFolders\n" +
                " a.java\n" +
                " b.java\n" +
+               " +a.java_folder\n" +
+               " +b.java_folder\n" +
                " a.txt\n" +
                " b.txt\n" +
-               " +a.java_folder\n" +
                " +a_folder\n" +
-               " +b.java_folder\n" +
                " +b_folder\n");
   }
 

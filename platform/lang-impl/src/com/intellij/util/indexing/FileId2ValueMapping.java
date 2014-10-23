@@ -15,7 +15,11 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.util.SmartList;
+import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
+
+import java.util.List;
 
 /**
 * Created by Maxim.Mossienko on 7/4/2014.
@@ -28,11 +32,29 @@ class FileId2ValueMapping<Value> {
     id2ValueMap = new TIntObjectHashMap<Value>();
     valueContainer = _valueContainer;
 
+    TIntArrayList removedFileIdList = null;
+    List<Value> removedValueList = null;
+
     for (final ValueContainer.ValueIterator<Value> valueIterator = _valueContainer.getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
 
       for (final ValueContainer.IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
-        associateFileIdToValue(intIterator.next(), value);
+        int id = intIterator.next();
+        Value previousValue = id2ValueMap.put(id, value);
+        if (previousValue != null) {  // delay removal of duplicated id -> value mapping since it will affect valueIterator we are using
+          if (removedFileIdList == null) {
+            removedFileIdList = new TIntArrayList();
+            removedValueList = new SmartList<Value>();
+          }
+          removedFileIdList.add(id);
+          removedValueList.add(previousValue);
+        }
+      }
+    }
+
+    if (removedFileIdList != null) {
+      for(int i = 0, size = removedFileIdList.size(); i < size; ++i) {
+        valueContainer.removeValue(removedFileIdList.get(i), removedValueList.get(i));
       }
     }
   }

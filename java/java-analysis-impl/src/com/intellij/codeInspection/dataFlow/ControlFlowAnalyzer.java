@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -100,7 +101,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     addInstruction(new ReturnInstruction(false, null));
 
-    new LiveVariablesAnalyzer(myCurrentFlow, myFactory).flushDeadVariablesOnStatementFinish();
+    if (Registry.is("idea.dfa.live.variables.analysis")) {
+      new LiveVariablesAnalyzer(myCurrentFlow, myFactory).flushDeadVariablesOnStatementFinish();
+    }
 
     return myCurrentFlow;
   }
@@ -198,7 +201,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateDefaultAssignmentBinOp(lExpr, rExpr, type);
     }
 
-    addInstruction(new AssignInstruction(rExpr));
+    addInstruction(new AssignInstruction(rExpr, myFactory.createValue(lExpr)));
 
     flushArrayElementsOnUnknownIndexAssignment(lExpr);
 
@@ -281,7 +284,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new PushInstruction(dfaVariable, initializer));
     initializer.accept(this);
     generateBoxingUnboxingInstructionFor(initializer, variable.getType());
-    addInstruction(new AssignInstruction(initializer));
+    addInstruction(new AssignInstruction(initializer, dfaVariable));
     addInstruction(new PopInstruction());
   }
 
@@ -582,7 +585,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (finallyDescriptor != null) {
       addInstruction(new PushInstruction(getExceptionHolder(finallyDescriptor), null));
       addInstruction(new PushInstruction(myString, null));
-      addInstruction(new AssignInstruction(null));
+      addInstruction(new AssignInstruction(null, null));
       addInstruction(new PopInstruction());
       
       addInstruction(new GotoInstruction(finallyDescriptor.getJumpOffset(this)));
@@ -724,7 +727,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       gotoInstruction.setOffset(myCurrentFlow.getInstructionCount());
       addInstruction(new PushInstruction(getExceptionHolder(cd), null));
       addInstruction(new SwapInstruction());
-      addInstruction(new AssignInstruction(null));
+      addInstruction(new AssignInstruction(null, null));
       addInstruction(new PopInstruction());
       addThrowCode(cd, statement);
     }
@@ -752,7 +755,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new PushInstruction(myError, null));
     ifRuntime.setOffset(myCurrentFlow.getInstructionCount());
 
-    addInstruction(new AssignInstruction(null));
+    addInstruction(new AssignInstruction(null, null));
     addInstruction(new PopInstruction());
     
     addThrowCode(cd, null);
@@ -972,7 +975,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       // e = $exception$
       addInstruction(new PushInstruction(myFactory.getVarFactory().createVariableValue(section.getParameter(), false), null));
       addInstruction(new PushInstruction(exceptionHolder, null));
-      addInstruction(new AssignInstruction(null));
+      addInstruction(new AssignInstruction(null, null));
       addInstruction(new PopInstruction());
       
       addInstruction(new FlushVariableInstruction(exceptionHolder));
@@ -987,7 +990,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (nextCatch != null) {
       addInstruction(new PushInstruction(getExceptionHolder(nextCatch), null, false));
       addInstruction(new PushInstruction(getExceptionHolder(currentDescriptor), null, true));
-      addInstruction(new AssignInstruction(null));
+      addInstruction(new AssignInstruction(null, null));
       addInstruction(new PopInstruction());
     }
     addThrowCode(nextCatch, null);
@@ -1388,7 +1391,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (cd == null) return;
     addInstruction(new PushInstruction(getExceptionHolder(cd), null));
     addInstruction(new PushInstruction(myFactory.createTypeValue(ref, Nullness.NOT_NULL), null));
-    addInstruction(new AssignInstruction(null));
+    addInstruction(new AssignInstruction(null, null));
     addInstruction(new PopInstruction());
   }
 

@@ -198,8 +198,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       if (o.value instanceof OptionDescription && !(value instanceof OptionDescription)) return -1;
 
       int diff = o.getMatchingDegree() - getMatchingDegree();
+      if (diff != 0) return diff;
       //noinspection unchecked
-      return diff != 0 ? diff : value.compareTo(o.value);
+      int compare = value.compareTo(o.value);
+      if (compare != 0) return compare;
+      return o.hashCode() - hashCode(); 
     }
   }
 
@@ -679,9 +682,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     @Override
     public int compareTo(@NotNull ActionWrapper o) {
       int compared = myMode.compareTo(o.getMode());
-      return compared != 0
-             ? compared
-             : StringUtil.compare(myAction.getTemplatePresentation().getText(), o.getAction().getTemplatePresentation().getText(), true);
+      if (compared != 0) return compared;
+      Presentation myPresentation = myAction.getTemplatePresentation();
+      Presentation oPresentation = o.getAction().getTemplatePresentation();
+      int byText = StringUtil.compare(myPresentation.getText(), oPresentation.getText(), true);
+      if (byText != 0) return byText;
+      int byGroup = Comparing.compare(myGroupName, o.getGroupName());
+      if (byGroup !=0) return byGroup;
+      int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
+      if (byDesc != 0) return byDesc;
+      return 0;
     }
 
     private boolean isAvailable() {
