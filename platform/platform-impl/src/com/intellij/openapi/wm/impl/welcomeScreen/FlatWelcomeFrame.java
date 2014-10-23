@@ -369,7 +369,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     private JComponent createLogo() {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      JLabel logo = new JLabel(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()));
+      ApplicationInfoEx app = ApplicationInfoEx.getInstanceEx();
+      JLabel logo = new JLabel(IconLoader.getIcon(app.getWelcomeScreenLogoUrl()));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
       JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -377,7 +378,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       appName.setForeground(JBColor.foreground());
       appName.setFont(font.deriveFont(36f).deriveFont(Font.PLAIN));
       appName.setHorizontalAlignment(SwingConstants.CENTER);
-      JLabel version = new JLabel("Version " + ApplicationInfoEx.getInstanceEx().getFullVersion());
+      String appVersion = "Version " + app.getFullVersion();
+      
+      if (app.isEAP() && app.getBuild().getBuildNumber() < Integer.MAX_VALUE) {
+        appVersion += " (" + app.getBuild().asString() + ")";
+      }
+      
+      JLabel version = new JLabel(appVersion);
       version.setFont(font.deriveFont(16f).deriveFont(Font.PLAIN));
       version.setHorizontalAlignment(SwingConstants.CENTER);
       version.setForeground(Gray._128);
