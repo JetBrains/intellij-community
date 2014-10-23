@@ -104,22 +104,7 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
       }
 
       @Override
-      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        super.childReplaced(event);
-      }
-
-      @Override
-      public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
-        super.beforeChildMovement(event);
-      }
-
-      @Override
-      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-        super.propertyChanged(event);
-      }
-
-      @Override
-      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
+      public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();
         if (!(child instanceof PsiFile)) {
           return;
