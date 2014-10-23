@@ -12,7 +12,7 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
 public class IpnbDeleteCellAction extends AnAction {
   public IpnbDeleteCellAction() {
-    super(AllIcons.General.Run);
+    super(AllIcons.Actions.Delete);
   }
 
   @Override
@@ -26,7 +26,7 @@ public class IpnbDeleteCellAction extends AnAction {
   }
 
   public void cutCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
-    ipnbFilePanel.deleteCell();
+    ipnbFilePanel.deleteSelectedCell();
     ipnbFilePanel.revalidate();
     ipnbFilePanel.repaint();
   }
