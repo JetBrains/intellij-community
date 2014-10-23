@@ -25,13 +25,15 @@ public class StandaloneVmHelper extends MessageWriter {
     return write(((Object)content));
   }
 
-  public boolean write(@NotNull Object content) {
+  @Nullable
+  public Channel getChannelIfActive() {
     Channel currentChannel = channel;
-    if (currentChannel == null || !currentChannel.isActive()) {
-      return false;
-    }
-    currentChannel.writeAndFlush(content);
-    return true;
+    return currentChannel == null || !currentChannel.isActive() ? null : currentChannel;
+  }
+
+  public boolean write(@NotNull Object content) {
+    Channel channel = getChannelIfActive();
+    return channel != null && !channel.writeAndFlush(content).isCancelled();
   }
 
   public interface VmEx extends Vm {
