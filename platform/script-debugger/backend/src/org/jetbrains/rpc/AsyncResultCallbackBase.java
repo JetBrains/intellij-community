@@ -27,13 +27,13 @@ abstract class AsyncResultCallbackBase<SUCCESS_RESPONSE, C extends ActionCallbac
             callback.reject(e.getMessage());
           }
           finally {
-            MessageHandler.LOG.error(e);
+            CommandProcessor.LOG.error(e);
           }
         }
       }
     }
     catch (Throwable e) {
-      MessageHandler.LOG.error(e);
+      CommandProcessor.LOG.error(e);
     }
   }
 }

@@ -24,7 +24,7 @@ final class CommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RE
       callback.setDone(transform.fun(result));
     }
     catch (Throwable e) {
-      MessageHandler.LOG.error(e);
+      CommandProcessor.LOG.error(e);
     }
   }
 }

@@ -9,13 +9,13 @@ public abstract class MessageWriter implements BooleanFunction<Request> {
   public boolean fun(@NotNull Request message) {
     CharSequence content = message.toJson();
     if (isDebugLoggingEnabled()) {
-      MessageHandler.LOG.debug("OUT: " + content.toString());
+      CommandProcessor.LOG.debug("OUT: " + content.toString());
     }
     return write(content);
   }
 
   protected boolean isDebugLoggingEnabled() {
-    return MessageHandler.LOG.isDebugEnabled();
+    return CommandProcessor.LOG.isDebugEnabled();
   }
 
   protected abstract boolean write(@NotNull CharSequence content);

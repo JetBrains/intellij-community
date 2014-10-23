@@ -72,7 +72,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
         failedToSend(sequence);
       }
       finally {
-        MessageHandler.LOG.error("Failed to send", e);
+        CommandProcessor.LOG.error("Failed to send", e);
       }
       return;
     }
@@ -94,7 +94,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
     if (commandResponse == null) {
       if (closed) {
         // just ignore
-        MessageHandler.LOG.info("Connection closed, ignore incoming");
+        CommandProcessor.LOG.info("Connection closed, ignore incoming");
       }
       else {
         handler.acceptNonSequence(incomingParsed);
@@ -113,7 +113,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
     }
     catch (Throwable e) {
       callback.onError("Failed to dispatch response to callback", null);
-      MessageHandler.LOG.error("Failed to dispatch response to callback", e);
+      CommandProcessor.LOG.error("Failed to dispatch response to callback", e);
     }
   }
 
@@ -142,7 +142,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
         }
       }
       catch (Throwable e) {
-        MessageHandler.LOG.error("Failed to reject callback on connection closed", e);
+        CommandProcessor.LOG.error("Failed to reject callback on connection closed", e);
       }
     }
   }

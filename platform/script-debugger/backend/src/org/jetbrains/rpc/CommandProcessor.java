@@ -12,14 +12,14 @@ import org.jetbrains.jsonProtocol.RequestWithResponse;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class MessageHandler<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS>
+public abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS>
   implements MessageManager.Handler<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS>, ResultReader<SUCCESS_RESPONSE>, CommandSender<ERROR_DETAILS>, MessageProcessor {
   public static final Logger LOG = Logger.getInstance(MessageManager.class);
 
   private final AtomicInteger currentSequence = new AtomicInteger();
   protected final MessageManager<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS> messageManager;
 
-  protected MessageHandler() {
+  protected CommandProcessor() {
     messageManager = new MessageManager<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS>(this);
   }
 
