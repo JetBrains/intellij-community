@@ -475,7 +475,7 @@ public class GenerateMembersUtil {
     if (method.isConstructor()) {
       return factory.createConstructor(method.getName(), target);
     }
-    return factory.createMethod(method.getName(), PsiType.VOID);
+    return factory.createMethodFromText("public void " + method.getName() + "(){}", target);
   }
 
   private static void substituteReturnType(@NotNull PsiManager manager,
