@@ -20,7 +20,7 @@ abstract class CommandCallbackWithResponseBase<SUCCESS_RESPONSE, C extends Actio
       onSuccess(resultReader.<RESULT>readResult(methodName, response));
     }
     catch (Throwable e) {
-      MessageManager.LOG.error(e);
+      MessageHandler.LOG.error(e);
       callback.reject(e.getMessage());
     }
   }

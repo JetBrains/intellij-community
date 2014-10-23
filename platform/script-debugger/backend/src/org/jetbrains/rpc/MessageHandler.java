@@ -1,5 +1,6 @@
 package org.jetbrains.rpc;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Function;
@@ -12,7 +13,9 @@ import org.jetbrains.jsonProtocol.RequestWithResponse;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MessageHandler<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS>
-  implements MessageManager.Handler<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS>, ResultReader<SUCCESS_RESPONSE>, CommandSender<ERROR_DETAILS> {
+  implements MessageManager.Handler<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS>, ResultReader<SUCCESS_RESPONSE>, CommandSender<ERROR_DETAILS>, MessageProcessor {
+  public static final Logger LOG = Logger.getInstance(MessageManager.class);
+
   private final AtomicInteger currentSequence = new AtomicInteger();
   protected final MessageManager<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS> messageManager;
 
@@ -20,23 +23,25 @@ public abstract class MessageHandler<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPON
     messageManager = new MessageManager<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS>(this);
   }
 
-  public void cancelWaitingRequests() {
+  @Override
+  public final void cancelWaitingRequests() {
     messageManager.cancelWaitingRequests();
   }
 
-  public void closed() {
+  @Override
+  public final void closed() {
     messageManager.closed();
   }
 
   @Override
-  public final int getUpdatedSequence(Request message) {
+  public final int getUpdatedSequence(@NotNull Request message) {
     int id = currentSequence.incrementAndGet();
     message.finalize(id);
     return id;
   }
 
   @Override
-  public final ActionCallback send(Request message) {
+  public final ActionCallback send(@NotNull Request message) {
     CommandCallbackWithoutResponse<SUCCESS_RESPONSE, ERROR_DETAILS> callback = new CommandCallbackWithoutResponse<SUCCESS_RESPONSE, ERROR_DETAILS>();
     messageManager.send(message, callback);
     return callback.callback;

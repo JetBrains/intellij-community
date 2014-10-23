@@ -12,8 +12,7 @@ import java.util.*;
 public final class ReaderGenerator {
   public static void generate(String[] args, @NotNull GenerateConfiguration configuration) throws IOException {
     FileUpdater fileUpdater = new FileUpdater(FileSystems.getDefault().getPath(parseArgs(args).outputDirectory(),
-                                                                               configuration.packageName.replace('.',
-                                                                                                                 File.separatorChar),
+                                                                               configuration.packageName.replace('.', File.separatorChar),
                                                                                configuration.className + ".java"));
     generate(configuration, fileUpdater.builder);
     fileUpdater.update();

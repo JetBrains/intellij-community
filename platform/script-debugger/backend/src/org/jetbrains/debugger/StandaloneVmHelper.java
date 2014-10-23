@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.NettyUtil;
 import org.jetbrains.jsonProtocol.Request;
-import org.jetbrains.rpc.MessageHandler;
+import org.jetbrains.rpc.MessageProcessor;
 import org.jetbrains.rpc.MessageWriter;
 
 public class StandaloneVmHelper extends MessageWriter {
@@ -35,7 +35,7 @@ public class StandaloneVmHelper extends MessageWriter {
   }
 
   public interface VmEx extends Vm {
-    MessageHandler<?, ?, ?, ?> getCommandProcessor();
+    MessageProcessor getCommandProcessor();
 
     @Nullable
     Request createDisconnectRequest();

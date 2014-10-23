@@ -15,7 +15,6 @@
  */
 package org.jetbrains.rpc;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +28,6 @@ import java.util.Arrays;
  * @param <INCOMING_WITH_SEQ> type of incoming message that is a command (has sequence number)
  */
 public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> {
-  public static final Logger LOG = Logger.getInstance(MessageManager.class);
-
   private final ConcurrentIntObjectMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>> callbackMap = ContainerUtil.createConcurrentIntObjectMap();
   private final Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler;
 
@@ -41,7 +38,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
   }
 
   public interface Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> {
-    int getUpdatedSequence(OUTGOING message);
+    int getUpdatedSequence(@NotNull OUTGOING message);
 
     boolean write(@NotNull OUTGOING message) throws IOException;
 
@@ -75,7 +72,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
         failedToSend(sequence);
       }
       finally {
-        LOG.error("Failed to send", e);
+        MessageHandler.LOG.error("Failed to send", e);
       }
       return;
     }
@@ -97,7 +94,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
     if (commandResponse == null) {
       if (closed) {
         // just ignore
-        LOG.info("Connection closed, ignore incoming");
+        MessageHandler.LOG.info("Connection closed, ignore incoming");
       }
       else {
         handler.acceptNonSequence(incomingParsed);
@@ -116,7 +113,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
     }
     catch (Throwable e) {
       callback.onError("Failed to dispatch response to callback", null);
-      LOG.error("Failed to dispatch response to callback", e);
+      MessageHandler.LOG.error("Failed to dispatch response to callback", e);
     }
   }
 
@@ -145,7 +142,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
         }
       }
       catch (Throwable e) {
-        LOG.error("Failed to reject callback on connection closed", e);
+        MessageHandler.LOG.error("Failed to reject callback on connection closed", e);
       }
     }
   }
