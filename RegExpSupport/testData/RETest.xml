@@ -719,7 +719,7 @@
       <expected>ERR</expected>
     </test>
     <test verify="false">
-      <pattern><![CDATA[([ab]+=<warning descr="Backreference is nested into the capturing group it refers to">\1</warning>)]]></pattern>
+      <pattern><![CDATA[([ab]+=<warning descr="Back reference is nested into the capturing group it refers to">\1</warning>)]]></pattern>
       <expected>OK</expected>
     </test>
   </backrefs>
