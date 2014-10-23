@@ -216,6 +216,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       if (refactoringId != null) {
         final RefactoringEventData beforeData = new RefactoringEventData();
         beforeData.addElement(elementToRename);
+        beforeData.addStringProperties(myOldName);
         myProject.getMessageBus()
           .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
       }
@@ -300,6 +301,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       if (refactoringId != null) {
         final RefactoringEventData afterData = new RefactoringEventData();
         afterData.addElement(getVariable());
+        afterData.addStringProperties(newName);
         myProject.getMessageBus()
           .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, afterData);
       }
