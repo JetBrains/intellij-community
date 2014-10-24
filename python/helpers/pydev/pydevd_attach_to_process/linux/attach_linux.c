@@ -239,7 +239,7 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
 
     if(!pyHasAttrFunc(pydevdTracingMod.ToPython(), "_original_settrace")){
         if(showDebugInfo){
-            printf("pydevd_tracing module has no _original_settrace! ");
+            printf("pydevd_tracing module has no _original_settrace!\n");
         }
         return 8;
     }
@@ -277,7 +277,7 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
     
     DecRef(call(settrace.ToPython(), traceFunc.ToPython(), NULL), isDebug);
     if(showDebugInfo){
-        printf("sys.settrace(pydevd.GetGlobalDebugger().trace_dispatch) worked.");
+        printf("sys.settrace(pydevd.GetGlobalDebugger().trace_dispatch) worked.\n");
     }
 
     return 0;
