@@ -18,12 +18,11 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.projectWizard.NewProjectWizard;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import org.jetbrains.annotations.NotNull;
 
 public class NewProjectAction extends AnAction implements DumbAware {
@@ -34,7 +33,7 @@ public class NewProjectAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (e.getPlace() == ActionPlaces.WELCOME_SCREEN && Registry.is("ide.new.welcome.screen")) {
+    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       e.getPresentation().setIcon(AllIcons.Welcome.CreateNewProject);
     }
   }

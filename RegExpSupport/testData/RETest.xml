@@ -572,6 +572,14 @@
       <expected>OK</expected>
     </test>
     <test>
+      <pattern>\x{0}</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>\x{2011F}</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
       <pattern>[\x4a-\x4b]</pattern>
       <expected>OK</expected>
     </test>
@@ -769,6 +777,18 @@
     </test>
     <test>
       <pattern>abc\x1</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>abc\x{</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>abc\x{}</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>abc\x{0</pattern>
       <expected>ERR</expected>
     </test>
     <test>

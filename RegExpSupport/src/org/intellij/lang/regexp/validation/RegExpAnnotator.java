@@ -104,6 +104,13 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
           registerFix(a, new RemoveRedundantEscapeAction(ch));
         }
       }
+      if (ch.getType() == RegExpChar.Type.HEX) {
+        if (text.charAt(text.length() - 1) == '}') {
+          if (!myLanguageHosts.supportsExtendedHexCharacter(ch)) {
+            myHolder.createErrorAnnotation(ch, "This hex character syntax is not supported");
+          }
+        }
+      }
     }
   }
 
