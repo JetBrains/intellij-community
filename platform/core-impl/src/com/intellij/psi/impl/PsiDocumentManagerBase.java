@@ -136,9 +136,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Nullable
   public FileViewProvider getCachedViewProvider(@NotNull Document document) {
+    final VirtualFile virtualFile = getVirtualFile(document);
+    if (virtualFile == null) return null;
+    return getCachedViewProvider(virtualFile);
+  }
+
+  private FileViewProvider getCachedViewProvider(@NotNull VirtualFile virtualFile) {
+    return ((PsiManagerEx)myPsiManager).getFileManager().findCachedViewProvider(virtualFile);
+  }
+
+  private static VirtualFile getVirtualFile(@NotNull Document document) {
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
-    return ((PsiManagerEx)myPsiManager).getFileManager().findCachedViewProvider(virtualFile);
+    return virtualFile;
   }
 
   @Nullable
@@ -321,7 +331,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         }
         myLastCommittedTexts.remove(document);
         viewProvider.contentsSynchronized();
-      } else {
+      }
+      else {
         handleCommitWithoutPsi(document);
       }
     }
@@ -588,21 +599,25 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       myLastCommittedTexts.put(document, document.getImmutableCharSequence());
     }
 
-    final FileViewProvider viewProvider = getCachedViewProvider(document);
-    if (viewProvider == null) return;
-    if (!isRelevant(viewProvider)) return;
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    boolean isBulk = document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate();
 
-    VirtualFile virtualFile = viewProvider.getVirtualFile();
-    if (virtualFile.getFileType().isBinary()) return;
+    boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
+    if (!isBulk && isRelevant) {
+      mySmartPointerManager.fastenBelts(virtualFile, event.getOffset(), null);
+    }
+
+    final FileViewProvider viewProvider = getCachedViewProvider(document);
+    boolean inMyProject = viewProvider != null && viewProvider.getManager() == myPsiManager;
+    if (!isRelevant || !inMyProject) {
+      return;
+    }
 
     final List<PsiFile> files = viewProvider.getAllFiles();
     PsiFile psiCause = null;
     for (PsiFile file : files) {
       if (file == null) {
         throw new AssertionError("View provider "+viewProvider+" ("+viewProvider.getClass()+") returned null in its files array: "+files+" for file "+viewProvider.getVirtualFile());
-      }
-      if (!(document instanceof DocumentEx) || !((DocumentEx)document).isInBulkUpdate()) {
-        mySmartPointerManager.fastenBelts(file, event.getOffset(), null);
       }
 
       if (mySynchronizer.isInsideAtomicChange(file)) {
@@ -623,12 +638,21 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void documentChanged(DocumentEvent event) {
     final Document document = event.getDocument();
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    boolean isBulk = document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate();
+
+    boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
+    if (!isBulk && isRelevant) {
+      mySmartPointerManager.unfastenBelts(virtualFile, event.getOffset());
+    }
+
     final FileViewProvider viewProvider = getCachedViewProvider(document);
     if (viewProvider == null) {
       handleCommitWithoutPsi(document);
       return;
     }
-    if (!isRelevant(viewProvider)) {
+    boolean inMyProject = viewProvider.getManager() == myPsiManager;
+    if (!isRelevant || !inMyProject) {
       myLastCommittedTexts.remove(document);
       return;
     }
@@ -637,9 +661,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final List<PsiFile> files = viewProvider.getAllFiles();
     boolean commitNecessary = true;
     for (PsiFile file : files) {
-      if (!(document instanceof DocumentEx) || !((DocumentEx)document).isInBulkUpdate()) {
-        mySmartPointerManager.unfastenBelts(file, event.getOffset());
-      }
 
       if (mySynchronizer.isInsideAtomicChange(file)) {
         commitNecessary = false;
@@ -679,24 +700,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void updateStarted(@NotNull Document document) {
-    final FileViewProvider viewProvider = getCachedViewProvider(document);
-    if (viewProvider == null || !isRelevant(viewProvider)) return;
+    final VirtualFile virtualFile = getVirtualFile(document);
+    if (virtualFile == null || !isRelevant(virtualFile)) return;
 
-    final List<PsiFile> files = viewProvider.getAllFiles();
-    for (PsiFile file : files) {
-      mySmartPointerManager.fastenBelts(file, 0, null);
-    }
+    mySmartPointerManager.fastenBelts(virtualFile, 0, null);
   }
 
   @Override
   public void updateFinished(@NotNull Document document) {
-    final FileViewProvider viewProvider = getCachedViewProvider(document);
-    if (viewProvider == null || !isRelevant(viewProvider)) return;
-
-    final List<PsiFile> files = viewProvider.getAllFiles();
-    for (PsiFile file : files) {
-      mySmartPointerManager.unfastenBelts(file, 0);
-    }
+    final VirtualFile virtualFile = getVirtualFile(document);
+    if (virtualFile == null || !isRelevant(virtualFile)) return;
+    mySmartPointerManager.unfastenBelts(virtualFile, 0);
   }
 
   public void handleCommitWithoutPsi(@NotNull Document document) {
@@ -740,10 +754,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     });
   }
 
-  private boolean isRelevant(@NotNull FileViewProvider viewProvider) {
-    VirtualFile virtualFile = viewProvider.getVirtualFile();
+  private boolean isRelevant(@NotNull VirtualFile virtualFile) {
     return !virtualFile.getFileType().isBinary() &&
-           viewProvider.getManager() == myPsiManager &&
            !myPsiManager.getProject().isDisposed();
   }
 
