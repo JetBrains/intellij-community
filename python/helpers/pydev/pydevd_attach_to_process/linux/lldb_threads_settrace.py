@@ -3,20 +3,34 @@
 def __lldb_init_module(debugger, internal_dict):
     # Command Initialization code goes here
     print('Startup LLDB in Python!')
+    import lldb
 
     try:
-        show_debug_info = 0
+        show_debug_info = 1
         is_debug = 0
         target = debugger.GetSelectedTarget()
         if target:
             process = target.GetProcess()
             if process:
-                for t in process:
+                for thread in process:
                     # Get the first frame
-                    frame = t.GetFrameAtIndex (t.GetNumFrames()-1)
-                    if frame:
-                        print('Will settrace in: %s' % (frame,))
-                        frame.EvaluateExpression("expr (int) SetSysTraceFunc(%s, %s);" % (
-                            show_debug_info, is_debug))
+                    print('Thread %s, suspended %s\n'%(thread, thread.IsStopped()))
+
+                    process.SetSelectedThread(thread)
+
+                    if not thread.IsStopped():
+                        error = process.Stop()
+                        print(error)
+
+                    if thread:
+                        frame = thread.GetSelectedFrame()
+                        if frame:
+                            print('Will settrace in: %s' % (frame,))
+                            res = frame.EvaluateExpression("(int) SetSysTraceFunc(%s, %s)" % (
+                                show_debug_info, is_debug), lldb.eDynamicCanRunTarget)
+                            error = res.GetError()
+                            if error:
+                                print(error)
+                    thread.Resume()
     except:
         import traceback;traceback.print_exc()
