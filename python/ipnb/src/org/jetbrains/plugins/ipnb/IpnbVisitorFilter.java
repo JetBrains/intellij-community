@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.coursecreator;
+package org.jetbrains.plugins.ipnb;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.jetbrains.python.edu.PyExecuteFileExtensionPoint;
+import com.intellij.psi.PsiFile;
+import com.jetbrains.python.inspections.PyDocstringInspection;
+import com.jetbrains.python.inspections.PyStatementEffectInspection;
+import com.jetbrains.python.inspections.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.coursecreator.actions.CCRunTestsAction;
 
-public class CCRunTests implements PyExecuteFileExtensionPoint {
-
-  @NotNull
-  public AnAction getRunAction() {
-    return new CCRunTestsAction();
+public class IpnbVisitorFilter implements PythonVisitorFilter {
+  @Override
+  public boolean isSupported(@NotNull final Class visitorClass, @NotNull final PsiFile file) {
+    if (visitorClass == PyDocstringInspection.class || visitorClass == PyStatementEffectInspection.class) {
+      return false;
+    }
+    return true;
   }
-
 }

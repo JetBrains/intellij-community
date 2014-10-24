@@ -122,7 +122,8 @@ public class IpnbParser {
         raw.outputs = outputRaws.toArray(new CellOutputRaw[outputRaws.size()]);
         raw.language = ((IpnbCodeCell)cell).getLanguage();
         raw.input = ((IpnbCodeCell)cell).getSource();
-        raw.prompt_number = ((IpnbCodeCell)cell).getPromptNumber();
+        final Integer promptNumber = ((IpnbCodeCell)cell).getPromptNumber();
+        raw.prompt_number = promptNumber != null && promptNumber >= 0 ? promptNumber : null;
       }
       else if (cell instanceof IpnbRawCell) {
         raw.cell_type = "raw";
@@ -181,7 +182,7 @@ public class IpnbParser {
       if (outputCell instanceof IpnbPngOutputCell) {
         raw.png = ((IpnbPngOutputCell)outputCell).getBase64String();
         raw.text = outputCell.getText();
-        //raw.output_type = "display_data";
+        raw.output_type = "display_data";
       }
       else if (outputCell instanceof IpnbSvgOutputCell) {
         raw.svg = ((IpnbSvgOutputCell)outputCell).getSvg();

@@ -22,11 +22,11 @@ public class CCAddTaskWindow extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCAddTaskWindow.class);
 
   public CCAddTaskWindow() {
-    super("Add task window","Add task window", null);
+    super("Add problem to solve","Add problem to solve", null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;

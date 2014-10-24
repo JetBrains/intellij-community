@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditorPanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
@@ -99,8 +100,12 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
             UIUtil.requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel());
           }
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) {
-            final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
+            final IpnbRunCellInplaceAction action = (IpnbRunCellInplaceAction)ActionManager.getInstance().getAction("IpnbRunCellInplaceAction");
             action.runCell(ipnbFilePanel, false);
+          }
+          else if (keyCode == KeyEvent.VK_ENTER && InputEvent.SHIFT_DOWN_MASK == e.getModifiersEx()) {
+            final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
+            action.runCell(ipnbFilePanel, true);
           }
         }
 

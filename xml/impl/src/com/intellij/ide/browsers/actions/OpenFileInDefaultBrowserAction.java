@@ -24,11 +24,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
     Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = BaseOpenInBrowserAction.doUpdate(e);
@@ -63,7 +64,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static WebBrowser findUsingBrowser() {
+  public static WebBrowser findUsingBrowser() {
     WebBrowserManager browserManager = WebBrowserManager.getInstance();
     DefaultBrowserPolicy defaultBrowserPolicy = browserManager.getDefaultBrowserPolicy();
     if (defaultBrowserPolicy == DefaultBrowserPolicy.FIRST || (defaultBrowserPolicy == DefaultBrowserPolicy.SYSTEM && !BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy())) {
@@ -86,7 +87,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     BaseOpenInBrowserAction.open(e, findUsingBrowser());
   }
 }

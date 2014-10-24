@@ -99,7 +99,6 @@ public class PyStringFormatInspection extends PyInspection {
         final Class[] SIMPLE_RHS_EXPRESSIONS = {
           PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class
         };
-        final Class[] LIST_LIKE_EXPRESSIONS = {PyListLiteralExpression.class, PyListCompExpression.class};
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(problemTarget);
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
 
@@ -193,7 +192,7 @@ public class PyStringFormatInspection extends PyInspection {
         else if (rightExpression instanceof PyDictLiteralExpression) {
           return inspectDict(rightExpression, problemTarget, false);
         }
-        else if (PyUtil.instanceOf(rightExpression, LIST_LIKE_EXPRESSIONS)) {
+        else if (PyUtil.instanceOf(rightExpression, PySequenceExpression.class, PyComprehensionElement.class)) {
           if (s != null) {
             checkTypeCompatible(problemTarget, builtinCache.getStrType(),
                                 PyTypeParser.getTypeByName(problemTarget, s));
@@ -267,7 +266,8 @@ public class PyStringFormatInspection extends PyInspection {
         if (addSubscriptions) {
           additionalExpressions = addSubscriptions(rightExpression.getContainingFile(),
                                                                                  rightExpression.getText());
-          pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)).getElement();
+          pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(
+            PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)).getElement();
         }
         else {
           additionalExpressions = new HashMap<PyExpression,PyExpression>();

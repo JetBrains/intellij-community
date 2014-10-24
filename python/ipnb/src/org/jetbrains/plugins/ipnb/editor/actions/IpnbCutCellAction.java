@@ -12,7 +12,7 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
 public class IpnbCutCellAction extends AnAction {
   public IpnbCutCellAction() {
-    super(AllIcons.General.Run);
+    super(AllIcons.Actions.Menu_cut);
   }
 
   @Override

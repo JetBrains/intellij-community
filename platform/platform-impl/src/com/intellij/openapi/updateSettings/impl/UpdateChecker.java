@@ -273,7 +273,7 @@ public final class UpdateChecker {
                                        Map<PluginId, PluginDownloader> downloaded,
                                        Collection<IdeaPluginDescriptor> incompatiblePlugins,
                                        boolean collectToUpdate, 
-                                       ProgressIndicator indicator) throws IOException {
+                                       @Nullable ProgressIndicator indicator) throws IOException {
     final String pluginId = downloader.getPluginId();
     final String pluginVersion = downloader.getPluginVersion();
     if (collectToUpdate && PluginManagerCore.getDisabledPlugins().contains(pluginId)) return;

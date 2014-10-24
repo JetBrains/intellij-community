@@ -365,6 +365,18 @@
       <expected>OK</expected>
     </test>
     <test>
+      <pattern>\pL\pM\pZ\pS\pN\pP\pC\PL\PM\PZ\PS\PN\PP\PC</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>\pA</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>\pl</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
       <pattern>a\p</pattern>
       <expected>ERR</expected>
     </test>

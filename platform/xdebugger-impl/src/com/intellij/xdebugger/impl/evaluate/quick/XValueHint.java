@@ -181,8 +181,10 @@ public class XValueHint extends AbstractValueHint {
               }
               showHint(component);
             }
-            else if (getType() == ValueHintType.MOUSE_CLICK_HINT && !myShown) {
-              showTree(result);
+            else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
+              if (!myShown) {
+                showTree(result);
+              }
             }
             else {
               if (getType() == ValueHintType.MOUSE_OVER_HINT) {
