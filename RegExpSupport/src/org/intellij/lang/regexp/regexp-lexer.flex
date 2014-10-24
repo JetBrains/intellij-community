@@ -2,10 +2,11 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.FlexLexer;
-import com.intellij.psi.tree.IElementType;
-import java.util.LinkedList;
-import java.util.EnumSet;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.tree.IElementType;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
 
 @SuppressWarnings("ALL")
 %%
@@ -20,7 +21,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 
 %{
     // This adds support for nested states. I'm no JFlex pro, so maybe this is overkill, but it works quite well.
-    private final LinkedList<Integer> states = new LinkedList();
+    private final ArrayList<Integer> states = new ArrayList();
 
     // This was an idea to use the regex implementation for XML schema regexes (which use a slightly different syntax)
     // as well, but is currently unfinished as it requires to tweak more places than just the lexer.
@@ -49,11 +50,12 @@ import com.intellij.psi.StringEscapesTokenTypes;
     }
 
     private void yypushstate(int state) {
-        states.addFirst(yystate());
+        states.add(yystate());
         yybegin(state);
     }
+
     private void yypopstate() {
-        final int state = states.removeFirst();
+        final int state = states.remove(states.size() - 1);
         yybegin(state);
     }
 
