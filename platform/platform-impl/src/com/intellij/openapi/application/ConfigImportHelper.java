@@ -17,11 +17,13 @@ package com.intellij.openapi.application;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PropertyResourceBundle;
@@ -65,10 +65,13 @@ public class ConfigImportHelper {
       AppUIUtil.updateWindowIcon(dialog);
       dialog.setVisible(true);
       if (dialog.isImportEnabled()) {
-        File instHome = dialog.getSelectedFile();
-        oldConfigDir = getOldConfigDir(instHome, settings);
-        if (!validateOldConfigDir(instHome, oldConfigDir, settings)) continue;
+        File installationHome = dialog.getSelectedFile();
+        oldConfigDir = getOldConfigDir(installationHome, settings);
+        if (!validateOldConfigDir(installationHome, oldConfigDir, settings)) {
+          continue;
+        }
 
+        assert oldConfigDir != null;
         doImport(newConfigPath, oldConfigDir);
         settings.importFinished(newConfigPath);
         System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
@@ -81,26 +84,16 @@ public class ConfigImportHelper {
 
   private static ConfigImportSettings getConfigImportSettings() {
     try {
-      Class customProviderClass =
-        Class.forName("com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings");
-      if (customProviderClass != null) {
-        if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
-          Constructor constructor = customProviderClass.getDeclaredConstructor();
-          if (constructor != null) {
-            return (ConfigImportSettings)constructor.newInstance();
-          }
-        }
+      @SuppressWarnings("unchecked")
+      Class<ConfigImportSettings> customProviderClass =
+        (Class<ConfigImportSettings>)Class.forName("com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings");
+      if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
+        return ReflectionUtil.newInstance(customProviderClass);
       }
     }
     catch (ClassNotFoundException ignored) {
     }
-    catch (NoSuchMethodException ignored) {
-    }
-    catch (InvocationTargetException ignored) {
-    }
-    catch (InstantiationException ignored) {
-    }
-    catch (IllegalAccessException ignored) {
+    catch (RuntimeException ignored) {
     }
     return new ConfigImportSettings();
   }
@@ -108,7 +101,7 @@ public class ConfigImportHelper {
   @Nullable
   private static File findOldConfigDir(String newConfigPath, @Nullable String customPathSelector) {
     final File configDir = new File(newConfigPath);
-    final File selectorDir = CONFIG_RELATED_PATH.length() == 0 ? configDir : configDir.getParentFile();
+    final File selectorDir = CONFIG_RELATED_PATH.isEmpty() ? configDir : configDir.getParentFile();
     final File parent = selectorDir.getParentFile();
     if (parent == null || !parent.exists()) return null;
     File maxFile = null;
@@ -119,7 +112,7 @@ public class ConfigImportHelper {
     final String customPrefix = customPathSelector != null ? getPrefixFromSelector(customPathSelector) : null;
     for (File file : parent.listFiles(new FilenameFilter() {
       @Override
-      public boolean accept(File file, String name) {
+      public boolean accept(@NotNull File file, @NotNull String name) {
         return StringUtil.startsWithIgnoreCase(name, prefix) ||
                customPrefix != null && StringUtil.startsWithIgnoreCase(name, customPrefix);
       }
@@ -139,9 +132,9 @@ public class ConfigImportHelper {
     return (SystemInfo.isMac ? "" : ".") + selector.replaceAll("\\d", "");
   }
 
-  public static void doImport(final String newConfigPath, final File oldConfigDir) {
+  private static void doImport(@NotNull String newConfigPath, @NotNull File oldConfigDir) {
     try {
-      xcopy(oldConfigDir, new File(newConfigPath));
+      copy(oldConfigDir, new File(newConfigPath));
     }
     catch (IOException e) {
       JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
@@ -150,14 +143,12 @@ public class ConfigImportHelper {
     }
   }
 
-  public static boolean validateOldConfigDir(final File instHome, final File oldConfigDir, ConfigImportSettings settings) {
+  private static boolean validateOldConfigDir(@Nullable File installationHome, @Nullable File oldConfigDir, @NotNull ConfigImportSettings settings) {
     if (oldConfigDir == null) {
-      final String message = !instHome.equals(oldConfigDir) ?
-                             ApplicationBundle.message("error.invalid.installation.home", instHome.getAbsolutePath(),
-                                                       settings.getProductName(ThreeState.YES)) :
-                             ApplicationBundle.message("error.invalid.config.folder", instHome.getAbsolutePath(),
-                                                       settings.getProductName(ThreeState.YES));
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message);
+      if (installationHome != null) {
+        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                      ApplicationBundle.message("error.invalid.installation.home", installationHome.getAbsolutePath(), settings.getProductName(ThreeState.YES)));
+      }
       return false;
     }
 
@@ -171,7 +162,7 @@ public class ConfigImportHelper {
     return true;
   }
 
-  public static void xcopy(File src, File dest) throws IOException {
+  private static void copy(@NotNull File src, @NotNull File dest) throws IOException {
     src = src.getCanonicalFile();
     dest = dest.getCanonicalFile();
     if (!src.isDirectory()) {
@@ -190,13 +181,13 @@ public class ConfigImportHelper {
     File plugins = new File(dest, PLUGINS_PATH);
     if (plugins.exists()) {
       final ArrayList<IdeaPluginDescriptorImpl> descriptors = new ArrayList<IdeaPluginDescriptorImpl>();
-      PluginManager.loadDescriptors(plugins.getPath(), descriptors, null, 0);
+      PluginManagerCore.loadDescriptors(plugins.getPath(), descriptors, null, 0);
       final ArrayList<String> oldPlugins = new ArrayList<String>();
       for (IdeaPluginDescriptorImpl descriptor : descriptors) {
         oldPlugins.add(descriptor.getPluginId().getIdString());
       }
       if (!oldPlugins.isEmpty()) {
-        PluginManager.savePluginsList(oldPlugins, false, new File(dest, PluginManager.INSTALLED_TXT));
+        PluginManagerCore.savePluginsList(oldPlugins, false, new File(dest, PluginManager.INSTALLED_TXT));
       }
       FileUtil.delete(plugins);
     }
@@ -208,8 +199,11 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  public static File getOldConfigDir(File oldInstallHome, ConfigImportSettings settings) {
-    if (oldInstallHome == null) return null;
+  public static File getOldConfigDir(@Nullable File oldInstallHome, ConfigImportSettings settings) {
+    if (oldInstallHome == null) {
+      return null;
+    }
+
     // check if it's already config dir
     if (new File(oldInstallHome, OPTIONS_XML).exists()) {
       return oldInstallHome;
@@ -299,8 +293,8 @@ public class ConfigImportHelper {
                                               @NotNull final String propertyName) {
     if (file.getName().endsWith(".properties")) {
       try {
-        InputStream fis = new BufferedInputStream(new FileInputStream(file));
         PropertyResourceBundle bundle;
+        InputStream fis = new BufferedInputStream(new FileInputStream(file));
         try {
           bundle = new PropertyResourceBundle(fis);
         }
@@ -374,7 +368,7 @@ public class ConfigImportHelper {
   @Nullable
   private static String getContent(File file) {
     try {
-      StringBuffer content = new StringBuffer();
+      StringBuilder content = new StringBuilder();
       BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
       try {
         do {
