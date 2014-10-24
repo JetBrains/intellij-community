@@ -33,7 +33,7 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
     painter.appendLine("Reset current task file with Ctrl + Shift + X").smaller().withBullet();
     painter.appendLine("Check task with Alt + Ctrl + Enter").smaller().withBullet();
     painter.appendLine("Get hint for the task window using Ctrl + 7").smaller().withBullet();
-    painter.appendLine("To see your progress open the 'Course Description' panel").smaller().withBullet();
+    painter.appendLine("To see your progress, open the 'Course Description' panel").smaller().withBullet();
                        painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
                          @Override
                          public Couple<Integer> fun(Integer width, Integer height) {
