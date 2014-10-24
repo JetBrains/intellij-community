@@ -482,6 +482,7 @@ public class AllIcons {
     public static final Icon Reset = IconLoader.getIcon("/general/reset.png"); // 16x16
     public static final Icon Run = IconLoader.getIcon("/general/run.png"); // 7x10
     public static final Icon RunWithCoverage = IconLoader.getIcon("/general/runWithCoverage.png"); // 16x16
+    public static final Icon SearchEverywhereGear = IconLoader.getIcon("/general/searchEverywhereGear.png"); // 12x12
     public static final Icon SecondaryGroup = IconLoader.getIcon("/general/secondaryGroup.png"); // 16x16
     public static final Icon SeparatorH = IconLoader.getIcon("/general/separatorH.png"); // 17x11
     public static final Icon Settings = IconLoader.getIcon("/general/settings.png"); // 16x16
