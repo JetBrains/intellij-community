@@ -67,25 +67,20 @@ public class LinearGraphParser {
           case DOTTED:
             Integer downNodeIndex = nodeIdToNodeIndex.get(pairEdge.first);
             assert downNodeIndex != null;
-            edge = new GraphEdge(graphNode.getNodeIndex(), downNodeIndex, type);
-            downEdges.putValue(edge.getUpNodeIndex(), edge);
-            upEdges.putValue(edge.getDownNodeIndex(), edge);
+            edge = GraphEdge.createNormalEdge(graphNode.getNodeIndex(), downNodeIndex, type);
             break;
 
           case NOT_LOAD_COMMIT:
           case DOTTED_ARROW_DOWN:
-            edge = new GraphEdge(graphNode.getNodeIndex(), null, pairEdge.first, type);
-            downEdges.putValue(edge.getUpNodeIndex(), edge);
-            break;
-
           case DOTTED_ARROW_UP:
-            edge = new GraphEdge(null, graphNode.getNodeIndex(), pairEdge.first, type);
-            upEdges.putValue(edge.getDownNodeIndex(), edge);
+            edge = GraphEdge.createEdgeWithAdditionInfo(graphNode.getNodeIndex(), pairEdge.first, type);
             break;
 
           default:
             throw new IllegalStateException("Unknown type: " + type);
         }
+        if (edge.getUpNodeIndex() != null) downEdges.putValue(edge.getUpNodeIndex(), edge);
+        if (edge.getDownNodeIndex() != null) upEdges.putValue(edge.getDownNodeIndex(), edge);
       }
     }
 

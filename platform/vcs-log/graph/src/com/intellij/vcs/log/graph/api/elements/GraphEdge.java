@@ -20,6 +20,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class GraphEdge implements GraphElement {
+  public static GraphEdge createNormalEdge(int nodeIndex1, int nodeIndex2, @NotNull GraphEdgeType type) {
+    assert type.isNormalEdge();
+    return new GraphEdge(
+      Math.min(nodeIndex1, nodeIndex2),
+      Math.max(nodeIndex1, nodeIndex2),
+      null,
+      type);
+  }
+
+  public static GraphEdge createEdgeWithAdditionInfo(int nodeIndex, @Nullable Integer additionInfo, @NotNull GraphEdgeType type) {
+    switch (type) {
+      case DOTTED_ARROW_UP:
+        return new GraphEdge(null, nodeIndex, additionInfo, type);
+      case NOT_LOAD_COMMIT:
+      case DOTTED_ARROW_DOWN:
+        return new GraphEdge(nodeIndex, null, additionInfo, type);
+
+      default: throw new AssertionError("Unexpected edge type: " + type);
+    }
+  }
+
   @Nullable
   private final Integer myUpNodeIndex;
   @Nullable
@@ -29,6 +50,7 @@ public final class GraphEdge implements GraphElement {
   @NotNull
   private final GraphEdgeType myType;
 
+  @Deprecated
   public GraphEdge(@Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex, @NotNull GraphEdgeType type) {
     this(upNodeIndex, downNodeIndex, null, type);
   }

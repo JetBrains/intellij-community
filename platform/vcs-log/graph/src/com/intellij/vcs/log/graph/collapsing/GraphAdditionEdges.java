@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.vcs.log.graph.api.elements.GraphEdgeType.*;
-
 
 public class GraphAdditionEdges {
   public static GraphAdditionEdges newInstance(@NotNull Function<Integer, Integer> getNodeIndexById,
@@ -98,23 +96,19 @@ public class GraphAdditionEdges {
     int retrievedId = retrievedNodeIndex(compactEdge);
     switch (edgeType) {
       case DOTTED:
+      case USUAL:
         int anotherNodeIndex = myGetNodeIndexById.fun(retrievedId);
         if (anotherNodeIndex == -1)
           return null; // todo edge to hide node
-        if (nodeIndex < anotherNodeIndex)
-          return new GraphEdge(nodeIndex, anotherNodeIndex, DOTTED);
-        if (nodeIndex > anotherNodeIndex)
-          return new GraphEdge(anotherNodeIndex, nodeIndex, DOTTED);
-        return null;
+        return GraphEdge.createNormalEdge(nodeIndex, anotherNodeIndex, edgeType);
 
       case DOTTED_ARROW_DOWN:
-        return new GraphEdge(nodeIndex, null, retrievedId, DOTTED_ARROW_DOWN);
-
       case DOTTED_ARROW_UP:
-        return new GraphEdge(null, nodeIndex, retrievedId, DOTTED_ARROW_UP);
+      case NOT_LOAD_COMMIT:
+        return GraphEdge.createEdgeWithAdditionInfo(nodeIndex, retrievedId, edgeType);
 
       default:
-        return null;
+        throw new IllegalStateException("Unexpected edgeType: " + edgeType);
     }
   }
 
