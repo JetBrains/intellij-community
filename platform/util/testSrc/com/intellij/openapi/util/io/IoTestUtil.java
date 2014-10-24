@@ -18,6 +18,8 @@ package com.intellij.openapi.util.io;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -229,6 +231,34 @@ public class IoTestUtil {
         stream.write(data[i + 1].getBytes("UTF-8"));
         stream.closeEntry();
       }
+    }
+    finally {
+      stream.close();
+    }
+    return jarFile;
+  }
+
+  @NotNull
+  public static File createTestJar(@NotNull File jarFile, @NotNull final File root) throws IOException {
+    final ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile));
+    try {
+      FileUtil.visitFiles(root, new Processor<File>() {
+        @Override
+        public boolean process(File file) {
+          if (file.isFile()) {
+            String path = FileUtil.toSystemIndependentName(ObjectUtils.assertNotNull(FileUtil.getRelativePath(root, file)));
+            try {
+              stream.putNextEntry(new ZipEntry(path));
+              stream.write(FileUtil.loadFileBytes(file));
+              stream.closeEntry();
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+          return true;
+        }
+      });
     }
     finally {
       stream.close();
