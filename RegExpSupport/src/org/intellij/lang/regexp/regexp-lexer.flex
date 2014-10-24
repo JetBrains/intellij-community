@@ -27,6 +27,7 @@ import java.util.EnumSet;
     // as well, but is currently unfinished as it requires to tweak more places than just the lexer.
     private boolean xmlSchemaMode;
 
+    private int capturingGroupCount = 0;
 
     private boolean allowDanglingMetacharacters;
     private boolean allowNestedCharacterClasses;
@@ -146,15 +147,21 @@ HEX_CHAR=[0-9a-fA-F]
     subexpressions exist at that point in the regular expression, otherwise the
     parser will drop digits until the number is smaller or equal to the existing
     number of groups or it is one digit."
-
-    So, for 100% compatibility, backrefs > 9 should be resolved by the parser, but
-    I'm not sure if it's worth the effort - at least not atm.
 */
 {ESCAPE} [0-7]{3}             { if (allowOctalNoLeadingZero) return RegExpTT.OCT_CHAR;
-                                return yystate() != CLASS2 ? RegExpTT.BACKREF : RegExpTT.ESC_CHARACTER;
+                                if (yystate() == CLASS2) return RegExpTT.ESC_CHARACTER;
+                                while (yylength() > 2 && Integer.parseInt(yytext().toString().substring(1)) > capturingGroupCount) {
+                                  yypushback(1);
+                                }
+                                return RegExpTT.BACKREF;
                               }
 
-{ESCAPE} {DIGITS}             { return yystate() != CLASS2 ? RegExpTT.BACKREF : RegExpTT.ESC_CHARACTER; }
+{ESCAPE} {DIGITS}             { if (yystate() == CLASS2) return RegExpTT.ESC_CHARACTER;
+                                while (yylength() > 2 && Integer.parseInt(yytext().toString().substring(1)) > capturingGroupCount) {
+                                  yypushback(1);
+                                }
+                                return RegExpTT.BACKREF;
+                              }
 
 {ESCAPE}  "-"                 { return RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {META}              { return RegExpTT.ESC_CHARACTER; }
@@ -258,7 +265,7 @@ HEX_CHAR=[0-9a-fA-F]
 
 
 <YYINITIAL> {
-  {LPAREN}      { return RegExpTT.GROUP_BEGIN; }
+  {LPAREN}      { capturingGroupCount++; return RegExpTT.GROUP_BEGIN; }
   {RPAREN}      { return RegExpTT.GROUP_END;   }
 
   "|"           { return RegExpTT.UNION;  }
