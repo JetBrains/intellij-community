@@ -192,10 +192,11 @@ public class StudyEditor implements TextEditor {
   }
 
   private void initializeButtons(@NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {
-    myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
-    myPrevTaskButton = addButton(taskActionsPanel, "Previous Task", StudyIcons.Prev);
-    myNextTaskButton = addButton(taskActionsPanel, "Next Task", AllIcons.Actions.Forward);
-    myRefreshButton = addButton(taskActionsPanel, "Start task again", AllIcons.Actions.Refresh);
+    myCheckButton = addButton(taskActionsPanel, "Check task (Ctrl + Alt + Enter)", StudyIcons.Resolve);
+    myPrevTaskButton = addButton(taskActionsPanel, "Previous task (Ctrl + &lt;)", StudyIcons.Prev);
+    myNextTaskButton = addButton(taskActionsPanel, "Next task (Ctrl + >)", AllIcons.Actions.Forward);
+    myRefreshButton = addButton(taskActionsPanel, "Reset task file (Ctrl + Shift + X)", AllIcons.Actions.Refresh);
+    JButton myShowHintButton = addButton(taskActionsPanel, "Show hint for task window (Ctrl + 7)", StudyIcons.ShowHint);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
       JButton runButton = addButton(taskActionsPanel, "Run", AllIcons.General.Run);
       runButton.addActionListener(new ActionListener() {
@@ -242,9 +243,14 @@ public class StudyEditor implements TextEditor {
     myRefreshButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        StudyRefreshTaskFileAction studyRefreshTaskAction =
-          (StudyRefreshTaskFileAction)ActionManager.getInstance().getAction("RefreshTaskAction");
-        studyRefreshTaskAction.refresh(myProject);
+        StudyRefreshTaskFileAction.refresh(myProject);
+      }
+    });
+
+    myShowHintButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        StudyShowHintAction.showHint(myProject);
       }
     });
   }

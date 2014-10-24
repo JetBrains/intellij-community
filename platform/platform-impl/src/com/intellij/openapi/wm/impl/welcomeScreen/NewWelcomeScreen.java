@@ -28,10 +28,12 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -145,6 +147,10 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
 
   @Override
   public void dispose() {
+  }
+  
+  public static boolean isNewWelcomeScreen(@NotNull AnActionEvent e) {
+    return e.getPlace() == ActionPlaces.WELCOME_SCREEN && Registry.is("ide.new.welcome.screen");
   }
 
   private static class WelcomeScreenGroup extends DefaultActionGroup {

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.NettyUtil;
 import org.jetbrains.jsonProtocol.Request;
-import org.jetbrains.rpc.MessageHandler;
+import org.jetbrains.rpc.MessageProcessor;
 import org.jetbrains.rpc.MessageWriter;
 
 public class StandaloneVmHelper extends MessageWriter {
@@ -25,17 +25,19 @@ public class StandaloneVmHelper extends MessageWriter {
     return write(((Object)content));
   }
 
-  public boolean write(@NotNull Object content) {
+  @Nullable
+  public Channel getChannelIfActive() {
     Channel currentChannel = channel;
-    if (currentChannel == null || !currentChannel.isActive()) {
-      return false;
-    }
-    currentChannel.writeAndFlush(content);
-    return true;
+    return currentChannel == null || !currentChannel.isActive() ? null : currentChannel;
+  }
+
+  public boolean write(@NotNull Object content) {
+    Channel channel = getChannelIfActive();
+    return channel != null && !channel.writeAndFlush(content).isCancelled();
   }
 
   public interface VmEx extends Vm {
-    MessageHandler<?, ?, ?, ?> getCommandProcessor();
+    MessageProcessor getCommandProcessor();
 
     @Nullable
     Request createDisconnectRequest();

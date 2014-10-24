@@ -42,18 +42,21 @@ public class StringWriter extends Writer {
     builder.append(str, off, off + length);
   }
 
+  @NotNull
   @Override
   public StringWriter append(CharSequence charSequence) {
     builder.append(charSequence);
     return this;
   }
 
+  @NotNull
   @Override
   public StringWriter append(CharSequence charSequence, int start, int end) {
     builder.append(charSequence, start, end);
     return this;
   }
 
+  @NotNull
   @Override
   public StringWriter append(char c) {
     write(c);

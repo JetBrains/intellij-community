@@ -34,6 +34,8 @@ public class TestClassSimpleBytecodeMapping {
       Integer.parseInt(a);
     } catch (Exception e) {
       System.out.println(e);
+    } finally {
+      System.out.println("Finally");
     }
   }
 

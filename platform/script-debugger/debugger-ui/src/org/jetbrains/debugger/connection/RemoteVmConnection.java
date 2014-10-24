@@ -2,15 +2,22 @@ package org.jetbrains.debugger.connection;
 
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.socketConnection.ConnectionStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.Vm;
 
+import javax.swing.*;
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -86,5 +93,47 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
       callback = super.detachAndClose();
     }
     return callback;
+  }
+
+  @NotNull
+  public static <T> AsyncResult<T> chooseDebuggee(@NotNull final Collection<T> targets, final int selectedIndex, @NotNull final Function<T, String> itemToString) {
+    if (targets.size() == 1) {
+      return AsyncResult.done(ContainerUtil.getFirstItem(targets));
+    }
+
+    final AsyncResult<T> result = new AsyncResult<T>();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final JBList list = new JBList(targets);
+        list.setCellRenderer(new ColoredListCellRenderer() {
+          @Override
+          protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+            //noinspection unchecked
+            append(itemToString.fun((T)value));
+          }
+        });
+        list.setSelectedIndex(selectedIndex);
+
+        JBPopupFactory.getInstance().
+          createListPopupBuilder(list).
+          setTitle("Choose Page to debug").
+          setItemChoosenCallback(new Runnable() {
+            @Override
+            public void run() {
+              @SuppressWarnings("unchecked")
+              T value = (T)list.getSelectedValue();
+              if (value == null) {
+                result.setRejected();
+              }
+              else {
+                result.setDone(value);
+              }
+            }
+          }).
+          createPopup().showInFocusCenter();
+      }
+    });
+    return result;
   }
 }

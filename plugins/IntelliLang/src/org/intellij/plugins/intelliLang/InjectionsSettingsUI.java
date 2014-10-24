@@ -21,7 +21,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -34,17 +33,14 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.ui.*;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
@@ -78,7 +74,7 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract implements Configurable.NoMargin, Configurable.NoScroll {
+public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
 
   private final Project myProject;
   private final CfgInfo[] myInfos;
@@ -108,9 +104,6 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myInjectionsTable);
     createActions(decorator);
-    if (ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")) {
-      decorator.setPanelBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 0, 1, 0));
-    }
 
     //myRoot.add(new TitledSeparator("Languages injection places"), BorderLayout.NORTH);
     myRoot.add(decorator.createPanel(), BorderLayout.CENTER);

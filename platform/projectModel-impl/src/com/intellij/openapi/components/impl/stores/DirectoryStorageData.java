@@ -48,7 +48,7 @@ public class DirectoryStorageData extends StorageDataBase {
     this(new THashMap<String, StateMap>());
   }
 
-  DirectoryStorageData(@NotNull Map<String, StateMap> states) {
+  private DirectoryStorageData(@NotNull Map<String, StateMap> states) {
     myStates = states;
   }
 

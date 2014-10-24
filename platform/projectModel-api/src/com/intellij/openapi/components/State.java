@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.util.Getter;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -34,4 +36,11 @@ public @interface State {
   Class<? extends StateStorageChooser> storageChooser() default StateStorageChooser.class;
 
   boolean reloadable() default true;
+
+  String additionalExportFile() default "";
+
+  Class<? extends NameGetter> presentableName() default NameGetter.class;
+
+  abstract class NameGetter implements Getter<String> {
+  }
 }

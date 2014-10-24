@@ -1,0 +1,31 @@
+package pkg;
+
+public class TestTryCatchFinally {
+   public void test1(String var1) {
+      try {
+         System.out.println("sout1");
+      } catch (Exception var9) {
+         try {
+            System.out.println("sout2");
+         } catch (Exception var8) {
+            ;
+         }
+      } finally {
+         System.out.println("finally");
+      }
+
+   }
+
+   public int test(String var1) {
+      try {
+         int var2 = Integer.parseInt(var1);
+         return var2;
+      } catch (Exception var6) {
+         System.out.println("Error" + var6);
+      } finally {
+         System.out.println("Finally");
+      }
+
+      return -1;
+   }
+}

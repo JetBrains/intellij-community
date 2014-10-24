@@ -140,7 +140,7 @@ public class PositionManagerImpl implements PositionManager {
       lineNumber = -1;
     }
 
-    if (psiFile instanceof PsiCompiledElement && lineNumber > -1) {
+    if (lineNumber > -1) {
       VirtualFile file = psiFile.getVirtualFile();
       if (file != null) {
         int[] data = file.getUserData(LINE_NUMBERS_MAPPING_KEY);

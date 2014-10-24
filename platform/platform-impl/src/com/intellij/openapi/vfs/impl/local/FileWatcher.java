@@ -66,7 +66,7 @@ public class FileWatcher {
     public final List<String> dirtyPathsRecursive = newArrayList();
     public final List<String> dirtyDirectories = newArrayList();
 
-    private static DirtyPaths EMPTY = new DirtyPaths();
+    private static final DirtyPaths EMPTY = new DirtyPaths();
 
     private boolean isEmpty() {
       return dirtyPaths.isEmpty() && dirtyPathsRecursive.isEmpty() && dirtyDirectories.isEmpty();
@@ -203,6 +203,7 @@ public class FileWatcher {
 
     if (myFailureShownToTheUser.compareAndSet(false, true)) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           String title = ApplicationBundle.message("watcher.slow.sync");
           Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));

@@ -27,6 +27,8 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 public class ReplaceIfWithConditionalIntention extends Intention {
 
   @Override
@@ -67,7 +69,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
         return;
       }
       final String conditional = getConditionalText(condition, thenRhs, elseRhs, thenAssign.getType());
-      PsiReplacementUtil.replaceStatement(ifStatement, lhsText + operator + conditional + ';');
+      replaceIfStatement(ifStatement, lhsText + operator + conditional + ';');
     }
     else if (ReplaceIfWithConditionalPredicate.isReplaceableReturn(ifStatement)) {
       final PsiExpression condition = ifStatement.getCondition();
@@ -92,7 +94,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       }
       final PsiType returnType = method.getReturnType();
       final String conditional = getConditionalText(condition, thenReturnValue, elseReturnValue, returnType);
-      PsiReplacementUtil.replaceStatement(ifStatement, "return " + conditional + ';');
+      replaceIfStatement(ifStatement, "return " + conditional + ';');
     }
     else if (ReplaceIfWithConditionalPredicate.isReplaceableMethodCall(ifStatement)) {
       final PsiExpression condition = ifStatement.getCondition();
@@ -135,7 +137,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
         }
       }
       replacementText.append(");");
-      PsiReplacementUtil.replaceStatement(ifStatement, replacementText.toString());
+      replaceIfStatement(ifStatement, replacementText.toString());
     }
     else if (ReplaceIfWithConditionalPredicate.isReplaceableImplicitReturn(ifStatement)) {
       final PsiExpression condition = ifStatement.getCondition();
@@ -165,9 +167,18 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       if (conditional == null) {
         return;
       }
-      PsiReplacementUtil.replaceStatement(ifStatement, "return " + conditional + ';');
+      replaceIfStatement(ifStatement, "return " + conditional + ';');
       elseBranch.delete();
     }
+  }
+
+  private static void replaceIfStatement(PsiIfStatement ifStatement, String text) {
+    PsiElement parent = ifStatement.getParent();
+    final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(ifStatement, PsiComment.class);
+    for (PsiComment comment : comments) {
+      parent.addBefore(comment, ifStatement);
+    }
+    PsiReplacementUtil.replaceStatement(ifStatement, text);
   }
 
   private static String getConditionalText(PsiExpression condition,

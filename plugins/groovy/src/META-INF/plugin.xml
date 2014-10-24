@@ -598,6 +598,9 @@
     <copyPastePreProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyReferenceCopyPasteProcessor"/>
 
+    <regExpLanguageHost forClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl"
+                        implementationClass="org.jetbrains.plugins.groovy.regexp.GroovyRegExpHost"/>
+
     <localInspection shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
                      groupPath="Groovy"
                      groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"

@@ -75,7 +75,7 @@ public class ExtensionPointLocator {
     }
 
     final Project project = psiClass.getProject();
-    final Collection<VirtualFile> candidates = DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project);
+    final Collection<VirtualFile> candidates = DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScope.allScope(project));
     GlobalSearchScope scope = GlobalSearchScope.filesScope(project, candidates);
     PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
       @Override

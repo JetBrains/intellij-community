@@ -7,8 +7,7 @@ import java.util.LinkedList;
 import java.util.EnumSet;
 import com.intellij.psi.StringEscapesTokenTypes;
 
-// IDEADEV-11055
-@SuppressWarnings({ "ALL", "SameParameterValue", "WeakerAccess", "SameReturnValue", "RedundantThrows", "UnusedDeclaration", "UnusedDeclaration" })
+@SuppressWarnings("ALL")
 %%
 
 %class _RegExLexer
@@ -33,6 +32,8 @@ import com.intellij.psi.StringEscapesTokenTypes;
     private boolean allowOctalNoLeadingZero;
     private boolean allowHexDigitClass;
     private boolean allowEmptyCharacterClass;
+    private boolean allowHorizontalWhitespaceClass;
+    private boolean allowCategoryShorthand;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -42,7 +43,9 @@ import com.intellij.psi.StringEscapesTokenTypes;
       this.allowOctalNoLeadingZero = capabilities.contains(RegExpCapability.OCTAL_NO_LEADING_ZERO);
       this.commentMode = capabilities.contains(RegExpCapability.COMMENT_MODE);
       this.allowHexDigitClass = capabilities.contains(RegExpCapability.ALLOW_HEX_DIGIT_CLASS);
+      this.allowHorizontalWhitespaceClass = capabilities.contains(RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS);
       this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
+      this.allowCategoryShorthand = capabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND);
     }
 
     private void yypushstate(int state) {
@@ -99,7 +102,7 @@ META={ESCAPE} | {DOT} |
 CONTROL="t" | "n" | "r" | "f" | "a" | "e"
 BOUNDARY="b" | "B" | "A" | "z" | "Z" | "G"
 
-CLASS="w" | "W" | "s" | "S" | "d" | "D" | "X" | "C"
+CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X" | "C"
 XML_CLASS="c" | "C" | "i" | "I"
 PROP="p" | "P"
 
@@ -118,12 +121,12 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE} {ESCAPE}    { return RegExpTT.ESC_CHARACTER; }
 
 /* hex escapes */
-{ESCAPE} "x" {HEX_CHAR}{2}   { return RegExpTT.HEX_CHAR; }
-{ESCAPE} "x" {ANY}{0,2}      { return RegExpTT.BAD_HEX_VALUE; }
+{ESCAPE} "x" ({HEX_CHAR}{2}|{LBRACE}{HEX_CHAR}{1,6}{RBRACE})  { return RegExpTT.HEX_CHAR; }
+{ESCAPE} "x" ({HEX_CHAR}?|{LBRACE}{HEX_CHAR}*{RBRACE}?)   { return RegExpTT.BAD_HEX_VALUE; }
 
 /* unicode escapes */
 {ESCAPE} "u" {HEX_CHAR}{4}   { return RegExpTT.UNICODE_CHAR; }
-{ESCAPE} "u" {ANY}{0,4}      { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+{ESCAPE} "u" {HEX_CHAR}{0,3} { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
 
 /* octal escapes */
 {ESCAPE} "0" [0-7]{1,3}      { return RegExpTT.OCT_CHAR; }
@@ -159,7 +162,7 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  {BOUNDARY}          { return yystate() != CLASS2 ? RegExpTT.BOUNDARY : RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CONTROL}           { return RegExpTT.ESC_CTRL_CHARACTER; }
 
-{ESCAPE} [hH]                 { return (allowHexDigitClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
+{ESCAPE} [hH]                 { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
 {ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 
@@ -175,6 +178,7 @@ HEX_CHAR=[0-9a-fA-F]
 
 <PROP> {
   {LBRACE}                    { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE; }
+  "L"|"M"|"Z"|"S"|"N"|"P"|"C" { yypopstate(); if (allowCategoryShorthand) return RegExpTT.CATEGORY_SHORT_HAND; else yypushback(1); }
   {ANY}                       { yypopstate(); yypushback(1); }
 }
 

@@ -447,6 +447,10 @@ public class RegExpParser implements PsiParser {
   private static void parseProperty(PsiBuilder builder) {
     checkMatches(builder, RegExpTT.PROPERTY, "'\\p' expected");
 
+    if (builder.getTokenType() == RegExpTT.CATEGORY_SHORT_HAND) {
+      builder.advanceLexer();
+      return;
+    }
     checkMatches(builder, RegExpTT.LBRACE, "Character category expected");
     if (builder.getTokenType() == RegExpTT.NAME) {
       builder.advanceLexer();

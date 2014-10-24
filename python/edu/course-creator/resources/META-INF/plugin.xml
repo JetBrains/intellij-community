@@ -23,8 +23,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <directoryProjectGenerator implementation="org.jetbrains.plugins.coursecreator.CCProjectGenerator"/>
     <projectService serviceImplementation="org.jetbrains.plugins.coursecreator.CCProjectService"/>
-    <codeInsight.lineMarkerProvider language="Python"
-                                    implementationClass="org.jetbrains.plugins.coursecreator.highlighting.CCTaskLineMarkerProvider"/>
     <treeStructureProvider implementation="org.jetbrains.plugins.coursecreator.projectView.CCTreeStructureProvider"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="org.jetbrains.plugins.coursecreator.CCRunTestsLineMarker"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.coursecreator.CCAnswerFileTypeFactory" />
@@ -54,6 +52,12 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
     <action id="AddTaskWindow" class="org.jetbrains.plugins.coursecreator.actions.CCAddTaskWindow">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
+    </action>
+    <action id="ShowTaskWindowDetails" class="org.jetbrains.plugins.coursecreator.actions.CCShowTaskWindowDetails">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
+    </action>
+    <action id="DeleteTaskWindow" class="org.jetbrains.plugins.coursecreator.actions.CCDeleteTaskWindow">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
     </action>
     <action id="ShowPreview" class="org.jetbrains.plugins.coursecreator.actions.CCShowPreview">

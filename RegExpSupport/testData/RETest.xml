@@ -365,6 +365,18 @@
       <expected>OK</expected>
     </test>
     <test>
+      <pattern>\pL\pM\pZ\pS\pN\pP\pC\PL\PM\PZ\PS\PN\PP\PC</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>\pA</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>\pl</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
       <pattern>a\p</pattern>
       <expected>ERR</expected>
     </test>
@@ -572,6 +584,14 @@
       <expected>OK</expected>
     </test>
     <test>
+      <pattern>\x{0}</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>\x{2011F}</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
       <pattern>[\x4a-\x4b]</pattern>
       <expected>OK</expected>
     </test>
@@ -719,7 +739,7 @@
       <expected>ERR</expected>
     </test>
     <test verify="false">
-      <pattern><![CDATA[([ab]+=<warning descr="Backreference is nested into the capturing group it refers to">\1</warning>)]]></pattern>
+      <pattern><![CDATA[([ab]+=<warning descr="Back reference is nested into the capturing group it refers to">\1</warning>)]]></pattern>
       <expected>OK</expected>
     </test>
   </backrefs>
@@ -769,6 +789,18 @@
     </test>
     <test>
       <pattern>abc\x1</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>abc\x{</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>abc\x{}</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>abc\x{0</pattern>
       <expected>ERR</expected>
     </test>
     <test>
@@ -998,6 +1030,13 @@
   <bug id="IDEA-52291">
     <test>
       <pattern>(^|\.)\*(?=(\.|$))</pattern>
+      <expected>OK</expected>
+    </test>
+  </bug>
+
+  <bug id="IDEA-131542">
+    <test>
+      <pattern>\h \H \v \V</pattern>
       <expected>OK</expected>
     </test>
   </bug>

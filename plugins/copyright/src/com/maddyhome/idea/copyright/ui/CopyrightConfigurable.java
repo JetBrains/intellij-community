@@ -16,14 +16,26 @@
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
+import com.intellij.ui.*;
+import com.intellij.util.DocumentUtil;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
@@ -33,8 +45,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -46,16 +61,24 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   private boolean myModified;
 
   private String myDisplayName;
-  private JEditorPane myCopyrightPane;
+  private EditorTextField myEditor;
   private JButton myValidateButton;
   private JTextField myKeywordTf;
   private JTextField myAllowReplaceTextField;
+  private JPanel myEditorPanel;
 
   public CopyrightConfigurable(Project project, CopyrightProfile copyrightProfile, Runnable updater) {
     super(true, updater);
     myProject = project;
     myCopyrightProfile = copyrightProfile;
     myDisplayName = myCopyrightProfile.getName();
+    final Set<EditorCustomization> features = new HashSet<EditorCustomization>();
+    features.add(SpellCheckingEditorCustomization.ENABLED);
+    features.add(SoftWrapsEditorCustomization.ENABLED);
+    features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
+    EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
+    myEditor = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
+    myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 
   public void setDisplayName(String s) {
@@ -71,11 +94,10 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   }
 
   public JComponent createOptionsPanel() {
-    myCopyrightPane.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
     myValidateButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         try {
-          VelocityHelper.verify(myCopyrightPane.getText());
+          VelocityHelper.verify(myEditor.getDocument().getText());
           Messages.showInfoMessage(myProject, "Velocity template is valid.", "Validation");
         }
         catch (Exception e1) {
@@ -99,14 +121,14 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
 
   public boolean isModified() {
     return myModified ||
-           !Comparing.strEqual(EntityUtil.encode(myCopyrightPane.getText().trim()), myCopyrightProfile.getNotice()) ||
+           !Comparing.strEqual(EntityUtil.encode(myEditor.getDocument().getText().trim()), myCopyrightProfile.getNotice()) ||
            !Comparing.strEqual(myKeywordTf.getText().trim(), myCopyrightProfile.getKeyword()) ||
            !Comparing.strEqual(myAllowReplaceTextField.getText().trim(), myCopyrightProfile.getAllowReplaceKeyword()) ||
            !Comparing.strEqual(myDisplayName, myCopyrightProfile.getName());
   }
 
   public void apply() throws ConfigurationException {
-    myCopyrightProfile.setNotice(EntityUtil.encode(myCopyrightPane.getText().trim()));
+    myCopyrightProfile.setNotice(EntityUtil.encode(myEditor.getDocument().getText().trim()));
     final String keyword = myKeywordTf.getText().trim();
     try {
       if (!StringUtil.isEmptyOrSpaces(keyword)) {
@@ -125,7 +147,17 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
 
   public void reset() {
     myDisplayName = myCopyrightProfile.getName();
-    myCopyrightPane.setText(EntityUtil.decode(myCopyrightProfile.getNotice()));
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
+          @Override
+          public void run() {
+            myEditor.getDocument().setText(EntityUtil.decode(myCopyrightProfile.getNotice()));
+          }
+        });
+      }
+    });
     myKeywordTf.setText(myCopyrightProfile.getKeyword());
     myAllowReplaceTextField.setText(myCopyrightProfile.getAllowReplaceKeyword());
   }

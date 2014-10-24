@@ -1,58 +1,42 @@
-// Copyright (c) 2011 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 package org.jetbrains.protocolReader;
+
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-public class ReaderGenerator {
-  protected static void mainImpl(String[] args, GenerateConfiguration configuration) throws IOException {
+public final class ReaderGenerator {
+  public static void generate(String[] args, @NotNull GenerateConfiguration configuration) throws IOException {
     FileUpdater fileUpdater = new FileUpdater(FileSystems.getDefault().getPath(parseArgs(args).outputDirectory(),
-                                                                               configuration.getPackageName().replace('.',
-                                                                                                                      File.separatorChar),
-                                                                               configuration.getClassName() + ".java"));
-    generateImpl(configuration, fileUpdater.builder);
+                                                                               configuration.packageName.replace('.', File.separatorChar),
+                                                                               configuration.className + ".java"));
+    generate(configuration, fileUpdater.builder);
     fileUpdater.update();
   }
 
-  protected static class GenerateConfiguration {
+  public static class GenerateConfiguration<ROOT> {
     private final String packageName;
     private final String className;
-    private final DynamicReader<?> parser;
-    private final Collection<GeneratedCodeMap> basePackagesMap;
+    final Collection<Map<Class<?>, String>> basePackagesMap;
 
-    public GenerateConfiguration(String packageName, String className, DynamicReader<?> parser) {
-      this(packageName, className, parser, Collections.<GeneratedCodeMap>emptyList());
+    final LinkedHashMap<Class<?>, TypeHandler<?>> typeToTypeHandler;
+    final ReaderRoot<ROOT> root;
+
+    public GenerateConfiguration(String packageName, String className, Class<ROOT> readerRootClass, Class<?>[] protocolInterfaces) {
+      this(packageName, className, readerRootClass, protocolInterfaces, null);
     }
 
-    public GenerateConfiguration(String packageName, String className, DynamicReader<?> parser, Collection<GeneratedCodeMap> basePackagesMap) {
+    public GenerateConfiguration(String packageName, String className, Class<ROOT> readerRootClass, Class<?>[] protocolInterfaces, @Nullable Map<Class<?>, String> basePackagesMap) {
       this.packageName = packageName;
       this.className = className;
-      this.parser = parser;
-      this.basePackagesMap = basePackagesMap;
-    }
+      this.basePackagesMap = basePackagesMap == null ? Collections.emptyList() : Collections.singletonList(basePackagesMap);
 
-    public String getPackageName() {
-      return packageName;
-    }
-
-    public String getClassName() {
-      return className;
-    }
-
-    public DynamicReader<?> getParser() {
-      return parser;
-    }
-
-    public Collection<GeneratedCodeMap> getBasePackagesMap() {
-      return basePackagesMap;
+      typeToTypeHandler = new InterfaceReader(protocolInterfaces).go();
+      root = new ReaderRoot<>(readerRootClass, typeToTypeHandler);
     }
   }
 
@@ -76,17 +60,19 @@ public class ReaderGenerator {
       if (equalsPos == -1) {
         key = arg.substring(2).trim();
         value = null;
-      } else {
+      }
+      else {
         key = arg.substring(2, equalsPos).trim();
         value = arg.substring(equalsPos + 1).trim();
       }
-      ParamListener paramListener = paramMap.get(key);
+      StringParam paramListener = paramMap.get(key);
       if (paramListener == null) {
         throw new IllegalArgumentException("Unrecognized param name: " + key);
       }
       try {
         paramListener.setValue(value);
-      } catch (IllegalArgumentException e) {
+      }
+      catch (IllegalArgumentException e) {
         throw new IllegalArgumentException("Failed to set value of " + key, e);
       }
     }
@@ -96,22 +82,12 @@ public class ReaderGenerator {
       }
     }
 
-    return new Params() {
-      @Override
-      public String outputDirectory() {
-        return outputDirParam.getValue();
-      }
-    };
+    return outputDirParam::getValue;
   }
 
-  private interface ParamListener {
-    void setValue(String value);
-  }
-
-  private static class StringParam implements ParamListener {
+  private static class StringParam {
     private String value;
 
-    @Override
     public void setValue(String value) {
       if (value == null) {
         throw new IllegalArgumentException("Argument with value expected");
@@ -127,13 +103,58 @@ public class ReaderGenerator {
     }
   }
 
-  protected static GeneratedCodeMap buildParserMap(GenerateConfiguration configuration) {
-    return generateImpl(configuration, new StringBuilder());
+  public static Map<Class<?>, String> buildParserMap(GenerateConfiguration<?> configuration) {
+    FileScope fileScope = generate(configuration, new StringBuilder());
+
+    Map<Class<?>, String> typeToImplClassName = new THashMap<>();
+    for (TypeHandler<?> typeHandler : configuration.typeToTypeHandler.values()) {
+      typeToImplClassName.put(typeHandler.getTypeClass(), configuration.packageName + "." + configuration.className + "." + fileScope.getTypeImplShortName(typeHandler));
+    }
+    return typeToImplClassName;
   }
 
-  private static GeneratedCodeMap generateImpl(GenerateConfiguration configuration, StringBuilder stringBuilder) {
-    return configuration.getParser().generateStaticReader(stringBuilder,
-                                                          configuration.getPackageName(), configuration.getClassName(),
-                                                          configuration.getBasePackagesMap());
+  @NotNull
+  private static FileScope generate(GenerateConfiguration<?> configuration, StringBuilder stringBuilder) {
+    GlobalScope globalScope = new GlobalScope(configuration.typeToTypeHandler.values(), configuration.basePackagesMap);
+    FileScope fileScope = globalScope.newFileScope(stringBuilder);
+    TextOutput out = fileScope.getOutput();
+    out.append("// Generated source");
+    out.newLine().append("package ").append(configuration.packageName).append(';');
+    out.newLine().newLine().append("import org.jetbrains.jsonProtocol.*;");
+    out.newLine().newLine().append("import static org.jetbrains.jsonProtocol.JsonReaders.*;");
+    out.newLine().newLine().append("public final class ").append(configuration.className).space();
+    out.append(configuration.root.getType().isInterface() ? "implements" : "extends").space().append(configuration.root.getType().getCanonicalName()).openBlock(false);
+
+    ClassScope rootClassScope = fileScope.newClassScope();
+    configuration.root.writeStaticMethodJava(rootClassScope);
+
+    for (TypeHandler<?> typeHandler : configuration.typeToTypeHandler.values()) {
+      out.newLine();
+      typeHandler.writeStaticClassJava(rootClassScope);
+      out.newLine();
+    }
+
+    boolean isFirst = true;
+    for (TypeHandler<?> typeHandler : globalScope.getTypeFactories()) {
+      if (isFirst) {
+        isFirst = false;
+      }
+      else {
+        out.newLine();
+      }
+
+      String originName = typeHandler.getTypeClass().getCanonicalName();
+      out.newLine().append("private static final class ").append(globalScope.getTypeImplShortName(typeHandler)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append(" extends ObjectFactory<");
+      out.append(originName).append('>').openBlock();
+      out.append("@Override").newLine().append("public ").append(originName).append(" read(").append(Util.JSON_READER_PARAMETER_DEF);
+      out.append(')').openBlock();
+      out.append("return ");
+      typeHandler.writeInstantiateCode(rootClassScope, out);
+      out.append('(').append(Util.READER_NAME).append(", null);").closeBlock();
+      out.closeBlock();
+    }
+
+    out.closeBlock();
+    return fileScope;
   }
 }

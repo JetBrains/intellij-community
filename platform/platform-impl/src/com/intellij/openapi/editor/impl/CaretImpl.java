@@ -116,13 +116,15 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     myVisualLineEnd = doc.getLineCount() > 1 ? doc.getLineStartOffset(1) : doc.getLineCount() == 0 ? 0 : doc.getLineEndOffset(0);
   }
 
-  void onBulkDocumentUpdateStarted(@NotNull Document doc) {
-    if (doc != myEditor.getDocument() || myOffset > doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
+  void onBulkDocumentUpdateStarted() {
+    Document doc = myEditor.getDocument();
+    if (myOffset > doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
     savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
   }
 
-  void onBulkDocumentUpdateFinished(@NotNull Document doc) {
-    if (doc != myEditor.getDocument() || myEditor.getCaretModel().myIsInUpdate) return;
+  void onBulkDocumentUpdateFinished() {
+    Document doc = myEditor.getDocument();
+    if (myEditor.getCaretModel().myIsInUpdate) return;
     LOG.assertTrue(!myReportCaretMoves);
 
     if (savedBeforeBulkCaretMarker != null) {

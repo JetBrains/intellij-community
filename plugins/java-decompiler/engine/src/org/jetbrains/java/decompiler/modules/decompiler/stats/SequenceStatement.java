@@ -15,13 +15,11 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -101,20 +99,13 @@ public class SequenceStatement extends Statement {
   }
 
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-
     TextBuffer buf = new TextBuffer();
-
-    String indstr = null;
     boolean islabeled = isLabeled();
-
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
 
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
 
     if (islabeled) {
-      indstr = InterpreterUtil.getIndentString(indent);
-      indent++;
-      buf.append(indstr).append("label").append(this.id.toString()).append(": {").append(new_line_separator);
+      buf.appendIndent(indent++).append("label").append(this.id.toString()).append(": {").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 
@@ -125,7 +116,7 @@ public class SequenceStatement extends Statement {
       Statement st = stats.get(i);
 
       if (i > 0 && notempty) {
-        buf.append(new_line_separator);
+        buf.appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }
 
@@ -136,7 +127,7 @@ public class SequenceStatement extends Statement {
     }
 
     if (islabeled) {
-      buf.append(indstr).append("}").append(new_line_separator);
+      buf.appendIndent(indent-1).append("}").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 

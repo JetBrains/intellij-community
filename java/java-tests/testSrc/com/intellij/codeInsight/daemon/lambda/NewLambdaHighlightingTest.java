@@ -151,6 +151,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA131700() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

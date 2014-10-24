@@ -1,6 +1,6 @@
 <idea-plugin version="2">
 
-  <extensions xmlns="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
 
     <!--group.names.abstraction.issues-->
     <localInspection language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
@@ -1239,7 +1239,7 @@
                      key="package.info.java.without.package.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.javadoc.PackageInfoWithoutPackageInspection"/>
-    <localInspection shortName="PackageDotHtmlMayBePackageInfo" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection language="HTML" shortName="PackageDotHtmlMayBePackageInfo" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="package.dot.html.may.be.package.info.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.javadoc.PackageDotHtmlMayBePackageInfoInspection"/>
@@ -2459,10 +2459,6 @@
                      key="size.replaceable.by.isempty.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection"/>
-    <localInspection shortName="ProblematicWhitespace" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="problematic.whitespace.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.style.ProblematicWhitespaceInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"

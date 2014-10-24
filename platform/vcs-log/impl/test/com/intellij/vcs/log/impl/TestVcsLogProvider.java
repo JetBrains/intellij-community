@@ -198,6 +198,12 @@ public class TestVcsLogProvider implements VcsLogProvider {
     return myReadFirstBlockCounter;
   }
 
+  @Nullable
+  @Override
+  public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
+    return null;
+  }
+
   private static class MockRefManager implements VcsLogRefManager {
     @NotNull
     @Override

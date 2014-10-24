@@ -109,9 +109,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     chars = editor.getDocument().getCharsSequence();
     if (c == '(' || c == '[' || c == '{'){
       char c1 = chars.charAt(offset);
-      if (c == '(' && c1 != ')') return true;
-      if (c == '[' && c1 != ']') return true;
-      if (c == '{' && c1 != '}') return true;
+      if (c1 != getRightChar(c)) return true;
 
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
       BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
@@ -142,6 +140,14 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
 
     return true;
+  }
+
+  public static char getRightChar(final char c) {
+    if (c == '(') return ')';
+    if (c == '[') return ']';
+    if (c == '{') return '}';
+    assert false;
+    return c;
   }
 
   private static boolean isOffsetInsideInjected(Editor injectedEditor, int injectedOffset) {

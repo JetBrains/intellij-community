@@ -747,7 +747,7 @@ public class AbstractPopup implements JBPopup {
 
     Point xy = new Point(aScreenX, aScreenY);
     boolean adjustXY = true;
-    if (myDimensionServiceKey != null) {
+    if (myUseDimServiceForXYLocation && myDimensionServiceKey != null) {
       final Point storedLocation = DimensionService.getInstance().getLocation(myDimensionServiceKey, myProject);
       if (storedLocation != null) {
         xy = storedLocation;
@@ -782,7 +782,7 @@ public class AbstractPopup implements JBPopup {
     Rectangle original = new Rectangle(targetBounds);
     if (myLocateWithinScreen) {
       if (myMovable) {
-        ScreenUtil.moveRectangleToFitTheScreen(targetBounds);
+        ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX, aScreenY), null);
       }
     }
 
