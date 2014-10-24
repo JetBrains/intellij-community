@@ -716,7 +716,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     topPanel.add(title, BorderLayout.WEST);
     final JPanel controls = new JPanel(new BorderLayout());
     controls.setOpaque(false);
-    final JLabel settings = new JLabel(AllIcons.General.WebSettings);
+    final JLabel settings = new JLabel(AllIcons.General.SearchEverywhereGear);
     new ClickListener(){
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
