@@ -24,9 +24,9 @@
       <option name="SELECTED_TEARLINE_COLOR" value="000000"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
 
-      <option name="ADDED_LINES_COLOR" value="edfced"/>
-      <option name="MODIFIED_LINES_COLOR" value="e0f0ff"/>
-      <option name="DELETED_LINES_COLOR" value="cbcbcb"/>
+      <option name="ADDED_LINES_COLOR" value="CBE3CA"/>
+      <option name="MODIFIED_LINES_COLOR" value="C7D5E2"/>
+      <option name="DELETED_LINES_COLOR" value="9F9F9F"/>
       <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="ffffff"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
     </colors>

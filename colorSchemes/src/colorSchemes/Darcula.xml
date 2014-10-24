@@ -12,7 +12,7 @@
   <option name="EDITOR_FONT_SIZE" value="12" linux="14"/>
   <option name="EDITOR_FONT_NAME" value="Menlo" linux="Source Code Pro"/>
   <colors>
-    <option name="ADDED_LINES_COLOR" value="295622" />
+    <option name="ADDED_LINES_COLOR" value="384C38" />
     <option name="ANNOTATIONS_COLOR" value="8b999f" />
     <option name="CARET_COLOR" value="bbbbbb" />
     <option name="CARET_ROW_COLOR" value="323232" />
@@ -38,7 +38,7 @@
     <option name="INDENT_GUIDE" value="373737" />
     <option name="LINE_NUMBERS_COLOR" value="888888" />
     <option name="METHOD_SEPARATORS_COLOR" value="4d4d4d" />
-    <option name="MODIFIED_LINES_COLOR" value="415f69" />
+    <option name="MODIFIED_LINES_COLOR" value="374752" />
     <option name="NOTIFICATION_BACKGROUND" value="5c5c42" />
     <option name="READONLY_FRAGMENT_BACKGROUND" value="" />
     <option name="RECURSIVE_CALL_ATTRIBUTES" value="574300" />

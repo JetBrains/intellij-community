@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.DiffColors;
@@ -38,11 +37,13 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredSideBorder;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.HintListener;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,23 +81,12 @@ public class LineStatusTrackerDrawing {
       final int x = r.x + r.width - 4;
       final int width = endX - x;
       if (r.height > 0) {
-        g.fillRect(x, r.y, width, r.height);
-        if (!isDistractionFreeMode()) {
-          g.setColor(gutter.getOutlineColor(false));
-          UIUtil.drawLine(g, x, r.y, x + width, r.y);
-          UIUtil.drawLine(g, x, r.y, x, r.y + r.height - 1);
-          UIUtil.drawLine(g, x, r.y + r.height - 1, x + width, r.y + r.height - 1);
-        }
+        g.fillRect(x, r.y, width, r.height); // todo: intersection with dotted gutter outline
       }
       else {
-        final int[] xPoints = new int[]{x, x, endX - (foldingOutlineShown ? 0 : triangle - 1)};
+        final int[] xPoints = new int[]{x, x, endX - (foldingOutlineShown ? -1 : triangle + 1)};
         final int[] yPoints = new int[]{r.y - triangle, r.y + triangle, r.y};
         g.fillPolygon(xPoints, yPoints, 3);
-
-        if (!isDistractionFreeMode()) {
-          g.setColor(gutter.getOutlineColor(false));
-          g.drawPolygon(xPoints, yPoints, 3);
-        }
       }
     }
     else { // registry: diff.status.tracker.smart
@@ -107,7 +97,7 @@ public class LineStatusTrackerDrawing {
       if (range.getType() == Range.DELETED) {
         final int y = lineToY(editor, range.getLine1());
 
-        final int[] xPoints = new int[]{x, x, endX - (foldingOutlineShown ? 0 : triangle - 1)};
+        final int[] xPoints = new int[]{x, x, endX - (foldingOutlineShown ? 0 : triangle + 1)};
         final int[] yPoints = new int[]{y - triangle, y + triangle, y};
 
         g.setColor(stripeColor);
@@ -355,17 +345,6 @@ public class LineStatusTrackerDrawing {
   @NotNull
   private static Color getDiffGutterColor(@NotNull Range range) {
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Color color = getDiffGutterColor(range, globalScheme);
-    return !isDistractionFreeMode() ? color : 
-           ColorUtil.isDark(globalScheme.getDefaultBackground()) ? ColorUtil.brighter(color, 1) : ColorUtil.darker(color, 1);
-  }
-
-  private static boolean isDistractionFreeMode() {
-    return Registry.is("editor.distraction.free.mode") || UISettings.getInstance().PRESENTATION_MODE;
-  }
-
-  @NotNull
-  private static Color getDiffGutterColor(@NotNull Range range, @NotNull EditorColorsScheme globalScheme) {
     switch (range.getType()) {
       case Range.INSERTED:
         return globalScheme.getColor(EditorColors.ADDED_LINES_COLOR);
