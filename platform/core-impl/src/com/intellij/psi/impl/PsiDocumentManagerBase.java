@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -57,7 +58,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.*;
 
-public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener {
+public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, DocumentBulkUpdateListener {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
   private static final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REFERENCE_TO_PSI");
@@ -96,6 +97,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       public void transactionCompleted(@NotNull Document document, @NotNull PsiFile file) {
       }
     });
+    bus.connect().subscribe(DocumentBulkUpdateListener.TOPIC, this);
   }
 
   @Override
@@ -134,9 +136,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Nullable
   public FileViewProvider getCachedViewProvider(@NotNull Document document) {
+    final VirtualFile virtualFile = getVirtualFile(document);
+    if (virtualFile == null) return null;
+    return getCachedViewProvider(virtualFile);
+  }
+
+  private FileViewProvider getCachedViewProvider(@NotNull VirtualFile virtualFile) {
+    return ((PsiManagerEx)myPsiManager).getFileManager().findCachedViewProvider(virtualFile);
+  }
+
+  private static VirtualFile getVirtualFile(@NotNull Document document) {
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
-    return ((PsiManagerEx)myPsiManager).getFileManager().findCachedViewProvider(virtualFile);
+    return virtualFile;
   }
 
   @Nullable
@@ -319,7 +331,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         }
         myLastCommittedTexts.remove(document);
         viewProvider.contentsSynchronized();
-      } else {
+      }
+      else {
         handleCommitWithoutPsi(document);
       }
     }
@@ -586,12 +599,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       myLastCommittedTexts.put(document, document.getImmutableCharSequence());
     }
 
-    final FileViewProvider viewProvider = getCachedViewProvider(document);
-    if (viewProvider == null) return;
-    if (!isRelevant(viewProvider)) return;
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    boolean isBulk = document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate();
 
-    VirtualFile virtualFile = viewProvider.getVirtualFile();
-    if (virtualFile.getFileType().isBinary()) return;
+    boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
+    if (!isBulk && isRelevant) {
+      mySmartPointerManager.fastenBelts(virtualFile, event.getOffset(), null);
+    }
+
+    final FileViewProvider viewProvider = getCachedViewProvider(document);
+    boolean inMyProject = viewProvider != null && viewProvider.getManager() == myPsiManager;
+    if (!isRelevant || !inMyProject) {
+      return;
+    }
 
     final List<PsiFile> files = viewProvider.getAllFiles();
     PsiFile psiCause = null;
@@ -599,7 +619,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       if (file == null) {
         throw new AssertionError("View provider "+viewProvider+" ("+viewProvider.getClass()+") returned null in its files array: "+files+" for file "+viewProvider.getVirtualFile());
       }
-      mySmartPointerManager.fastenBelts(file, event.getOffset(), null);
 
       if (mySynchronizer.isInsideAtomicChange(file)) {
         psiCause = file;
@@ -619,12 +638,21 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void documentChanged(DocumentEvent event) {
     final Document document = event.getDocument();
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    boolean isBulk = document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate();
+
+    boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
+    if (!isBulk && isRelevant) {
+      mySmartPointerManager.unfastenBelts(virtualFile, event.getOffset());
+    }
+
     final FileViewProvider viewProvider = getCachedViewProvider(document);
     if (viewProvider == null) {
       handleCommitWithoutPsi(document);
       return;
     }
-    if (!isRelevant(viewProvider)) {
+    boolean inMyProject = viewProvider.getManager() == myPsiManager;
+    if (!isRelevant || !inMyProject) {
       myLastCommittedTexts.remove(document);
       return;
     }
@@ -633,7 +661,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final List<PsiFile> files = viewProvider.getAllFiles();
     boolean commitNecessary = true;
     for (PsiFile file : files) {
-      mySmartPointerManager.unfastenBelts(file, event.getOffset());
 
       if (mySynchronizer.isInsideAtomicChange(file)) {
         commitNecessary = false;
@@ -641,19 +668,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
 
       assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() :
-        event +
-        "; file=" +
-        file +
-        "; allFiles=" +
-        files +
-        "; viewProvider=" +
-        viewProvider;
+        event + "; file=" + file + "; allFiles=" + files + "; viewProvider=" + viewProvider;
     }
 
     boolean forceCommit = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class) &&
                           (SystemProperties.getBooleanProperty("idea.force.commit.on.external.change", false) ||
-                           ApplicationManager.getApplication().isHeadlessEnvironment()
-                          );
+                           ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode());
 
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and
     // current document lines number is roughly above 5000. This makes sense in situations when external change is performed
@@ -676,6 +696,21 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     else {
       myLastCommittedTexts.remove(document);
     }
+  }
+
+  @Override
+  public void updateStarted(@NotNull Document document) {
+    final VirtualFile virtualFile = getVirtualFile(document);
+    if (virtualFile == null || !isRelevant(virtualFile)) return;
+
+    mySmartPointerManager.fastenBelts(virtualFile, 0, null);
+  }
+
+  @Override
+  public void updateFinished(@NotNull Document document) {
+    final VirtualFile virtualFile = getVirtualFile(document);
+    if (virtualFile == null || !isRelevant(virtualFile)) return;
+    mySmartPointerManager.unfastenBelts(virtualFile, 0);
   }
 
   public void handleCommitWithoutPsi(@NotNull Document document) {
@@ -719,10 +754,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     });
   }
 
-  private boolean isRelevant(@NotNull FileViewProvider viewProvider) {
-    VirtualFile virtualFile = viewProvider.getVirtualFile();
+  private boolean isRelevant(@NotNull VirtualFile virtualFile) {
     return !virtualFile.getFileType().isBinary() &&
-           viewProvider.getManager() == myPsiManager &&
            !myPsiManager.getProject().isDisposed();
   }
 
