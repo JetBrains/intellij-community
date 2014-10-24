@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.coursecreator;
+package com.jetbrains.python.edu;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.jetbrains.python.edu.PyExecuteFileExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.coursecreator.actions.CCRunTestsAction;
 
-public class CCRunTests implements PyExecuteFileExtensionPoint {
+public interface PyExecuteFileExtensionPoint {
+
+  ExtensionPointName<PyExecuteFileExtensionPoint> EP_NAME = ExtensionPointName.create("PythonidEdu.executeFile");
 
   @NotNull
-  public AnAction getRunAction() {
-    return new CCRunTestsAction();
-  }
+  AnAction getRunAction();
 
 }

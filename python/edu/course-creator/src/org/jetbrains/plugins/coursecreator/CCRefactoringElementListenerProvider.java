@@ -24,6 +24,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.coursecreator.actions.CCRunTestsAction;
 import org.jetbrains.plugins.coursecreator.format.Course;
 import org.jetbrains.plugins.coursecreator.format.Lesson;
 import org.jetbrains.plugins.coursecreator.format.Task;
@@ -85,7 +86,7 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          CCRunTests.clearTestEnvironment(taskDir.getVirtualFile(), taskDir.getProject());
+          CCRunTestsAction.clearTestEnvironment(taskDir.getVirtualFile(), taskDir.getProject());
         }
       });
       Map<String, TaskFile> taskFiles = task.getTaskFiles();
