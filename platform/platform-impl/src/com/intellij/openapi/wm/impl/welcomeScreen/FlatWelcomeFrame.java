@@ -508,7 +508,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       private final ActionGroup myGroup;
 
       public IconsFreeActionGroup(ActionGroup group) {
+        super(group.getTemplatePresentation().getText(), group.getTemplatePresentation().getDescription(), null);
         myGroup = group;
+      }
+
+      @Override
+      public boolean isPopup() {
+        return myGroup.isPopup();
       }
 
       @NotNull
