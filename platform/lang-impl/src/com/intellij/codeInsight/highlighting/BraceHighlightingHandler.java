@@ -560,7 +560,7 @@ public class BraceHighlightingHandler {
   }
 
   private static class MyLineMarkerRenderer implements LineMarkerRenderer {
-    private static final int DEEPNESS = 2;
+    private static final int DEEPNESS = 0;
     private static final int THICKNESS = 1;
     private final Color myColor;
 
