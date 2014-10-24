@@ -56,8 +56,12 @@ import org.jetbrains.annotations.Nullable;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
 
+import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -71,8 +75,8 @@ public class ConsoleHistoryController {
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
   private final LanguageConsoleImpl myConsole;
-  private final AnAction myHistoryNext = new MyAction(true);
-  private final AnAction myHistoryPrev = new MyAction(false);
+  private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
+  private final AnAction myHistoryPrev = new MyAction(false, getKeystrokesUpDown(false));
   private final AnAction myBrowseHistory = new MyBrowseAction();
   private boolean myMultiline;
   private final ModelHelper myHelper;
@@ -127,16 +131,8 @@ public class ConsoleHistoryController {
     EmptyAction.setupAction(myHistoryPrev, "Console.History.Previous", null);
     EmptyAction.setupAction(myBrowseHistory, "Console.History.Browse", null);
     if (!myMultiline) {
-      AnAction up = ActionManager.getInstance().getActionOrStub(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
-      AnAction down = ActionManager.getInstance().getActionOrStub(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
-      if (up != null && down != null) {
-        myHistoryNext.registerCustomShortcutSet(up.getShortcutSet(), null);
-        myHistoryPrev.registerCustomShortcutSet(down.getShortcutSet(), null);
-      }
-      else {
-        myHistoryNext.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
-        myHistoryPrev.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
-      }
+      addShortcuts(myHistoryNext, getShortcutUpDown(true));
+      addShortcuts(myHistoryPrev, getShortcutUpDown(false));
     }
     myHistoryNext.registerCustomShortcutSet(myHistoryNext.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
     myHistoryPrev.registerCustomShortcutSet(myHistoryPrev.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
@@ -241,8 +237,12 @@ public class ConsoleHistoryController {
   private class MyAction extends AnAction {
     private final boolean myNext;
 
-    public MyAction(final boolean next) {
+    @NotNull
+    private final Collection<KeyStroke> myUpDownKeystrokes;
+
+    public MyAction(final boolean next, @NotNull Collection<KeyStroke> upDownKeystrokes) {
       myNext = next;
+      myUpDownKeystrokes = upDownKeystrokes;
       getTemplatePresentation().setVisible(false);
     }
 
@@ -263,7 +263,16 @@ public class ConsoleHistoryController {
     @Override
     public void update(final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(myMultiline || canMoveInEditor(myNext));
+      e.getPresentation().setEnabled(myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext));
+    }
+
+    private boolean isUpDownKey(AnActionEvent e) {
+      final InputEvent event = e.getInputEvent();
+      if (!(event instanceof KeyEvent)) {
+        return false;
+      }
+      final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent((KeyEvent)event);
+      return myUpDownKeystrokes.contains(keyStroke);
     }
   }
 
@@ -505,4 +514,37 @@ public class ConsoleHistoryController {
       out.endTag(null, tag);
     }
   }
+
+  private static ShortcutSet getShortcutUpDown(boolean isUp) {
+    AnAction action = ActionManager.getInstance().getActionOrStub(isUp ?
+                                                                  IdeActions.ACTION_EDITOR_MOVE_CARET_UP :
+                                                                  IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+    if (action != null) {
+      return action.getShortcutSet();
+    }
+    return new CustomShortcutSet(KeyStroke.getKeyStroke(isUp ? KeyEvent.VK_UP : KeyEvent.VK_DOWN, 0));
+  }
+
+  private static void addShortcuts(@NotNull AnAction action, @NotNull ShortcutSet newShortcuts) {
+    if (action.getShortcutSet().getShortcuts().length == 0) {
+      action.registerCustomShortcutSet(newShortcuts, null);
+    }
+    else {
+      action.registerCustomShortcutSet(new CompositeShortcutSet(action.getShortcutSet(), newShortcuts), null);
+    }
+  }
+
+  private static Collection<KeyStroke> getKeystrokesUpDown(boolean isUp) {
+    Collection<KeyStroke> result = new ArrayList<KeyStroke>();
+
+    final ShortcutSet shortcutSet = getShortcutUpDown(isUp);
+    for (Shortcut shortcut : shortcutSet.getShortcuts()) {
+      if (shortcut.isKeyboard() && ((KeyboardShortcut)shortcut).getSecondKeyStroke() == null) {
+        result.add(((KeyboardShortcut)shortcut).getFirstKeyStroke());
+      }
+    }
+
+    return result;
+  }
+
 }
