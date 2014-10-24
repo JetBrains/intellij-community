@@ -113,7 +113,7 @@ void showWarning(NSString* installedJava){
    NSAlert* alert = [[NSAlert alloc] init];
    [alert addButtonWithTitle:@"Update"];
    [alert addButtonWithTitle:@"Cancel"];
-    NSString* message_description = [NSString stringWithFormat:@"%@%@%@",@"Java version: ", installedJava, @" which is installed on your mac is obsolete."];
+    NSString* message_description = [NSString stringWithFormat:@"%@%@%@",@"Java version: ", installedJava, @" which is installed on your Mac is obsolete."];
    NSString* message_suggestion  = @"Would you like to update Java?";
    NSString* informativeText =[NSString stringWithFormat:@"%@\n%@",message_description,message_suggestion];
    [alert setMessageText:@"Java Update"];
@@ -208,7 +208,9 @@ NSString *requiredJvmVersion() {
 }
 
 BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
-    javaUpdateRequired = isJavaUpdateRequired(vmVersion, requiredVersion);
+    if (!javaUpdateRequired){
+      javaUpdateRequired = isJavaUpdateRequired(vmVersion, requiredVersion);
+    }
     if (javaUpdateRequired){
       return !javaUpdateRequired;
     }

@@ -365,6 +365,18 @@
       <expected>OK</expected>
     </test>
     <test>
+      <pattern>\pL\pM\pZ\pS\pN\pP\pC\PL\PM\PZ\PS\PN\PP\PC</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>\pA</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>\pl</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
       <pattern>a\p</pattern>
       <expected>ERR</expected>
     </test>
@@ -716,6 +728,14 @@
     </test>
     <test>
       <pattern>([ab]+)=\1</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\105</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>(.)\11</pattern>
       <expected>OK</expected>
     </test>
     <test verify="false">

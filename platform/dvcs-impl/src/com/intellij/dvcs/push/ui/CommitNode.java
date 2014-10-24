@@ -42,9 +42,8 @@ public class CommitNode extends DefaultMutableTreeNode implements CustomRendered
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    new IssueLinkRenderer(myProject, renderer).appendTextWithLinks(getUserObject().getSubject(),
-                                                                   new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER,
-                                                                                            renderer.getForeground()));
+    renderer.append("   ");
+    new IssueLinkRenderer(myProject, renderer).appendTextWithLinks(getUserObject().getSubject(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   public String getTooltip() {

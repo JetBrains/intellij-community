@@ -63,7 +63,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   public void actionPerformed(@Nullable AnActionEvent e) {
     ApplicationManager.getApplication().saveSettings();
 
-    ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(getExportableComponentsMap(true), true,
+    ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(getExportableComponentsMap(true, true), true,
                                                                                IdeBundle.message("title.select.components.to.export"),
                                                                                IdeBundle.message(
                                                                                  "prompt.please.check.all.components.to.export"));
@@ -77,7 +77,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     }
 
     Set<File> exportFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    for (final ExportableComponent markedComponent : markedComponents) {
+    for (ExportableComponent markedComponent : markedComponents) {
       ContainerUtil.addAll(exportFiles, markedComponent.getExportFiles());
     }
 
@@ -136,7 +136,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static MultiMap<File, ExportableComponent> getExportableComponentsMap(final boolean onlyExisting) {
+  public static MultiMap<File, ExportableComponent> getExportableComponentsMap(final boolean onlyExisting, final boolean computePresentableNames) {
     ExportableApplicationComponent[] components1 = ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class);
     List<ExportableComponent> components2 = ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent.class);
     final MultiMap<File, ExportableComponent> result = MultiMap.createLinkedSet();
@@ -204,7 +204,15 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
               else {
                 files = fileExists ? new File[]{file, additionalExportFile} : new File[]{additionalExportFile};
               }
-              result.putValue(file, new MyExportableComponent(files, getExportableComponentPresentableName(stateAnnotation, aClass, pluginDescriptor)));
+              ExportableComponentItem item = new ExportableComponentItem(files,
+                                                                         computePresentableNames
+                                                                         ? getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor)
+                                                                         : "",
+                                                                         storage.roamingType());
+              result.putValue(file, item);
+              if (additionalExportFile != null) {
+                result.putValue(additionalExportFile, item);
+              }
             }
           }
         }
@@ -215,7 +223,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static String getExportableComponentPresentableName(@NotNull State state, @NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
+  private static String getComponentPresentableName(@NotNull State state, @NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
     if (state.presentableName() != State.NameGetter.class) {
       try {
         return ReflectionUtil.newInstance(state.presentableName()).get();
@@ -249,13 +257,15 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     return defaultName;
   }
 
-  private static final class MyExportableComponent implements ExportableComponent {
+  public static final class ExportableComponentItem implements ExportableComponent {
     private final File[] files;
     private final String name;
+    private final RoamingType roamingType;
 
-    public MyExportableComponent(@NotNull File[] files, @NotNull String name) {
+    public ExportableComponentItem(@NotNull File[] files, @NotNull String name, @NotNull RoamingType roamingType) {
       this.files = files;
       this.name = name;
+      this.roamingType = roamingType;
     }
 
     @NotNull
@@ -268,6 +278,11 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     @Override
     public String getPresentableName() {
       return name;
+    }
+
+    @NotNull
+    public RoamingType getRoamingType() {
+      return roamingType;
     }
   }
 }

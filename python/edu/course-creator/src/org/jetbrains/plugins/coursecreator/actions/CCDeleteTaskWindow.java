@@ -18,7 +18,7 @@ public class CCDeleteTaskWindow extends CCTaskWindowAction {
   private static final Logger LOG = Logger.getInstance(CCDeleteTaskWindow.class);
 
   public CCDeleteTaskWindow() {
-    super("Delete task window","Delete task window", null);
+    super("Delete problem","Delete problem", null);
   }
 
   @Override

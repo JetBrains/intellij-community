@@ -44,7 +44,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   }
 
   public CCCreateCourseArchive() {
-    super("Generate course archive", "Generate course archive", AllIcons.FileTypes.Archive);
+    super("Generate Course Archive", "Generate Course Archive", AllIcons.FileTypes.Archive);
   }
 
   @Override

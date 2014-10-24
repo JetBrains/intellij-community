@@ -2562,7 +2562,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
 
-  private VisualPosition getSelectionStartPosition() {
+  private VisualPosition getSelectionStartPositionForPaint() {
     if (mySelectionStartPosition == null) {
       // We cache the value to avoid repeated invocations of Editor.logicalPositionToOffset which is currently slow for long lines
       mySelectionStartPosition = getSelectionModel().getSelectionStartPosition();
@@ -2570,7 +2570,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return mySelectionStartPosition;
   }
 
-  private VisualPosition getSelectionEndPosition() {
+  private VisualPosition getSelectionEndPositionForPaint() {
     if (mySelectionEndPosition == null) {
       // We cache the value to avoid repeated invocations of Editor.logicalPositionToOffset which is currently slow for long lines
       mySelectionEndPosition = getSelectionModel().getSelectionEndPosition();
@@ -2599,8 +2599,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                             @JdkConstants.FontStyle int fontType) {
     // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
     // there then.
-    VisualPosition selectionStartPosition = getSelectionStartPosition();
-    VisualPosition selectionEndPosition = getSelectionEndPosition();
+    VisualPosition selectionStartPosition = getSelectionStartPositionForPaint();
+    VisualPosition selectionEndPosition = getSelectionEndPositionForPaint();
     if (selectionStartPosition.equals(selectionEndPosition)) {
       return;
     }
@@ -2660,8 +2660,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                              @NotNull SoftWrap softWrap) {
     // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
     // there then.
-    VisualPosition selectionStartPosition = getSelectionStartPosition();
-    VisualPosition selectionEndPosition = getSelectionEndPosition();
+    VisualPosition selectionStartPosition = getSelectionStartPositionForPaint();
+    VisualPosition selectionEndPosition = getSelectionEndPositionForPaint();
     if (selectionStartPosition.equals(selectionEndPosition)) {
       return;
     }

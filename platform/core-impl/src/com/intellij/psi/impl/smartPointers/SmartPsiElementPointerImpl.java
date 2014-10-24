@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,22 +42,24 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   private final Class<? extends PsiElement> myElementClass;
   private byte myReferenceCount;
 
-  public SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile) {
+  SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile) {
     this(element, createElementInfo(project, element, containingFile), element.getClass());
   }
-  public SmartPsiElementPointerImpl(@NotNull E element,
-                                    @NotNull SmartPointerElementInfo elementInfo,
-                                    @NotNull Class<? extends PsiElement> elementClass) {
+  SmartPsiElementPointerImpl(@NotNull E element,
+                             @NotNull SmartPointerElementInfo elementInfo,
+                             @NotNull Class<? extends PsiElement> elementClass) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     cacheElement(element);
     myElementClass = elementClass;
     myElementInfo = elementInfo;
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof SmartPsiElementPointer && pointsToTheSameElementAs(this, (SmartPsiElementPointer)obj);
   }
 
+  @Override
   public int hashCode() {
     return myElementInfo.elementHashCode();
   }
@@ -125,6 +127,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @NotNull
   static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
+    if (element instanceof PsiDirectory) {
+      return new DirElementInfo((PsiDirectory)element);
+    }
     if (element instanceof PsiCompiledElement || containingFile == null || !containingFile.isPhysical() || !element.isPhysical()) {
       if (element instanceof StubBasedPsiElement && element instanceof PsiCompiledElement) {
         if (element instanceof PsiFile) {
@@ -136,9 +141,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
         }
       }
       return new HardElementInfo(project, element);
-    }
-    if (element instanceof PsiDirectory) {
-      return new DirElementInfo((PsiDirectory)element);
     }
 
     for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -686,16 +687,26 @@ public class GitUtil {
 
 
   @Nullable
-  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @Nullable String name) {
-    if (name == null) {
-      return null;
-    }
-    for (GitRemote remote : repository.getRemotes()) {
-      if (remote.getName().equals(name)) {
-        return remote;
+  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @Nullable final String name) {
+    return ContainerUtil.find(repository.getRemotes(), new Condition<GitRemote>() {
+      @Override
+      public boolean value(GitRemote remote) {
+        return remote.getName().equals(name);
       }
-    }
-    return null;
+    });
+  }
+
+  @Nullable
+  public static GitRemoteBranch findRemoteBranch(@NotNull GitRepository repository,
+                                                         @NotNull final GitRemote remote,
+                                                         @NotNull final String nameAtRemote) {
+    return ContainerUtil.find(repository.getBranches().getRemoteBranches(), new Condition<GitRemoteBranch>() {
+      @Override
+      public boolean value(GitRemoteBranch remoteBranch) {
+        return remoteBranch.getRemote().equals(remote) &&
+               remoteBranch.getNameForRemoteOperations().equals(GitBranchUtil.stripRefsPrefix(nameAtRemote));
+      }
+    });
   }
 
   /**

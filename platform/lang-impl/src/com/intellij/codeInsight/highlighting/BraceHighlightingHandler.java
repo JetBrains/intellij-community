@@ -440,7 +440,7 @@ public class BraceHighlightingHandler {
             if (myProject.isDisposed() || myEditor.isDisposed()) return;
             Color color = attributes.getBackgroundColor();
             if (color == null) return;
-            color = ColorUtil.isDark(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()) ? ColorUtil.shift(color, 1.1d) : color.darker();
+            color = ColorUtil.isDark(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()) ? ColorUtil.shift(color, 1.5d) : color.darker();
             lineMarkFragment(startLine, endLine, color);
           }
         };
@@ -458,6 +458,9 @@ public class BraceHighlightingHandler {
         }
       }
 
+      
+      
+      
       if (!scopeHighlighting) {
         showScopeHint(lBrace.getStartOffset(), lBrace.getEndOffset());
       }
@@ -560,7 +563,7 @@ public class BraceHighlightingHandler {
   }
 
   private static class MyLineMarkerRenderer implements LineMarkerRenderer {
-    private static final int DEEPNESS = 2;
+    private static final int DEEPNESS = 0;
     private static final int THICKNESS = 1;
     private final Color myColor;
 

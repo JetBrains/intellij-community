@@ -38,7 +38,9 @@ public class RegExpParserDefinition implements ParserDefinition {
 
     @NotNull
     public Lexer createLexer(Project project) {
-        return new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES, RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS));
+        return new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES,
+                                          RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS,
+                                          RegExpCapability.UNICODE_CATEGORY_SHORTHAND));
     }
 
     public PsiParser createParser(Project project) {

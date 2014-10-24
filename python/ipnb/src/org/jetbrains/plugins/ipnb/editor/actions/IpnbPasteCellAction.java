@@ -12,11 +12,11 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
 public class IpnbPasteCellAction extends AnAction {
   public IpnbPasteCellAction() {
-    super(AllIcons.General.Run);
+    super(AllIcons.Actions.Menu_paste);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext context = event.getDataContext();
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof IpnbFileEditor) {
