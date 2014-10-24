@@ -14,7 +14,7 @@ import org.jetbrains.plugins.coursecreator.ui.CreateTaskWindowDialog;
 public class CCShowTaskWindowDetails extends CCTaskWindowAction {
 
   public CCShowTaskWindowDetails() {
-    super("Show task window details", "Show task windows details", null);
+    super("Show problem details", "Show problem details", null);
   }
 
   @Override
