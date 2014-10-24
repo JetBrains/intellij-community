@@ -880,22 +880,22 @@ public class RefactoringUtil {
       LOG.assertTrue(newBody != null);
       newBody.add(declaration);
 
-      final PsiStatement lastBodyStatement;
-      if (LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression) == PsiType.VOID) {
-        lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
-        ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
-      }
-      else {
-        lastBodyStatement = elementFactory.createStatementFromText("return a;", lambdaExpression);
-        final PsiExpression returnValue = ((PsiReturnStatement)lastBodyStatement).getReturnValue();
-        LOG.assertTrue(returnValue != null);
-        returnValue.replace(lambdaExpressionBody);
-      }
+      PsiStatement lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
+      ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
       newBody.add(lastBodyStatement);
 
-      final PsiLambdaExpression copy = (PsiLambdaExpression)lambdaExpression.replace(expressionFromText);
+      PsiLambdaExpression copy = (PsiLambdaExpression)lambdaExpression.replace(expressionFromText);
       newBody = (PsiCodeBlock)copy.getBody();
       LOG.assertTrue(newBody != null);
+
+      if (LambdaUtil.getFunctionalInterfaceReturnType(copy) != PsiType.VOID) {
+        PsiExpressionStatement lastStatement = (PsiExpressionStatement)newBody.getStatements()[1];
+        PsiReturnStatement returnStatement = (PsiReturnStatement)elementFactory.createStatementFromText("return a;", copy);
+        final PsiExpression returnValue = returnStatement.getReturnValue();
+        LOG.assertTrue(returnValue != null);
+        returnValue.replace(lastStatement.getExpression());
+        lastStatement.replace(returnStatement);
+      }
       declaration = newBody.getStatements()[0];
       declaration = (PsiStatement)JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
     }
