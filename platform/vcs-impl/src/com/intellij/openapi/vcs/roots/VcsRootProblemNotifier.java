@@ -28,12 +28,14 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 
@@ -46,6 +48,7 @@ public class VcsRootProblemNotifier {
 
   private final @NotNull Project myProject;
   private final @NotNull VcsConfiguration mySettings;
+  @NotNull private final Set<VcsRootError> myReportedUnregisteredRoots = ContainerUtil.newHashSet();
 
   private @Nullable Notification myNotification;
   private final @NotNull Object NOTIFICATION_LOCK = new Object();
@@ -77,6 +80,11 @@ public class VcsRootProblemNotifier {
 
     String title = makeTitle(unregisteredRoots, invalidRoots);
     String description = makeDescription(unregisteredRoots, invalidRoots);
+
+    if (myReportedUnregisteredRoots.containsAll(unregisteredRoots) && invalidRoots.isEmpty()) {
+      return;
+    }
+    myReportedUnregisteredRoots.addAll(unregisteredRoots);
 
     synchronized (NOTIFICATION_LOCK) {
       expireNotification();
