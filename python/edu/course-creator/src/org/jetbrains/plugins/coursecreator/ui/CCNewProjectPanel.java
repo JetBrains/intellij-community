@@ -24,6 +24,7 @@ public class CCNewProjectPanel {
     myName.getDocument().addDocumentListener(new MyValidator());
     myDescription.getDocument().addDocumentListener(new MyValidator());
     myAuthorField.getDocument().addDocumentListener(new MyValidator());
+    myDescription.setLineWrap(true);
   }
 
   public JPanel getMainPanel() {

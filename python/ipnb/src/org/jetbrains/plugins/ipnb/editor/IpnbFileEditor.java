@@ -226,7 +226,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbAddCellAction action = (IpnbAddCellAction)ActionManager.getInstance().getAction("IpnbAddCellAction");
+        final IpnbAddCellBelowAction action = (IpnbAddCellBelowAction)ActionManager.getInstance().getAction("IpnbAddCellAction");
         action.addCell(myIpnbFilePanel);
       }
     }, AllIcons.General.Add, "Insert Cell Below");

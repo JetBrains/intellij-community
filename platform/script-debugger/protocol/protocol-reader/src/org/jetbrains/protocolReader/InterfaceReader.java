@@ -117,7 +117,10 @@ class InterfaceReader {
     }
 
     for (SubtypeCaster subtypeCaster : subtypeCasters) {
-      subtypeCaster.getSubtypeHandler().getSubtypeSupport().setSubtypeCaster(subtypeCaster);
+      ExistingSubtypeAspect subtypeSupport = subtypeCaster.getSubtypeHandler().getSubtypeSupport();
+      if (subtypeSupport != null) {
+        subtypeSupport.setSubtypeCaster(subtypeCaster);
+      }
     }
 
     return typeToTypeHandler;

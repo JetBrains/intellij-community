@@ -152,8 +152,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         @Override
         public void run() {
           performInspectionsWithProgress(scope, runGlobalToolsOnly);
-          if (outputPath == null) return;
-          
           @NonNls final String ext = ".xml";
           final Map<Element, Tools> globalTools = new HashMap<Element, Tools>();
           for (Map.Entry<String,Tools> stringSetEntry : myTools.entrySet()) {

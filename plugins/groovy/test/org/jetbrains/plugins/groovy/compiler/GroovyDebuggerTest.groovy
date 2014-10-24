@@ -64,11 +64,8 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
 
   @Override
   protected void setUp() {
-    edt {
-      super.setUp()
-      addGroovyLibrary(myModule);
-    }
-
+    super.setUp()
+    addGroovyLibrary(myModule);
   }
 
   @Override

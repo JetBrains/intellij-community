@@ -21,10 +21,11 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.PairFunction;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,26 @@ public class LiveVariablesAnalyzer {
   private final Instruction[] myInstructions;
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final FactoryMap<PsiElement, List<DfaVariableValue>> myClosureReads = new FactoryMap<PsiElement, List<DfaVariableValue>>() {
+    @Nullable
+    @Override
+    protected List<DfaVariableValue> create(PsiElement closure) {
+      final Set<DfaVariableValue> result = ContainerUtil.newLinkedHashSet();
+      closure.accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (element instanceof PsiReferenceExpression) {
+            DfaValue value = myFactory.createValue((PsiReferenceExpression)element);
+            if (value instanceof DfaVariableValue) {
+              result.add((DfaVariableValue)value);
+            }
+          }
+          super.visitElement(element);
+        }
+      });
+      return ContainerUtil.newArrayList(result);
+    }
+  };
 
   public LiveVariablesAnalyzer(ControlFlow flow, DfaValueFactory factory) {
     myFactory = factory;
@@ -96,12 +117,36 @@ public class LiveVariablesAnalyzer {
     return result;
   }
 
+  @Nullable
+  private static DfaVariableValue getWrittenVariable(Instruction instruction) {
+    if (instruction instanceof AssignInstruction) {
+      DfaValue value = ((AssignInstruction)instruction).getAssignedValue();
+      return value instanceof DfaVariableValue ? (DfaVariableValue)value : null;
+    }
+    if (instruction instanceof FlushVariableInstruction) return ((FlushVariableInstruction)instruction).getVariable();
+    return null;
+  }
+
+  @NotNull
+  private List<DfaVariableValue> getReadVariables(Instruction instruction) {
+    if (instruction instanceof PushInstruction && !((PushInstruction)instruction).isReferenceWrite()) {
+      DfaValue value = ((PushInstruction)instruction).getValue();
+      if (value instanceof DfaVariableValue) {
+        return Collections.singletonList((DfaVariableValue)value);
+      }
+    } else {
+      PsiElement closure = DfaUtil.getClosureInside(instruction);
+      if (closure != null) {
+        return myClosureReads.get(closure);
+      }
+    }
+    return Collections.emptyList();
+  }
+
   private boolean isInterestingInstruction(Instruction instruction) {
     if (instruction == myInstructions[0]) return true;
-    if (instruction instanceof PushInstruction) return ((PushInstruction)instruction).getValue() instanceof DfaVariableValue;
-    if (instruction instanceof AssignInstruction) return ((AssignInstruction)instruction).getAssignedValue() != null;
+    if (!getReadVariables(instruction).isEmpty() || getWrittenVariable(instruction) != null) return true;
     return instruction instanceof FinishElementInstruction ||
-           instruction instanceof FlushVariableInstruction ||
            instruction instanceof GotoInstruction ||
            instruction instanceof ConditionalGotoInstruction ||
            instruction instanceof ReturnInstruction;
@@ -124,32 +169,22 @@ public class LiveVariablesAnalyzer {
           }
         }
 
-        if (instruction instanceof AssignInstruction) {
-          DfaValue value = ((AssignInstruction)instruction).getAssignedValue();
-          if (value instanceof DfaVariableValue) {
-            liveVars = (BitSet)liveVars.clone();
-            liveVars.clear(value.getID());
-            for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy((DfaVariableValue)value)) {
-              liveVars.clear(var.getID());
-            }
+        DfaVariableValue written = getWrittenVariable(instruction);
+        if (written != null) {
+          liveVars = (BitSet)liveVars.clone();
+          liveVars.clear(written.getID());
+          for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy(written)) {
+            liveVars.clear(var.getID());
           }
-        }
-
-        if (instruction instanceof PushInstruction) {
-          DfaValue value = ((PushInstruction)instruction).getValue();
-          if (value instanceof DfaVariableValue) {
-            if (!((PushInstruction)instruction).isReferenceWrite() && !liveVars.get(value.getID())) {
-              liveVars = (BitSet)liveVars.clone();
+        } else {
+          boolean cloned = false;
+          for (DfaVariableValue value : getReadVariables(instruction)) {
+            if (!liveVars.get(value.getID())) {
+              if (!cloned) {
+                liveVars = (BitSet)liveVars.clone();
+                cloned = true;
+              }
               liveVars.set(value.getID());
-            }
-          }
-        } else if (instruction instanceof FlushVariableInstruction) {
-          DfaVariableValue variable = ((FlushVariableInstruction)instruction).getVariable();
-          if (variable != null) {
-            liveVars = (BitSet)liveVars.clone();
-            liveVars.clear(variable.getID());
-            for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy(variable)) {
-              liveVars.clear(var.getID());
             }
           }
         }

@@ -179,7 +179,8 @@ public class GroovyPositionManager implements PositionManager {
     String suffix = typeDefinition instanceof GrTypeDefinition && ((GrTypeDefinition)typeDefinition).isTrait() ? "$Trait$Helper" : "";
     final PsiClass psiClass = typeDefinition.getContainingClass();
     if (psiClass != null) {
-      return getClassNameForJvm(psiClass) + "$" + typeDefinition.getName() + suffix;
+      String parent = getClassNameForJvm(psiClass);
+      return parent == null ? null : parent + "$" + typeDefinition.getName() + suffix;
     }
 
     for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
@@ -189,7 +190,8 @@ public class GroovyPositionManager implements PositionManager {
       }
     }
 
-    return typeDefinition.getQualifiedName() + suffix;
+    String qname = typeDefinition.getQualifiedName();
+    return qname == null ? null : qname + suffix;
   }
 
   @Nullable

@@ -378,6 +378,7 @@ public class AllIcons {
     public static final Icon CollapseAllHover = IconLoader.getIcon("/general/collapseAllHover.png"); // 11x16
     public static final Icon Combo = IconLoader.getIcon("/general/combo.png"); // 16x16
     public static final Icon Combo2 = IconLoader.getIcon("/general/combo2.png"); // 16x16
+    public static final Icon Combo3 = IconLoader.getIcon("/general/combo3.png"); // 16x16
     public static final Icon ComboArrow = IconLoader.getIcon("/general/comboArrow.png"); // 16x16
     public static final Icon ComboArrowDown = IconLoader.getIcon("/general/comboArrowDown.png"); // 9x5
     public static final Icon ComboArrowLeft = IconLoader.getIcon("/general/comboArrowLeft.png"); // 5x9
@@ -413,6 +414,7 @@ public class AllIcons {
     public static final Icon Floating = IconLoader.getIcon("/general/floating.png"); // 14x14
     public static final Icon Gear = IconLoader.getIcon("/general/gear.png"); // 21x16
     public static final Icon GearHover = IconLoader.getIcon("/general/gearHover.png"); // 21x16
+    public static final Icon GearPlain = IconLoader.getIcon("/general/gearPlain.png"); // 16x16
     public static final Icon GetProjectfromVCS = IconLoader.getIcon("/general/getProjectfromVCS.png"); // 32x32
     public static final Icon Help = IconLoader.getIcon("/general/help.png"); // 10x10
     public static final Icon Help_small = IconLoader.getIcon("/general/help_small.png"); // 16x16
@@ -1169,10 +1171,10 @@ public class AllIcons {
   
   public static class Welcome {
     public static final Icon CreateDesktopEntry = IconLoader.getIcon("/welcome/createDesktopEntry.png"); // 32x32
-    public static final Icon CreateNewProject = IconLoader.getIcon("/welcome/createNewProject.png"); // 32x32
-    public static final Icon FromVCS = IconLoader.getIcon("/welcome/fromVCS.png"); // 32x32
-    public static final Icon ImportProject = IconLoader.getIcon("/welcome/importProject.png"); // 32x32
-    public static final Icon OpenProject = IconLoader.getIcon("/welcome/openProject.png"); // 32x32
+    public static final Icon CreateNewProject = IconLoader.getIcon("/welcome/createNewProject.png"); // 16x16
+    public static final Icon FromVCS = IconLoader.getIcon("/welcome/fromVCS.png"); // 16x16
+    public static final Icon ImportProject = IconLoader.getIcon("/welcome/importProject.png"); // 16x16
+    public static final Icon OpenProject = IconLoader.getIcon("/welcome/openProject.png"); // 16x16
     public static final Icon Register = IconLoader.getIcon("/welcome/register.png"); // 32x32
 
   }

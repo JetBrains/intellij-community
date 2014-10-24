@@ -22,7 +22,9 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorLastActionTracker;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +131,7 @@ public class EditorLastActionTrackerImpl extends EditorLastActionTracker impleme
       return;
     }
     EditorImpl editorImpl = (EditorImpl)editor;
-    if (editorImpl.replace(DISPOSABLE_SET, null, Boolean.TRUE)) {
+    if (!editorImpl.isDisposed() && editorImpl.replace(DISPOSABLE_SET, null, Boolean.TRUE)) {
       Disposer.register(editorImpl.getDisposable(), new Disposable() {
         @Override
         public void dispose() {

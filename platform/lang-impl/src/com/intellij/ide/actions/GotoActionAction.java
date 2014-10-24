@@ -90,7 +90,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           public void valueChanged(ListSelectionEvent e) {
             Object value = myList.getSelectedValue();
             String text = getText(value);
-            if (text != null) {
+            if (text != null && myDropdownPopup != null) {
               myDropdownPopup.setAdText(text, SwingConstants.LEFT);
             }
           }

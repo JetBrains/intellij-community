@@ -144,7 +144,9 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       }
 
       for (PsiMethodMember member : elements) {
-        if (!addParameterToConstructor(project, file, editor, member.getElement(), new PsiField[] {getField()}, cleanupElements)) break;
+        if (!addParameterToConstructor(project, file, editor, member.getElement(), new PsiField[] {getField()}, cleanupElements)) {
+          break;
+        }
       }
 
     } else if (!constrs.isEmpty()) {
@@ -317,9 +319,9 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     assert constructor != null;
     PsiParameter[] newParameters = constructor.getParameterList().getParameters();
     if (newParameters == parameters) return false; //user must have canceled dialog
-    boolean created = false;
     // do not introduce assignment in chanined constructor
     if (JavaHighlightUtil.getChainedConstructors(constructor) == null) {
+      boolean created = false;
       for (PsiField field : fields.keySet()) {
         final String defaultParamName = fields.get(field);
         PsiParameter parameter = findParamByName(defaultParamName, field.getType(), newParameters, parameterInfos);
@@ -334,8 +336,10 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         }
         created = true;
       }
+      return created;
+    } else {
+      return true;
     }
-    return created;
   }
 
   private static void notNull(PsiField field, PsiParameter parameter) {

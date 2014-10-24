@@ -16,9 +16,8 @@
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 
 /**
  * @author Dmitry Avdeev
@@ -34,7 +33,7 @@ public class ImportProjectAction extends ImportModuleAction {
 
   @Override
   public void update(AnActionEvent e) {
-    if (e.getPlace() == ActionPlaces.WELCOME_SCREEN && Registry.is("ide.new.welcome.screen")) {
+    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       e.getPresentation().setIcon(AllIcons.Welcome.ImportProject);
     }
   }

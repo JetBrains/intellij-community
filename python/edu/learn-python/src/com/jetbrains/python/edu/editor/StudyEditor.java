@@ -66,7 +66,6 @@ public class StudyEditor implements TextEditor {
   private JButton myRefreshButton;
   private static final Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
   private final Project myProject;
-  private JButton myShowHintButton;
 
   public JButton getCheckButton() {
     return myCheckButton;
@@ -193,11 +192,11 @@ public class StudyEditor implements TextEditor {
   }
 
   private void initializeButtons(@NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {
-    myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
-    myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
-    myNextTaskButton = addButton(taskActionsPanel, "Next Task", AllIcons.Actions.Forward);
-    myRefreshButton = addButton(taskActionsPanel, "Start task again", AllIcons.Actions.Refresh);
-    myShowHintButton = addButton(taskActionsPanel, "Show hint", StudyIcons.ShowHint);
+    myCheckButton = addButton(taskActionsPanel, "Check task (Ctrl + Alt + Enter)", StudyIcons.Resolve);
+    myPrevTaskButton = addButton(taskActionsPanel, "Previous task (Ctrl + &lt;)", StudyIcons.Prev);
+    myNextTaskButton = addButton(taskActionsPanel, "Next task (Ctrl + >)", AllIcons.Actions.Forward);
+    myRefreshButton = addButton(taskActionsPanel, "Reset task file (Ctrl + Shift + X)", AllIcons.Actions.Refresh);
+    JButton myShowHintButton = addButton(taskActionsPanel, "Show hint for task window (Ctrl + 7)", StudyIcons.ShowHint);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
       JButton runButton = addButton(taskActionsPanel, "Run", AllIcons.General.Run);
       runButton.addActionListener(new ActionListener() {

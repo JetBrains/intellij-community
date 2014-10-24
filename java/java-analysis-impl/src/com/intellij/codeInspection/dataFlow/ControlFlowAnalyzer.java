@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -100,7 +101,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     addInstruction(new ReturnInstruction(false, null));
 
-    new LiveVariablesAnalyzer(myCurrentFlow, myFactory).flushDeadVariablesOnStatementFinish();
+    if (Registry.is("idea.dfa.live.variables.analysis")) {
+      new LiveVariablesAnalyzer(myCurrentFlow, myFactory).flushDeadVariablesOnStatementFinish();
+    }
 
     return myCurrentFlow;
   }

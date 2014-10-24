@@ -249,6 +249,12 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   @Override
+  public PsiMethod createMethod(@NotNull @NonNls String name, PsiType returnType, PsiElement context) throws IncorrectOperationException {
+    return createMethodFromText("public " + returnType.getCanonicalText(true) + " " + name + "() {}", context);
+  }
+
+  @NotNull
+  @Override
   public PsiMethod createConstructor() {
     return createConstructor("_Dummy_");
   }

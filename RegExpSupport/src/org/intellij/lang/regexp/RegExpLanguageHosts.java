@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -71,6 +72,14 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     else {
       return !("\\]".equals(text) || "\\}".equals(text));
     }
+  }
+
+  public boolean supportsExtendedHexCharacter(@Nullable RegExpChar regExpChar) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return true;
+    }
+    final RegExpLanguageHost host = findRegExpHost(regExpChar);
+    return host != null && host.supportsExtendedHexCharacter(regExpChar);
   }
 
   public boolean supportsNamedGroupSyntax(@Nullable final RegExpGroup group) {

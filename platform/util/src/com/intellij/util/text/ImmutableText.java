@@ -96,7 +96,14 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
     return new ImmutableText(new LeafNode(chars));
   }
 
-  private ImmutableText ensureChunked() {
+  /**
+   * When first loaded, ImmutableText contents are stored as a single large array. This saves memory but isn't
+   * modification-friendly as it disallows slightly changed texts to retain most of the internal structure of the
+   * original document. Whoever retains old non-chunked version will use more memory than really needed.
+   *
+   * @return a copy of this text better prepared for small modifications to fully enable structure-sharing capabilities
+   */
+  public ImmutableText ensureChunked() {
     if (length() > BLOCK_SIZE && myNode instanceof LeafNode) {
       return new ImmutableText(nodeOf(((LeafNode)myNode)._data, 0, length()));
     }
@@ -292,7 +299,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
    * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
    *         (start > end) || (end > this.length())</code>
    */
-  private ImmutableText subtext(int start, int end) {
+  public ImmutableText subtext(int start, int end) {
     if ((start < 0) || (start > end) || (end > length()))
       throw new IndexOutOfBoundsException();
     if ((start == 0) && (end == length()))

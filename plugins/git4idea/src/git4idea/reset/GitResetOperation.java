@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -32,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUiHandlerImpl;
@@ -95,7 +95,7 @@ public class GitResetOperation {
         results.put(repository, result);
         repository.update();
         VfsUtil.markDirtyAndRefresh(true, true, false, root);
-        VcsUtil.markFileAsDirty(myProject, root);
+        VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
       }
     }
     finally {

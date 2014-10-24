@@ -2,13 +2,17 @@ package org.jetbrains.protocolReader;
 
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class GlobalScope {
   private final State state;
 
-  public GlobalScope(Collection<TypeHandler<?>> typeHandlers, Collection<GeneratedCodeMap> basePackages) {
+  public GlobalScope(Collection<TypeHandler<?>> typeHandlers, Collection<Map<Class<?>, String>> basePackages) {
     state = new State(typeHandlers, basePackages);
   }
 
@@ -38,13 +42,22 @@ public class GlobalScope {
 
   private static class State {
     private final Map<TypeHandler<?>, String> typeToName;
-    private final Collection<GeneratedCodeMap> basePackages;
+    private final Collection<Map<Class<?>, String>> basePackages;
     private final THashSet<TypeHandler<?>> typesWithFactories = new THashSet<>();
     private final List<TypeHandler<?>> typesWithFactoriesList = new ArrayList<>();
 
-    State(Collection<TypeHandler<?>> typeHandlers, Collection<GeneratedCodeMap> basePackages) {
+    State(Collection<TypeHandler<?>> typeHandlers, Collection<Map<Class<?>, String>> basePackages) {
       this.basePackages = basePackages;
-      typeToName = buildLocalTypeNameMap(typeHandlers);
+
+      int uniqueCode = 0;
+      Map<TypeHandler<?>, String> result = new THashMap<>(typeHandlers.size());
+      for (TypeHandler<?> handler : typeHandlers) {
+        String conflict = result.put(handler, Util.TYPE_NAME_PREFIX + Integer.toString(uniqueCode++));
+        if (conflict != null) {
+          throw new RuntimeException();
+        }
+      }
+      typeToName = result;
     }
 
     String getTypeImplReference(TypeHandler<?> typeHandler) {
@@ -53,8 +66,8 @@ public class GlobalScope {
         return localName;
       }
 
-      for (GeneratedCodeMap base : basePackages) {
-        String result = base.getTypeImplementationReference(typeHandler.getTypeClass());
+      for (Map<Class<?>, String> base : basePackages) {
+        String result = base.get(typeHandler.getTypeClass());
         if (result != null) {
           return result;
         }
@@ -71,37 +84,9 @@ public class GlobalScope {
       return name;
     }
 
+    @NotNull
     String getTypeImplShortName(TypeHandler<?> typeHandler) {
-      String result = typeToName.get(typeHandler);
-      if (result == null) {
-        throw new RuntimeException();
-      }
-      return result;
-    }
-
-    private static Map<TypeHandler<?>, String> buildLocalTypeNameMap(Collection<TypeHandler<?>> typeHandlers) {
-      List<TypeHandler<?>> list = new ArrayList<>(typeHandlers);
-      // Sort to produce consistent GeneratedCodeMap later.
-      Collections.sort(list, new Comparator<TypeHandler<?>>() {
-        @Override
-        public int compare(TypeHandler<?> o1, TypeHandler<?> o2) {
-          return getName(o1).compareTo(getName(o2));
-        }
-
-        private String getName(TypeHandler<?> handler) {
-          return handler.getTypeClass().getName();
-        }
-      });
-
-      int uniqueCode = 0;
-      Map<TypeHandler<?>, String> result = new THashMap<>(list.size());
-      for (TypeHandler<?> handler : list) {
-        String conflict = result.put(handler, Util.TYPE_NAME_PREFIX + Integer.toString(uniqueCode++));
-        if (conflict != null) {
-          throw new RuntimeException();
-        }
-      }
-      return result;
+      return typeToName.get(typeHandler);
     }
   }
 }

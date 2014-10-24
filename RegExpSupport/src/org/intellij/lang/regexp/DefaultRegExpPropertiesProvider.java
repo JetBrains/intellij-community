@@ -89,8 +89,12 @@ public final class DefaultRegExpPropertiesProvider {
   private final String[][] myCharacterClasses = {
     {"d", "digit: [0-9]"},
     {"D", "nondigit: [^0-9]"},
+    {"h", "horizontal whitespace character: [ \\t\\xA0\\u1680\\u180e\\u2000-\\u200a\\u202f\\u205f\\u3000]"},
+    {"H", "non-horizontal whitespace character: [^\\h]"},
     {"s", "whitespace [ \\t\\n\\x0B\\f\\r]"},
     {"S", "non-whitespace [^\\s]"},
+    {"v", "vertical whitespace character: [\\n\\x0B\\f\\r\\x85\\u2028\\u2029]"},
+    {"V", "non-vertical whitespace character: [^\\v]"},
     {"w", "word character [a-zA-Z_0-9]"},
     {"W", "nonword character [^\\w]"},
     {"b", "word boundary"},

@@ -1810,7 +1810,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     pane.installComparator();
   }
 
-  private class ManualOrderAction extends ToggleAction {
+  private class ManualOrderAction extends ToggleAction implements DumbAware {
     private ManualOrderAction() {
       super(IdeBundle.message("action.manual.order"), IdeBundle.message("action.manual.order"), AllIcons.ObjectBrowser.Sorted);
     }
@@ -1834,7 +1834,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
   
-  private class SortByTypeAction extends ToggleAction {
+  private class SortByTypeAction extends ToggleAction implements DumbAware {
     private SortByTypeAction() {
       super(IdeBundle.message("action.sort.by.type"), IdeBundle.message("action.sort.by.type"), AllIcons.ObjectBrowser.SortByType);
     }
@@ -1857,7 +1857,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private class FoldersAlwaysOnTopAction extends ToggleAction {
+  private class FoldersAlwaysOnTopAction extends ToggleAction implements DumbAware {
     private FoldersAlwaysOnTopAction() {
       super("Folders Always on Top");
     }
