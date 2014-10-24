@@ -198,10 +198,13 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   public AnAction[] createConsoleActions() {
     List<AnAction> actions = Lists.newArrayList();
     actions.addAll(Arrays.asList(myPrimaryConsoleView.createConsoleActions()));
-
     actions.add(mySwitchConsoleAction);
+    addExtraActions(actions);
 
     return ArrayUtil.toObjectArray(actions, AnAction.class);
+  }
+
+  protected void addExtraActions(List<AnAction> actions) {
   }
 
   @Override
