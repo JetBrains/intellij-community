@@ -872,7 +872,6 @@ public class ExprProcessor implements CodeConstants {
                                          boolean castAlways,
                                          BytecodeMappingTracer tracer) {
 
-    boolean ret = false;
     VarType rightType = exprent.getExprType();
 
     TextBuffer res = exprent.toJava(indent, tracer);
@@ -889,12 +888,11 @@ public class ExprProcessor implements CodeConstants {
       }
 
       res.prepend("(" + getCastTypeName(leftType) + ")");
-      ret = true;
     }
 
     buffer.append(res);
 
-    return ret;
+    return cast;
   }
 
   private static boolean isIntConstant(Exprent exprent) {
