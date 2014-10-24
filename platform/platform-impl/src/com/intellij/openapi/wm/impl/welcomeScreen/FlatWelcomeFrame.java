@@ -294,8 +294,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         public void actionPerformed(@NotNull AnActionEvent e) {
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
           final PopupFactoryImpl.ActionGroupPopup popup = (PopupFactoryImpl.ActionGroupPopup)JBPopupFactory.getInstance()
-            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
-                                    10, null);
+            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, ActionPlaces.WELCOME_SCREEN);
           popup.showUnderneathOfLabel(ref.get());
         }
       };
