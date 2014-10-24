@@ -84,7 +84,7 @@ public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
     return new PublicFieldBasedOptionDescription(option, "reference.settings.ide.settings.notifications", field) {
       @Override
       public Object getInstance() {
-        return NotificationsConfigurationImpl.getNotificationsConfigurationImpl();
+        return NotificationsConfigurationImpl.getInstanceImpl();
       }
     };
   }

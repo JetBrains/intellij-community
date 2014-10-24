@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.notification;
 
 import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.NotNull;
 
 public abstract class NotificationsConfiguration extends NotificationsAdapter {
   public abstract void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud);
@@ -24,7 +23,4 @@ public abstract class NotificationsConfiguration extends NotificationsAdapter {
   public static NotificationsConfiguration getNotificationsConfiguration() {
     return ApplicationManager.getApplication().getComponent(NotificationsConfiguration.class);
   }
-
-  @Deprecated
-  public abstract void registerToolWindowCapability(@NotNull String groupId, @NotNull String toolWindowId);
 }
