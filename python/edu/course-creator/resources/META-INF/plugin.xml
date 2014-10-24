@@ -48,6 +48,9 @@
     <action id="CreateLesson" class="org.jetbrains.plugins.coursecreator.actions.CCCreateLesson">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
+    <action id="ChangeCourseInfo" class="org.jetbrains.plugins.coursecreator.actions.CCChangeCourseInfo">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="PackCourse"/>
+    </action>
     <action id="CreateTaskFile" class="org.jetbrains.plugins.coursecreator.actions.CCCreateTaskFile">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>

@@ -27,6 +27,13 @@ public class CCNewProjectPanel {
     myDescription.setLineWrap(true);
   }
 
+  public CCNewProjectPanel(String name, String author, String description) {
+    this();
+    myName.setText(name);
+    myAuthorField.setText(author);
+    myDescription.setText(description);
+  }
+
   public JPanel getMainPanel() {
     return myPanel;
   }
@@ -54,7 +61,9 @@ public class CCNewProjectPanel {
 
     @Override
     protected void textChanged(DocumentEvent e) {
-      myValidationManager.validate();
+      if (myValidationManager != null) {
+        myValidationManager.validate();
+      }
     }
   }
 }
