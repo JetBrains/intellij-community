@@ -20,6 +20,8 @@ import icons.CourseCreatorIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.coursecreator.actions.CCCreateLesson;
+import org.jetbrains.plugins.coursecreator.actions.CCCreateTask;
 import org.jetbrains.plugins.coursecreator.format.Course;
 import org.jetbrains.plugins.coursecreator.ui.CCNewProjectPanel;
 
@@ -69,9 +71,10 @@ public class CCProjectGenerator extends PythonProjectGenerator implements Direct
         catch (Exception ignored) {
         }
         DirectoryUtil.createSubdirectories("hints", projectDir, "\\/");
+        final PsiDirectory lessonDir = CCCreateLesson.createLesson(projectDir, 1, null, null, course);
+        CCCreateTask.createTask(null, project, lessonDir, false);
       }
     }.execute();
-
   }
 
   @NotNull
@@ -81,7 +84,7 @@ public class CCProjectGenerator extends PythonProjectGenerator implements Direct
     message = mySettingsPanel.getDescription().equals("") ? "Enter description" : message;
     message = mySettingsPanel.getAuthor().equals("") ? "Enter author name" : message;
     message = mySettingsPanel.getName().equals("") ? "Enter course name" : message;
-    return message.equals("")? ValidationResult.OK : new ValidationResult(message) ;
+    return message.equals("") ? ValidationResult.OK : new ValidationResult(message);
   }
 
   @Nullable
