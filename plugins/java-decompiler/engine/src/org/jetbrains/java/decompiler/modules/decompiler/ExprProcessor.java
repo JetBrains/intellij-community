@@ -855,8 +855,12 @@ public class ExprProcessor implements CodeConstants {
     return defaultval;
   }
 
-  public static boolean getCastedExprent(Exprent exprent, VarType leftType, TextBuffer buffer, int indent,
-                                                               boolean castNull, BytecodeMappingTracer tracer) {
+  public static boolean getCastedExprent(Exprent exprent,
+                                         VarType leftType,
+                                         TextBuffer buffer,
+                                         int indent,
+                                         boolean castNull,
+                                         BytecodeMappingTracer tracer) {
     return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, tracer);
   }
 
@@ -865,7 +869,8 @@ public class ExprProcessor implements CodeConstants {
                                          TextBuffer buffer,
                                          int indent,
                                          boolean castNull,
-                                         boolean castAlways, BytecodeMappingTracer tracer) {
+                                         boolean castAlways,
+                                         BytecodeMappingTracer tracer) {
 
     boolean ret = false;
     VarType rightType = exprent.getExprType();
@@ -873,16 +878,10 @@ public class ExprProcessor implements CodeConstants {
     TextBuffer res = exprent.toJava(indent, tracer);
 
     boolean cast =
-      !leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT);
-    cast |= castAlways;
-
-    if (!cast && castNull && rightType.type == CodeConstants.TYPE_NULL) {
-      // check for a nameless anonymous class
-      cast = !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType));
-    }
-    if (!cast) {
-      cast = isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType);
-    }
+      castAlways ||
+      (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
+      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
+      (isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType));
 
     if (cast) {
       if (exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
