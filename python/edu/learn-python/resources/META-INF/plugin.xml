@@ -2,7 +2,7 @@
 <idea-plugin version="2">
   <id>com.jetbrains.python.edu.learn-python</id>
   <name>Educational plugin for PyCharm</name>
-  <version>1.0</version>
+  <version>1.1</version>
   <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
 
   <description><![CDATA[
