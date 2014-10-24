@@ -294,8 +294,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         public void actionPerformed(@NotNull AnActionEvent e) {
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
           final PopupFactoryImpl.ActionGroupPopup popup = (PopupFactoryImpl.ActionGroupPopup)JBPopupFactory.getInstance()
-            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
-                                    10, null);
+            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, ActionPlaces.WELCOME_SCREEN);
           popup.showUnderneathOfLabel(ref.get());
         }
       };
@@ -312,6 +311,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     private JComponent createActionPanel() {
       JPanel actions = new NonOpaquePanel();
+      actions.setBorder(new EmptyBorder(0, 10, 0, 0));
       actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
@@ -509,7 +509,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       private final ActionGroup myGroup;
 
       public IconsFreeActionGroup(ActionGroup group) {
+        super(group.getTemplatePresentation().getText(), group.getTemplatePresentation().getDescription(), null);
         myGroup = group;
+      }
+
+      @Override
+      public boolean isPopup() {
+        return myGroup.isPopup();
       }
 
       @NotNull
