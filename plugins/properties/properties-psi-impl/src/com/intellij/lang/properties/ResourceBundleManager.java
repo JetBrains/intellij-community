@@ -87,12 +87,10 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
           }
         }
 
-        if (!myState.getCustomResourceBundles().isEmpty()) {
-          for (CustomResourceBundleState customResourceBundleState : myState.getCustomResourceBundles()) {
-            if (customResourceBundleState.getFileUrls().remove(oldAndNewUrls.getValue().getFirst())) {
-              customResourceBundleState.getFileUrls().add(oldAndNewUrls.getValue().getSecond());
-              break;
-            }
+        for (CustomResourceBundleState customResourceBundleState : myState.getCustomResourceBundles()) {
+          if (customResourceBundleState.getFileUrls().remove(oldAndNewUrls.getValue().getFirst())) {
+            customResourceBundleState.getFileUrls().add(oldAndNewUrls.getValue().getSecond());
+            break;
           }
         }
 
@@ -241,7 +239,7 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
   }
 
   public boolean isDefaultDissociated(final @NotNull VirtualFile virtualFile) {
-    if (myState.getDissociatedFiles().isEmpty() || myState.getCustomResourceBundles().isEmpty()) {
+    if (myState.getDissociatedFiles().isEmpty() && myState.getCustomResourceBundles().isEmpty()) {
       return false;
     }
     final String url = virtualFile.getUrl();

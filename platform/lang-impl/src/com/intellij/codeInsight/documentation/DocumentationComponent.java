@@ -105,6 +105,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyDictionary<String, Image> myImageProvider = new MyDictionary<String, Image>() {
     @Override
     public Image get(Object key) {
+      if (myManager == null || key == null) return null;
       PsiElement element = getElement();
       if (element == null) return null;
       URL url = (URL)key;

@@ -7,8 +7,7 @@ import java.util.LinkedList;
 import java.util.EnumSet;
 import com.intellij.psi.StringEscapesTokenTypes;
 
-// IDEADEV-11055
-@SuppressWarnings({ "ALL", "SameParameterValue", "WeakerAccess", "SameReturnValue", "RedundantThrows", "UnusedDeclaration", "UnusedDeclaration" })
+@SuppressWarnings("ALL")
 %%
 
 %class _RegExLexer
@@ -120,12 +119,12 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE} {ESCAPE}    { return RegExpTT.ESC_CHARACTER; }
 
 /* hex escapes */
-{ESCAPE} "x" {HEX_CHAR}{2}   { return RegExpTT.HEX_CHAR; }
-{ESCAPE} "x" {ANY}{0,2}      { return RegExpTT.BAD_HEX_VALUE; }
+{ESCAPE} "x" ({HEX_CHAR}{2}|{LBRACE}{HEX_CHAR}{1,6}{RBRACE})  { return RegExpTT.HEX_CHAR; }
+{ESCAPE} "x" ({HEX_CHAR}?|{LBRACE}{HEX_CHAR}*{RBRACE}?)   { return RegExpTT.BAD_HEX_VALUE; }
 
 /* unicode escapes */
 {ESCAPE} "u" {HEX_CHAR}{4}   { return RegExpTT.UNICODE_CHAR; }
-{ESCAPE} "u" {ANY}{0,4}      { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+{ESCAPE} "u" {HEX_CHAR}{0,3} { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
 
 /* octal escapes */
 {ESCAPE} "0" [0-7]{1,3}      { return RegExpTT.OCT_CHAR; }

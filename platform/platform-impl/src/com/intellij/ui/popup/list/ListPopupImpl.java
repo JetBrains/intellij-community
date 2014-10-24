@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.UIUtil;
@@ -74,6 +75,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     if (maxRowCount != -1){
       myMaxRowCount = maxRowCount;
     }
+  }
+
+  public void showUnderneathOfLabel(@NotNull JLabel label) {
+    int offset = -UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding().left;
+    if (label.getIcon() != null) {
+      offset += label.getIcon().getIconWidth() + label.getIconTextGap();
+    }
+    show(new RelativePoint(label, new Point(offset, label.getHeight() + 1)));
   }
 
   protected ListPopupModel getListModel() {

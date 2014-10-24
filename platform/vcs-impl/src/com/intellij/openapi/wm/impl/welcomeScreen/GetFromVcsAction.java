@@ -38,7 +38,7 @@ public class GetFromVcsAction extends WelcomePopupAction{
   }
 
   protected String getCaption() {
-    return UIBundle.message("welcome.screen.get.from.vcs.action.checkout.from.list.popup.title");
+    return null;
   }
 
   protected String getTextForEmpty() {

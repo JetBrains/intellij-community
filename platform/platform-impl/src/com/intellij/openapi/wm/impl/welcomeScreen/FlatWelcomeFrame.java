@@ -43,10 +43,10 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -277,7 +277,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       }
 
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
-      toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.Settings, !registeredVisible));
+      toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.GearPlain, !registeredVisible));
       toolbar.add(createActionLink("Get Help", IdeActions.GROUP_WELCOME_SCREEN_DOC, null, false));
       
       panel.add(toolbar, BorderLayout.EAST);
@@ -292,16 +292,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       AnAction action = new AnAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          int offset = - UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding().left;
-          if (ref.get().getIcon() != null) {
-            offset += ref.get().getIcon().getIconWidth() + ref.get().getIconTextGap();
-          }
-          RelativePoint point = new RelativePoint(ref.get(), new Point(offset, ref.get().getHeight() + 1));
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
-          JBPopupFactory.getInstance()
+          final PopupFactoryImpl.ActionGroupPopup popup = (PopupFactoryImpl.ActionGroupPopup)JBPopupFactory.getInstance()
             .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
-                                    10, null)
-            .show(point);
+                                    10, null);
+          popup.showUnderneathOfLabel(ref.get());
         }
       };
       ref.set(new ActionLink(text, icon, action));
@@ -369,7 +364,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     private JComponent createLogo() {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      JLabel logo = new JLabel(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()));
+      ApplicationInfoEx app = ApplicationInfoEx.getInstanceEx();
+      JLabel logo = new JLabel(IconLoader.getIcon(app.getWelcomeScreenLogoUrl()));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
       JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -377,7 +373,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       appName.setForeground(JBColor.foreground());
       appName.setFont(font.deriveFont(36f).deriveFont(Font.PLAIN));
       appName.setHorizontalAlignment(SwingConstants.CENTER);
-      JLabel version = new JLabel("Version " + ApplicationInfoEx.getInstanceEx().getFullVersion());
+      String appVersion = "Version " + app.getFullVersion();
+      
+      if (app.isEAP() && app.getBuild().getBuildNumber() < Integer.MAX_VALUE) {
+        appVersion += " (" + app.getBuild().asString() + ")";
+      }
+      
+      JLabel version = new JLabel(appVersion);
       version.setFont(font.deriveFont(16f).deriveFont(Font.PLAIN));
       version.setHorizontalAlignment(SwingConstants.CENTER);
       version.setForeground(Gray._128);
@@ -427,7 +429,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         public void keyPressed(KeyEvent e) {
           final JList list = UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class);
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            action.actionPerformed(new AnActionEvent(e,
+            InputEvent event = e;
+            if (e.getComponent() instanceof JComponent) {
+              ActionLink link = UIUtil.findComponentOfType((JComponent)e.getComponent(), ActionLink.class);
+              if (link != null) {
+                event = new MouseEvent(link, MouseEvent.MOUSE_CLICKED, e.getWhen(), e.getModifiers(), 0, 0, 1, false, MouseEvent.BUTTON1);
+              }
+            }
+            action.actionPerformed(new AnActionEvent(event,
                                                      DataManager.getInstance().getDataContext(),
                                                      ActionPlaces.WELCOME_SCREEN,
                                                      action.getTemplatePresentation().clone(),
