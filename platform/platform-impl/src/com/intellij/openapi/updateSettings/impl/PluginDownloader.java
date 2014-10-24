@@ -98,7 +98,7 @@ public class PluginDownloader {
     return prepareToInstall(pi, myBuildNumber);
   }
 
-  public boolean prepareToInstall(@Nullable ProgressIndicator pi, @Nullable BuildNumber forBuildNumber) throws IOException {
+  public boolean prepareToInstall(@Nullable ProgressIndicator progressIndicator, @Nullable BuildNumber forBuildNumber) throws IOException {
     if (myFile != null) {
       return true;
     }
@@ -118,7 +118,7 @@ public class PluginDownloader {
     // download plugin
     String errorMessage = IdeBundle.message("unknown.error");
     try {
-      myFile = downloadPlugin(pi);
+      myFile = downloadPlugin(progressIndicator);
     }
     catch (IOException ex) {
       myFile = null;
@@ -236,15 +236,15 @@ public class PluginDownloader {
     }
   }
 
-  private File downloadPlugin(@Nullable final ProgressIndicator pi) throws IOException {
+  private File downloadPlugin(@Nullable final ProgressIndicator progressIndicator) throws IOException {
     final File pluginsTemp = new File(PathManager.getPluginTempPath());
     if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
       throw new IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp));
     }
     final File file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false);
 
-    if (pi != null) {
-      pi.setText(IdeBundle.message("progress.connecting"));
+    if (progressIndicator != null) {
+      progressIndicator.setText(IdeBundle.message("progress.connecting"));
     }
 
     URLConnection connection = null;
@@ -252,19 +252,19 @@ public class PluginDownloader {
       connection = openConnection(myPluginUrl);
 
       final InputStream is = (ApplicationManager.getApplication() != null)
-                              ? UrlConnectionUtil.getConnectionInputStream(connection, pi)
+                              ? UrlConnectionUtil.getConnectionInputStream(connection, progressIndicator)
                               : connection.getInputStream();
       if (is == null) {
         throw new IOException("Failed to open connection");
       }
 
-      if (ApplicationManager.getApplication() != null && pi != null) {
-        pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
+      if (progressIndicator != null && ApplicationManager.getApplication() != null) {
+        progressIndicator.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
       }
       try {
         final OutputStream fos = new BufferedOutputStream(new FileOutputStream(file, false));
         try {
-          NetUtils.copyStreamContent(pi, is, fos, connection.getContentLength());
+          NetUtils.copyStreamContent(progressIndicator, is, fos, connection.getContentLength());
         }
         finally {
           fos.close();
