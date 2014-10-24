@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,6 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     myDescription = description;
     myShowFilePath = showFilePath;
     Map<ExportableComponent, ComponentElementProperties> componentToContainingListElement = new LinkedHashMap<ExportableComponent, ComponentElementProperties>();
-
     for (ExportableComponent component : fileToComponents.values()) {
       if (!addToExistingListElement(component, componentToContainingListElement, fileToComponents)) {
         ComponentElementProperties componentElementProperties = new ComponentElementProperties();
@@ -72,10 +72,9 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
         componentToContainingListElement.put(component, componentElementProperties);
       }
     }
-    final Set<ComponentElementProperties> componentElementProperties = new LinkedHashSet<ComponentElementProperties>(componentToContainingListElement.values());
     myChooser = new ElementsChooser<ComponentElementProperties>(true);
     myChooser.setColorUnmarkedElements(false);
-    for (final ComponentElementProperties componentElementProperty : componentElementProperties) {
+    for (ComponentElementProperties componentElementProperty : new LinkedHashSet<ComponentElementProperties>(componentToContainingListElement.values())) {
       myChooser.addElement(componentElementProperty, true, componentElementProperty);
     }
     myChooser.sort(new Comparator<ComponentElementProperties>() {
@@ -149,7 +148,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   }
 
   private static boolean addToExistingListElement(@NotNull ExportableComponent component,
-                                                  Map<ExportableComponent, ComponentElementProperties> componentToContainingListElement,
+                                                  @NotNull Map<ExportableComponent, ComponentElementProperties> componentToContainingListElement,
                                                   @NotNull MultiMap<File, ExportableComponent> fileToComponents) {
     File file = null;
     for (File exportFile : component.getExportFiles()) {
@@ -236,9 +235,8 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   }
 
   Set<ExportableComponent> getExportableComponents() {
-    final List<ComponentElementProperties> markedElements = myChooser.getMarkedElements();
-    final Set<ExportableComponent> components = new HashSet<ExportableComponent>();
-    for (ComponentElementProperties elementProperties : markedElements) {
+    Set<ExportableComponent> components = new THashSet<ExportableComponent>();
+    for (ComponentElementProperties elementProperties : myChooser.getMarkedElements()) {
       components.addAll(elementProperties.myComponents);
     }
     return components;
@@ -265,11 +263,9 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
     public String toString() {
       Set<String> names = new LinkedHashSet<String>();
-      
-      for (final ExportableComponent component : myComponents) {
+      for (ExportableComponent component : myComponents) {
         names.add(component.getPresentableName());
       }
-
       return StringUtil.join(names.toArray(new String[names.size()]), ", ");
     }
   }
