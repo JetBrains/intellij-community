@@ -193,7 +193,7 @@ public class StudyEditor implements TextEditor {
 
   private void initializeButtons(@NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {
     myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
-    myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
+    myPrevTaskButton = addButton(taskActionsPanel, "Previous Task", StudyIcons.Prev);
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", AllIcons.Actions.Forward);
     myRefreshButton = addButton(taskActionsPanel, "Start task again", AllIcons.Actions.Refresh);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
