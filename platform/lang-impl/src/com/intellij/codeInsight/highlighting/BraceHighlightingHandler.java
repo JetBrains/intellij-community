@@ -440,7 +440,7 @@ public class BraceHighlightingHandler {
             if (myProject.isDisposed() || myEditor.isDisposed()) return;
             Color color = attributes.getBackgroundColor();
             if (color == null) return;
-            color = ColorUtil.isDark(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()) ? ColorUtil.shift(color, 1.1d) : color.darker();
+            color = ColorUtil.isDark(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()) ? ColorUtil.shift(color, 1.5d) : color.darker();
             lineMarkFragment(startLine, endLine, color);
           }
         };
