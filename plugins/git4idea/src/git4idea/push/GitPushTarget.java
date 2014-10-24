@@ -22,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
-import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitRefNameValidator;
@@ -31,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.ParseException;
 import java.util.Collection;
+
+import static git4idea.GitUtil.findRemoteBranch;
 
 class GitPushTarget implements PushTarget {
 
@@ -93,16 +94,6 @@ class GitPushTarget implements PushTarget {
     });
   }
 
-  @Nullable
-  static GitRemoteBranch findRemoteBranch(@NotNull GitRepository repository, @NotNull final GitRemote remote,
-                                          @NotNull final String nameAtRemote) {
-    return ContainerUtil.find(repository.getBranches().getRemoteBranches(), new Condition<GitRemoteBranch>() {
-      @Override
-      public boolean value(GitRemoteBranch remoteBranch) {
-        return remoteBranch.getRemote().equals(remote) &&
-               remoteBranch.getNameForRemoteOperations().equals(GitBranchUtil.stripRefsPrefix(nameAtRemote));
-      }
-    });
-  }
+
 
 }
