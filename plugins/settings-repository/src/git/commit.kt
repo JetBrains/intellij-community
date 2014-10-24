@@ -10,6 +10,8 @@ import org.jetbrains.settingsRepository.PROJECTS_DIR_NAME
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.AddFile
 import com.intellij.util.PathUtilRt
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import java.net.InetAddress
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   indicator.checkCanceled()
@@ -46,6 +48,10 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   indicator.checkCanceled()
 
   val builder = StringBuilder()
+  builder.append(ApplicationInfoEx.getInstanceEx()!!.getFullApplicationName())
+  builder.append(' ' ).append('<').append(System.getProperty("user.name", "unknown-user")).append('@').append(InetAddress.getLocalHost().getHostName())
+  builder.append(' ')
+
   // we use Github (edit via web UI) terms here
   addCompactList("Update", diff.getChanged(), builder)
   addCompactList("Create", diff.getAdded(), builder)
@@ -77,7 +83,7 @@ private fun addList(name: String, list: Collection<String>, builder: StringBuild
   }
 
   if (compact) {
-    if (builder.length() != 0) {
+    if (builder.length() != 0 && builder.charAt(builder.length() - 1) != ' ') {
       builder.append('\t')
     }
     builder.append(name)
