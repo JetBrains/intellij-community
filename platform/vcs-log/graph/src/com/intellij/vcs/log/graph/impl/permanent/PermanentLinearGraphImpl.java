@@ -69,20 +69,18 @@ public class PermanentLinearGraphImpl implements LinearGraph {
     List<GraphEdge> result = ContainerUtil.newArrayList();
 
     if (nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1))
-      result.add(new GraphEdge(nodeIndex - 1, nodeIndex, USUAL));
+      result.add(GraphEdge.createNormalEdge(nodeIndex - 1, nodeIndex, USUAL));
 
     for (int i = myNodeToEdgeIndex.get(nodeIndex); i < myNodeToEdgeIndex.get(nodeIndex + 1); i++) {
       int node = myLongEdges.get(i);
       if (node < 0)
-        result.add(new GraphEdge(nodeIndex, null, node, GraphEdgeType.NOT_LOAD_COMMIT));
-      else if (nodeIndex < node)
-        result.add(new GraphEdge(nodeIndex, node, USUAL));
+        result.add(GraphEdge.createEdgeWithAdditionInfo(nodeIndex, node, GraphEdgeType.NOT_LOAD_COMMIT));
       else
-        result.add(new GraphEdge(node, nodeIndex, USUAL));
+        result.add(GraphEdge.createNormalEdge(nodeIndex, node, USUAL));
     }
 
     if (mySimpleNodes.get(nodeIndex))
-      result.add(new GraphEdge(nodeIndex, nodeIndex + 1, USUAL));
+      result.add(GraphEdge.createNormalEdge(nodeIndex, nodeIndex + 1, USUAL));
 
     return result;
   }
