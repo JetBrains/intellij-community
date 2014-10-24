@@ -254,6 +254,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean mySoftWrapsChanged;
 
+  // transient fields used during painting
+  private VisualPosition mySelectionStartPosition;
+  private VisualPosition mySelectionEndPosition;
+
   private Color myLastBackgroundColor    = null;
   private Point myLastBackgroundPosition = null;
   private int myLastBackgroundWidth;
@@ -2250,6 +2254,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myLastBackgroundPosition = null;
     myLastBackgroundColor = null;
+    mySelectionStartPosition = null;
+    mySelectionEndPosition = null;
 
     int start = clipStartOffset;
 
@@ -2555,6 +2561,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     position.x = width;
   }
 
+
+  private VisualPosition getSelectionStartPosition() {
+    if (mySelectionStartPosition == null) {
+      // We cache the value to avoid repeated invocations of Editor.logicalPositionToOffset which is currently slow for long lines
+      mySelectionStartPosition = getSelectionModel().getSelectionStartPosition();
+    }
+    return mySelectionStartPosition;
+  }
+
+  private VisualPosition getSelectionEndPosition() {
+    if (mySelectionEndPosition == null) {
+      // We cache the value to avoid repeated invocations of Editor.logicalPositionToOffset which is currently slow for long lines
+      mySelectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    }
+    return mySelectionEndPosition;
+  }
+
   /**
    * End user is allowed to perform selection by visual coordinates (e.g. by dragging mouse with left button hold). There is a possible
    * case that such a move intersects with soft wrap introduced virtual space. We want to draw corresponding selection background
@@ -2576,8 +2599,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                             @JdkConstants.FontStyle int fontType) {
     // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
     // there then.
-    VisualPosition selectionStartPosition = getSelectionModel().getSelectionStartPosition();
-    VisualPosition selectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    VisualPosition selectionStartPosition = getSelectionStartPosition();
+    VisualPosition selectionEndPosition = getSelectionEndPosition();
     if (selectionStartPosition.equals(selectionEndPosition)) {
       return;
     }
@@ -2637,8 +2660,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                              @NotNull SoftWrap softWrap) {
     // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
     // there then.
-    VisualPosition selectionStartPosition = getSelectionModel().getSelectionStartPosition();
-    VisualPosition selectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    VisualPosition selectionStartPosition = getSelectionStartPosition();
+    VisualPosition selectionEndPosition = getSelectionEndPosition();
     if (selectionStartPosition.equals(selectionEndPosition)) {
       return;
     }
