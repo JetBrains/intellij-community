@@ -39,6 +39,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
@@ -116,6 +117,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         }
       }
     };
+    myTree.setBorder(new EmptyBorder(2, 0, 0, 0));  //additional vertical indent
     myTree.setEditable(true);
     myTree.setShowsRootHandles(root.getChildCount() > 1);
     MyTreeCellEditor treeCellEditor = new MyTreeCellEditor();
