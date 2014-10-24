@@ -47,7 +47,7 @@ public abstract class LighterAST {
   @NotNull
   public abstract List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent);
 
-  public static @Nullable LighterAST getLighterASTFromFileAST(@NotNull FileASTNode node, @NotNull Language language) {
+  public static @NotNull LighterAST getLighterASTFromFileAST(@NotNull FileASTNode node, @NotNull Language language) {
     final IFileElementType contentType = LanguageParserDefinitions.INSTANCE.forLanguage(language).getFileNodeType();
     assert contentType instanceof ILightStubFileElementType;
 
