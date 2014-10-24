@@ -6,7 +6,8 @@
   <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
 
   <description><![CDATA[
-
+      Educational plugin for students. This plugin allows to learn Python
+       using intelligent PyCharm IDE.
       ]]></description>
 
   <change-notes><![CDATA[
