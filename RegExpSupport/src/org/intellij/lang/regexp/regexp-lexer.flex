@@ -33,6 +33,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
     private boolean allowHexDigitClass;
     private boolean allowEmptyCharacterClass;
     private boolean allowHorizontalWhitespaceClass;
+    private boolean allowCategoryShorthand;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -44,6 +45,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
       this.allowHexDigitClass = capabilities.contains(RegExpCapability.ALLOW_HEX_DIGIT_CLASS);
       this.allowHorizontalWhitespaceClass = capabilities.contains(RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS);
       this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
+      this.allowCategoryShorthand = capabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND);
     }
 
     private void yypushstate(int state) {
@@ -176,6 +178,7 @@ HEX_CHAR=[0-9a-fA-F]
 
 <PROP> {
   {LBRACE}                    { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE; }
+  "L"|"M"|"Z"|"S"|"N"|"P"|"C" { yypopstate(); if (allowCategoryShorthand) return RegExpTT.CATEGORY_SHORT_HAND; else yypushback(1); }
   {ANY}                       { yypopstate(); yypushback(1); }
 }
 
