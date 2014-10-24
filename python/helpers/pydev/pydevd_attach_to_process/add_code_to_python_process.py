@@ -549,10 +549,10 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
     print('Running: %s' % (' '.join(cmd)))
     p = subprocess.Popen(
         ' '.join(cmd),
-        shell=False,
+        shell=True,
         env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=None,
+        stderr=None,
         )
     print('Running lldb in target process.')
     out, err = p.communicate()
