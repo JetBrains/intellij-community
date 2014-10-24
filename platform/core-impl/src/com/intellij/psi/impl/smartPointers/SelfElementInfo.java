@@ -38,13 +38,13 @@ import java.lang.ref.SoftReference;
 public class SelfElementInfo implements SmartPointerElementInfo {
   protected final VirtualFile myVirtualFile;
   private Reference<RangeMarker> myMarkerRef; // create marker only in case of live document
-  private int mySyncStartOffset;
-  private int mySyncEndOffset;
-  protected boolean mySyncMarkerIsValid;
+  private volatile int mySyncStartOffset;
+  private volatile int mySyncEndOffset;
+  protected volatile boolean mySyncMarkerIsValid;
   private final Class myType;
   protected final Project myProject;
   @SuppressWarnings({"UnusedDeclaration"})
-  private RangeMarker myRangeMarker; //maintain hard reference during modification
+  private volatile RangeMarker myRangeMarker; //maintains hard reference during modification
   protected final Language myLanguage;
 
   protected SelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor) {
@@ -90,7 +90,9 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   // before change
   @Override
   public void fastenBelt(int offset, @Nullable RangeMarker[] cachedRangeMarkers) {
-    if (!mySyncMarkerIsValid) return;
+    if (!mySyncMarkerIsValid) {
+      return;
+    }
     RangeMarker marker = getMarker();
     int actualEndOffset = marker == null || !marker.isValid() ? getSyncEndOffset() : marker.getEndOffset();
     if (offset > actualEndOffset) {
@@ -115,13 +117,16 @@ public class SelfElementInfo implements SmartPointerElementInfo {
             }
           }
         }
-        else {
+        if (marker == null) {
           marker = document.createRangeMarker(start, end, true);
         }
       }
       setMarker(marker);
     }
-    else if (!marker.isValid()) {
+    else if (marker.isValid()) {
+      setRange(marker);
+    }
+    else {
       mySyncMarkerIsValid = false;
       setMarker(null);
       marker = null;
@@ -132,7 +137,9 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   // after change
   @Override
   public void unfastenBelt(int offset) {
-    if (!mySyncMarkerIsValid) return;
+    if (!mySyncMarkerIsValid) {
+      return;
+    }
     RangeMarker marker = getMarker();
     if (marker != null) {
       if (marker.isValid()) {
@@ -210,10 +217,6 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     myMarkerRef = marker == null ? null : new SoftReference<RangeMarker>(marker);
   }
 
-  @Nullable
-  public static PsiFile restoreFileFromVirtual(final VirtualFile virtualFile, @NotNull final Project project) {
-    return restoreFileFromVirtual(virtualFile, project, null);
-  }
   @Nullable
   public static PsiFile restoreFileFromVirtual(final VirtualFile virtualFile, @NotNull final Project project, @Nullable final Language language) {
     if (virtualFile == null) return null;

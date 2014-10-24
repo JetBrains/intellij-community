@@ -504,7 +504,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           lastEditorHighlighter = null;
         }
 
-        assert lowerHighlighter != null;
         if (!lowerHighlighter.isValid()) continue;
 
         int startLineIndex = lowerHighlighter.getDocument().getLineNumber(startOffset);
