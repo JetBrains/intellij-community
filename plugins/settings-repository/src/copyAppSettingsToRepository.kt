@@ -9,20 +9,13 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import java.io.File
 import com.intellij.openapi.components.ExportableComponent
-import com.intellij.util.containers.MultiMap
-import com.intellij.openapi.util.RoamingTypeDisabled
 
 fun copyLocalConfig() {
   val stateStorageManager = (ApplicationManager.getApplication()!! as ApplicationImpl).getStateStore().getStateStorageManager()
   val streamProvider = stateStorageManager.getStreamProvider()!! as IcsManager.IcsStreamProvider
 
-  val fileToComponents = ExportSettingsAction.getExportableComponentsMap(true)
+  val fileToComponents = ExportSettingsAction.getExportableComponentsMap(true, false)
   for (file in fileToComponents.keySet()) {
-    val roamingType = getRoamingType(file, fileToComponents)
-    if (roamingType == RoamingType.DISABLED) {
-      continue
-    }
-
     val absolutePath = file.getAbsolutePath()
     var fileSpec = stateStorageManager.collapseMacros(absolutePath)
     if (fileSpec.equals(absolutePath)) {
@@ -33,6 +26,7 @@ fun copyLocalConfig() {
       }
     }
 
+    val roamingType = getRoamingType(fileToComponents.get(file))
     if (file.isFile()) {
       val fileBytes = FileUtil.loadFileBytes(file)
       streamProvider.doSave(fileSpec, fileBytes, fileBytes.size, roamingType)
@@ -59,9 +53,12 @@ private fun saveDirectory(parent: File, parentFileSpec: String, roamingType: Roa
   }
 }
 
-private fun getRoamingType(file: File, fileToComponents: MultiMap<File, ExportableComponent>): RoamingType {
-  for (component in fileToComponents.get(file)) {
-    if (component is PersistentStateComponent<*>) {
+private fun getRoamingType(components: Collection<ExportableComponent>): RoamingType {
+  for (component in components) {
+    if (component is ExportSettingsAction.ExportableComponentItem) {
+      return component.getRoamingType()
+    }
+    else if (component is PersistentStateComponent<*>) {
       val stateAnnotation = component.javaClass.getAnnotation(javaClass<State>())
       if (stateAnnotation != null) {
         val storages = stateAnnotation.storages()
@@ -69,9 +66,6 @@ private fun getRoamingType(file: File, fileToComponents: MultiMap<File, Exportab
           return storages[0].roamingType()
         }
       }
-    }
-    else if (component is RoamingTypeDisabled) {
-      return RoamingType.DISABLED
     }
   }
   return RoamingType.PER_USER
