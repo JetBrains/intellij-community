@@ -874,7 +874,7 @@ public class ExprProcessor implements CodeConstants {
 
     boolean cast =
       !leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT);
-    cast |= castAlways;
+    cast |= castAlways && !leftType.equals(rightType);
 
     if (!cast && castNull && rightType.type == CodeConstants.TYPE_NULL) {
       // check for a nameless anonymous class
