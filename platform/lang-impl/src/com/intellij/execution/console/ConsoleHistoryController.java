@@ -57,8 +57,11 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -72,11 +75,10 @@ public class ConsoleHistoryController {
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
   private final LanguageConsoleImpl myConsole;
-  private final AnAction myHistoryNext = new MyAction(true);
-  private final AnAction myHistoryPrev = new MyAction(false);
+  private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
+  private final AnAction myHistoryPrev = new MyAction(false, getKeystrokesUpDown(false));
   private final AnAction myBrowseHistory = new MyBrowseAction();
   private boolean myMultiline;
-  private boolean isStandardUpDownUsed = false;
   private final ModelHelper myHelper;
   private long myLastSaveStamp;
 
@@ -117,7 +119,6 @@ public class ConsoleHistoryController {
       loadHistory(myHelper.getId());
     }
     configureActions();
-    isStandardUpDownUsed = checkIfStandardUpDownUsed();
     myLastSaveStamp = getCurrentTimeStamp();
   }
 
@@ -125,18 +126,13 @@ public class ConsoleHistoryController {
     return getModel().getModificationCount() + myConsole.getEditorDocument().getModificationStamp();
   }
 
-  private boolean checkIfStandardUpDownUsed() {
-    return isShortcutSetsIntersect(myHistoryNext.getShortcutSet(), getShortcutUpDown(true))
-           || isShortcutSetsIntersect(myHistoryPrev.getShortcutSet(), getShortcutUpDown(false));
-  }
-
-  protected void configureActions() {
+  private void configureActions() {
     EmptyAction.setupAction(myHistoryNext, "Console.History.Next", null);
     EmptyAction.setupAction(myHistoryPrev, "Console.History.Previous", null);
     EmptyAction.setupAction(myBrowseHistory, "Console.History.Browse", null);
     if (!myMultiline) {
-      myHistoryNext.registerCustomShortcutSet(getShortcutUpDown(true), null);
-      myHistoryPrev.registerCustomShortcutSet(getShortcutUpDown(false), null);
+      addShortcuts(myHistoryNext, getShortcutUpDown(true));
+      addShortcuts(myHistoryPrev, getShortcutUpDown(false));
     }
     myHistoryNext.registerCustomShortcutSet(myHistoryNext.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
     myHistoryPrev.registerCustomShortcutSet(myHistoryPrev.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
@@ -241,8 +237,12 @@ public class ConsoleHistoryController {
   private class MyAction extends AnAction {
     private final boolean myNext;
 
-    public MyAction(final boolean next) {
+    @NotNull
+    private final Collection<KeyStroke> myUpDownKeystrokes;
+
+    public MyAction(final boolean next, @NotNull Collection<KeyStroke> upDownKeystrokes) {
       myNext = next;
+      myUpDownKeystrokes = upDownKeystrokes;
       getTemplatePresentation().setVisible(false);
     }
 
@@ -263,7 +263,16 @@ public class ConsoleHistoryController {
     @Override
     public void update(final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(!isStandardUpDownUsed || canMoveInEditor(myNext));
+      e.getPresentation().setEnabled(myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext));
+    }
+
+    private boolean isUpDownKey(AnActionEvent e) {
+      final InputEvent event = e.getInputEvent();
+      if (!(event instanceof KeyEvent)) {
+        return false;
+      }
+      final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent((KeyEvent)event);
+      return myUpDownKeystrokes.contains(keyStroke);
     }
   }
 
@@ -344,7 +353,7 @@ public class ConsoleHistoryController {
       chooser.setSplitterOrientation(false);
       chooser.setSelectedIndex(Math.max(getModel().getHistoryCursor(), 0));
       chooser.show();
-      if (chooser.isOK()) {
+      if (chooser.isOK() && myConsole.getCurrentEditor().getComponent().isShowing()) {
         setConsoleText(chooser.getSelectedText(), false, true);
       }
     }
@@ -516,18 +525,26 @@ public class ConsoleHistoryController {
     return new CustomShortcutSet(KeyStroke.getKeyStroke(isUp ? KeyEvent.VK_UP : KeyEvent.VK_DOWN, 0));
   }
 
-  private static boolean isShortcutSetsIntersect(ShortcutSet set1, ShortcutSet set2) {
-    final Shortcut[] shortcuts1 = set1.getShortcuts();
-    final Shortcut[] shortcuts2 = set2.getShortcuts();
+  private static void addShortcuts(@NotNull AnAction action, @NotNull ShortcutSet newShortcuts) {
+    if (action.getShortcutSet().getShortcuts().length == 0) {
+      action.registerCustomShortcutSet(newShortcuts, null);
+    }
+    else {
+      action.registerCustomShortcutSet(new CompositeShortcutSet(action.getShortcutSet(), newShortcuts), null);
+    }
+  }
 
-    for (Shortcut s1 : shortcuts1) {
-      for (Shortcut s2 : shortcuts2) {
-        if (s1.equals(s2)) {
-          return true;
-        }
+  private static Collection<KeyStroke> getKeystrokesUpDown(boolean isUp) {
+    Collection<KeyStroke> result = new ArrayList<KeyStroke>();
+
+    final ShortcutSet shortcutSet = getShortcutUpDown(isUp);
+    for (Shortcut shortcut : shortcutSet.getShortcuts()) {
+      if (shortcut.isKeyboard() && ((KeyboardShortcut)shortcut).getSecondKeyStroke() == null) {
+        result.add(((KeyboardShortcut)shortcut).getFirstKeyStroke());
       }
     }
-    return false;
+
+    return result;
   }
 
 }
