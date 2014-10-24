@@ -208,7 +208,9 @@ NSString *requiredJvmVersion() {
 }
 
 BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
-    javaUpdateRequired = isJavaUpdateRequired(vmVersion, requiredVersion);
+    if (!javaUpdateRequired){
+      javaUpdateRequired = isJavaUpdateRequired(vmVersion, requiredVersion);
+    }
     if (javaUpdateRequired){
       return !javaUpdateRequired;
     }
