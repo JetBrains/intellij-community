@@ -66,7 +66,7 @@ public class BuilderHandler {
   }
 
   protected boolean validateBuilderClassName(@NotNull String builderClassName, @NotNull Project project, @NotNull ProblemBuilder builder) {
-    final PsiNameHelper psiNameHelper = JavaPsiFacade.getInstance(project).getNameHelper();
+    final PsiNameHelper psiNameHelper = PsiNameHelper.getInstance(project);
     if (!psiNameHelper.isIdentifier(builderClassName)) {
       builder.addError("%s ist not a valid identifier", builderClassName);
       return false;

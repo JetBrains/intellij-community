@@ -130,10 +130,11 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     return result;
   }
 
+  @SuppressWarnings("deprecation")
   private boolean shouldGenerateCanEqual(@NotNull PsiClass psiClass) {
     final boolean isNotDirectDescendantOfObject = PsiClassUtil.hasSuperClass(psiClass);
     if (isNotDirectDescendantOfObject) {
-      return isNotDirectDescendantOfObject;
+      return true;
     }
 
     final boolean isFinal = psiClass.hasModifierProperty(PsiModifier.FINAL) ||

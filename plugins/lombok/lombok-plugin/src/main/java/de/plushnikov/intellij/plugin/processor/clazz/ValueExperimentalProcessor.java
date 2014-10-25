@@ -1,14 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import lombok.experimental.Value;
-
 /**
  * @author twillouer
  */
 public class ValueExperimentalProcessor extends ValueProcessor {
 
+  @SuppressWarnings("deprecation")
   public ValueExperimentalProcessor() {
-    super(Value.class);
+    super(lombok.experimental.Value.class);
   }
 
 }

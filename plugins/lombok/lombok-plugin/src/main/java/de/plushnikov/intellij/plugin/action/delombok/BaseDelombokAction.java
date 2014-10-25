@@ -37,8 +37,8 @@ public abstract class BaseDelombokAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final DataContext dataContext = event.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
@@ -119,7 +119,7 @@ public abstract class BaseDelombokAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
 

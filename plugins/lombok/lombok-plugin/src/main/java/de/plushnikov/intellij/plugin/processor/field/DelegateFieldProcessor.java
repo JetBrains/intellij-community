@@ -7,7 +7,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
-import lombok.Delegate;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -22,8 +21,9 @@ import java.util.List;
 public class DelegateFieldProcessor extends AbstractFieldProcessor {
   private final DelegateHandler handler;
 
+  @SuppressWarnings("deprecation")
   public DelegateFieldProcessor() {
-    this(Delegate.class);
+    this(lombok.Delegate.class);
   }
 
   protected DelegateFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {

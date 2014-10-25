@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.8.8</version>
+  <version>0.8.9</version>
 
   <idea-version since-build="138.00"/>
 
@@ -146,6 +146,10 @@
       <action id="delombokDelegate" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDelegateAction"
               text="@Delegate" description="Action to replace lombok @Delegate annotation with vanilla java methods">
       </action>
+      <!--TODO: implement de.plushnikov.intellij.plugin.action.delombok.BaseDelombokHandler.rebuildPsiElement-->
+      <!--<action id="delombokBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokBuilderAction"-->
+              <!--text="@Builder" description="Action to replace lombok @Builder annotation with vanilla java methods">-->
+      <!--</action>-->
       <separator/>
       <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"
               text="@Constructors"
@@ -179,6 +183,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		  <li>0.8.9
+				<ol>
+				    <li>Updates and Improvements</li>
+				</ol>
+			</li>
 			<li>0.8.8
 				<ol>
 				    <li>Fixed #52 : Invalid stub element type in index</li>
