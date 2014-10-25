@@ -580,6 +580,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         //return;
       }
+      if (isMacScrollbarHiddenAndDistractionFreeEnabled()) return;
       Rectangle clip = g.getClipBounds().intersection(bounds);
       if (clip.height == 0) return;
 
@@ -852,6 +853,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
+      if (isMacScrollbarHiddenAndDistractionFreeEnabled()) return;
       EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
       int buttonHeight = scrollBar.getDecScrollButtonHeight();
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();
