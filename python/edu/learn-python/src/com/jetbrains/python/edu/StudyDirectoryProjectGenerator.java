@@ -171,6 +171,9 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
           final AbstractProjectViewPane projectViewPane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
           if (projectViewPane == null || initialized[0]) return;
           JTree tree = projectViewPane.getTree();
+          if (tree == null) {
+            return;
+          }
           tree.updateUI();
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
