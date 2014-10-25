@@ -5,19 +5,27 @@ import com.google.gson.stream.JsonReader;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.lang.javascript.boilerplate.GithubDownloadUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.jetbrains.python.edu.course.Course;
-import com.jetbrains.python.edu.course.CourseInfo;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.jetbrains.python.edu.course.*;
 import com.jetbrains.python.edu.ui.StudyNewProjectPanel;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.StudyIcons;
@@ -150,12 +158,52 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
     try {
       reader = new InputStreamReader(new FileInputStream(mySelectedCourseFile));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-      Course course = gson.fromJson(reader, Course.class);
+      final Course course = gson.fromJson(reader, Course.class);
       course.init(false);
       course.create(baseDir, new File(mySelectedCourseFile.getParent()));
       course.setResourcePath(mySelectedCourseFile.getAbsolutePath());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
       StudyTaskManager.getInstance(project).setCourse(course);
+      final boolean[] initialized = {false};
+      ToolWindowManagerEx.getInstanceEx(myProject).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+        @Override
+        public void stateChanged() {
+          final AbstractProjectViewPane projectViewPane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
+          if (projectViewPane == null || initialized[0]) return;
+          JTree tree = projectViewPane.getTree();
+          tree.updateUI();
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              LocalFileSystem.getInstance().refresh(false);
+              final Lesson firstLesson = StudyUtils.getFirst(course.getLessons());
+              final Task firstTask = StudyUtils.getFirst(firstLesson.getTaskList());
+              final VirtualFile taskDir = firstTask.getTaskDir(myProject);
+              if (taskDir == null) return;
+              final Map<String, TaskFile> taskFiles = firstTask.getTaskFiles();
+
+              VirtualFile activeVirtualFile = null;
+              for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
+                final String name = entry.getKey();
+                final TaskFile taskFile = entry.getValue();
+                final VirtualFile virtualFile = taskDir.findChild(name);
+                if (virtualFile != null) {
+                  FileEditorManager.getInstance(project).openFile(virtualFile, true);
+                  if (!taskFile.getTaskWindows().isEmpty()) {
+                    activeVirtualFile = virtualFile;
+                  }
+                }
+              }
+              if (activeVirtualFile != null) {
+                final PsiFile file = PsiManager.getInstance(myProject).findFile(activeVirtualFile);
+                ProjectView.getInstance(project).select(file, activeVirtualFile, true);
+                initialized[0] = true;
+              }
+            }
+          });
+        }
+      });
     }
     catch (FileNotFoundException e) {
       LOG.error(e);
