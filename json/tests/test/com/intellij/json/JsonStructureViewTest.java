@@ -66,7 +66,9 @@ public class JsonStructureViewTest extends JsonTestCase {
            "  -object\n" +
            "   nestedObject\n" +
            " -array\n" +
-           "  +array\n" +
+           "  -array\n" +
+           "   -object\n" +
+           "    deepNestedObject\n" +
            " -object\n" +
            "  siblingObject\n");
   }
