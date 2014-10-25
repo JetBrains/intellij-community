@@ -79,7 +79,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         final XValuePresentation presentation = value.getValuePresentation();
         if (presentation == null) continue;
         try {
-          if (presentation instanceof XValueCompactPresentation) {
+          if (presentation instanceof XValueCompactPresentation && !value.getTree().isUnderRemoteDebug()) {
             ((XValueCompactPresentation)presentation).renderValue(renderer, value);
           }
           else {
