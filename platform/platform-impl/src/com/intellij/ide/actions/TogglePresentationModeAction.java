@@ -180,7 +180,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     return hasVisible;
   }
 
-  private static boolean storeToolWindows(@Nullable Project project) {
+  static boolean storeToolWindows(@Nullable Project project) {
     if (project == null) return false;
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
 
@@ -195,7 +195,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     return hasVisible;
   }
 
-  private static void restoreToolWindows(Project project, boolean needsRestore, boolean inPresentation) {
+  static void restoreToolWindows(Project project, boolean needsRestore, boolean inPresentation) {
     if (project == null || !needsRestore) return;
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();
