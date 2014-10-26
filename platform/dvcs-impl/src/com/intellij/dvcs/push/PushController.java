@@ -176,6 +176,9 @@ public class PushController implements Disposable {
     final RepositoryNode repoNode = mySingleRepoProject
                                     ? new SingleRepositoryNode(repoPanel, checkBoxModel)
                                     : new RepositoryNode(repoPanel, checkBoxModel, target != null);
+    if (!support.shouldRequestIncomingChangesForNotCheckedRepositories()) {
+      model.getCheckBoxModel().setChecked(myPreselectedRepositories.contains(repository));
+    }
     pushTargetPanel.setFireOnChangeAction(new Runnable() {
       @Override
       public void run() {
@@ -325,7 +328,7 @@ public class PushController implements Disposable {
       shouldBeSelected = hasCommits || target.hasSomethingToPush();
     }
     else {
-      shouldBeSelected = (hasCommits || target.hasSomethingToPush()) && myPreselectedRepositories.contains(repository);
+      shouldBeSelected = (hasCommits || target.hasSomethingToPush());
     }
     return shouldBeSelected;
   }
