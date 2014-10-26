@@ -133,18 +133,12 @@ public class VcsRootProblemNotifier {
     if (!invalidRoots.isEmpty()) {
       if (invalidRoots.size() == 1) {
         VcsRootError rootError = invalidRoots.iterator().next();
-        description
-          .append("The directory " +
-                  rootToDisplayableString.fun(rootError) +
-                  " is registered as a " +
-                  rootError.getVcsKey().getName() +
-                  " root, " +
-                  "but no " +
-                  rootError.getVcsKey().getName() +
-                  " repositories were found there.");
+        String vcsName = rootError.getVcsKey().getName();
+        description.append(String.format("The directory %s is registered as a %s root, but no %s repositories were found there.",
+                                         rootToDisplayableString.fun(rootError), vcsName, vcsName));
       }
       else {
-        description.append("The following directories are registered as Vcs roots, but they are not: <br/>" +
+        description.append("The following directories are registered as VCS roots, but they are not: <br/>" +
                            StringUtil.join(invalidRoots, rootToDisplayableString, ", "));
       }
       description.append("<br/>");
@@ -153,16 +147,11 @@ public class VcsRootProblemNotifier {
     if (!unregisteredRoots.isEmpty()) {
       if (unregisteredRoots.size() == 1) {
         VcsRootError unregisteredRoot = unregisteredRoots.iterator().next();
-        description
-          .append("The directory " +
-                  rootToDisplayableString.fun(unregisteredRoot) +
-                  " is under " +
-                  unregisteredRoot.getVcsKey().getName() +
-                  ", " +
-                  "but is not registered in the Settings.");
+        description.append(String.format("The directory %s is under %s, but is not registered in the Settings.",
+                                         rootToDisplayableString.fun(unregisteredRoot), unregisteredRoot.getVcsKey().getName()));
       }
       else {
-        description.append("The following directories are roots of Vcs repositories, but they are not registered in the Settings: <br/>" +
+        description.append("The following directories are roots of VCS repositories, but they are not registered in the Settings: <br/>" +
                            StringUtil.join(unregisteredRoots, rootToDisplayableString, ", "));
       }
       description.append("<br/>");
