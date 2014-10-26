@@ -128,20 +128,6 @@ public class TaskFile implements Stateful {
   }
 
   /**
-   * Updates task window lines
-   *
-   * @param startLine lines greater than this line and including this line will be updated
-   * @param change    change to be added to line numbers
-   */
-  public void incrementLines(int startLine, int change) {
-    for (TaskWindow taskTaskWindow : taskWindows) {
-      if (taskTaskWindow.getLine() >= startLine) {
-        taskTaskWindow.setLine(taskTaskWindow.getLine() + change);
-      }
-    }
-  }
-
-  /**
    * Initializes state of task file
    *
    * @param task task which task file belongs to
@@ -165,36 +151,6 @@ public class TaskFile implements Stateful {
     myIndex = index;
   }
 
-  /**
-   * Updates windows in specific line
-   *
-   * @param lineChange         change in line number
-   * @param line               line to be updated
-   * @param newEndOffsetInLine distance from line start to end of inserted fragment
-   * @param oldEndOffsetInLine distance from line start to end of changed fragment
-   */
-  public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine) {
-    for (TaskWindow w : taskWindows) {
-      if ((w.getLine() == line) && (w.getStart() > oldEndOffsetInLine)) {
-        int distance = w.getStart() - oldEndOffsetInLine;
-        boolean coveredByPrevTW = false;
-        int prevIndex = w.getIndex() - 1;
-        if (StudyUtils.indexIsValid(prevIndex, taskWindows)) {
-          TaskWindow prevTW = taskWindows.get(prevIndex);
-          if (prevTW.getLine() == line) {
-            int endOffset = prevTW.getStart() + prevTW.getLength();
-            if (endOffset >= newEndOffsetInLine) {
-              coveredByPrevTW = true;
-            }
-          }
-        }
-        if (lineChange != 0 || newEndOffsetInLine <= w.getStart() || coveredByPrevTW) {
-          w.setStart(distance + newEndOffsetInLine);
-          w.setLine(line + lineChange);
-        }
-      }
-    }
-  }
 
   public static void copy(@NotNull final TaskFile source, @NotNull final TaskFile target) {
     List<TaskWindow> sourceTaskWindows = source.getTaskWindows();

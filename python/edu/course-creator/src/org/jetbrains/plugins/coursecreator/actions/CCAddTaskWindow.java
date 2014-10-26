@@ -85,6 +85,7 @@ public class CCAddTaskWindow extends DumbAwareAction {
     }
     int index = taskFile.getTaskWindows().size() + 1;
     taskFile.addTaskWindow(taskWindow, index);
+    taskFile.sortTaskWindows();
     taskWindow.drawHighlighter(editor, false);
     taskWindow.createGuardedBlocks(editor);
   }
