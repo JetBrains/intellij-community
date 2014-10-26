@@ -133,8 +133,7 @@ public class PushController implements Disposable {
       if (preselectByUser(repository)) {
         priorityLoading.put(entry.getKey(), model);
       }
-      else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories() &&
-               !myExcludedRepositoryRoots.contains(repository.getRoot().getPath())) {
+      else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories()) {
         others.put(entry.getKey(), model);
       }
     }
