@@ -33,20 +33,20 @@ import java.util.Collection;
 
 import static git4idea.GitUtil.findRemoteBranch;
 
-class GitPushTarget implements PushTarget {
+public class GitPushTarget implements PushTarget {
 
   private static final Logger LOG = Logger.getInstance(GitPushTarget.class);
 
   @NotNull private final GitRemoteBranch myRemoteBranch;
   private final boolean myIsNewBranchCreated;
 
-  GitPushTarget(@NotNull GitRemoteBranch remoteBranch, boolean isNewBranchCreated) {
+  public GitPushTarget(@NotNull GitRemoteBranch remoteBranch, boolean isNewBranchCreated) {
     myRemoteBranch = remoteBranch;
     myIsNewBranchCreated = isNewBranchCreated;
   }
 
   @NotNull
-  GitRemoteBranch getBranch() {
+  public GitRemoteBranch getBranch() {
     return myRemoteBranch;
   }
 
@@ -55,12 +55,12 @@ class GitPushTarget implements PushTarget {
     return isNewBranchCreated();
   }
 
-  boolean isNewBranchCreated() {
+  public boolean isNewBranchCreated() {
     return myIsNewBranchCreated;
   }
 
   @NotNull
-  static GitPushTarget parse(@NotNull GitRepository repository, @Nullable String remoteName, @NotNull String branchName) throws
+  public static GitPushTarget parse(@NotNull GitRepository repository, @Nullable String remoteName, @NotNull String branchName) throws
                                                                                                                         ParseException {
     if (remoteName == null) {
       throw new ParseException("No remotes defined", -1);
