@@ -25,6 +25,7 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
 
   public void testBlankLinesAroundClassInitializationBlock() throws Exception {
     getSettings().BLANK_LINES_AROUND_METHOD = 3;
+    getJavaSettings().BLANK_LINES_AROUND_INITIALIZER = 3;
     doTextTest(
       "class T {\n" +
       "    private final DecimalFormat fmt = new DecimalFormat();\n" +
