@@ -445,6 +445,7 @@ public class SwingHelper {
       }
     }
     textPane.setForeground(foreground != null ? foreground : UIUtil.getLabelForeground());
+    textPane.setFocusable(false);
     return textPane;
   }
 
