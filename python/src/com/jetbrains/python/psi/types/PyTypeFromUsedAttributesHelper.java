@@ -54,11 +54,9 @@ public class PyTypeFromUsedAttributesHelper {
   }
 
   /**
-   * Attempts to guess type of given expression based on what attributes (including special names) were accessed on it. If several types
-   * fit their union will be returned. Suggested classes will be ordered according to their {@link PyTypeFromUsedAttributesHelper.Priority}.
-   * Currently at most {@link #MAX_CANDIDATES} can be returned in union.
-   *
-   * @return described type or {@code null} if nothing suits
+   * Attempts to guess the type of a given expression based on what attributes (including special names) were accessed on it. If several
+   * types fit then their union is returned. Suggested classes are ordered according to their
+   * {@link PyTypeFromUsedAttributesHelper.Priority}. Currently at most {@link #MAX_CANDIDATES} can be returned in a union.
    */
   @Nullable
   public PyType getType(@NotNull PyExpression expression) {
@@ -83,9 +81,6 @@ public class PyTypeFromUsedAttributesHelper {
     })));
   }
 
-  /**
-   * Main algorithm
-   */
   @NotNull
   private Set<PyClass> suggestCandidateClasses(@NotNull final PyExpression expression, @NotNull Set<String> seenAttrs) {
     final Set<PyClass> candidates = Sets.newHashSet();
@@ -122,9 +117,6 @@ public class PyTypeFromUsedAttributesHelper {
     return Collections.unmodifiableSet(suitableClasses);
   }
 
-  /**
-   * Re-order and filter results
-   */
   @NotNull
   private List<CandidateClass> prepareCandidates(@NotNull Set<PyClass> candidates, @NotNull final PyExpression expression) {
     final Set<QualifiedName> importQualifiers = collectImportQualifiers(expression.getContainingFile());
@@ -277,10 +269,10 @@ public class PyTypeFromUsedAttributesHelper {
   }
 
   /**
-   * Returns all attributes: methods, class and instance fields that are declared directly in specified class
+   * Returns all attributes: methods, class and instance fields that are declared directly in the specified class
    * (not taking inheritance into account).
    * <p/>
-   * This method must not access to AST because it's called during stub indexing process.
+   * This method <b>must not</b> access the AST because it is being called during stub indexing.
    */
   @NotNull
   public static List<String> getAllDeclaredAttributeNames(@NotNull PyClass pyClass) {
@@ -298,9 +290,9 @@ public class PyTypeFromUsedAttributesHelper {
   }
 
   /**
-   * Simpler and faster alternative to {@link com.jetbrains.python.psi.impl.PyClassImpl#getAncestorClasses()}.
-   * Approach used here does not require proper MRO order of ancestors and performance is greatly improved by reusing
-   * of intermediate results in case of large class hierarchy.
+   * A simpler and faster alternative to {@link com.jetbrains.python.psi.impl.PyClassImpl#getAncestorClasses()}.
+   * The approach used here does not require proper MRO order of ancestors and its performance is greatly improved by reusing
+   * intermediate results in case of a large class hierarchy.
    */
   @NotNull
   private Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass) {
@@ -359,7 +351,7 @@ public class PyTypeFromUsedAttributesHelper {
     SAME_FILE,
     IMPORTED,
     PROJECT,
-    // TODO How implement?
+    // TODO How to implement it?
     DEPENDENCY,
     OTHER
   }
