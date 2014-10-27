@@ -43,7 +43,7 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepository> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.trello.TrelloRepositoryEditor");
+  private static final Logger LOG = Logger.getInstance(TrelloRepositoryEditor.class);
 
   private static final TrelloBoard UNSPECIFIED_BOARD = new TrelloBoard() {
     @NotNull
@@ -83,9 +83,10 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
       @Override
       protected void textChanged(DocumentEvent e) {
         String password = String.valueOf(myPasswordText.getPassword());
-        if (password.equals(myRepository.getPassword())) {
+        if (password.isEmpty() || password.equals(myRepository.getPassword())) {
           return;
         }
+        LOG.debug("Authentication token was changed");
         myRepository.setPassword(password);
         new BoardsDownloader(UNSPECIFIED_BOARD) {
           @Override
@@ -119,7 +120,6 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
       }
     });
     myBoardComboBox.setRenderer(new TrelloBoardRenderer("Set token first"));
-    myListComboBox.setRenderer(new TrelloListRenderer("Select board first"));
 
     myListComboBox.addItemListener(new ItemListener() {
       @Override
@@ -132,12 +132,14 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
         }
       }
     });
+    myListComboBox.setRenderer(new TrelloListRenderer("Select board first"));
 
     // Initial setup:
     if (myRepository.getCurrentUser() != null) {
       new BoardsDownloader(myRepository.getCurrentBoard()) {
         @Override
         protected List<TrelloBoard> download() throws Exception {
+          LOG.debug("Updating information about boards available to user when repository setting are shown");
           List<TrelloBoard> boards = super.download();
           if (myBoard == null) {
             return boards;
@@ -157,6 +159,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
       new ListsDownloader(myRepository.getCurrentList()) {
         @Override
         protected List<TrelloList> download() throws Exception {
+          LOG.debug("Updating information about lists of board " + myRepository.getCurrentBoard() + " when repository setting are shown");
           List<TrelloList> lists = super.download();
           if (myList == null) {
             return lists;
@@ -266,6 +269,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
       return myRepository.fetchUserBoards();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void updateUI(List<TrelloBoard> boards) {
       myBoardComboBox.setModel(new DefaultComboBoxModel(boards.toArray()));
@@ -296,6 +300,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
       return myRepository.fetchBoardLists();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void updateUI(List<TrelloList> lists) {
       myListComboBox.setModel(new DefaultComboBoxModel(lists.toArray()));
