@@ -15,6 +15,8 @@
  */
 package org.intellij.lang.xpath.xslt;
 
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
@@ -47,6 +49,8 @@ public class XsltSupport {
   public static final String XSLT_NS = "http://www.w3.org/1999/XSL/Transform";
   public static final String PLUGIN_EXTENSIONS_NS = "urn:idea:xslt-plugin#extensions";
   public static final Key<ParameterizedCachedValue<XsltChecker.LanguageLevel, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
+  public static final TextAttributesKey XSLT_DIRECTIVE =
+    TextAttributesKey.createTextAttributesKey("XSLT_DIRECTIVE", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
 
   private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<String, String>(10);
   private static final Map<String, Set<String>> XPATH_AVT_MAP = new THashMap<String, Set<String>>(10);

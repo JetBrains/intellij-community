@@ -321,9 +321,13 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   @Override
   public Comparable getTypeSortKey() {
     VirtualFile file = getVirtualFile();
-    if (file == null) return null;
-    String extension = file.getExtension();
-    return extension == null ? null : new PsiFileNode.ExtensionSortKey(extension);
+    if (file != null) {
+      String extension = file.getExtension();
+      if (extension != null) {
+        return new PsiFileNode.ExtensionSortKey(extension);
+      }
+    }
+    return null;
   }
 
   @Override
