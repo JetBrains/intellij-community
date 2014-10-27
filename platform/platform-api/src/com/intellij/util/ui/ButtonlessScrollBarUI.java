@@ -70,6 +70,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   public static final int DELAY_FRAMES = 4;
   public static final int FRAMES_COUNT = 10 + DELAY_FRAMES;
 
+  private ScrollbarRepaintCallback myRepaintCallback;
+
   protected ButtonlessScrollBarUI() {
     myAdjustmentListener = new AdjustmentListener() {
       @Override
@@ -106,6 +108,42 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       super.layoutContainer(scrollbarContainer);
     } catch (NullPointerException ignore) {
       //installUI is not performed yet or uninstallUI has set almost every field to null. Just ignore it //IDEA-89674
+    }
+  }
+
+  /**
+   * This is overridden only to increase the invalid area.
+   * This ensures that whole track will be repainted in case of installed callback
+   */
+  @Override
+  protected void setThumbBounds(int x, int y, int width, int height) {
+    if (myRepaintCallback == null) {
+      super.setThumbBounds(x, y, width, height);
+    }
+    else {
+        /* If the thumbs bounds haven't changed, we're done.
+         */
+      if ((thumbRect.x == x) &&
+          (thumbRect.y == y) &&
+          (thumbRect.width == width) &&
+          (thumbRect.height == height)) {
+        return;
+      }
+
+        /* Update thumbRect, and repaint the union of x,y,w,h and
+         * the old thumbRect.
+         */
+      int minX = Math.min(x, trackRect.x);
+      int minY = Math.min(y, trackRect.y);
+      int maxX = Math.max(x + width, trackRect.x + trackRect.width);
+      int maxY = Math.max(y + height, trackRect.y + trackRect.height);
+
+      thumbRect.setBounds(x, y, width, height);
+      scrollbar.repaint(minX, minY, maxX - minX, maxY - minY);
+
+      // Once there is API to determine the mouse location this will need
+      // to be changed.
+      setThumbRollover(false);
     }
   }
 
@@ -224,6 +262,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     else {
       g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
     }
+
+    if (myRepaintCallback != null) {
+      myRepaintCallback.call(g);
+    }
   }
 
   @Override
@@ -329,6 +371,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return new EmptyButton();
   }
 
+  public void registerRepaintCallback(ScrollbarRepaintCallback callback) {
+    myRepaintCallback = callback;
+  }
+
   private static class EmptyButton extends JButton {
     private EmptyButton() {
       setFocusable(false);
@@ -349,5 +395,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     public Dimension getMinimumSize() {
       return getMaximumSize();
     }
+  }
+
+  public interface ScrollbarRepaintCallback {
+    void call(Graphics g);
   }
 }

@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -259,10 +260,5 @@ public interface EditorEx extends Editor {
    * @param callback  callback which will be called from the {@link javax.swing.JComponent#paint(java.awt.Graphics)} method of
    *                  the editor vertical scrollbar.
    */
-  void registerScrollBarRepaintCallback(@Nullable RepaintCallback callback);
-
-  interface RepaintCallback {
-    void call(Graphics g);
-  }
-
+  void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback);
 }
