@@ -140,7 +140,8 @@ public class PyTypeFromUsedAttributesHelper {
   }
 
   @NotNull
-  private Priority findPriority(@NotNull PyClass candidate, @NotNull PyExpression expression, @NotNull Set<QualifiedName> qualifiers) {
+  private static Priority findPriority(@NotNull PyClass candidate, @NotNull PyExpression expression,
+                                       @NotNull Set<QualifiedName> qualifiers) {
     final PsiFile candidateFile = candidate.getContainingFile();
     if (PyBuiltinCache.getInstance(expression).isBuiltin(candidate)) {
       return Priority.BUILTIN;
