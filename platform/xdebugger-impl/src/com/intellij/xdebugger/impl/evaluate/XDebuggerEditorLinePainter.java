@@ -26,7 +26,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullProducer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -95,7 +98,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         catch (Exception e) {
           continue;
         }
-        final Color color = bpLine == lineNumber ? new JBColor(Gray._180, new Color(147, 217, 186)) : getForeground();
+        final Color color = bpLine == lineNumber ? new JBColor(new Color(0, 255, 86), new Color(255, 235, 9)) : getForeground();
 
         final String name = value.getName();
         if (StringUtil.isEmpty(text.toString())) {
