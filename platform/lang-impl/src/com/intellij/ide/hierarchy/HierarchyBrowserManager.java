@@ -52,7 +52,7 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.HIERARCHY, true, ToolWindowAnchor.RIGHT, project);
     DefaultActionGroup gearActions = new DefaultActionGroup();
-    gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(toolWindow)).setAsSecondary(true);
+    gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(project, toolWindow)).setAsSecondary(true);
     ((ToolWindowEx)toolWindow).setAdditionalGearActions(gearActions);
 
     myContentManager = toolWindow.getContentManager();

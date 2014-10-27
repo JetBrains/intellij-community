@@ -87,7 +87,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
           myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject, true);
           myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowChanges);
           DefaultActionGroup gearActions = new DefaultActionGroup();
-          gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(myToolWindow)).setAsSecondary(true);
+          gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(myProject, myToolWindow)).setAsSecondary(true);
           ((ToolWindowEx)myToolWindow).setAdditionalGearActions(gearActions);
 
           updateToolWindowAvailability();

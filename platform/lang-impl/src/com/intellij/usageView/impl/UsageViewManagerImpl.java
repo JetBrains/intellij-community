@@ -45,7 +45,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowFind);
     DefaultActionGroup gearActions = new DefaultActionGroup();
-    gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(toolWindow)).setAsSecondary(true);
+    gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(project, toolWindow)).setAsSecondary(true);
     ((ToolWindowEx)toolWindow).setAdditionalGearActions(gearActions);
 
     myFindContentManager = toolWindow.getContentManager();

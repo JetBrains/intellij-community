@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
@@ -172,8 +173,8 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
   }
 
   @NotNull
-  public static AnAction createToggleToolbarAction(@NotNull ToolWindow toolWindow) {
-    return new ToggleToolbarAction(toolWindow, PropertiesComponent.getInstance());
+  public static AnAction createToggleToolbarAction(Project project, @NotNull ToolWindow toolWindow) {
+    return new ToggleToolbarAction(toolWindow, PropertiesComponent.getInstance(project));
   }
 
   private static class ToggleToolbarAction extends ToggleAction implements DumbAware {
