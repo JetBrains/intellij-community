@@ -38,7 +38,7 @@ public class DateFormatUtilTest {
 
   @Test
   public void testBasics() throws ParseException {
-    Clock.setTime(2004, 11, 10, 17, 10);
+    Clock.setTime(2004, Calendar.DECEMBER, 10, 17, 10);
 
     doTestPrettyDate("Today", "10.12.2004 17.00.00");
     doTestPrettyDate("Today", "10.12.2004 00.00.00");
@@ -49,7 +49,7 @@ public class DateFormatUtilTest {
 
   @Test
   public void testTime() throws Exception {
-    Clock.setTime(2004, 11, 10, 17, 10, 15);
+    Clock.setTime(2004, Calendar.DECEMBER, 10, 17, 10, 15);
 
     if (SystemInfo.isMac) {
       assertEquals("17:10", DateFormatUtil.formatTime(Clock.getTime()));
@@ -73,7 +73,7 @@ public class DateFormatUtilTest {
 
   @Test
   public void testPrettyDateTime() throws ParseException {
-    Clock.setTime(2004, 11, 10, 17, 0);
+    Clock.setTime(2004, Calendar.DECEMBER, 10, 17, 0);
     doTestDateTime("Moments ago", "10.12.2004 16.59.31");
     doTestDateTime("A minute ago", "10.12.2004 16.59.29");
     doTestDateTime("5 minutes ago", "10.12.2004 16.55.00");
@@ -82,7 +82,7 @@ public class DateFormatUtilTest {
     doTestDateTime("Yesterday " + DateFormatUtil.formatTime(DATE_FORMAT.parse("09.12.2004 15.00.00")), "09.12.2004 15.00.00");
     doTestDateTime("Today " + DateFormatUtil.formatTime(DATE_FORMAT.parse("10.12.2004 19.00.00")), "10.12.2004 19.00.00");
 
-    Clock.setTime(2004, 0, 1, 15, 53);
+    Clock.setTime(2004, Calendar.JANUARY, 1, 15, 53);
     doTestDateTime(DateFormatUtil.formatDateTime(DATE_FORMAT.parse("01.01.2003 15.53.00")), "01.01.2003 15.53.00");
     doTestDateTime("Yesterday " + DateFormatUtil.formatTime(DATE_FORMAT.parse("31.12.2003 15.00.00")), "31.12.2003 15.00.00");
   }
