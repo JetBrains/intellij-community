@@ -95,20 +95,30 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
     return data != null? data.channel : null;
   }
 
-  public boolean acquirePreloadedSessionIfReady(final UUID sessionId) {
-    final SessionData data = mySessionDescriptors.get(sessionId);
-    return data != null && data.getAndClearWaitingFlag();
-  }
-  
-  public void sendBuildParameters(final UUID preloadedSessionId, CmdlineRemoteProto.Message.ControllerMessage params) {
+  public boolean sendBuildParameters(@NotNull final UUID preloadedSessionId, @NotNull CmdlineRemoteProto.Message.ControllerMessage params) {
+    boolean succeeded = false;
     final SessionData sessionData = mySessionDescriptors.get(preloadedSessionId);
     if (sessionData != null) {
-      final Channel channel = sessionData.channel;
-      if (channel != null && channel.isActive() && sessionData.handler != null) {
-        sessionData.handler.buildStarted(preloadedSessionId);
-        channel.writeAndFlush(CmdlineProtoUtil.toMessage(preloadedSessionId, params));
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (sessionData) {
+        if (sessionData.state == SessionData.State.WAITING_PARAMS) {
+          sessionData.state = SessionData.State.RUNNING;
+          final Channel channel = sessionData.channel;
+          if (channel != null && channel.isActive()) {
+            sessionData.handler.buildStarted(preloadedSessionId);
+            channel.writeAndFlush(CmdlineProtoUtil.toMessage(preloadedSessionId, params));
+            succeeded = true;
+          }
+        }
+        else {
+          if (sessionData.state == SessionData.State.INITIAL) {
+            sessionData.params = params;
+            succeeded = true;
+          }
+        }
       }
     }
+    return succeeded;
   }
   
   @Override
@@ -151,16 +161,25 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
         final CmdlineRemoteProto.Message.BuilderMessage builderMessage = message.getBuilderMessage();
         final CmdlineRemoteProto.Message.BuilderMessage.Type msgType = builderMessage.getType();
         if (msgType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
-          final CmdlineRemoteProto.Message.ControllerMessage params = sessionData.params;
-          if (params != null) {
-            handler.buildStarted(sessionId);
-            sessionData.params = null;
-            context.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, params));
-          }
-          else if (!sessionData.setReadyAndWaiting()) {
-            // this message is expected to be sent only once.
-            // To be on the safe side, cancel the session
-            cancelSession(sessionId);
+          //noinspection SynchronizationOnLocalVariableOrMethodParameter
+          synchronized (sessionData) {
+            final CmdlineRemoteProto.Message.ControllerMessage params = sessionData.params;
+            if (params != null) {
+              sessionData.state = SessionData.State.RUNNING;
+              handler.buildStarted(sessionId);
+              sessionData.params = null;
+              context.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, params));
+            }
+            else {
+              if (sessionData.state == SessionData.State.INITIAL) {
+                sessionData.state = SessionData.State.WAITING_PARAMS;
+              }
+              else {
+                // this message is expected to be sent only once.
+                // To be on the safe side, cancel the session
+                cancelSession(sessionId);
+              }
+            }
           }
         }
         else {
@@ -199,30 +218,22 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   }
 
   private static final class SessionData {
+    enum State {
+      INITIAL, WAITING_PARAMS, RUNNING
+    }
+    
+    @NotNull
     final UUID sessionId;
+    @NotNull
     final BuilderMessageHandler handler;
     volatile CmdlineRemoteProto.Message.ControllerMessage params;
     volatile Channel channel;
-    private boolean isReadyAndWaiting = false;
+    State state = State.INITIAL;
 
-    private SessionData(UUID sessionId, BuilderMessageHandler handler, CmdlineRemoteProto.Message.ControllerMessage params) {
+    private SessionData(@NotNull UUID sessionId, @NotNull BuilderMessageHandler handler, CmdlineRemoteProto.Message.ControllerMessage params) {
       this.sessionId = sessionId;
       this.handler = handler;
       this.params = params;
-    }
-
-    public synchronized boolean setReadyAndWaiting() {
-      if (!isReadyAndWaiting) {
-        isReadyAndWaiting = true;
-        return true;
-      }
-      return false;
-    }
-    
-    public synchronized boolean getAndClearWaitingFlag() {
-      final boolean wasWaiting = isReadyAndWaiting;
-      isReadyAndWaiting = false;
-      return wasWaiting;
     }
   }
 }

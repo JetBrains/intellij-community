@@ -71,9 +71,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.jps.api.BasicFuture;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
-import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
@@ -138,7 +138,7 @@ public class CompileDriver {
           return;
         }
         try {
-          final RequestFuture future = compileInExternalProcess(compileContext, true);
+          final BasicFuture future = compileInExternalProcess(compileContext, true);
           if (future != null) {
             while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
               if (indicator.isCanceled()) {
@@ -194,7 +194,7 @@ public class CompileDriver {
   }
 
   @Nullable
-  private RequestFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
+  private BasicFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
     throws Exception {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
@@ -400,7 +400,7 @@ public class CompileDriver {
             return;
           }
 
-          final RequestFuture future = compileInExternalProcess(compileContext, false);
+          final BasicFuture future = compileInExternalProcess(compileContext, false);
           if (future != null) {
             while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
               if (indicator.isCanceled()) {
@@ -640,7 +640,6 @@ public class CompileDriver {
       final Module[] scopeModules = scope.getAffectedModules();
       final List<String> modulesWithoutOutputPathSpecified = new ArrayList<String>();
       final List<String> modulesWithoutJdkAssigned = new ArrayList<String>();
-      final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
       for (final Module module : scopeModules) {
         if (!compilerManager.isValidationEnabled(module)) {
