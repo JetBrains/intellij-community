@@ -47,7 +47,7 @@ public class LightStubBuilder implements StubBuilder {
       LOG.error("File is not of ILightStubFileElementType: " + contentType + ", " + file);
       return null;
     }
-    final LighterAST tree = LighterAST.getLighterASTFromFileAST(file.getNode(), language);
+    final LighterAST tree = file.getNode().getLighterAST();
     if (tree == null) return null;
 
     final StubElement rootStub = createStubForFile(file, tree);
