@@ -77,6 +77,16 @@ public class CommandRuntime {
     }
   }
 
+  @NotNull
+  public CommandExecutor runLocal(@NotNull Command command, int timeout) throws SvnBindException {
+    CommandExecutor executor = newExecutor(command);
+
+    executor.run(timeout);
+    onAfterCommand(executor, command);
+
+    return executor;
+  }
+
   private void onStart(@NotNull Command command) throws SvnBindException {
     // TODO: Actually command handler should be used as canceller, but currently all handlers use same cancel logic -
     // TODO: - just check progress indicator
