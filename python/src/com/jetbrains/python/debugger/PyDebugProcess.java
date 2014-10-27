@@ -24,6 +24,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -34,6 +35,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.remote.RemoteProcessHandlerBase;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -44,9 +48,11 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -594,12 +600,36 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return frame;
   }
 
+  private String getFunctionName(final XLineBreakpoint breakpoint) {
+    final VirtualFile file = breakpoint.getSourcePosition().getFile();
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    final Project project = getSession().getProject();
+    final String[] funcName = new String[1];
+    if (document != null) {
+      if (file.getFileType() == PythonFileType.INSTANCE) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            PsiElement psiElement = XDebuggerUtil.getInstance().findContextElement(file, breakpoint.getSourcePosition().getOffset(),
+                                                                                   project, false);
+            PyFunction function = PsiTreeUtil.getParentOfType(psiElement, PyFunction.class);
+            if (function != null) {
+              funcName[0] = function.getName();
+            }
+          }
+        });
+      }
+    }
+    return funcName[0];
+  }
+
   public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint breakpoint) {
     myRegisteredBreakpoints.put(position, breakpoint);
     if (isConnected()) {
-      myDebugger.setBreakpoint(breakpoint.getType().getId(), position.getFile(), position.getLine(),
-                               breakpoint.getCondition(),
-                               breakpoint.getLogExpression());
+      myDebugger.setBreakpointWithFuncName(breakpoint.getType().getId(), position.getFile(), position.getLine(),
+                                           breakpoint.getCondition(),
+                                           breakpoint.getLogExpression(),
+                                           getFunctionName(breakpoint));
     }
   }
 

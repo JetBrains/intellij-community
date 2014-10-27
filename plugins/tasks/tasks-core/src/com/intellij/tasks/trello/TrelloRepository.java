@@ -26,7 +26,6 @@ import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.impl.httpclient.ResponseUtil;
 import com.intellij.tasks.trello.model.TrelloBoard;
 import com.intellij.tasks.trello.model.TrelloCard;
@@ -320,8 +319,6 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     HttpClient client = getHttpClient();
     client.executeMethod(method);
     String entityContent = ResponseUtil.getResponseContentAsString(method);
-    TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
-    // LOG.debug("Response size: " + method.getResponseHeader("Content-Length").getValue() + " bytes");
     if (method.getStatusCode() != HttpStatus.SC_OK) {
       Header header = method.getResponseHeader("Content-Type");
       if (header != null && header.getValue().startsWith("text/plain")) {
