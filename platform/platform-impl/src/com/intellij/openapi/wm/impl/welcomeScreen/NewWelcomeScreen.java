@@ -28,7 +28,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -150,7 +149,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
   
   public static boolean isNewWelcomeScreen(@NotNull AnActionEvent e) {
-    return e.getPlace() == ActionPlaces.WELCOME_SCREEN && Registry.is("ide.new.welcome.screen");
+    return e.getPlace() == ActionPlaces.WELCOME_SCREEN && FlatWelcomeFrameProvider.isAvailable();
   }
 
   private static class WelcomeScreenGroup extends DefaultActionGroup {
