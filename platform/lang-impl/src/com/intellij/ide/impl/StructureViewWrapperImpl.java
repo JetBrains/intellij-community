@@ -92,7 +92,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
-    myShowToolbarAction = SimpleToolWindowPanel.createToggleToolbarAction(myToolWindow);
+    myShowToolbarAction = SimpleToolWindowPanel.createToggleToolbarAction(project, myToolWindow);
 
     myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myToolWindow.getComponent(), this, myToolWindow.getComponent(), true);
     myUpdateQueue.setRestartTimerOnAdd(true);
