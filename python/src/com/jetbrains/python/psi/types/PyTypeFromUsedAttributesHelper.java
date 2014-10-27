@@ -50,7 +50,9 @@ public class PyTypeFromUsedAttributesHelper {
   private final Map<PyClass, Set<PyClass>> myAncestorsCache = Maps.newHashMap();
 
   /**
-   * @see #getType(com.jetbrains.python.psi.PyExpression)
+   * Attempts to guess the type of a given expression based on what attributes (including special names) were accessed on it. If several
+   * types fit then their union is returned. Suggested classes are ordered according to their
+   * {@link PyTypeFromUsedAttributesHelper.Priority}. Currently at most {@link #MAX_CANDIDATES} can be returned in a union.
    */
   @Nullable
   public static PyType getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
@@ -61,13 +63,8 @@ public class PyTypeFromUsedAttributesHelper {
     myContext = context;
   }
 
-  /**
-   * Attempts to guess the type of a given expression based on what attributes (including special names) were accessed on it. If several
-   * types fit then their union is returned. Suggested classes are ordered according to their
-   * {@link PyTypeFromUsedAttributesHelper.Priority}. Currently at most {@link #MAX_CANDIDATES} can be returned in a union.
-   */
   @Nullable
-  public PyType getType(@NotNull PyExpression expression) {
+  private PyType getType(@NotNull PyExpression expression) {
     if (!ENABLED || !myContext.allowLocalUsages(expression)) {
       return null;
     }
