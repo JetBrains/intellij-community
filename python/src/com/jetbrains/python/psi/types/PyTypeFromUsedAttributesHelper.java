@@ -57,8 +57,7 @@ public class PyTypeFromUsedAttributesHelper {
     return new PyTypeFromUsedAttributesHelper(context).getType(expression);
   }
 
-  @VisibleForTesting
-  public PyTypeFromUsedAttributesHelper(@NotNull TypeEvalContext context) {
+  private PyTypeFromUsedAttributesHelper(@NotNull TypeEvalContext context) {
     myContext = context;
   }
 
@@ -127,7 +126,7 @@ public class PyTypeFromUsedAttributesHelper {
   }
 
   @NotNull
-  private List<CandidateClass> prepareCandidates(@NotNull Set<PyClass> candidates, @NotNull final PyExpression expression) {
+  private static List<CandidateClass> prepareCandidates(@NotNull Set<PyClass> candidates, @NotNull final PyExpression expression) {
     final Set<QualifiedName> importQualifiers = collectImportQualifiers(expression.getContainingFile());
 
     final List<CandidateClass> prioritizedCandidates = ContainerUtil.map(candidates, new Function<PyClass, CandidateClass>() {
@@ -151,11 +150,10 @@ public class PyTypeFromUsedAttributesHelper {
   @NotNull
   private static Priority findPriority(@NotNull PyClass candidate, @NotNull PyExpression expression,
                                        @NotNull Set<QualifiedName> qualifiers) {
-    final PsiFile candidateFile = candidate.getContainingFile();
     if (PyBuiltinCache.getInstance(expression).isBuiltin(candidate)) {
       return Priority.BUILTIN;
     }
-    if (candidateFile == expression.getContainingFile()) {
+    if (PyUtil.inSameFile(candidate, expression)) {
       return Priority.SAME_FILE;
     }
     final String qualifiedName = candidate.getQualifiedName();
@@ -166,7 +164,7 @@ public class PyTypeFromUsedAttributesHelper {
         }
       }
     }
-    if (ProjectScope.getProjectScope(candidate.getProject()).contains(candidateFile.getVirtualFile())) {
+    if (ProjectScope.getProjectScope(candidate.getProject()).contains(candidate.getContainingFile().getVirtualFile())) {
       return Priority.PROJECT;
     }
     return Priority.OTHER;
@@ -174,7 +172,7 @@ public class PyTypeFromUsedAttributesHelper {
 
   @VisibleForTesting
   @NotNull
-  public Set<QualifiedName> collectImportQualifiers(@NotNull PsiFile file) {
+  public static Set<QualifiedName> collectImportQualifiers(@NotNull PsiFile file) {
     final Set<QualifiedName> result = Sets.newHashSet();
     if (file instanceof PyFile) {
       final PyFile originalModule = (PyFile)file;

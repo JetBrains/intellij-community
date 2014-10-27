@@ -228,8 +228,7 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
   public void testImportQualifiers() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("pkg1/pkg2/main.py");
-    final TypeEvalContext context = TypeEvalContext.userInitiated(myFixture.getFile());
-    final Set<QualifiedName> qualifiers = new PyTypeFromUsedAttributesHelper(context).collectImportQualifiers(myFixture.getFile());
+    final Set<QualifiedName> qualifiers = PyTypeFromUsedAttributesHelper.collectImportQualifiers(myFixture.getFile());
     final Set<String> qualifiedNames = ContainerUtil.map2Set(qualifiers, new Function<QualifiedName, String>() {
       @Override
       public String fun(QualifiedName name) {
