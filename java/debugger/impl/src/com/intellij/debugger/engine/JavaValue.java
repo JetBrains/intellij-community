@@ -113,6 +113,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myEvaluationContext;
   }
 
+  public NodeManagerImpl getNodeManager() {
+    return myNodeManager;
+  }
+
   @Override
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
     final SuspendContextImpl suspendContext = myEvaluationContext.getSuspendContext();

@@ -93,7 +93,7 @@ public final class UpdateChecker {
   @NonNls private static final String DISABLED_UPDATE = "disabled_update.txt";
 
   private static Set<String> ourDisabledToUpdatePlugins;
-  private static Map<String, String> ourAdditionalRequestOptions = new HashMap<String, String>();
+  private static final Map<String, String> ourAdditionalRequestOptions = new HashMap<String, String>();
 
   private static class Holder {
     private static final String UPDATE_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getCheckingUrl();
@@ -464,8 +464,7 @@ public final class UpdateChecker {
   private static CheckForUpdateResult checkForUpdates(final UpdateSettings settings) {
     UpdatesInfo info;
     try {
-      UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl());
-      info = loader.loadUpdatesInfo();
+      info = UpdatesXmlLoader.loadUpdatesInfo(getUpdateUrl());
       if (info == null) {
         return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED);
       }
@@ -660,13 +659,11 @@ public final class UpdateChecker {
         return uid;
       }
     }
-    String uid;
-    if (!propertiesComponent.isValueSet(INSTALLATION_UID)) {
+
+    String uid = propertiesComponent.getValue(INSTALLATION_UID);
+    if (uid == null) {
       uid = generateUUID();
       propertiesComponent.setValue(INSTALLATION_UID, uid);
-    }
-    else {
-      uid = propertiesComponent.getValue(INSTALLATION_UID);
     }
     return uid;
   }
@@ -683,11 +680,8 @@ public final class UpdateChecker {
             return FileUtil.loadFile(permanentIdFile).trim();
           }
 
-          String uuid;
-          if (propertiesComponent.isValueSet(INSTALLATION_UID)) {
-            uuid = propertiesComponent.getValue(INSTALLATION_UID);
-          }
-          else {
+          String uuid = propertiesComponent.getValue(INSTALLATION_UID);
+          if (uuid == null) {
             uuid = generateUUID();
           }
           FileUtil.writeToFile(permanentIdFile, uuid);
@@ -816,7 +810,7 @@ public final class UpdateChecker {
       out.close();
     }
 
-    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
+    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.ENGLISH);
     File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
     FileUtil.copy(tempFile, patchFile);
     FileUtil.delete(tempFile);

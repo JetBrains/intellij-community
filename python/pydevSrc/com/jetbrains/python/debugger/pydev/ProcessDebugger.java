@@ -78,6 +78,8 @@ public interface ProcessDebugger {
 
   void setBreakpoint(String typeId, String file, int line, String condition, String logExpression);
 
+  void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName);
+
   void removeBreakpoint(String typeId, String file, int line);
 
   void addCloseListener(RemoteDebuggerCloseListener remoteDebuggerCloseListener);
