@@ -37,6 +37,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -66,7 +67,7 @@ import java.util.List;
 */
 public class AnnotateStackTraceAction extends AnAction implements DumbAware {
   private final EditorHyperlinkSupport myHyperlinks;
-  private Map<Integer, VcsFileRevision> cache;
+  private Map<Integer, LastRevision> cache;
   private int newestLine = -1;
   private int maxDateLength = 0;
   private final Editor myEditor;
@@ -83,7 +84,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    cache = new HashMap<Integer, VcsFileRevision>();
+    cache = new HashMap<Integer, LastRevision>();
 
     ProgressManager.getInstance().run(
     new Task.Backgroundable(myEditor.getProject(), "Getting file history", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
@@ -100,7 +101,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
         final EditorGutterAction action = new EditorGutterAction() {
           @Override
           public void doAction(int lineNum) {
-            final VcsFileRevision revision = cache.get(lineNum);
+            final LastRevision revision = cache.get(lineNum);
             final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(lineNum);
             if (!links.isEmpty()) {
               final RangeHighlighter key = links.get(links.size() - 1);
@@ -111,7 +112,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
                 final Project project = getProject();
                 final AbstractVcs vcs = ProjectLevelVcsManagerEx.getInstanceEx(project).getVcsFor(file);
                 if (vcs != null) {
-                  final VcsRevisionNumber number = revision.getRevisionNumber();
+                  final VcsRevisionNumber number = revision.getNumber();
                   final VcsKey vcsKey = vcs.getKeyInstanceMethod();
                   ShowAllAffectedGenericAction.showSubmittedFiles(project, number, file, vcsKey);
                 }
@@ -137,23 +138,23 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
 
           @Override
           public String getLineText(int line, Editor editor) {
-            final VcsFileRevision revision = cache.get(line);
+            final LastRevision revision = cache.get(line);
             if (revision != null) {
-              return String.format("%"+maxDateLength+"s", DateFormatUtil.formatPrettyDate(revision.getRevisionDate())) + " " + revision.getAuthor();
+              return String.format("%"+maxDateLength+"s", DateFormatUtil.formatPrettyDate(revision.getDate())) + " " + revision.getAuthor();
             }
             return "";
           }
 
           @Override
           public String getToolTip(int line, Editor editor) {
-            final VcsFileRevision revision = cache.get(line);
+            final LastRevision revision = cache.get(line);
             if (revision != null) {
               return XmlStringUtil.wrapInHtml(
                 revision.getAuthor() +
                 " " +
-                DateFormatUtil.formatDateTime(revision.getRevisionDate()) +
+                DateFormatUtil.formatDateTime(revision.getDate()) +
                 "<br/>" +
-                revision.getCommitMessage()
+                revision.getMessage()
               );
             }
             return null;
@@ -220,11 +221,11 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
         for (VirtualFile file : files) {
           indicator.checkCanceled();
 
-          VcsFileRevision revision = getLastRevision(file);
+          LastRevision revision = getLastRevision(file);
           if (revision != null) {
             final List<Integer> lines = files2lines.get(file);
 
-            final Date date = revision.getRevisionDate();
+            final Date date = revision.getDate();
             if (newestDate == null || date.after(newestDate)) {
               newestDate = date;
               newestLine = lines.get(0);
@@ -252,7 +253,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
       }
 
       @Nullable
-      private VcsFileRevision getLastRevision(@NotNull VirtualFile file) {
+      private LastRevision getLastRevision(@NotNull VirtualFile file) {
         try {
           final AbstractVcs vcs = VcsUtil.getVcsFor(myEditor.getProject(), file);
           if (vcs == null) return null;
@@ -267,7 +268,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           List<VcsFileRevision> list = session.getRevisionList();
           if (list == null || list.isEmpty()) return null;
 
-          return list.get(0);
+          return LastRevision.create(list.get(0));
         }
         catch (VcsException ignored) {
           ignored.printStackTrace();
@@ -280,5 +281,48 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(cache == null || !myGutterShowed);
+  }
+
+  private static class LastRevision {
+    @NotNull private final VcsRevisionNumber myNumber;
+    @NotNull private final String myAuthor;
+    @NotNull private final Date myDate;
+    @NotNull private final String myMessage;
+
+    public LastRevision(@NotNull VcsRevisionNumber number, @NotNull String author, @NotNull Date date, @NotNull String message) {
+      myNumber = number;
+      myAuthor = author;
+      myDate = date;
+      myMessage = message;
+    }
+
+    @NotNull
+    public static LastRevision create(@NotNull VcsFileRevision revision) {
+      VcsRevisionNumber number = revision.getRevisionNumber();
+      String author = StringUtil.notNullize(revision.getAuthor(), "Unknown");
+      Date date = revision.getRevisionDate();
+      String message = StringUtil.notNullize(revision.getCommitMessage());
+      return new LastRevision(number, author, date, message);
+    }
+
+    @NotNull
+    public VcsRevisionNumber getNumber() {
+      return myNumber;
+    }
+
+    @NotNull
+    public String getAuthor() {
+      return myAuthor;
+    }
+
+    @NotNull
+    public Date getDate() {
+      return myDate;
+    }
+
+    @NotNull
+    public String getMessage() {
+      return myMessage;
+    }
   }
 }
