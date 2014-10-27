@@ -15,13 +15,16 @@
  */
 package org.jetbrains.idea.devkit.references.extensions;
 
+import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.lang.documentation.DocumentationProviderEx;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -45,15 +48,23 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
 
     final XmlFile epDeclarationFile = (XmlFile)extensionPoint.getXmlTag().getContainingFile();
     final Module epModule = ModuleUtilCore.findModuleForFile(epDeclarationFile.getVirtualFile(), element.getProject());
-    final PsiClass epClass = getExtensionPointClass(extensionPoint);
     final String epPrefix = extensionPoint.getNamePrefix();
-    return
-      (epModule == null ? "" : "[" + epModule.getName() + "]") +
-      (epPrefix == null ? "" : " " + epPrefix) +
-      "\n" +
-      "<b>" + extensionPoint.getEffectiveName() + "</b>" +
-      " [" + epDeclarationFile.getName() + "]\n" +
-      (epClass == null ? "<unknown>" : epClass.getQualifiedName());
+
+    final PsiClass epClass = getExtensionPointClass(extensionPoint);
+    StringBuilder epClassText = new StringBuilder();
+    if (epClass != null) {
+      JavaDocInfoGenerator.generateType(epClassText, PsiTypesUtil.getClassType(epClass), epClass, true);
+    }
+    else {
+      epClassText.append("<unknown>");
+    }
+
+    return (epModule == null ? "" : "[" + epModule.getName() + "]") +
+           (epPrefix == null ? "" : " " + epPrefix) +
+           "<br/>" +
+           "<b>" + extensionPoint.getEffectiveName() + "</b>" +
+           " [" + epDeclarationFile.getName() + "]<br/>" +
+           epClassText.toString();
   }
 
   @Override
@@ -63,7 +74,16 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
 
     final PsiClass epClass = getExtensionPointClass(extensionPoint);
     if (epClass != null) {
-      return JavaDocumentationProvider.generateExternalJavadoc(epClass);
+      StringBuilder sb = new StringBuilder();
+      sb.append("<em>EP Definition</em><br/>");
+      final String quickInfo = StringUtil.notNullize(getQuickNavigateInfo(element, originalElement));
+      sb.append(quickInfo);
+      sb.append("<br/>");
+      sb.append("<br/>");
+      sb.append("<em>EP Implementation</em>");
+      sb.append(JavaDocumentationProvider.generateExternalJavadoc(epClass));
+
+      return sb.toString();
     }
     return null;
   }
