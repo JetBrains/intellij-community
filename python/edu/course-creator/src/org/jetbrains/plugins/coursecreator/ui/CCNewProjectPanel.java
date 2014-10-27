@@ -24,6 +24,14 @@ public class CCNewProjectPanel {
     myName.getDocument().addDocumentListener(new MyValidator());
     myDescription.getDocument().addDocumentListener(new MyValidator());
     myAuthorField.getDocument().addDocumentListener(new MyValidator());
+    myDescription.setLineWrap(true);
+  }
+
+  public CCNewProjectPanel(String name, String author, String description) {
+    this();
+    myName.setText(name);
+    myAuthorField.setText(author);
+    myDescription.setText(description);
   }
 
   public JPanel getMainPanel() {
@@ -53,7 +61,9 @@ public class CCNewProjectPanel {
 
     @Override
     protected void textChanged(DocumentEvent e) {
-      myValidationManager.validate();
+      if (myValidationManager != null) {
+        myValidationManager.validate();
+      }
     }
   }
 }

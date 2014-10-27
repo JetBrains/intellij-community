@@ -33,7 +33,7 @@ public class HgTarget implements PushTarget {
 
   @Override
   public boolean hasSomethingToPush() {
-    return false;
+    // push is always allowed except invalid target
+    return true;
   }
-
 }

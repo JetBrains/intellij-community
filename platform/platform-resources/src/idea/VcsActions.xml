@@ -259,6 +259,10 @@
       <add-to-group group-id="NavBarVcsGroup" anchor="first"/>
     </group>
 
+    <action id="Vcs.ShowDiffWithLocal" class="com.intellij.openapi.vcs.history.ShowDiffWithLocalAction"
+            text="Compare with Local" description="Compare version from selected revision with current version"
+            icon="AllIcons.Actions.DiffWithCurrent"/>
+
     <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>

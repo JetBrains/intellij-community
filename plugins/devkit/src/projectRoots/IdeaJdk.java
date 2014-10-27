@@ -175,7 +175,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @Nullable
   public static String getBuildNumber(String ideaHome) {
     try {
-      @NonNls final String buildTxt = "/build.txt";
+      @NonNls final String buildTxt = SystemInfo.isMac ? "/Resources/build.txt" : "/build.txt";
       return FileUtil.loadFile(new File(ideaHome + buildTxt)).trim();
     }
     catch (IOException e) {

@@ -49,14 +49,17 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
 
   @Override
   public void showDiffForOne(@NotNull AnActionEvent e,
-                             @NotNull FilePath filePath,
+                             @NotNull Project project, @NotNull FilePath filePath,
                              @NotNull VcsFileRevision previousRevision,
                              @NotNull VcsFileRevision revision) {
     doShowDiff(filePath, previousRevision, revision, false);
   }
 
   @Override
-  public void showDiffForTwo(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2) {
+  public void showDiffForTwo(@NotNull Project project,
+                             @NotNull FilePath filePath,
+                             @NotNull VcsFileRevision revision1,
+                             @NotNull VcsFileRevision revision2) {
     doShowDiff(filePath, revision1, revision2, true);
   }
 

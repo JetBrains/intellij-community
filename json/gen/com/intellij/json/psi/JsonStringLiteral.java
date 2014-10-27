@@ -15,8 +15,6 @@ public interface JsonStringLiteral extends JsonLiteral {
   @Nullable
   PsiElement getSingleQuotedString();
 
-  boolean isQuotedString();
-
   @NotNull
   List<Pair<TextRange, String>> getTextFragments();
 

@@ -16,6 +16,7 @@
 package git4idea.ui.branch;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -41,6 +42,8 @@ import java.awt.event.MouseEvent;
 public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidget.MultipleTextValuesPresentation,
                                                                   StatusBarWidget.Multiframe,
                                                                   GitRepositoryChangeListener {
+  private static final Logger LOG = Logger.getInstance(GitBranchWidget.class);
+
   private final GitVcsSettings mySettings;
   private volatile String myText = "";
   private volatile String myTooltip = "";
@@ -71,22 +74,32 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
 
   @Override
   public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+    LOG.debug("selection changed");
     update();
   }
 
   @Override
   public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+    LOG.debug("file opened");
     update();
   }
 
   @Override
   public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+    LOG.debug("file closed");
     update();
   }
 
   @Override
   public void repositoryChanged(@NotNull GitRepository repository) {
-    update();
+    LOG.debug("repository changed");
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        LOG.debug("update after repository change");
+        update();
+      }
+    });
   }
 
   @Override
@@ -132,28 +145,23 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
   }
 
   private void update() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Project project = getProject();
-        if (project == null || project.isDisposed()) {
-          emptyTextAndTooltip();
-          return;
-        }
+    Project project = getProject();
+    if (project == null || project.isDisposed()) {
+      emptyTextAndTooltip();
+      return;
+    }
 
-        GitRepository repo = GitBranchUtil.getCurrentRepository(project);
-        if (repo == null) { // the file is not under version control => display nothing
-          emptyTextAndTooltip();
-          return;
-        }
+    GitRepository repo = GitBranchUtil.getCurrentRepository(project);
+    if (repo == null) { // the file is not under version control => display nothing
+      emptyTextAndTooltip();
+      return;
+    }
 
-        int maxLength = myMaxString.length() - 1; // -1, because there are arrows indicating that it is a popup
-        myText = StringUtil.shortenTextWithEllipsis(GitBranchUtil.getDisplayableBranchText(repo), maxLength, 5);
-        myTooltip = getDisplayableBranchTooltip(repo);
-        myStatusBar.updateWidget(ID());
-        mySettings.setRecentRoot(repo.getRoot().getPath());
-      }
-    });
+    int maxLength = myMaxString.length() - 1; // -1, because there are arrows indicating that it is a popup
+    myText = StringUtil.shortenTextWithEllipsis(GitBranchUtil.getDisplayableBranchText(repo), maxLength, 5);
+    myTooltip = getDisplayableBranchTooltip(repo);
+    myStatusBar.updateWidget(ID());
+    mySettings.setRecentRoot(repo.getRoot().getPath());
   }
 
   private void emptyTextAndTooltip() {

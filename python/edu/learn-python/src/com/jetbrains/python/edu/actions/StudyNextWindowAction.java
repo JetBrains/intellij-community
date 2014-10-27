@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class StudyNextWindowAction extends StudyWindowNavigationAction {
   public static final String ACTION_ID = "NextWindow";
-  public static final String SHORTCUT = "ctrl pressed PERIOD";
+  public static final String SHORTCUT = "ctrl shift pressed PERIOD";
   public static final String SHORTCUT2 = "ctrl pressed ENTER";
 
   public StudyNextWindowAction() {
