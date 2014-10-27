@@ -36,6 +36,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -69,6 +70,7 @@ import java.util.List;
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
   private final Project myProject;
   private final ToolWindowEx myToolWindow;
+  private final AnAction myShowToolbarAction;
 
   private VirtualFile myFile;
 
@@ -90,6 +92,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
+    myShowToolbarAction = SimpleToolWindowPanel.createToggleToolbarAction(myToolWindow);
 
     myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myToolWindow.getComponent(), this, myToolWindow.getComponent(), true);
     myUpdateQueue.setRestartTimerOnAdd(true);
@@ -365,12 +368,13 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private void updateHeaderActions(StructureView structureView) {
-    ActionGroup gearActions = null;
+    DefaultActionGroup gearActions = new DefaultActionGroup();
     AnAction[] titleActions = AnAction.EMPTY_ARRAY;
     if (structureView instanceof StructureViewComponent) {
-      gearActions = ((StructureViewComponent)structureView).getGearActions();
+      gearActions.addAll(((StructureViewComponent)structureView).getGearActions());
       titleActions = ((StructureViewComponent)structureView).getTitleActions();
     }
+    gearActions.addAction(myShowToolbarAction).setAsSecondary(true);
     myToolWindow.setAdditionalGearActions(gearActions);
     myToolWindow.setTitleActions(titleActions);
   }

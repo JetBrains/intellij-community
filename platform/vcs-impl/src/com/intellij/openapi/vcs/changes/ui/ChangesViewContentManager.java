@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -26,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -36,6 +38,7 @@ import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.NotNullFunction;
@@ -83,6 +86,10 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
         if (toolWindowManager != null) {
           myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject, true);
           myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowChanges);
+          DefaultActionGroup gearActions = new DefaultActionGroup();
+          gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(myToolWindow)).setAsSecondary(true);
+          ((ToolWindowEx)myToolWindow).setAdditionalGearActions(gearActions);
+
           updateToolWindowAvailability();
           final ContentManager contentManager = myToolWindow.getContentManager();
           myContentManagerListener = new MyContentManagerListener();
