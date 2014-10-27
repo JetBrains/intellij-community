@@ -188,7 +188,7 @@ public class ConfigImportHelper {
       @Override
       public boolean accept(@NotNull File dir, @NotNull String name) {
         // Don't copy plugins just imported. They're most probably incompatible with newer idea version.
-        return !StringUtil.startsWithChar(name, '.') && !name.equals(PLUGINS_PATH) && !name.equals(PLUGINS_PATH);
+        return !StringUtil.startsWithChar(name, '.') && !name.equals(PLUGINS_PATH);
       }
     });
 
