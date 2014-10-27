@@ -16,6 +16,7 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import io.netty.bootstrap.Bootstrap;
@@ -124,9 +125,12 @@ public class BuildMain {
       final String projectPathToPreload = System.getProperty(PRELOAD_PROJECT_PATH, null);
       final String globalsPathToPreload = System.getProperty(PRELOAD_CONFIG_PATH, null); 
       if (projectPathToPreload != null && globalsPathToPreload != null) {
+        final long preloadStart = System.currentTimeMillis();
         final PreloadedData data = new PreloadedData();
         ourPreloadedData = data;
         try {
+          FileSystemUtil.getAttributes(projectPathToPreload); // this will pre-load all FS optimizations
+
           final BuildRunner runner = new BuildRunner(new JpsModelLoaderImpl(projectPathToPreload, globalsPathToPreload, null));
           data.setRunner(runner);
 
@@ -162,10 +166,11 @@ public class BuildMain {
             LOG.info("Error pre-loading FS state", e);
             fsState.clearAll();
           }
+          LOG.info("Pre-loaded project model in " + (System.currentTimeMillis() - preloadStart) + " ms");
         }
         catch (Throwable e) {
           LOG.info("Failed to pre-load project " + projectPathToPreload, e);
-          // just failed to preload the project, the situation will be handled later, when real build starts  
+          // just failed to preload the project, the situation will be handled later, when real build starts
         }
       }
       else if (projectPathToPreload != null || globalsPathToPreload != null){
