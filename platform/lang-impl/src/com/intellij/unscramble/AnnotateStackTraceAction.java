@@ -55,6 +55,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
@@ -218,51 +219,59 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
 
         for (VirtualFile file : files) {
           indicator.checkCanceled();
-          final AbstractVcs vcs = VcsUtil.getVcsFor(myEditor.getProject(), file);
-          FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
-          if (vcs != null) {
-            try {
-              final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
-              final VcsHistorySession session;
-              if (provider != null) {
-                session = provider.createSessionFor(filePath);
-                final List<VcsFileRevision> list;
-                if (session != null) {
-                  list = session.getRevisionList();
-                  final List<Integer> lines = files2lines.get(file);
-                  if (list != null && !list.isEmpty()) {
-                    final VcsFileRevision revision = list.get(0);
-                    final Date date = revision.getRevisionDate();
-                    if (newestDate == null || date.after(newestDate)) {
-                      newestDate = date;
-                      newestLine = lines.get(0);
-                    }
-                    final int length = DateFormatUtil.formatPrettyDate(date).length();
-                    if (length > maxDateLength) {
-                      maxDateLength = length;
-                    }
-                    for (Integer line : lines) {
-                      cache.put(line, revision);
-                    }
-                    ApplicationManager.getApplication().invokeLater(new Runnable() {
-                      @Override
-                      public void run() {
-                        if (!myGutterShowed) {
-                          showGutter();
-                        } else {
-                          ((EditorGutterComponentEx)myEditor.getGutter()).revalidateMarkup();
-                        }
-                      }
-                    });
-                  }
+
+          VcsFileRevision revision = getLastRevision(file);
+          if (revision != null) {
+            final List<Integer> lines = files2lines.get(file);
+
+            final Date date = revision.getRevisionDate();
+            if (newestDate == null || date.after(newestDate)) {
+              newestDate = date;
+              newestLine = lines.get(0);
+            }
+            final int length = DateFormatUtil.formatPrettyDate(date).length();
+            if (length > maxDateLength) {
+              maxDateLength = length;
+            }
+            for (Integer line : lines) {
+              cache.put(line, revision);
+            }
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (!myGutterShowed) {
+                  showGutter();
+                }
+                else {
+                  ((EditorGutterComponentEx)myEditor.getGutter()).revalidateMarkup();
                 }
               }
-            }
-            catch (VcsException ignored) {
-              ignored.printStackTrace();
-            }
+            });
           }
+        }
+      }
 
+      @Nullable
+      private VcsFileRevision getLastRevision(@NotNull VirtualFile file) {
+        try {
+          final AbstractVcs vcs = VcsUtil.getVcsFor(myEditor.getProject(), file);
+          if (vcs == null) return null;
+
+          VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
+          if (historyProvider == null) return null;
+
+          FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+          VcsHistorySession session = historyProvider.createSessionFor(filePath);
+          if (session == null) return null;
+
+          List<VcsFileRevision> list = session.getRevisionList();
+          if (list == null || list.isEmpty()) return null;
+
+          return list.get(0);
+        }
+        catch (VcsException ignored) {
+          ignored.printStackTrace();
+          return null;
         }
       }
     });
