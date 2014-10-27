@@ -20,7 +20,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
 import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
-import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ import java.util.Set;
 import static com.intellij.vcs.log.graph.GraphStrUtils.containingBranchesGetterToStr;
 import static org.junit.Assert.assertEquals;
 
-public abstract class ContainingBranchesTest<CommitId> extends AbstractTestWithTextFile {
+public abstract class ContainingBranchesTest<CommitId> extends AbstractTestWithTwoTextFile {
   private final static String SEPARATOR = "\nBRANCH NODES:\n";
 
   public ContainingBranchesTest() {
