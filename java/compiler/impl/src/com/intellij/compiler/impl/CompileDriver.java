@@ -71,9 +71,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.jps.api.BasicFuture;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
+import org.jetbrains.jps.api.TaskFuture;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
@@ -138,7 +138,7 @@ public class CompileDriver {
           return;
         }
         try {
-          final BasicFuture future = compileInExternalProcess(compileContext, true);
+          final TaskFuture future = compileInExternalProcess(compileContext, true);
           if (future != null) {
             while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
               if (indicator.isCanceled()) {
@@ -194,7 +194,7 @@ public class CompileDriver {
   }
 
   @Nullable
-  private BasicFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
+  private TaskFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
     throws Exception {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
@@ -400,7 +400,7 @@ public class CompileDriver {
             return;
           }
 
-          final BasicFuture future = compileInExternalProcess(compileContext, false);
+          final TaskFuture future = compileInExternalProcess(compileContext, false);
           if (future != null) {
             while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
               if (indicator.isCanceled()) {
