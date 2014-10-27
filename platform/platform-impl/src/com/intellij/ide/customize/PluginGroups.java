@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.customize;
 
+import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Condition;
@@ -329,7 +329,7 @@ public class PluginGroups {
     else {
       myFeaturedIds.remove(pluginId);
     }
-    StartupUtil.setFeaturedPluginsToInstall(myFeaturedIds);
+    WelcomeWizardUtil.setFeaturedPluginsToInstall(myFeaturedIds);
   }
 
   void setPluginEnabledWithDependencies(final String pluginId, boolean enabled) {

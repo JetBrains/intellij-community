@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
-import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -38,15 +37,15 @@ public class GitPushAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    Collection<GitRepository> repositories = collectRepositories(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+    Collection<GitRepository> repositories = e.getData(CommonDataKeys.EDITOR) != null
+                                             ? ContainerUtil.<GitRepository>emptyList()
+                                             : collectRepositories(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
     new VcsPushDialog(project, RepositoryUtil.sortRepositories(repositories)).show();
   }
 
   @NotNull
   private static Collection<GitRepository> collectRepositories(@NotNull Project project, @Nullable VirtualFile[] files) {
-    if (files == null) {
-      return Collections.singletonList(GitBranchUtil.getCurrentRepository(project));
-    }
+    if (files == null) return Collections.emptyList();
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     Collection<GitRepository> repositories = ContainerUtil.newHashSet();
     for (VirtualFile file : files) {

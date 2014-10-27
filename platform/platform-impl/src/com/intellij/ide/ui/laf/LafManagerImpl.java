@@ -18,13 +18,13 @@ package com.intellij.ide.ui.laf;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
-import com.intellij.idea.StartupUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -221,7 +221,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       if (laf != null) {
         boolean needUninstall = UIUtil.isUnderDarcula();
         setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
-        if (StartupUtil.getWizardLAF() != null) {
+        if (WelcomeWizardUtil.getWizardLAF() != null) {
           if (UIUtil.isUnderDarcula()) {
             DarculaInstaller.install();
           }
@@ -315,8 +315,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * RubyMine uses Native L&F for linux as well
    */
   private UIManager.LookAndFeelInfo getDefaultLaf() {
-    if (StartupUtil.getWizardLAF() != null) {
-      UIManager.LookAndFeelInfo laf = findLaf(StartupUtil.getWizardLAF());
+    if (WelcomeWizardUtil.getWizardLAF() != null) {
+      UIManager.LookAndFeelInfo laf = findLaf(WelcomeWizardUtil.getWizardLAF());
       LOG.assertTrue(laf != null);
       return laf;
     }
@@ -337,7 +337,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
     }
     // Default
-    final String defaultLafName = StartupUtil.getDefaultLAF();
+    final String defaultLafName = WelcomeWizardUtil.getDefaultLAF();
     if (defaultLafName != null) {
       UIManager.LookAndFeelInfo defaultLaf = findLaf(defaultLafName);
       if (defaultLaf != null) {

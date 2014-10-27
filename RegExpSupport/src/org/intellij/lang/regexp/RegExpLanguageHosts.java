@@ -79,7 +79,12 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
       return true;
     }
     final RegExpLanguageHost host = findRegExpHost(regExpChar);
-    return host != null && host.supportsExtendedHexCharacter(regExpChar);
+    try {
+      return host != null && host.supportsExtendedHexCharacter(regExpChar);
+    } catch (AbstractMethodError e) {
+      // supportsExtendedHexCharacter not present
+      return false;
+    }
   }
 
   public boolean supportsNamedGroupSyntax(@Nullable final RegExpGroup group) {

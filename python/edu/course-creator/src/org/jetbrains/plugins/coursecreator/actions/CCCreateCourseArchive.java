@@ -134,6 +134,9 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     final TaskFile taskFile = taskFiles.getValue();
     TaskFile taskFileSaved = new TaskFile();
     taskFile.copy(taskFileSaved);
+    for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
+      taskWindow.setLength(taskWindow.getReplacementLength());
+    }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
@@ -168,7 +171,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            document.replaceString(offset, offset + taskWindow.getReplacementLength(), taskText);
+            document.replaceString(offset, offset + taskWindow.getLength(), taskText);
             FileDocumentManager.getInstance().saveDocument(document);
           }
         });
@@ -252,11 +255,6 @@ public class CCCreateCourseArchive extends DumbAwareAction {
 
     public InsertionListener(TaskFile taskFile) {
       super(taskFile);
-    }
-
-    @Override
-    protected void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change) {
-      //we don't need to update task window length
     }
 
     @Override

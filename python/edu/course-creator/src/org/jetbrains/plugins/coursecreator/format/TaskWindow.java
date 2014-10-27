@@ -20,7 +20,7 @@ import org.jetbrains.plugins.coursecreator.CCProjectService;
 import java.io.File;
 import java.util.List;
 
-public class TaskWindow implements Comparable{
+public class TaskWindow implements Comparable<TaskWindow> {
 
   @Expose public int line;
   @Expose public int start;
@@ -120,8 +120,7 @@ public class TaskWindow implements Comparable{
   }
 
   @Override
-  public int compareTo(Object o) {
-    TaskWindow taskWindow = (TaskWindow)o;
+  public int compareTo(@NotNull TaskWindow taskWindow) {
     int lineDiff = line - taskWindow.line;
     if (lineDiff == 0) {
       return start - taskWindow.start;
@@ -153,5 +152,9 @@ public class TaskWindow implements Comparable{
     RangeHighlighter rh = editor.getMarkupModel()
       .addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, null, HighlighterTargetArea.EXACT_RANGE);
     blocks.add(rh);
+  }
+
+  public void setLength(int length) {
+    this.length = length;
   }
 }
