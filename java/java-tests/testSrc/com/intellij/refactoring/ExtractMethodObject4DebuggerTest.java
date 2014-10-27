@@ -214,6 +214,56 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "    }", false);
   }
 
+  public void testOnClosingBrace() throws Exception {
+    doTest("   foo()", "int result = new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public int invoke() {\n" +
+           "            return foo();\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testOnClosingBraceLocalClass() throws Exception {
+    doTest("   foo()", "int result = new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public int invoke() {\n" +
+           "            return foo();\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testOnFieldInitialization() throws Exception {
+    doTest("   foo()", "int result = new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public int invoke() {\n" +
+           "            return foo();\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testOnEmptyMethod() throws Exception {
+    doTest("   foo()", "int result = Test.invoke();",
+
+           "public static class Test {\n" +
+           "        public static int invoke() {\n" +
+           "            return foo();\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testOnSuperConstructorCall() throws Exception {
+    doTest("   foo()", "int result = new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public int invoke() {\n" +
+           "            return foo();\n" +
+           "        }\n" +
+           "    }");
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();
