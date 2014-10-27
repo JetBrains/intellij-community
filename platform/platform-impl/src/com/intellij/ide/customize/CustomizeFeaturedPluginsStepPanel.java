@@ -56,10 +56,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
   public CustomizeFeaturedPluginsStepPanel(PluginGroups pluginGroups) throws OfflineException {
     setLayout(new GridLayout(1, 1));
     JPanel gridPanel = new JPanel(new GridLayout(0, 3));
-    JBScrollPane scrollPane =
-      new JBScrollPane(gridPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.getVerticalScrollBar().setUnitIncrement(10);
-    scrollPane.setBorder(null);
+    JBScrollPane scrollPane = CustomizePluginsStepPanel.createScrollPane(gridPanel);
 
     Map<String, String> config = pluginGroups.getFeaturedPlugins();
     boolean isEmptyOrOffline = true;
