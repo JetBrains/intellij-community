@@ -20,7 +20,7 @@ import javax.swing.*;
 
 public class CCChangeCourseInfo extends DumbAwareAction {
   public CCChangeCourseInfo() {
-    super("Change course information", "Change course information", null);
+    super("Change Course information", "Change Course Information", null);
   }
 
   @Override
