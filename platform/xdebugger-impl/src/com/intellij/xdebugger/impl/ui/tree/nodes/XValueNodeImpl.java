@@ -160,10 +160,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           };
 
           if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-            getValueContainer().computeSourcePosition(new XNearestSourcePosition() {
+            class ValueDeclaration implements XNavigatable {
               @Override
               public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-                final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+                final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map =
+                  myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
                 final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
                 if (map == null || timestamps == null || sourcePosition == null) return;
                 VirtualFile file = sourcePosition.getFile();
@@ -172,7 +173,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
                 int line = sourcePosition.getLine();
                 callback.computed(file, doc, line);
               }
-            });
+            }
+            class NearestValuePosition extends ValueDeclaration implements XNearestSourcePosition {}
+            getValueContainer().computeSourcePosition(new ValueDeclaration());
+            getValueContainer().computeSourcePosition(new NearestValuePosition());
           }
         }
       }
