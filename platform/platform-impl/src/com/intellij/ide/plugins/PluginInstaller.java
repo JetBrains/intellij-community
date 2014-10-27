@@ -22,15 +22,21 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author stathik
@@ -41,9 +47,9 @@ public class PluginInstaller {
 
   private PluginInstaller() { }
 
-  public static boolean prepareToInstall(List<PluginNode> pluginsToInstall, List<IdeaPluginDescriptor> allPlugins) {
-    HashSet<PluginNode> dependant = new HashSet<PluginNode>();
-    boolean install = prepareToInstall(pluginsToInstall, allPlugins, dependant);
+  public static boolean prepareToInstall(List<PluginNode> pluginsToInstall, List<IdeaPluginDescriptor> allPlugins, @NotNull ProgressIndicator indicator) {
+    Set<PluginNode> dependant = new THashSet<PluginNode>();
+    boolean install = prepareToInstall(pluginsToInstall, allPlugins, dependant, indicator);
     for (PluginNode node : dependant) {
       if (!pluginsToInstall.contains(node)) {
         pluginsToInstall.add(node);
@@ -54,21 +60,18 @@ public class PluginInstaller {
 
   private static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
                                           List<IdeaPluginDescriptor> allPlugins,
-                                          Set<PluginNode> installedDependant) {
-    ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-
-    final List<PluginId> pluginIds = new ArrayList<PluginId>();
+                                          Set<PluginNode> installedDependant,
+                                          @NotNull ProgressIndicator progressIndicator) {
+    List<PluginId> pluginIds = new SmartList<PluginId>();
     for (PluginNode pluginNode : pluginsToInstall) {
       pluginIds.add(pluginNode.getPluginId());
     }
 
     boolean result = false;
-
-    for (final PluginNode pluginNode : pluginsToInstall) {
-      if (pi != null) pi.setText(pluginNode.getName());
-
+    for (PluginNode pluginNode : pluginsToInstall) {
+      progressIndicator.setText(pluginNode.getName());
       try {
-        result |= prepareToInstall(pluginNode, pluginIds, allPlugins, installedDependant);
+        result |= prepareToInstall(pluginNode, pluginIds, allPlugins, installedDependant, progressIndicator);
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
@@ -83,7 +86,8 @@ public class PluginInstaller {
   private static boolean prepareToInstall(final PluginNode pluginNode,
                                           final List<PluginId> pluginIds,
                                           List<IdeaPluginDescriptor> allPlugins,
-                                          Set<PluginNode> installedDependant) throws IOException {
+                                          Set<PluginNode> installedDependant,
+                                          @NotNull ProgressIndicator progressIndicator) throws IOException {
     installedDependant.add(pluginNode);
     // check for dependent plugins at first.
     if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
@@ -93,7 +97,6 @@ public class PluginInstaller {
       final List<PluginNode> optionalDeps = new ArrayList<PluginNode>();
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
         PluginId depPluginId = pluginNode.getDepends().get(i);
-
         if (PluginManager.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
             PluginManagerUISettings.getInstance().getInstalledPlugins().contains(depPluginId.getIdString()) ||
             (pluginIds != null && pluginIds.contains(depPluginId))) {
@@ -123,6 +126,7 @@ public class PluginInstaller {
         }
         try {
           GuiUtils.runOrInvokeAndWait(new Runnable() {
+            @Override
             public void run() {
               String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
               String message = IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), buf.substring(0, buf.length() - 1));
@@ -134,7 +138,7 @@ public class PluginInstaller {
           return false;
         }
         if (proceed[0]) {
-          if (!prepareToInstall(depends, allPlugins, installedDependant)) {
+          if (!prepareToInstall(depends, allPlugins, installedDependant, progressIndicator)) {
             return false;
           }
         }
@@ -151,6 +155,7 @@ public class PluginInstaller {
         final boolean[] proceed = new boolean[1];
         try {
           GuiUtils.runOrInvokeAndWait(new Runnable() {
+            @Override
             public void run() {
               proceed[0] =
                 Messages.showYesNoDialog(IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(),
@@ -164,19 +169,19 @@ public class PluginInstaller {
           return false;
         }
         if (proceed[0]) {
-          if (!prepareToInstall(optionalDeps, allPlugins, installedDependant)) {
+          if (!prepareToInstall(optionalDeps, allPlugins, installedDependant, progressIndicator)) {
             return false;
           }
         }
       }
     }
 
-    PluginDownloader downloader = null;
+    PluginDownloader downloader;
     final String repositoryName = pluginNode.getRepositoryName();
     if (repositoryName != null) {
       try {
-        final Map<PluginId, PluginDownloader> downloaders = new HashMap<PluginId, PluginDownloader>();
-        if (!UpdateChecker.checkPluginsHost(repositoryName, downloaders)) {
+        Map<PluginId, PluginDownloader> downloaders = new THashMap<PluginId, PluginDownloader>();
+        if (!UpdateChecker.checkPluginsHost(repositoryName, downloaders, progressIndicator)) {
           return false;
         }
         downloader = downloaders.get(pluginNode.getPluginId());
@@ -190,7 +195,7 @@ public class PluginInstaller {
       downloader = PluginDownloader.createDownloader(pluginNode);
     }
 
-    if (downloader.prepareToInstall(ProgressManager.getInstance().getProgressIndicator())) {
+    if (downloader.prepareToInstall(progressIndicator)) {
       synchronized (myLock) {
         downloader.install();
       }
@@ -199,7 +204,6 @@ public class PluginInstaller {
     else {
       return false;
     }
-    
 
     return true;
   }
