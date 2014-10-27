@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,10 +56,11 @@ public class ConfigImportHelper {
   private ConfigImportHelper() {
   }
 
-  public static void importConfigsTo(String newConfigPath) {
+  public static void importConfigsTo(@NotNull String newConfigPath) {
     ConfigImportSettings settings = getConfigImportSettings();
 
-    File oldConfigDir = findOldConfigDir(newConfigPath, settings.getCustomPathsSelector());
+    File newConfigDir = new File(newConfigPath);
+    File oldConfigDir = findOldConfigDir(newConfigDir, settings.getCustomPathsSelector());
     do {
       ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(oldConfigDir, settings);
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
@@ -72,7 +74,7 @@ public class ConfigImportHelper {
         }
 
         assert oldConfigDir != null;
-        doImport(newConfigPath, oldConfigDir);
+        doImport(newConfigDir, oldConfigDir);
         settings.importFinished(newConfigPath);
         System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
       }
@@ -82,6 +84,7 @@ public class ConfigImportHelper {
     while (true);
   }
 
+  @NotNull
   private static ConfigImportSettings getConfigImportSettings() {
     try {
       @SuppressWarnings("unchecked")
@@ -99,11 +102,12 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static File findOldConfigDir(String newConfigPath, @Nullable String customPathSelector) {
-    final File configDir = new File(newConfigPath);
+  private static File findOldConfigDir(@NotNull File configDir, @Nullable String customPathSelector) {
     final File selectorDir = CONFIG_RELATED_PATH.isEmpty() ? configDir : configDir.getParentFile();
     final File parent = selectorDir.getParentFile();
-    if (parent == null || !parent.exists()) return null;
+    if (parent == null || !parent.exists()) {
+      return null;
+    }
     File maxFile = null;
     long lastModified = 0;
     final String selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
@@ -117,9 +121,12 @@ public class ConfigImportHelper {
                customPrefix != null && StringUtil.startsWithIgnoreCase(name, customPrefix);
       }
     })) {
-      final File options = new File(file, CONFIG_RELATED_PATH + OPTIONS_XML);
-      if (!options.exists()) continue;
-      final long modified = options.lastModified();
+      File options = new File(file, CONFIG_RELATED_PATH + OPTIONS_XML);
+      if (!options.exists()) {
+        continue;
+      }
+
+      long modified = options.lastModified();
       if (modified > lastModified) {
         lastModified = modified;
         maxFile = file;
@@ -132,9 +139,9 @@ public class ConfigImportHelper {
     return (SystemInfo.isMac ? "" : ".") + selector.replaceAll("\\d", "");
   }
 
-  private static void doImport(@NotNull String newConfigPath, @NotNull File oldConfigDir) {
+  private static void doImport(@NotNull File newConfigDir, @NotNull File oldConfigDir) {
     try {
-      copy(oldConfigDir, new File(newConfigPath));
+      copy(oldConfigDir, newConfigDir);
     }
     catch (IOException e) {
       JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
@@ -175,21 +182,44 @@ public class ConfigImportHelper {
       return;
     }
 
-    FileUtil.copyDir(src, dest);
+    FileUtil.ensureExists(dest);
 
-    // Delete plugins just imported. They're most probably incompatible with newer idea version.
-    File plugins = new File(dest, PLUGINS_PATH);
+    File[] childFiles = src.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(@NotNull File dir, @NotNull String name) {
+        // Don't copy plugins just imported. They're most probably incompatible with newer idea version.
+        return !StringUtil.startsWithChar(name, '.') && !name.equals(PLUGINS_PATH) && !name.equals(PLUGINS_PATH);
+      }
+    });
+
+    if (childFiles == null || childFiles.length == 0) {
+      return;
+    }
+
+    for (File from : childFiles) {
+      File to = new File(dest, from.getName());
+      if (from.isDirectory()) {
+        FileUtil.copyDir(from, to, false);
+      }
+      else {
+        FileUtil.copy(from, to);
+      }
+    }
+
+    File plugins = new File(src, PLUGINS_PATH);
     if (plugins.exists()) {
-      final ArrayList<IdeaPluginDescriptorImpl> descriptors = new ArrayList<IdeaPluginDescriptorImpl>();
-      PluginManagerCore.loadDescriptors(plugins.getPath(), descriptors, null, 0);
-      final ArrayList<String> oldPlugins = new ArrayList<String>();
+      List<IdeaPluginDescriptorImpl> descriptors = new SmartList<IdeaPluginDescriptorImpl>();
+      PluginManagerCore.loadDescriptors(plugins, descriptors, null, 0);
+      List<String> oldPlugins = new SmartList<String>();
       for (IdeaPluginDescriptorImpl descriptor : descriptors) {
-        oldPlugins.add(descriptor.getPluginId().getIdString());
+        // check isBundled also - probably plugin is bundled in new IDE version
+        if (descriptor.isEnabled() && !descriptor.isBundled()) {
+          oldPlugins.add(descriptor.getPluginId().getIdString());
+        }
       }
       if (!oldPlugins.isEmpty()) {
         PluginManagerCore.savePluginsList(oldPlugins, false, new File(dest, PluginManager.INSTALLED_TXT));
       }
-      FileUtil.delete(plugins);
     }
   }
 
