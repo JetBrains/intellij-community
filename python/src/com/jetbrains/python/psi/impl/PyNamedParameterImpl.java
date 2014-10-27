@@ -276,7 +276,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             return PyUnionType.createWeakType(PyUnionType.union(types));
           }
         }
-        final PyType type = new PyTypeFromUsedAttributesHelper(context).getType(this);
+        final PyType type = PyTypeFromUsedAttributesHelper.getType(this, context);
         if (type != null) {
           return type;
         }

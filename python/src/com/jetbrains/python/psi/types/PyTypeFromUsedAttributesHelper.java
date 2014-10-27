@@ -49,6 +49,15 @@ public class PyTypeFromUsedAttributesHelper {
   private final TypeEvalContext myContext;
   private final Map<PyClass, Set<PyClass>> myAncestorsCache = Maps.newHashMap();
 
+  /**
+   * @see #getType(com.jetbrains.python.psi.PyExpression)
+   */
+  @Nullable
+  public static PyType getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    return new PyTypeFromUsedAttributesHelper(context).getType(expression);
+  }
+
+  @VisibleForTesting
   public PyTypeFromUsedAttributesHelper(@NotNull TypeEvalContext context) {
     myContext = context;
   }

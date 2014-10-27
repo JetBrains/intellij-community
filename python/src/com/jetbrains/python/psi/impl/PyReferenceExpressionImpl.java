@@ -236,7 +236,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (type != null) {
           return type;
         }
-        type = new PyTypeFromUsedAttributesHelper(context).getType(this);
+        type = PyTypeFromUsedAttributesHelper.getType(this, context);
         if (type != null) {
           return type;
         }
