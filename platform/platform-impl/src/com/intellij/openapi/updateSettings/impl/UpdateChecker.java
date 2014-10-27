@@ -765,7 +765,11 @@ public final class UpdateChecker {
 
     String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
     String toBuildNumber = newVersion.getNumber().asStringWithoutProductCode();
-    String bundledJdk = "jdk-bundled".equals(System.getProperty("idea.java.redist")) ? "-jdk-bundled" : "";
+    String jdkMacRedist = System.getProperty("idea.java.redist");
+    String bundledJdk = "";
+    if (jdkMacRedist.lastIndexOf("jdk-bundled") >= 0 ){
+      bundledJdk = "jdk-bundled".equals(jdkMacRedist) ? "-jdk-bundled" : "-custom-jdk-bundled";
+    }
 
     String fileName = productCode + "-" + fromBuildNumber + "-" + toBuildNumber + "-patch" + bundledJdk + osSuffix + ".jar";
 
