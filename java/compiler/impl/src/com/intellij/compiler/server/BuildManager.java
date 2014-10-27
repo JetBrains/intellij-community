@@ -148,7 +148,7 @@ public class BuildManager implements ApplicationComponent{
   private final File mySystemDirectory;
   private final ProjectManager myProjectManager;
 
-  private final Map<RequestFuture, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<RequestFuture, Project>());
+  private final Map<BasicFuture, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<BasicFuture, Project>());
   private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<String, RequestFuture>());
   private final Map<String, Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> myPreloadedBuilds = 
     Collections.synchronizedMap(new HashMap<String, Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>());
@@ -447,7 +447,7 @@ public class BuildManager implements ApplicationComponent{
     }
     final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
     final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
-    final RequestFuture future = scheduleBuild(
+    final BasicFuture future = scheduleBuild(
       project, false, true, false, scopes, Collections.<String>emptyList(), Collections.<String, String>emptyMap(), handler
     );
     if (future != null) {
@@ -526,12 +526,12 @@ public class BuildManager implements ApplicationComponent{
     return false;
   }
 
-  public Collection<RequestFuture> cancelAutoMakeTasks(Project project) {
-    final Collection<RequestFuture> futures = new SmartList<RequestFuture>();
+  public Collection<BasicFuture> cancelAutoMakeTasks(Project project) {
+    final Collection<BasicFuture> futures = new SmartList<BasicFuture>();
     synchronized (myAutomakeFutures) {
-      for (Map.Entry<RequestFuture, Project> entry : myAutomakeFutures.entrySet()) {
+      for (Map.Entry<BasicFuture, Project> entry : myAutomakeFutures.entrySet()) {
         if (entry.getValue().equals(project)) {
-          final RequestFuture future = entry.getKey();
+          final BasicFuture future = entry.getKey();
           future.cancel(false);
           futures.add(future);
         }
@@ -540,17 +540,30 @@ public class BuildManager implements ApplicationComponent{
     return futures;
   }
 
-  private String cancelPreloadedBuilds(Project project) {
+  private void cancelPreloadedBuilds(Project project) {
     final String projectPath = getProjectPath(project);
     final Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = myPreloadedBuilds.remove(projectPath);
     if (pair != null) {
-      myMessageDispatcher.cancelSession(pair.first.getRequestID());
+      final RequestFuture<PreloadedProcessMessageHandler> future = pair.first;
+      myMessageDispatcher.cancelSession(future.getRequestID());
+      runCommand(new Runnable() {
+        @Override
+        public void run() {
+          // waiting for preloaded process from project's task queue guarantees no build is started for this project
+          // until this one gracefully exits and closes all its storages 
+          getProjectData(projectPath).taskQueue.submit(new Runnable() {
+            @Override
+            public void run() {
+              future.waitFor();
+            }
+          });
+        }
+      });
     }
-    return projectPath;
   }
 
   @Nullable
-  public RequestFuture scheduleBuild(
+  public BasicFuture scheduleBuild(
     final Project project, final boolean isRebuild, final boolean isMake,
     final boolean onlyCheckUpToDate, final List<TargetTypeBuildScope> scopes,
     final Collection<String> paths,
@@ -558,9 +571,9 @@ public class BuildManager implements ApplicationComponent{
 
     final String projectPath = getProjectPath(project);
 
-    final Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> preloaded = myPreloadedBuilds.get(projectPath);
+    final Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> preloaded = myPreloadedBuilds.remove(projectPath);
     final RequestFuture<PreloadedProcessMessageHandler> preloadedFuture = preloaded != null? preloaded.first : null;
-    final boolean usingPreloadedProcess = preloadedFuture != null && myMessageDispatcher.acquirePreloadedSessionIfReady(preloadedFuture.getRequestID());
+    final boolean usingPreloadedProcess = preloadedFuture != null;
     
     final UUID sessionId;
     final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, messageHandler instanceof AutoMakeMessageHandler);
@@ -568,7 +581,6 @@ public class BuildManager implements ApplicationComponent{
       LOG.info("Using preloaded build process to compile " + projectPath);
       sessionId = preloadedFuture.getRequestID();
       preloadedFuture.getMessageHandler().setDelegateHandler(handler);
-      myPreloadedBuilds.remove(projectPath);
     }
     else {
       sessionId = UUID.randomUUID();
@@ -607,11 +619,7 @@ public class BuildManager implements ApplicationComponent{
           CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
           final SequentialTaskExecutor projectTaskQueue;
           synchronized (myProjectDataMap) {
-            ProjectData data = myProjectDataMap.get(projectPath);
-            if (data == null) {
-              data = new ProjectData(new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE));
-              myProjectDataMap.put(projectPath, data);
-            }
+            final ProjectData data = getProjectData(projectPath);
             if (isRebuild) {
               data.dropChanges();
             }
@@ -659,7 +667,10 @@ public class BuildManager implements ApplicationComponent{
                   final OSProcessHandler processHandler;
                   final StringBuilder errorsOnLaunch = new StringBuilder();
                   if (usingPreloadedProcess) {
-                    myMessageDispatcher.sendBuildParameters(future.getRequestID(), params);
+                    final boolean paramsSent = myMessageDispatcher.sendBuildParameters(future.getRequestID(), params);
+                    if (!paramsSent) {
+                      myMessageDispatcher.cancelSession(future.getRequestID());
+                    }
                     processHandler = preloaded.second;
                   }
                   else {
@@ -716,7 +727,7 @@ public class BuildManager implements ApplicationComponent{
                     }
                   }
 
-                  if (Registry.is("compiler.process.preload") && !myPreloadedBuilds.containsKey(projectPath) && !project.isDisposed()) {
+                  if (Registry.is("compiler.process.preload") && !project.isDisposed()) {
                     try {
                       final Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = launchPreloadedBuildProcess(project);
                       myPreloadedBuilds.put(projectPath, pair);
@@ -748,6 +759,18 @@ public class BuildManager implements ApplicationComponent{
     }
 
     return null;
+  }
+
+  @NotNull
+  private ProjectData getProjectData(String projectPath) {
+    synchronized (myProjectDataMap) {
+      ProjectData data = myProjectDataMap.get(projectPath);
+      if (data == null) {
+        data = new ProjectData(new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE));
+        myProjectDataMap.put(projectPath, data);
+      }
+      return data;
+    }
   }
 
   private void ensureListening() throws Exception {
@@ -1277,7 +1300,7 @@ public class BuildManager implements ApplicationComponent{
     @Override
     public void projectClosing(Project project) {
       cancelPreloadedBuilds(project);
-      for (RequestFuture future : cancelAutoMakeTasks(project)) {
+      for (BasicFuture future : cancelAutoMakeTasks(project)) {
         future.waitFor(500, TimeUnit.MILLISECONDS);
       }
     }
@@ -1293,13 +1316,14 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private static class ProjectData {
+    @NotNull
     final SequentialTaskExecutor taskQueue;
     private final Set<InternedPath> myChanged = new THashSet<InternedPath>();
     private final Set<InternedPath> myDeleted = new THashSet<InternedPath>();
     private long myNextEventOrdinal = 0L;
     private boolean myNeedRescan = true;
 
-    private ProjectData(SequentialTaskExecutor taskQueue) {
+    private ProjectData(@NotNull SequentialTaskExecutor taskQueue) {
       this.taskQueue = taskQueue;
     }
 
