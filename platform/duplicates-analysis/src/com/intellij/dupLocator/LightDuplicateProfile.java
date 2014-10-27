@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang;
+package com.intellij.dupLocator;
 
-import com.intellij.util.CharTable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.psi.PsiFile;
 
 /**
- * Top-level node in AST, corresponds to PsiFile.
- *
- * @see com.intellij.psi.PsiFile
+ * Created by Maxim.Mossienko on 10/1/2014.
  */
-public interface FileASTNode extends ASTNode {
-  @NotNull
-  CharTable getCharTable();
+public interface LightDuplicateProfile {
+  void process(PsiFile file, Callback callback);
 
-  boolean isParsed();
-
-  @Nullable
-  LighterAST getLighterAST();
+  interface Callback {
+    void process(LighterAST ast, LighterASTNode node, int hash);
+  }
 }

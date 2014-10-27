@@ -870,32 +870,38 @@ public class RefactoringUtil {
       JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
       if (loopBodyCopy != null) codeBlock.add(loopBodyCopy);
     } else if (container instanceof PsiLambdaExpression) {
-      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)container;
-      final PsiElement lambdaExpressionBody = lambdaExpression.getBody();
-      LOG.assertTrue(lambdaExpressionBody != null);
+      PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)container;
+      final PsiElement invalidBody = lambdaExpression.getBody();
+      if (invalidBody == null) return declaration;
 
       final PsiLambdaExpression expressionFromText = (PsiLambdaExpression)elementFactory
-        .createExpressionFromText(lambdaExpression.getParameterList().getText() + " -> {}", lambdaExpression);
+        .createExpressionFromText(lambdaExpression.getParameterList().getText() + " -> {}", lambdaExpression.getParent());
       PsiCodeBlock newBody = (PsiCodeBlock)expressionFromText.getBody();
       LOG.assertTrue(newBody != null);
       newBody.add(declaration);
 
-      PsiStatement lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
-      ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
+      lambdaExpression =
+        (PsiLambdaExpression)lambdaExpression.replace(elementFactory.createExpressionFromText(
+          lambdaExpression.getParameterList().getText() + " -> " + invalidBody.getText(), lambdaExpression));
+
+      final PsiElement lambdaExpressionBody = lambdaExpression.getBody();
+      LOG.assertTrue(lambdaExpressionBody != null);
+      final PsiStatement lastBodyStatement;
+      if (LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression) == PsiType.VOID) {
+        lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
+        ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
+      }
+      else {
+        lastBodyStatement = elementFactory.createStatementFromText("return a;", lambdaExpression);
+        final PsiExpression returnValue = ((PsiReturnStatement)lastBodyStatement).getReturnValue();
+        LOG.assertTrue(returnValue != null);
+        returnValue.replace(lambdaExpressionBody);
+      }
       newBody.add(lastBodyStatement);
 
-      PsiLambdaExpression copy = (PsiLambdaExpression)lambdaExpression.replace(expressionFromText);
+      final PsiLambdaExpression copy = (PsiLambdaExpression)lambdaExpression.replace(expressionFromText);
       newBody = (PsiCodeBlock)copy.getBody();
       LOG.assertTrue(newBody != null);
-
-      if (LambdaUtil.getFunctionalInterfaceReturnType(copy) != PsiType.VOID) {
-        PsiExpressionStatement lastStatement = (PsiExpressionStatement)newBody.getStatements()[1];
-        PsiReturnStatement returnStatement = (PsiReturnStatement)elementFactory.createStatementFromText("return a;", copy);
-        final PsiExpression returnValue = returnStatement.getReturnValue();
-        LOG.assertTrue(returnValue != null);
-        returnValue.replace(lastStatement.getExpression());
-        lastStatement.replace(returnStatement);
-      }
       declaration = newBody.getStatements()[0];
       declaration = (PsiStatement)JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
     }
