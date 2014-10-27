@@ -49,7 +49,6 @@ def patch_use(interpreter):
     """ Patch matplotlib function 'use' """
     matplotlib = sys.modules['matplotlib']
     def patched_use(*args, **kwargs):
-        print "patched use!"
         matplotlib.real_use(*args, **kwargs)
         gui, backend = find_gui_and_backend()
         interpreter.enableGui(gui)
