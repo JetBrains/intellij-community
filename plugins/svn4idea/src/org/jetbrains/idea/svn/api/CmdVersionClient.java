@@ -3,9 +3,7 @@ package org.jetbrains.idea.svn.api;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.Version;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.commandLine.Command;
-import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 
@@ -18,6 +16,7 @@ import java.util.regex.Pattern;
 public class CmdVersionClient extends BaseSvnClient implements VersionClient {
 
   private static final Pattern VERSION = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)");
+  private static final int COMMAND_TIMEOUT = 30 * 1000;
 
   @NotNull
   @Override
@@ -25,16 +24,12 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
     return parseVersion(runCommand());
   }
 
-  private static ProcessOutput runCommand() throws SvnBindException {
-    // TODO: Seems CommandRuntime should be used here when its api is more robust (to specify timeout or so).
+  @NotNull
+  private ProcessOutput runCommand() throws SvnBindException {
     Command command = new Command(SvnCommandName.version);
     command.put("--quiet");
 
-    SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
-    CommandExecutor executor = new CommandExecutor(settings.getCommandLinePath(), settings.getExecutableLocale(), command);
-    executor.run(30 * 1000);
-
-    return executor.getProcessOutput();
+    return newRuntime(myVcs).runLocal(command, COMMAND_TIMEOUT).getProcessOutput();
   }
 
   @NotNull

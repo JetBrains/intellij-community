@@ -106,8 +106,12 @@ public abstract class BaseSvnClient implements SvnClient {
     command.setResultBuilder(listener);
     command.put(parameters);
 
-    CommandRuntime runtime = new CommandRuntime(vcs, new AuthenticationService(vcs, myIsActive));
-    return runtime.runWithAuthenticationAttempt(command);
+    return newRuntime(vcs).runWithAuthenticationAttempt(command);
+  }
+
+  @NotNull
+  public CommandRuntime newRuntime(@NotNull SvnVcs vcs) {
+    return new CommandRuntime(vcs, new AuthenticationService(vcs, myIsActive));
   }
 
   protected static void callHandler(@Nullable ProgressTracker handler, @NotNull ProgressEvent event) throws VcsException {
