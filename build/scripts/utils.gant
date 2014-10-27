@@ -64,7 +64,7 @@ binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
 binding.setVariable("yjpOptions", { String systemSelector, String platformSuffix = "" ->
-  "-agentpath:yjpagent$platformSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
+  "-agentlib:yjpagent$platformSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
 })
 binding.setVariable("vmOptions32yjp", { String systemSelector ->
   "${vmOptions32()} ${yjpOptions(systemSelector)}".trim()
@@ -303,6 +303,7 @@ binding.setVariable("platformImplementationModules", [
   "xml-analysis-impl",
   "xml-psi-impl",
   "xml-structure-view-impl",
+  "json",
   "protocol-reader-runtime",
   "script-debugger-backend",
   "script-debugger-ui"
@@ -359,7 +360,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   if (isEap() && !args.mac_no_yjp) {
     ideaVmOptions += " ${yjpOptions(args.system_selector)}"
   }
-  new File("$path/bin/idea.vmoptions").text = ideaVmOptions.replace("yjpagent", "\$APP_PACKAGE/Contents/bin/yjpagent")
+  new File("$path/bin/idea.vmoptions").text = ideaVmOptions
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
@@ -506,13 +507,11 @@ binding.setVariable("unixScripts", { String target, String home, String name, Ma
 binding.setVariable("winVMOptions", { String target, String system_selector, String name, String name64 = null ->
   if (name != null) {
     def options = isEap() && system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
-    options = options.replace("yjpagent", "%IDE_BIN_DIR%yjpagent")
     ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
   }
 
   if (name64 != null) {
     def options = isEap() && system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
-    options = options.replace("yjpagent", "%IDE_BIN_DIR%yjpagent")
     ant.echo(file: "$target/bin/${name64}.vmoptions", message: options.replace(' ', '\n'))
   }
 
@@ -691,6 +690,28 @@ private String submapToXml(Map properties, List keys) {
   }
   return buff.toString()
 }
+
+private List<File> getChildren(File file) {
+  if (!file.isDirectory()) return []
+  return file.listFiles().sort { File f -> f.name.toLowerCase() }
+}
+
+binding.setVariable("getCustomJDK", { File customJdkDir ->
+  getChildren(customJdkDir).each {
+    if (it.getName().endsWith(".tar.gz")) {
+      def customJdkFileName = it.getAbsolutePath().substring(0, it.getAbsolutePath().length() - 3)
+      projectBuilder.info("customJdkFileName: " + customJdkFileName)
+      if (new File(customJdkFileName).exists()){
+        ant.delete(file: customJdkFileName)
+      }
+      if (new File("${home}/build/jdk/custom_jdk_${buildNumber}.tar").exists()){
+        ant.delete(file: "${home}/build/jdk/custom_jdk_${buildNumber}.tar")
+      }
+      ant.gunzip(src: it.getAbsolutePath())
+      ant.copy(file: customJdkFileName, tofile: "${home}/build/jdk/custom_jdk_${buildNumber}.tar")
+    }
+  }
+})
 
 binding.setVariable("buildWinZip", { String zipPath, List paths ->
   projectBuilder.stage(".win.zip")
