@@ -15,6 +15,7 @@
  */
 package com.intellij.dupLocator;
 
+import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiFile;
 
@@ -25,6 +26,6 @@ public interface LightDuplicateProfile {
   void process(PsiFile file, Callback callback);
 
   interface Callback {
-    void process(LighterASTNode node, int hash);
+    void process(LighterAST ast, LighterASTNode node, int hash);
   }
 }

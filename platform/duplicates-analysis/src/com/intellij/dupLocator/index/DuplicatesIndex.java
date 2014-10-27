@@ -22,6 +22,7 @@ import com.intellij.dupLocator.LightDuplicateProfile;
 import com.intellij.dupLocator.treeHash.FragmentsCollector;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.Language;
+import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -121,7 +122,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
         final THashMap<Integer, TIntArrayList> result = new THashMap<Integer, TIntArrayList>();
         ((LightDuplicateProfile)profile).process(psiFile, new LightDuplicateProfile.Callback() {
           @Override
-          public void process(LighterASTNode node, int hash) {
+          public void process(LighterAST ast, LighterASTNode node, int hash) {
             TIntArrayList list = result.get(hash);
             if (list == null) { result.put(hash, list = new TIntArrayList(1)); }
             list.add(node.getStartOffset());
