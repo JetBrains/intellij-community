@@ -54,23 +54,28 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
             return new LineMarkerGutterIconRenderer<PsiElement>(this){
               @Override
               public AnAction getClickAction() {
-                final DefaultActionGroup group = new DefaultActionGroup();
-                group.add(new PyRunCurrentFileAction());
-                final PyExecuteFileExtensionPoint[] extensions =
-                  ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
-                for (PyExecuteFileExtensionPoint extension : extensions) {
-                  final AnAction action = extension.getRunAction();
-                  group.add(action);
-                }
-                if (group.getChildrenCount() == 1) {
-                  return new PyRunCurrentFileAction();
-                }
+
                 return new AnAction() {
                   @Override
                   public void actionPerformed(@NotNull AnActionEvent e) {
-                    final ListPopup popup =
-                      new PopupFactoryImpl().createActionGroupPopup(null, group, e.getDataContext(), false, false, false, null, 5);
-                    popup.showInBestPositionFor(e.getDataContext());
+                    final DefaultActionGroup group = new DefaultActionGroup();
+                    group.add(new PyRunCurrentFileAction());
+                    final PyExecuteFileExtensionPoint[] extensions =
+                      ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
+                    for (PyExecuteFileExtensionPoint extension : extensions) {
+                      final AnAction action = extension.getRunAction();
+                      action.update(e);
+                      if (e.getPresentation().isEnabled())
+                        group.add(action);
+                    }
+                    if (group.getChildrenCount() == 1) {
+                      new PyRunCurrentFileAction().actionPerformed(e);
+                    }
+                    else {
+                      final ListPopup popup =
+                        new PopupFactoryImpl().createActionGroupPopup(null, group, e.getDataContext(), false, false, false, null, 5);
+                      popup.showInBestPositionFor(e.getDataContext());
+                    }
                   }
                 };
               }
