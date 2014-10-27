@@ -19,7 +19,7 @@ package com.intellij.vcs.log.graph.impl.permanent;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
-import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -29,7 +29,7 @@ import java.util.List;
 import static com.intellij.vcs.log.graph.GraphStrUtils.commitsInfoToStr;
 import static org.junit.Assert.assertEquals;
 
-public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWithTextFile {
+public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWithTwoTextFile {
 
   public GraphBuilderHashIndexTest() {
     super("graphHashIndex/");

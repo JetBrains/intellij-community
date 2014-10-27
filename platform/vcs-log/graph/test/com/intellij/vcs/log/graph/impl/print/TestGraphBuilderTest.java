@@ -15,7 +15,7 @@
  */
 package com.intellij.vcs.log.graph.impl.print;
 
-import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.GraphPackage;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.parser.LinearGraphParser;
@@ -25,7 +25,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestGraphBuilderTest extends AbstractTestWithTextFile {
+public class TestGraphBuilderTest extends AbstractTestWithTwoTextFile {
   public TestGraphBuilderTest() {
     super("testParser");
   }

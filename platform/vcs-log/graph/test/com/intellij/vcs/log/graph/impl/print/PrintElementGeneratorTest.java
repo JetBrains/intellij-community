@@ -17,7 +17,7 @@ package com.intellij.vcs.log.graph.impl.print;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.NotNullFunction;
-import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.GraphPackage;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -39,7 +39,7 @@ import java.util.Comparator;
 
 import static org.junit.Assert.assertEquals;
 
-public class PrintElementGeneratorTest extends AbstractTestWithTextFile {
+public class PrintElementGeneratorTest extends AbstractTestWithTwoTextFile {
 
   public PrintElementGeneratorTest() {
     super("elementGenerator");

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -22,10 +21,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
 
-public abstract class AbstractTestWithTextFile {
+abstract class AbstractTestWithTextFile {
   public static final String BASE_DIRECTORY = "platform/vcs-log/graph/testData/";
-  public static final String IN_POSTFIX = "_in.txt";
-  public static final String OUT_POSTFIX = "_out.txt";
 
   protected final String myDirectory;
 
@@ -34,11 +31,8 @@ public abstract class AbstractTestWithTextFile {
     this.myDirectory = PathManagerEx.findFileUnderCommunityHome(BASE_DIRECTORY + directory).getPath();
   }
 
-  protected void doTest(String testName) throws IOException {
-    String in = FileUtil.loadFile(new File(myDirectory, testName + IN_POSTFIX), true);
-    String out = FileUtil.loadFile(new File(myDirectory, testName + OUT_POSTFIX), true);
-    runTest(in, out);
+  protected String loadText(String filename) throws IOException {
+    return FileUtil.loadFile(new File(myDirectory, filename), true);
   }
 
-  protected abstract void runTest(String in, String out);
 }
