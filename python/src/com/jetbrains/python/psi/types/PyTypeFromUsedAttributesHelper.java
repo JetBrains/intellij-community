@@ -243,8 +243,7 @@ public class PyTypeFromUsedAttributesHelper {
 
     final PsiReference reference = anchor.getReference();
     final ScopeOwner definitionScope = ScopeUtil.getScopeOwner(reference != null ? reference.resolve() : anchor);
-    ScopeOwner scope = ScopeUtil.getScopeOwner(anchor);
-    while (scope != null) {
+    for (ScopeOwner scope = ScopeUtil.getScopeOwner(anchor); scope != null; scope = ScopeUtil.getScopeOwner(scope)) {
       final ScopeOwner inspectedScope = scope;
       scope.accept(new PyRecursiveElementVisitor() {
         @Override
@@ -261,7 +260,6 @@ public class PyTypeFromUsedAttributesHelper {
       if (scope == definitionScope) {
         break;
       }
-      scope = ScopeUtil.getScopeOwner(scope);
     }
     return result;
   }
