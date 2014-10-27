@@ -14,10 +14,10 @@ import java.util.List;
 abstract class MethodHandler {
   abstract void writeMethodImplementationJava(ClassScope classScope, Method m, TextOutput out);
 
-  protected static void appendMethodSignatureJava(@NotNull Method m, @NotNull List<String> paramNames, @NotNull TextOutput out) {
-    out.append(m.getName()).append('(');
+  protected static void appendMethodSignatureJava(@NotNull Method method, @NotNull List<String> paramNames, @NotNull TextOutput out) {
+    out.append(method.getName()).append('(');
     boolean firstArg = true;
-    Type[] types = m.getGenericParameterTypes();
+    Type[] types = method.getGenericParameterTypes();
     for (int i = 0, length = types.length; i < length; i++) {
       Type arg = types[i];
       if (firstArg) {
@@ -32,8 +32,8 @@ abstract class MethodHandler {
     out.append(')');
   }
 
-  protected static void writeMethodDeclarationJava(TextOutput out, Method m) {
-    writeMethodDeclarationJava(out, m, Collections.<String>emptyList());
+  protected static void writeMethodDeclarationJava(TextOutput out, Method method) {
+    writeMethodDeclarationJava(out, method, Collections.<String>emptyList());
   }
 
   protected static void writeMethodDeclarationJava(@NotNull TextOutput out, @NotNull Method m, @NotNull List<String> paramNames) {
