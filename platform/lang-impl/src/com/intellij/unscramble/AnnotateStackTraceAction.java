@@ -47,10 +47,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vcs.history.VcsHistorySession;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -83,7 +80,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(final AnActionEvent e) {
     cache = new HashMap<Integer, LastRevision>();
 
     ProgressManager.getInstance().run(
@@ -262,13 +259,20 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           if (historyProvider == null) return null;
 
           FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
-          VcsHistorySession session = historyProvider.createSessionFor(filePath);
-          if (session == null) return null;
 
-          List<VcsFileRevision> list = session.getRevisionList();
-          if (list == null || list.isEmpty()) return null;
+          if (historyProvider instanceof VcsHistoryProviderEx) {
+            VcsFileRevision revision = ((VcsHistoryProviderEx)historyProvider).getLastRevision(filePath);
+            if (revision == null) return null;
+            return LastRevision.create(revision);
+          } else {
+            VcsHistorySession session = historyProvider.createSessionFor(filePath);
+            if (session == null) return null;
 
-          return LastRevision.create(list.get(0));
+            List<VcsFileRevision> list = session.getRevisionList();
+            if (list == null || list.isEmpty()) return null;
+
+            return LastRevision.create(list.get(0));
+          }
         }
         catch (VcsException ignored) {
           ignored.printStackTrace();
