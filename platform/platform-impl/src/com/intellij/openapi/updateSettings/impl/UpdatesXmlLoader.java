@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,33 +25,19 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.concurrent.Callable;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
-public class UpdatesXmlLoader {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdatesXmlLoader");
-
-  private final String updateUrl;
-
-  public UpdatesXmlLoader(final String updatesUrl) {
-    this.updateUrl = updatesUrl;
-  }
-
+class UpdatesXmlLoader {
+  private static final Logger LOG = Logger.getInstance(UpdatesXmlLoader.class);
 
   @Nullable
-  public UpdatesInfo loadUpdatesInfo() throws ConnectionException{
-    LOG.debug("load update xml (UPDATE_URL='" + updateUrl + "' )");
+  public static UpdatesInfo loadUpdatesInfo(@Nullable final String updateUrl) throws ConnectionException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("load update xml (UPDATE_URL='" + updateUrl + "' )");
+    }
 
     if (StringUtil.isEmpty(updateUrl)) {
       LOG.debug("update url is empty: updates will not be checked");
@@ -59,20 +45,13 @@ public class UpdatesXmlLoader {
     }
 
     final Ref<Exception> error = new Ref<Exception>();
-    FutureTask<UpdatesInfo> ft = new FutureTask<UpdatesInfo>(new Callable<UpdatesInfo>() {
+    Future<UpdatesInfo> future = ApplicationManager.getApplication().executeOnPooledThread(new Callable<UpdatesInfo>() {
       @Nullable
       @Override
       public UpdatesInfo call() throws Exception {
         try {
-          prepareUrl(updateUrl);
-
-          URL requestUrl = prepareRequestUrl(updateUrl);
-
-          URLConnection connection = requestUrl.openConnection();
-          connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
-          connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
-          final InputStream inputStream = connection.getInputStream();
-          Reader reader = new InputStreamReader(inputStream);
+          String url = updateUrl.startsWith("file:") ? updateUrl : updateUrl + '?' + UpdateChecker.prepareUpdateCheckArgs();
+          InputStream inputStream = HttpConfigurable.getInstance().openConnection(url).getInputStream();
           try {
             return new UpdatesInfo(JDOMUtil.loadDocument(inputStream).getRootElement());
           }
@@ -80,59 +59,41 @@ public class UpdatesXmlLoader {
             LOG.info(e); // Broken xml downloaded. Don't bother telling user.
           }
           finally {
-            reader.close();
             inputStream.close();
           }
         }
         catch (Exception e) {
+          LOG.debug(e);
           error.set(e);
         }
         return null;
       }
     });
-    ApplicationManager.getApplication().executeOnPooledThread(ft);
+
+    UpdatesInfo result = null;
     try {
-      UpdatesInfo result = ft.get(5, TimeUnit.SECONDS);
-      if (!error.isNull()) {
-        //noinspection ThrowableResultOfMethodCallIgnored
-        throw new ConnectionException(error.get());
-      }
-      return result;
+      result = future.get(5, TimeUnit.SECONDS);
     }
-    catch (TimeoutException e) {
-      // ignore
+    catch (TimeoutException ignored) {
     }
-    catch (Exception e) {
+    catch (InterruptedException e) {
       LOG.debug(e);
-      throw new ConnectionException(e.getMessage(),e);
+      error.set(e);
     }
-    if (!ft.isDone()) {
-      ft.cancel(true);
-      throw new ConnectionException(IdeBundle.message("updates.timeout.error"));
+    catch (ExecutionException e) {
+      LOG.debug(e);
+      error.set(e);
     }
-    return null;
 
-  }
-
-
-  protected static void prepareUrl(@NotNull String url) throws ConnectionException {
-    try {
-      HttpConfigurable.getInstance().prepareURL(url);
-    }
-    catch (Exception e) {
-      throw new ConnectionException(e);
-    }
-  }
-
-  protected URL prepareRequestUrl(@NotNull String url) throws ConnectionException {
-    try {
-      if (url.startsWith("file:")) {
-        return new URL(url);
+    if (!future.isDone()) {
+      future.cancel(true);
+      if (error.isNull()) {
+        throw new ConnectionException(IdeBundle.message("updates.timeout.error"));
       }
-      return new URL(url + "?" + UpdateChecker.prepareUpdateCheckArgs());
     }
-    catch (Exception e) {
-      throw new ConnectionException(e);
+    if (!error.isNull()) {
+      throw new ConnectionException(error.get());
     }
+    return result;
   }
 }
