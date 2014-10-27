@@ -154,9 +154,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
 
-    if (getSettings().SHOW_TOOLBAR) {
-      setToolbar(createToolbar());
-    }
+    setToolbar(createToolbar());
 
     installTree();
 
@@ -390,25 +388,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public ActionGroup getGearActions() {
-    DefaultActionGroup group = createActionGroup(true);
-    group.addAction(new ToggleAction("Show Toolbar") {
-      @Override
-      public boolean isDumbAware() {
-        return true;
-      }
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return getSettings().SHOW_TOOLBAR;
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        setToolbar(state ? createToolbar() : null);
-        getSettings().SHOW_TOOLBAR = state;
-      }
-    }).setAsSecondary(true);
-    return group;
+    return createActionGroup(true);
   }
 
   private StructureViewFactoryImpl.State getSettings() {

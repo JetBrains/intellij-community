@@ -18,12 +18,15 @@ package com.intellij.usageView.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.*;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.UsageView;
@@ -41,6 +44,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.FIND, true, ToolWindowAnchor.BOTTOM, project, true);
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowFind);
+    DefaultActionGroup gearActions = new DefaultActionGroup();
+    gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(toolWindow)).setAsSecondary(true);
+    ((ToolWindowEx)toolWindow).setAdditionalGearActions(gearActions);
+
     myFindContentManager = toolWindow.getContentManager();
     myFindContentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override

@@ -54,7 +54,6 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_MODE = true;
     @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_FROM_SOURCE = false;
     @SuppressWarnings({"WeakerAccess"}) public String ACTIVE_ACTIONS = "";
-    public boolean SHOW_TOOLBAR = false;
   }
 
   private final Project myProject;
