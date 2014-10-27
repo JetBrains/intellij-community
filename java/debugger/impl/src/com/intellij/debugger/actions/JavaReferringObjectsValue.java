@@ -168,4 +168,10 @@ public class JavaReferringObjectsValue extends JavaValue {
     }
     return null;
   }
+
+  @Nullable
+  @Override
+  public XValueModifier getModifier() {
+    return null;
+  }
 }
