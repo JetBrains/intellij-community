@@ -64,27 +64,28 @@ public class SvnExecutableChecker extends ExecutableValidator {
   }
 
   @Override
-  protected boolean isExecutableValid(@NotNull String executable) {
-    setNotificationErrorDescription(getWrongPathMessage());
+  @Nullable
+  protected Notification validate(@NotNull String executable) {
+    Notification result = createDefaultNotification();
 
     // Necessary executable path will be taken from settings while command execution
     final Version version = getConfiguredClientVersion();
-    try {
-      return version != null && validateVersion(version);
+    if (version != null) {
+      try {
+        result = validateVersion(version);
+      }
+      catch (Throwable e) {
+        LOG.info(e);
+      }
     }
-    catch (Throwable e) {
-      LOG.info(e);
-      return false;
-    }
+
+    return result;
   }
 
-  private boolean validateVersion(@NotNull Version version) {
-    if (!getVcs().isSupportedByCommandLine(WorkingCopyFormat.from(version))) {
-      setNotificationErrorDescription(getOldExecutableMessage(version));
-      return false;
-    }
-
-    return true;
+  @Nullable
+  private Notification validateVersion(@NotNull Version version) {
+    return !getVcs().isSupportedByCommandLine(WorkingCopyFormat.from(version)) ? new ExecutableNotValidNotification(
+      getOldExecutableMessage(version)) : null;
   }
 
   @Nullable
