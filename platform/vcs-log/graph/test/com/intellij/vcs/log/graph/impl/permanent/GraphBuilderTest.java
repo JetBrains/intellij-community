@@ -17,7 +17,7 @@
 package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.NotNullFunction;
-import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.GraphPackage;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
@@ -29,7 +29,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public abstract class GraphBuilderTest<CommitId extends Comparable<CommitId>> extends AbstractTestWithTextFile {
+public abstract class GraphBuilderTest<CommitId extends Comparable<CommitId>> extends AbstractTestWithTwoTextFile {
   public GraphBuilderTest() {
     super("graphBuilder/");
   }
