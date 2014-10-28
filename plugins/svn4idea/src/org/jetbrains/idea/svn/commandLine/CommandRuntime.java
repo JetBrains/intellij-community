@@ -52,7 +52,7 @@ public class CommandRuntime {
 
     SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
     exePath = settings.getCommandLinePath();
-    executableLocale = Registry.stringValue("svn.executable.locale");
+    executableLocale = Registry.stringValue(SvnExecutableChecker.SVN_EXECUTABLE_LOCALE_REGISTRY_KEY);
 
     myModules = ContainerUtil.newArrayList();
     myModules.add(new CommandParametersResolutionModule(this));
