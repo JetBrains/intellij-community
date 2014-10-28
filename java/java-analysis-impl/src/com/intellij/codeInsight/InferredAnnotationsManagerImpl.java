@@ -74,10 +74,13 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && hasHardcodedContracts(owner)) {
       return true;
     }
-    if (AnnotationUtil.NOT_NULL.equals(annotationFQN) &&
-        owner instanceof PsiParameter && owner.getParent() != null &&
-        hasHardcodedContracts(owner.getParent().getParent())) {
-      return true;
+    if (AnnotationUtil.NOT_NULL.equals(annotationFQN) && owner instanceof PsiParameter && owner.getParent() != null) {
+      if (AnnotationUtil.isAnnotated(owner, NullableNotNullManager.getInstance(owner.getProject()).getNullables())) {
+        return true;
+      }
+      if (hasHardcodedContracts(owner.getParent().getParent())) {
+        return true;
+      }
     }
     return false;
   }
