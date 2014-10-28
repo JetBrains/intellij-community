@@ -531,7 +531,7 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
     if connect_debugger_tracing:
         cmd.extend([
             # "-o 'expr (int) SetSysTraceFunc(0, 0);'",
-            "-o 'command script import %s'" % (lldb_threads_settrace_file,),
+            "-o 'command script import \'%s\''" % (lldb_threads_settrace_file,),
             ])
 
     cmd.extend([
