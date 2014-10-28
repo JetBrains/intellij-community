@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,24 @@ public class CompositeInputFilter implements InputFilter {
   }
 
   public void addFilter(@NotNull final InputFilter filter) {
-    myFilters.add(Pair.create(filter, DumbService.isDumbAware(filter)));
+    InputFilter wrapper = new InputFilter() {
+      boolean isBroken;
+
+      @Nullable
+      @Override
+      public List<Pair<String, ConsoleViewContentType>> applyFilter(String text, ConsoleViewContentType contentType) {
+        if (!isBroken) {
+          try {
+            return filter.applyFilter(text, contentType);
+          }
+          catch (Throwable e) {
+            isBroken = true;
+            LOG.error(e);
+          }
+        }
+        return null;
+      }
+    };
+    myFilters.add(Pair.create(wrapper, DumbService.isDumbAware(filter)));
   }
 }
