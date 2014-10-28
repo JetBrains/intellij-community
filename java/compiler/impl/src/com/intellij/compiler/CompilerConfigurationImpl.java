@@ -126,15 +126,61 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public Element getState() {
+    Element state = new Element("state");
     try {
-      @NonNls final Element e = new Element("state");
-      writeExternal(e);
-      return e;
+      DefaultJDOMExternalizer.writeExternal(this, state);
     }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
+    catch (WriteExternalException e) {
+      LOG.error(e);
       return null;
     }
+
+    if (!myAddNotNullAssertions) {
+      addChild(state, JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS).setAttribute(
+        JpsJavaCompilerConfigurationSerializer.ENABLED, String.valueOf(myAddNotNullAssertions));
+    }
+
+    if (myExcludedEntriesConfiguration.getExcludeEntryDescriptions().length > 0) {
+      myExcludedEntriesConfiguration.writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
+    }
+
+    final Element newChild = addChild(state, JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
+    for (final String pattern : getRegexpPatterns()) {
+      addChild(newChild, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
+    }
+
+    if (myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) {
+      final Element wildcardPatterns = addChild(state, JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
+      for (final String wildcardPattern : myWildcardPatterns) {
+        addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, wildcardPattern);
+      }
+    }
+
+    final Element annotationProcessingSettings = addChild(state, JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
+    final Element defaultProfileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "true");
+    AnnotationProcessorProfileSerializer.writeExternal(myDefaultProcessorsProfile, defaultProfileElem);
+    for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
+      final Element profileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "false");
+      AnnotationProcessorProfileSerializer.writeExternal(profile, profileElem);
+    }
+
+    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
+      final Element bytecodeTarget = addChild(state, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+      if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
+        bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
+      }
+      if (!myModuleBytecodeTarget.isEmpty()) {
+        final List<String> moduleNames = new ArrayList<String>(myModuleBytecodeTarget.keySet());
+        Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER);
+        for (String name : moduleNames) {
+          final Element moduleElement = addChild(bytecodeTarget, JpsJavaCompilerConfigurationSerializer.MODULE);
+          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name);
+          final String value = myModuleBytecodeTarget.get(name);
+          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, value != null ? value : "");
+        }
+      }
+    }
+    return state;
   }
 
   @Override
@@ -755,56 +801,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         profile.addModuleName(moduleName);
       }
       myModuleProcessorProfiles.add(profile);
-    }
-  }
-
-  private void writeExternal(Element parentNode) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, parentNode);
-
-    if (myAddNotNullAssertions != true) {
-      addChild(parentNode, JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS).setAttribute(
-        JpsJavaCompilerConfigurationSerializer.ENABLED, String.valueOf(myAddNotNullAssertions));
-    }
-
-    if(myExcludedEntriesConfiguration.getExcludeEntryDescriptions().length > 0) {
-      myExcludedEntriesConfiguration.writeExternal(addChild(parentNode, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
-    }
-
-    final Element newChild = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
-    for (final String pattern : getRegexpPatterns()) {
-      addChild(newChild, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
-    }
-
-    if (myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) {
-      final Element wildcardPatterns = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
-      for (final String wildcardPattern : myWildcardPatterns) {
-        addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, wildcardPattern);
-      }
-    }
-
-    final Element annotationProcessingSettings = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
-    final Element defaultProfileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "true");
-    AnnotationProcessorProfileSerializer.writeExternal(myDefaultProcessorsProfile, defaultProfileElem);
-    for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
-      final Element profileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "false");
-      AnnotationProcessorProfileSerializer.writeExternal(profile, profileElem);
-    }
-
-    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
-      final Element bytecodeTarget = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
-      if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
-        bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
-      }
-      if (!myModuleBytecodeTarget.isEmpty()) {
-        final List<String> moduleNames = new ArrayList<String>(myModuleBytecodeTarget.keySet());
-        Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER);
-        for (String name : moduleNames) {
-          final Element moduleElement = addChild(bytecodeTarget, JpsJavaCompilerConfigurationSerializer.MODULE);
-          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name);
-          final String value = myModuleBytecodeTarget.get(name);
-          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, value != null? value : "");
-        }
-      }
     }
   }
 
