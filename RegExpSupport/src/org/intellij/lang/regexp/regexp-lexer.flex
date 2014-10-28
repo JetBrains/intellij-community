@@ -75,7 +75,7 @@ import java.util.EnumSet;
 %xstate QUOTED
 %xstate EMBRACED
 %xstate CLASS1
-%xstate CLASS1PY
+%xstate NEGATE_CLASS1
 %state CLASS2
 %state PROP
 %xstate OPTIONS
@@ -228,18 +228,11 @@ HEX_CHAR=[0-9a-fA-F]
                           }
 }
 
-{LBRACKET} / {RBRACKET}   { yypushstate(CLASS1);
+{LBRACKET} / {RBRACKET}   { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1);
                             return RegExpTT.CLASS_BEGIN; }
 
-/* Python understands that, Java doesn't */
-{LBRACKET} / "^" {RBRACKET} { if (allowEmptyCharacterClass) {
-                                yypushstate(CLASS1PY);
-                              }
-                              else {
-                                yypushstate(CLASS2);
-                              }
-                              return RegExpTT.CLASS_BEGIN;
-                            }
+{LBRACKET} / "^" {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1);
+                              return RegExpTT.CLASS_BEGIN; }
 
 {LBRACKET}                { yypushstate(CLASS2);
                             return RegExpTT.CLASS_BEGIN; }
@@ -250,7 +243,7 @@ HEX_CHAR=[0-9a-fA-F]
   .                       { assert false : yytext(); }
 }
 
-<CLASS1PY> {
+<NEGATE_CLASS1> {
   "^"                     { yybegin(CLASS1); return RegExpTT.CARET; }
   .                       { assert false : yytext(); }
 }
