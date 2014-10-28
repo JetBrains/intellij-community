@@ -80,7 +80,7 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </action>
-    <action id="CCRunTests" class="org.jetbrains.plugins.coursecreator.actions.CCRunTestsAction" text="Run tests" description="Run tests"/>
+    <action id="CCRunTests" class="org.jetbrains.plugins.coursecreator.actions.CCRunTestsAction" text="Run Tests" description="Run tests"/>
   </actions>
 
 </idea-plugin>
