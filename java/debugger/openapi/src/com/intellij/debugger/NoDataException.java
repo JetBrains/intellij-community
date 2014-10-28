@@ -15,7 +15,16 @@
  */
 package com.intellij.debugger;
 
-public class NoDataException extends Exception{
+public class NoDataException extends Exception {
+  public static final NoDataException INSTANCE = new NoDataException();
+
+  /**
+   * @deprecated Use shared {@link com.intellij.debugger.NoDataException#INSTANCE} instead
+   */
+  @Deprecated
+  public NoDataException() {
+  }
+
   @Override
   public Throwable fillInStackTrace() {
     return this;
