@@ -61,7 +61,7 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
            (epPrefix == null ? "" : " " + epPrefix) +
            "<br/>" +
            "<b>" + extensionPoint.getEffectiveName() + "</b>" +
-           " [" + epDeclarationFile.getName() + "]<br/>" +
+           " (" + epDeclarationFile.getName() + ")<br/>" +
            epClassText.toString();
   }
 

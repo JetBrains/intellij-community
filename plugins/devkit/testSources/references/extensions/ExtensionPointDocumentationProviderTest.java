@@ -21,8 +21,7 @@ public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFix
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
 
     String epDefinition = "[" + myModule.getName() + "] foo<br/>" +
-                          "<b>bar</b> " +
-                          "[extensionPointDocumentation.xml]<br/>" +
+                          "<b>bar</b> (extensionPointDocumentation.xml)<br/>" +
                           "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a>";
 
     assertEquals(epDefinition,
