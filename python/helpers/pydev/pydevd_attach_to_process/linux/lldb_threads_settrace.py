@@ -6,7 +6,7 @@ def __lldb_init_module(debugger, internal_dict):
     import lldb
 
     try:
-        show_debug_info = 1
+        show_debug_info = 0
         is_debug = 0
         target = debugger.GetSelectedTarget()
         if target:
