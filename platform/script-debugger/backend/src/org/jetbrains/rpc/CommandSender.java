@@ -12,6 +12,8 @@ import org.jetbrains.jsonProtocol.RequestWithResponse;
 public interface CommandSender<ERROR_DETAILS> {
   ActionCallback send(Request message);
 
+  <RESULT> AsyncResult<RESULT> send(@NotNull RequestWithResponse message);
+
   <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull RequestWithResponse message, @NotNull Function<RESULT, TRANSFORMED_RESULT> transform);
 
   <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull RequestWithResponse message,
