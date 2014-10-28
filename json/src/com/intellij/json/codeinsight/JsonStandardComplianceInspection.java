@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
@@ -22,15 +23,17 @@ import javax.swing.*;
 /**
  * Compliance checks include
  * <ul>
- *   <li>Usage of line and block commentaries</li>
- *   <li>Usage of single quoted strings</li>
- *   <li>Usage of identifiers (unqouted words)</li>
- *   <li>Not double quoted string literal is used as property key</li>
+ * <li>Usage of line and block commentaries</li>
+ * <li>Usage of single quoted strings</li>
+ * <li>Usage of identifiers (unqouted words)</li>
+ * <li>Not double quoted string literal is used as property key</li>
  * </ul>
  *
  * @author Mikhail Golubev
  */
 public class JsonStandardComplianceInspection extends LocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(JsonStandardComplianceInspection.class);
+
   public boolean myWarnAboutComments = true;
 
   @NotNull
@@ -58,8 +61,10 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       @Override
       public void visitStringLiteral(@NotNull JsonStringLiteral stringLiteral) {
         if (stringLiteral.getText().startsWith("'")) {
-          holder.registerProblem(stringLiteral, JsonBundle.message("msg.compliance.problem.single.quoted.strings"), new AddDoubleQuotesFix());
+          holder
+            .registerProblem(stringLiteral, JsonBundle.message("msg.compliance.problem.single.quoted.strings"), new AddDoubleQuotesFix());
         }
+        // May be illegal property key as well
         super.visitStringLiteral(stringLiteral);
       }
 
@@ -76,6 +81,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       @Override
       public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
         holder.registerProblem(reference, JsonBundle.message("msg.compliance.problem.identifier"), new AddDoubleQuotesFix());
+        // May be illegal property key as well
+        super.visitReferenceExpression(reference);
       }
 
       @Override
@@ -133,9 +140,13 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      assert element instanceof JsonLiteral || element instanceof JsonReferenceExpression;
-      final String content = StringUtil.stripQuotesAroundValue(element.getText());
-      element.replace(new JsonElementGenerator(project).createStringLiteral(content));
+      if (element instanceof JsonLiteral || element instanceof JsonReferenceExpression) {
+        final String content = StringUtil.stripQuotesAroundValue(element.getText());
+        element.replace(new JsonElementGenerator(project).createStringLiteral(content));
+      }
+      else if (element != null) {
+        LOG.error("Quick fix was applied to unexpected element", element.getText(), element.getParent().getText());
+      }
     }
   }
 }
