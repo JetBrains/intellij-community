@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class FCTSBackedLighterAST extends LighterAST {
+public class FCTSBackedLighterAST extends LighterAST {
   private final FlyweightCapableTreeStructure<LighterASTNode> myTreeStructure;
 
   public FCTSBackedLighterAST(final CharTable charTable, final FlyweightCapableTreeStructure<LighterASTNode> treeStructure) {

@@ -2,10 +2,11 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.FlexLexer;
-import com.intellij.psi.tree.IElementType;
-import java.util.LinkedList;
-import java.util.EnumSet;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.tree.IElementType;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
 
 @SuppressWarnings("ALL")
 %%
@@ -20,12 +21,13 @@ import com.intellij.psi.StringEscapesTokenTypes;
 
 %{
     // This adds support for nested states. I'm no JFlex pro, so maybe this is overkill, but it works quite well.
-    private final LinkedList<Integer> states = new LinkedList();
+    private final ArrayList<Integer> states = new ArrayList();
 
     // This was an idea to use the regex implementation for XML schema regexes (which use a slightly different syntax)
     // as well, but is currently unfinished as it requires to tweak more places than just the lexer.
     private boolean xmlSchemaMode;
 
+    private int capturingGroupCount = 0;
 
     private boolean allowDanglingMetacharacters;
     private boolean allowNestedCharacterClasses;
@@ -49,11 +51,12 @@ import com.intellij.psi.StringEscapesTokenTypes;
     }
 
     private void yypushstate(int state) {
-        states.addFirst(yystate());
+        states.add(yystate());
         yybegin(state);
     }
+
     private void yypopstate() {
-        final int state = states.removeFirst();
+        final int state = states.remove(states.size() - 1);
         yybegin(state);
     }
 
@@ -144,15 +147,21 @@ HEX_CHAR=[0-9a-fA-F]
     subexpressions exist at that point in the regular expression, otherwise the
     parser will drop digits until the number is smaller or equal to the existing
     number of groups or it is one digit."
-
-    So, for 100% compatibility, backrefs > 9 should be resolved by the parser, but
-    I'm not sure if it's worth the effort - at least not atm.
 */
 {ESCAPE} [0-7]{3}             { if (allowOctalNoLeadingZero) return RegExpTT.OCT_CHAR;
-                                return yystate() != CLASS2 ? RegExpTT.BACKREF : RegExpTT.ESC_CHARACTER;
+                                if (yystate() == CLASS2) return RegExpTT.ESC_CHARACTER;
+                                while (yylength() > 2 && Integer.parseInt(yytext().toString().substring(1)) > capturingGroupCount) {
+                                  yypushback(1);
+                                }
+                                return RegExpTT.BACKREF;
                               }
 
-{ESCAPE} {DIGITS}             { return yystate() != CLASS2 ? RegExpTT.BACKREF : RegExpTT.ESC_CHARACTER; }
+{ESCAPE} {DIGITS}             { if (yystate() == CLASS2) return RegExpTT.ESC_CHARACTER;
+                                while (yylength() > 2 && Integer.parseInt(yytext().toString().substring(1)) > capturingGroupCount) {
+                                  yypushback(1);
+                                }
+                                return RegExpTT.BACKREF;
+                              }
 
 {ESCAPE}  "-"                 { return RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {META}              { return RegExpTT.ESC_CHARACTER; }
@@ -256,7 +265,7 @@ HEX_CHAR=[0-9a-fA-F]
 
 
 <YYINITIAL> {
-  {LPAREN}      { return RegExpTT.GROUP_BEGIN; }
+  {LPAREN}      { capturingGroupCount++; return RegExpTT.GROUP_BEGIN; }
   {RPAREN}      { return RegExpTT.GROUP_END;   }
 
   "|"           { return RegExpTT.UNION;  }

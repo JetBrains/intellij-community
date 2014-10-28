@@ -84,6 +84,7 @@ public class CCRunTestsAction extends AnAction {
     if (lessonDir == null) return;
     if (course == null) return;
     final Lesson lesson = course.getLesson(lessonDir.getName());
+    if (lesson == null) return;
     final Task task = lesson.getTask(taskDir.getName());
     if (task == null) {
       presentation.setVisible(false);

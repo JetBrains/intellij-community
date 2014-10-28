@@ -58,14 +58,20 @@ public class BuildRunner {
   public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
   private static final boolean STORE_TEMP_CACHES_IN_MEMORY = PARALLEL_BUILD_ENABLED || Boolean.valueOf(System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION, "true"));
   private final JpsModelLoader myModelLoader;
-  private final List<String> myFilePaths;
-  private final Map<String, String> myBuilderParams;
+  private List<String> myFilePaths = Collections.emptyList();
+  private Map<String, String> myBuilderParams = Collections.emptyMap();
   private boolean myForceCleanCaches;
 
-  public BuildRunner(JpsModelLoader modelLoader, List<String> filePaths, Map<String, String> builderParams) {
+  public BuildRunner(JpsModelLoader modelLoader) {
     myModelLoader = modelLoader;
-    myFilePaths = filePaths;
-    myBuilderParams = builderParams;
+  }
+
+  public void setFilePaths(List<String> filePaths) {
+    myFilePaths = filePaths != null? filePaths : Collections.<String>emptyList();
+  }
+
+  public void setBuilderParams(Map<String, String> builderParams) {
+    myBuilderParams = builderParams != null? builderParams : Collections.<String, String>emptyMap();
   }
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {

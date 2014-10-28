@@ -18,11 +18,27 @@ import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.*;
 import org.jetbrains.plugins.coursecreator.ui.CreateTaskWindowDialog;
 
+import java.util.List;
+
 public class CCAddTaskWindow extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCAddTaskWindow.class);
 
   public CCAddTaskWindow() {
-    super("Add problem to solve","Add problem to solve", null);
+    super("Add problem to solve", "Add problem to solve", null);
+  }
+
+
+  private static boolean areTaskWindowsIntersect(@NotNull final TaskFile taskFile, @NotNull final Document document, int start, int end) {
+    List<TaskWindow> taskWindows = taskFile.getTaskWindows();
+    for (TaskWindow existingTaskWindow : taskWindows) {
+      int twStart = existingTaskWindow.getRealStartOffset(document);
+      int twEnd = existingTaskWindow.getReplacementLength() + twStart;
+      if ((start >= twStart && start < twEnd) || (end > twStart && end <= twEnd) ||
+          (twStart >= start && twStart < end) || (twEnd > start && twEnd <= end)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -35,7 +51,6 @@ public class CCAddTaskWindow extends DumbAwareAction {
     if (file == null) return;
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     if (editor == null) return;
-
     final SelectionModel model = editor.getSelectionModel();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
@@ -54,14 +69,23 @@ public class CCAddTaskWindow extends DumbAwareAction {
     final Lesson lesson = course.getLesson(lessonDir.getName());
     final Task task = lesson.getTask(taskDir.getName());
     final TaskFile taskFile = task.getTaskFile(file.getName());
+    if (taskFile == null) {
+      return;
+    }
+    if (areTaskWindowsIntersect(taskFile, document, start, end)) {
+      return;
+    }
     final TaskWindow taskWindow = new TaskWindow(lineNumber, realStart, length, model.getSelectedText());
-    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, taskWindow, lesson.getIndex(), task.getIndex(), file.getVirtualFile().getNameWithoutExtension(), taskFile.getTaskWindows().size() + 1);
+    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, taskWindow, lesson.getIndex(),
+                                                            task.getIndex(), file.getVirtualFile().getNameWithoutExtension(),
+                                                            taskFile.getTaskWindows().size() + 1);
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
     int index = taskFile.getTaskWindows().size() + 1;
     taskFile.addTaskWindow(taskWindow, index);
+    taskFile.sortTaskWindows();
     taskWindow.drawHighlighter(editor, false);
     taskWindow.createGuardedBlocks(editor);
   }
@@ -85,11 +109,14 @@ public class CCAddTaskWindow extends DumbAwareAction {
       presentation.setEnabled(false);
       return;
     }
-    if (!editor.getSelectionModel().hasSelection()) {
+    SelectionModel selectionModel = editor.getSelectionModel();
+    if (!selectionModel.hasSelection()) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;
     }
+    int start = selectionModel.getSelectionStart();
+    int end = selectionModel.getSelectionEnd();
 
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
@@ -112,6 +139,11 @@ public class CCAddTaskWindow extends DumbAwareAction {
     TaskFile taskFile = task.getTaskFile(file.getName());
     if (taskFile == null) {
       LOG.info("could not find task file");
+      presentation.setVisible(false);
+      presentation.setEnabled(false);
+      return;
+    }
+    if (areTaskWindowsIntersect(taskFile, editor.getDocument(), start, end)) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;

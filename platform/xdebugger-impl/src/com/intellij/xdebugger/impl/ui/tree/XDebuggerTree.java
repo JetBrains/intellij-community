@@ -15,6 +15,9 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.execution.configurations.RemoteRunProfile;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -225,6 +228,15 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   private void updateEditor() {
     myAlarm.cancelAndRequest();
+  }
+  
+  public boolean isUnderRemoteDebug() {
+    DataContext context = DataManager.getInstance().getDataContext(this);
+    ExecutionEnvironment env = LangDataKeys.EXECUTION_ENVIRONMENT.getData(context);
+    if (env != null && env.getRunProfile() instanceof RemoteRunProfile) {
+      return true;
+    }
+    return false;
   }
 
   private boolean expandIfEllipsis() {

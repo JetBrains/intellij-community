@@ -32,7 +32,7 @@ public class CreateTaskWindowPanel extends JPanel {
         // 1 for checked
         enableHint(state == 1);
         if (state == 2) {
-          myDialog.deleteHint();
+          resetHint();
         }
       }
     });

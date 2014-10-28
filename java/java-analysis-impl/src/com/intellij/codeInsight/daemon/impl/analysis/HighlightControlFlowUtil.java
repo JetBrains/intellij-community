@@ -260,7 +260,7 @@ public class HighlightControlFlowUtil {
     }
     else {
       PsiElement scope = variable instanceof PsiField
-                               ? variable.getContainingFile()
+                               ? ((PsiField)variable).getContainingClass()
                                : variable.getParent() != null ? variable.getParent().getParent() : null;
       if (scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchStatement) {
         scope = PsiTreeUtil.getParentOfType(scope, PsiCodeBlock.class);

@@ -358,8 +358,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     for (final StandardFileType pair : myStandardFileTypes.values()) {
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers);
     }
-    for (StandardFileType pair : myStandardFileTypes.values()) {
-      registerReDetectedMappings(pair);
+    if (!myUnresolvedMappings.isEmpty()) {
+      for (StandardFileType pair : myStandardFileTypes.values()) {
+        registerReDetectedMappings(pair);
+      }
     }
     // Resolve unresolved mappings initialized before certain plugin initialized.
     for (final StandardFileType pair : myStandardFileTypes.values()) {
@@ -1297,11 +1299,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     FileType fileType = pair.fileType;
     if (fileType == PlainTextFileType.INSTANCE) return;
     for (FileNameMatcher matcher : pair.matchers) {
-      String typeName = myUnresolvedMappings.get(matcher);
-      if (typeName != null && !typeName.equals(fileType.getName())) {
-        Trinity<String, String, Boolean> trinity = myUnresolvedRemovedMappings.get(matcher);
-        myRemovedMappings.put(matcher, Pair.create(fileType, trinity != null && trinity.third));
+      registerReDetectedMapping(fileType, matcher);
+      if (matcher instanceof ExtensionFileNameMatcher) {
+        // also check exact file name matcher
+        ExtensionFileNameMatcher extMatcher = (ExtensionFileNameMatcher)matcher;
+        registerReDetectedMapping(fileType, new ExactFileNameMatcher("." + extMatcher.getExtension()));
       }
+    }
+  }
+
+  private void registerReDetectedMapping(@NotNull FileType fileType, @NotNull FileNameMatcher matcher) {
+    String typeName = myUnresolvedMappings.get(matcher);
+    if (typeName != null && !typeName.equals(fileType.getName())) {
+      Trinity<String, String, Boolean> trinity = myUnresolvedRemovedMappings.get(matcher);
+      myRemovedMappings.put(matcher, Pair.create(fileType, trinity != null && trinity.third));
     }
   }
 

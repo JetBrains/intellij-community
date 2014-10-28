@@ -2347,6 +2347,13 @@ public class Mappings {
     }
   }
 
+  @Nullable
+  public Collection<File> getClassSources(int className) {
+    synchronized (myLock) {
+      return myClassToSourceFile.get(className);
+    }
+  }
+
   public void close() {
     synchronized (myLock) {
       myClassToSubclasses.close();

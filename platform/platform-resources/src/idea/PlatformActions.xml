@@ -533,6 +533,7 @@
 
       <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"
               icon="AllIcons.Welcome.CreateDesktopEntry"/>
+      <action id="WelcomeScreen.Update" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction" text="Check for Update"/>
     </group>
 
     <group id="FileChooser">
@@ -582,8 +583,8 @@
     <group id="ChangeScheme">
       <action id="ChangeColorScheme" class="com.intellij.ide.actions.QuickChangeColorSchemeAction"/>
       <action id="ChangeKeymap" class="com.intellij.ide.actions.QuickChangeKeymapAction"/>
-      <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel"/>
       <action id="ChangeView" class="com.intellij.ide.actions.QuickChangeViewModeAction"/>
+      <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel"/>
     </group>
 
     <action id="MaintenanceAction" class="com.intellij.ide.actions.MaintenanceAction"/>

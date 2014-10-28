@@ -360,6 +360,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName) {
+    for (ProcessDebugger d : allDebuggers()) {
+      d.setBreakpointWithFuncName(typeId, file, line, condition, logExpression, funcName);
+    }
+  }
+
+  @Override
   public void removeBreakpoint(String typeId, String file, int line) {
     for (ProcessDebugger d : allDebuggers()) {
       d.removeBreakpoint(typeId, file, line);

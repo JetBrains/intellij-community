@@ -30,7 +30,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.PlatformUtilsCore;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
@@ -166,7 +169,7 @@ public class PluginManagerCore {
     return app != null && app.isUnitTestMode();
   }
 
-  public static void savePluginsList(Collection<String> ids, boolean append, File plugins) throws IOException {
+  public static void savePluginsList(@NotNull Collection<String> ids, boolean append, @NotNull File plugins) throws IOException {
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
     }
@@ -700,7 +703,13 @@ public class PluginManagerCore {
                                      List<IdeaPluginDescriptorImpl> result,
                                      @Nullable StartupProgress progress,
                                      int pluginsCount) {
-    final File pluginsHome = new File(pluginsPath);
+    loadDescriptors(new File(pluginsPath), result, progress, pluginsCount);
+  }
+
+  public static void loadDescriptors(@NotNull File pluginsHome,
+                                     List<IdeaPluginDescriptorImpl> result,
+                                     @Nullable StartupProgress progress,
+                                     int pluginsCount) {
     final File[] files = pluginsHome.listFiles();
     if (files != null) {
       int i = result.size();

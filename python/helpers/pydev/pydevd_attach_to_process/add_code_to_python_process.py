@@ -263,6 +263,10 @@ def resolve_label(process, label):
 def is_python_64bit():
     return (struct.calcsize('P') == 8)
 
+def is_mac():
+    import platform
+    return platform.system() == 'Darwin'
+
 def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
     from winappdbg import compat
@@ -395,11 +399,11 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, sh
 def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
     filedir = os.path.dirname(__file__)
-    
+
     # Valid arguments for arch are i386, i386:x86-64, i386:x64-32, i8086,
     #   i386:intel, i386:x86-64:intel, i386:x64-32:intel, i386:nacl,
     #   i386:x86-64:nacl, i386:x64-32:nacl, auto.
-    
+
     if is_python_64bit():
         suffix = 'amd64'
         arch = 'i386:x86-64'
@@ -408,7 +412,7 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
         arch = 'i386'
 
     print('Attaching with arch: %s'% (arch,))
-        
+
     target_dll = os.path.join(filedir, 'attach_linux_%s.so' % suffix)
     target_dll = os.path.normpath(target_dll)
     if not os.path.exists(target_dll):
@@ -443,7 +447,7 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
         "--eval-command='call DoAttach(%s, \"%s\", %s)'" % (
             is_debug, python_code, show_debug_info)
     ])
-    
+
 
     if connect_debugger_tracing:
         cmd.extend([
@@ -472,8 +476,96 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
     return out, err
 
 
+def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
+    assert '\'' not in python_code, 'Having a single quote messes with our command.'
+    filedir = os.path.dirname(__file__)
+
+    # Valid arguments for arch are i386, i386:x86-64, i386:x64-32, i8086,
+    #   i386:intel, i386:x86-64:intel, i386:x64-32:intel, i386:nacl,
+    #   i386:x86-64:nacl, i386:x64-32:nacl, auto.
+
+    if is_python_64bit():
+        suffix = 'x86_64.dylib'
+        arch = 'i386:x86-64'
+    else:
+        suffix = 'x86.dylib'
+        arch = 'i386'
+
+    print('Attaching with arch: %s'% (arch,))
+
+    target_dll = os.path.join(filedir, 'attach_%s' % suffix)
+    target_dll = os.path.normpath(target_dll)
+    if not os.path.exists(target_dll):
+        raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
+
+    lldb_threads_settrace_file = os.path.join(filedir, 'linux', 'lldb_threads_settrace.py')
+    lldb_threads_settrace_file = os.path.normpath(lldb_threads_settrace_file)
+    if not os.path.exists(lldb_threads_settrace_file):
+        raise RuntimeError('Could not find file to settrace: %s' % lldb_threads_settrace_file)
+
+    # Note: we currently don't support debug builds
+    is_debug = 0
+    # Note that the space in the beginning of each line in the multi-line is important!
+    cmd = [
+        'lldb',
+        '--no-lldbinit',  # Do not automatically parse any '.lldbinit' files.
+        # '--attach-pid',
+        # str(pid),
+        # '--arch',
+        # arch,
+        '--script-language',
+        'Python'
+        #         '--batch-silent',
+    ]
+
+
+    cmd.extend([
+        "-o 'process attach --pid %d'"%pid,
+        "-o 'expr (void*)dlopen(\"%s\", 2);'" % target_dll,
+        "-o 'expr (int)hello();'",
+        "-o 'expr (int)DoAttach(%s, \"%s\", %s);'" % (
+            is_debug, python_code, show_debug_info),
+    ])
+
+
+    if connect_debugger_tracing:
+        cmd.extend([
+            # "-o 'expr (int) SetSysTraceFunc(0, 0);'",
+            "-o 'command script import %s'" % (lldb_threads_settrace_file,),
+            ])
+
+    cmd.extend([
+        "-o 'process continue'",
+        "-o 'process detach'",
+        # "-o 'script import os; os._exit(1)'",
+    ])
+
+    #print ' '.join(cmd)
+
+    env = os.environ.copy()
+    # Remove the PYTHONPATH (if gdb has a builtin Python it could fail if we
+    # have the PYTHONPATH for a different python version or some forced encoding).
+    env.pop('PYTHONIOENCODING', None)
+    env.pop('PYTHONPATH', None)
+    print('Running: %s' % (' '.join(cmd)))
+    p = subprocess.Popen(
+        ' '.join(cmd),
+        shell=True,
+        env=env,
+        stdout=None,
+        stderr=None,
+        )
+    print('Running lldb in target process.')
+    out, err = p.communicate()
+    print('stdout: %s' % (out,))
+    print('stderr: %s' % (err,))
+    return out, err
+
+
 if sys.platform == 'win32':
     run_python_code = run_python_code_windows
+elif is_mac():
+    run_python_code = run_python_code_mac
 else:
     run_python_code = run_python_code_linux
 

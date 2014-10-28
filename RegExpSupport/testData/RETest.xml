@@ -730,6 +730,14 @@
       <pattern>([ab]+)=\1</pattern>
       <expected>OK</expected>
     </test>
+    <test>
+      <pattern>(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\105</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>(.)\11</pattern>
+      <expected>OK</expected>
+    </test>
     <test verify="false">
       <pattern>([ab]+)=\2</pattern>
       <expected>ERR</expected>

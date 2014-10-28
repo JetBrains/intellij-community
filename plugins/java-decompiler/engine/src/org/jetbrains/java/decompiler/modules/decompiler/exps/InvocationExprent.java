@@ -357,21 +357,23 @@ public class InvocationExprent extends Exprent {
 
     Set<Integer> setAmbiguousParameters = getAmbiguousParameters();
 
-    boolean firstpar = true;
+    boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
       if (sigFields == null || sigFields.get(i) == null) {
-        if (!firstpar) {
+        if (!firstParameter) {
           buf.append(", ");
         }
 
         TextBuffer buff = new TextBuffer();
-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, setAmbiguousParameters.contains(i), tracer);
-
+        boolean ambiguous = setAmbiguousParameters.contains(i);
+        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
         buf.append(buff);
-        firstpar = false;
+
+        firstParameter = false;
       }
     }
+
     buf.append(")");
 
     return buf;
