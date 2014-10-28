@@ -192,7 +192,7 @@ public class ArrayRenderer extends NodeRendererImpl{
 
         if(!myForced && END_INDEX < array.length() - 1) {
           //children.add(nodeManager.createMessageNode(new MessageDescriptor(MORE_ELEMENTS, MessageDescriptor.SPECIAL)));
-          builder.setRemaining(array.length()-END_INDEX);
+          builder.setRemaining(array.length()-1-END_INDEX);
         }
       }
     }

@@ -120,7 +120,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
 
   @Override
   public boolean isValidInContext(PsiElement element) {
-    if (myInline && myName.equals(LINKPLAIN_TAG))
+    if (myInline && myName.equals(LINKPLAIN_TAG) && element != null)
       return PsiUtil.getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_4) >= 0;
 
     return true;

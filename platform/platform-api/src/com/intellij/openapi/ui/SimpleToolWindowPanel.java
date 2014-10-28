@@ -15,20 +15,30 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
+import java.util.LinkedList;
 import java.util.List;
 
 public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider, DataProvider {
@@ -72,6 +82,10 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
         }
       }
     });
+  }
+
+  public boolean isToolbarVisible() {
+    return myToolbar != null && myToolbar.isVisible();
   }
 
   public void setToolbar(@Nullable JComponent c) {
@@ -156,6 +170,81 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
       } else {
         int x = (int)myToolbar.getBounds().getMaxX();
         g.drawLine(x, 0, x, getHeight());
+      }
+    }
+  }
+
+  @NotNull
+  public static AnAction createToggleToolbarAction(Project project, @NotNull ToolWindow toolWindow) {
+    return new ToggleToolbarAction(toolWindow, PropertiesComponent.getInstance(project));
+  }
+
+  private static class ToggleToolbarAction extends ToggleAction implements DumbAware {
+
+    private final PropertiesComponent myPropertiesComponent;
+    private final ToolWindow myToolWindow;
+
+    private ToggleToolbarAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent propertiesComponent) {
+      super("Show Toolbar");
+      myPropertiesComponent = propertiesComponent;
+      myToolWindow = toolWindow;
+      myToolWindow.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
+        @Override
+        public void contentAdded(ContentManagerEvent event) {
+          JComponent component = event.getContent().getComponent();
+          setContentToolbarVisible(component, getVisibilityValue());
+
+          // support nested content managers, e.g. RunnerLayoutUi as content component
+          ContentManager contentManager =
+            component instanceof DataProvider ? PlatformDataKeys.CONTENT_MANAGER.getData((DataProvider)component) : null;
+          if (contentManager != null) contentManager.addContentManagerListener(this);
+        }
+
+        @Override
+        public void selectionChanged(ContentManagerEvent event) {
+          Content content = event.getContent();
+          if (content != null) {
+            setContentToolbarVisible(content.getComponent(), getVisibilityValue());
+          }
+        }
+      });
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return getVisibilityValue();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myPropertiesComponent.setValue(getProperty(), String.valueOf(state), String.valueOf(true));
+      for (Content content : myToolWindow.getContentManager().getContents()) {
+        setContentToolbarVisible(content.getComponent(), state);
+      }
+    }
+
+    @NotNull
+    private String getProperty() {
+      return myToolWindow.getStripeTitle() + ".ShowToolbar";
+    }
+
+    private boolean getVisibilityValue() {
+      return myPropertiesComponent.getBoolean(getProperty(), true);
+    }
+
+    private static void setContentToolbarVisible(@NotNull JComponent root, boolean state) {
+      LinkedList<JComponent> deque = ContainerUtil.newLinkedList(root);
+      while(!deque.isEmpty()) {
+        JComponent component = deque.pollFirst();
+        for (int i = 0, count = component.getComponentCount(); i < count; i++) {
+          Component c = component.getComponent(i);
+          if (c instanceof ActionToolbar) {
+            c.setVisible(state);
+          }
+          else if (c instanceof JPanel || c instanceof JLayeredPane || c instanceof JBTabs) {
+            deque.addLast((JComponent)c);
+          }
+        }
       }
     }
   }

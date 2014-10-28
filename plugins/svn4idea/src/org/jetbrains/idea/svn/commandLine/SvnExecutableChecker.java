@@ -16,13 +16,19 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutableValidator;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.CmdVersionClient;
 
 /**
  * Created with IntelliJ IDEA.
@@ -34,8 +40,21 @@ public class SvnExecutableChecker extends ExecutableValidator {
 
   private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);
 
-  public SvnExecutableChecker(Project project) {
-    super(project, getNotificationTitle(), getWrongPathMessage());
+  public static final String SVN_EXECUTABLE_LOCALE_REGISTRY_KEY = "svn.executable.locale";
+  private static final String SVN_VERSION_ENGLISH_OUTPUT = "The following repository access (RA) modules are available";
+
+  @NotNull private final SvnVcs myVcs;
+
+  public SvnExecutableChecker(@NotNull SvnVcs vcs) {
+    super(vcs.getProject(), getNotificationTitle(), getWrongPathMessage());
+
+    myVcs = vcs;
+    Registry.get(SVN_EXECUTABLE_LOCALE_REGISTRY_KEY).addListener(new RegistryValueListener.Adapter() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        myVcs.checkCommandLineVersion();
+      }
+    }, myProject);
   }
 
   @Override
@@ -49,9 +68,17 @@ public class SvnExecutableChecker extends ExecutableValidator {
     return SvnConfigurable.DISPLAY_NAME;
   }
 
-  @NotNull
-  private SvnVcs getVcs() {
-    return SvnVcs.getInstance(myProject);
+  @Override
+  protected boolean notify(@Nullable Notification notification) {
+    expireAll();
+
+    return super.notify(notification);
+  }
+
+  public void expireAll() {
+    for (Notification notification : myNotificationManager.getNotificationsOfType(ExecutableNotValidNotification.class, myProject)) {
+      notification.expire();
+    }
   }
 
   @Override
@@ -60,31 +87,51 @@ public class SvnExecutableChecker extends ExecutableValidator {
     // always expire notification as different message could be detected
     notification.expire();
 
-    getVcs().checkCommandLineVersion();
+    myVcs.checkCommandLineVersion();
   }
 
   @Override
-  protected boolean isExecutableValid(@NotNull String executable) {
-    setNotificationErrorDescription(getWrongPathMessage());
+  @Nullable
+  protected Notification validate(@NotNull String executable) {
+    Notification result = createDefaultNotification();
 
     // Necessary executable path will be taken from settings while command execution
     final Version version = getConfiguredClientVersion();
-    try {
-      return version != null && validateVersion(version);
+    if (version != null) {
+      try {
+        result = validateVersion(version);
+
+        if (result == null) {
+          result = validateEnglishOutput();
+        }
+      }
+      catch (Throwable e) {
+        LOG.info(e);
+      }
     }
-    catch (Throwable e) {
-      LOG.info(e);
-      return false;
-    }
+
+    return result;
   }
 
-  private boolean validateVersion(@NotNull Version version) {
-    if (!getVcs().isSupportedByCommandLine(WorkingCopyFormat.from(version))) {
-      setNotificationErrorDescription(getOldExecutableMessage(version));
-      return false;
+  @Nullable
+  private Notification validateVersion(@NotNull Version version) {
+    return !myVcs.isSupportedByCommandLine(WorkingCopyFormat.from(version)) ? new ExecutableNotValidNotification(
+      getOldExecutableMessage(version)) : null;
+  }
+
+  @Nullable
+  private Notification validateEnglishOutput() throws SvnBindException {
+    ProcessOutput versionOutput = getVersionClient().runCommand(false);
+    Notification result = null;
+
+    if (!isEnglishOutput(versionOutput.getStdout())) {
+      LOG.info("\"svn --version\" command contains non-English output " + versionOutput.getStdout());
+
+      result = new ExecutableNotValidNotification(prepareDescription(SvnBundle.message("non.english.locale.detected.warning"), false),
+                                                  NotificationType.WARNING);
     }
 
-    return true;
+    return result;
   }
 
   @Nullable
@@ -92,13 +139,22 @@ public class SvnExecutableChecker extends ExecutableValidator {
     Version result = null;
 
     try {
-      result = getVcs().getCommandLineFactory().createVersionClient().getVersion();
+      result = getVersionClient().getVersion();
     }
     catch (Throwable e) {
       LOG.info(e);
     }
 
     return result;
+  }
+
+  @NotNull
+  private CmdVersionClient getVersionClient() {
+    return (CmdVersionClient)myVcs.getCommandLineFactory().createVersionClient();
+  }
+
+  public static boolean isEnglishOutput(@NotNull String versionOutput) {
+    return StringUtil.containsIgnoreCase(versionOutput, SVN_VERSION_ENGLISH_OUTPUT);
   }
 
   private static String getWrongPathMessage() {

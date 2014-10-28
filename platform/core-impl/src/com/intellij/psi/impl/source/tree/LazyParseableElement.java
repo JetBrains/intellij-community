@@ -181,8 +181,8 @@ public class LazyParseableElement extends CompositeElement {
         if (rawFirstChild() != null) {
           LOG.error("Reentrant parsing?");
         }
-  
-        myText = null;
+
+        resetCachesOnParsedStateUpdate();
   
         if (parsedNode == null) return;
         super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
@@ -197,6 +197,10 @@ public class LazyParseableElement extends CompositeElement {
       // create PSI outside the 'lock' since this method grabs PSI_LOCK and deadlock is possible when someone else locks in the other order.
       createAllChildrenPsiIfNecessary();
     }
+  }
+
+  protected void resetCachesOnParsedStateUpdate() {
+    myText = null;
   }
 
   @Override

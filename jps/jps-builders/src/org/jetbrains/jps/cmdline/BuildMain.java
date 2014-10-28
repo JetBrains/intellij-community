@@ -16,6 +16,7 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import io.netty.bootstrap.Bootstrap;
@@ -35,11 +36,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -76,6 +80,7 @@ public class BuildMain {
   private static PreloadedData ourPreloadedData;
 
   public static void main(String[] args){
+    final long processStart = System.currentTimeMillis();
     System.out.println("Build process started. Classpath: " + System.getProperty("java.class.path"));
     final String host = args[HOST_ARG];
     final int port = Integer.parseInt(args[PORT_ARG]);
@@ -127,6 +132,8 @@ public class BuildMain {
         final PreloadedData data = new PreloadedData();
         ourPreloadedData = data;
         try {
+          FileSystemUtil.getAttributes(projectPathToPreload); // this will pre-load all FS optimizations
+
           final BuildRunner runner = new BuildRunner(new JpsModelLoaderImpl(projectPathToPreload, globalsPathToPreload, null));
           data.setRunner(runner);
 
@@ -162,10 +169,20 @@ public class BuildMain {
             LOG.info("Error pre-loading FS state", e);
             fsState.clearAll();
           }
+
+          // preloading target configurations
+          final BuildTargetsState targetsState = pd.getTargetsState();
+          for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
+            targetsState.getTargetConfiguration(target);
+          }
+
+          BuilderRegistry.getInstance();
+
+          LOG.info("Pre-loaded process ready in " + (System.currentTimeMillis() - processStart) + " ms");
         }
         catch (Throwable e) {
           LOG.info("Failed to pre-load project " + projectPathToPreload, e);
-          // just failed to preload the project, the situation will be handled later, when real build starts  
+          // just failed to preload the project, the situation will be handled later, when real build starts
         }
       }
       else if (projectPathToPreload != null || globalsPathToPreload != null){

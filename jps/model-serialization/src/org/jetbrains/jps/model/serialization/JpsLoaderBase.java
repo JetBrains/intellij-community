@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -30,6 +31,8 @@ import java.io.IOException;
  * @author nik
  */
 public abstract class JpsLoaderBase {
+  private static final Logger LOG = Logger.getInstance(JpsLoaderBase.class);
+  private static final int MAX_ATTEMPTS = 5;
   private final JpsMacroExpander myMacroExpander;
 
   protected JpsLoaderBase(JpsMacroExpander macroExpander) {
@@ -66,7 +69,7 @@ public abstract class JpsLoaderBase {
 
   protected static Element loadRootElement(final File file, final JpsMacroExpander macroExpander) {
     try {
-      final Element element = JDOMUtil.loadDocument(file).getRootElement();
+      final Element element = tryLoadRootElement(file);
       macroExpander.substitute(element, SystemInfo.isFileSystemCaseSensitive);
       return element;
     }
@@ -76,6 +79,24 @@ public abstract class JpsLoaderBase {
     catch (IOException e) {
       throw new RuntimeException("Cannot read file " + file.getAbsolutePath() + ": " + e.getMessage(), e);
     }
+  }
+
+  private static Element tryLoadRootElement(File file) throws IOException, JDOMException {
+    for (int i = 0; i < MAX_ATTEMPTS - 1; i++) {
+      try {
+        return JDOMUtil.loadDocument(file).getRootElement();
+      }
+      catch (Exception e) {
+        LOG.info("Loading attempt #" + i + " failed", e);
+      }
+      //most likely configuration file is being written by IDE so we'll wait a little
+      try {
+        //noinspection BusyWait
+        Thread.sleep(300);
+      }
+      catch (InterruptedException ignored) { }
+    }
+    return JDOMUtil.loadDocument(file).getRootElement();
   }
 
   protected static boolean isXmlFile(File file) {

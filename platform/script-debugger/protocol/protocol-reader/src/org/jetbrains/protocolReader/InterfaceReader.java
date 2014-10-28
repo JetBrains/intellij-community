@@ -161,8 +161,6 @@ class InterfaceReader {
     }
 
     FieldProcessor<T> fields = new FieldProcessor<>(this, typeClass);
-    fields.go();
-
     LinkedHashMap<Method, MethodHandler> methodHandlerMap = fields.getMethodHandlerMap();
     for (Method method : methodHandlerMap.keySet()) {
       Class<?> returnType = method.getReturnType();

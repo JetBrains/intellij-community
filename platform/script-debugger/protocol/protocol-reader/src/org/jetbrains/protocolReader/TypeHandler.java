@@ -93,9 +93,9 @@ class TypeHandler<T> {
       subtypeAspect.writeParseMethod(valueImplClassName, classScope, out);
     }
 
-    for (Map.Entry<Method, MethodHandler> en : methodHandlerMap.entrySet()) {
+    for (Map.Entry<Method, MethodHandler> entry : methodHandlerMap.entrySet()) {
       out.newLine();
-      en.getValue().writeMethodImplementationJava(classScope, en.getKey(), out);
+      entry.getValue().writeMethodImplementationJava(classScope, entry.getKey(), out);
       out.newLine();
     }
 

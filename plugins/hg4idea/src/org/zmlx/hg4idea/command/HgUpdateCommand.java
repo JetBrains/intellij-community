@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,7 +76,7 @@ public class HgUpdateCommand {
     final HgPromptCommandExecutor executor = new HgPromptCommandExecutor(project);
     executor.setShowOutput(true);
     HgCommandResult result;
-    DvcsUtil.workingTreeChangeStarted(project);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       result =
         executor.executeInCurrentThread(repo, "update", arguments);
@@ -89,7 +90,7 @@ public class HgUpdateCommand {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project);
+      DvcsUtil.workingTreeChangeFinished(project, token);
     }
 
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);

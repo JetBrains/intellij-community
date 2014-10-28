@@ -18,6 +18,7 @@ package git4idea.actions;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -86,7 +87,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
         final GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
           new GitUntrackedFilesOverwrittenByOperationDetector(selectedRoot);
 
-        DvcsUtil.workingTreeChangeStarted(project);
+        AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
         try {
           GitCommandResult result = git.runCommand(new Computable<GitLineHandler>() {
             @Override
@@ -109,7 +110,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
           handleResult(result, project, localChangesDetector, untrackedFilesDetector, repository, currentRev, affectedRoots, beforeLabel);
         }
         finally {
-          DvcsUtil.workingTreeChangeFinished(project);
+          DvcsUtil.workingTreeChangeFinished(project, token);
         }
       }
 

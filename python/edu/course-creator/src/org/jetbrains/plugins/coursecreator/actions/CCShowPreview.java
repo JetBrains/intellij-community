@@ -50,7 +50,7 @@ public class CCShowPreview extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCShowPreview.class.getName());
 
   public CCShowPreview() {
-    super("Show preview","Show preview", null);
+    super("Show Preview","Show preview", null);
   }
 
   @Override

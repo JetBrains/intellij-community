@@ -17,6 +17,7 @@ package com.intellij.ide.startup.impl;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -113,7 +114,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       @Override
       @SuppressWarnings("SynchronizeOnThis")
       public void run() {
-        HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
+        AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
         try {
           runActivities(myPreStartupActivities);
 
@@ -133,7 +134,7 @@ public class StartupManagerImpl extends StartupManagerEx {
           }
         }
         finally {
-          HeavyProcessLatch.INSTANCE.processFinished();
+          token.finish();
         }
       }
     });

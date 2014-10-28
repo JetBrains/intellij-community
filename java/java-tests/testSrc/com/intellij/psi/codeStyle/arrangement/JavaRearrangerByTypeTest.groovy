@@ -569,4 +569,85 @@ class B extends A {
       rules: [rule(PUBLIC, METHOD), rule(PRIVATE, METHOD)]
     )
   }
+
+  void "test initializer block after fields"() {
+    doTest(
+      initial: '''\
+public class NewOneClass {
+
+    {
+        a = 1;
+    }
+
+    int a;
+
+    {
+        b = 5;
+    }
+
+    int b;
+
+}
+''',
+      expected: '''\
+public class NewOneClass {
+
+    int a;
+    int b;
+
+    {
+        a = 1;
+    }
+
+    {
+        b = 5;
+    }
+
+}
+''',
+      rules: [rule(FIELD), rule(INIT_BLOCK)]
+    )
+  }
+
+  void "test static initializer block"() {
+    doTest(
+      initial: '''\
+public class NewOneClass {
+
+    static {
+        a = 1;
+    }
+
+    static int a;
+
+    {
+        b = 5;
+    }
+
+    int b;
+
+}
+''',
+      expected: '''\
+public class NewOneClass {
+
+    static int a;
+
+    static {
+        a = 1;
+    }
+
+    int b;
+
+    {
+        b = 5;
+    }
+
+}
+''',
+      rules: [rule(STATIC, FIELD), rule(STATIC, INIT_BLOCK), rule(FIELD), rule(INIT_BLOCK)]
+    )
+  }
+
+
 }

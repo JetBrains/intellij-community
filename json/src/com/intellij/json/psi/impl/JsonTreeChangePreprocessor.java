@@ -1,6 +1,7 @@
 package com.intellij.json.psi.impl;
 
 import com.intellij.json.JsonLanguage;
+import com.intellij.json.psi.JsonFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -20,6 +21,8 @@ public class JsonTreeChangePreprocessor implements PsiTreeChangePreprocessor {
    */
   @Override
   public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
+    if (!(event.getFile() instanceof JsonFile)) return;
+
     final PsiElement element = event.getParent();
     if (element == null || !(element.getManager() instanceof PsiManagerImpl)) {
       return;

@@ -157,6 +157,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     settings.setIndentGuidesShown(false);
     settings.setVirtualSpace(false);
     settings.setWheelFontChangeEnabled(false);
+    settings.setAdditionalPageAtBottom(false);
     previewEditor.setCaretEnabled(false);
     previewEditor.setBorder(IdeBorderFactory.createEmptyBorder());
 

@@ -31,24 +31,20 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.MarkersHolderFileViewProvider;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.UnsafeWeakList;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
 
   private final Project myProject;
   private final Object lock = new Object();
-  private final Map<VirtualFile, List<SmartPointerEx>> pointers = new THashMap<VirtualFile, List<SmartPointerEx>>();
-  private final Set<VirtualFile> fastenedFiles = new THashSet<VirtualFile>();
+  private static final Key<List<SmartPointerEx>> POINTERS_KEY = Key.create("SMART_POINTERS");
+  private static final Key<Boolean> POINTERS_ARE_FASTENED_KEY = Key.create("SMART_POINTERS_ARE_FASTENED");
 
   public SmartPointerManagerImpl(Project project) {
     myProject = project;
@@ -63,7 +59,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       if (getAndFasten(file)) return;
 
       if (pointers.isEmpty()) {
-        this.pointers.remove(file);
+        file.putUserData(POINTERS_KEY, null);
       }
       else {
         for (SmartPointerEx pointer : pointers) {
@@ -101,7 +97,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       if (!getAndUnfasten(file)) return;
 
       if (pointers.isEmpty()) {
-        this.pointers.remove(file);
+        file.putUserData(POINTERS_KEY, null);
       }
       else {
         for (SmartPointerEx pointer : pointers) {
@@ -169,6 +165,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         return null;
       }
     }
+    //noinspection unchecked
     return cachedPointer;
   }
 
@@ -189,7 +186,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       List<SmartPointerEx> pointers = getPointers(containingFile);
       if (pointers == null) {
         pointers = new UnsafeWeakList<SmartPointerEx>(); // we synchronise access anyway
-        this.pointers.put(containingFile, pointers);
+        containingFile.putUserData(POINTERS_KEY, pointers);
       }
       pointers.add(pointer);
 
@@ -222,8 +219,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return false;
   }
 
-  private List<SmartPointerEx> getPointers(@NotNull VirtualFile containingFile) {
-    return pointers.get(containingFile);
+  private static List<SmartPointerEx> getPointers(@NotNull VirtualFile containingFile) {
+    return containingFile.getUserData(POINTERS_KEY);
   }
 
   @TestOnly
@@ -234,14 +231,18 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
   }
 
-  private boolean getAndFasten(@NotNull VirtualFile file) {
-    return !fastenedFiles.add(file);
+  private static boolean getAndFasten(@NotNull VirtualFile file) {
+    boolean fastened = areBeltsFastened(file);
+    file.putUserData(POINTERS_ARE_FASTENED_KEY, Boolean.TRUE);
+    return fastened;
   }
-  private boolean getAndUnfasten(@NotNull VirtualFile file) {
-    return fastenedFiles.remove(file);
+  private static boolean getAndUnfasten(@NotNull VirtualFile file) {
+    boolean fastened = areBeltsFastened(file);
+    file.putUserData(POINTERS_ARE_FASTENED_KEY, null);
+    return fastened;
   }
-  private boolean areBeltsFastened(VirtualFile file) {
-    return fastenedFiles.contains(file);
+  private static boolean areBeltsFastened(VirtualFile file) {
+    return file.getUserData(POINTERS_ARE_FASTENED_KEY) == Boolean.TRUE;
   }
 
   @Override

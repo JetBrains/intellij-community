@@ -11,7 +11,7 @@ public abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESP
   implements MessageManager.Handler<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS>,
              ResultReader<SUCCESS_RESPONSE>,
              MessageProcessor {
-  public static final Logger LOG = Logger.getInstance(MessageManager.class);
+  public static final Logger LOG = Logger.getInstance(CommandProcessor.class);
 
   private final AtomicInteger currentSequence = new AtomicInteger();
   protected final MessageManager<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS> messageManager;

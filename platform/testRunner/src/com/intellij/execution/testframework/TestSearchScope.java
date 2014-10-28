@@ -65,7 +65,7 @@ public interface TestSearchScope {
 
   class Wrapper implements JDOMExternalizable {
     @NonNls private static final String DEFAULT_NAME = "defaultName";
-    private TestSearchScope myScope = MODULE_WITH_DEPENDENCIES;
+    private TestSearchScope myScope = SINGLE_MODULE;
     @NonNls private static final String WHOLE_PROJECT_NAE = "wholeProject";
     @NonNls private static final String SINGLE_MODULE_NAME = "singleModule";
     @NonNls private static final String MODULE_WITH_DEPENDENCIES_NAME = "moduleWithDependencies";

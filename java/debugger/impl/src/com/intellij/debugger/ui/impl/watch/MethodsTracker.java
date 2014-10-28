@@ -16,9 +16,12 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.sun.jdi.Method;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -26,7 +29,7 @@ import java.util.Map;
  */
 public class MethodsTracker {
   private final Map<Method, Integer> myMethodToOccurrenceMap = new HashMap<Method, Integer>();
-  private final Map<Integer, MethodOccurrence> myOccurences = new HashMap<Integer, MethodOccurrence>();
+  private final Set<Integer> myProcessedFrames = new HashSet<Integer>();
 
   public final class MethodOccurrence {
     private final Method myMethod;
@@ -50,13 +53,13 @@ public class MethodsTracker {
     }
   }
 
-  public MethodOccurrence getMethodOccurrence(int frameIndex, Method method) {
-    MethodOccurrence occurrence = myOccurences.get(frameIndex);
-    if (occurrence == null) {
-      occurrence = new MethodOccurrence(method, assignOccurrenceIndex(method));
-      myOccurences.put(frameIndex, occurrence);
+  public MethodOccurrence getMethodOccurrence(int frameIndex, @Nullable Method method) {
+    int occurenceIndex = getOccurrenceCount(method);
+    if (!myProcessedFrames.contains(frameIndex)) {
+      myMethodToOccurrenceMap.put(method, occurenceIndex + 1);
+      myProcessedFrames.add(frameIndex);
     }
-    return occurrence;
+    return new MethodOccurrence(method, occurenceIndex);
   }
 
   private int getOccurrenceCount(Method method) {
@@ -65,14 +68,5 @@ public class MethodsTracker {
     }
     final Integer integer = myMethodToOccurrenceMap.get(method);
     return integer != null? integer.intValue(): 0;
-  }
-
-  private int assignOccurrenceIndex(Method method) {
-    if (method == null) {
-      return 0;
-    }
-    final int count = getOccurrenceCount(method);
-    myMethodToOccurrenceMap.put(method, count + 1);
-    return count;
   }
 }

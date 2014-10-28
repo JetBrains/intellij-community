@@ -27,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
@@ -36,6 +37,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +64,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   // Type
   @NotNull private static final Set<ArrangementSettingsToken>                                SUPPORTED_TYPES     =
     ContainerUtilRt.newLinkedHashSet(
-      FIELD, CONSTRUCTOR, METHOD, CLASS, INTERFACE, ENUM, GETTER, SETTER, OVERRIDDEN
+      FIELD, INIT_BLOCK, CONSTRUCTOR, METHOD, CLASS, INTERFACE, ENUM, GETTER, SETTER, OVERRIDDEN
     );
   // Modifier
   @NotNull private static final Set<ArrangementSettingsToken>                                SUPPORTED_MODIFIERS =
@@ -78,6 +80,9 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     ContainerUtilRt.newHashMap();
   @NotNull private static final Collection<Set<ArrangementSettingsToken>>                    MUTEXES             =
     ContainerUtilRt.newArrayList();
+
+  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_ORDER = ContainerUtil.newHashSet();
+  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_NAME_MATCH = ContainerUtil.newHashSet();
 
   static {
     Set<ArrangementSettingsToken> visibilityModifiers = ContainerUtilRt.newHashSet(PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE);
@@ -96,6 +101,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     MODIFIERS_BY_TYPE.put(GETTER, ContainerUtilRt.<ArrangementSettingsToken>newHashSet());
     MODIFIERS_BY_TYPE.put(SETTER, ContainerUtilRt.<ArrangementSettingsToken>newHashSet());
     MODIFIERS_BY_TYPE.put(OVERRIDDEN, ContainerUtilRt.<ArrangementSettingsToken>newHashSet());
+    MODIFIERS_BY_TYPE.put(INIT_BLOCK, ContainerUtilRt.newHashSet(STATIC));
+
+    TYPES_WITH_DISABLED_ORDER.add(INIT_BLOCK);
+
+    TYPES_WITH_DISABLED_NAME_MATCH.add(INIT_BLOCK);
   }
 
   private static final Map<ArrangementSettingsToken, List<ArrangementSettingsToken>> GROUPING_RULES = ContainerUtilRt.newLinkedHashMap();
@@ -129,6 +139,8 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     for (ArrangementSettingsToken modifier : visibility) {
       and(matchRules, FIELD, STATIC, modifier);
     }
+    and(matchRules, INIT_BLOCK, STATIC);
+
     for (ArrangementSettingsToken modifier : visibility) {
       and(matchRules, FIELD, FINAL, modifier);
     }
@@ -136,6 +148,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
       and(matchRules, FIELD, modifier);
     }
     and(matchRules, FIELD);
+    and(matchRules, INIT_BLOCK);
     and(matchRules, CONSTRUCTOR);
     and(matchRules, METHOD, STATIC);
     and(matchRules, METHOD);
@@ -304,9 +317,13 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     }
 
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     if (FIELD.equals(target.getType())) {
       if (parent != null && parent.getType() == INTERFACE) {
         return commonSettings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE;
+      }
+      else if (INIT_BLOCK.equals(previous.getType())) {
+        return javaSettings.BLANK_LINES_AROUND_INITIALIZER;
       }
       else {
         return commonSettings.BLANK_LINES_AROUND_FIELD;
@@ -322,6 +339,9 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     }
     else if (CLASS.equals(target.getType())) {
       return commonSettings.BLANK_LINES_AROUND_CLASS;
+    }
+    else if (INIT_BLOCK.equals(target.getType())) {
+      return javaSettings.BLANK_LINES_AROUND_INITIALIZER;
     }
     else {
       return -1;
@@ -363,9 +383,10 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
 
   @Override
   public boolean isEnabled(@NotNull ArrangementSettingsToken token, @Nullable ArrangementMatchCondition current) {
-    if (SUPPORTED_TYPES.contains(token) || SUPPORTED_ORDERS.contains(token) || StdArrangementTokens.Regexp.NAME.equals(token)) {
+    if (SUPPORTED_TYPES.contains(token)) {
       return true;
     }
+
     ArrangementSettingsToken type = null;
     if (current != null) {
       type = ArrangementUtil.parseType(current);
@@ -373,6 +394,15 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     if (type == null) {
       type = NO_TYPE;
     }
+
+    if (SUPPORTED_ORDERS.contains(token)) {
+      return !TYPES_WITH_DISABLED_ORDER.contains(type);
+    }
+
+    if (StdArrangementTokens.Regexp.NAME.equals(token)) {
+      return !TYPES_WITH_DISABLED_NAME_MATCH.contains(type);
+    }
+
     Set<ArrangementSettingsToken> modifiers = MODIFIERS_BY_TYPE.get(type);
     return modifiers != null && modifiers.contains(token);
   }

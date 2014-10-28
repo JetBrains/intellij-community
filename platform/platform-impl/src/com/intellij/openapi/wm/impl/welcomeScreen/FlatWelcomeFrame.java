@@ -283,7 +283,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       panel.add(toolbar, BorderLayout.EAST);
       
 
-      panel.setBorder(new EmptyBorder(0,0,8,21));
+      panel.setBorder(new EmptyBorder(0,0,8,11));
       return panel;
     }
     
@@ -302,7 +302,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       ref.get().setPaintUnderline(false);
       ref.get().setNormalColor(getLinkNormalColor());
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      panel.setBorder(new EmptyBorder(4, 10, 4, 10));
+      panel.setBorder(new EmptyBorder(4, 6, 4, 6));
       panel.add(ref.get());
       panel.add(createArrow(ref.get()), BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
@@ -346,7 +346,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         }
       }
 
-      actions.setBorder(new EmptyBorder(0, 0, 0, 0));
       WelcomeScreenActionsPanel panel = new WelcomeScreenActionsPanel();
       panel.actions.add(actions);
       return panel.root;
@@ -366,6 +365,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       ApplicationInfoEx app = ApplicationInfoEx.getInstanceEx();
       JLabel logo = new JLabel(IconLoader.getIcon(app.getWelcomeScreenLogoUrl()));
+      logo.setBorder(new EmptyBorder(30,0,10,0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
       JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -380,13 +380,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       }
       
       JLabel version = new JLabel(appVersion);
-      version.setFont(font.deriveFont(16f).deriveFont(Font.PLAIN));
+      version.setFont(getProductFont().deriveFont(16f));
       version.setHorizontalAlignment(SwingConstants.CENTER);
       version.setForeground(Gray._128);
       
       panel.add(appName);
       panel.add(version, BorderLayout.SOUTH);
-      panel.setBorder(new EmptyBorder(20, 10, 30, 10));
+      panel.setBorder(new EmptyBorder(0, 0, 20, 0));
       return panel;
     }
 
