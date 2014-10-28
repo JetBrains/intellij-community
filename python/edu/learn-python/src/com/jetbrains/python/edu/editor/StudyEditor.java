@@ -192,11 +192,11 @@ public class StudyEditor implements TextEditor {
   }
 
   private void initializeButtons(@NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {
-    myCheckButton = addButton(taskActionsPanel, "Check task (Ctrl + Alt + Enter)", StudyIcons.Resolve);
-    myPrevTaskButton = addButton(taskActionsPanel, "Previous task (Ctrl + &lt;)", StudyIcons.Prev);
-    myNextTaskButton = addButton(taskActionsPanel, "Next task (Ctrl + >)", AllIcons.Actions.Forward);
-    myRefreshButton = addButton(taskActionsPanel, "Reset task file (Ctrl + Shift + X)", AllIcons.Actions.Refresh);
-    JButton myShowHintButton = addButton(taskActionsPanel, "Show hint for task window (Ctrl + 7)", StudyIcons.ShowHint);
+    myCheckButton = addButton(taskActionsPanel, "Check Task (Ctrl + Alt + Enter)", StudyIcons.Resolve);
+    myPrevTaskButton = addButton(taskActionsPanel, "Previous Task (Ctrl + &lt;)", StudyIcons.Prev);
+    myNextTaskButton = addButton(taskActionsPanel, "Next Task (Ctrl + >)", AllIcons.Actions.Forward);
+    myRefreshButton = addButton(taskActionsPanel, "Reset Task File (Ctrl + Shift + X)", AllIcons.Actions.Refresh);
+    JButton myShowHintButton = addButton(taskActionsPanel, "Show Hint For Task Window (Ctrl + 7)", StudyIcons.ShowHint);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
       JButton runButton = addButton(taskActionsPanel, "Run", AllIcons.General.Run);
       runButton.addActionListener(new ActionListener() {
@@ -206,7 +206,7 @@ public class StudyEditor implements TextEditor {
           studyRunAction.run(myProject);
         }
       });
-      JButton watchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
+      JButton watchInputButton = addButton(taskActionsPanel, "Watch Test Input", StudyIcons.WatchInput);
       watchInputButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
