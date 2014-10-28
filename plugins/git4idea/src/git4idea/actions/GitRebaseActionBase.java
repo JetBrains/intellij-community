@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
@@ -65,7 +66,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     task.executeInBackground(false, new GitTaskResultHandlerAdapter() {
       @Override
       protected void run(GitTaskResult taskResult) {
-        DvcsUtil.workingTreeChangeStarted(project);
+        AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
         try {
           editor.close();
           GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
@@ -74,7 +75,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
           notifyAboutErrorResult(taskResult, resultListener, exceptions, project);
         }
         finally {
-          DvcsUtil.workingTreeChangeFinished(project);
+          DvcsUtil.workingTreeChangeFinished(project, token);
         }
       }
     });

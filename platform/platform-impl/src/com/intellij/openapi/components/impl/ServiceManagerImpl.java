@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
@@ -199,7 +200,7 @@ public class ServiceManagerImpl implements BaseComponent {
         @Override
         public Object compute() {
           // prevent storages from flushing and blocking FS
-          HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation()+"'");
+          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
           try {
             synchronized (MyComponentAdapter.this) {
               Object instance = myInitializedComponentInstance;
@@ -209,7 +210,7 @@ public class ServiceManagerImpl implements BaseComponent {
             }
           }
           finally {
-            HeavyProcessLatch.INSTANCE.processFinished();
+            token.finish();
           }
         }
       });

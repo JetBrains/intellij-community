@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,7 +51,7 @@ public class HgMergeCommand {
       arguments.add("--rev");
       arguments.add(revision);
     }
-    DvcsUtil.workingTreeChangeStarted(project);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       final HgCommandResult result =
         commandExecutor.executeInCurrentThread(repo, "merge", arguments);
@@ -58,7 +59,7 @@ public class HgMergeCommand {
       return result;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project);
+      DvcsUtil.workingTreeChangeFinished(project, token);
     }
   }
 }

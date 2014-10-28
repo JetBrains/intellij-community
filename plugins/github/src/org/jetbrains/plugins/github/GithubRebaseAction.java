@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -229,18 +230,22 @@ public class GithubRebaseAction extends DumbAwareAction {
                                           @NotNull final ProgressIndicator indicator) {
     final Git git = ServiceManager.getService(project, Git.class);
     final GitPlatformFacade facade = ServiceManager.getService(project, GitPlatformFacade.class);
-    DvcsUtil.workingTreeChangeStarted(project);
-    GitPreservingProcess process =
-      new GitPreservingProcess(project, facade, git, Collections.singletonList(gitRepository), "Rebasing", "upstream/master", indicator,
-                               new Runnable() {
-                                 @Override
-                                 public void run() {
-                                   doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
+    try {
+      GitPreservingProcess process =
+        new GitPreservingProcess(project, facade, git, Collections.singletonList(gitRepository), "Rebasing", "upstream/master", indicator,
+                                 new Runnable() {
+                                   @Override
+                                   public void run() {
+                                     doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);
+                                   }
                                  }
-                               }
-      );
-    process.execute();
-    DvcsUtil.workingTreeChangeFinished(project);
+        );
+      process.execute();
+    }
+    finally {
+      DvcsUtil.workingTreeChangeFinished(project, token);
+    }
   }
 
   private static void doRebaseCurrentBranch(@NotNull final Project project,
