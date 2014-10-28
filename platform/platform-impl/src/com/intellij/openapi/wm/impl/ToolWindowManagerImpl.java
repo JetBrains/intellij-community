@@ -56,10 +56,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.PositionTracker;
@@ -1794,7 +1791,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private ActionCallback appendRequestFocusInEditorComponentCmd(List<FinalizableCommand> commandList, boolean forced) {
     if (myProject.isDisposed()) return new ActionCallback.Done();
-    EditorsSplitters splitters = FileEditorManagerEx.getInstanceEx(myProject).getSplitters();
+    EditorsSplitters splitters = getSplittersToFocus();
     CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     RequestFocusInEditorComponentCmd command = new RequestFocusInEditorComponentCmd(splitters, getFocusManager(), commandProcessor, forced);
     commandList.add(command);
@@ -1821,6 +1818,22 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final JRootPane rootPane = myFrame.getRootPane();
     final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, myWindowManager.getCommandProcessor());
     commandsList.add(command);
+  }
+
+  private EditorsSplitters getSplittersToFocus() {
+    Window activeWindow = myWindowManager.getMostRecentFocusedWindow();
+
+    if (activeWindow instanceof FloatingDecorator) {
+      IdeFocusManager ideFocusManager = IdeFocusManager.findInstanceByComponent(activeWindow);
+      IdeFrame lastFocusedFrame = ideFocusManager.getLastFocusedFrame();
+      JComponent frameComponent = lastFocusedFrame != null ? lastFocusedFrame.getComponent() : null;
+      Window lastFocusedWindow = frameComponent != null ? SwingUtilities.getWindowAncestor(frameComponent) : null;
+      activeWindow = ObjectUtils.notNull(lastFocusedWindow, activeWindow);
+    }
+
+    FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(myProject);
+    EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
+    return splitters != null ? splitters : fem.getSplitters();
   }
 
   /**
