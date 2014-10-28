@@ -28,10 +28,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
@@ -322,10 +319,12 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
     JPanel jPanel = new JPanel(new BorderLayout());
     final JScrollPane textScrollPane = ScrollPaneFactory.createScrollPane(textArea);
-    textScrollPane.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.selected.revision.commit.message"), false
-    ));
-    jPanel.add(textScrollPane, BorderLayout.SOUTH);
-
+    // text on title border has some problems if text font size is bigger than expected.
+    final JLabel commentLabel = new JLabel(VcsBundle.message("border.selected.revision.commit.message"));
+    jPanel.add(commentLabel, BorderLayout.NORTH);
+    commentLabel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | SideBorder.BOTTOM));
+    textScrollPane.setBorder(null);
+    jPanel.add(textScrollPane, BorderLayout.CENTER);
     jPanel.setPreferredSize(new Dimension(300, 100));
     return jPanel;
   }
