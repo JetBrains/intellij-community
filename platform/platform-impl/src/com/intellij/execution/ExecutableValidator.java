@@ -48,7 +48,7 @@ public abstract class ExecutableValidator {
   private static final NotificationGroup ourNotificationGroup = new NotificationGroup("External Executable Critical Failures",
                                                                               STICKY_BALLOON, true);
   @NotNull protected final Project myProject;
-  @NotNull private final NotificationsManager myNotificationManager;
+  @NotNull protected final NotificationsManager myNotificationManager;
 
   @NotNull private final String myNotificationErrorTitle;
   @NotNull private final String myNotificationErrorDescription;
@@ -176,6 +176,10 @@ public abstract class ExecutableValidator {
     }
     Notification notification = validate(getCurrentExecutable());
 
+    return notify(notification);
+  }
+
+  protected boolean notify(@Nullable Notification notification) {
     if (notification != null) {
       showExecutableNotConfiguredNotification(notification);
       return false;
