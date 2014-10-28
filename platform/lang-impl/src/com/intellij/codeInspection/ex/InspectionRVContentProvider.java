@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,8 +79,7 @@ public abstract class InspectionRVContentProvider {
     InspectionToolPresentation presentation = context.getPresentation(wrapper);
     Map<String, Set<RefEntity>> content = presentation.getContent();
     Map<RefEntity, CommonProblemDescriptor[]> problems = presentation.getProblemElements();
-    Map<String, Set<RefEntity>> contents = content == null ? new HashMap<String, Set<RefEntity>>() : content;
-    appendToolNodeContent(context, toolNode, parentNode, showStructure, contents, problems, null);
+    appendToolNodeContent(context, toolNode, parentNode, showStructure, content, problems, null);
   }
 
   public abstract void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
