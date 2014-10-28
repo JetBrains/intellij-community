@@ -650,9 +650,9 @@ public class GitHistoryUtils {
    * @return the list of the revisions
    * @throws VcsException if there is problem with running git
    */
-  public static List<VcsFileRevision> history(final Project project, final FilePath path) throws VcsException {
+  public static List<VcsFileRevision> history(final Project project, final FilePath path, String... parameters) throws VcsException {
     final VirtualFile root = GitUtil.getGitRoot(path);
-    return history(project, path, root);
+    return history(project, path, root, parameters);
   }
 
   /**
