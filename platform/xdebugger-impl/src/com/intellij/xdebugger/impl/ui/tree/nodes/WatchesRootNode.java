@@ -106,6 +106,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
   }
 
   private void replaceNode(final WatchNode oldNode, final WatchNode newNode) {
+    int[] selectedRows = getTree().getSelectionRows();
     for (int i = 0; i < myChildren.size(); i++) {
       WatchNode child = myChildren.get(i);
       if (child == oldNode) {
@@ -118,6 +119,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
         else {
           fireNodeStructureChanged(newNode);
         }
+        getTree().setSelectionRows(selectedRows);
         return;
       }
     }
