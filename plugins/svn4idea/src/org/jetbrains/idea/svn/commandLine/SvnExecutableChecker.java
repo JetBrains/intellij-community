@@ -69,6 +69,19 @@ public class SvnExecutableChecker extends ExecutableValidator {
   }
 
   @Override
+  protected boolean notify(@Nullable Notification notification) {
+    expireAll();
+
+    return super.notify(notification);
+  }
+
+  public void expireAll() {
+    for (Notification notification : myNotificationManager.getNotificationsOfType(ExecutableNotValidNotification.class, myProject)) {
+      notification.expire();
+    }
+  }
+
+  @Override
   protected void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
     showSettings();
     // always expire notification as different message could be detected
