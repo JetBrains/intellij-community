@@ -3,10 +3,8 @@ package org.jetbrains.idea.devkit.references.extensions;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.xml.DomTarget;
 
 public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -17,12 +15,10 @@ public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFix
   public void testExtensionPointDocumentation() {
     myFixture.configureByFiles("extensionPointDocumentation.xml", "bar/MyExtensionPoint.java");
 
-    PsiElement originalElement = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
-    PomTargetPsiElement pomTargetPsiElement = assertInstanceOf(myFixture.getElementAtCaret(), PomTargetPsiElement.class);
-    DomTarget domTarget = assertInstanceOf(pomTargetPsiElement.getTarget(), DomTarget.class);
-    PsiElement epPsiElement = domTarget.getNavigationElement();
-
-    DocumentationProvider provider = DocumentationManager.getProviderFromElement(epPsiElement);
+    final PsiElement docElement =
+      DocumentationManager.getInstance(getProject()).findTargetElement(myFixture.getEditor(),
+                                                                       myFixture.getFile());
+    DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
 
     String epDefinition = "[" + myModule.getName() + "] foo<br/>" +
                           "<b>bar</b> " +
@@ -30,7 +26,7 @@ public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFix
                           "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a>";
 
     assertEquals(epDefinition,
-                 provider.getQuickNavigateInfo(epPsiElement, originalElement));
+                 provider.getQuickNavigateInfo(docElement, null));
 
     assertEquals("<em>EP Definition</em><br/>" +
                  epDefinition +
@@ -39,6 +35,6 @@ public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFix
                  "<html><head>    <style type=\"text/css\">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head>" +
                  "<body><small><b>bar</b></small><PRE>public interface <b>MyExtensionPoint</b></PRE>\n" +
                  "   MyExtensionPoint JavaDoc.</body></html>",
-                 provider.generateDoc(epPsiElement, originalElement));
+                 provider.generateDoc(docElement, null));
   }
 }
