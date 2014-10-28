@@ -7,7 +7,7 @@ class C {
   private String a;
   private String b;
 
-  public void setA(String <warning descr="Setter parameter for @Nullable field is annotated @ParametersAreNonnullByDefault">a</warning>) {
+  public void setA(String a) {
     this.a = a;
   }
 

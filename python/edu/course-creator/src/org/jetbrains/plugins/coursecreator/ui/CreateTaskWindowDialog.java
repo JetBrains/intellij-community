@@ -95,6 +95,10 @@ public class CreateTaskWindowDialog extends DialogWrapper {
       myTaskWindow.setHint(hintName);
       String hintText = myPanel.getHintText();
       createHint(hintName, hintText);
+    } else {
+      if (myTaskWindow.getHintName() != null) {
+        deleteHint();
+      }
     }
     super.doOKAction();
   }

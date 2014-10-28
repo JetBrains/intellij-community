@@ -6,9 +6,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.coursecreator.CCProjectService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TaskFile {
@@ -57,52 +57,6 @@ public class TaskFile {
     return null;
   }
 
-  /**
-   * Updates task window lines
-   *
-   * @param startLine lines greater than this line and including this line will be updated
-   * @param change    change to be added to line numbers
-   */
-  public void incrementLines(int startLine, int change) {
-    for (TaskWindow taskTaskWindow : task_windows) {
-      if (taskTaskWindow.getLine() >= startLine) {
-        taskTaskWindow.setLine(taskTaskWindow.getLine() + change);
-      }
-    }
-  }
-
-  /**
-   * Updates windows in specific line
-   *
-   * @param lineChange         change in line number
-   * @param line               line to be updated
-   * @param newEndOffsetInLine distance from line start to end of inserted fragment
-   * @param oldEndOffsetInLine distance from line start to end of changed fragment
-   */
-  public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine, boolean useLength) {
-    for (TaskWindow w : task_windows) {
-      if ((w.getLine() == line) && (w.getStart() > oldEndOffsetInLine)) {
-        int distance = w.getStart() - oldEndOffsetInLine;
-        boolean coveredByPrevTW = false;
-        int prevIndex = w.getIndex() - 1;
-        if (CCProjectService.indexIsValid(prevIndex, task_windows)) {
-          TaskWindow prevTW = task_windows.get(prevIndex - 1);
-          if (prevTW.getLine() == line) {
-            int prevLength = useLength ? prevTW.getLength() : prevTW.getReplacementLength();
-            int endOffset = prevTW.getStart() + prevLength;
-            if (endOffset >= newEndOffsetInLine) {
-              coveredByPrevTW = true;
-            }
-          }
-        }
-        if (lineChange != 0 || newEndOffsetInLine <= w.getStart() || coveredByPrevTW) {
-          w.setStart(distance + newEndOffsetInLine);
-          w.setLine(line + lineChange);
-        }
-      }
-    }
-  }
-
   public void copy(@NotNull final TaskFile target) {
     target.setIndex(myIndex);
     for (TaskWindow taskWindow : task_windows) {
@@ -110,6 +64,7 @@ public class TaskFile {
                                               taskWindow.getLength(), "");
       target.getTaskWindows().add(savedWindow);
       savedWindow.setIndex(taskWindow.getIndex());
+      savedWindow.setReplacementLength(taskWindow.getReplacementLength());
     }
   }
 
@@ -121,6 +76,8 @@ public class TaskFile {
       }
       taskWindowUpdated.setLine(taskWindow.getLine());
       taskWindowUpdated.setStart(taskWindow.getStart());
+      taskWindowUpdated.setReplacementLength(taskWindow.getReplacementLength());
+      taskWindowUpdated.setLength(taskWindow.getLength());
     }
   }
 
@@ -140,6 +97,13 @@ public class TaskFile {
   public void createGuardedBlocks(@NotNull final Editor editor) {
     for (TaskWindow taskWindow : task_windows) {
       taskWindow.createGuardedBlocks(editor);
+    }
+  }
+
+  public void sortTaskWindows() {
+    Collections.sort(task_windows);
+    for (int i = 0; i < task_windows.size(); i++) {
+      task_windows.get(i).setIndex(i + 1);
     }
   }
 }

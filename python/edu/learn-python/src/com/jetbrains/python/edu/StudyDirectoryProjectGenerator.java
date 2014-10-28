@@ -9,15 +9,18 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.lang.javascript.boilerplate.GithubDownloadUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -171,6 +174,9 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
           final AbstractProjectViewPane projectViewPane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
           if (projectViewPane == null || initialized[0]) return;
           JTree tree = projectViewPane.getTree();
+          if (tree == null) {
+            return;
+          }
           tree.updateUI();
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -187,7 +193,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
               for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
                 final String name = entry.getKey();
                 final TaskFile taskFile = entry.getValue();
-                final VirtualFile virtualFile = taskDir.findChild(name);
+                final VirtualFile virtualFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(name);
                 if (virtualFile != null) {
                   FileEditorManager.getInstance(project).openFile(virtualFile, true);
                   if (!taskFile.getTaskWindows().isEmpty()) {
@@ -200,6 +206,11 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
                 ProjectView.getInstance(project).select(file, activeVirtualFile, true);
                 initialized[0] = true;
               }
+            }
+          }, ModalityState.current(), new Condition() {
+            @Override
+            public boolean value(Object o) {
+              return project.isDisposed();
             }
           });
         }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.keymap.Keymap;
@@ -75,7 +76,9 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
                                                     RoamingType.PER_USER);
 
     Keymap[] keymaps = defaultKeymap.getKeymaps();
-    String systemDefaultKeymap = defaultKeymap.getDefaultKeymapName();
+    String systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() != null
+                                 ? WelcomeWizardUtil.getWizardMacKeymap()
+                                 : defaultKeymap.getDefaultKeymapName();
     for (Keymap keymap : keymaps) {
       addKeymap(keymap);
       if (systemDefaultKeymap.equals(keymap.getName())) {

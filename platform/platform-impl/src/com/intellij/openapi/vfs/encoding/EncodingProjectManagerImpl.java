@@ -67,6 +67,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   private Charset myDefaultCharsetForPropertiesFiles;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
+  // we should avoid changed file
+  private String myOldUTFGuessing;
+  private boolean myNative2AsciiForPropertiesFilesWasSpecified;
+
   public EncodingProjectManagerImpl(Project project, PsiDocumentManager documentManager) {
     myProject = project;
     documentManager.addListener(new PsiDocumentManager.Listener() {
@@ -87,23 +91,32 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @Override
   public Element getState() {
     Element element = new Element("x");
-    List<VirtualFile> files = new ArrayList<VirtualFile>(myMapping.keySet());
-    ContainerUtil.quickSort(files, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(final VirtualFile o1, final VirtualFile o2) {
-        if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
-        return o1.getPath().compareTo(o2.getPath());
+    if (!myMapping.isEmpty()) {
+      List<VirtualFile> files = new ArrayList<VirtualFile>(myMapping.keySet());
+      ContainerUtil.quickSort(files, new Comparator<VirtualFile>() {
+        @Override
+        public int compare(final VirtualFile o1, final VirtualFile o2) {
+          if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
+          return o1.getPath().compareTo(o2.getPath());
+        }
+      });
+      for (VirtualFile file : files) {
+        Charset charset = myMapping.get(file);
+        Element child = new Element("file");
+        element.addContent(child);
+        child.setAttribute("url", file == null ? PROJECT_URL : file.getUrl());
+        child.setAttribute("charset", charset.name());
       }
-    });
-    for (VirtualFile file : files) {
-      Charset charset = myMapping.get(file);
-      Element child = new Element("file");
-      element.addContent(child);
-      child.setAttribute("url", file == null ? PROJECT_URL : file.getUrl());
-      child.setAttribute("charset", charset.name());
     }
-    element.setAttribute("useUTFGuessing", Boolean.toString(true));
-    element.setAttribute("native2AsciiForPropertiesFiles", Boolean.toString(myNative2AsciiForPropertiesFiles));
+
+    if (myOldUTFGuessing != null) {
+      element.setAttribute("useUTFGuessing", myOldUTFGuessing);
+    }
+
+    if (myNative2AsciiForPropertiesFiles || myNative2AsciiForPropertiesFilesWasSpecified) {
+      element.setAttribute("native2AsciiForPropertiesFiles", Boolean.toString(myNative2AsciiForPropertiesFiles));
+    }
+
     if (myDefaultCharsetForPropertiesFiles != null) {
       element.setAttribute("defaultCharsetForPropertiesFiles", myDefaultCharsetForPropertiesFiles.name());
     }
@@ -112,25 +125,31 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
 
   @Override
   public void loadState(Element element) {
-    List<Element> files = element.getChildren("file");
-    final Map<VirtualFile, Charset> mapping = new HashMap<VirtualFile, Charset>();
-    for (Element fileElement : files) {
-      String url = fileElement.getAttributeValue("url");
-      String charsetName = fileElement.getAttributeValue("charset");
-      Charset charset = CharsetToolkit.forName(charsetName);
-      if (charset == null) continue;
-      VirtualFile file = url.equals(PROJECT_URL) ? null : VirtualFileManager.getInstance().findFileByUrl(url);
-      if (file != null || url.equals(PROJECT_URL)) {
-        mapping.put(file, charset);
-      }
-    }
     myMapping.clear();
-    myMapping.putAll(mapping);
+    List<Element> files = element.getChildren("file");
+    if (!files.isEmpty()) {
+      Map<VirtualFile, Charset> mapping = new HashMap<VirtualFile, Charset>();
+      for (Element fileElement : files) {
+        String url = fileElement.getAttributeValue("url");
+        String charsetName = fileElement.getAttributeValue("charset");
+        Charset charset = CharsetToolkit.forName(charsetName);
+        if (charset == null) continue;
+        VirtualFile file = url.equals(PROJECT_URL) ? null : VirtualFileManager.getInstance().findFileByUrl(url);
+        if (file != null || url.equals(PROJECT_URL)) {
+          mapping.put(file, charset);
+        }
+      }
+      myMapping.putAll(mapping);
+    }
 
-    myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
+    String native2AsciiForPropertiesFiles = element.getAttributeValue("native2AsciiForPropertiesFiles");
+    myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(native2AsciiForPropertiesFiles);
     myDefaultCharsetForPropertiesFiles = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForPropertiesFiles"));
 
     myModificationTracker.incModificationCount();
+
+    myOldUTFGuessing = element.getAttributeValue("useUTFGuessing");
+    myNative2AsciiForPropertiesFilesWasSpecified = native2AsciiForPropertiesFiles != null;
   }
 
   @Override

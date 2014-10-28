@@ -23,12 +23,14 @@ import java.util.EnumSet;
 public class RegExpLexer extends FlexAdapter {
 
     private static final int COMMENT_MODE = 1 << 14;
+    private static final int NESTED_STATES = 1 << 15;
+    private static final int CAPTURING_GROUPS = 1 << 16;
     private final EnumSet<RegExpCapability> myCapabilities;
 
     public RegExpLexer(EnumSet<RegExpCapability> capabilities) {
         super(new _RegExLexer(capabilities));
         myCapabilities = capabilities;
-  }
+    }
 
     public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
         getFlex().commentMode = (initialState & COMMENT_MODE) != 0 || myCapabilities.contains(RegExpCapability.COMMENT_MODE);
@@ -40,8 +42,17 @@ public class RegExpLexer extends FlexAdapter {
     }
 
     public int getState() {
-        final boolean commentMode = getFlex().commentMode;
-        final int state = super.getState();
-        return commentMode ? state | COMMENT_MODE : state;
+        final _RegExLexer flex = getFlex();
+        int state = super.getState();
+        if (flex.commentMode) {
+            state |= COMMENT_MODE;
+        }
+        if (!flex.states.isEmpty()) {
+            state |= NESTED_STATES;
+        }
+        if (flex.capturingGroupCount != 0) {
+            state |= CAPTURING_GROUPS;
+        }
+        return state;
     }
 }

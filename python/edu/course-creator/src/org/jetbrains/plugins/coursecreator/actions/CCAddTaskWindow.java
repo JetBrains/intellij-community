@@ -24,7 +24,7 @@ public class CCAddTaskWindow extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCAddTaskWindow.class);
 
   public CCAddTaskWindow() {
-    super("Add problem to solve", "Add problem to solve", null);
+    super("Add Problem to Solve", "Add problem to solve", null);
   }
 
 
@@ -85,6 +85,7 @@ public class CCAddTaskWindow extends DumbAwareAction {
     }
     int index = taskFile.getTaskWindows().size() + 1;
     taskFile.addTaskWindow(taskWindow, index);
+    taskFile.sortTaskWindows();
     taskWindow.drawHighlighter(editor, false);
     taskWindow.createGuardedBlocks(editor);
   }

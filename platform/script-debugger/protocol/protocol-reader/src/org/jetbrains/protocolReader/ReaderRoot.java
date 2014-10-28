@@ -94,11 +94,11 @@ class ReaderRoot<R> {
     return rootClass;
   }
 
-  public void writeStaticMethodJava(ClassScope scope) {
+  public void writeStaticMethodJava(@NotNull ClassScope scope) {
     TextOutput out = scope.getOutput();
-    for (Map.Entry<Method, ReadDelegate> en : methodMap.entrySet()) {
+    for (Map.Entry<Method, ReadDelegate> entry : methodMap.entrySet()) {
       out.newLine();
-      en.getValue().write(scope, en.getKey(), out);
+      entry.getValue().write(scope, entry.getKey(), out);
       out.newLine();
     }
   }

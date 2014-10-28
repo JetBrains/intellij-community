@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package git4idea.update;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -133,12 +134,12 @@ public class GitUpdateProcess {
 
     GitComplexProcess.Operation updateOperation = new GitComplexProcess.Operation() {
       @Override public void run(ContinuationContext continuationContext) {
-        DvcsUtil.workingTreeChangeStarted(myProject);
+        AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
         try {
           myResult = updateImpl(updateMethod, continuationContext);
         }
         finally {
-          DvcsUtil.workingTreeChangeFinished(myProject);
+          DvcsUtil.workingTreeChangeFinished(myProject, token);
         }
       }
     };

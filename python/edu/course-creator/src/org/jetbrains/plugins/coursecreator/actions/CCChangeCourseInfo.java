@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.coursecreator.actions;
 
 import com.intellij.ide.IdeView;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,7 +21,7 @@ import javax.swing.*;
 
 public class CCChangeCourseInfo extends DumbAwareAction {
   public CCChangeCourseInfo() {
-    super("Change course information", "Change course information", null);
+    super("Change Course Information", "Change Course Information", null);
   }
 
   @Override
@@ -85,6 +86,7 @@ public class CCChangeCourseInfo extends DumbAwareAction {
       course.setAuthor(panel.getAuthor());
       course.setName(panel.getName());
       course.setDescription(panel.getDescription());
+      ProjectView.getInstance(project).refresh();
     }
   }
 
@@ -93,6 +95,7 @@ public class CCChangeCourseInfo extends DumbAwareAction {
     CCNewProjectPanel myNewProjectPanel;
     public ChangeCourseInfoDialog(@Nullable Project project, CCNewProjectPanel panel) {
       super(project);
+      setTitle("Change Course Information");
       myNewProjectPanel = panel;
       init();
     }

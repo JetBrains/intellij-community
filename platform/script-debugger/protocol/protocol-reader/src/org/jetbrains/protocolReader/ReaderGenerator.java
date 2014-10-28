@@ -121,6 +121,7 @@ public final class ReaderGenerator {
     out.append("// Generated source");
     out.newLine().append("package ").append(configuration.packageName).append(';');
     out.newLine().newLine().append("import org.jetbrains.jsonProtocol.*;");
+    out.newLine().newLine().append("import org.jetbrains.annotations.NotNull;");
     out.newLine().newLine().append("import static org.jetbrains.jsonProtocol.JsonReaders.*;");
     out.newLine().newLine().append("public final class ").append(configuration.className).space();
     out.append(configuration.root.getType().isInterface() ? "implements" : "extends").space().append(configuration.root.getType().getCanonicalName()).openBlock(false);

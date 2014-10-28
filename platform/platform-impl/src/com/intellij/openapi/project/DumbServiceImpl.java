@@ -18,6 +18,7 @@ package com.intellij.openapi.project;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -152,12 +153,12 @@ public class DumbServiceImpl extends DumbService implements Disposable {
       if (indicator != null) {
         indicator.pushState();
       }
+      AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task");
       try {
-        HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task");
         task.performInDumbMode(indicator != null ? indicator : new EmptyProgressIndicator());
       }
       finally {
-        HeavyProcessLatch.INSTANCE.processFinished();
+        token.finish();
         if (indicator != null) {
           indicator.popState();
         }
@@ -336,8 +337,8 @@ public class DumbServiceImpl extends DumbService implements Disposable {
       public void run(@NotNull final ProgressIndicator visibleIndicator) {
         final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
         final Thread self = Thread.currentThread();
+        AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks");
         try {
-          HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks");
           shutdownTracker.registerStopperThread(self);
 
           if (visibleIndicator instanceof ProgressIndicatorEx) {
@@ -362,7 +363,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
         }
         finally {
           shutdownTracker.unregisterStopperThread(self);
-          HeavyProcessLatch.INSTANCE.processFinished();
+          token.finish();
         }
       }
     });

@@ -10,6 +10,8 @@ import org.jetbrains.jsonProtocol.Request;
 import org.jetbrains.jsonProtocol.RequestWithResponse;
 
 public abstract class CommandSenderBase<SUCCESS_RESPONSE, ERROR_DETAILS> implements CommandSender<ERROR_DETAILS> {
+  private static final Function.Self SELF_TRANSFORM = new Function.Self();
+
   protected abstract void send(@NotNull Request message, @NotNull AsyncResultCallback<SUCCESS_RESPONSE, ERROR_DETAILS> callback);
 
   @Override
@@ -22,6 +24,12 @@ public abstract class CommandSenderBase<SUCCESS_RESPONSE, ERROR_DETAILS> impleme
   @Override
   public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull RequestWithResponse message, @NotNull Function<RESULT, TRANSFORMED_RESULT> transform) {
     return send(message, transform, null);
+  }
+
+  @Override
+  public final <RESULT> AsyncResult<RESULT> send(@NotNull RequestWithResponse message) {
+    //noinspection unchecked
+    return send(message, SELF_TRANSFORM, null);
   }
 
   @Override

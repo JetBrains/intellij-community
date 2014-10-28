@@ -161,8 +161,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                                      addAnnoFix);
             }
             if (PropertyUtil.isSimpleSetter(setter)) {
-              if (annotated.isDeclaredNotNull && isNullableNotInferred(parameter, false) ||
-                  annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false, false)) {
+              if (annotated.isDeclaredNotNull && isNullableNotInferred(parameter, false)) {
                 final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
                 assertValidElement(setter, parameter, nameIdentifier1);
                 holder.registerProblem(nameIdentifier1, InspectionsBundle.message(

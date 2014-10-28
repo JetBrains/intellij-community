@@ -73,12 +73,6 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     }
 
     @Override
-    protected void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change) {
-        int newLength = taskWindow.getReplacementLength() + change;
-        taskWindow.setReplacementLength(newLength <= 0 ? 0 : newLength);
-    }
-
-    @Override
     protected boolean useLength() {
       return false;
     }
