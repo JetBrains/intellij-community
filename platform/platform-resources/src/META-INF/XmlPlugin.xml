@@ -198,6 +198,7 @@
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor"/>
 
+    <xml.zenCodingGenerator implementation="com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl" order="last"/>
     <customLiveTemplate implementation="com.intellij.codeInsight.template.emmet.ZenCodingTemplate"/>
     <typedHandler implementation="com.intellij.codeInsight.template.emmet.EmmetPreviewTypedHandler"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
