@@ -104,7 +104,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Nullable
   private String myBytecodeTargetLevel = null;  // null means compiler default
-  private final Map<String, String> myModuleBytecodeTarget = new java.util.HashMap<String, String>();
+  private final Map<String, String> myModuleBytecodeTarget = new HashMap<String, String>();
 
   public CompilerConfigurationImpl(Project project) {
     myProject = project;
@@ -112,16 +112,19 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     Disposer.register(project, myExcludedEntriesConfiguration);
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+      @Override
       public void beforeModuleRemoved(Project project, Module module) {
         getAnnotationProcessingConfiguration(module).removeModuleName(module.getName());
       }
 
+      @Override
       public void moduleAdded(Project project, Module module) {
         myProcessorsProfilesMap = null; // clear cache
       }
     });
   }
 
+  @Override
   public Element getState() {
     try {
       @NonNls final Element e = new Element("state");
@@ -134,6 +137,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
+  @Override
   public void loadState(Element state) {
     try {
       readExternal(state);
@@ -162,6 +166,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return myModuleBytecodeTarget;
   }
 
+  @Override
   public void setBytecodeTargetLevel(Module module, String level) {
     final String previous;
     if (StringUtil.isEmpty(level)) {
@@ -229,11 +234,14 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void projectClosed() {
   }
 
@@ -242,6 +250,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return JAVAC_EXTERNAL_BACKEND;
   }
 
+  @Override
   public void projectOpened() {
     createCompilers();
   }
@@ -304,6 +313,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return ArrayUtil.toStringArray(myWildcardPatterns);
   }
 
+  @Override
   public void addResourceFilePattern(String namePattern) throws MalformedPatternException {
     addWildcardResourcePattern(namePattern);
   }
@@ -321,6 +331,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return myExcludedEntriesConfiguration;
   }
 
+  @Override
   public boolean isExcludedFromCompilation(final VirtualFile virtualFile) {
     return myExcludedEntriesConfiguration.isExcluded(virtualFile);
   }
@@ -505,6 +516,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return wildcardPattern.length() > 1 && wildcardPattern.charAt(0) == '!';
   }
 
+  @Override
   public boolean isResourceFile(String name) {
     return isResourceFile(name, null);
   }
@@ -647,7 +659,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     final Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
     if (bytecodeTargetElement != null) {
       myBytecodeTargetLevel = bytecodeTargetElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
-      for (Element elem : (Collection<Element>)bytecodeTargetElement.getChildren(JpsJavaCompilerConfigurationSerializer.MODULE)) {
+      for (Element elem : bytecodeTargetElement.getChildren(JpsJavaCompilerConfigurationSerializer.MODULE)) {
         final String name = elem.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
         if (name == null) {
           continue;
@@ -796,6 +808,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
+  @Override
   @NotNull @NonNls
   public String getComponentName() {
     return "CompilerConfiguration";
@@ -839,9 +852,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         );
         final String wildcardPatterns = Messages.showInputDialog(
           myProject, message, CompilerBundle.message("pattern.conversion.dialog.title"), Messages.getWarningIcon(), initialPatternString, new InputValidator() {
+          @Override
           public boolean checkInput(String inputString) {
             return true;
           }
+          @Override
           public boolean canClose(String inputString) {
             final StringTokenizer tokenizer = new StringTokenizer(inputString, ";", false);
             StringBuilder malformedPatterns = new StringBuilder();
@@ -925,6 +940,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return extensionsString.toString();
   }
 
+  @Override
   public boolean isCompilableResourceFile(final Project project, final VirtualFile file) {
     if (!isResourceFile(file)) {
       return false;
@@ -938,7 +954,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     @Nullable final Pattern dir;
     @Nullable final Pattern srcRoot;
 
-    private CompiledPattern(Pattern fileName, Pattern dir, Pattern srcRoot) {
+    private CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
       this.fileName = fileName;
       this.dir = dir;
       this.srcRoot = srcRoot;
