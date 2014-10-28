@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.ExecutableValidator;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +33,12 @@ public class SvnExecutableChecker extends ExecutableValidator {
 
   private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);
 
-  public SvnExecutableChecker(Project project) {
-    super(project, getNotificationTitle(), getWrongPathMessage());
+  @NotNull private final SvnVcs myVcs;
+
+  public SvnExecutableChecker(@NotNull SvnVcs vcs) {
+    super(vcs.getProject(), getNotificationTitle(), getWrongPathMessage());
+
+    myVcs = vcs;
   }
 
   @Override
@@ -49,18 +52,13 @@ public class SvnExecutableChecker extends ExecutableValidator {
     return SvnConfigurable.DISPLAY_NAME;
   }
 
-  @NotNull
-  private SvnVcs getVcs() {
-    return SvnVcs.getInstance(myProject);
-  }
-
   @Override
   protected void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
     showSettings();
     // always expire notification as different message could be detected
     notification.expire();
 
-    getVcs().checkCommandLineVersion();
+    myVcs.checkCommandLineVersion();
   }
 
   @Override
@@ -84,7 +82,7 @@ public class SvnExecutableChecker extends ExecutableValidator {
 
   @Nullable
   private Notification validateVersion(@NotNull Version version) {
-    return !getVcs().isSupportedByCommandLine(WorkingCopyFormat.from(version)) ? new ExecutableNotValidNotification(
+    return !myVcs.isSupportedByCommandLine(WorkingCopyFormat.from(version)) ? new ExecutableNotValidNotification(
       getOldExecutableMessage(version)) : null;
   }
 
@@ -93,7 +91,7 @@ public class SvnExecutableChecker extends ExecutableValidator {
     Version result = null;
 
     try {
-      result = getVcs().getCommandLineFactory().createVersionClient().getVersion();
+      result = myVcs.getCommandLineFactory().createVersionClient().getVersion();
     }
     catch (Throwable e) {
       LOG.info(e);
