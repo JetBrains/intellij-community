@@ -22,8 +22,6 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.python</depends>
-  <application-components>
-  </application-components>
 
   <project-components>
     <component>
@@ -63,6 +61,9 @@
             description="Run your code with tests"/>
     <action id="WelcomeScreen.PythonIntro" class="com.jetbrains.python.edu.actions.StudyIntroductionCourseAction" icon="StudyIcons.EducationalProjectType">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </action>
+    <action id="StudyWatchTutorial" class="com.jetbrains.python.edu.actions.StudyWatchTutorialAction">
+      <add-to-group group-id="HelpMenu" anchor="first"/>
     </action>
 
   </actions>

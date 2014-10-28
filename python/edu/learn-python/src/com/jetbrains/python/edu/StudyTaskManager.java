@@ -1,6 +1,12 @@
 package com.jetbrains.python.edu;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,11 +20,15 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.python.edu.actions.*;
 import com.jetbrains.python.edu.course.Course;
@@ -32,7 +42,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,9 +157,65 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               }
 
               final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(toolWindowId);
+              class UrlOpeningListener implements NotificationListener {
+                private final boolean myExpireNotification;
+
+                public UrlOpeningListener(boolean expireNotification) {
+                  myExpireNotification = expireNotification;
+                }
+
+                protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                  URL url = event.getURL();
+                  if (url == null) {
+                    BrowserUtil.browse(event.getDescription());
+                  }
+                  else {
+                    BrowserUtil.browse(url);
+                  }
+                  if (myExpireNotification) {
+                    notification.expire();
+                  }
+                }
+
+                @Override
+                public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                  if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    hyperlinkActivated(notification, event);
+                  }
+                }
+              }
               if (studyToolWindow != null) {
                 StudyUtils.updateStudyToolWindow(myProject);
                 studyToolWindow.show(null);
+                UiNotifyConnector.doWhenFirstShown(studyToolWindow.getComponent(), new Runnable() {
+                  @Override
+                  public void run() {
+                    if (PropertiesComponent.getInstance().getBoolean("StudyShowPopup", true)) {
+                      String content = "<html>If you'd like to learn" +
+                                       " more about PyCharm " +
+                                       "Educational Edition, " +
+                                       "click <a href=\"http://www.jetbrains.com/pycharm-educational/quickstart/\">here</a> to watch a tutorial</html>";
+                      final Notification notification =
+                        new Notification("Watch Tutorials!", "", content, NotificationType.INFORMATION, new UrlOpeningListener(true));
+                      Notifications.Bus.notify(notification);
+                      Balloon balloon = notification.getBalloon();
+                      if (balloon != null) {
+                        balloon.addListener(new JBPopupAdapter() {
+                          @Override
+                          public void onClosed(LightweightWindowEvent event) {
+                            notification.expire();
+                          }
+                        });
+                      }
+                      notification.whenExpired(new Runnable() {
+                        @Override
+                        public void run() {
+                          PropertiesComponent.getInstance().setValue("StudyShowPopup", String.valueOf(false));
+                        }
+                      });
+                    }
+                  }
+                });
               }
               addShortcut(StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.ACTION_ID);
               addShortcut(StudyPrevWindowAction.SHORTCUT, StudyPrevWindowAction.ACTION_ID);
