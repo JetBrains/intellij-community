@@ -15,14 +15,11 @@ def __lldb_init_module(debugger, internal_dict):
                 for thread in process:
                     # Get the first frame
                     print('Thread %s, suspended %s\n'%(thread, thread.IsStopped()))
+                    print(thread.GetName())
 
                     process.SetSelectedThread(thread)
 
-                    if not thread.IsStopped():
-                        error = process.Stop()
-                        print(error)
-
-                    if thread:
+                    if getattr(internal_dict, '_thread_%d' % thread.GetThreadID(), False):
                         frame = thread.GetSelectedFrame()
                         if frame:
                             print('Will settrace in: %s' % (frame,))
@@ -31,6 +28,6 @@ def __lldb_init_module(debugger, internal_dict):
                             error = res.GetError()
                             if error:
                                 print(error)
-                    thread.Resume()
+                        thread.Resume()
     except:
         import traceback;traceback.print_exc()
