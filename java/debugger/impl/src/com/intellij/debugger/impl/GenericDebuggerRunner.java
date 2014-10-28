@@ -122,7 +122,9 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
           sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
           sessionImpl.addExtraStopActions(((DefaultExecutionResult)executionResult).getAdditionalStopActions());
         }
-        return new JavaDebugProcess(session, debuggerSession);
+        JavaDebugProcess res = new JavaDebugProcess(session, debuggerSession);
+        debugProcess.setXDebugProcess(res);
+        return res;
       }
     }).getRunContentDescriptor();
   }
