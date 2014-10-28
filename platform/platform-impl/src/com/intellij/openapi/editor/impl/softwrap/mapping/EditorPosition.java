@@ -144,10 +144,7 @@ class EditorPosition implements Cloneable {
       // Single-line fold region.
       if (collapsedSymbolsWidthInColumns < 0) {
         collapsedSymbolsWidthInColumns = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor)
-          .toVisualColumnSymbolsNumber(document.getCharsSequence(),
-                                       foldRegion.getStartOffset(),
-                                       foldRegion.getEndOffset(),
-                                       x);
+          .toVisualColumnSymbolsNumber(foldRegion.getStartOffset(), foldRegion.getEndOffset(), x);
       }
       logicalColumn += collapsedSymbolsWidthInColumns;
       foldingColumnDiff += placeholder.length() - collapsedSymbolsWidthInColumns;
@@ -156,10 +153,7 @@ class EditorPosition implements Cloneable {
       // Multi-line fold region.
       if (collapsedSymbolsWidthInColumns < 0) {
         collapsedSymbolsWidthInColumns = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor)
-          .toVisualColumnSymbolsNumber(document.getCharsSequence(),
-                                       foldRegion.getStartOffset(),
-                                       foldRegion.getEndOffset(),
-                                       0);
+          .toVisualColumnSymbolsNumber(foldRegion.getStartOffset(), foldRegion.getEndOffset(), 0);
       }
       int linesDiff = endOffsetLogicalLine - logicalLine;
       logicalLine += linesDiff;

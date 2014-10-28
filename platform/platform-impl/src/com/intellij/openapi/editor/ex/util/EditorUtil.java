@@ -222,7 +222,12 @@ public final class EditorUtil {
    * @param tabSize       number of desired visual columns to use for tabulation representation
    * @param debugBuffer   buffer to hold debug info during the processing (if any)
    * @return              given text offset that identifies the same position that is pointed by the given visual column
+   *
+   * @deprecated This function can give incorrect results when soft wraps are enabled in editor. It is also slow in case of
+   * long document lines - {@link com.intellij.openapi.editor.Editor#logicalPositionToOffset(com.intellij.openapi.editor.LogicalPosition)}
+   * should be faster when soft wraps are enabled. To be removed in IDEA 16.
    */
+  @SuppressWarnings("UnusedDeclaration")
   public static int calcOffset(@NotNull EditorEx editor,
                                @NotNull CharSequence text,
                                int start,
@@ -291,7 +296,7 @@ public final class EditorUtil {
    * @return                target offset that belongs to the <code>[start; end)</code> range and points to the target logical
    *                        column if any; <code>-1</code> otherwise
    */
-  private static int calcSoftWrapUnawareOffset(@NotNull Editor editor,
+  public static int calcSoftWrapUnawareOffset(@NotNull Editor editor,
                                                @NotNull CharSequence text,
                                                int start,
                                                int end,

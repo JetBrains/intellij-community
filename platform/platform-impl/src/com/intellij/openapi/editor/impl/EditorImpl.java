@@ -3656,11 +3656,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    return logicalPositionToOffset(pos, null);
+    return logicalPositionToOffset(pos, true);
   }
 
-
-  public int logicalPositionToOffset(@NotNull LogicalPosition pos, @Nullable StringBuilder debugBuffer) {
+  @Override
+  public int logicalPositionToOffset(@NotNull LogicalPosition pos, boolean softWrapAware) {
+    if (softWrapAware) {
+      return mySoftWrapModel.logicalPositionToOffset(pos);
+    }
     assertReadAccess();
     if (myDocument.getLineCount() == 0) return 0;
 
@@ -3675,9 +3678,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (pos.column == 0) return start;
     int end = myDocument.getLineEndOffset(pos.line);
 
-    CharSequence text = myDocument.getImmutableCharSequence();
+    int x = getDocument().getLineNumber(start) == 0 ? getPrefixTextWidthInPixels() : 0;
 
-    return EditorUtil.calcOffset(this, text, start, end, pos.column, EditorUtil.getTabSize(this), debugBuffer);
+    int result = EditorUtil.calcSoftWrapUnawareOffset(this, myDocument.getImmutableCharSequence(), start, end, pos.column,
+                                                      EditorUtil.getTabSize(this), x, new int[]{0}, null);
+    if (result >= 0) {
+      return result;
+    }
+
+    return end;
   }
 
   @Override
