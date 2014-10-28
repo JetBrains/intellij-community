@@ -11,6 +11,7 @@ def __lldb_init_module(debugger, internal_dict):
             process = target.GetProcess()
             if process:
                 for thread in process:
+                    # print('Marking process thread %d'%thread.GetThreadID())
                     internal_dict['_thread_%d' % thread.GetThreadID()] = True
                     # thread.Suspend()
     except:

@@ -2,7 +2,7 @@
 # the attach_linux.dylib dll has already been loaded to settrace for all threads.
 def __lldb_init_module(debugger, internal_dict):
     # Command Initialization code goes here
-    print('Startup LLDB in Python!')
+    # print('Startup LLDB in Python!')
     import lldb
 
     try:
@@ -14,12 +14,11 @@ def __lldb_init_module(debugger, internal_dict):
             if process:
                 for thread in process:
                     # Get the first frame
-                    print('Thread %s, suspended %s\n'%(thread, thread.IsStopped()))
-                    print(thread.GetName())
+                    # print('Thread %s, suspended %s\n'%(thread, thread.IsStopped()))
 
                     process.SetSelectedThread(thread)
 
-                    if getattr(internal_dict, '_thread_%d' % thread.GetThreadID(), False):
+                    if internal_dict.get('_thread_%d' % thread.GetThreadID(), False):
                         frame = thread.GetSelectedFrame()
                         if frame:
                             print('Will settrace in: %s' % (frame,))
