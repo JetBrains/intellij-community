@@ -196,7 +196,7 @@ public class StudyEditor implements TextEditor {
     myPrevTaskButton = addButton(taskActionsPanel, "Previous Task (Ctrl + &lt;)", StudyIcons.Prev);
     myNextTaskButton = addButton(taskActionsPanel, "Next Task (Ctrl + >)", AllIcons.Actions.Forward);
     myRefreshButton = addButton(taskActionsPanel, "Reset Task File (Ctrl + Shift + X)", AllIcons.Actions.Refresh);
-    JButton myShowHintButton = addButton(taskActionsPanel, "Show Hint For Task Window (Ctrl + 7)", StudyIcons.ShowHint);
+    JButton myShowHintButton = addButton(taskActionsPanel, "Show Hint for Task Window (Ctrl + 7)", StudyIcons.ShowHint);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
       JButton runButton = addButton(taskActionsPanel, "Run", AllIcons.General.Run);
       runButton.addActionListener(new ActionListener() {
