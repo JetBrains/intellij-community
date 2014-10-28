@@ -750,7 +750,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         history.getSettings().setAdditionalColumnsCount(2 + (width - historySize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, history));
       }
 
-      // deal with height, WEB-11122 we cannot trust editor width — it could be 0 in case of soft wrap even if editor has text
+      // deal with height, WEB-11122 we cannot trust editor width - it could be 0 in case of soft wrap even if editor has text
       if (history.getDocument().getLineCount() == 0) {
         historySize.height = 0;
       }
