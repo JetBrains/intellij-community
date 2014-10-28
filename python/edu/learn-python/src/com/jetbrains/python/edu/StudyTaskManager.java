@@ -235,6 +235,10 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   private static void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString) {
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    Shortcut[] shortcuts = keymap.getShortcuts(actionIdString);
+    if (shortcuts.length > 0) {
+      return;
+    }
     Shortcut studyActionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcutString), null);
     String[] actionsIds = keymap.getActionIds(studyActionShortcut);
     for (String actionId : actionsIds) {
