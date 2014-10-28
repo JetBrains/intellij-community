@@ -234,7 +234,9 @@ public abstract class InspectionRVContentProvider {
         public boolean accept(Object node) {
           if (node instanceof RefElementNode) {
             final RefElementNode refElementNode = (RefElementNode)node;
-            if (finalContainer.areEqual(refElementNode.getUserObject(), finalContainer.getUserObject())) {
+            final Object finalContainerUserObject = finalContainer.getUserObject();
+            if (finalContainerUserObject instanceof RefEntity &&
+                finalContainer.areEqual(refElementNode.getUserObject(), finalContainerUserObject)) {
               if (firstLevel.get()) {
                 result.set(refElementNode);
                 return false;
