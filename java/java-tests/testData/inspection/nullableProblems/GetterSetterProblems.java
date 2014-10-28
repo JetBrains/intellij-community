@@ -1,4 +1,7 @@
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.Object;
 
 class B {
      @NotNull
@@ -26,16 +29,16 @@ class C {
     this.c = c;
   }
 
-  C(@<error descr="Cannot resolve symbol 'Nullable'">Nullable</error> C <warning descr="Constructor parameter for @NotNull field might be annotated @NotNull itself">c</warning>, int i) {
+  C(@Nullable C c, int i) {
     this.c = c;
   }
 
-  @<error descr="Cannot resolve symbol 'Nullable'">Nullable</error>
-  public C <warning descr="Getter for @NotNull field might be annotated @NotNull itself">getC</warning>() {
+  @Nullable
+  public C <warning descr="Getter for @NotNull field is annotated @Nullable">getC</warning>() {
     return c;
   }
 
-  public void setC(@<error descr="Cannot resolve symbol 'Nullable'">Nullable</error> C <warning descr="Setter parameter for @NotNull field might be annotated @NotNull itself">c</warning>) {
+  public void setC(@Nullable C <warning descr="Setter parameter for @NotNull field is annotated @Nullable">c</warning>) {
     this.c = c;
   }
 
@@ -50,7 +53,7 @@ class C {
 }
 
 class D {
-    @<error descr="Cannot resolve symbol 'Nullable'">Nullable</error> Long myL;
+    @Nullable Long myL;
 
     D(long l) {
       myL = l;
@@ -64,4 +67,11 @@ class E {
     this.c = c;
   }
 
+}
+class F {
+  @Nullable Object field;
+
+  public void setField(@NotNull Object field) {
+    this.field = field;
+  }
 }
