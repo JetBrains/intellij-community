@@ -136,15 +136,22 @@ public abstract class ExecutableValidator {
   }
   
   @NotNull
-  private String prepareDescription(@NotNull String description) {
+  protected String prepareDescription(@NotNull String description, boolean appendFixIt) {
+    StringBuilder result = new StringBuilder();
     String executable = getCurrentExecutable();
+
     if (executable.isEmpty()) {
-      return String.format("<b>%s</b>%s <a href=''>Fix it.</a>", myNotificationErrorTitle, description);
+      result.append(String.format("<b>%s</b>%s", myNotificationErrorTitle, description));
     }
     else {
-      return String.format("<b>%s:</b> <code>%s</code><br/>%s <a href=''>Fix it.</a>",
-                           myNotificationErrorTitle, executable, description);
+      result.append(
+        String.format("<b>%s:</b> <code>%s</code><br/>%s", myNotificationErrorTitle, executable, description));
     }
+    if (appendFixIt) {
+      result.append(" <a href=''>Fix it.</a>");
+    }
+
+    return result.toString();
   }
 
   protected void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
@@ -224,7 +231,7 @@ public abstract class ExecutableValidator {
     }
 
     public ExecutableNotValidNotification(@NotNull String description) {
-      this(prepareDescription(description), NotificationType.ERROR);
+      this(prepareDescription(description, true), NotificationType.ERROR);
     }
 
     public ExecutableNotValidNotification(@NotNull String preparedDescription, @NotNull NotificationType type) {
