@@ -32,6 +32,7 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
   public void testSee2() throws Exception { doTest(); }
   public void testSee3() throws Exception { doTest(); }
   public void testPackageInfo() throws Exception { doTest(BASE_PATH + "/pkg/package-info.java", BASE_PATH, false, false); }
+  public void testBrokenPackageInfo() throws Exception { doTest(BASE_PATH + "/pkg1/package-info.java", BASE_PATH, false, false); }
 
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/pkg/" + getTestName(false) + ".java", BASE_PATH, false, false);
