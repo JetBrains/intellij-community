@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
@@ -69,7 +70,7 @@ public class ConfigImportHelper {
         oldConfigDir = getOldConfigDir(instHome, settings);
         if (!validateOldConfigDir(instHome, oldConfigDir, settings)) continue;
 
-        doImport(newConfigPath, oldConfigDir);
+        doImport(newConfigPath, oldConfigDir, settings, instHome);
         settings.importFinished(newConfigPath);
         System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
       }
@@ -139,9 +140,9 @@ public class ConfigImportHelper {
     return (SystemInfo.isMac ? "" : ".") + selector.replaceAll("\\d", "");
   }
 
-  public static void doImport(final String newConfigPath, final File oldConfigDir) {
+  private static void doImport(final String newConfigPath, final File oldConfigDir, ConfigImportSettings settings, File installationHome) {
     try {
-      xcopy(oldConfigDir, new File(newConfigPath));
+      xcopy(oldConfigDir, new File(newConfigPath), settings, installationHome);
     }
     catch (IOException e) {
       JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
@@ -171,7 +172,7 @@ public class ConfigImportHelper {
     return true;
   }
 
-  public static void xcopy(File src, File dest) throws IOException {
+  private static void xcopy(File src, File dest, ConfigImportSettings settings, File oldInstallationHome) throws IOException {
     src = src.getCanonicalFile();
     dest = dest.getCanonicalFile();
     if (!src.isDirectory()) {
@@ -188,6 +189,23 @@ public class ConfigImportHelper {
 
     // Delete plugins just imported. They're most probably incompatible with newer idea version.
     File plugins = new File(dest, PLUGINS_PATH);
+    if (!loadOldPlugins(plugins, dest) && SystemInfo.isMac) {
+      File oldPluginsDir = getOldPath(oldInstallationHome, settings, PathManager.PROPERTY_PLUGINS_PATH,
+                                      new Function<String, String>() {
+                                        @Override
+                                        public String fun(String pathSelector) {
+                                          return PathManager.getDefaultPluginPathFor(pathSelector);
+                                        }
+                                      });
+      if (oldPluginsDir == null) {
+        //e.g. installation home referred to config home. Try with default selector, same as config name
+        oldPluginsDir = new File(PathManager.getDefaultPluginPathFor(src.getName()));
+      }
+      loadOldPlugins(oldPluginsDir, dest);
+    }
+  }
+
+  private static boolean loadOldPlugins(File plugins, File dest) throws IOException {
     if (plugins.exists()) {
       final ArrayList<IdeaPluginDescriptorImpl> descriptors = new ArrayList<IdeaPluginDescriptorImpl>();
       PluginManager.loadDescriptors(plugins.getPath(), descriptors, null, 0);
@@ -204,11 +222,13 @@ public class ConfigImportHelper {
     File pluginsSettings = new File(new File(dest, "options"), "plugin_ui.xml");
     if (pluginsSettings.exists()) {
       FileUtil.delete(pluginsSettings);
+      return true;
     }
+    return false;
   }
 
   @Nullable
-  public static File getOldConfigDir(File oldInstallHome, ConfigImportSettings settings) {
+  public static File getOldConfigDir(@Nullable File oldInstallHome, ConfigImportSettings settings) {
     if (oldInstallHome == null) return null;
     // check if it's already config dir
     if (new File(oldInstallHome, OPTIONS_XML).exists()) {
@@ -225,12 +245,24 @@ public class ConfigImportHelper {
       return new File(oldInstallHome, "config");
     }
 
+    return getOldPath(oldInstallHome, settings, PathManager.PROPERTY_CONFIG_PATH, new Function<String, String>() {
+      @Override
+      public String fun(String pathsSelector) {
+        return PathManager.getDefaultConfigPathFor(pathsSelector);
+      }
+    });
+  }
+
+  private static File getOldPath(final File oldInstallHome,
+                                 final ConfigImportSettings settings,
+                                 final String propertyName,
+                                 final Function<String, String> fromPathSelector) {
     final File[] launchFileCandidates = getLaunchFilesCandidates(oldInstallHome, settings);
 
     // custom config folder
     for (File candidate : launchFileCandidates) {
       if (candidate.exists()) {
-        String configDir = PathManager.substituteVars(getPropertyFromLaxFile(candidate, PathManager.PROPERTY_CONFIG_PATH),
+        String configDir = PathManager.substituteVars(getPropertyFromLaxFile(candidate, propertyName),
                                                       oldInstallHome.getPath());
         if (configDir != null) {
           File probableConfig = new File(configDir);
@@ -244,7 +276,7 @@ public class ConfigImportHelper {
       if (candidate.exists()) {
         final String pathsSelector = getPropertyFromLaxFile(candidate, PathManager.PROPERTY_PATHS_SELECTOR);
         if (pathsSelector != null) {
-          final String configDir = PathManager.getDefaultConfigPathFor(pathsSelector);
+          final String configDir = fromPathSelector.fun(pathsSelector);
           final File probableConfig = new File(configDir);
           if (probableConfig.exists()) {
             return probableConfig;
