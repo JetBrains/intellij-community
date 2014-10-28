@@ -22,9 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.UIUtil;
@@ -189,7 +191,21 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
       myToolWindow.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
         @Override
         public void contentAdded(ContentManagerEvent event) {
-          setContentToolbarVisible(event.getContent(), getVisibilityValue());
+          JComponent component = event.getContent().getComponent();
+          setContentToolbarVisible(component, getVisibilityValue());
+
+          // support nested content managers, e.g. RunnerLayoutUi as content component
+          ContentManager contentManager =
+            component instanceof DataProvider ? PlatformDataKeys.CONTENT_MANAGER.getData((DataProvider)component) : null;
+          if (contentManager != null) contentManager.addContentManagerListener(this);
+        }
+
+        @Override
+        public void selectionChanged(ContentManagerEvent event) {
+          Content content = event.getContent();
+          if (content != null) {
+            setContentToolbarVisible(content.getComponent(), getVisibilityValue());
+          }
         }
       });
     }
@@ -203,7 +219,7 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     public void setSelected(AnActionEvent e, boolean state) {
       myPropertiesComponent.setValue(getProperty(), String.valueOf(state), String.valueOf(true));
       for (Content content : myToolWindow.getContentManager().getContents()) {
-        setContentToolbarVisible(content, state);
+        setContentToolbarVisible(content.getComponent(), state);
       }
     }
 
@@ -216,19 +232,17 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
       return myPropertiesComponent.getBoolean(getProperty(), true);
     }
 
-    private static void setContentToolbarVisible(Content content, boolean state) {
-      LinkedList<JComponent> deque = ContainerUtil.newLinkedList(content.getComponent());
+    private static void setContentToolbarVisible(@NotNull JComponent root, boolean state) {
+      LinkedList<JComponent> deque = ContainerUtil.newLinkedList(root);
       while(!deque.isEmpty()) {
         JComponent component = deque.pollFirst();
-        if (!(component instanceof JPanel)) continue;
-
         for (int i = 0, count = component.getComponentCount(); i < count; i++) {
           Component c = component.getComponent(i);
           if (c instanceof ActionToolbar) {
             c.setVisible(state);
           }
-          else if (c instanceof JPanel) {
-            deque.addLast((JPanel)c);
+          else if (c instanceof JPanel || c instanceof JLayeredPane || c instanceof JBTabs) {
+            deque.addLast((JComponent)c);
           }
         }
       }
