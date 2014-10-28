@@ -55,7 +55,7 @@
             description="Refresh current task"/>
     <action id="WatchInputAction" class="com.jetbrains.python.edu.actions.StudyEditInputAction" text="Watch Test Input"
             description="Watch test input "/>
-    <action id="ShowHintAction" class="com.jetbrains.python.edu.actions.StudyShowHintAction" text="Show Hint For Task Window"
+    <action id="ShowHintAction" class="com.jetbrains.python.edu.actions.StudyShowHintAction" text="Show Hint for Task Window"
             description="Show hint for task window"/>
     <action id="StudyRunAction" class="com.jetbrains.python.edu.actions.StudyRunAction" text="Run File With Tests"
             description="Run your code with tests"/>
