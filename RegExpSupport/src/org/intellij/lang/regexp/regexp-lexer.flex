@@ -21,7 +21,7 @@ import java.util.EnumSet;
 
 %{
     // This adds support for nested states. I'm no JFlex pro, so maybe this is overkill, but it works quite well.
-    private final ArrayList<Integer> states = new ArrayList();
+    final ArrayList<Integer> states = new ArrayList();
 
     // This was an idea to use the regex implementation for XML schema regexes (which use a slightly different syntax)
     // as well, but is currently unfinished as it requires to tweak more places than just the lexer.
@@ -202,7 +202,7 @@ HEX_CHAR=[0-9a-fA-F]
 
   {RBRACE}            { yypopstate(); return RegExpTT.RBRACE; }
   {ANY}               { if (allowDanglingMetacharacters) {
-                          yypopstate(); yypushback(1); 
+                          yypopstate(); yypushback(1);
                         } else {
                           return RegExpTT.BAD_CHARACTER;
                         }
