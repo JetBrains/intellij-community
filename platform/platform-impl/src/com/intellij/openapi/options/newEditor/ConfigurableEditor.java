@@ -34,6 +34,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -269,7 +270,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
           content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         }
         if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
-          JScrollPane scroll = ScrollPaneFactory.createScrollPane(content, true);
+          JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
+          scroll.setViewport(new GradientViewport(content, 5, 0, 0, 0, true));
           scroll.getVerticalScrollBar().setUnitIncrement(10);
           content = scroll;
         }

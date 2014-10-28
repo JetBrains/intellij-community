@@ -58,6 +58,7 @@ public class ScrollPaneFactory implements ScrollPaneConstants {
     JBScrollPane scrollPane = new JBScrollPane(view);
     if (withoutBorder) {
       scrollPane.setBorder(IdeBorderFactory.createEmptyBorder()); // set empty border, because setting null doesn't always take effect
+      scrollPane.setViewportBorder(IdeBorderFactory.createEmptyBorder());
     }
     return scrollPane;
   }
