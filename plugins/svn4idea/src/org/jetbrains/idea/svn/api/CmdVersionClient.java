@@ -21,13 +21,15 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
   @NotNull
   @Override
   public Version getVersion() throws SvnBindException {
-    return parseVersion(runCommand());
+    return parseVersion(runCommand(true));
   }
 
   @NotNull
-  private ProcessOutput runCommand() throws SvnBindException {
+  public ProcessOutput runCommand(boolean quiet) throws SvnBindException {
     Command command = new Command(SvnCommandName.version);
+    if (quiet) {
     command.put("--quiet");
+    }
 
     return newRuntime(myVcs).runLocal(command, COMMAND_TIMEOUT).getProcessOutput();
   }
