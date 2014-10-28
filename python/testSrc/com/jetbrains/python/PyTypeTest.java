@@ -848,6 +848,11 @@ public class PyTypeTest extends PyTestCase {
            "expr = (1,) + (True, 'spam') + ()");
   }
 
+  public void testTupleMultiplication() {
+    doTest("(int, bool, int, bool)",
+           "expr = (1, False) * 2");
+  }
+
   public void testConstructorUnification() {
     doTest("C[int]",
            "class C(object):\n" +
