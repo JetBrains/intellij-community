@@ -24,6 +24,7 @@ public class RegExpLexer extends FlexAdapter {
 
     private static final int COMMENT_MODE = 1 << 14;
     private static final int NESTED_STATES = 1 << 15;
+    private static final int CAPTURING_GROUPS = 1 << 16;
     private final EnumSet<RegExpCapability> myCapabilities;
 
     public RegExpLexer(EnumSet<RegExpCapability> capabilities) {
@@ -48,6 +49,9 @@ public class RegExpLexer extends FlexAdapter {
         }
         if (!flex.states.isEmpty()) {
             state |= NESTED_STATES;
+        }
+        if (flex.capturingGroupCount != 0) {
+            state |= CAPTURING_GROUPS;
         }
         return state;
     }

@@ -27,7 +27,7 @@ import java.util.EnumSet;
     // as well, but is currently unfinished as it requires to tweak more places than just the lexer.
     private boolean xmlSchemaMode;
 
-    private int capturingGroupCount = 0;
+    int capturingGroupCount = 0;
 
     private boolean allowDanglingMetacharacters;
     private boolean allowNestedCharacterClasses;
