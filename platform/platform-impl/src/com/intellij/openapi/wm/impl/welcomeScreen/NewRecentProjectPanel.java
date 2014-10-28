@@ -98,8 +98,8 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       @Override
       protected void layoutComponents() {
         setLayout(new BorderLayout());
-        myName.setBorder(new EmptyBorder(6, 5, 1, 5));
-        myPath.setBorder(new EmptyBorder(1, 5, 6, 5));
+        myName.setBorder(new EmptyBorder(6, 0, 1, 5));
+        myPath.setBorder(new EmptyBorder(1, 0, 6, 5));
         add(myName, BorderLayout.NORTH);
         add(myPath, BorderLayout.SOUTH);
       }
