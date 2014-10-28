@@ -21,6 +21,9 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +40,7 @@ public class SvnExecutableChecker extends ExecutableValidator {
 
   private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);
 
+  public static final String SVN_EXECUTABLE_LOCALE_REGISTRY_KEY = "svn.executable.locale";
   private static final String SVN_VERSION_ENGLISH_OUTPUT = "The following repository access (RA) modules are available";
 
   @NotNull private final SvnVcs myVcs;
@@ -45,6 +49,12 @@ public class SvnExecutableChecker extends ExecutableValidator {
     super(vcs.getProject(), getNotificationTitle(), getWrongPathMessage());
 
     myVcs = vcs;
+    Registry.get(SVN_EXECUTABLE_LOCALE_REGISTRY_KEY).addListener(new RegistryValueListener.Adapter() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        myVcs.checkCommandLineVersion();
+      }
+    }, myProject);
   }
 
   @Override
