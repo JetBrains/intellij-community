@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class BuildDataManager implements StorageOwner {
   private final BuildTargetsState myTargetsState;
   private final OutputToTargetRegistry myOutputToTargetRegistry;
   private final File myVersionFile;
-  private StorageOwner myTargetStoragesOwner = new CompositeStorageOwner() {
+  private final StorageOwner myTargetStoragesOwner = new CompositeStorageOwner() {
     @Override
     protected Iterable<? extends StorageOwner> getChildStorages() {
       return new Iterable<StorageOwner>() {
