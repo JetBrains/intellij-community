@@ -15,16 +15,12 @@
  */
 package com.jetbrains.python.debugger.array;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author amarch
@@ -35,10 +31,8 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
   private double myMax = Double.MIN_VALUE;
   private String myComplexMin;
   private String myComplexMax;
-  private boolean colored = true;
+  private boolean myColored = true;
   private String myType;
-
-  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d^j]*)([+-]?[e.\\d]*j)?");
 
   public ArrayTableCellRenderer(double min, double max, String type) {
     setHorizontalAlignment(CENTER);
@@ -50,7 +44,7 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
   }
 
   public void setColored(boolean colored) {
-    this.colored = colored;
+    myColored = colored;
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value,
@@ -65,9 +59,9 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
     }
 
     if (myMax != myMin) {
-      if (colored && value != null) {
+      if (myColored && value != null) {
         try {
-          double rangedValue = getRangedValue(value.toString());
+          double rangedValue = NumpyArrayValueProvider.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
           this.setBackground(
             new JBColor(new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130),
                         new Color(0, 0, 0, 0)));
@@ -81,57 +75,6 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
     }
 
     return this;
-  }
-
-  /**
-   * @return double presentation from [0:1] range
-   */
-  private double getRangedValue(String value) {
-    if ("iuf".contains(myType)) {
-      return (Double.parseDouble(value) - myMin) / (myMax - myMin);
-    }
-    else if ("b".equals(myType)) {
-      return value.equals("True") ? 1 : 0;
-    }
-    else if ("c".equals(myType)) {
-      return getComplexRangedValue(value);
-    }
-    return 0;
-  }
-
-  /**
-   * type complex128 in numpy is compared by next rule:
-   * A + Bj > C +Dj if A > C or A == C and B > D
-   */
-  private double getComplexRangedValue(String value) {
-    Pair<Double, Double> med = parsePyComplex(value);
-    Pair<Double, Double> max = parsePyComplex(myComplexMax);
-    Pair<Double, Double> min = parsePyComplex(myComplexMin);
-    double range = (med.first - min.first) / (max.first - min.first);
-    if (max.first.equals(min.first)) {
-      range = (med.second - min.second) / (max.second - min.second);
-    }
-    return range;
-  }
-
-  private static Pair<Double, Double> parsePyComplex(@NotNull String pyComplexValue) {
-    if (pyComplexValue.startsWith("(") && pyComplexValue.endsWith(")")) {
-      pyComplexValue = pyComplexValue.substring(1, pyComplexValue.length() - 1);
-    }
-    Matcher matcher = PY_COMPLEX_NUMBER.matcher(pyComplexValue);
-    if (matcher.matches()) {
-      String real = matcher.group(1);
-      String imag = matcher.group(2);
-      if (real.contains("j") && imag == null) {
-        return new Pair(new Double(0.0), Double.parseDouble(real.substring(0, real.length() - 1)));
-      }
-      else {
-        return new Pair(Double.parseDouble(real), Double.parseDouble(imag.substring(0, imag.length() - 1)));
-      }
-    }
-    else {
-      throw new IllegalArgumentException("Not a valid python complex value: " + pyComplexValue);
-    }
   }
 
   public void setMin(double min) {

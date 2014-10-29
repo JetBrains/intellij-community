@@ -42,13 +42,12 @@ import java.awt.event.KeyEvent;
 /**
  * @author amarch
  */
-class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor {
-  MyTableEditor myEditor;
-  Project myProject;
-  Object lastValue;
+public class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor {
+  private MyTableEditor myEditor;
+  private final Project myProject;
+  private Object myLastValue;
 
   public ArrayTableCellEditor(Project project) {
-    super();
     myProject = project;
   }
 
@@ -56,7 +55,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
                                                final int rowIndex, final int vColIndex) {
     myEditor = new MyTableEditor(myProject, new PyDebuggerEditorsProvider(), "numpy.array.table.view", null,
                                  new XExpressionImpl(value.toString(), PythonLanguage.getInstance(), "", EvaluationMode.CODE_FRAGMENT));
-    lastValue = value;
+    myLastValue = value;
     JComponent editorComponent = myEditor.getComponent();
 
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
@@ -79,13 +78,12 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
     return editorComponent;
   }
 
+  @Nullable
   public Object getCellEditorValue() {
     if (myEditor.getEditor() != null) {
       return myEditor.getEditor().getDocument().getText();
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   public void doOKAction(int rowIndex, int vColIndex) {
@@ -95,7 +93,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
     new WriteCommandAction(null) {
       protected void run(@NotNull Result result) throws Throwable {
         if (myEditor.getEditor() != null) {
-          myEditor.getEditor().getDocument().setText(lastValue.toString());
+          myEditor.getEditor().getDocument().setText(myLastValue.toString());
         }
       }
     }.execute();
@@ -103,9 +101,17 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
     stopCellEditing();
   }
 
-  public class MyTableEditor extends XDebuggerEditorBase {
+  public MyTableEditor getEditor() {
+    return myEditor;
+  }
+
+  public void setLastValue(Object lastValue) {
+    myLastValue = lastValue;
+  }
+
+  public static class MyTableEditor extends XDebuggerEditorBase {
     private final EditorTextField myEditorTextField;
-    private XExpression myExpression;
+    private final XExpression myExpression;
 
     public MyTableEditor(Project project,
                          XDebuggerEditorsProvider debuggerEditorsProvider,
@@ -136,7 +142,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
     }
 
     @Override
-    protected void doSetText(XExpression text) {
+    protected void setEditorText(XExpression text) {
       myEditorTextField.setText(text.getExpression());
     }
 
