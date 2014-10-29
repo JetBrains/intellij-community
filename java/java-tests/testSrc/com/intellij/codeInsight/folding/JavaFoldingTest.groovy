@@ -33,6 +33,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -1085,6 +1086,35 @@ class Foo {
     }
     assertEquals 2, foldRegionsCount
     assertEquals 0, expandedFoldRegionsCount
+  }
+
+  public void "test processing of tabs inside fold regions"() {
+    String text = """public class Foo {
+\tpublic static void main(String[] args) {
+\t\tjavax.swing.SwingUtilities.invokeLater(new Runnable() {
+\t\t\t@Override
+\t\t\tpublic void run() {
+\t\t\t\tSystem.out.println();
+\t\t\t}
+\t\t});
+\t}
+}""";
+    configure text
+    assert myFixture.editor.getFoldingModel().getCollapsedRegionAtOffset(text.indexOf("new"))
+    myFixture.editor.settings.useTabCharacter = true
+    EditorTestUtil.configureSoftWraps(myFixture.editor, 1000)
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("System"))
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_TAB)
+    myFixture.checkResult("""public class Foo {
+\tpublic static void main(String[] args) {
+\t\tjavax.swing.SwingUtilities.invokeLater(new Runnable() {
+\t\t\t@Override
+\t\t\tpublic void run() {
+\t\t\t\t\t<caret>System.out.println();
+\t\t\t}
+\t\t});
+\t}
+}""");
   }
 
   private int getFoldRegionsCount() {

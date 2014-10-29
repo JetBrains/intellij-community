@@ -297,6 +297,10 @@
       <expected>ERR</expected>
     </test>
     <test>
+      <pattern>[^]</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
       <pattern>[abhgefdc]ij</pattern>
       <expected>OK</expected>
     </test>
@@ -583,11 +587,11 @@
       <pattern>\x4a</pattern>
       <expected>OK</expected>
     </test>
-    <test>
+    <test verify="false">
       <pattern>\x{0}</pattern>
       <expected>OK</expected>
     </test>
-    <test>
+    <test verify="false">
       <pattern>\x{2011F}</pattern>
       <expected>OK</expected>
     </test>
@@ -1043,7 +1047,7 @@
   </bug>
 
   <bug id="IDEA-131542">
-    <test>
+    <test verify="false">
       <pattern>\h \H \v \V</pattern>
       <expected>OK</expected>
     </test>

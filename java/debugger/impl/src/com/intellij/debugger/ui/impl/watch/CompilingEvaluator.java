@@ -50,10 +50,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import javax.tools.*;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
 * @author egor
@@ -250,9 +247,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     StringReference url = proxy.mirrorOf("file:a");
     keep(url, context);
     ObjectReference reference = classType.newInstance(threadReference, classType.concreteMethodByName("<init>", "(Ljava/lang/String;)V"),
-                                                      Arrays.asList(url), ClassType.INVOKE_SINGLE_THREADED);
+                                                      Collections.singletonList(url), ClassType.INVOKE_SINGLE_THREADED);
     keep(reference, context);
-    arrayRef.setValues(Arrays.asList(reference));
+    arrayRef.setValues(Collections.singletonList(reference));
     return arrayRef;
   }
 
@@ -290,7 +287,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
                             diagnostic,
                             options,
                             null,
-                            Arrays.asList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))
+                            Collections.singletonList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))
       ).call()) {
         StringBuilder res = new StringBuilder("Compilation failed:\n");
         for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {

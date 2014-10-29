@@ -178,6 +178,8 @@ public interface EditorEx extends Editor {
   @NotNull
   VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
 
+  int logicalPositionToOffset(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
+
   /**
    * Creates color scheme delegate which is bound to current editor. E.g. all schema changes will update editor state.
    * @param customGlobalScheme

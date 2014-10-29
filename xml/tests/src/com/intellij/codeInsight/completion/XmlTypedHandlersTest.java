@@ -105,6 +105,20 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
            "</foo>");
   }
 
+  public void testWeb13982() throws Exception {
+    doTest(
+      "<a foo=\"1\"\n" +
+      "   bar=\"2\"><caret></a>",
+
+      '\n',
+
+      "<a foo=\"1\"\n" +
+      "   bar=\"2\">\n" +
+      "    <caret>\n" +
+      "</a>"
+    );
+  }
+
   private void doTest(String text, char c, String result) {
     myFixture.configureByText(XmlFileType.INSTANCE, text);
     myFixture.type(c);

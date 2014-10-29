@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,4 +62,13 @@ public interface SoftWrapDataMapper {
    */
   VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logical, @NotNull VisualPosition softWrapUnawareVisual)
     throws IllegalStateException;
+
+  /**
+   * Maps given logical position to corresponding offset.
+   *
+   * @param logical                 logical position to map
+   * @return                        offset that corresponds to the given logical position
+   * @throws IllegalStateException  if it's not possible to perform a mapping
+   */
+  int logicalPositionToOffset(@NotNull LogicalPosition logical) throws IllegalStateException;
 }

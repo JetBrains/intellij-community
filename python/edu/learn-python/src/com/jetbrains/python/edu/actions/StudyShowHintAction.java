@@ -28,8 +28,8 @@ import java.io.File;
 public class StudyShowHintAction extends DumbAwareAction {
   public static final String ACTION_ID = "ShowHintAction";
   public static final String SHORTCUT = "ctrl pressed 7";
-  public static final String OUTSIDE_TASK_WINDOW_MESSAGE = "Put caret to task window to get hint for it.";
-  public static final String HINT_NOT_AVAILABLE = "There is no hint for this task window";
+  public static final String OUTSIDE_TASK_WINDOW_MESSAGE = "Put caret to answer placeholder to get hint";
+  public static final String HINT_NOT_AVAILABLE = "There is no hint for this answer placeholder";
 
   public StudyShowHintAction() {
     super("Show hint", "Show hint", StudyIcons.ShowHint);

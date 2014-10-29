@@ -303,7 +303,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final TIntFunction myLineNumberAreaWidthFunction = new TIntFunction() {
     @Override
     public int execute(int lineNumber) {
-      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1)) + 6;
+      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1)) + 5;
     }
   };
 
@@ -1340,7 +1340,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (softWrapAware) {
       return mySoftWrapModel.offsetToLogicalPosition(offset);
     }
-    int line = offsetToLogicalLine(offset, false);
+    int line = offsetToLogicalLine(offset);
     int column = calcColumnNumber(offset, line, false, myDocument.getImmutableCharSequence());
     return new LogicalPosition(line, column);
   }
@@ -3656,11 +3656,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    return logicalPositionToOffset(pos, null);
+    return logicalPositionToOffset(pos, true);
   }
 
-
-  public int logicalPositionToOffset(@NotNull LogicalPosition pos, @Nullable StringBuilder debugBuffer) {
+  @Override
+  public int logicalPositionToOffset(@NotNull LogicalPosition pos, boolean softWrapAware) {
+    if (softWrapAware) {
+      return mySoftWrapModel.logicalPositionToOffset(pos);
+    }
     assertReadAccess();
     if (myDocument.getLineCount() == 0) return 0;
 
@@ -3675,9 +3678,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (pos.column == 0) return start;
     int end = myDocument.getLineEndOffset(pos.line);
 
-    CharSequence text = myDocument.getImmutableCharSequence();
+    int x = getDocument().getLineNumber(start) == 0 ? getPrefixTextWidthInPixels() : 0;
 
-    return EditorUtil.calcOffset(this, text, start, end, pos.column, EditorUtil.getTabSize(this), debugBuffer);
+    int result = EditorUtil.calcSoftWrapUnawareOffset(this, myDocument.getImmutableCharSequence(), start, end, pos.column,
+                                                      EditorUtil.getTabSize(this), x, new int[]{0}, null);
+    if (result >= 0) {
+      return result;
+    }
+
+    return end;
   }
 
   @Override
@@ -3872,7 +3881,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     FoldRegion lastCollapsedBefore = getLastCollapsedBeforePosition(visiblePos);
 
     if (lastCollapsedBefore != null) {
-      int logFoldEndLine = offsetToLogicalLine(lastCollapsedBefore.getEndOffset(), false);
+      int logFoldEndLine = offsetToLogicalLine(lastCollapsedBefore.getEndOffset());
       int visFoldEndLine = logicalToVisualLine(logFoldEndLine);
 
       line = logFoldEndLine + visiblePos.line - visFoldEndLine;
@@ -3894,10 +3903,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   int offsetToLogicalLine(int offset) {
-    return offsetToLogicalLine(offset, true);
-  }
-
-  private int offsetToLogicalLine(int offset, boolean softWrapAware) {
     int textLength = myDocument.getTextLength();
     if (textLength == 0) return 0;
 
@@ -3908,13 +3913,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int lineIndex = myDocument.getLineNumber(offset);
     LOG.assertTrue(lineIndex >= 0 && lineIndex < myDocument.getLineCount());
 
-    if (softWrapAware && getSoftWrapModel().isSoftWrappingEnabled()) {
-      int column = calcColumnNumber(offset, lineIndex, false, myDocument.getImmutableCharSequence());
-      return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(lineIndex, column), offset).line;
-    }
-    else {
-      return lineIndex;
-    }
+    return lineIndex;
   }
 
   @Override
@@ -3930,7 +3929,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int column = EditorUtil.calcColumnNumber(this, documentCharSequence, lineStartOffset, offset);
 
     if (softWrapAware) {
-      int line = offsetToLogicalLine(offset, false);
+      int line = offsetToLogicalLine(offset);
       return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(line, column), offset).column;
     }
     else {
@@ -6772,10 +6771,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           g.setColor(ButtonlessScrollBarUI.getTrackBackground());
           g.fillRect(0, 0, width, height);
 
-          int shortner = 0;
-          if (myGutterComponent.isFoldingOutlineShown()) {
-            shortner = myGutterComponent.getFoldingAreaWidth() / 2;
-          }
+          int shortner = myGutterComponent.getFoldingAreaWidth() / 2;
 
           g.setColor(myGutterComponent.getBackground());
           g.fillRect(0, 0, width - shortner, height);

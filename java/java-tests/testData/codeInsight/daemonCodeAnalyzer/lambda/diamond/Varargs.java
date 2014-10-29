@@ -24,3 +24,12 @@ class A<T> {
     bar(s(get(), ""));
   }
 }
+
+class B<T>  {
+  public B(T entity) {}
+  public B(T entity, Integer... error){}
+
+  void foo(final Integer generalError){
+    B value = new B<>("", generalError);
+  }
+}

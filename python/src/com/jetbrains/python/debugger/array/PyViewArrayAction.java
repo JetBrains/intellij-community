@@ -16,14 +16,19 @@
 package com.jetbrains.python.debugger.array;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 
 /**
  * @author amarch
@@ -34,9 +39,41 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     final MyDialog dialog = new MyDialog(e.getProject());
-    dialog.setTitle("View Array");
     dialog.setValue(node);
     dialog.show();
+  }
+
+  @Nullable
+  private static TreePath[] getSelectedNodes(DataContext dataContext) {
+    XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
+    return tree == null ? null : tree.getSelectionPaths();
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    TreePath[] paths = getSelectedNodes(e.getDataContext());
+    if (paths != null) {
+      if(paths.length > 1) {
+        e.getPresentation().setVisible(false);
+        return;
+      }
+
+      XValueNodeImpl node  = getSelectedNode(e.getDataContext());
+      if (node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
+        PyDebugValue debugValue = (PyDebugValue) node.getValueContainer();
+        if (debugValue.getFrameAccessor() instanceof PydevConsoleCommunication) {
+          e.getPresentation().setVisible(false);
+          return;
+        }
+
+        String nodeType = debugValue.getType();
+        if ("ndarray".equals(nodeType)) {
+          e.getPresentation().setVisible(true);
+          return;
+        }
+      }
+    }
+    e.getPresentation().setVisible(false);
   }
 
   protected class MyDialog extends DialogWrapper {

@@ -19,9 +19,7 @@ import com.sun.jdi.Method;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -29,7 +27,7 @@ import java.util.Set;
  */
 public class MethodsTracker {
   private final Map<Method, Integer> myMethodToOccurrenceMap = new HashMap<Method, Integer>();
-  private final Set<Integer> myProcessedFrames = new HashSet<Integer>();
+  private final Map<Integer, Integer> myInitialOccurence = new HashMap<Integer, Integer>();
 
   public final class MethodOccurrence {
     private final Method myMethod;
@@ -54,12 +52,13 @@ public class MethodsTracker {
   }
 
   public MethodOccurrence getMethodOccurrence(int frameIndex, @Nullable Method method) {
-    int occurenceIndex = getOccurrenceCount(method);
-    if (!myProcessedFrames.contains(frameIndex)) {
-      myMethodToOccurrenceMap.put(method, occurenceIndex + 1);
-      myProcessedFrames.add(frameIndex);
+    Integer initial = myInitialOccurence.get(frameIndex);
+    if (initial == null) {
+      initial = getOccurrenceCount(method);
+      myMethodToOccurrenceMap.put(method, initial + 1);
+      myInitialOccurence.put(frameIndex, initial);
     }
-    return new MethodOccurrence(method, occurenceIndex);
+    return new MethodOccurrence(method, initial);
   }
 
   private int getOccurrenceCount(Method method) {

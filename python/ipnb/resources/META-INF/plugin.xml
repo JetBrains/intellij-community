@@ -56,5 +56,12 @@
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMoveCellUpAction" id="IpnbMoveCellUpAction" text="Move Cell Up" use-shortcut-of="$MoveStatementUp">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift UP"/>
     </action>
+
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMarkdownCellAction" id="IpnbMarkdownCellAction" text="Markdown Cell">
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift m"/>
+    </action>
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCodeCellAction" id="IpnbCodeCellAction" text="Code Cell">
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift s"/>
+    </action>
   </actions>
 </idea-plugin>

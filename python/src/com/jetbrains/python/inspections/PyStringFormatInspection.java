@@ -102,39 +102,25 @@ public class PyStringFormatInspection extends PyInspection {
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(problemTarget);
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
 
-        //in case tuple multiplies integer PY-4647
-        if (rightExpression instanceof PyBinaryExpression) {
-          PyBinaryExpression binaryExpression = (PyBinaryExpression)rightExpression;
-          if (binaryExpression.getOperator() == PyTokenTypes.MULT && binaryExpression.getLeftExpression() instanceof PyParenthesizedExpression
-                                                                && binaryExpression.getRightExpression() instanceof PyNumericLiteralExpression) {
-            PyParenthesizedExpression parenthesizedExpression = (PyParenthesizedExpression)binaryExpression.getLeftExpression();
-            if (parenthesizedExpression.getContainedExpression() instanceof PyTupleExpression) {
-              PyExpression[] tupleElements = ((PyTupleExpression)parenthesizedExpression.getContainedExpression()).getElements();
-              final PyExpression expression = ((PyBinaryExpression)rightExpression).getRightExpression();
-              if (expression != null) {
-                return ((PyNumericLiteralExpression)expression).getBigIntegerValue().intValue() * tupleElements.length;
-              }
-            }
-          }
-        }
         final String s = myFormatSpec.get("1");
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (s != null) {
-            assert rightExpression != null;
-            PyType right_type = myTypeEvalContext.getType(rightExpression);
-            if (right_type instanceof PySubscriptableType) {
-              PySubscriptableType tuple_type = (PySubscriptableType)right_type;
-              for (int i=0; i <= tuple_type.getElementCount(); i += 1) {
-                PyType elementType = tuple_type.getElementType(i);
+            final PyType rightType = myTypeEvalContext.getType(rightExpression);
+            if (rightType instanceof PySubscriptableType) {
+              final PySubscriptableType tupleType = (PySubscriptableType)rightType;
+              for (int i = 0; i <= tupleType.getElementCount(); i += 1) {
+                final PyType elementType = tupleType.getElementType(i);
                 if (elementType != null) {
                   final String typeName = myFormatSpec.get(String.valueOf(i + 1));
                   final PyType type = typeName != null ? PyTypeParser.getTypeByName(problemTarget, typeName) : null;
                   checkTypeCompatible(problemTarget, elementType, type);
                 }
               }
-              return tuple_type.getElementCount();
+              return tupleType.getElementCount();
             }
-            else checkExpressionType(rightExpression, s, problemTarget);
+            else {
+              checkExpressionType(rightExpression, s, problemTarget);
+            }
           }
           return 1;
         }

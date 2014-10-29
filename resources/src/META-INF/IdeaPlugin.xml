@@ -42,7 +42,7 @@
 
     <component>
       <interface-class>com.intellij.psi.RefResolveService</interface-class>
-      <implementation-class>com.intellij.psi.RefResolveServiceImpl</implementation-class>
+      <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
   </project-components>
 
