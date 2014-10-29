@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -528,10 +529,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     try {
       configuration.checkSettings(executor);
     }
-    catch (RuntimeConfigurationError er) {
+    catch (RuntimeConfigurationError ignored) {
       return false;
     }
-    catch (RuntimeConfigurationException e) {
+    catch (RuntimeConfigurationException ignored) {
       return true;
     }
     return true;
@@ -1082,7 +1083,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
                                                     settings.checkSettings();
                                                     icon = ProgramRunnerUtil.getConfigurationIcon(settings, false);
                                                   }
-                                                  catch (RuntimeConfigurationException e) {
+                                                  catch (RuntimeConfigurationException ignored) {
                                                     icon = ProgramRunnerUtil.getConfigurationIcon(settings, true);
                                                   }
                                                   myIconCalcTime.put(uniqueID, System.currentTimeMillis() - startTime);
@@ -1118,10 +1119,12 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       tasks = getBeforeRunTasks(settings);
       myConfigurationToBeforeTasksMap.put(settings, tasks);
     }
-    List<T> result = new ArrayList<T>();
+    List<T> result = new SmartList<T>();
     for (BeforeRunTask task : tasks) {
-      if (task.getProviderId() == taskProviderID)
+      if (task.getProviderId() == taskProviderID) {
+        //noinspection unchecked
         result.add((T)task);
+      }
     }
     return result;
   }
@@ -1187,10 +1190,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Override
   public final void setBeforeRunTasks(final RunConfiguration runConfiguration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
-    List<BeforeRunTask> result = new ArrayList<BeforeRunTask>(tasks);
+    List<BeforeRunTask> result = new SmartList<BeforeRunTask>(tasks);
     if (addEnabledTemplateTasksIfAbsent) {
       List<BeforeRunTask> templates = getTemplateBeforeRunTasks(runConfiguration);
-      Set<Key<BeforeRunTask>> idsToSet = new HashSet<Key<BeforeRunTask>>();
+      Set<Key<BeforeRunTask>> idsToSet = new THashSet<Key<BeforeRunTask>>();
       for (BeforeRunTask task : tasks) {
         idsToSet.add(task.getProviderId());
       }
